@@ -1,0 +1,14 @@
+- Guia IA
+Filament necesitara el Modelo, mediante la IA generaremos la migracion y el modelo con los campos
+src/Shared/Modulo
+-Domain
+    - Entity
+    - Collection
+-Infra
+    - Repo
+    - Modelo
+
+Filtrar por tipo los pokemon?
+pokemon_reclutable
+pokemon_reclutados
+

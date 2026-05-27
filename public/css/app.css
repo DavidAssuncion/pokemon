@@ -1,0 +1,35 @@
+/* Public CSS fallback (compiled-less version) */
+body { font-family: sans-serif; margin: 2rem; background: #333; color: #111; }
+
+/* Tabs */
+.tabs { display: flex; gap: 0.25rem; margin-bottom: 1rem; flex-wrap: wrap; }
+.tab-button { padding: 0.5rem 0.75rem; border: 1px solid #ccc; background: #f3f4f6; cursor: pointer; border-radius: 6px; }
+.tab-button.active { background: #e6f7ff; border-color: #8ed1f5; }
+
+.province { margin-bottom: 1.5rem; }
+.habitats-grid { display: flex; flex-wrap: wrap; gap: 1rem; }
+.habitat-button { margin: 0; display: inline-flex; flex-direction: column; align-items: center; gap: 0.5rem; padding: 0px; border:none; background: #fff; cursor: pointer; text-align: center; width: 220px; border-radius: 6px; }
+.habitat-button:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+.habitat-thumb { width: 220px; height: 160px; object-fit: cover; border-radius: 4px; }
+.habitat-name { margin: 0; font-weight: 600; }
+.habitat-button.active { background: #d4f0ff; border-color: #8ed1f5; }
+
+@media (max-width: 640px) {
+  .habitat-button, .habitat-thumb { width: 140px; }
+  .habitat-thumb { height: 100px; }
+}
+
+/* Habitat detail */
+.layout { display: flex; flex-wrap: wrap; gap: 2rem; }
+.habitat-image { flex: 1 1 320px; max-width: 420px; }
+.habitat-image img { width: 100%; height: auto; border-radius: 10px; object-fit: cover; }
+.habitat-details { flex: 2 1 420px; display: flex; flex-direction: column; gap: 1rem; }
+.habitat-name { margin: 0 0 0.5rem 0; }
+.habitat-levels { display: grid; gap: 1rem; }
+.level-row { border: 1px solid #ccc; border-radius: 10px; padding: 1rem; background: #fafafa; }
+.level-row h3 { margin-top: 0; }
+.level-row ul { margin: 0; padding-left: 1.2rem; }
+.level-row li { margin: 0.25rem 0; }
+.empty { color: #666; margin: 0; }
+.back-link { display: inline-block; margin-bottom: 1rem; color: #0366d6; text-decoration: none; }
+.back-link:hover { text-decoration: underline; }
