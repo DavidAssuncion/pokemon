@@ -28,6 +28,21 @@ Route::get('/habitats-img/{id}.webp', function (int $id) {
     ]);
 });
 
+Route::get('/iconos/{filename}', function (string $filename) {
+    if (!preg_match('/^[a-zA-Z0-9]+(?:_[a-zA-Z0-9]+)*\.png$/', $filename)) {
+        abort(404);
+    }
+
+    $path = resource_path("iconos/{$filename}");
+    if (!file_exists($path)) {
+        abort(404);
+    }
+
+    return response()->file($path, [
+        'Content-Type' => 'image/png',
+    ]);
+});
+
 Route::get('/habitats/{id}', function (int $id) {
     $useCase = new ObtenerHabitatDetalle(new HabitatRepository());
     $habitat = $useCase->handle($id);
@@ -43,3 +58,5 @@ Route::get('/api/habitats/{habitat}/pokemon', function (int $habitat) {
     $useCase = new ObtenerPokemonsPorHabitat(new HabitatRepository());
     return response()->json($useCase->handle($habitat));
 });
+
+require __DIR__ . '/reclutados.php';

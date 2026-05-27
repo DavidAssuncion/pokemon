@@ -18,7 +18,7 @@ class HabitatRepository implements HabitatRepositoryInterface
 {
     public function allProvinciasWithHabitats(): ProvinciasCollection
     {
-        $provinces = Province::with('habitats')->get();
+        $provinces = Province::with('habitats')->get()->sortBy('id');
 
         $items = [];
         foreach ($provinces as $province) {
@@ -95,51 +95,27 @@ class HabitatRepository implements HabitatRepositoryInterface
 
         $levels = [1 => [], 2 => [], 3 => []];
 
-        foreach ($unmapped as $pokemon) {
-            $levels[2][] = [
+        $habitatPokemon = $habitat->pokemon()
+            ->select(['pokemon.id', 'pokemon.name'])
+            ->get()
+            ->map(fn($pokemon) => [
                 'id' => $pokemon->id,
                 'name' => $pokemon->name,
+                'level' => intval($pokemon->pivot->level ?? 2),
+                'icon' => "/iconos/{$pokemon->name}.png",
+            ]);
+
+        foreach ($habitatPokemon as $pokemon) {
+            $level = $pokemon['level'];
+            if (!in_array($level, [1, 2, 3], true)) {
+                $level = 2;
+            }
+
+            $levels[$level][] = [
+                'id' => $pokemon['id'],
+                'name' => $pokemon['name'],
+                'icon' => $pokemon['icon'],
             ];
-        }
-
-        foreach (array_keys($familyChains) as $chainId) {
-            if (Schema::hasTable('pokemon_species')) {
-                $chainSpeciesIds = DB::table('pokemon_species')
-                    ->where('evolution_chain_id', $chainId)
-                    ->pluck('id')
-                    ->toArray();
-            } else {
-                $chainEvos = PokemonEvolution::where('evolution_chain_id', $chainId)->get();
-                $chainSpeciesIds = [];
-                foreach ($chainEvos as $e) {
-                    $chainSpeciesIds[] = $e->evolved_species_id;
-                    if (!empty($e->evolves_from_species_id)) {
-                        $chainSpeciesIds[] = $e->evolves_from_species_id;
-                    }
-                }
-                $chainSpeciesIds = array_values(array_unique(array_filter($chainSpeciesIds)));
-                if (empty($chainSpeciesIds)) {
-                    $chainSpeciesIds = $familyChains[$chainId] ?? [];
-                }
-            }
-
-            $evolutions = PokemonEvolution::where('evolution_chain_id', $chainId)->get();
-            $orderedSpecies = $this->orderSpeciesByEvolution($chainSpeciesIds, $evolutions);
-            $familyPokemons = Pokemon::whereIn('species_id', $chainSpeciesIds)
-                ->select(['id', 'name', 'species_id'])
-                ->get()
-                ->groupBy('species_id');
-
-            $count = count($orderedSpecies);
-            foreach ($orderedSpecies as $index => $species) {
-                $level = $this->getEvolutionLevel($index, $count);
-                foreach ($familyPokemons[$species] ?? [] as $pokemon) {
-                    $levels[$level][] = [
-                        'id' => $pokemon->id,
-                        'name' => $pokemon->name,
-                    ];
-                }
-            }
         }
 
         return [
@@ -160,7 +136,7 @@ class HabitatRepository implements HabitatRepositoryInterface
             $parents[$evolution->evolved_species_id] = $evolution->evolves_from_species_id;
         }
 
-        $roots = array_values(array_filter($speciesIds, fn ($id) => !isset($parents[$id])));
+        $roots = array_values(array_filter($speciesIds, fn($id) => !isset($parents[$id])));
         if (empty($roots)) {
             $roots = [$speciesIds[0]];
         }
@@ -170,7 +146,7 @@ class HabitatRepository implements HabitatRepositoryInterface
             $this->traverseSpecies($root, $children, $order);
         }
 
-        $ordered = array_values(array_unique(array_filter($order, fn ($id) => in_array($id, $speciesIds, true))));
+        $ordered = array_values(array_unique(array_filter($order, fn($id) => in_array($id, $speciesIds, true))));
         if (empty($ordered)) {
             return $speciesIds;
         }

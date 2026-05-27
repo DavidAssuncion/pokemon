@@ -21,6 +21,7 @@ class DatabaseSeeder extends Seeder
             ProvinceSeeder::class,
             HabitatSeeder::class,
             PokemonSeeder::class,
+            \Database\Seeders\ReclutadosSeeder::class,
         ]);
 
         // User::factory(10)->create();

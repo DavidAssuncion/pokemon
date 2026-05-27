@@ -3,6 +3,7 @@
 @section('title', 'Hábitats')
 
 @section('content')
+<h1>Provincias</h1>
     <div id="provincias">
         <div class="tabs" role="tablist" aria-label="Provincias">
             @foreach($provincias as $i => $province)

@@ -7,8 +7,13 @@
     <link rel="stylesheet" href="/css/app.css">
 </head>
 <body>
-    <header style="margin-bottom:1rem">
-        <h1 style="margin:0; font-size:1.25rem">@yield('header', 'Pokémon - Hábitats')</h1>
+    <header class="app-header">
+        <nav class="app-nav" aria-label="Navegación principal">
+            <a class="nav-link" href="/pokedex">Pokedex</a>
+            <a class="nav-link" href="/habitats">Hábitats</a>
+            <a class="nav-link" href="/reclutados">Reclutados</a>
+            <a class="nav-link" href="/reclutamiento">Reclutamiento</a>
+        </nav>
     </header>
 
     <main>

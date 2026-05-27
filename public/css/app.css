@@ -1,6 +1,15 @@
 /* Public CSS fallback (compiled-less version) */
-body { font-family: sans-serif; margin: 2rem; background: #333; color: #111; }
+@import url('https://fonts.googleapis.com/css2?family=Merriweather:wght@400;700&family=Ubuntu:wght@400;500;700&display=swap');
+body { font-family: 'Ubuntu', sans-serif; margin: 0; background: #121827; color: #f8fafc; }
+main{padding: 0.75rem 1rem;}
+header.app-header { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 1rem; padding: 0.75rem 1rem; background: #1e293b; border-bottom: 1px solid #334155; }
+.app-nav { display: flex; flex-wrap: wrap; gap: 0.75rem; }
+.nav-link { color: #f8fafc; padding: 0.5rem 0.75rem; border-radius: 8px; background: transparent; border: 1px solid transparent; text-decoration: none; font-family: 'Merriweather', serif; transition: background-color 0.2s ease, border-color 0.2s ease; }
+.nav-link:hover { background: #334155; border-color: #475569; }
+.nav-link.active { background: #475569; }
 
+h1, h2, h3, h4, h5, h6, .habitat-name, .tab-button, .back-link { font-family: 'Merriweather', serif; }
+h1 { margin: 0 0 1rem 0; font-size: 1.75rem; }
 /* Tabs */
 .tabs { display: flex; gap: 0.25rem; margin-bottom: 1rem; flex-wrap: wrap; }
 .tab-button { padding: 0.5rem 0.75rem; border: 1px solid #ccc; background: #f3f4f6; cursor: pointer; border-radius: 6px; }
@@ -23,13 +32,17 @@ body { font-family: sans-serif; margin: 2rem; background: #333; color: #111; }
 .layout { display: flex; flex-wrap: wrap; gap: 2rem; }
 .habitat-image { flex: 1 1 320px; max-width: 420px; }
 .habitat-image img { width: 100%; height: auto; border-radius: 10px; object-fit: cover; }
-.habitat-details { flex: 2 1 420px; display: flex; flex-direction: column; gap: 1rem; }
+.habitat-details { flex: 2 1 420px; display: flex; flex-direction: column;}
 .habitat-name { margin: 0 0 0.5rem 0; }
 .habitat-levels { display: grid; gap: 1rem; }
 .level-row { border: 1px solid #ccc; border-radius: 10px; padding: 1rem; background: #fafafa; }
-.level-row h3 { margin-top: 0; }
+.level-row h3 { margin-top: 0; color: #333; }
 .level-row ul { margin: 0; padding-left: 1.2rem; }
 .level-row li { margin: 0.25rem 0; }
 .empty { color: #666; margin: 0; }
-.back-link { display: inline-block; margin-bottom: 1rem; color: #0366d6; text-decoration: none; }
+.back-link { display: inline-block; margin-bottom: 1rem; color: #50c77f; text-decoration: none; }
 .back-link:hover { text-decoration: underline; }
+.icono{float: left; height:auto; display:block;width: 170px;}
+
+.reclutado-item { display: inline-grid; align-items: center; }
+.reclutado-item strong { text-align: center; }

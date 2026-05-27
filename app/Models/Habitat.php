@@ -12,6 +12,7 @@ class Habitat extends Model
     public $timestamps = false;
 
     protected $fillable = [
+        'id',
         'province_id',
         'name',
     ];
@@ -23,6 +24,7 @@ class Habitat extends Model
 
     public function pokemon()
     {
-        return $this->belongsToMany(Pokemon::class, 'pokemon_habitat');
+        return $this->belongsToMany(Pokemon::class, 'pokemon_habitat')
+            ->withPivot('level');
     }
 }
