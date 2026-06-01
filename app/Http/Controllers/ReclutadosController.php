@@ -2,19 +2,23 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Reclutado;
-use App\Models\Team;
+use Src\Reclutamiento\App\ObtenerPokemonsReclutados;
+use Src\Equipos\App\ObtenerEquipos;
+
 
 class ReclutadosController extends Controller
 {
+    public function __construct(
+        public readonly ObtenerPokemonsReclutados $obtenerPokemonsReclutados,
+        public readonly ObtenerEquipos $obtenerEquipos,
+    ) {}
+    
     public function index()
     {
-        $reclutados = Reclutado::with('pokemon')->get();
-        $teams = Team::with('members.reclutado.pokemon')->get();
 
         return view('reclutados.index', [
-            'reclutados' => $reclutados,
-            'teams' => $teams,
+            'reclutados' => $this->obtenerPokemonsReclutados->run(),
+            'teams' => $this->obtenerEquipos->run(),
         ]);
     }
 }

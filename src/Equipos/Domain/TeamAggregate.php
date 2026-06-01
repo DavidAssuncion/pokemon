@@ -1,6 +1,6 @@
 <?php
 
-namespace Src\Team\Domain;
+namespace Src\Equipos\Domain;
 
 class TeamAggregate
 {
