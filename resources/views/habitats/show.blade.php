@@ -12,20 +12,17 @@
         <div class="explorer-team">
             @foreach($teams as $team)
             <div style="border:1px solid #334;padding:8px;margin-top:8px">
-                <strong>{{ $team->name }}</strong>
                 <div>
-                    <h4>Miembros</h4>
                     @foreach($team->members as $member)
-                    <div style="display:flex;align-items:center;gap:8px">
+                    <div style="display:inline-grid;align-items:center;">
+                        <div>{{ $member->slot }} - {{ $member->reclutado->nombre ?? '---' }}</div>
+                        <div>{{ $member->behavior }}</div>
                         <img
                             src="/iconos/{{ $member->reclutado['nombre'] }}.png"
                             alt="{{ $member->reclutado['name'] }}"
                             title="{{ $member->reclutado['name'] }}"
                             class="icono"
                             onerror="this.style.display='none'">
-
-                        <div>{{ $member->slot }} - {{ $member->reclutado->nombre ?? '---' }}</div>
-                        <div>{{ $member->behavior }}</div>
                     </div>
                     @endforeach
                 </div>

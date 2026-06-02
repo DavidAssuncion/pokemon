@@ -2,7 +2,7 @@
 
 namespace Src\Shared\Domain;
 
-class Collection
+class Collection implements \IteratorAggregate
 {
     public string $type;
     protected array $items = [];
@@ -12,6 +12,11 @@ class Collection
         foreach ($items as $item) {
             $this->add($item);
         }
+    }
+
+    public function getIterator(): \ArrayIterator
+    {
+        return new \ArrayIterator($this->items);
     }
     
     public function add($item): void

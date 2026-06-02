@@ -7,7 +7,9 @@ use Src\Shared\Tipos\TipoPokemon;
 
 class TiposCollection extends Collection
 {
-
     public string $type = TipoPokemon::class;
-    public function __construct() {}
+    public function __construct(array $items = [])
+    {
+        parent::__construct($items);
+    }
 }
