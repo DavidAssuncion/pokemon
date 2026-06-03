@@ -23,7 +23,7 @@ class BattleAggregate
     public function obtenerDiferenciasStatsAtaqueDefensa() {}
 
     public function obtenerMejorMovimiento() {}
-    public function chooseBestMove(PokemonEntity $attacker, PokemonEntity $defender)
+    public function elegirMejorMovimiento(PokemonEntity $attacker, PokemonEntity $defender)
     {
         $best = null;
         $bestScore = 0;

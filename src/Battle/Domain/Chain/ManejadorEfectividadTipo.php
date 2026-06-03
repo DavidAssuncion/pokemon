@@ -2,11 +2,11 @@
 
 namespace Src\Battle\Domain\Chain;
 
-use Src\Battle\Domain\BattleAction;
+use Src\Battle\Domain\AccionBatalla;
 
-class TypeEffectivenessHandler extends AbstractDamageHandler
+class ManejadorEfectividadTipo extends ManejadorDanioAbstracto
 {
-    protected function process(BattleAction $action, float $daño): float
+    protected function process(AccionBatalla $action, float $daño): float
     {
         $efectividad = $action->move->tipo->effectiveness($action->defender->pokemon);
 

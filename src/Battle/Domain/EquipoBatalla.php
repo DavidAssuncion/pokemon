@@ -2,35 +2,36 @@
 
 namespace Src\Battle\Domain;
 
+use Src\Battle\Domain\Effects\FabricaEfectos;
 use Src\Pokemon\Domain\PokemonEntity;
 use Src\Pokemon\Domain\Stats\StatsValue;
 use Src\Shared\Tipos\TiposCollection;
 
-class BattleTeam
+class EquipoBatalla
 {
-    /** @var Combatant[] */
+    /** @var Combatiente[] */
     public array $combatants = [];
 
     public function __construct(
         public readonly string $name,
     ) {}
 
-    public function addCombatant(Combatant $combatant, Position $position): void
+    public function agregarCombatiente(Combatiente $combatant, Posicion $posicion): void
     {
-        $combatant->position = $position;
+        $combatant->posicion = $posicion;
         $this->combatants[] = $combatant;
     }
 
-    public function aliveCombatants(): array
+    public function combatientesVivos(): array
     {
-        return array_values(array_filter($this->combatants, fn(Combatant $c) => $c->isAlive()));
+        return array_values(array_filter($this->combatants, fn(Combatiente $c) => $c->estaVivo()));
     }
 
     public function vanguardiaAlive(): array
     {
         return array_values(array_filter(
             $this->combatants,
-            fn(Combatant $c) => $c->isAlive() && $c->estaEnVanguardia()
+            fn(Combatiente $c) => $c->estaVivo() && $c->estaEnVanguardia()
         ));
     }
 
@@ -38,7 +39,7 @@ class BattleTeam
     {
         return array_values(array_filter(
             $this->combatants,
-            fn(Combatant $c) => $c->isAlive() && $c->estaEnRetaguardia()
+            fn(Combatiente $c) => $c->estaVivo() && $c->estaEnRetaguardia()
         ));
     }
 
@@ -47,25 +48,25 @@ class BattleTeam
         return !empty($this->vanguardiaAlive());
     }
 
-    public function allFainted(): bool
+    public function todosDebilitados(): bool
     {
-        return empty($this->aliveCombatants());
+        return empty($this->combatientesVivos());
     }
 
     public function lowestSpeed(): float
     {
-        $alive = $this->aliveCombatants();
+        $alive = $this->combatientesVivos();
         if (empty($alive)) {
             return 0;
         }
 
         return min(array_map(
-            fn(Combatant $c) => $c->pokemon->battleStats->speed,
+            fn(Combatiente $c) => $c->pokemon->battleStats->speed,
             $alive
         ));
     }
 
-    /** @param BattlePokemonData[] $members */
+    /** @param DatosPokemonBatalla[] $members */
     public static function fromData(array $members, string $name): self
     {
         $team = new self($name);
@@ -86,13 +87,30 @@ class BattleTeam
                 tiposCollection: $tipos,
             );
 
-            $combatant = new Combatant($pokemon, $member->posicion);
+            $combatant = new Combatiente($pokemon, $member->posicion);
             $combatant->id = $member->id;
             $combatant->nombre = $member->nombre;
             $combatant->iconName = $member->iconName;
             $combatant->shiny = $member->shiny;
 
-            $team->addCombatant($combatant, $member->posicion);
+            // Procesar efectos/habilidades via Factory
+            foreach ($member->effectKeys as $key) {
+                $effect = FabricaEfectos::crearEfecto($key);
+                if ($effect !== null) {
+                    $combatant->effects->add($effect);
+                }
+            }
+
+            // Procesar objeto equipado via Factory
+            if ($member->item !== null) {
+                $combatant->item = $member->item;
+                $itemEffect = FabricaEfectos::crearItem($member->item);
+                if ($itemEffect !== null) {
+                    $combatant->effects->add($itemEffect);
+                }
+            }
+
+            $team->agregarCombatiente($combatant, $member->posicion);
         }
 
         return $team;
@@ -100,7 +118,7 @@ class BattleTeam
 
 
 
-    public function findCombatant(Combatant $target): ?Combatant
+    public function findCombatant(Combatiente $target): ?Combatiente
     {
         foreach ($this->combatants as $c) {
             if ($c->id === $target->id) {
@@ -110,7 +128,7 @@ class BattleTeam
         return null;
     }
 
-    public function findCombatantById(string $id): ?Combatant
+    public function findCombatantById(string $id): ?Combatiente
     {
         foreach ($this->combatants as $c) {
             if ($c->id === $id) {

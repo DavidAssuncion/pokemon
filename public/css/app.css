@@ -78,6 +78,13 @@ h1 { margin: 0 0 1rem 0; font-size: 1.75rem; }
 .anim-move { font-weight: 600; font-size: 0.8rem; color: #60a5fa; }
 .anim-defender { font-weight: 700; font-size: 0.85rem; color: #f87171; }
 
+/* Weather banner */
+.weather-banner { text-align: center; padding: 0.3rem 0.6rem; margin-bottom: 0.5rem; border-radius: 8px; font-size: 0.8rem; font-weight: 600; }
+.weather-sandstorm { background: #78350f; color: #fcd34d; border: 1px solid #92400e; }
+.weather-sun { background: #78350f; color: #fcd34d; border: 1px solid #92400e; }
+.weather-rain { background: #1e3a5f; color: #93c5fd; border: 1px solid #1d4ed8; }
+.weather-hail { background: #1e293b; color: #93c5fd; border: 1px solid #475569; }
+
 /* Battle field */
 .battle-field { background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 0.75rem; }
 .field-grid { display: grid; grid-template-columns: 1fr auto 1fr; gap: 0.5rem; align-items: start; }
@@ -152,6 +159,7 @@ h1 { margin: 0 0 1rem 0; font-size: 1.75rem; }
 .move-dmg { grid-column: 1 / -1; font-size: 0.8rem; color: #f87171; font-weight: 600; text-align: center; padding-top: 0.2rem; border-top: 1px solid #1e293b; }
 .move-multipliers { grid-column: 1 / -1; display: flex; gap: 0.35rem; justify-content: center; flex-wrap: wrap; }
 .stab-badge { font-size: 0.6rem; background: #22c55e; color: #0f172a; padding: 0.1rem 0.35rem; border-radius: 3px; font-weight: 700; text-transform: uppercase; }
+.directo-badge { font-size: 0.6rem; background: #ef4444; color: #fff; padding: 0.1rem 0.35rem; border-radius: 3px; font-weight: 700; text-transform: uppercase; }
 .efectividad { font-size: 0.6rem; padding: 0.1rem 0.35rem; border-radius: 3px; font-weight: 700; }
 .efectividad-alta { background: #ef4444; color: #fff; }
 .efectividad-baja { background: #64748b; color: #fff; }
@@ -187,3 +195,32 @@ h1 { margin: 0 0 1rem 0; font-size: 1.75rem; }
 .log-entries { display: flex; flex-direction: column; gap: 0.2rem; }
 .log-entry { font-size: 0.75rem; color: #cbd5e1; padding: 0.2rem 0; border-bottom: 1px solid #1e293b; }
 .log-entry:last-child { border-bottom: none; }
+
+/* Weather power description */
+.weather-power { font-weight: 400; font-size: 0.7rem; opacity: 0.8; }
+
+/* Status badges on moves */
+.status-badge { font-size: 0.6rem; padding: 0.1rem 0.35rem; border-radius: 3px; font-weight: 700; text-transform: uppercase; }
+.status-burn { background: #ef4444; color: #fff; }
+.status-poison, .status-bad_poison { background: #a855f7; color: #fff; }
+.status-paralysis { background: #fbbf24; color: #0f172a; }
+.status-sleep { background: #6366f1; color: #fff; }
+.status-freeze { background: #38bdf8; color: #0f172a; }
+.status-confusion { background: #f472b6; color: #fff; }
+
+/* Status indicator on pokemon cards */
+.status-indicator { position: absolute; top: 4px; left: 4px; font-size: 1rem; z-index: 2; filter: drop-shadow(0 0 3px rgba(0,0,0,0.8)); }
+
+/* Stat stages on pokemon cards */
+.stages-row { display: flex; gap: 0.2rem; flex-wrap: wrap; justify-content: center; margin-top: 0.15rem; }
+.stage-badge { font-size: 0.55rem; padding: 0.05rem 0.3rem; border-radius: 3px; font-weight: 700; }
+.stage-up { background: #22c55e; color: #0f172a; }
+.stage-down { background: #ef4444; color: #fff; }
+
+/* Stat change badges on moves */
+.stat-badge { font-size: 0.55rem; padding: 0.1rem 0.35rem; border-radius: 3px; font-weight: 700; text-transform: uppercase; }
+.stat-self { background: #22c55e; color: #0f172a; }
+.stat-target { background: #f97316; color: #fff; }
+
+/* Item badge */
+.item-badge { position: absolute; top: 4px; right: 4px; font-size: 0.85rem; z-index: 2; filter: drop-shadow(0 0 3px rgba(0,0,0,0.8)); cursor: help; }

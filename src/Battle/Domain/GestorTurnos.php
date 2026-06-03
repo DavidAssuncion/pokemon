@@ -2,17 +2,17 @@
 
 namespace Src\Battle\Domain;
 
-class TurnManager
+class GestorTurnos
 {
     public int $round = 0;
 
-    /** @var Combatant[] */
+    /** @var Combatiente[] */
     private array $teamA;
     private array $teamB;
 
     public function __construct(
-        public readonly BattleTeam $team1,
-        public readonly BattleTeam $team2,
+        public readonly EquipoBatalla $team1,
+        public readonly EquipoBatalla $team2,
     ) {
         $this->teamA = $team1->combatants;
         $this->teamB = $team2->combatants;
@@ -23,24 +23,24 @@ class TurnManager
         return array_merge($this->teamA, $this->teamB);
     }
 
-    public function aliveCombatants(): array
+    public function combatientesVivos(): array
     {
         return array_values(array_filter(
             $this->allCombatants(),
-            fn(Combatant $c) => $c->isAlive()
+            fn(Combatiente $c) => $c->estaVivo()
         ));
     }
 
-    public function lowestSpeedAmongAlive(): float
+    public function menorVelocidadEntreVivos(): float
     {
-        $alive = $this->aliveCombatants();
+        $alive = $this->combatientesVivos();
 
         if (empty($alive)) {
             return 0;
         }
 
         return min(array_map(
-            fn(Combatant $c) => $c->pokemon->battleStats->speed,
+            fn(Combatiente $c) => $c->obtenerStatEfectivo('speed'),
             $alive
         ));
     }
@@ -50,21 +50,21 @@ class TurnManager
         $this->round++;
 
         foreach ($this->allCombatants() as $combatant) {
-            if ($combatant->isAlive()) {
-                $combatant->addSpeed();
-                $combatant->timesActedThisRound = 0;
+            if ($combatant->estaVivo()) {
+                $combatant->agregarVelocidad();
+                $combatant->vecesActuadoEstaRonda = 0;
             }
         }
     }
 
-    public function getNextActor(): ?Combatant
+    public function getNextActor(): ?Combatiente
     {
-        $lowest = $this->lowestSpeedAmongAlive();
+        $lowest = $this->menorVelocidadEntreVivos();
         if ($lowest <= 0) {
             return null;
         }
 
-        $alive = $this->aliveCombatants();
+        $alive = $this->combatientesVivos();
 
         if (empty($alive)) {
             return null;
@@ -74,8 +74,8 @@ class TurnManager
         $selected = null;
 
         foreach ($alive as $combatant) {
-            if ($combatant->accumulatedSpeed > $maxSpeed) {
-                $maxSpeed = $combatant->accumulatedSpeed;
+            if ($combatant->velocidadAcumulada > $maxSpeed) {
+                $maxSpeed = $combatant->velocidadAcumulada;
                 $selected = $combatant;
             }
         }
@@ -84,29 +84,29 @@ class TurnManager
             return null;
         }
 
-        if ($selected->accumulatedSpeed <= 0) {
+        if ($selected->velocidadAcumulada <= 0) {
             return null;
         }
 
         return $selected;
     }
 
-    public function consumeAction(Combatant $actor): void
+    public function consumeAction(Combatiente $actor): void
     {
-        $lowest = $this->lowestSpeedAmongAlive();
-        $actor->reducirSpeed($lowest <= 0 ? 1 : $lowest);
-        $actor->timesActedThisRound++;
+        $lowest = $this->menorVelocidadEntreVivos();
+        $actor->reducirVelocidad($lowest <= 0 ? 1 : $lowest);
+        $actor->vecesActuadoEstaRonda++;
     }
 
     public function hayAlgunoConAccionPendiente(): bool
     {
-        $lowest = $this->lowestSpeedAmongAlive();
+        $lowest = $this->menorVelocidadEntreVivos();
         if ($lowest <= 0) {
             return false;
         }
 
-        foreach ($this->aliveCombatants() as $c) {
-            if ($c->accumulatedSpeed > 0) {
+        foreach ($this->combatientesVivos() as $c) {
+            if ($c->velocidadAcumulada > 0) {
                 return true;
             }
         }
@@ -116,6 +116,6 @@ class TurnManager
 
     public function bothTeamsAlive(): bool
     {
-        return !$this->team1->allFainted() && !$this->team2->allFainted();
+        return !$this->team1->todosDebilitados() && !$this->team2->todosDebilitados();
     }
 }

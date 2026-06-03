@@ -2,10 +2,10 @@
 
 namespace Src\Battle\App;
 
-use Src\Battle\Domain\BattleTeam;
-use Src\Battle\Domain\Combatant;
-use Src\Battle\Domain\Position;
-use Src\Battle\Domain\TurnBattleAggregate;
+use Src\Battle\Domain\EquipoBatalla;
+use Src\Battle\Domain\Combatiente;
+use Src\Battle\Domain\Posicion;
+use Src\Battle\Domain\AgregadoBatalla;
 use Src\Pokemon\Domain\PokemonEntity;
 
 class IniciarBatalla
@@ -15,20 +15,20 @@ class IniciarBatalla
         $team1 = $this->crearEquipo($team1Data, 'Equipo 1');
         $team2 = $this->crearEquipo($team2Data, 'Equipo 2');
 
-        $battle = new TurnBattleAggregate($team1, $team2);
+        $battle = new AgregadoBatalla($team1, $team2);
 
         return $battle->ejecutarBatalla();
     }
 
-    private function crearEquipo(array $teamData, string $name): BattleTeam
+    private function crearEquipo(array $teamData, string $name): EquipoBatalla
     {
-        $team = new BattleTeam($name);
+        $team = new EquipoBatalla($name);
 
         foreach ($teamData as $i => $member) {
             $pokemon = $member['pokemon']; // PokemonEntity
-            $posicion = $member['posicion'] ?? Position::VANGUARDIA;
-            $combatant = new Combatant($pokemon, $posicion);
-            $team->addCombatant($combatant, $posicion);
+            $posicion = $member['posicion'] ?? Posicion::VANGUARDIA;
+            $combatant = new Combatiente($pokemon, $posicion);
+            $team->agregarCombatiente($combatant, $posicion);
         }
 
         return $team;

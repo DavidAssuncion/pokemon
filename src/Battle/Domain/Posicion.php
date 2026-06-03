@@ -2,7 +2,7 @@
 
 namespace Src\Battle\Domain;
 
-enum Position: string
+enum Posicion: string
 {
     case VANGUARDIA = 'vanguardia';
     case RETAGUARDIA = 'retaguardia';

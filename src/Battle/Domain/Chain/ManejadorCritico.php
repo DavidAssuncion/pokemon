@@ -2,11 +2,11 @@
 
 namespace Src\Battle\Domain\Chain;
 
-use Src\Battle\Domain\BattleAction;
+use Src\Battle\Domain\AccionBatalla;
 
-class CriticalHandler extends AbstractDamageHandler
+class ManejadorCritico extends ManejadorDanioAbstracto
 {
-    protected function process(BattleAction $action, float $daño): float
+    protected function process(AccionBatalla $action, float $daño): float
     {
         $critChance = 0.0625;
         $critBonus = 1.5;
