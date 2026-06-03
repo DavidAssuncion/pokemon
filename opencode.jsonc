@@ -1,0 +1,46 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+
+  // El analista es el agente por defecto al iniciar una sesión
+  "default_agent": "analista",
+
+  // Definición de los agentes del proyecto
+  "agent": {
+    "analista": {
+      "description": "Analista del proyecto: transforma ideas en especificaciones claras. No implementa código.",
+      "mode": "primary",
+      "prompt": "{file:./docs/agents/analista.md}",
+      "permission": {
+        "edit": "deny",
+        "bash": "deny"
+      }
+    },
+    "arquitecto": {
+      "description": "Arquitecto del proyecto: diseña soluciones técnicas y garantiza coherencia arquitectónica.",
+      "mode": "subagent",
+      "prompt": "{file:./docs/agents/arquitecto.md}",
+      "permission": {
+        "edit": "deny",
+        "bash": "deny"
+      }
+    },
+    "backend": {
+      "description": "Desarrollador Backend Laravel: implementa la lógica de negocio definida por el Arquitecto.",
+      "mode": "subagent",
+      "prompt": "{file:./docs/agents/backend.md}"
+    },
+    "frontend": {
+      "description": "Desarrollador Frontend: implementa la interfaz de usuario siguiendo el diseño del Arquitecto.",
+      "mode": "subagent",
+      "prompt": "{file:./docs/agents/frontend.md}"
+    },
+    "bibliotecario": {
+      "description": "Bibliotecario del proyecto: preserva, organiza y evoluciona el conocimiento del sistema.",
+      "mode": "subagent",
+      "prompt": "{file:./docs/agents/bibliotecario.md}",
+      "permission": {
+        "bash": "deny"
+      }
+    }
+  }
+}
