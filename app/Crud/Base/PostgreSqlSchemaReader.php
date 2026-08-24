@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Crud\Base;
 
 use Illuminate\Support\Facades\DB;
@@ -16,14 +18,14 @@ class PostgreSqlSchemaReader
         WHERE table_schema = 'public'
     "))
             ->pluck('table_name')
-            ->filter(fn($table) => !in_array($table, $ignored))
+            ->filter(fn ($table) => ! in_array($table, $ignored, true))
             ->values()
             ->all();
     }
 
     public function getSchema(string $table): array
     {
-        if (in_array($table, config('crud.ignore_tables'))) {
+        if (in_array($table, config('crud.ignore_tables'), true)) {
             throw new \Exception("Table $table is ignored by CRUD generator");
         }
 
@@ -36,12 +38,12 @@ class PostgreSqlSchemaReader
 
     private function getColumns(string $table): array
     {
-        return DB::select("
+        return DB::select('
             SELECT column_name, data_type
             FROM information_schema.columns
             WHERE table_name = ?
             ORDER BY ordinal_position
-        ", [$table]);
+        ', [$table]);
     }
 
     private function getRelations(string $table): array

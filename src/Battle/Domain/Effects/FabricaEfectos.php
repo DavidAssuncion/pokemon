@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Src\Battle\Domain\Effects;
 
 /**
@@ -20,7 +22,7 @@ class FabricaEfectos
      *
      * @param  string  $clave  Identificador del efecto
      * @param  string  $clase  Clase que implementa InterfazEfecto
-     * @param  mixed   ...$args  Argumentos extra para el constructor (además de $clave)
+     * @param  mixed  ...$args  Argumentos extra para el constructor (además de $clave)
      */
     public static function registrarEfecto(string $clave, string $clase, mixed ...$args): void
     {
@@ -48,6 +50,7 @@ class FabricaEfectos
         $args = $registro['args'];
         // El primer argumento siempre es la clave
         array_unshift($args, $clave);
+
         return new $clase(...$args);
     }
 
@@ -60,11 +63,13 @@ class FabricaEfectos
         if ($clase === null) {
             return null;
         }
+
         return new $clase($clave);
     }
 
     /**
      * Retorna todas las claves de efectos registrados.
+     *
      * @return string[]
      */
     public static function clavesEfectos(): array
@@ -74,6 +79,7 @@ class FabricaEfectos
 
     /**
      * Retorna todas las claves de items registrados.
+     *
      * @return string[]
      */
     public static function clavesItems(): array

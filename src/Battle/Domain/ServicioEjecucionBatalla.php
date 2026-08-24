@@ -1,8 +1,12 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Src\Battle\Domain;
 
 use Src\Battle\Domain\Chain\CadenaDanio;
+use Src\Battle\Domain\Enums\EstadoPokemon;
+use Src\Battle\Presentation\DTOResultadoDanio;
 
 /**
  * Servicio compartido que ejecuta el cálculo y aplicación de un movimiento.
@@ -12,36 +16,21 @@ class ServicioEjecucionBatalla
 {
     public function __construct(
         private readonly CadenaDanio $damageChain,
-    ) {}
+    ) {
+    }
 
     /**
      * Calcula y aplica el daño de un movimiento.
      * No maneja logging, animaciones ni efectos (eso es responsabilidad del caller).
-     *
-     * @return array{daño: float, directPct: float}
      */
-    public function calcularYAplicarDaño(
-        Combatiente $actor,
-        Combatiente $objetivo,
-        MovimientoBatalla $movimiento,
-        string $weather,
-        bool $defenderTeamHasVanguard,
-    ): array {
-        $directPct = $actor->obtenerPorcentajeDanioDirecto();
+    public function calcularYAplicarDano(AccionBatalla $accion): DTOResultadoDanio
+    {
+        $directPct = $accion->attacker->obtenerPorcentajeDanioDirecto();
 
-        $action = new AccionBatalla(
-            attacker: $actor,
-            defender: $objetivo,
-            move: $movimiento,
-            fromPosition: $actor->posicion,
-            defenderTeamHasVanguard: $defenderTeamHasVanguard,
-            weather: $weather,
-        );
+        $daño = $this->damageChain->calculate($accion);
+        $accion->defender->recibirDaño($daño, $accion->move->esEspecial(), $directPct);
 
-        $daño = $this->damageChain->calculate($action);
-        $objetivo->recibirDaño($daño, $movimiento->esEspecial(), $directPct);
-
-        return ['daño' => $daño, 'directPct' => $directPct];
+        return new DTOResultadoDanio(dano: $daño, directPct: $directPct);
     }
 
     /**
@@ -49,16 +38,16 @@ class ServicioEjecucionBatalla
      */
     public function aplicarEstado(Combatiente $objetivo, MovimientoBatalla $movimiento): void
     {
-        if (!$movimiento->tieneStatus() || !$objetivo->estaVivo()) {
+        if (! $movimiento->tieneStatus() || ! $objetivo->estaVivo()) {
             return;
         }
 
-        $objetivo->estado = $movimiento->statusEffect;
-        $objetivo->turnosEstado = match ($movimiento->statusEffect) {
-            'sleep' => mt_rand(2, 4),
-            'confusion' => mt_rand(2, 4),
+        $objetivo->setEstado($movimiento->statusEffect);
+        $objetivo->setTurnosEstado(match ($movimiento->statusEffect) {
+            EstadoPokemon::SLEEP => mt_rand(2, 4),
+            EstadoPokemon::CONFUSION => mt_rand(2, 4),
             default => 0,
-        };
+        });
     }
 
     /**
@@ -85,15 +74,15 @@ class ServicioEjecucionBatalla
         float $directPct,
         bool $defenderTeamHasVanguard,
     ): string {
-        $dmgPart = $daño > 0 ? " → {$daño} de daño a {$objetivo->nombre}" : '';
-        $logMsg = "{$actor->nombre} usa {$movimiento->nombre}{$dmgPart}";
+        $dmgPart = $daño > 0 ? " → {$daño} de daño a {$objetivo->nombre()}" : '';
+        $logMsg = "{$actor->nombre()} usa {$movimiento->nombre}{$dmgPart}";
 
         if ($daño > 0 && $objetivo->estaEnRetaguardia() && $defenderTeamHasVanguard) {
             $logMsg .= ' (-50% retaguardia)';
         }
 
         if ($daño > 0 && $directPct > 0) {
-            $logMsg .= ' [' . ($directPct * 100) . '% directo]';
+            $logMsg .= ' ['.($directPct * 100).'% directo]';
         }
 
         return $logMsg;

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Src\Battle\Domain;
 
 use Src\Shared\Tipos\TipoPokemon;
@@ -7,9 +9,9 @@ use Src\Shared\Tipos\TipoPokemon;
 class DatosPokemonBatalla
 {
     /**
-     * @param MovimientoBatalla[] $moves
-     * @param TipoPokemon[] $tipos
-     * @param string[] $effectKeys Claves de efectos/habilidades (ej: 'armor_pierce')
+     * @param  MovimientoBatalla[]  $moves
+     * @param  TipoPokemon[]  $tipos
+     * @param  string[]  $effectKeys  Claves de efectos/habilidades (ej: 'armor_pierce')
      */
     public function __construct(
         public readonly string $id,
@@ -31,12 +33,12 @@ class DatosPokemonBatalla
         public readonly ?string $item = null,
     ) {
         foreach ($moves as $m) {
-            if (!$m instanceof MovimientoBatalla) {
+            if (! $m instanceof MovimientoBatalla) {
                 throw new \InvalidArgumentException('Moves must be MovimientoBatalla instances');
             }
         }
         foreach ($tipos as $t) {
-            if (!$t instanceof TipoPokemon) {
+            if (! $t instanceof TipoPokemon) {
                 throw new \InvalidArgumentException('Types must be TipoPokemon instances');
             }
         }

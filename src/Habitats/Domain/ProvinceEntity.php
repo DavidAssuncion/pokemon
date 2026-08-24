@@ -1,8 +1,8 @@
 <?php
 
-namespace Src\Habitats\Domain;
+declare(strict_types=1);
 
-use Src\Habitats\Domain\HabitatsCollection;
+namespace Src\Habitats\Domain;
 
 class ProvinceEntity
 {
@@ -10,7 +10,8 @@ class ProvinceEntity
         public int $id,
         public string $name,
         public HabitatsCollection $habitats
-    ) {}
+    ) {
+    }
 
     public function toArray(): array
     {

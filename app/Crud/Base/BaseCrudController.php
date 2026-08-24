@@ -1,19 +1,25 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Crud\Base;
 
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
 
 class BaseCrudController
 {
     public function __construct(
         private BaseCrudService $service
-    ) {}
+    ) {
+    }
 
     protected string $modelClass;
+
     protected string $dtoClass;
 
-    public function index(Request $request)
+    public function index(Request $request): LengthAwarePaginator
     {
         return $this->service->search(
             $this->modelClass,
@@ -23,7 +29,7 @@ class BaseCrudController
         );
     }
 
-    public function store(Request $request)
+    public function store(Request $request): Model
     {
         return $this->service->create(
             $this->modelClass,
@@ -31,7 +37,7 @@ class BaseCrudController
         );
     }
 
-    public function update(int $id, Request $request)
+    public function update(int $id, Request $request): Model
     {
         return $this->service->update(
             $this->modelClass,
@@ -40,9 +46,9 @@ class BaseCrudController
         );
     }
 
-    public function destroy(int $id)
+    public function destroy(int $id): void
     {
-        return $this->service->delete(
+        $this->service->delete(
             $this->modelClass,
             $id
         );

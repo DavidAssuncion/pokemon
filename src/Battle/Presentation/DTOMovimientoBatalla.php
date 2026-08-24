@@ -1,8 +1,12 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Src\Battle\Presentation;
 
 use Livewire\Wireable;
+use Src\Battle\Domain\Enums\CategoriaMovimiento;
+use Src\Battle\Domain\Enums\EstadoPokemon;
 use Src\Battle\Domain\MovimientoBatalla;
 use Src\Shared\Tipos\TipoPokemon;
 
@@ -23,7 +27,8 @@ class DTOMovimientoBatalla implements Wireable
         public readonly array $selfStatChanges = [],
         /** @var array<array{stat: string, stages: int}> */
         public readonly array $targetStatChanges = [],
-    ) {}
+    ) {
+    }
 
     public static function desdeDominio(MovimientoBatalla $move): self
     {
@@ -31,8 +36,8 @@ class DTOMovimientoBatalla implements Wireable
             nombre: $move->nombre,
             potencia: $move->potencia,
             tipo: $move->tipo->value,
-            categoria: $move->categoria,
-            statusEffect: $move->statusEffect,
+            categoria: $move->categoria->value,
+            statusEffect: $move->statusEffect->value,
             priority: $move->priority,
             selfStatChanges: $move->selfStatChanges,
             targetStatChanges: $move->targetStatChanges,
@@ -73,8 +78,8 @@ class DTOMovimientoBatalla implements Wireable
             nombre: $this->nombre,
             potencia: $this->potencia,
             tipo: TipoPokemon::from($this->tipo),
-            categoria: $this->categoria,
-            statusEffect: $this->statusEffect,
+            categoria: CategoriaMovimiento::from($this->categoria),
+            statusEffect: $this->statusEffect !== '' ? EstadoPokemon::from($this->statusEffect) : EstadoPokemon::NONE,
             priority: $this->priority,
             selfStatChanges: $this->selfStatChanges,
             targetStatChanges: $this->targetStatChanges,

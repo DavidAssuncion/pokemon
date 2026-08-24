@@ -1,16 +1,19 @@
 <?php
 
-namespace Src\Equipos\Domain;
+declare(strict_types=1);
 
-use App\Models\Team;
-use Illuminate\Database\Eloquent\Collection;
+namespace Src\Equipos\Domain;
 
 class TeamSrv
 {
-    public function __construct() {}
+    public function __construct(
+        private readonly TeamRepositoryInterface $teamRepository,
+    ) {
+    }
 
-    public function obtenerTeams(): Collection
+    /** @return TeamAggregate[] */
+    public function obtenerTeams(): array
     {
-        return Team::with('members.reclutado.pokemon')->get();
+        return $this->teamRepository->obtenerTodos();
     }
 }

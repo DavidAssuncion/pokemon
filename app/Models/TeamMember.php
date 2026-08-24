@@ -1,10 +1,10 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use App\Models\Reclutado;
-use App\Models\Team;
 
 class TeamMember extends Model
 {

@@ -1,16 +1,25 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Src\Pokemon\Domain\Stats;
 
 class BattleStats
 {
     public float $hp;
+
     public float $defenseHp;
+
     public float $spDefenseHp;
+
     public float $attack;
+
     public float $defense;
+
     public float $spAtk;
+
     public float $spDef;
+
     public float $speed;
 
     public function __construct(

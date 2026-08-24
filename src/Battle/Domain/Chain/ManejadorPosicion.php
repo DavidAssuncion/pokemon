@@ -1,9 +1,10 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Src\Battle\Domain\Chain;
 
 use Src\Battle\Domain\AccionBatalla;
-use Src\Battle\Domain\Posicion;
 
 class ManejadorPosicion extends ManejadorDanioAbstracto
 {

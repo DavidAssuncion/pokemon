@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Crud\Base\Generators;
 
 use Illuminate\Support\Str;
@@ -10,8 +12,8 @@ class ViewGenerator
     {
         return [
             'index' => $this->index($module, $schema),
-            'form'  => $this->form($module, $schema),
-            'show'  => $this->show($module, $schema),
+            'form' => $this->form($module, $schema),
+            'show' => $this->show($module, $schema),
         ];
     }
 
@@ -22,6 +24,7 @@ class ViewGenerator
                 return Str::camel(Str::replaceLast('_id', '', $columnName));
             }
         }
+
         return null;
     }
 
@@ -32,6 +35,7 @@ class ViewGenerator
                 return strtolower($rel->foreign_table);
             }
         }
+
         return null;
     }
 
@@ -41,6 +45,7 @@ class ViewGenerator
         if ($rel) {
             return "{{ \$item->{$rel}->name ?? \$item->{$rel}->description ?? \$item->{$columnName} }}";
         }
+
         return "{{ \$item->{$columnName} }}";
     }
 
@@ -52,7 +57,7 @@ class ViewGenerator
         $columns = '';
 
         foreach ($schema['columns'] as $col) {
-            if (in_array($col->column_name, ['id', 'created_at', 'updated_at'])) {
+            if (in_array($col->column_name, ['id', 'created_at', 'updated_at'], true)) {
                 continue;
             }
 
@@ -106,7 +111,7 @@ BLADE;
         $fields = '';
 
         foreach ($schema['columns'] as $col) {
-            if (in_array($col->column_name, ['id', 'created_at', 'updated_at'])) {
+            if (in_array($col->column_name, ['id', 'created_at', 'updated_at'], true)) {
                 continue;
             }
 
@@ -127,7 +132,7 @@ BLADE;
 </select>
 BLADE;
             } else {
-                $inputType = in_array($col->data_type, ['integer', 'bigint']) ? 'number' : 'text';
+                $inputType = in_array($col->data_type, ['integer', 'bigint'], true) ? 'number' : 'text';
                 $fields .= <<<BLADE
 
 <label>{$label}</label>

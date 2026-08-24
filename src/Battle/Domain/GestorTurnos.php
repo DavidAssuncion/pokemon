@@ -1,21 +1,29 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Src\Battle\Domain;
 
 class GestorTurnos
 {
-    public int $round = 0;
+    private int $round = 0;
+
+    public function round(): int
+    {
+        return $this->round;
+    }
 
     /** @var Combatiente[] */
     private array $teamA;
+
     private array $teamB;
 
     public function __construct(
         public readonly EquipoBatalla $team1,
         public readonly EquipoBatalla $team2,
     ) {
-        $this->teamA = $team1->combatants;
-        $this->teamB = $team2->combatants;
+        $this->teamA = $team1->combatants();
+        $this->teamB = $team2->combatants();
     }
 
     public function allCombatants(): array
@@ -27,7 +35,7 @@ class GestorTurnos
     {
         return array_values(array_filter(
             $this->allCombatants(),
-            fn(Combatiente $c) => $c->estaVivo()
+            fn (Combatiente $c) => $c->estaVivo()
         ));
     }
 
@@ -40,7 +48,7 @@ class GestorTurnos
         }
 
         return min(array_map(
-            fn(Combatiente $c) => $c->obtenerStatEfectivo('speed'),
+            fn (Combatiente $c) => $c->obtenerStatEfectivo('speed'),
             $alive
         ));
     }
@@ -52,7 +60,7 @@ class GestorTurnos
         foreach ($this->allCombatants() as $combatant) {
             if ($combatant->estaVivo()) {
                 $combatant->agregarVelocidad();
-                $combatant->vecesActuadoEstaRonda = 0;
+                $combatant->setVecesActuadoEstaRonda(0);
             }
         }
     }
@@ -74,8 +82,8 @@ class GestorTurnos
         $selected = null;
 
         foreach ($alive as $combatant) {
-            if ($combatant->velocidadAcumulada > $maxSpeed) {
-                $maxSpeed = $combatant->velocidadAcumulada;
+            if ($combatant->velocidadAcumulada() > $maxSpeed) {
+                $maxSpeed = $combatant->velocidadAcumulada();
                 $selected = $combatant;
             }
         }
@@ -84,7 +92,7 @@ class GestorTurnos
             return null;
         }
 
-        if ($selected->velocidadAcumulada <= 0) {
+        if ($selected->velocidadAcumulada() <= 0) {
             return null;
         }
 
@@ -95,7 +103,7 @@ class GestorTurnos
     {
         $lowest = $this->menorVelocidadEntreVivos();
         $actor->reducirVelocidad($lowest <= 0 ? 1 : $lowest);
-        $actor->vecesActuadoEstaRonda++;
+        $actor->setVecesActuadoEstaRonda($actor->vecesActuadoEstaRonda() + 1);
     }
 
     public function hayAlgunoConAccionPendiente(): bool
@@ -106,7 +114,7 @@ class GestorTurnos
         }
 
         foreach ($this->combatientesVivos() as $c) {
-            if ($c->velocidadAcumulada > 0) {
+            if ($c->velocidadAcumulada() > 0) {
                 return true;
             }
         }
@@ -116,6 +124,6 @@ class GestorTurnos
 
     public function bothTeamsAlive(): bool
     {
-        return !$this->team1->todosDebilitados() && !$this->team2->todosDebilitados();
+        return ! $this->team1->todosDebilitados() && ! $this->team2->todosDebilitados();
     }
 }

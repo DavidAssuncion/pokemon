@@ -1,19 +1,21 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Src\Equipos\App;
 
-use Illuminate\Database\Eloquent\Collection;
-use Src\Equipos\Domain\TeamSrv;
-
+use Src\Equipos\Domain\TeamRepositoryInterface;
 
 class ObtenerEquipos
 {
     public function __construct(
-        public readonly TeamSrv $teamSrv,
-    ) {}
+        private readonly TeamRepositoryInterface $teamRepository,
+    ) {
+    }
 
-    public function run(): Collection
+    /** @return array */
+    public function run(): array
     {
-        return $this->teamSrv->obtenerTeams();
+        return $this->teamRepository->obtenerTodos();
     }
 }

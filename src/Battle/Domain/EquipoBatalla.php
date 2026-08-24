@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Src\Battle\Domain;
 
 use Src\Battle\Domain\Effects\FabricaEfectos;
@@ -10,28 +12,37 @@ use Src\Shared\Tipos\TiposCollection;
 class EquipoBatalla
 {
     /** @var Combatiente[] */
-    public array $combatants = [];
+    private array $combatants = [];
 
     public function __construct(
         public readonly string $name,
-    ) {}
+    ) {
+    }
+
+    /**
+     * @return Combatiente[]
+     */
+    public function combatants(): array
+    {
+        return $this->combatants;
+    }
 
     public function agregarCombatiente(Combatiente $combatant, Posicion $posicion): void
     {
-        $combatant->posicion = $posicion;
+        $combatant->setPosicion($posicion);
         $this->combatants[] = $combatant;
     }
 
     public function combatientesVivos(): array
     {
-        return array_values(array_filter($this->combatants, fn(Combatiente $c) => $c->estaVivo()));
+        return array_values(array_filter($this->combatants, fn (Combatiente $c) => $c->estaVivo()));
     }
 
     public function vanguardiaAlive(): array
     {
         return array_values(array_filter(
             $this->combatants,
-            fn(Combatiente $c) => $c->estaVivo() && $c->estaEnVanguardia()
+            fn (Combatiente $c) => $c->estaVivo() && $c->estaEnVanguardia()
         ));
     }
 
@@ -39,13 +50,13 @@ class EquipoBatalla
     {
         return array_values(array_filter(
             $this->combatants,
-            fn(Combatiente $c) => $c->estaVivo() && $c->estaEnRetaguardia()
+            fn (Combatiente $c) => $c->estaVivo() && $c->estaEnRetaguardia()
         ));
     }
 
     public function tieneVanguardiaViva(): bool
     {
-        return !empty($this->vanguardiaAlive());
+        return ! empty($this->vanguardiaAlive());
     }
 
     public function todosDebilitados(): bool
@@ -61,7 +72,7 @@ class EquipoBatalla
         }
 
         return min(array_map(
-            fn(Combatiente $c) => $c->pokemon->battleStats->speed,
+            fn (Combatiente $c) => $c->pokemon()->battleStats()->speed,
             $alive
         ));
     }
@@ -73,8 +84,12 @@ class EquipoBatalla
 
         foreach ($members as $member) {
             $stats = new StatsValue(
-                hp: $member->hp, attack: $member->atk, defense: $member->def,
-                spAtk: $member->spAtk, spDef: $member->spDef, speed: $member->speed,
+                hp: $member->hp,
+                attack: $member->atk,
+                defense: $member->def,
+                spAtk: $member->spAtk,
+                spDef: $member->spDef,
+                speed: $member->speed,
             );
 
             $evs = new StatsValue(0, 0, 0, 0, 0, 0);
@@ -88,25 +103,25 @@ class EquipoBatalla
             );
 
             $combatant = new Combatiente($pokemon, $member->posicion);
-            $combatant->id = $member->id;
-            $combatant->nombre = $member->nombre;
-            $combatant->iconName = $member->iconName;
-            $combatant->shiny = $member->shiny;
+            $combatant->setId($member->id);
+            $combatant->setNombre($member->nombre);
+            $combatant->setIconName($member->iconName);
+            $combatant->setShiny($member->shiny);
 
             // Procesar efectos/habilidades via Factory
             foreach ($member->effectKeys as $key) {
                 $effect = FabricaEfectos::crearEfecto($key);
                 if ($effect !== null) {
-                    $combatant->effects->add($effect);
+                    $combatant->effects()->add($effect);
                 }
             }
 
             // Procesar objeto equipado via Factory
             if ($member->item !== null) {
-                $combatant->item = $member->item;
+                $combatant->setItem($member->item);
                 $itemEffect = FabricaEfectos::crearItem($member->item);
                 if ($itemEffect !== null) {
-                    $combatant->effects->add($itemEffect);
+                    $combatant->effects()->add($itemEffect);
                 }
             }
 
@@ -116,25 +131,25 @@ class EquipoBatalla
         return $team;
     }
 
-
-
     public function findCombatant(Combatiente $target): ?Combatiente
     {
         foreach ($this->combatants as $c) {
-            if ($c->id === $target->id) {
+            if ($c->id() === $target->id()) {
                 return $c;
             }
         }
+
         return null;
     }
 
     public function findCombatantById(string $id): ?Combatiente
     {
         foreach ($this->combatants as $c) {
-            if ($c->id === $id) {
+            if ($c->id() === $id) {
                 return $c;
             }
         }
+
         return null;
     }
 }

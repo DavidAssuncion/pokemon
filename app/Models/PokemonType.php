@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Models;
 
 use App\Enums\TipoEnum;
@@ -25,7 +27,7 @@ class PokemonType extends Model
     }
 
     /**
-     * Obtener el nombre en español del tipo
+     * Obtener el nombre en español del tipo.
      */
     public function getTipoNombreAttribute(): string
     {

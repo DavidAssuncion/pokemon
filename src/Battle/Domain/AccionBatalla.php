@@ -1,6 +1,10 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Src\Battle\Domain;
+
+use Src\Battle\Domain\Enums\TipoClima;
 
 class AccionBatalla
 {
@@ -10,6 +14,7 @@ class AccionBatalla
         public readonly MovimientoBatalla $move,
         public readonly Posicion $fromPosition,
         public readonly bool $defenderTeamHasVanguard = false,
-        public readonly string $weather = 'none',
-    ) {}
+        public readonly TipoClima $weather = TipoClima::NONE,
+    ) {
+    }
 }

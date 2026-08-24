@@ -1,9 +1,11 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Src\Battle\Domain\Effects;
 
-use Src\Battle\Domain\Combatiente;
 use Src\Battle\Domain\AgregadoBatalla;
+use Src\Battle\Domain\Combatiente;
 
 class ColeccionEfectos
 {
@@ -24,7 +26,7 @@ class ColeccionEfectos
     {
         return array_values(array_filter(
             $this->effects,
-            fn(InterfazEfecto $e) => $e->esUnico()
+            fn (InterfazEfecto $e) => $e->esUnico()
         ));
     }
 
@@ -35,6 +37,7 @@ class ColeccionEfectos
                 return $e;
             }
         }
+
         return null;
     }
 

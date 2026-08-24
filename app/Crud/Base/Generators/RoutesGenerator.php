@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Crud\Base\Generators;
 
 use Illuminate\Support\Facades\File;
@@ -11,7 +13,7 @@ class RoutesGenerator
     {
         $path = base_path('src/Crud/routes.php');
 
-        if (!file_exists($path) || filesize($path) === 0) {
+        if (! file_exists($path) || filesize($path) === 0) {
             File::put($path, "<?php\n\n");
         }
 

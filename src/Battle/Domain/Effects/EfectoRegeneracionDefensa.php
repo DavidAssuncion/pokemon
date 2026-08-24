@@ -1,9 +1,11 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Src\Battle\Domain\Effects;
 
-use Src\Battle\Domain\Combatiente;
 use Src\Battle\Domain\AgregadoBatalla;
+use Src\Battle\Domain\Combatiente;
 
 /**
  * Regenera un porcentaje de la barrera de defensa física (DefenseHp)
@@ -16,7 +18,8 @@ class EfectoRegeneracionDefensa implements InterfazEfecto
     public function __construct(
         private readonly string $clave,
         private readonly float $porcentaje,
-    ) {}
+    ) {
+    }
 
     public function obtenerClave(): string
     {
@@ -25,12 +28,12 @@ class EfectoRegeneracionDefensa implements InterfazEfecto
 
     public function onRoundEnd(Combatiente $portador, AgregadoBatalla $battle): void
     {
-        if (!$portador->estaVivo()) {
+        if (! $portador->estaVivo()) {
             return;
         }
 
-        $maxDefHp = $portador->pokemon->battleStats->defenseHp;
+        $maxDefHp = $portador->pokemon()->battleStats()->defenseHp;
         $cura = $maxDefHp * ($this->porcentaje / 100);
-        $portador->defensaHpActual = min($maxDefHp, $portador->defensaHpActual + $cura);
+        $portador->setDefensaHpActual(min($maxDefHp, $portador->defensaHpActual() + $cura));
     }
 }

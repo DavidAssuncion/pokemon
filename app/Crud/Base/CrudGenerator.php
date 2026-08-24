@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Crud\Base;
 
 use App\Crud\Base\Generators\ControllerGenerator;
@@ -29,7 +31,7 @@ class CrudGenerator
         $dirs = [
             "{$basePath}/Domain",
             "{$basePath}/Infra",
-            "resources/views/crud/" . Str::kebab($module),
+            'resources/views/crud/'.Str::kebab($module),
         ];
 
         foreach ($dirs as $dir) {
@@ -61,7 +63,7 @@ class CrudGenerator
 
         app(RoutesGenerator::class)->append($module);
 
-        $viewPath = "resources/views/crud/" . Str::kebab($module);
+        $viewPath = 'resources/views/crud/'.Str::kebab($module);
 
         $views = app(ViewGenerator::class)->make($module, $schema);
 
@@ -78,7 +80,9 @@ class CrudGenerator
 
         foreach (glob(resource_path('views/crud/*'), GLOB_ONLYDIR) as $dir) {
             $name = basename($dir);
-            if ($name === 'dashboard') continue;
+            if ($name === 'dashboard') {
+                continue;
+            }
             $modules[] = $name;
         }
 

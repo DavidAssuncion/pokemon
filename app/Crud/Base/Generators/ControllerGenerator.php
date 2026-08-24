@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Crud\Base\Generators;
 
 use Illuminate\Support\Str;
@@ -9,7 +11,7 @@ class ControllerGenerator
     public function make(string $module, array $schema): string
     {
         $model = Str::studly($module);
-        $request = Str::studly($module) . 'Request';
+        $request = Str::studly($module).'Request';
         $route = Str::kebab($module);
 
         $relationLoads = '';
@@ -17,9 +19,9 @@ class ControllerGenerator
 
         foreach ($schema['relations'] as $i => $rel) {
             $var = strtolower($rel->foreign_table);
-            $class = '\Src\Crud\\' . Str::studly($rel->foreign_table) . '\Infra\\' . Str::studly($rel->foreign_table);
+            $class = '\Src\Crud\\'.Str::studly($rel->foreign_table).'\Infra\\'.Str::studly($rel->foreign_table);
             $relationLoads .= "        \${$var} = {$class}::pluck('name', 'id');\n";
-            $viewParams .= ($i > 0 ? ', ' : '') . "'{$var}'";
+            $viewParams .= ($i > 0 ? ', ' : '')."'{$var}'";
         }
 
         if ($viewParams) {

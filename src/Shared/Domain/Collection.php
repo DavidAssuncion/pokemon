@@ -1,10 +1,13 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Src\Shared\Domain;
 
 class Collection implements \IteratorAggregate
 {
     public string $type;
+
     protected array $items = [];
 
     public function __construct(array $items = [])
@@ -18,7 +21,7 @@ class Collection implements \IteratorAggregate
     {
         return new \ArrayIterator($this->items);
     }
-    
+
     public function add($item): void
     {
         $this->validateType($item);
@@ -27,8 +30,8 @@ class Collection implements \IteratorAggregate
 
     protected function validateType($item): void
     {
-        if (!($item instanceof $this->type)) {
-            throw new \InvalidArgumentException("Invalid type");
+        if (! ($item instanceof $this->type)) {
+            throw new \InvalidArgumentException('Invalid type');
         }
     }
 

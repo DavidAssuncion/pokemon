@@ -1,8 +1,11 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Src\Battle\Domain\Chain;
 
 use Src\Battle\Domain\AccionBatalla;
+use Src\Battle\Domain\Enums\TipoClima;
 use Src\Shared\Tipos\TipoPokemon;
 
 /**
@@ -19,19 +22,19 @@ class ManejadorClima extends ManejadorDanioAbstracto
     protected function process(AccionBatalla $action, float $daño): float
     {
         $weather = $action->weather;
-        if ($weather === 'none' || $weather === '') {
+        if ($weather === TipoClima::NONE) {
             return $daño;
         }
 
         $tipoMovimiento = $action->move->tipo;
 
         $multiplicador = match ($weather) {
-            'sequia' => $this->multiplicadorSequia($tipoMovimiento),
-            'diluvio' => $this->multiplicadorDiluvio($tipoMovimiento),
-            'niebla' => $this->multiplicadorNiebla($tipoMovimiento),
-            'granizo' => $this->multiplicadorGranizo($tipoMovimiento, $action),
-            'tormenta_arena' => $this->multiplicadorTormenta($tipoMovimiento, $action),
-            'turbulencias' => $this->multiplicadorTurbulencias($tipoMovimiento),
+            TipoClima::SEQUIA => $this->multiplicadorSequia($tipoMovimiento),
+            TipoClima::DILUVIO => $this->multiplicadorDiluvio($tipoMovimiento),
+            TipoClima::NIEBLA => $this->multiplicadorNiebla($tipoMovimiento),
+            TipoClima::GRANIZO => $this->multiplicadorGranizo($tipoMovimiento, $action),
+            TipoClima::TORMENTA_ARENA => $this->multiplicadorTormenta($tipoMovimiento, $action),
+            TipoClima::TURBULENCIAS => $this->multiplicadorTurbulencias($tipoMovimiento),
             default => 1.0,
         };
 
@@ -70,6 +73,7 @@ class ManejadorClima extends ManejadorDanioAbstracto
             // HIELO gana +25% SpDef → el ataque especial hace -20% (1/1.25 = 0.8)
             return 0.80;
         }
+
         return 1.0;
     }
 
@@ -77,13 +81,14 @@ class ManejadorClima extends ManejadorDanioAbstracto
     {
         if ($action->move->esFisico()) {
             $defensor = $action->defender;
-            foreach ($defensor->pokemon->tiposCollection as $tipoDef) {
+            foreach ($defensor->pokemon()->tiposCollection() as $tipoDef) {
                 if (in_array($tipoDef, [TipoPokemon::ROCA, TipoPokemon::TIERRA, TipoPokemon::ACERO], true)) {
                     // +25% Def → ataque físico hace -20% (1/1.25 = 0.8)
                     return 0.80;
                 }
             }
         }
+
         return 1.0;
     }
 

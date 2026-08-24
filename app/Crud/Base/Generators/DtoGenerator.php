@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Crud\Base\Generators;
 
 use Illuminate\Support\Str;
@@ -8,13 +10,13 @@ class DtoGenerator
 {
     public function make(string $module, array $schema): string
     {
-        $class = Str::studly($module) . 'DTO';
+        $class = Str::studly($module).'DTO';
 
         $properties = '';
 
         foreach ($schema['columns'] as $col) {
 
-            if (in_array($col->column_name, ['id', 'created_at', 'updated_at'])) {
+            if (in_array($col->column_name, ['id', 'created_at', 'updated_at'], true)) {
                 continue;
             }
 

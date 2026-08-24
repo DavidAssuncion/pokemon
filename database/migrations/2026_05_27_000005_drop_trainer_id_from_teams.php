@@ -1,11 +1,12 @@
 <?php
 
+declare(strict_types=1);
+
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration
-{
+return new class () extends Migration {
     /**
      * Run the migrations.
      */
@@ -36,7 +37,7 @@ return new class extends Migration
      */
     public function down(): void
     {
-        if (Schema::hasTable('teams') && !Schema::hasColumn('teams', 'trainer_id')) {
+        if (Schema::hasTable('teams') && ! Schema::hasColumn('teams', 'trainer_id')) {
             Schema::table('teams', function (Blueprint $table) {
                 $table->unsignedBigInteger('trainer_id')->nullable()->after('id');
                 // no foreign key re-creation to avoid accidental references

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Src\Shared\Tipos;
 
 /**
@@ -12,9 +14,9 @@ class TypeEffectService
     /**
      * Calcula el multiplicador de efectividad total.
      *
-     * @param TipoPokemon      $moveType      Tipo del movimiento
-     * @param TipoPokemon      $defenderType1 Primer tipo del defensor
-     * @param TipoPokemon|null $defenderType2 Segundo tipo del defensor (opcional)
+     * @param  TipoPokemon  $moveType  Tipo del movimiento
+     * @param  TipoPokemon  $defenderType1  Primer tipo del defensor
+     * @param  TipoPokemon|null  $defenderType2  Segundo tipo del defensor (opcional)
      * @return float Multiplicador (0.0, 0.25, 0.5, 1.0, 2.0, 4.0...)
      */
     public function calculate(
@@ -33,6 +35,7 @@ class TypeEffectService
 
     /**
      * Devuelve la matriz completa 18×18 de efectividades.
+     *
      * @return array<int, array<int, float>>
      */
     public function getChart(): array

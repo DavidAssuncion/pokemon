@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Console\Commands;
 
 use App\Crud\Base\CrudGenerator;
@@ -9,6 +11,7 @@ use Illuminate\Console\Command;
 class CrudGenerateCommand extends Command
 {
     protected $signature = 'crud:generate {table?}';
+
     protected $description = 'Generate CRUD modules from PostgreSQL schema';
 
     public function handle(
@@ -26,7 +29,7 @@ class CrudGenerateCommand extends Command
 
             $generator->generate($schema);
 
-            $this->info("Generated CRUD for: " . ($t->table_name ?? $t));
+            $this->info('Generated CRUD for: '.($t->table_name ?? $t));
         }
 
         return self::SUCCESS;

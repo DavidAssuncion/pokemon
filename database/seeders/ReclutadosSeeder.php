@@ -1,11 +1,13 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Carbon;
 
 class ReclutadosSeeder extends Seeder
 {
@@ -33,15 +35,16 @@ class ReclutadosSeeder extends Seeder
                     ->orWhere('name', 'LIKE', "%{$name}%")
                     ->first();
 
-                if (!$pokemon) {
+                if (! $pokemon) {
                     // Try variants (galar etc.)
                     $pokemon = DB::table('pokemon')
-                        ->whereRaw('LOWER(name) LIKE ?', ["%".strtolower($name)."%"])
+                        ->whereRaw('LOWER(name) LIKE ?', ['%'.strtolower($name).'%'])
                         ->first();
                 }
 
-                if (!$pokemon) {
+                if (! $pokemon) {
                     Log::warning("Starter pokemon not found: {$name}");
+
                     continue;
                 }
 
@@ -87,16 +90,17 @@ class ReclutadosSeeder extends Seeder
 
     private function insertTeamMemberIfExists(array $map, string $name, int $teamId, int $slot, string $behavior): void
     {
-        if (!isset($map[$name])) {
+        if (! isset($map[$name])) {
             // Try lowercase keys
             foreach ($map as $k => $id) {
                 if (strtolower($k) === strtolower($name) || stripos($k, $name) !== false) {
-                    $map[$name] = $id; break;
+                    $map[$name] = $id;
+                    break;
                 }
             }
         }
 
-        if (!isset($map[$name])) {
+        if (! isset($map[$name])) {
             // nothing to insert
             return;
         }

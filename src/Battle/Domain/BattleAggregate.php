@@ -1,34 +1,42 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Src\Battle\Domain;
 
 use Src\Pokemon\Domain\PokemonEntity;
 use Src\Shared\Tipos\TipoPokemon;
 
+/**
+ * @deprecated Clase incompleta. La funcionalidad de batalla automática
+ *             está implementada en AgregadoBatalla::ejecutarBatalla().
+ *             Pendiente de eliminar en una limpieza futura.
+ *             Ver Oleada 1 - B1.9 en RESUMEN_TAREA.md
+ */
 class BattleAggregate
 {
     public function __construct(
-        public readonly BattleSrv $battleSrv,
-        //public $weather = null,
+        public mixed $weather = null,
         public PokemonEntity $pokemon,
-        public PokemonEntity $pokemonRival
+        public PokemonEntity $pokemonRival,
     ) {
-        //$chooseBestMove;
     }
-    //Clase para el combate automatico
-    //BattleSrv recogera la logica comun al automatico y la v2 manual
-    //Por lo que pokemonentity debera ser compatible para ambos, tener la loica comun, y que este agregado sea quien orqueste o organiza las diferencais en las batallas
+    // Clase para el combate automatico
 
+    public function obtenerDiferenciasStatsAtaqueDefensa(): void
+    {
+    }
 
-    public function obtenerDiferenciasStatsAtaqueDefensa() {}
+    public function obtenerMejorMovimiento(): void
+    {
+    }
 
-    public function obtenerMejorMovimiento() {}
-    public function elegirMejorMovimiento(PokemonEntity $attacker, PokemonEntity $defender)
+    public function elegirMejorMovimiento(PokemonEntity $attacker, PokemonEntity $defender): mixed
     {
         $best = null;
         $bestScore = 0;
 
-        foreach ($attacker->tiposCollection as $move) {
+        foreach ($attacker->tiposCollection() as $move) {
             $score = $this->bestMoveMultiplier(
                 $move->type(),
                 $attacker,
@@ -50,12 +58,12 @@ class BattleAggregate
         $base = $tipoMovimiento->effectiveness($defender);
 
         $attackStat = $isSpecial
-            ? $attacker->battleStats->spAtk
-            : $attacker->battleStats->attack;
+            ? $attacker->battleStats()->spAtk
+            : $attacker->battleStats()->attack;
 
         $defenseStat = $isSpecial
-            ? $defender->battleStats->spDef
-            : $defender->battleStats->defense;
+            ? $defender->battleStats()->spDef
+            : $defender->battleStats()->defense;
 
         return $base * ($attackStat / max($defenseStat, 1));
     }

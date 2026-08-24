@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Src\Pokemon\Domain\Stats;
 
 class StatsValue
@@ -11,5 +13,6 @@ class StatsValue
         public ?float $spAtk = 255,
         public ?float $spDef = 255,
         public ?float $speed = 255
-    ) {}
+    ) {
+    }
 }

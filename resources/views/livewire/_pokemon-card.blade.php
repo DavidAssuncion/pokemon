@@ -42,7 +42,7 @@
         @endif
     @endif
     @if(!empty($p['status']) && $p['status'] !== 'none')
-        <div class="status-indicator status-{{ $p['status'] }}" title="{{ \Src\Battle\Domain\Combatiente::STATUS_LABELS[$p['status']] ?? $p['status'] }}{{ $p['statusTurns'] > 0 ? ' ('.$p['statusTurns'].' turnos)' : '' }}">
+        <div class="status-indicator status-{{ $p['status'] }}" title="{{ \Src\Battle\Domain\Enums\EstadoPokemon::tryFrom($p['status'])?->label() ?? $p['status'] }}{{ $p['statusTurns'] > 0 ? ' ('.$p['statusTurns'].' turnos)' : '' }}">
             @switch($p['status'])
                 @case('burn') 🔥 @break
                 @case('poison') ☠ @break

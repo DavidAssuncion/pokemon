@@ -1,11 +1,12 @@
 <?php
 
+declare(strict_types=1);
+
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration
-{
+return new class () extends Migration {
     /**
      * Run the migrations.
      */
@@ -27,7 +28,7 @@ return new class extends Migration
      */
     public function down(): void
     {
-        if (Schema::hasTable('team_members') && !Schema::hasColumn('team_members', 'experience_gained')) {
+        if (Schema::hasTable('team_members') && ! Schema::hasColumn('team_members', 'experience_gained')) {
             Schema::table('team_members', function (Blueprint $table) {
                 $table->json('experience_gained')->nullable()->after('behavior');
             });

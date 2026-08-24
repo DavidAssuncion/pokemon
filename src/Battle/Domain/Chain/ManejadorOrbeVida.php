@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Src\Battle\Domain\Chain;
 
 use Src\Battle\Domain\AccionBatalla;
@@ -11,9 +13,10 @@ class ManejadorOrbeVida extends ManejadorDanioAbstracto
 {
     protected function process(AccionBatalla $action, float $daño): float
     {
-        if ($action->attacker->item === 'life_orb' && $action->attacker->estaVivo()) {
+        if ($action->attacker->item() === 'life_orb' && $action->attacker->estaVivo()) {
             $daño *= 1.30;
         }
+
         return $daño;
     }
 }

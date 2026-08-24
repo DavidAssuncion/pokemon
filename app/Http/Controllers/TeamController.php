@@ -1,31 +1,44 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers;
 
-use App\Models\Team;
 use App\Models\TeamMember;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Src\Equipos\Domain\TeamRepositoryInterface;
 
 class TeamController extends Controller
 {
-    public function store(Request $request)
+    public function __construct(
+        private readonly TeamRepositoryInterface $teamRepository,
+    ) {
+    }
+
+    public function store(Request $request): RedirectResponse
     {
         $data = $request->validate([
             'name' => 'required|string|max:255',
         ]);
 
-        $team = Team::create(['name' => $data['name']]);
+        // Use repository for persistence
+        $this->teamRepository->guardar(new \Src\Equipos\Domain\TeamAggregate(
+            id: 0,
+            name: $data['name'],
+        ));
 
         return redirect()->back();
     }
 
-    public function destroy(Team $team)
+    public function destroy(\App\Models\Team $team): RedirectResponse
     {
-        $team->delete();
+        $this->teamRepository->eliminar($team->id);
+
         return redirect()->back();
     }
 
-    public function addMember(Request $request)
+    public function addMember(Request $request): RedirectResponse
     {
         $data = $request->validate([
             'team_id' => 'required|exists:teams,id',
@@ -56,7 +69,7 @@ class TeamController extends Controller
         return redirect()->back();
     }
 
-    public function removeMember(Request $request)
+    public function removeMember(Request $request): RedirectResponse
     {
         $data = $request->validate([
             'member_id' => 'required|exists:team_members,id',

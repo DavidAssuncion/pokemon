@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Src\Battle\Domain\Effects;
 
 /**
@@ -13,7 +15,8 @@ class EfectoPerforacionArmadura implements InterfazEfecto
     public function __construct(
         private readonly string $clave,
         private readonly float $porcentaje,
-    ) {}
+    ) {
+    }
 
     public function obtenerClave(): string
     {

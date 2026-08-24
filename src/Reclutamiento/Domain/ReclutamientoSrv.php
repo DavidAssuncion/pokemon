@@ -1,16 +1,19 @@
 <?php
 
-namespace Src\Reclutamiento\Domain;
+declare(strict_types=1);
 
-use App\Models\Reclutado;
-use Illuminate\Database\Eloquent\Collection;
+namespace Src\Reclutamiento\Domain;
 
 class ReclutamientoSrv
 {
-    public function __construct() {}
+    public function __construct(
+        private readonly ReclutamientoRepositoryInterface $reclutamientoRepository,
+    ) {
+    }
 
-    public function obtenerPokemonsReclutados(): Collection
+    /** @return ReclutadoEntity[] */
+    public function obtenerPokemonsReclutados(): array
     {
-        return Reclutado::with('pokemon')->get();
+        return $this->reclutamientoRepository->obtenerTodos();
     }
 }

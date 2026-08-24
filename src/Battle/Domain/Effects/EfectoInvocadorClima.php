@@ -1,15 +1,16 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Src\Battle\Domain\Effects;
 
-use Src\Battle\Domain\Combatiente;
 use Src\Battle\Domain\AgregadoBatalla;
+use Src\Battle\Domain\Combatiente;
+use Src\Battle\Domain\Enums\TipoClima;
 
 /**
  * Activa un clima al iniciar la batalla.
  * Se parametriza con el tipo de clima a establecer.
- *
- * Ej: 'sequia' → $battle->weather = 'sequia'
  */
 class EfectoInvocadorClima implements InterfazEfecto
 {
@@ -17,8 +18,9 @@ class EfectoInvocadorClima implements InterfazEfecto
 
     public function __construct(
         private readonly string $clave,
-        private readonly string $clima,
-    ) {}
+        private readonly TipoClima $clima,
+    ) {
+    }
 
     public function obtenerClave(): string
     {
@@ -27,15 +29,15 @@ class EfectoInvocadorClima implements InterfazEfecto
 
     public function onBattleStart(Combatiente $portador, AgregadoBatalla $battle): void
     {
-        $battle->weather = $this->clima;
+        $battle->setWeather($this->clima);
         $nombres = [
-            'sequia' => '¡Sequía! El sol abrasa el campo de batalla',
-            'diluvio' => '¡Diluvio! La lluvia torrencial inunda todo',
-            'niebla' => '¡Niebla! Una bruma mística envuelve el campo',
-            'granizo' => '¡Granizo! El hielo cae del cielo',
-            'tormenta_arena' => '¡Tormenta de arena! La arena azota el campo',
-            'turbulencias' => '¡Turbulencias! Vientos huracanados sacuden el campo',
+            TipoClima::SEQUIA->value => '¡Sequía! El sol abrasa el campo de batalla',
+            TipoClima::DILUVIO->value => '¡Diluvio! La lluvia torrencial inunda todo',
+            TipoClima::NIEBLA->value => '¡Niebla! Una bruma mística envuelve el campo',
+            TipoClima::GRANIZO->value => '¡Granizo! El hielo cae del cielo',
+            TipoClima::TORMENTA_ARENA->value => '¡Tormenta de arena! La arena azota el campo',
+            TipoClima::TURBULENCIAS->value => '¡Turbulencias! Vientos huracanados sacuden el campo',
         ];
-        $battle->log[] = $nombres[$this->clima] ?? "Clima: {$this->clima}";
+        $battle->agregarLog($nombres[$this->clima->value] ?? "Clima: {$this->clima->value}");
     }
 }

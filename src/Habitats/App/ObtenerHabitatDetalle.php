@@ -1,8 +1,11 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Src\Habitats\App;
 
 use Src\Habitats\Domain\Repositories\HabitatRepositoryInterface;
+use Src\Habitats\Presentation\DTOHabitatDetalle;
 
 class ObtenerHabitatDetalle
 {
@@ -10,7 +13,7 @@ class ObtenerHabitatDetalle
     {
     }
 
-    public function handle(int $habitatId): array
+    public function handle(int $habitatId): DTOHabitatDetalle
     {
         return $this->repository->getHabitatDetail($habitatId);
     }

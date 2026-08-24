@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Crud\Base\Generators;
+declare(strict_types=1);
 
-use Illuminate\Support\Str;
+namespace App\Crud\Base\Generators;
 
 class RequestGenerator
 {
@@ -12,7 +12,7 @@ class RequestGenerator
 
         foreach ($schema['columns'] as $col) {
 
-            if (in_array($col->column_name, ['id', 'created_at', 'updated_at'])) {
+            if (in_array($col->column_name, ['id', 'created_at', 'updated_at'], true)) {
                 continue;
             }
 

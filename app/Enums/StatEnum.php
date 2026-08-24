@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Enums;
 
 enum StatEnum: int
@@ -12,7 +14,7 @@ enum StatEnum: int
     case SPEED = 6;
 
     /**
-     * Obtener el nombre en español del stat
+     * Obtener el nombre en español del stat.
      */
     public function label(): string
     {
@@ -27,7 +29,7 @@ enum StatEnum: int
     }
 
     /**
-     * Obtener todos los stats como opciones para select
+     * Obtener todos los stats como opciones para select.
      */
     public static function options(): array
     {
@@ -37,7 +39,7 @@ enum StatEnum: int
     }
 
     /**
-     * Obtener stat por ID
+     * Obtener stat por ID.
      */
     public static function fromId(int $id): ?self
     {
@@ -45,7 +47,7 @@ enum StatEnum: int
     }
 
     /**
-     * Obtener nombre en español por ID
+     * Obtener nombre en español por ID.
      */
     public static function getNombreEspanol(int $id): ?string
     {

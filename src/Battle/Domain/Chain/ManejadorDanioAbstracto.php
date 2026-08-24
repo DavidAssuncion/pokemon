@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Src\Battle\Domain\Chain;
 
 use Src\Battle\Domain\AccionBatalla;
@@ -11,6 +13,7 @@ abstract class ManejadorDanioAbstracto implements ManejadorDanio
     public function setNext(ManejadorDanio $handler): ManejadorDanio
     {
         $this->next = $handler;
+
         return $handler;
     }
 

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Database\Seeders;
 
 use App\Models\Habitat;
@@ -28,7 +30,7 @@ class HabitatSeeder extends Seeder
     private function loadCsv(string $path): array
     {
         $data = [];
-        if (!file_exists($path) || ($handle = fopen($path, 'r')) === false) {
+        if (! file_exists($path) || ($handle = fopen($path, 'r')) === false) {
             return $data;
         }
 
@@ -36,6 +38,7 @@ class HabitatSeeder extends Seeder
         while (($row = fgetcsv($handle)) !== false) {
             if (empty($headers)) {
                 $headers = $row;
+
                 continue;
             }
 
@@ -43,6 +46,7 @@ class HabitatSeeder extends Seeder
         }
 
         fclose($handle);
+
         return $data;
     }
 }

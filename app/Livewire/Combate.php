@@ -1,43 +1,79 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Livewire;
 
 use Livewire\Component;
 use Src\Battle\Domain\AccionBatalla;
-use Src\Battle\Domain\MovimientoBatalla;
+use Src\Battle\Domain\AgregadoBatalla;
 use Src\Battle\Domain\Combatiente;
 use Src\Battle\Domain\EquipoBatalla;
-use Src\Battle\Domain\AgregadoBatalla;
+use Src\Battle\Domain\FabricaBatallaInterface;
+use Src\Battle\Domain\MovimientoBatalla;
+use Src\Battle\Domain\ServicioEjecucionBatalla;
+use Src\Battle\Presentation\DTOAccionBatalla;
+use Src\Battle\Presentation\DTOMovimientoBatalla;
 
 class Combate extends Component
 {
     public string $battleId = '';
+
     public array $team1 = [];
+
     public array $team2 = [];
+
     public array $turnQueue = [];
+
     public array $currentMoves = [];
+
     public ?int $selectedMoveIdx = null;
+
     public string $phase = 'init';
+
     public int $round = 0;
+
     public array $log = [];
+
     public string $actingRefId = '';
+
     public bool $processing = false;
+
     public string $animAttackerId = '';
+
     public string $animDefenderId = '';
+
     public string $animAttackerNombre = '';
+
     public string $animDefenderNombre = '';
+
     public string $animMoveNombre = '';
+
     public int $animTick = 0;
+
     public string $weather = 'none';
+
     public ?int $selectedTargetTeam = null;
+
     public ?int $selectedTargetIdx = null;
+
     public string $selectedTargetRefId = '';
+
+    private FabricaBatallaInterface $fabricaBatalla;
+
+    private ?ServicioEjecucionBatalla $servicioEjecucion = null;
 
     // ─── Lifecycle ───────────────────────────────────────────
 
+    public function __construct()
+    {
+        parent::__construct();
+        $this->fabricaBatalla = app(FabricaBatallaInterface::class);
+    }
+
     public function nuevaBatalla(): void
     {
-        $this->battleId = 'battle_' . uniqid();
+        $this->battleId = 'battle_'.uniqid();
         $this->initMockBattle();
     }
 
@@ -46,7 +82,7 @@ class Combate extends Component
         $this->nuevaBatalla();
     }
 
-    public function render()
+    public function render(): \Illuminate\View\View
     {
         return view('livewire.combate')
             ->extends('layouts.app')
@@ -55,7 +91,7 @@ class Combate extends Component
 
     // ─── Persistencia (sesión) ───────────────────────────────
 
-    private const SESSION_VERSION = 1;
+    private const SESSION_VERSION = 2;
 
     private function getBattle(): ?AgregadoBatalla
     {
@@ -65,26 +101,27 @@ class Combate extends Component
         }
 
         // Formato: "v{version}|{serialized}"
-        if (!str_contains($data, '|')) {
+        if (! str_contains($data, '|')) {
             session()->forget($this->battleId);
+
             return null;
         }
 
         [$version, $payload] = explode('|', $data, 2);
 
-        // Migrar sessiones v1 (propiedades inglesas → español)
         try {
             /** @var AgregadoBatalla $battle */
             $battle = unserialize($payload);
         } catch (\Throwable $e) {
-            // PHP 8.4+ no permite propiedades dinámicas; si la serialización
-            // antigua tenía propiedades con nombres en inglés, falla
+            // Versión antigua incompatible, limpiar sesión
             session()->forget($this->battleId);
+
             return null;
         }
 
-        if (!$battle instanceof AgregadoBatalla) {
+        if (! $battle instanceof AgregadoBatalla) {
             session()->forget($this->battleId);
+
             return null;
         }
 
@@ -93,7 +130,7 @@ class Combate extends Component
 
     private function saveBattle(AgregadoBatalla $battle): void
     {
-        $payload = self::SESSION_VERSION . '|' . serialize($battle);
+        $payload = self::SESSION_VERSION.'|'.serialize($battle);
         session()->put($this->battleId, $payload);
     }
 
@@ -101,7 +138,8 @@ class Combate extends Component
 
     private function initMockBattle(): void
     {
-        $battle = \Src\Battle\Infrastructure\FabricaBatallaMock::createBattle();
+        $battle = $this->fabricaBatalla->createBattle();
+        $this->servicioEjecucion = new ServicioEjecucionBatalla($battle->damageChain());
         $this->saveBattle($battle);
 
         $this->syncViewData($battle);
@@ -128,45 +166,48 @@ class Combate extends Component
             return;
         }
 
-        if (!$battle->turnManager->bothTeamsAlive()) {
+        if (! $battle->turnManager()->bothTeamsAlive()) {
             $this->endBattle($battle);
+
             return;
         }
 
         // Si todos actuaron o es el inicio, avanzar ronda
-        if (!$battle->turnManager->hayAlgunoConAccionPendiente()) {
+        if (! $battle->turnManager()->hayAlgunoConAccionPendiente()) {
             $this->advanceRound($battle);
         }
 
-        $actor = $battle->turnManager->getNextActor();
+        $actor = $battle->turnManager()->getNextActor();
 
         // Si aún así no hay actor (todos sin velocidad), forzar nueva ronda
         if ($actor === null) {
             $this->advanceRound($battle);
-            $actor = $battle->turnManager->getNextActor();
+            $actor = $battle->turnManager()->getNextActor();
             if ($actor === null) {
                 $this->endBattle($battle);
+
                 return;
             }
         }
 
-        $this->actingRefId = $actor->id;
+        $this->actingRefId = $actor->id();
 
         // Verificar si el actor puede actuar (sueño, hielo, parálisis, confusión)
         $statusCheck = $actor->puedeActuar();
-        if (!$statusCheck['canAct']) {
-            $this->log[] = "{$actor->nombre} {$statusCheck['reason']}!";
+        if (! $statusCheck['canAct']) {
+            $this->log[] = "{$actor->nombre()} {$statusCheck['reason']}!";
             if ($statusCheck['selfDamage'] > 0) {
-                $this->log[] = "¡{$actor->nombre} se golpeó a sí mismo! ({$statusCheck['selfDamage']} daño)";
+                $this->log[] = "¡{$actor->nombre()} se golpeó a sí mismo! ({$statusCheck['selfDamage']} daño)";
             }
-            $battle->turnManager->consumeAction($actor);
+            $battle->turnManager()->consumeAction($actor);
             $this->syncViewData($battle);
             $this->saveBattle($battle);
             $this->nextActor();
+
             return;
         }
         if ($statusCheck['reason'] === 'despertó' || $statusCheck['reason'] === 'se descongeló') {
-            $this->log[] = "¡{$actor->nombre} {$statusCheck['reason']}!";
+            $this->log[] = "¡{$actor->nombre()} {$statusCheck['reason']}!";
         }
 
         $this->syncViewData($battle, $actor);
@@ -175,6 +216,7 @@ class Combate extends Component
         if ($actorView === null) {
             $this->saveBattle($battle);
             $this->processing = false;
+
             return;
         }
 
@@ -182,14 +224,15 @@ class Combate extends Component
 
         if ($isPlayer) {
             $this->currentMoves = array_map(
-                fn (MovimientoBatalla $m) => \Src\Battle\Presentation\DTOMovimientoBatalla::desdeDominio($m)->toLivewire(),
-                $actor->pokemon->moves
+                fn (MovimientoBatalla $m) => DTOMovimientoBatalla::desdeDominio($m)->toLivewire(),
+                $actor->pokemon()->moves->all()
             );
             $this->phase = 'player_target';
             $this->processing = false;
         } else {
             $this->processing = true;
             $this->prepareAiAnimation($battle, $actor);
+
             return; // la animación llama commitAction() via Alpine
         }
 
@@ -203,19 +246,19 @@ class Combate extends Component
      */
     private function advanceRound(AgregadoBatalla $battle): void
     {
-        if ($battle->turnManager->round > 0) {
+        if ($battle->turnManager()->round() > 0) {
             $battle->triggerRoundEndEffects();
         }
-        $battle->turnManager->startNewRound();
+        $battle->turnManager()->startNewRound();
         $battle->triggerRoundStartEffects();
-        $this->round = $battle->turnManager->round;
+        $this->round = $battle->turnManager()->round();
         $this->log[] = "--- Ronda {$this->round} ---";
     }
 
     private function endBattle(AgregadoBatalla $battle): void
     {
         $this->phase = 'battle_over';
-        $winner = !$battle->team1->todosDebilitados() ? $battle->team1->name : $battle->team2->name;
+        $winner = ! $battle->team1->todosDebilitados() ? $battle->team1->name : $battle->team2->name;
         $this->log[] = "¡{$winner} gana la batalla!";
         $this->resetAnimState();
         $this->syncViewData($battle);
@@ -239,18 +282,19 @@ class Combate extends Component
 
         // Movimientos autodirigidos (ej: Danza Espada) apuntan al actor
         $targetForAnim = $objetivo;
-        $defenderId = $objetivo->id;
-        if ($movimiento->tieneSelfStatChanges() && !$movimiento->tieneTargetStatChanges()) {
-            $defenderId = $actor->id;
+        $defenderId = $objetivo->id();
+        if ($movimiento->tieneSelfStatChanges() && ! $movimiento->tieneTargetStatChanges()) {
+            $defenderId = $actor->id();
             $targetForAnim = $actor;
         }
 
-        $battle->pendingAction = [
-            'attackerId' => $actor->id,
-            'defenderId' => $defenderId,
-            'attackerNombre' => $actor->nombre,
-            'move' => \Src\Battle\Presentation\DTOMovimientoBatalla::desdeDominio($movimiento)->toLivewire(),
-        ];
+        $battle->setPendingAction(new DTOAccionBatalla(
+            type: 'attack',
+            actorId: $actor->id(),
+            defenderId: $defenderId,
+            attackerNombre: $actor->nombre(),
+            move: DTOMovimientoBatalla::desdeDominio($movimiento)->toLivewire(),
+        ));
 
         $this->setAnimState($actor, $targetForAnim, $movimiento);
         $this->syncViewData($battle, $actor);
@@ -266,78 +310,90 @@ class Combate extends Component
             return;
         }
 
-        $pending = $battle->pendingAction;
+        $pending = $battle->pendingAction();
         if ($pending === null) {
             return;
         }
 
-        $actor = $battle->team1->findCombatantById($pending['attackerId'])
-            ?? $battle->team2->findCombatantById($pending['attackerId']);
-        $objetivo = $battle->team1->findCombatantById($pending['defenderId'])
-            ?? $battle->team2->findCombatantById($pending['defenderId']);
+        $actor = $battle->team1->findCombatantById($pending->actorId)
+            ?? $battle->team2->findCombatantById($pending->actorId);
+        $objetivo = $battle->team1->findCombatantById($pending->defenderId)
+            ?? $battle->team2->findCombatantById($pending->defenderId);
 
         if ($actor === null || $objetivo === null) {
-            $battle->pendingAction = null;
+            $battle->setPendingAction(null);
             $this->saveBattle($battle);
             $this->resetAnimState();
             $this->nextActor();
+
             return;
         }
 
-        $movimiento = \Src\Battle\Presentation\DTOMovimientoBatalla::fromLivewire($pending['move'])->toDomain();
+        $movimiento = DTOMovimientoBatalla::fromLivewire($pending->move)->toDomain();
 
         // Movimientos autodirigidos (ej: Danza Espada) siempre apuntan al actor
-        if ($movimiento->tieneSelfStatChanges() && !$movimiento->tieneTargetStatChanges()) {
+        if ($movimiento->tieneSelfStatChanges() && ! $movimiento->tieneTargetStatChanges()) {
             $objetivo = $actor;
         }
 
         $defenderTeam = $this->defenderTeam($battle, $objetivo);
 
         // 1. Calcular y aplicar daño (servicio compartido)
-        $servicio = new \Src\Battle\Domain\ServicioEjecucionBatalla($battle->damageChain);
-        $resultado = $servicio->calcularYAplicarDaño(
-            $actor, $objetivo, $movimiento,
-            $battle->weather, $defenderTeam->tieneVanguardiaViva(),
+        $servicio = $this->servicioEjecucion ?? new ServicioEjecucionBatalla($battle->damageChain());
+
+        $accion = new AccionBatalla(
+            attacker: $actor,
+            defender: $objetivo,
+            move: $movimiento,
+            fromPosition: $actor->posicion(),
+            defenderTeamHasVanguard: $defenderTeam->tieneVanguardiaViva(),
+            weather: $battle->weather(),
         );
 
-        $daño = $resultado['daño'];
-        $directPct = $resultado['directPct'];
+        $resultado = $servicio->calcularYAplicarDano($accion);
+
+        $daño = $resultado->dano;
+        $directPct = $resultado->directPct;
 
         // 2. Log de daño
-        $isAi = $battle->team2->findCombatantById($pending['attackerId']) !== null;
+        $isAi = $battle->team2->findCombatantById($pending->actorId) !== null;
         $prefix = $isAi ? 'RIVAL: ' : '';
-        $this->log[] = $prefix . $servicio->generarLogMovimiento(
-            $actor, $objetivo, $movimiento,
-            $daño, $directPct, $defenderTeam->tieneVanguardiaViva(),
+        $this->log[] = $prefix.$servicio->generarLogMovimiento(
+            $actor,
+            $objetivo,
+            $movimiento,
+            $daño,
+            $directPct,
+            $defenderTeam->tieneVanguardiaViva(),
         );
 
         // 3. Aplicar estado y cambios de estadísticas
         $servicio->aplicarEstado($objetivo, $movimiento);
         if ($movimiento->tieneStatus() && $objetivo->estaVivo()) {
-            $label = Combatiente::STATUS_LABELS[$movimiento->statusEffect] ?? $movimiento->statusEffect;
-            $this->log[] = "{$objetivo->nombre} sufre {$label}!";
+            $label = $movimiento->statusEffect->label();
+            $this->log[] = "{$objetivo->nombre()} sufre {$label}!";
         }
         $this->applyMoveStatChanges($actor, $movimiento, true);
         $this->applyMoveStatChanges($objetivo, $movimiento, false);
 
         // 4. Disparar eventos de efectos (items, habilidades, etc.)
-        $battle->subject->notifyDamaged($objetivo, $daño);
+        $battle->subject()->notifyDamaged($objetivo, $daño);
         $objetivo->dispararDanioRecibido($daño, $battle);
         $actor->dispararDanioInfligido($objetivo, $daño, $battle);
-        $battle->turnManager->consumeAction($actor);
+        $battle->turnManager()->consumeAction($actor);
 
         // 5. Debilitamiento
-        if (!$objetivo->estaVivo()) {
-            $this->log[] = "¡{$objetivo->nombre} se ha debilitado!";
-            $battle->subject->notifyFainted($objetivo);
+        if (! $objetivo->estaVivo()) {
+            $this->log[] = "¡{$objetivo->nombre()} se ha debilitado!";
+            $battle->subject()->notifyFainted($objetivo);
         }
-        if (!$actor->estaVivo()) {
-            $this->log[] = "¡{$actor->nombre} se ha debilitado!";
-            $battle->subject->notifyFainted($actor);
+        if (! $actor->estaVivo()) {
+            $this->log[] = "¡{$actor->nombre()} se ha debilitado!";
+            $battle->subject()->notifyFainted($actor);
         }
 
         // 6. Limpiar estado pendiente y seguir
-        $battle->pendingAction = null;
+        $battle->setPendingAction(null);
         $this->resetAnimState();
         $this->syncViewData($battle, $actor);
         $this->saveBattle($battle);
@@ -365,31 +421,31 @@ class Combate extends Component
 
         $this->selectedTargetTeam = $teamIdx;
         $this->selectedTargetIdx = $pokemonIdx;
-        $this->selectedTargetRefId = $target->id;
+        $this->selectedTargetRefId = $target->id();
 
         $previews = [];
-        foreach ($actor->pokemon->moves as $move) {
+        foreach ($actor->pokemon()->moves as $move) {
             $defenderTeam = $this->defenderTeam($battle, $target);
 
             $action = new AccionBatalla(
                 attacker: $actor,
                 defender: $target,
                 move: $move,
-                fromPosition: $actor->posicion,
+                fromPosition: $actor->posicion(),
                 defenderTeamHasVanguard: $defenderTeam->tieneVanguardiaViva(),
-                weather: $battle->weather,
+                weather: $battle->weather(),
             );
 
             $previews[] = [
                 'nombre' => $move->nombre,
                 'tipo' => $move->tipo->value,
                 'potencia' => $move->potencia,
-                'categoria' => $move->categoria,
-                'daño' => $battle->damageChain->calculate($action),
-                'efectividad' => $move->tipo->effectiveness($target->pokemon),
+                'categoria' => $move->categoria->value,
+                'daño' => $battle->damageChain()->calculate($action),
+                'efectividad' => $move->tipo->effectiveness($target->pokemon()),
                 'stab' => $this->tieneStab($actor, $move),
                 'directo' => $actor->obtenerPorcentajeDanioDirecto() > 0,
-                'statusEffect' => $move->statusEffect,
+                'statusEffect' => $move->statusEffect->value,
                 'selfStatChanges' => $move->selfStatChanges,
                 'targetStatChanges' => $move->targetStatChanges,
             ];
@@ -417,20 +473,21 @@ class Combate extends Component
             return;
         }
 
-        $move = $actor->pokemon->moves[$index] ?? null;
-        if (!$move instanceof MovimientoBatalla) {
+        $move = $actor->pokemon()->moves->get($index);
+        if (! $move instanceof MovimientoBatalla) {
             return;
         }
 
         // Movimientos autodirigidos (ej: Danza Espada) apuntan al actor
-        $defender = $move->tieneSelfStatChanges() && !$move->tieneTargetStatChanges() ? $actor : $target;
+        $defender = $move->tieneSelfStatChanges() && ! $move->tieneTargetStatChanges() ? $actor : $target;
 
-        $battle->pendingAction = [
-            'attackerId' => $actor->id,
-            'defenderId' => $defender->id,
-            'attackerNombre' => $actor->nombre,
-            'move' => \Src\Battle\Presentation\DTOMovimientoBatalla::desdeDominio($move)->toLivewire(),
-        ];
+        $battle->setPendingAction(new DTOAccionBatalla(
+            type: 'attack',
+            actorId: $actor->id(),
+            defenderId: $defender->id(),
+            attackerNombre: $actor->nombre(),
+            move: DTOMovimientoBatalla::desdeDominio($move)->toLivewire(),
+        ));
 
         $this->selectedMoveIdx = null;
         $this->setAnimState($actor, $defender, $move);
@@ -460,7 +517,8 @@ class Combate extends Component
     private function getTargetFromSelection(AgregadoBatalla $battle, int $teamIdx, int $pokemonIdx): ?Combatiente
     {
         $team = $teamIdx === 0 ? $battle->team1 : $battle->team2;
-        return $team->combatants[$pokemonIdx] ?? null;
+
+        return $team->combatants()[$pokemonIdx] ?? null;
     }
 
     private function defenderTeam(AgregadoBatalla $battle, Combatiente $defender): EquipoBatalla
@@ -472,11 +530,12 @@ class Combate extends Component
 
     private function tieneStab(Combatiente $actor, MovimientoBatalla $move): bool
     {
-        foreach ($actor->pokemon->tiposCollection as $tipo) {
+        foreach ($actor->pokemon()->tiposCollection as $tipo) {
             if ($tipo === $move->tipo) {
                 return true;
             }
         }
+
         return false;
     }
 
@@ -501,31 +560,33 @@ class Combate extends Component
             $label = $statLabels[$change['stat']] ?? $change['stat'];
             $verb = $change['stages'] > 0 ? 'subió' : 'bajó';
             $stages = abs($change['stages']);
-            $this->log[] = "{$combatant->nombre} {$verb} {$label} en {$stages}!";
+            $this->log[] = "{$combatant->nombre()} {$verb} {$label} en {$stages}!";
         }
     }
 
     private function findPokemonViewData(Combatiente $target): ?array
     {
         foreach ($this->team1 as $i => $p) {
-            if ($p['refId'] === $target->id) {
+            if ($p['refId'] === $target->id()) {
                 return ['team' => 0, 'index' => $i];
             }
         }
         foreach ($this->team2 as $i => $p) {
-            if ($p['refId'] === $target->id) {
+            if ($p['refId'] === $target->id()) {
                 return ['team' => 1, 'index' => $i];
             }
         }
+
         return null;
     }
 
     private function buildTurnQueue(AgregadoBatalla $battle): array
     {
-        $alive = $battle->turnManager->combatientesVivos();
+        $alive = $battle->turnManager()->combatientesVivos();
 
-        usort($alive, fn (Combatiente $a, Combatiente $b) =>
-            $b->velocidadAcumulada <=> $a->velocidadAcumulada
+        usort(
+            $alive,
+            fn (Combatiente $a, Combatiente $b) => $b->velocidadAcumulada() <=> $a->velocidadAcumulada()
         );
 
         return array_map(fn (Combatiente $c) => $this->findPokemonViewData($c) ?? ['team' => 0, 'index' => 0], $alive);
@@ -536,12 +597,12 @@ class Combate extends Component
     private function setAnimState(Combatiente $actor, Combatiente $target, MovimientoBatalla $move): void
     {
         $this->animTick++;
-        $this->animAttackerId = $actor->id;
-        $this->animAttackerNombre = $actor->nombre;
+        $this->animAttackerId = $actor->id();
+        $this->animAttackerNombre = $actor->nombre();
         // Movimientos autodirigidos (ej: Danza Espada) no necesitan parpadeo en el defensor
-        if ($target->id !== $actor->id) {
-            $this->animDefenderId = $target->id;
-            $this->animDefenderNombre = $target->nombre;
+        if ($target->id() !== $actor->id()) {
+            $this->animDefenderId = $target->id();
+            $this->animDefenderNombre = $target->nombre();
         } else {
             $this->animDefenderId = '';
             $this->animDefenderNombre = '';
@@ -564,123 +625,29 @@ class Combate extends Component
 
     private function syncViewData(AgregadoBatalla $battle, ?Combatiente $actor = null): void
     {
-        $this->weather = $battle->weather;
-        $this->log = array_merge($this->log, $battle->log);
-        $battle->log = [];
+        $this->weather = $battle->weather()->value;
+        $this->log = array_merge($this->log, $battle->log());
+        $battle->limpiarLog();
 
         $this->team1 = array_map(
             fn (Combatiente $c) => $c->aArrayVista(0),
-            $battle->team1->combatants
+            $battle->team1->combatants()
         );
 
         $this->team2 = array_map(
             fn (Combatiente $c) => $c->aArrayVista(1),
-            $battle->team2->combatants
+            $battle->team2->combatants()
         );
 
-        if ($actor === null || !$battle->team1->findCombatant($actor)) {
+        if ($actor === null || ! $battle->team1->findCombatant($actor)) {
             return;
         }
 
-        $canHitRetaguardia = !$actor->estaEnVanguardia() || !$battle->team2->tieneVanguardiaViva();
+        $canHitRetaguardia = ! $actor->estaEnVanguardia() || ! $battle->team2->tieneVanguardiaViva();
 
         foreach ($this->team2 as &$p) {
             $p['canTarget'] = $p['posicion'] !== 'retaguardia' || $canHitRetaguardia;
         }
         unset($p);
-    }
-
-    // ─── Datos mock ──────────────────────────────────────────
-
-    /** @return DatosPokemonBatalla[] */
-    private function generateMockTeam1(): array
-    {
-        return [
-            new DatosPokemonBatalla(
-                id: 'player_1', nombre: 'Gengar',
-                hp: 60, atk: 65, def: 60, spAtk: 130, spDef: 75, speed: 110,
-                tipos: [TipoPokemon::FANTASMA, TipoPokemon::VENENO], posicion: Posicion::RETAGUARDIA,
-                moves: [
-                    new MovimientoBatalla('Bola Sombra', 80, TipoPokemon::FANTASMA, 'especial'),
-                    new MovimientoBatalla('Bomba Lodo', 90, TipoPokemon::VENENO, 'especial'),
-                    new MovimientoBatalla('Rayo', 90, TipoPokemon::ELECTRICO, 'especial'),
-                    new MovimientoBatalla('Pulso Umbrío', 80, TipoPokemon::SINIESTRO, 'especial'),
-                    new MovimientoBatalla('Tóxico', 0, TipoPokemon::VENENO, 'especial', 'poison'),
-                    new MovimientoBatalla('Fuego Fatuo', 0, TipoPokemon::FUEGO, 'especial', 'burn'),
-                ],
-                effectKeys: ['armor_pierce'],
-                item: 'life_orb',
-            ),
-            new DatosPokemonBatalla(
-                id: 'player_2', nombre: 'Giratina',
-                hp: 150, atk: 100, def: 120, spAtk: 100, spDef: 120, speed: 90,
-                tipos: [TipoPokemon::DRAGON], posicion: Posicion::VANGUARDIA,
-                moves: [
-                    new MovimientoBatalla('Garra Umbría', 80, TipoPokemon::FANTASMA, 'fisico'),
-                    new MovimientoBatalla('Cometa Draco', 130, TipoPokemon::DRAGON, 'especial'),
-                    new MovimientoBatalla('Danza Espada', 0, TipoPokemon::NORMAL, 'estado', selfStatChanges: [['stat' => 'attack', 'stages' => 2]]),
-                    new MovimientoBatalla('Tierra Viva', 90, TipoPokemon::TIERRA, 'especial'),
-                ],
-                shiny: true,
-            ),
-            new DatosPokemonBatalla(
-                id: 'player_3', nombre: 'Tyranitar',
-                hp: 100, atk: 134, def: 110, spAtk: 95, spDef: 100, speed: 61,
-                tipos: [TipoPokemon::SINIESTRO], posicion: Posicion::VANGUARDIA,
-                moves: [
-                    new MovimientoBatalla('Roca Afilada', 100, TipoPokemon::ROCA, 'fisico'),
-                    new MovimientoBatalla('Triturar', 80, TipoPokemon::SINIESTRO, 'fisico'),
-                    new MovimientoBatalla('Terremoto', 100, TipoPokemon::TIERRA, 'fisico'),
-                    new MovimientoBatalla('Onda Trueno', 0, TipoPokemon::ELECTRICO, 'estado', statusEffect: 'paralysis'),
-                ],
-                shiny: true,
-                effectKeys: ['sandstorm_summoner'],
-                item: 'leftovers',
-            ),
-        ];
-    }
-
-    /** @return DatosPokemonBatalla[] */
-    private function generateMockTeam2(): array
-    {
-        return [
-            new DatosPokemonBatalla(
-                id: 'enemy_1', nombre: 'Aggron',
-                hp: 70, atk: 110, def: 180, spAtk: 60, spDef: 60, speed: 50,
-                tipos: [TipoPokemon::ACERO, TipoPokemon::ROCA], posicion: Posicion::VANGUARDIA,
-                moves: [
-                    new MovimientoBatalla('Cabeza de Hierro', 80, TipoPokemon::ACERO, 'fisico'),
-                    new MovimientoBatalla('Roca Afilada', 100, TipoPokemon::ROCA, 'fisico'),
-                    new MovimientoBatalla('Terremoto', 100, TipoPokemon::TIERRA, 'fisico'),
-                    new MovimientoBatalla('Defensa Férrea', 0, TipoPokemon::ACERO, 'estado', selfStatChanges: [['stat' => 'defense', 'stages' => 2]]),
-                ],
-                effectKeys: ['regen_def'],
-                item: 'focus_sash',
-            ),
-            new DatosPokemonBatalla(
-                id: 'enemy_2', nombre: 'Deoxys',
-                hp: 50, atk: 70, def: 160, spAtk: 70, spDef: 160, speed: 90,
-                tipos: [TipoPokemon::PSIQUICO], posicion: Posicion::VANGUARDIA,
-                moves: [
-                    new MovimientoBatalla('Psíquico', 90, TipoPokemon::PSIQUICO, 'especial'),
-                    new MovimientoBatalla('Rayo', 90, TipoPokemon::ELECTRICO, 'especial'),
-                    new MovimientoBatalla('Psicorrayo', 65, TipoPokemon::PSIQUICO, 'especial', 'confusion'),
-                    new MovimientoBatalla('Pulso Umbrío', 80, TipoPokemon::SINIESTRO, 'especial'),
-                ],
-                iconName: 'deoxys-defense',
-            ),
-            new DatosPokemonBatalla(
-                id: 'enemy_3', nombre: 'Mewtwo',
-                hp: 106, atk: 110, def: 90, spAtk: 154, spDef: 90, speed: 130,
-                tipos: [TipoPokemon::PSIQUICO], posicion: Posicion::RETAGUARDIA,
-                moves: [
-                    new MovimientoBatalla('Psíquico', 90, TipoPokemon::PSIQUICO, 'especial'),
-                    new MovimientoBatalla('Esfera Aural', 80, TipoPokemon::LUCHA, 'especial'),
-                    new MovimientoBatalla('Llamarada', 110, TipoPokemon::FUEGO, 'especial'),
-                    new MovimientoBatalla('Paz Mental', 0, TipoPokemon::PSIQUICO, 'estado', selfStatChanges: [['stat' => 'spAtk', 'stages' => 1], ['stat' => 'spDef', 'stages' => 1]]),
-                ],
-                item: 'life_orb',
-            ),
-        ];
     }
 }

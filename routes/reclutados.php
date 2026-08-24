@@ -1,8 +1,10 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
+declare(strict_types=1);
+
 use App\Http\Controllers\ReclutadosController;
 use App\Http\Controllers\TeamController;
+use Illuminate\Support\Facades\Route;
 
 Route::get('/reclutados', [ReclutadosController::class, 'index']);
 Route::post('/teams', [TeamController::class, 'store']);

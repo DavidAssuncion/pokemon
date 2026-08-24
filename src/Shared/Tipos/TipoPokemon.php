@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Src\Shared\Tipos;
 
 use Src\Pokemon\Domain\PokemonEntity;
@@ -34,7 +36,7 @@ enum TipoPokemon: int
     {
         $multiplicador = 1.0;
 
-        foreach ($pokemon->tiposCollection as $defensor) {
+        foreach ($pokemon->tiposCollection() as $defensor) {
             $multiplicador *= $this->effectivenessAgainst($defensor);
         }
 

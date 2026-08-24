@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Enums;
 
 enum TipoEnum: int
@@ -24,7 +26,7 @@ enum TipoEnum: int
     case FAIRY = 18;
 
     /**
-     * Obtener el nombre en español del tipo
+     * Obtener el nombre en español del tipo.
      */
     public function label(): string
     {
@@ -52,7 +54,7 @@ enum TipoEnum: int
 
     /**
      * Obtener todos los tipos como opciones para select
-     * Retorna array [id => nombre_español]
+     * Retorna array [id => nombre_español].
      */
     public static function options(): array
     {
@@ -62,7 +64,7 @@ enum TipoEnum: int
     }
 
     /**
-     * Obtener tipo por ID
+     * Obtener tipo por ID.
      */
     public static function fromId(int $id): ?self
     {
@@ -70,7 +72,7 @@ enum TipoEnum: int
     }
 
     /**
-     * Obtener nombre en español por ID
+     * Obtener nombre en español por ID.
      */
     public static function getNombreEspanol(int $id): ?string
     {

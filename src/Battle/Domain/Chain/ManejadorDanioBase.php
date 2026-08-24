@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Src\Battle\Domain\Chain;
 
 use Src\Battle\Domain\AccionBatalla;
@@ -19,6 +21,6 @@ class ManejadorDanioBase extends ManejadorDanioAbstracto
             ? $action->defender->obtenerStatEfectivo('spDef')
             : $action->defender->obtenerStatEfectivo('defense');
 
-        return ((((2 * $nivel / 5 + 2) * $move->potencia * $atk / max($def, 1)) / 50) + 2);
+        return (((2 * $nivel / 5 + 2) * $move->potencia * $atk / max($def, 1)) / 50) + 2;
     }
 }

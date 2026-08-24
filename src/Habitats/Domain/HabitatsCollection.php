@@ -1,8 +1,9 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Src\Habitats\Domain;
 
-use Src\Habitats\Domain\HabitatEntity;
 use Src\Shared\Domain\Collection;
 
 class HabitatsCollection extends Collection
@@ -11,6 +12,6 @@ class HabitatsCollection extends Collection
 
     public function toArray(): array
     {
-        return array_map(fn(HabitatEntity $habitat) => $habitat->toArray(), $this->items);
+        return array_map(fn (HabitatEntity $habitat) => $habitat->toArray(), $this->items);
     }
 }
