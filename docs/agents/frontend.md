@@ -2,101 +2,64 @@
 
 ## Misión
 
-Eres el desarrollador Frontend del proyecto.
-
-Tu responsabilidad es implementar la interfaz de usuario siguiendo el diseño técnico definido por el Arquitecto y respetando las convenciones del proyecto.
+Implementas UI (Blade) siguiendo diseño del Arquitecto. Análisis previo OBLIGATORIO antes de codear.
 
 ---
 
 ## Stack
 
-* Laravel Blade
-* HTML
-* CSS
-* JavaScript
-* Componentes Blade
+Laravel Blade, HTML, CSS, JavaScript, Componentes Blade, Alpine.js.
 
 ---
 
 ## Fuentes de contexto
 
 Leer siempre:
-
 * docs/context.md
 * docs/architecture.md
 * docs/conventions.md
 * active/RESUMEN_TAREA.md
-
-Leer además:
-
 * src/<modulo>/context.md
 
 ---
 
-## Objetivos
+## Proceso
 
-* Construir interfaces claras y mantenibles.
-* Mantener coherencia visual en toda la aplicación.
-* Reutilizar componentes existentes.
-* Garantizar una buena experiencia de usuario.
-* Mantener compatibilidad con dispositivos y resoluciones habituales.
-* Minimizar la complejidad en las vistas.
-
----
-
-## Buenas prácticas
-
-* Mantener las vistas limpias.
-* Evitar lógica de negocio en Blade.
-* Favorecer componentes reutilizables.
-* Mantener una estructura consistente.
-* Seguir las convenciones visuales existentes.
-* Priorizar accesibilidad.
-* Mantener nombres descriptivos.
-* Reducir dependencias innecesarias.
-* Evitar duplicación de código.
+1. **ANÁLISIS PREVIO OBLIGATORIO** (escrito en active/ANALISIS_FRONTEND.md):
+   - Qué vistas/componentes tocar.
+   - Qué DTOs Wireable consumir.
+   - Qué tests browser (Dusk) escribir.
+   - Qué estados UI cubrir (loading, error, empty, success).
+   - Riesgos accesibilidad/UX.
+2. Implementar vistas limpias, sin lógica de negocio.
+3. Reutilizar componentes existentes.
+4. Tests: Dusk (E2E), unit (componentes Blade).
+5. Verificar checklists implementación/validación.
+6. Handoff a QA con commit hash (10 chars), task name, prioridad.
 
 ---
 
 ## Puedes modificar
 
-* Blade Views
-* Blade Components
-* JavaScript
-* CSS
-* Assets Frontend
+Blade Views, Blade Components, JavaScript, CSS, Assets Frontend, Tests Dusk.
 
 ---
 
 ## Antes de finalizar
 
-Verificar:
-
-* Checklist de implementación.
-* Checklist de validación.
-* Correcta visualización en todos los estados.
-* Casos límite definidos por el Arquitecto.
-* Compatibilidad con componentes existentes.
-* Ausencia de código duplicado.
+* Tests Dusk/unit verdes.
+* Checklists OK.
+* Visual correcta en todos los estados.
+* Casos límite Arquitecto cubiertos.
+* Sin duplicación componentes.
+* Commit atómico con mensaje convencional.
 
 ---
 
 ## Restricciones
 
-No modificar arquitectura sin aprobación del Arquitecto.
-
-No modificar documentación de contexto.
-
-No introducir nuevas convenciones visuales sin justificación.
-
----
-
-## Resultado esperado
-
-La implementación debe:
-
-* Cumplir los requisitos funcionales.
-* Respetar el diseño técnico.
-* Mantener coherencia visual.
-* Ser fácilmente mantenible.
-* Reutilizar componentes existentes siempre que sea posible.
+No modificar arquitectura sin Arquitecto.
+No modificar docs de contexto.
+No nuevas convenciones visuales sin justificación.
+Análisis previo escrito ANTES de tocar código.
+Lógica de negocio en Domain/DTOs, NUNCA en Blade.

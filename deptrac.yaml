@@ -1,0 +1,53 @@
+deptrac:
+    paths:
+        - src/
+        - app/
+
+    exclude_files:
+        - src/*/Infra/*
+        - app/Http/*
+        - app/Console/*
+        - app/Exceptions/*
+        - app/Providers/*
+        - vendor/*
+        - bootstrap/*
+        - config/*
+        - database/*
+        - public/*
+        - resources/*
+        - routes/*
+        - storage/*
+        - tests/*
+
+    layers:
+        - name: Domain
+          collectors:
+              - type: className
+                regex: '^Src\\\\(.+)\\\\Domain\\\\(.+)$'
+        - name: Application
+          collectors:
+              - type: className
+                regex: '^Src\\\\(.+)\\\\Application\\\\(.+)$'
+        - name: Infrastructure
+          collectors:
+              - type: className
+                regex: '^Src\\\\(.+)\\\\Infra\\\\(.+)$'
+        - name: Presentation
+          collectors:
+              - type: className
+                regex: '^App\\\\(Http|Livewire|Console|View)\\\\(.+)$'
+
+    ruleset:
+        Domain:
+            - Application
+            - Infrastructure
+        Application:
+            - Domain
+            - Infrastructure
+        Infrastructure:
+            - Domain
+            - Application
+        Presentation:
+            - Domain
+            - Application
+            - Infrastructure

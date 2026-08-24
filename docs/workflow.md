@@ -1,207 +1,241 @@
-# Workflow de orquestación
+# Workflow de Orquestación (Swarm-Forge Adaptado)
 
-Pipeline de extremo a extremo para el desarrollo de funcionalidades en el proyecto Pokemon.
+Pipeline 7-agentes: Analista → Coder → QA → Cleaner → Arquitecto → Hardener → Bibliotecario.
 
 ---
 
-## Ciclo de vida de una tarea
+## Ciclo de Vida
 
 ```mermaid
 flowchart LR
-    A[Analista] -->|Especificación| ARQ[Arquitecto]
-    ARQ -->|RESUMEN_TAREA.md| BF{¿RequiereFrontend?}
-    BF -->|Sí| BE[Backend] & FE[Frontend]
-    BF -->|No| BE[Backend]
-    BE & FE -->|Implementación lista| BIB[Bibliotecario]
-    BIB -->|Documentación actualizada| FIN[✅ Tarea cerrada]
+    A[Analista] -->|Spec + Handoff| B[Coder<br/>Backend/Frontend]
+    B -->|Commit + Tests| C[QA]
+    C -->|Pass| D[Cleaner]
+    C -->|Fail| B
+    D -->|Refactor + Tests| E[Arquitecto]
+    E -->|Pass| F[Hardener]
+    E -->|Fail| D
+    F -->|Hardened| G[Bibliotecario]
+    F -->|Fail| D
+    G -->|Docs| H[✅ Done]
 ```
 
 ---
 
-## Roles
+## Roles y Handoffs Explícitos
 
-| Rol | Agente | Responsabilidad |
-|---|---|---|
-| **Analista** | `@analista` (default) | Transforma ideas en especificaciones claras. No escribe código. |
-| **Arquitecto** | `@arquitecto` | Diseña la solución técnica y genera `active/RESUMEN_TAREA.md`. No escribe código. |
-| **Backend** | `@backend` | Implementa la lógica de backend (Laravel) según el diseño del Arquitecto. |
-| **Frontend** | `@frontend` | Implementa la interfaz de usuario (Blade) según el diseño del Arquitecto. |
-| **Bibliotecario** | `@bibliotecario` | Documenta el conocimiento generado y cierra la tarea. |
-
----
-
-## Fases
-
-### Fase 1: Analista
-
-**Inicio**: El usuario describe una idea, necesidad o problema.
-
-**Qué hace**:
-1. Analiza la petición del usuario.
-2. Revisa `docs/context.md`, `docs/architecture.md`, `docs/conventions.md` y los contextos de módulos afectados (`src/<modulo>/context.md`).
-3. Identifica requisitos implícitos, ambigüedades, riesgos y casos límite.
-4. Propone mejoras si aplica.
-5. Genera una especificación funcional con:
-   - Objetivo
-   - Alcance
-   - Requisitos funcionales y no funcionales
-   - Casos límite
-   - Riesgos
-   - Mejoras propuestas
-   - Módulos afectados
-
-**Transición**: Entrega el análisis al Arquitecto (`@arquitecto`) con la instrucción de diseñar la solución.
-
-**Restricción**: No generar código.
+| Rol | Agente | Entrada | Salida (Handoff) |
+|-----|--------|---------|------------------|
+| **Analista** | `@analista` | Idea usuario | Spec funcional + `task:` name + `priority` |
+| **Coder** | `@backend` + `@frontend` | Spec + RESUMEN_TAREA | Commit (10 chars), tests, `active/ANALISIS_*.md` |
+| **QA** | `@qa` | Commit + Tests | PASS → Cleaner | FAIL → Coder (commit, hash, líneas) |
+| **Cleaner** | `@cleaner` | Código + Tests | Refactor commits, PHPStan/Infection clean |
+| **Arquitecto** | `@arquitecto` | Código post-Cleaner | APROBADO → Hardener | RECHAZADO → Cleaner (archivo:línea) |
+| **Hardener** | `@hardener` | Código post-Arquitecto | 100% mutation killed, PHPStan L8, CRAP<10 |
+| **Bibliotecario** | `@bibliotecario` | Código endurecido | Docs actualizadas, RESUMEN_TAREA eliminado |
 
 ---
 
-### Fase 2: Arquitecto
+## Protocolo de Handoff (Obligatorio)
 
-**Inicio**: Recibe la especificación del Analista.
-
-**Qué hace**:
-1. Revisa la propuesta del Analista.
-2. Consulta `docs/context.md`, `docs/architecture.md`, `docs/conventions.md`.
-3. Diseña la solución técnica.
-4. Define responsabilidades de cada módulo.
-5. Valida el impacto arquitectónico.
-6. Aprueba o rechaza cambios estructurales.
-7. Genera `active/RESUMEN_TAREA.md` con la siguiente estructura:
+Todo handoff **DEBE** incluir:
 
 ```markdown
-# Objetivo
-
-# Alcance
-
-# Módulos afectados
-
-# Diseño técnico
-
-# Cambios Backend
-
-# Cambios Frontend
-
-# Casos límite
-
-# Riesgos
-
-# Checklist de implementación
-
-# Checklist de validación
+type: git_handoff
+to: <siguiente_rol>
+priority: 10-90
+task: <nombre_estable_corto>
+commit: <10_hex_chars>
 ```
 
-**Transición**:
-- Si requiere cambios de backend y frontend → invocar `@backend` y `@frontend`.
-- Si solo requiere backend → invocar `@backend`.
-- Si solo requiere frontend → invocar `@frontend`.
-
-**Restricción**: No implementar código. No modificar documentación histórica.
-
----
-
-### Fase 3a: Backend
-
-**Inicio**: Recibe `active/RESUMEN_TAREA.md` generado por el Arquitecto.
-
-**Qué hace**:
-1. Lee `active/RESUMEN_TAREA.md`.
-2. Consulta `docs/context.md`, `docs/architecture.md`, `docs/conventions.md` y `src/<modulo>/context.md`.
-3. Implementa los cambios definidos en la sección "Cambios Backend".
-4. Sigue las buenas prácticas del proyecto (SOLID, controladores ligeros, Services, Form Requests, etc.).
-5. Añade tests cuando corresponda.
-
-**Puede modificar**:
-- Controllers, Services, Models, Policies, Events, Jobs, Commands, Requests, Migrations, Tests.
-
-**Antes de finalizar** verificar:
-- Checklist de implementación.
-- Checklist de validación.
-- Compatibilidad con módulos afectados.
-- Ausencia de código muerto.
-
-**Restricciones**:
-- No modificar arquitectura sin aprobación del Arquitecto.
-- No modificar documentación de contexto.
-
-**Transición**: Cuando la implementación esté lista, invocar al Bibliotecario (`@bibliotecario`) para documentar y cerrar la tarea. Si también participó Frontend, coordinar con ese agente antes de pasar al Bibliotecario.
-
----
-
-### Fase 3b: Frontend
-
-**Inicio**: Recibe `active/RESUMEN_TAREA.md` generado por el Arquitecto.
-
-**Qué hace**:
-1. Lee `active/RESUMEN_TAREA.md`.
-2. Consulta `docs/context.md`, `docs/architecture.md`, `docs/conventions.md` y `src/<modulo>/context.md`.
-3. Implementa los cambios definidos en la sección "Cambios Frontend".
-4. Sigue las buenas prácticas (vistas limpias, componentes reutilizables, accesibilidad, etc.).
-
-**Puede modificar**:
-- Blade Views, Blade Components, JavaScript, CSS, Assets Frontend.
-
-**Antes de finalizar** verificar:
-- Checklist de implementación.
-- Checklist de validación.
-- Correcta visualización en todos los estados.
-- Casos límite definidos por el Arquitecto.
-- Compatibilidad con componentes existentes.
-- Ausencia de código duplicado.
-
-**Restricciones**:
-- No modificar arquitectura sin aprobación del Arquitecto.
-- No modificar documentación de contexto.
-- No introducir nuevas convenciones visuales sin justificación.
-
-**Transición**: Cuando la implementación esté lista, invocar al Bibliotecario (`@bibliotecario`). Si también participó Backend, coordinar con ese agente antes de pasar al Bibliotecario.
-
----
-
-### Fase 4: Bibliotecario
-
-**Inicio**: Backend y/o Frontend han completado la implementación.
-
-**Qué hace**:
-1. Lee `active/RESUMEN_TAREA.md`.
-2. Consulta `docs/context.md`, `docs/architecture.md`, `docs/conventions.md` y `src/<modulo>/context.md`.
-3. Identifica el conocimiento relevante generado durante la tarea.
-4. Actualiza la documentación permanente:
-   - `docs/context.md` — añade resumen funcional del cambio, módulos afectados, referencias relevantes.
-   - `docs/architecture.md` — si hay nuevos patrones, componentes, integraciones o cambios estructurales.
-   - `src/<modulo>/context.md` — registra funcionalidades añadidas, cambios relevantes, dependencias, casos especiales, restricciones, decisiones y motivos.
-5. Mantiene limpieza documental: elimina información duplicada, obsoleta o irrelevante.
-6. **Elimina** `active/RESUMEN_TAREA.md` (el conocimiento ya fue absorbido por la documentación permanente).
-
-**Verificación final**:
-- `docs/context.md` actualizado.
-- `docs/architecture.md` actualizado si aplica.
-- `src/<modulo>/context.md` actualizado.
-- No existen contradicciones entre documentos.
-- No queda conocimiento relevante únicamente en `active/`.
-- `active/RESUMEN_TAREA.md` puede eliminarse de forma segura.
-
-**Resultado esperado**: Cualquier agente debe ser capaz de comprender qué existe, cómo funciona, por qué se diseñó así y qué restricciones tiene, sin necesidad de revisar el historial completo del proyecto.
-
-**Transición**: Tarea finalizada. El ciclo puede comenzar de nuevo con una nueva solicitud al Analista.
-
----
-
-## Flujo rápido (ejemplo)
-
-```
-Usuario: "Necesito añadir un sistema de evolución de Pokemon"
-  → @analista  (analiza, genera especificación)
-    → @arquitecto  (diseña solución, genera active/RESUMEN_TAREA.md)
-      → @backend  (implementa migraciones, modelos, lógica de evolución)
-      → @frontend  (implementa vista de evolución)
-        → @bibliotecario  (documenta cambios, cierra tarea)
+Ejemplo:
+```markdown
+type: git_handoff
+to: qa
+priority: 50
+task: evolucion-pokemon
+commit: a1b2c3d4e5
 ```
 
+**Reglas:**
+- `task:` nombre estable, corto, sin espacios (kebab-case).
+- `commit:` exactamente 10 chars hex, resuelve a 1 commit.
+- `priority:` 10 (bajo) a 90 (crítico).
+- QA valida handoff ANTES de ejecutar tests.
+
 ---
 
-## Notas importantes
+## Fases Detalladas
 
-- `active/RESUMEN_TAREA.md` es un **documento temporal**. Su ciclo de vida comienza en la Fase 2 (Arquitecto) y termina en la Fase 4 (Bibliotecario), donde se elimina.
-- Los contextos de módulo (`src/<modulo>/context.md`) se crean bajo demanda cuando un módulo adquiere suficiente entidad.
-- Si una tarea es muy pequeña (ej: corregir un typo), el flujo puede simplificarse saltando fases a criterio del equipo.
+### Fase 1: Analista (`@analista`)
+
+**Inicio:** Usuario describe idea/problema.
+
+**Hace:**
+1. Analiza petición.
+2. Lee contextos: `docs/context.md`, `docs/architecture.md`, `docs/conventions.md`, `src/<modulo>/context.md`.
+3. Detecta: requisitos implícitos, ambigüedades, riesgos, edge cases, mejoras.
+4. Genera especificación: Objetivo, Alcance, Requisitos, Edge Cases, Riesgos, Mejoras, Módulos Afectados.
+
+**Entrega:** Handoff a Coder con `task:`, `priority:`, spec completa.
+
+**Restricción:** Cero código.
+
+---
+
+### Fase 2: Coder (`@backend` + `@frontend` en paralelo)
+
+**Inicio:** Recibe spec + handoff del Analista.
+
+**OBLIGATORIO - Análisis Previo (antes de codear):**
+- Backend: `active/ANALISIS_BACKEND.md` — archivos, tests, DTOs, enums, interfaces, riesgos.
+- Frontend: `active/ANALISIS_FRONTEND.md` — vistas, componentes, DTOs Wireable, tests Dusk, estados UI, riesgos.
+
+**Hace:**
+1. TDD: test rojo → verde → refactor.
+2. Tests: Unit (Domain), Feature (Use Cases), Acceptance (E2E/Dusk).
+3. DTOs readonly en fronteras, Enums/Value Objects para primitivas.
+4. Ejecuta: `php artisan test --compact` + `vendor/bin/phpstan analyse` + `vendor/bin/infection --min-msi=80`.
+
+**Entrega:** Handoff a QA con `commit:` (10 chars), tests verdes, análisis previo escrito.
+
+**Restricción:** No codear sin análisis previo escrito. TDD obligatorio.
+
+---
+
+### Fase 3: QA (`@qa`)
+
+**Inicio:** Recibe commit + tests del Coder.
+
+**Hace:**
+1. Valida handoff: commit 10 chars, task name, priority.
+2. Ejecuta suite completa: `php artisan test --compact`.
+3. Verifica edge cases del Analista/Arquitecto.
+4. Verifica coverage ≥ 80% (mutation score ≥ 80%).
+5. Si FAIL: nota a Coder con commit hash, archivo:línea, test fallado.
+6. Si PASS: handoff a Cleaner.
+
+**Entrega:** PASS/FAIL + reporte + handoff.
+
+**Restricción:** Solo valida. No toca código. Bloquea sin piedad.
+
+---
+
+### Fase 4: Cleaner (`@cleaner`)
+
+**Inicio:** Código validado por QA.
+
+**Hace:**
+1. PHPStan level 6+.
+2. Infection (mutation testing) — detecta mutantes supervivientes.
+3. Code smells: god classes, feature envy, data clumps, shotgun surgery, primitive obsession.
+4. DRY: elimina duplicación >5 líneas.
+5. CRAP score < 10 por método.
+6. Encapsulamiento: private/readonly, getters, colecciones tipadas.
+6. Refactor en commits atómicos ("refactor: ...").
+7. Verifica tests siguen verdes.
+
+**Entrega:** Handoff a Arquitecto con commit hash.
+
+**Restricción:** Cero cambio de comportamiento. Cero features. Commits atómicos revertibles.
+
+---
+
+### Fase 5: Arquitecto (`@arquitecto`)
+
+**Inicio:** Código post-Cleaner.
+
+**Hace (Code Review Arquitectónico):**
+1. Dependency direction: `src/` no importa `App\`/`Illuminate\` (salvo `Infra/`).
+2. Boundaries: Domain ↔ Infra por interfaces.
+3. Enums/Value Objects para primitivas cerradas.
+4. DTOs readonly en fronteras (3+ params).
+5. Propiedades private/readonly, getters tipados, colecciones tipadas.
+6. Property tests en Domain (invariantes).
+7. Sin god classes (>200 líneas / >5 responsabilidades).
+8. Sin dependencias circulares.
+9. Violaciones conocidas resueltas (TeamSrv, ReclutamientoSrv, BattleSrv, etc.).
+
+**Entrega:** APROBADO → Hardener | RECHAZADO → Cleaner (archivo:línea, regla, fix sugerido).
+
+**Restricción:** No codea. Feedback accionable: archivo, línea, regla, fix.
+
+---
+
+### Fase 6: Hardener (`@hardener`)
+
+**Inicio:** Código aprobado por Arquitecto.
+
+**Hace:**
+1. Infection: **100% mutation score** (todos mutantes muertos).
+2. PHPStan **level 8+** (strict).
+3. CRAP score < 10 en TODOS los métodos.
+4. DRY: 0 duplicación >5 líneas.
+5. Language mutation: `declare(strict_types=1)`, types completos, readonly, enums.
+6. Soft Gherkin mutation: mutar specs → tests deben fallar.
+
+**Entrega:** PASS → Bibliotecario | FAIL → Cleaner/Coder (commit, hash, métrica fallada).
+
+**Restricción:** No cambia comportamiento. Bloquea si métricas no cumplen. Última barrera.
+
+---
+
+### Fase 7: Bibliotecario (`@bibliotecario`)
+
+**Inicio:** Código endurecido, tests verdes, métricas OK.
+
+**Hace:**
+1. Lee `active/RESUMEN_TAREA.md`.
+2. Actualiza docs permanentes:
+   - `docs/context.md` — resumen funcional, módulos, referencias.
+   - `docs/architecture.md` — patrones, componentes, decisiones.
+   - `src/<modulo>/context.md` — funcionalidades, cambios, dependencias, decisiones, motivos.
+3. Limpia: elimina duplicados, obsoletos, irrelevantes.
+4. **Elimina** `active/RESUMEN_TAREA.md` y `active/ANALISIS_*.md`.
+
+**Verificación final:**
+- [ ] `docs/context.md` actualizado
+- [ ] `docs/architecture.md` actualizado si aplica
+- [ ] `src/<modulo>/context.md` actualizado
+- [ ] Sin contradicciones entre docs
+- [ ] Sin conocimiento solo en `active/`
+- [ ] `active/RESUMEN_TAREA.md` eliminado seguro
+
+**Entrega:** Tarea cerrada. Ciclo reinicia en Analista.
+
+---
+
+## Métricas de Calidad (No Negociables)
+
+| Métrica | Objetivo | Fase |
+|---------|----------|------|
+| Test Coverage | ≥ 80% | Coder |
+| Mutation Score (MSI) | ≥ 80% | Coder → 100% Hardener |
+| PHPStan Level | 6+ (Coder) → 8 (Hardener) | Coder → Hardener |
+| CRAP Score | < 10/método | Cleaner → Hardener |
+| DRY | 0 duplicación >5 líneas | Cleaner → Hardener |
+| Handoff Validity | 100% | QA |
+
+---
+
+## Flujo Rápido (Ejemplo)
+
+```
+Usuario: "Sistema de evolución Pokémon"
+  → @analista (spec + handoff task:evolucion-pokemon priority:50)
+    → @backend + @frontend (ANALISIS_*.md → TDD → commit a1b2c3d4e5)
+      → @qa (tests + edge cases → PASS handoff task:evolucion-pokemon commit:a1b2c3d4e5)
+        → @cleaner (refactor → PHPStan L6 + Infection 80% → commit f6g7h8i9j0)
+          → @arquitecto (review → APROBADO handoff commit:f6g7h8i9j0)
+            → @hardener (100% mutation + PHPStan L8 + CRAP<10 → commit k1l2m3n4o5)
+              → @bibliotecario (docs → elimina active/ → ✅ Done)
+```
+
+---
+
+## Notas
+
+- `active/RESUMEN_TAREA.md` y `active/ANALISIS_*.md` son **temporales**. Ciclo: Analista→Coder→Cleaner→Arquitecto→Hardener→Bibliotecario (elimina).
+- Contextos módulo (`src/<modulo>/context.md`) se crean bajo demanda.
+- Tareas triviales (typo, config): saltar fases a criterio, pero **QA + Hardener siempre**.
+- Si cualquier fase FAIL: vuelta atrás con commit hash y ubicación exacta. No "arreglar sobre la marcha".

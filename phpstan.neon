@@ -1,0 +1,36 @@
+includes:
+    - vendor/larastan/larastan/extension.neon
+    - vendor/nesbot/carbon/extension.neon
+    - vendor/phpstan/phpstan-strict-rules/rules.neon
+    - vendor/phpstan/phpstan-deprecation-rules/rules.neon
+    - vendor/phpstan/phpstan-phpunit/extension.neon
+
+parameters:
+    paths:
+        - src/
+        - app/
+        - tests/
+
+    level: 6
+
+    excludePaths:
+        analyse:
+            - vendor/
+            - bootstrap/cache/
+            - storage/
+            - public/
+            - resources/
+            - database/
+            - config/
+            - routes/
+            - tests/Unit/Infra (?)
+            - tests/Feature/Infra (?)
+
+    ignoreErrors:
+        -
+            message: '#Call to an undefined method Illuminate\\\\Support\\\\HigherOrderCollectionProxy::#'
+            path: tests/*
+
+        -
+            message: '#Property .* does not exist on .*#'
+            path: tests/*
