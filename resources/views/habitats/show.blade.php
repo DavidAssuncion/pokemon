@@ -4,10 +4,10 @@
 
 @section('content')
 <div x-data="habitatShow()" x-init="init()">
-        <!-- Main: Left 1/3 (back/title/image/construction) + Right 2/3 (explorations/teams/levels) -->
-        <div class="grid lg:grid-cols-3 gap-6">
-            <!-- Left 1/3: Back, Title, Image (auto size), stacked construction buttons -->
-            <div class="space-y-4">
+        <!-- Main: Left 1/4 (back/title/image/construction) + Right 3/4 (explorations/teams/levels) -->
+        <div class="grid lg:grid-cols-4 gap-6">
+            <!-- Left 1/4: Back, Title, Image (auto size), stacked construction buttons -->
+            <div class="lg:col-span-1 space-y-4">
                 <a href="/habitats" class="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 text-sm font-medium transition-colors inline-flex items-center gap-1">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
@@ -71,8 +71,8 @@
                 @endif
             </div>
 
-            <!-- Right 2/3: Explorations, Teams, Levels -->
-            <div class="lg:col-span-2 space-y-6">
+            <!-- Right 3/4: Explorations, Teams, Levels -->
+            <div class="lg:col-span-3 space-y-6">
                 <!-- Active Explorations List -->
                 @if($exploracionesActivas && $exploracionesActivas->count() > 0)
                 <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
@@ -113,14 +113,14 @@
                 </div>
                 @endif
 
-                <!-- Teams Panel: 2-column grid of team cards -->
+                <!-- Teams Panel: 3-column grid of team cards -->
                 <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
                     <div class="p-4 border-b border-gray-200 dark:border-gray-700">
                         <h3 class="text-sm font-semibold text-gray-900 dark:text-white">Equipos</h3>
                         <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Selecciona un equipo para explorar</p>
                     </div>
                     <div class="p-4">
-                        <div class="grid sm:grid-cols-2 gap-3">
+                        <div class="grid sm:grid-cols-3 gap-3">
                             @forelse($teams as $team)
                             @php
                                 $equipoEnExploracion = $equiposEnExploracion->firstWhere('equipo_id', $team->id);
@@ -158,7 +158,7 @@
                                     🔒 En exploración ({{ $equipoEnExploracion['habitat_name'] }})
                                 </p>
                                 @endif
-                                <div class="flex gap-2">
+                                <div class="flex flex-wrap gap-2">
                                     @for($i = 0; $i < 3; $i++)
                                         @if(isset($team->members[$i]))
                                             <div class="flex-1 text-center">
@@ -166,7 +166,7 @@
                                                     src="/images/iconos/{{ $team->members[$i]->reclutado->pokemon_id }}.png"
                                                     alt="{{ $team->members[$i]->reclutado->nombre ?? '' }}"
                                                     title="{{ $team->members[$i]->reclutado->nombre ?? '' }}"
-                                                    class="w-8 h-8 object-contain mx-auto"
+                                                    class="w-24 h-24 object-contain mx-auto"
                                                     onerror="this.style.display='none'"
                                                 >
                                                 <p class="text-[10px] text-gray-500 dark:text-gray-400 truncate mt-0.5">
@@ -175,7 +175,7 @@
                                             </div>
                                         @else
                                             <div class="flex-1 text-center">
-                                                <div class="w-8 h-8 mx-auto rounded border-2 border-dashed border-gray-300 dark:border-gray-600"></div>
+                                                <div class="w-24 h-24 mx-auto rounded border-2 border-dashed border-gray-300 dark:border-gray-600"></div>
                                                 <p class="text-[10px] text-gray-400 dark:text-gray-500 mt-0.5">Vacío</p>
                                             </div>
                                         @endif
@@ -183,7 +183,7 @@
                                 </div>
                             </div>
                             @empty
-                            <div class="sm:col-span-2 text-center py-8">
+                            <div class="sm:col-span-3 text-center py-8">
                                 <svg class="w-12 h-12 mx-auto text-gray-300 dark:text-gray-600 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
                                 </svg>
@@ -216,7 +216,7 @@
                             </div>
                             <div class="flex flex-wrap gap-2">
                                 @forelse($habitat['levels'][$level] ?? [] as $pokemon)
-                                <div class="relative w-12 h-12">
+                                <div class="relative w-24 h-24">
                                     <img
                                         src="{{ $pokemon['icon'] }}"
                                         alt="{{ $pokemon['name'] }}"
