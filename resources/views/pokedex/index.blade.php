@@ -85,6 +85,49 @@
                         </div>
                     </template>
                 </div>
+                <div class="relative">
+                    <button
+                        @click="showEffortFilter = !showEffortFilter"
+                        class="px-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors flex items-center gap-2"
+                        aria-haspopup="listbox"
+                        :aria-expanded="showEffortFilter"
+                    >
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                        </svg>
+                        <span x-text="effortFilter || 'Esfuerzo'"></span>
+                        <span
+                            x-show="effortFilter"
+                            @click.stop="clearEffortFilter()"
+                            class="ml-0.5 text-red-500 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 font-bold"
+                            aria-label="Quitar filtro de esfuerzo"
+                            title="Quitar filtro de esfuerzo"
+                        >✕</span>
+                    </button>
+                    <template x-if="showEffortFilter">
+                        <div class="absolute left-0 top-full mt-1 z-40 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-lg p-3 w-48 max-h-64 overflow-y-auto">
+                            <button
+                                @click="selectEffort(null)"
+                                class="w-full text-left px-3 py-1.5 text-sm rounded hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                                :class="effortFilter === null ? 'text-blue-600 dark:text-blue-400 font-medium' : 'text-gray-700 dark:text-gray-300'"
+                            >
+                                Todos
+                            </button>
+                            @php
+                                $stats = $stats ?? \App\Enums\StatEnum::options();
+                            @endphp
+                            @foreach($stats as $id => $nombre)
+                            <button
+                                @click="selectEffort('{{ $nombre }}')"
+                                class="w-full text-left px-3 py-1.5 text-sm rounded hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                                :class="effortFilter === '{{ $nombre }}' ? 'text-blue-600 dark:text-blue-400 font-medium' : 'text-gray-700 dark:text-gray-300'"
+                            >
+                                {{ $nombre }}
+                            </button>
+                            @endforeach
+                        </div>
+                    </template>
+                </div>
             </div>
             <div class="relative flex-1 max-w-xs">
                 <input
@@ -342,6 +385,8 @@ function pokedexApp() {
         activeFilter: 'vistos',
         typeFilter: null,
         showTypeFilter: false,
+        effortFilter: null,
+        showEffortFilter: false,
         searchQuery: '',
         showModal: false,
         selectedPokemon: null,
@@ -359,7 +404,7 @@ function pokedexApp() {
         clickHandler: null,
 
         get emptyMessage() {
-            if (this.searchQuery.trim() || this.typeFilter) {
+            if (this.searchQuery.trim() || this.typeFilter || this.effortFilter) {
                 return 'No se encontraron Pokémon';
             }
             if (this.activeFilter === 'atrapados') {
@@ -405,6 +450,7 @@ function pokedexApp() {
             this.clickHandler = (e) => {
                 if (!e.target.closest('[x-data]')?.contains(e.target)) {
                     this.showTypeFilter = false;
+                    this.showEffortFilter = false;
                 }
             };
             document.addEventListener('click', this.clickHandler);
@@ -446,6 +492,9 @@ function pokedexApp() {
             }
             if (this.typeFilter) {
                 params.set('filter[types]', this.typeFilter);
+            }
+            if (this.effortFilter) {
+                params.set('filter[effort]', this.effortFilter);
             }
             if (this.activeFilter === 'vistos') {
                 params.set('filter[visto]', '1');
@@ -544,6 +593,17 @@ function pokedexApp() {
 
         clearTypeFilter() {
             this.typeFilter = null;
+            this.resetAndFetch();
+        },
+
+        selectEffort(label) {
+            this.effortFilter = label;
+            this.showEffortFilter = false;
+            this.resetAndFetch();
+        },
+
+        clearEffortFilter() {
+            this.effortFilter = null;
             this.resetAndFetch();
         },
 

@@ -45,6 +45,40 @@ class PokedexViewTest extends TestCase
     }
 
     /**
+     * El filtro de esfuerzo (EVs) renderiza su dropdown con las 6 stats
+     * y se envía al datagrid como filter[effort].
+     */
+    public function test_pokedex_renders_effort_filter(): void
+    {
+        Pokemon::create([
+            'id' => 1,
+            'name' => 'bulbasaur',
+            'species_id' => 1,
+            'capture_rate' => 45,
+            'base_experience' => 64,
+            'height' => 7,
+            'weight' => 69,
+        ]);
+
+        $response = $this->get('/pokedex');
+
+        $response->assertOk();
+        // Botón del filtro de esfuerzo
+        $response->assertSee("effortFilter || 'Esfuerzo'", false);
+        // Las 6 opciones de stat (labels en español) desde StatEnum::options()
+        $response->assertSee('PS (HP)', false);
+        $response->assertSee('Ataque', false);
+        $response->assertSee('Defensa', false);
+        $response->assertSee('Ataque Especial', false);
+        $response->assertSee('Defensa Especial', false);
+        $response->assertSee('Velocidad', false);
+        // La lógica de params envía filter[effort]
+        $response->assertSee("params.set('filter[effort]', this.effortFilter)", false);
+        $response->assertSee('selectEffort(', false);
+        $response->assertSee('clearEffortFilter()', false);
+    }
+
+    /**
      * Los Pokémon no vistos no descargan su icono: la card usa placeholder CSS
      * y el modal no lanza fetch de detalle para no avistados.
      */
