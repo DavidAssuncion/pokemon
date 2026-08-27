@@ -1,91 +1,42 @@
-# Análisis Frontend - Vistas Pokedex, Habitat Show, Reclutamiento, Equipos
+# Análisis Frontend — Revert layout a nav horizontal + habitats/index con Tailwind/Alpine
 
-## Vistas a crear/modificar
+## Vistas a tocar
 
-### 1. `resources/views/pokedex/index.blade.php` (NUEVA)
-- Vista standalone con grid responsivo de pokemon (3/6/9 columnas)
-- Estados: no vistos (grayscale + "???"), vistos (nombre visible), atrapados (borde verde + badge)
-- Filtros: Todos / Vistos / Atrapados + búsqueda por nombre
-- Modal detalle: stats, tipo, cadena evolutiva, hábitat
-- DTO consumido: `$pokemons` collection con `visto`, `atrapado`, `habitat_name` appendados
-- Modal con Alpine.js x-data para estado del modal
+### 1. `resources/views/layouts/app.blade.php` (REESCRIBIR)
+- Reemplazar layout con sidebar (`components.sidebar` + `components.header` + `lg:ml-64`) por nav horizontal simple (sticky header, logo + 5 enlaces + toggle dark mode).
+- **No borrar** `resources/views/components/sidebar.blade.php` ni `header.blade.php` (quedan sin uso en el repo).
+- Flash messages: pasar de `x-alert` a divs inline con clases Tailwind (según markup del Arquitecto).
 
-### 2. `resources/views/habitats/show.blade.php` (REESCRIBIR)
-- Sección superior: 3 columnas (botón volver + nombre | imagen | botones placeholder)
-- Sección inferior: 1/3 teams panel + 2/3 pokemon grid
-- Modal exploración Alpine.js con opciones de duración
-- Se reutilizan partials `_level-preview.blade.php` y `_family-modal.blade.php`
-- DTO: `$habitat`, `$teams`, `$exploracionActiva`
+### 2. `resources/views/habitats/index.blade.php` (REESCRIBIR)
+- Eliminar clases CSS custom (`.tabs`, `.tab-button`, `.habitat-button`, `.habitats-grid`, `.habitat-thumb`, `.habitat-name`) que viven en `public/css/app.css` (fallback legacy) y rompen dark mode.
+- Tabs con Alpine.js `x-data`/`x-show` + `x-cloak` (consistente con el proyecto; se elimina el JS vanilla del `@push('scripts')`).
+- Cards de hábitat: imagen arriba `aspect-square` (300x300) + nombre abajo, grid `1/2/3` columnas, link a `/habitats/{id}`.
 
-### 3. `resources/views/reclutamiento/index.blade.php` (NUEVA)
-- Header con título + "Descartar todos" con confirmación
-- Grid pokemon 9 columnas, cada celda con imagen + cantidad + botón Reclutar
-- Alpine.js para gestión de cantidad y diálogos de confirmación
-- Empty state: "No hay Pokémon reclutables"
-- DTO: `$reclutables` collection de Reclutable con pokemon relationship
+## Assets / infraestructura (decisión clave)
 
-### 4. `resources/views/equipos/index.blade.php` (NUEVA)
-- Layout 2 columnas: 1/3 teams + 2/3 pokemon disponibles
-- Teams: lista con 3 slots, botón eliminar, botón nuevo equipo
-- Pokemon disponibles: grid con botón [+], asignados en grayscale con [→]
-- Filtros: búsqueda + tipo
-- Tooltip en hover para stats
-- Alpine.js para todas las interacciones
-- DTO: `$teams`, `$reclutados`, `$teamIds`
+- `public/css/app.css` es un fallback **sin utilidades Tailwind** (CSS custom legacy, fondo fijo `#121827`, clases `.tabs`, `.habitat-button`…).
+- Tailwind + Alpine se sirven vía `@vite` (manifest en `public/build/`, Alpine arranca en `resources/js/bootstrap.js`).
+- **Decisión**: en el layout se conserva `@vite(['resources/css/app.css', 'resources/js/app.js'])` en lugar del `<link href="/css/app.css">` del markup del Arquitecto. Sin `@vite`, las utilidades Tailwind de TODAS las vistas desaparecen y `x-data` (tabs) no funciona. Se mantiene el resto del markup del Arquitecto verbatim (nav, toggle, flash, `[x-cloak]`, script anti-flash dark mode).
 
-## Patrones Tailwind a seguir (del proyecto existente)
-- `bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700` para cards
-- `min-h-screen bg-gray-50 dark:bg-gray-900` para fondo de página
-- `max-w-6xl mx-auto px-4 py-8` para contenedor principal
-- `text-gray-900 dark:text-white` para texto principal
-- `text-gray-500 dark:text-gray-400` para texto secundario
-- `text-blue-600 dark:text-blue-400` para enlaces
-- Imágenes: `src="/images/iconos/{id}.png"` con `onerror="this.style.display='none'"`
-- Botones: `px-4 py-2 rounded-lg text-sm font-medium transition-colors`
+## DTOs consumidos
 
-## Estados UI a cubrir
-- **Pokedex**: vacío (no hay pokemon), sin resultados de búsqueda, loading modal
-- **Habitat show**: sin equipos, equipo vacío, exploración activa (botón deshabilitado)
-- **Reclutamiento**: vacío (no hay reclutables), cantidad > 1, confirmación descarte
-- **Equipos**: sin equipos, sin pokemon disponibles, equipo inválido (<3 miembros)
-
-## Accesibilidad
-- `role="button"` + `tabindex="0"` en elementos clickeables
-- `aria-label` en botones e interacciones
-- Soporte `@keydown.space.prevent` y `@keydown.enter.prevent` para navegación por teclado
-- Contraste de colores en dark mode verificado
-
-## Riesgos
-- Nuevos directorios `pokedex/`, `reclutamiento/`, `equipos/` — requieren controlador (el backend los creará)
-- El campo `habitat_name` en pokedex debe ser appendado por el controlador
-- Reclutamiento necesita modelo `Reclutable` (o se usa `Reclutado` con cantidad)
-
----
-
-# Tarea actual: Restructurar `resources/views/habitats/show.blade.php`
-
-## Vistas/componentes a tocar
-- `resources/views/habitats/show.blade.php` (único archivo; sin partials nuevos)
-
-## DTOs consumidos (sin cambios)
-- `$habitat` (array: name, image, id, levels[1..3][] => {id|species_id, name, icon})
-- `$teams`, `$equiposEnExploracion`, `$exploracionesActivas`, `$sightedPokemonIds`
-
-## Cambios estructurales
-1. **Top**: quitar grid 3 columnas → columna única: back link + título + botones construcción (inline, flex-wrap) → imagen full-width (aspect-[16/9]) debajo.
-2. **Niveles + Pokémon**: fusionar panel "Nivel de exploración" + "Pokémon del hábitat" en UN panel "Niveles" (2/3 derecho) con 3 filas clickeables (selectLevel). Equipos queda 1/3 izquierdo. Grid `lg:grid-cols-3`.
-3. **Modal automático**: `selectTeam()`/`selectLevel()` llaman `checkAndOpenModal()`; si ambos seleccionados → `openExplorationModal()`. Botón "Iniciar Exploración" queda como fallback llamando `checkAndOpenModal()`.
-4. Mantener: modal duración (3 opciones), lista exploraciones activas, botones construcción con disabled, grayscale no vistos (`isSighted` + overlay "?" en filas de nivel).
-
-## Estados UI a cubrir
-- Nivel sin pokémon → "0 pokémon" + hint vacío
-- Equipo en exploración → bloqueado (existing)
-- Sin equipos → empty state (existing)
-- Modal: auto-apertura con team+nivel, cancelar cierra sin limpiar selección
+- `$provincias` (`HabitatsController::index` → `ObtenerHabitatsPorProvincia::handle()->toArray()`): array con `name` + `habitats` (cada uno `id`, `name`). Mismo shape que ya consume la vista actual — **sin cambios backend**.
 
 ## Tests
-- No existen tests para esta vista. Verificación: `php artisan view:cache` (compila Blade) + revisión manual de bindings Alpine.
 
-## Riesgos
-- Overlay `x-show="!isSighted(...)"` requiere `isSighted` existente (sí, se mantiene).
-- `@keydown` en filas nivel: usar `<button>` nativo (accesible por defecto, sin role/tabindex manual).
+- No hay Dusk instalado en el proyecto (solo PHPUnit). Cambio puramente de presentación: no se añaden tests nuevos.
+- Verificación: `vendor/bin/pint --dirty` + correr tests existentes de Hábitats (`tests/Feature/Habitats*`, `HabitatsControllerTest`) para confirmar que la vista sigue renderizando con el shape de datos esperado.
+
+## Estados UI a cubrir
+
+- **Nav**: estado activo (`request()->is(...)` → azul), hover, `overflow-x-auto` para móvil, toggle dark (☀️/🌙).
+- **Tabs**: tab activo (azul), tabs inactivos, panel oculto con `x-cloak` (sin flash al render).
+- **Cards**: imagen rota → `onerror` oculta la imagen (queda el bloque aspect-square gris + nombre), hover scale + shadow, dark mode en todos los textos.
+- **Flash**: success (verde) y error (rojo).
+
+## Riesgos accesibilidad/UX
+
+- `role="tablist"`/`role="tab"` sin `aria-selected` dinámico (se mantiene markup del Arquitecto; anotar para QA).
+- El toggle dark usa clase `.dark` en `<html>`, pero Tailwind v4 (sin `@custom-variant dark` en `resources/css/app.css`) resuelve `dark:` por `prefers-color-scheme` → el toggle es cosmético (comportamiento ya existente; fuera de alcance, anotar para Arquitecto).
+- `whitespace-nowrap` + `overflow-x-auto` evita desbordes en móvil.
+- No se borran componentes del sidebar (referencias en otros archivos fuera de alcance).
