@@ -89,4 +89,24 @@ class MigrationStatusTest extends TestCase
 
         $this->assertTrue($uniqueOnChain, 'caramelos table should have a unique index on evolution_chain_id');
     }
+
+    public function test_users_has_experiencia_column(): void
+    {
+        $this->assertTrue(Schema::hasTable('users'));
+        $this->assertTrue(Schema::hasColumn('users', 'experiencia'));
+    }
+
+    public function test_caramelos_ev_table_exists_and_has_unique_stat(): void
+    {
+        $this->assertTrue(Schema::hasTable('caramelos_ev'));
+        $this->assertTrue(Schema::hasColumn('caramelos_ev', 'stat'));
+        $this->assertTrue(Schema::hasColumn('caramelos_ev', 'cantidad'));
+
+        $indexes = Schema::getIndexes('caramelos_ev');
+        $uniqueOnStat = collect($indexes)->contains(function ($index) {
+            return $index['unique'] === true && in_array('stat', $index['columns'], true);
+        });
+
+        $this->assertTrue($uniqueOnStat, 'caramelos_ev table should have a unique index on stat');
+    }
 }

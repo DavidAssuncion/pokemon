@@ -190,3 +190,464 @@ El contrato coincide con el que ya exige `tests/Feature/PokedexViewTest.php` del
 - ✅ Pint: pass.
 - ✅ PHPStan: 497 totales (+8 vs 489) — los 8 son `staticMethod.dynamicCall` de asserts en DatagridTest (categoría tolerada preexistente); **0 errores en `app/Datagrid/` y `app/Providers/DatagridServiceProvider.php`**.
 - ✅ Commit nuevo de corrección (el anterior quedó en el historial, no se amendeó por trazabilidad del bloqueo).
+
+---
+
+# Análisis Backend — Motor de exploraciones (encuentros, vuelta, recompensas)
+
+## Qué voy a tocar
+
+### Crear
+| Archivo | Propósito |
+|---|---|
+| `database/migrations/2026_08_28_000001_add_experiencia_to_users_table.php` | Columna `experiencia` en `users` (default 0). |
+| `database/migrations/2026_08_28_000002_create_caramelos_ev_table.php` | Tabla `caramelos_ev` (stat único + cantidad). |
+| `app/Models/CarameloEv.php` | Modelo simple (patrón `Caramelo`). |
+| `src/Shared/Domain/NivelHelper.php` | Curva medium-fast + fórmula EXP derrota (puro, sin Laravel; español → `src/`). |
+| `src/Exploraciones/Domain/SimuladorEncuentros.php` | Pool ponderado (capture_rate/hatch) + generación de eventos con timestamps orgánicos (puro). |
+| `src/Exploraciones/App/ProcesarExploracionService.php` | Orquestación: intervalo, encuentros por tick, vuelta, recompensas (caramelos familia/EV, EXP, pokedex, captura, regreso). |
+| `app/Jobs/ProcesarExploracionJob.php` | Un job por exploración (aislamiento de fallos), patrón `CalcularRecompensasJob`. |
+| `app/Console/Commands/ProcesarExploraciones.php` | `exploraciones:procesar` — selecciona activas y despacha jobs. |
+| `tests/Unit/NivelHelperTest.php` | Matemática nivel/EXP. |
+| `tests/Unit/SimuladorEncuentrosTest.php` | Ponderación, distribución, timestamps, tipos de evento. |
+| `tests/Feature/ExploracionesTest.php` | Pipeline completo: command, vuelta, indefinido, recoger, recompensas. |
+
+### Modificar
+| Archivo | Cambio |
+|---|---|
+| `app/Models/User.php` | `experiencia` en fillable + cast + `nivel()` vía NivelHelper. |
+| `routes/console.php` | `Schedule::command('exploraciones:procesar')->everyFiveMinutes()`. |
+| `routes/exploraciones.php` | `POST /exploraciones/{exploracion}/recoger`. |
+| `app/Http/Controllers/ExploracionActivaController.php` | `recoger()` → pipeline forzado + redirect/json. |
+| `tests/Feature/MigrationStatusTest.php` | Checks de `users.experiencia` y `caramelos_ev`. |
+
+## Decisiones de diseño (a validar)
+
+1. **NivelHelper en `src/Shared/Domain/`** (no `app/Support/`): es lógica de dominio pura, nombre en español (convención `src/`), y queda cubierta por Infection (config preexistente solo cubre `src/`).
+2. **No reutilizo `CalcularRecompensasJob` en la finalización**: repartiría EXP plana (10/pokémon) y fijaría `regreso` con doble recompensa. Replico su algoritmo de caramelos de familia (phase × count) dentro del servicio y dejo el job intacto (sus tests siguen verdes).
+3. **Estructura `eventos` JSON ampliada y retrocompatible**: `{ bitacora: [...], derrotados: [...], ultimo_procesado: ISO }`. La clave `derrotados` se conserva (la lee `CalcularRecompensasJob`); se añaden `bitacora` (eventos con timestamp) y `ultimo_procesado` (frontera de tick para no duplicar encuentros entre corridas del scheduler).
+4. **Nivel del pool = `pivot.level == exploracion.nivel`**: la UI muestra filas por nivel (1-3) con "N pokémon" y el usuario elige UN nivel; el pool de encuentros es exactamente el de esa fila (no acumulativo).
+5. **Captura**: `capture_rate / 255` (misma convención que `ServicioCaptura`).
+6. **EXP**: `expDerrota(base_experience, nivelUsuario)` por derrotado; `user.experiencia += total`; **cada** miembro del equipo suma el total completo ("guardar en cada pokemon que explora la recompensa por derrotar" — spec). Sin usuario → nivel 1 y se omite el incremento de usuario.
+7. **Caramelos EV**: de `pokemon_stats.effort` (>0) por derrotado, incrementando por stat.
+8. **Intervalos**: `inicio = inicio_exploracion ?? created_at`; `fin = inicio + duracion_horas` (o `hora_limite` de hoy si está fijada; si quedó en el pasado, el tick siguiente completa solo); `inicio_vuelta = fin − duración/4` (clamped a ≥ inicio); indefinido → sin fin ni vuelta (solo `recoger()` completa).
+9. **1 encuentro por slot de 5 min** (`intdiv(minutos, 5)`), timestamp dentro de cada slot (jitter aleatorio inyectable para tests deterministas).
+10. **`recoger()`** fuerza la finalización vía `procesar($exploracion, forzarRegreso: true)`.
+
+## Riesgos
+- Aleatoriedad: los tests de recompensas derivan las expectativas de la bitácora real (no de conteos fijos).
+- `hora_limite` es columna `time` (string) → `Carbon::today()->setTimeFromTimeString()` (mismo patrón que `store`).
+- PHPStan level 6: tipos estrictos en phpdoc de pool/eventos.
+- Infection mutará `src/Exploraciones/` y `src/Shared/Domain/` → tests que cubren ramas (sin usuario, ya completada, etc.).
+
+---
+
+# Análisis Backend — Hardening (bloqueo Hardener, HEAD 11a52486)
+
+## Qué voy a tocar (B2/B3/B4)
+| Item | Archivo | Cambio |
+|---|---|---|
+| B2 | `app/Http/Controllers/DatagridController.php:22` | `/** @var array<string, mixed> $params */ $params = $request->query();` (stub Larastan: `query()` retorna `array` plano → error level 8 "expects array<string, mixed>, array given"). |
+| B3 | `tests/Feature/DatagridTest.php` | Asserts de normalización bool en 5 tests existentes (matan mutantes de `toVisibleArray` y casts del detalle). |
+| B3 | `tests/Feature/DatagridTest.php` | Nuevo `test_pokemon_detail_unseen_returns_false_booleans` (pokémon sin registro pokedex: `visto`/`atrapado` false, `types`/`stats` `[]`, `habitat_name` null — mata RemoveCast de `DatagridServiceProvider`). |
+| B3 | `tests/Unit/DatagridRegistryTest.php` (nuevo) | Case-insensitive de `register/has/get`, slug desconocido → `InvalidArgumentException`, re-registro sobrescribe (mata mutantes de `strtolower`). |
+| B4 | `app/Providers/DatagridServiceProvider.php:139-146` | `use LogicException;` (orden alfabético) + `sprintf('Datagrid pokemon resolvers require a Pokemon model, got %s.', $model::class)`. |
+| — | `active/ANALISIS_BACKEND.md` | Esta sección (anexo, sin tocar la sección de exploraciones de otro agente). |
+
+## Tests (TDD — cobertura anti-mutantes; la implementación ya es correcta, los tests faltaban)
+- 5 asserts bool en tests de listado existentes (índices verificados contra la implementación real: `visto=0` → data[0] es el no visto; `atrapado=1` → data[0] es el capturado; etc.).
+- Detalle unseen: `(bool) getAttribute('visto')` con NULL → false; `loadMissing` → colecciones vacías; `habitats->first()?->name` → null.
+- Registry: los 3 tests unitarios.
+
+## Riesgos / notas
+- No tocar cambios sin commitear de otros agentes (`resources/views/exploraciones/`, `tests/Feature/ExploracionesViewTest.php`, `active/*`, `layouts/app.blade.php`) — fuera de mi alcance.
+- PHPStan level 8 solo sobre los archivos de la task (los 497 errores a level 6 del repo son preexistentes tolerados).
+- Commits atómicos `harden: ...` separados (tests / código).
+
+## Estado final (hardening completado)
+
+### Resultados de verificación
+- ✅ B3 (TDD): 24 tests verdes en DatagridTest + DatagridRegistryTest (6 asserts bool nuevos en listado, `test_pokemon_detail_unseen_returns_false_booleans`, 3 unit tests del registry).
+- ✅ B2: `vendor/bin/phpstan analyse app/Datagrid/ app/Providers/DatagridServiceProvider.php app/Http/Controllers/DatagridController.php app/Support/ app/Console/Commands/OptimizeIconsToWebp.php --level=8` → **0 errores en app/**. Error adicional encontrado y corregido: `typeNames()` a level 8 devolvía `array<mixed>` → `array_values(...->all())` (garantiza `list<string>`).
+- ✅ B4: `use LogicException;` (orden alfabético) + `sprintf('Datagrid pokemon resolvers require a Pokemon model, got %s.', $model::class)`.
+- ✅ Pint: pass en mis archivos (Pint --dirty también retocó 2 archivos del WIP de exploraciones — no incluidos en mis commits).
+- ⚠️ Suite completa: **31 failed** — TODOS de la tarea de exploraciones de otro agente (WIP sin commitear: NivelHelperTest/SimuladorEncuentrosTest/ExploracionesTest con `CommandNotFoundException`). Mis archivos: **34 passed, 1 skipped** (DatagridTest 21 + PlayerControllerTest 2 + PokedexViewTest 3 + OptimizeIconsToWebpTest 4 + DatagridRegistryTest 3 + WebpConverterTest 1+1skip).
+- ✅ PHPStan level 6 global: 606 (+109 vs 497) — el incremento es del WIP de exploraciones (src/Shared, src/Exploraciones, jobs); mis archivos: 0 errores (solo asserts tolerados en tests).
+
+### Commits
+- `harden: ...` tests (B3) y `harden: ...` código (B2+B4), atómicos.
+
+---
+
+# Análisis Backend — WebP en carpeta separada `public/images/iconos_webp/` (decisión del usuario)
+
+## Contexto
+- cwebp 1.3.2 instalado en `/usr/bin/cwebp` (GD/Imagick siguen ausentes) → `WebpConverter` lo detecta vía CLI, sin cambios.
+- Decisión del usuario: los WebP NO van junto al PNG; salida en `public/images/iconos_webp/` (no existe aún).
+- Realidad del input: 1032 PNG, 188 MB (el Analista estimaba ~7 MB; reporto el real).
+
+## Cambios
+| Archivo | Cambio |
+|---|---|
+| `app/Console/Commands/OptimizeIconsToWebp.php` | Nueva opción `--out=` (default `public/images/iconos_webp`). `process(string $dir, string $out)`: crea `$out` con `File::makeDirectory(recursive)`, valida escribible; por cada PNG de la raíz de `$dir` escribe `$out/{base}.webp`; idempotente contra la SALIDA; PNG originales intactos. |
+| `app/Providers/DatagridServiceProvider.php` (~L58) | `icon` → `/images/iconos_webp/{id}.webp`. |
+| `public/images/iconos_webp/.htaccess` (nuevo) | Mismos headers que el de `iconos/` (`Cache-Control: public, max-age=31536000, immutable`). NO se borra el de `public/images/iconos/`. |
+| `tests/Feature/DatagridTest.php` | `test_pokemon_list_items_include_icon_and_types` → `/images/iconos_webp/1.webp` y `/2.webp`. |
+| `tests/Feature/OptimizeIconsToWebpTest.php` | Adaptar a `--out` (carpeta salida separada, idempotencia contra salida, input intacto, subdir no tocado) + test REAL de conversión con cwebp (file_exists + tamaño > 0; skip solo si no hay backend) + test `.htaccess` de `iconos_webp/`. |
+| `tests/Feature/PokedexViewTest.php` | Fixtures de contrato `icon` → `/images/iconos_webp/{id}.webp` (coherencia; no asertan URL en HTML). |
+
+## Tests (TDD: rojo → verde)
+1. DatagridTest icon → iconos_webp (falla con implementación actual → rojo).
+2. OptimizeIconsToWebpTest: reescrito para `--out` + test real cwebp + htaccess nuevo.
+3. PokedexViewTest: fixtures actualizados.
+
+## Riesgos
+- `test_command_returns_failure_without_backend` ahora se SKIPEA (cwebp disponible) — correcto, el camino de fallo ya no aplica en este entorno.
+- La conversión real de 1032 PNG (188 MB) puede tardar varios minutos → timeout amplio.
+- El `.htaccess` se crea antes de la conversión; `glob('*.png')` no lo afecta.
+- Suite completa tiene 13 failed preexistentes de Exploraciones (WIP de otro agente) — se confirman y se ignoran; los míos deben pasar.
+- Commit: NO incluir WIP ajeno (exploraciones) ni `active/ANALISIS_BACKEND.md` si contiene secciones de otro agente — se decide al stagear.
+
+## Estado final (webp en carpeta separada — completado)
+
+### Resultados
+- ✅ TDD: 5 tests rojos → verde. `OptimizeIconsToWebpTest` reescrito (process($dir, $out), idempotencia contra salida, input intacto, subdir no tocado, test REAL con cwebp — file_exists + filesize > 0), `test_htaccess_iconos_webp_sets_cache_headers` nuevo, DatagridTest con `/images/iconos_webp/{id}.webp`.
+- ✅ PokedexViewTest: ya actualizado por el FRONTEND en paralelo (fixtures `iconos_webp` + asserts de fallback explícito a `/images/iconos/{id}.png`). Sin cambios míos.
+- ✅ Suite completa: **199 passed, 1 skipped, 0 failed** (el otro agente arregló su WIP de exploraciones; ya no hay 13 failed).
+- ✅ Pint: pass. PHPStan level 8 en mis archivos: 0 errores reales.
+- ✅ **Conversión real ejecutada**: `php artisan iconos:optimize-webp` → Backend cwebp, **Converted: 1032, Skipped: 0, Errors: 0**. Resultado: 1032 webp en `public/images/iconos_webp/` (**5.2 MB** vs 188 MB de PNG → ~97% de reducción; el Analista estimaba 3-4 MB sobre una base de ~7 MB, la base real era 188 MB). Segunda corrida: 0 convertidos / 1032 skipped (idempotencia real verificada). PNG originales intactos (1032).
+- ✅ `.htaccess` nuevo en `public/images/iconos_webp/` (max-age=31536000, immutable); el de `public/images/iconos/` NO se borró (sigue sirviendo los PNG como fallback).
+- ⚠️ `active/ANALISIS_BACKEND.md` actualizado pero NO commiteado (contiene secciones del WIP de exploraciones de otro agente — se evita arrastrarlas al commit).
+
+### Contrato (para FRONTEND)
+- `icon` del datagrid ahora apunta a `/images/iconos_webp/{id}.webp`. Los PNG siguen en `/images/iconos/{id}.png` como fallback (la vista ya lo maneja, ver PokedexViewTest).
+
+---
+
+## Estado final (implementado)
+
+### Resultados de verificación
+- ✅ TDD rojo → verde: 45 tests nuevos/actualizados en la primera pasada; suite completa **199 passed, 1 skipped** (el skip preexistente de WebpConverter sin backend).
+- ✅ Pint: pass.
+- ✅ PHPStan level 6: **580 totales** (la baseline preexistente era ~623) → **reduje errores**; **0 errores no-tolerados en mi código de producción nuevo** (las 2 categorías restantes en mis archivos son `staticMethod.dynamicCall` de asserts en tests, patrón tolerado en todo el repo).
+- ✅ Infection (src/Exploraciones + NivelHelper): **Covered MSI 99%** (251/256 mutantes eliminados; 1 escapado es falso positivo equivalente: `return 0.0` para capture_rate ≤ 0 es idéntico a `0/divisor`; 3 timeouts), umbral 80% superado.
+- ✅ `php artisan route:list`: `POST /exploraciones/{exploracion}/recoger` registrada.
+- ✅ `php artisan schedule:list`: `*/5 * * * * php artisan exploraciones:procesar` registrada.
+
+### Archivos creados
+`database/migrations/2026_08_28_000001_add_experiencia_to_users_table.php`, `2026_08_28_000002_create_caramelos_ev_table.php`, `app/Models/CarameloEv.php`, `src/Shared/Domain/NivelHelper.php`, `src/Exploraciones/Domain/SimuladorEncuentros.php`, `src/Exploraciones/App/ProcesarExploracionService.php`, `app/Jobs/ProcesarExploracionJob.php`, `app/Console/Commands/ProcesarExploraciones.php`, `tests/Unit/NivelHelperTest.php`, `tests/Unit/SimuladorEncuentrosTest.php`, `tests/Feature/ExploracionesTest.php`.
+
+### Archivos modificados
+`app/Models/User.php` (experiencia + `nivel()`), `app/Models/EvolutionChain.php` / `TeamMember.php` / `Reclutado.php` (tipos de retorno en relaciones — elimina errores PHPStan preexistentes y desbloquea la resolución de relaciones), `app/Http/Controllers/ExploracionActivaController.php` (+`recoger()`), `routes/exploraciones.php` (+ruta), `routes/console.php` (+Schedule), `tests/Feature/MigrationStatusTest.php` (+checks esquema).
+
+### Decisiones tomadas durante la implementación
+- **Carbon 3 `diffInMinutes/diffInSeconds` son FIRMADOS** (devuelven negativo cuando `$this > $other`) y **float** → `abs()` + `(int)` en los tres puntos de cálculo (vuelta, encuentros por tick, slots). Fue el bug principal (vuelta mal calculada → la exploración "completaba" sin encuentros).
+- **`derrotados` solo se escribe al finalizar** (no durante la exploración activa) — los tests se ajustaron a ese contrato.
+- **Nivel de pool = `pivot.level == exploración.nivel`** (la UI ofrece filas de nivel 1-3; se explora exactamente esa fila). Implementado con `wherePivot` (evita acceso a `$pivot` y N+1).
+- **Timestamps en bitácora con `toIso8601String()`** (formato `+00:00`, legible; parseable con `Carbon::parse`).
+- **EXP**: cada miembro del equipo recibe el total completo (spec: "guardar en cada pokemon que explora la recompensa por derrotar"); `user.experiencia` suma el total; sin usuario → nivel 1.
+- **Captura**: `capture_rate / 255` (convención `ServicioCaptura`).
+- **No se reutiliza `CalcularRecompensasJob`** en la finalización (repartiría EXP plana y doblaría recompensas); su algoritmo de caramelos de familia (phase × count) se replicó en el servicio y el job quedó intacto con sus tests verdes.
+- **Modelos con relaciones sin tipo** (`EvolutionChain::pokemon`, `TeamMember::reclutado/team`, `Reclutado::pokemon`) recibieron tipos de retorno genéricos — solo firma, cero cambio de comportamiento, y reduce la baseline de PHPStan en ~43 errores (incluidos `CalcularRecompensasJob`/`ValidadorExploracion`).
+
+### Nota QA
+La notación `eventos` JSON ahora es `{ bitacora: [...], derrotados: [...], ultimo_procesado: ISO }` — `derrotados` se conserva retrocompatible (la lee `CalcularRecompensasJob`). No se tocó la BD de desarrollo (solo `laravel_test`).
+
+---
+
+# Análisis Backend — Ajuste de curva de EXP (medio ×10, sin tope de nivel)
+
+## Cambio solicitado
+- Curva media ×10: `exp_total = 10 × nivel³` → nivel 100 = 10.000.000 exp (antes: `nivel = cbrt(exp)` → 1.000.000).
+- **Sin tope de nivel**: `nivelDesdeExperiencia` devuelve niveles > 100 (no clamp).
+- Mantener la corrección de precisión flotante del código actual (potencias exactas), aplicada sobre `exp/10` ANTES de la raíz cúbica.
+- `expDerrota` (Gen V: `floor(base × nivel / 5)`) NO cambia.
+
+## ⚠️ Decisión sobre inconsistencia off-by-one en la spec
+La spec mezcla dos reglas incompatibles (no pueden cumplirse ambas):
+- **Ejemplos pequeños** (nivel 2 en exp 10, 3 en 80, 4 en 270) → umbral(N) = 10×(N−1)³.
+- **Fórmula principal + sketch de código** (`floor(cbrt(exp/10))`) y ejemplos grandes (nivel 100 EXACTO en 10.000.000, nivel 101 en 10.303.010 = 10×101³) → umbral(N) = 10×N³.
+
+**Decisión: se implementa la FÓRMULA** (`nivel = floor(cbrt(exp/10))`, nivel 100 en 10.000.000 exacto), porque:
+1. Es el enunciado principal, repetido dos veces: "experiencia = 10 × nivel³ → level 100 requires 10.000.000 exp".
+2. Es exactamente el sketch que el usuario adjuntó como implementación nueva (`(int) floor($experiencia / 10) ** (1/3)`), que devuelve nivel 1 en exp 10 y 2 en exp 80 — contradice sus propios ejemplos pequeños.
+3. "Level 100 exactly at 10,000,000" y "Level 101 at 10,303,010 (10×101³)" solo son ciertos con la fórmula.
+Consecuencia: exp 10 → nivel 1 (no 2), exp 80 → nivel 2 (no 3), exp 270 → nivel 3 (no 4). Los tests reflejan la fórmula.
+Si se prefiriera la regla de los ejemplos pequeños (umbral(N) = 10×(N−1)³), el cambio es de una línea: `return max(1, $nivel + 1);` — quedaría nivel 100 en [9.702.990, 10.000.000) y 10.000.000 → nivel 101 (rompería "level 100 requires 10M").
+
+## Qué voy a tocar
+| Archivo | Cambio |
+|---|---|
+| `src/Shared/Domain/NivelHelper.php` | `nivelDesdeExperiencia`: guard `<= 0 → 1`; `base = exp / 10`; `nivel = floor(base ** (1/3))` + loops de corrección de potencia exacta (patrón actual); `max(1, nivel)` para que exp 1-9 sea nivel 1. |
+| `tests/Unit/NivelHelperTest.php` | Umbrales de la curva nueva: 1 (0-79), 2 (80-269), 3 (270-639), 4 (640-1.249), 5 (1.250, caso precisión `125**(1/3)`), 100 exacto en 10.000.000, 101 en 10.303.010 (sin tope), 200 en 80.000.000. `expDerrota` intacto. |
+| `tests/Feature/ExploracionesTest.php` | Solo EXPECTATIVAS de nivel derivado: fixture `experiencia 1.250 → nivel 5` (antes 125 → 5 con curva vieja), `+1_250` en el assert de exp del usuario, y `0 → nivel 1` en el test de derivación. |
+
+## Qué NO toco (verificado)
+- `app/Models/User.php::nivel()` — firma intacta, solo cambia el valor derivado.
+- `src/Exploraciones/App/ProcesarExploracionService.php` — solo usa `NivelHelper::expDerrota` (línea 234), sin cambios.
+- `tests/Unit/SimuladorEncuentrosTest.php`, resto de suite de exploraciones — sin dependencia de `nivelDesdeExperiencia` (grep).
+
+## Umbrales nuevos (10 × nivel³)
+| Nivel | exp mínima | Nivel | exp mínima |
+|---|---|---|---|
+| 1 | 0 | 100 | 10.000.000 |
+| 2 | 80 | 101 | 10.303.010 |
+| 3 | 270 | 102 | 10.612.080 |
+| 4 | 640 | 200 | 80.000.000 |
+| 5 | 1.250 | — | — |
+
+## Tests (TDD rojo → verde)
+1. Nivel 1: exp 0, 9, 79 → 1.
+2. Nivel 2: exp 80, 269 → 2.
+3. Nivel 3/4/5: exp 270/639 → 3; 640/1.249 → 4; 1.250 → 5.
+4. Precisión flotante: exp 1.250 (base 125, `125**(1/3)=4.999...`) → 5; exp 10.000.000 → 100.
+5. Nivel 100 exacto: exp 9.999.999 → 99; 10.000.000 → 100.
+6. Sin tope: exp 10.000.001 y 10.303.009 → 100; 10.303.010 y 10.303.011 → 101; 80.000.000 → 200.
+7. `expDerrota` sin cambios (Gen V, floor).
+8. ExploracionesTest: recompensas con usuario nivel 5 (exp 1.250) y sin usuario (nivel 1) — fórmulas intactas.
+
+## Riesgos
+- ExploracionesTest tenía asserts de nivel derivado de la curva vieja (exp 125 → 5 y exp 0 → 0): actualizados, NO borrados.
+- `exp/10` en float: misma corrección de potencia exacta que ya usa el código → robusto en umbrales; valores > 2^53 pierden precisión, irrelevante para el juego.
+- No tocar BD dev; solo `laravel_test`.
+
+## Verificación
+- `php artisan test --compact tests/Unit/NivelHelperTest.php` → 9 passed (25 assertions).
+- `php artisan test --compact tests/Feature/ExploracionesTest.php` → 13 passed (50 assertions).
+- `vendor/bin/pint --dirty --format agent`
+
+---
+
+# Análisis Backend — Iconos WebP en src/Habitats/Infra/HabitatRepository.php (especificación del Analista)
+
+## Cambio
+`src/Habitats/Infra/HabitatRepository.php` — 4 líneas que generan el campo `icon`:
+- L90 (`getHabitatDetail`), L313 (`getFamilyMembersByChain`), L331 (`buildAvailableFamilyFromChain`), L364 (`buildUnassignedFamilyFromChain`): `/images/iconos/{id}.png` → `/images/iconos_webp/{id}.webp`.
+- PHPDoc breve en la clase indicando que el icon servido es WebP (`/images/iconos_webp/{id}.webp`; los PNG originales quedan en `/images/iconos/` como fuente/fallback).
+
+## Tests
+- Grep en tests/: NINGÚN test aserta los `icon` del HabitatRepository (los hits de `images/iconos` en tests son de PokedexViewTest/ExploracionesViewTest/OptimizeIconsToWebpTest → NO tocar, los gestiona el frontend o ya son correctos).
+- Infraestructura de test para hábitats: existe `tests/Feature/Habitats/FamiliesTest.php` (familias) y `HabitatsControllerTest` (usan RefreshDatabase + factories de Province/Habitat). Añadiré asserts mínimos de `icon` en los tests existentes de hábitats si cubren el JSON; si no, un test mínimo del repository (detalle/familias) que aserte `/images/iconos_webp/{id}.webp`.
+
+## Fronteras
+- NO tocar `app/` (datagrid ya sirve webp), ni vistas Blade (frontend en paralelo), ni OptimizeIconsToWebpTest/PokedexViewTest/ExploracionesViewTest.
+- La línea 109 (`/habitats-img/{$habitat->id}.webp`) ya es webp — sin cambios.
+
+---
+
+# Análisis Backend — Share nivel + progreso del jugador a TODAS las vistas (View::share)
+
+## Qué voy a tocar
+| Archivo | Cambio |
+|---|---|
+| `src/Shared/Domain/NivelHelper.php` | +`experienciaParaNivel(int): int` (10 × nivel³) +`progresoHaciaSiguienteNivel(int): int` (0-100, clamp [0,100]). |
+| `app/Providers/AppServiceProvider.php` | `boot()` → `View::share('nivelJugador', ...)` + `View::share('progresoNivel', ...)` vía `User::first()?->experiencia ?? 0`. |
+| `tests/Unit/NivelHelperTest.php` | Nuevos tests de los dos métodos (TDD rojo → verde). |
+
+## Verificación de consistencia con `nivelDesdeExperiencia` (números REALES computados)
+La curva actual: `nivel = floor(cbrt(exp/10))` + guard `exp ≤ 0 → 1` → eres nivel N con `exp ∈ [10·N³, 10·(N+1)³)` (y exp 0..9 → nivel 1 por el guard). Por tanto `experienciaParaNivel(N) = 10·N³` es EXACTAMENTE el umbral de entrada del nivel N:
+- `experienciaParaNivel(1) = 10` (umbral de nivel 1; exp < 10 también es nivel 1 por el guard) ✓
+- `experienciaParaNivel(2) = 80` (exp 80 → nivel 2, test existente) ✓
+- `experienciaParaNivel(100) = 10.000.000` (exp 10M → nivel 100 exacto) ✓
+
+## ⚠️ Decisión de diseño: CLAMP a [0, 100] (imprescindible)
+La fórmula cruda devuelve **progreso NEGATIVO** para exp 0..9 (nivel 1, inicio=10): `(0−10)/(80−10) = −14 %`. Eso rompería:
+1. El test WIP del FRONTEND `tests/Feature/HeaderNivelViewTest::test_layout_falls_back_without_shared_variables` (aserta `style="width: 0%"` sin usuario; con −14 renderizaría `width: -14%` → CSS inválido → barra a ancho completo).
+2. Las expectativas de la propia spec ("exp 0→0%, exp 9→0%").
+→ Se añade `max(0, min(100, ...))` al retorno. Sin usuario → exp 0 → nivel 1, progreso 0% (los valores por defecto que espera el layout `?? 1` / `?? 0`).
+
+## Valores de test (computados y verificados por ejecución)
+| exp | nivel | inicio | fin | progreso |
+|---|---|---|---|---|
+| 0 | 1 | 10 | 80 | **0** (crudo −14 → clamp) |
+| 9 | 1 | 10 | 80 | **0** (crudo −1 → clamp) |
+| 10 | 1 | 10 | 80 | **0** |
+| 45 | 1 | 10 | 80 | **50** (midpoint) |
+| 79 | 1 | 10 | 80 | **99** |
+| 80 | 2 | 80 | 270 | **0** (umbral nuevo nivel) |
+| 175 | 2 | 80 | 270 | **50** (midpoint) |
+| 269 | 2 | 80 | 270 | **99** |
+| 270 | 3 | 270 | 640 | **0** |
+| 10.000.000 | 100 | 10.000.000 | 10.303.010 | **0** |
+| 10.303.009 | 100 | 10.000.000 | 10.303.010 | **100** |
+
+## Riesgos
+- `User::first()` en `boot()` consulta la BD en cada boot (tests incluidos). BD de tests = PostgreSQL persistente `laravel_test`, MIGRADA y con **0 usuarios** (verificado) → sin error y con valores nivel 1/0% en el fallback. Las clases RefreshDatabase dejan la BD commitada vacía (transacciones) → el share de boot es estable.
+- `boot()` corre también en consola (artisan): consulta contra BD dev `laravel` (migrada, existe) → OK.
+- No toco vistas Blade (`layouts/app.blade.php` es WIP del FRONTEND) ni `bootstrap/app.php` (AppServiceProvider ya está registrado por defecto en Laravel 12).
+- PHPStan level 6: `$user?->experiencia ?? 0` → `int`; firmas tipadas.
+- No tocar BD dev; solo `laravel_test` (nada se escribe: solo SELECT).
+
+## Verificación
+- `php artisan test --compact tests/Unit/NivelHelperTest.php`
+- `php artisan test --compact` (suite completa; HeaderNivelViewTest debe seguir verde)
+- `vendor/bin/pint --dirty --format agent`
+- PHPStan level 6 sobre archivos tocados.
+
+## Estado final (completado)
+- ✅ TDD: 5 tests nuevos rojos → verde (14 passed, 42 assertions en NivelHelperTest).
+- ✅ `HeaderNivelViewTest` (WIP del FRONTEND) verde con el share activo (3 passed): `Nv 7`/`width: 45%` explícitos, y el fallback sin usuario → `Nv 1`/`width: 0%` (compartido desde boot: BD de tests sin usuarios commitados).
+- ✅ Suite completa: **212 passed, 1 skipped** en 4 corridas consecutivas. La PRIMERA corrida dio 17 failed (excepción de BD en `RecompilarHabitatJsonJobTest`, estado commitado residual de sesiones previas de otros agentes); el test pasa aislado y las corridas posteriores son verdes → flakiness preexistente de orden, no causada por este cambio (boot solo hace SELECT de solo lectura).
+- ✅ PHPStan level 6: 0 errores en `NivelHelper.php` y `AppServiceProvider.php` (test file: solo `staticMethod.dynamicCall` de asserts, categoría tolerada en todo el repo).
+- ✅ Pint: pass.
+
+### Desviaciones de la spec (justificadas y verificadas)
+1. **Clamp a [0,100] en `progresoHaciaSiguienteNivel`**: la fórmula cruda devuelve −14 % con exp 0 (nivel 1, inicio 10) → habría roto `HeaderNivelViewTest::test_layout_falls_back_without_shared_variables` (`width: 0%`) y renderizado CSS inválido. Los tests asertan los valores clampados: 0→0, 9→0, 10→0, 45→50, 79→99, 80→0 (nivel nuevo), 175→50, 269→99, 270→0, 10.000.000→0, 10.303.009→100.
+2. **`(int) $user->getAttribute('experiencia')` en vez de `$user?->experiencia ?? 0`**: la BD dev `laravel` NO tiene la columna `experiencia` (migración WIP sin aplicar; prohibido tocar BD dev) → `$user->experiencia` es `null` en runtime pese al cast del modelo → `nivelDesdeExperiencia(null)` TypeErrors en boot (rompía PHPStan bootstrap y TODOS los comandos artisan contra dev). `getAttribute()` + `(int)` normaliza null→0 sin disparar `cast.useless` de Larastan y sin tocar la BD.
+3. Sin usuario (tabla vacía): `User::first()` → null → exp 0 → nivel 1, progreso 0 % (requisito "con no users no debe errorar" ✓).
+
+### Archivos finales
+- `src/Shared/Domain/NivelHelper.php` (+`experienciaParaNivel`, +`progresoHaciaSiguienteNivel` con clamp).
+- `app/Providers/AppServiceProvider.php` (`boot()` con `View::share('nivelJugador')` y `View::share('progresoNivel')`).
+- `tests/Unit/NivelHelperTest.php` (+5 tests, 17 asserts).
+- `active/ANALISIS_BACKEND.md` (esta sección).
+- NO se tocó: vistas Blade, `bootstrap/app.php`, BD dev, tests del frontend.
+
+## Estado final (iconos webp en HabitatRepository — completado)
+
+### Cambios
+- `src/Habitats/Infra/HabitatRepository.php`: 4 líneas `icon` → `/images/iconos_webp/{id}.webp` (L90 `getHabitatDetail`, L313 `getFamilyMembersByChain`, L331 `buildAvailableFamilyFromChain`, L364 `buildUnassignedFamilyFromChain`) + PHPDoc en la clase (webp servido; PNG en `/images/iconos/` como fuente/fallback).
+
+### Tests (TDD rojo → verde)
+- `tests/Feature/Habitats/FamiliesTest.php`: asserts de icon webp en `test_obtener_familias_disponibles...` (base + 2 evoluciones) y `test_obtener_familias_sin_habitat...` (genérico por id) + nuevo `test_detalle_habitat_iconos_son_webp` (vía `HabitatRepository::getHabitatDetail`, `levels` y `toArray()`).
+- No existían tests del repository que asertaran icon; se usó la infraestructura existente de FamiliesTest.
+
+### Verificación
+- ✅ 3 tests rojos → verde; FamiliesTest 13 + HabitatsControllerTest 10 = 23 passed.
+- ✅ Suite completa: **207 passed, 1 skipped, 0 failed** (3 corridas consecutivas).
+- ⚠️ Durante la verificación hubo deadlocks PostgreSQL intermitentes (`laravel_test` compartida con la suite del WIP de exploraciones de otro agente, que corre en paralelo): `migrate:fresh --env=testing` limpió la DB corrupta; tras finalizar el otro agente, la suite pasa estable 3/3.
+- ✅ Pint: pass. PHPStan sobre `HabitatRepository.php`: 8 errores preexistentes (idénticos antes/después del cambio vía stash) — 0 nuevos.
+- ✅ `grep images/iconos src/` → solo el PHPDoc de fallback (correcto).
+- ⚠️ `active/ANALISIS_BACKEND.md` actualizado pero NO commiteado (contiene secciones del WIP de exploraciones de otro agente).
+
+---
+
+# Análisis Backend — Página /exploraciones (index + cerrar) y resumen de resultados
+
+## Contexto
+El motor de exploraciones está implementado (command, service, jobs, migraciones) y la vista `resources/views/exploraciones/index.blade.php` está commiteada (`d85fd418`) con un contrato de datos que NINGUNA ruta sirve todavía. Esta tarea implementa las rutas/controlador que materializan el contrato y hace que el servicio persista un resumen `resultado` en `eventos` al completar.
+
+## Qué voy a tocar
+| Archivo | Cambio |
+|---|---|
+| `src/Exploraciones/App/ProcesarExploracionService.php` | `finalizar()` persiste `eventos['resultado']` = `{avistados, capturados, caramelos_familia, caramelos_ev, exp}` (con nombres). La captura se resuelve en el servicio (roll síncrono con la MISMA regla que `CapturarPokemonJob`) para que el resumen sea exacto; se deja de despachar `CapturarPokemonJob` desde la finalización (el job queda para `ServicioCaptura`, intacto). |
+| `app/Http/Controllers/ExploracionActivaController.php` | +`index()` (contrato completo activas/terminadas) +`cerrar()` (delete + redirect/json, 404 si activa). |
+| `routes/exploraciones.php` | `GET /exploraciones` + `POST /exploraciones/{exploracion}/cerrar`. |
+| `tests/Feature/ExploracionesPageTest.php` | Nuevo: página (activas/terminadas/bitácora/resultado) + cerrar. |
+| `tests/Feature/ExploracionesTest.php` | +test de `eventos['resultado']` (TDD sobre el servicio). |
+| `active/ANALISIS_BACKEND.md` | Esta sección. |
+
+## Decisiones de diseño
+1. **Resumen persistido en `eventos['resultado']`** (decisión del enunciado): el servicio lo escribe al completar con nombres resueltos (pokemon `name`, familia = base de la cadena por `species_id`, EV solo `stat` → `stat_nombre` lo enriquece el controlador).
+2. **Captura síncrona en el servicio**: para que `resultado.capturados` refleje EXACTAMENTE los reclutables, el roll (`mt_rand(1,100)/100 <= capture_rate/255`, misma fórmula que el job) se hace en `finalizar()` y se incrementa `Reclutable` directamente. `CapturarPokemonJob` queda para `ServicioCaptura` (patrón de batalla, sus tests intactos). Tests existentes con capture_rate 255 (chance 1.0) no cambian su expectativa.
+3. **`stat_nombre` en el controlador** con el mapa EXACTO de la vista (1→PS, 2→Ataque, 3→Defensa, 4→Ataque Especial, 5→Defensa Especial, 6→Velocidad); `StatEnum::label()` devuelve 'PS (HP)' para HP y divergiría del fallback JS de la vista (`statName(1) === 'PS'`).
+4. **Cálculos duplicados controlador/servicio** (fin, vuelta, estado, progreso): el controlador replica las reglas del servicio (`hora_limite` de hoy, duración, indefinido → sin fin) para que la página muestre lo mismo que procesa el motor.
+5. **`cerrar()`** solo borra completadas (`regreso !== null` → 404 si no); devuelve `{success: true}` en JSON o redirect con flash (patrón `recoger()`).
+6. **Progreso**: % de tiempo transcurrido entre inicio y fin, clamp [0,100]; indefinido → 0.
+
+## Tests (TDD rojo → verde)
+1. `tests/Feature/ExploracionesPageTest.php`: GET 200 + `assertViewIs('exploraciones.index')`; activas con bitácora transformada (nombre pokemon + stat_nombre); 'volviendo'/progreso con `travelTo`; indefinida (sin fin/vuelta, 0%, 'explorando'); terminadas con resultado (stat_nombre añadido); terminadas sin resultado → `[]`; cerrar (redirect + JSON `{success:true}` + 404 si activa).
+2. `tests/Feature/ExploracionesTest.php`: `test_servicio_guarda_resumen_de_resultado` — exp/avistados/capturados/familia/EV derivados de la bitácora real (nunca conteos fijos).
+
+## Riesgos
+- Carbon 3: `diffInMinutes/diffInSeconds` firmados y float → `abs()` + `(int)` (mismo patrón que el servicio).
+- Nombres en BD en minúscula (bulbasaur) — la vista los muestra tal cual (contrato existente).
+- `viewData()` de `TestResponse` para asertar el contrato completo de activas/terminadas.
+- No tocar BD dev; solo `laravel_test`.
+- El cambio de captura síncrona modifica el flujo de finalización: verificar que `ServicioCapturaTest` y `CapturarPokemonJobTest` sigan verdes (no tocan la exploración).
+
+---
+
+# Análisis Backend — Cierre paquete Hardener (FAIL re-verificado + B4)
+
+## Verificación B1/B2/B3 (ya aplicados en rondas anteriores — comprobado en el árbol)
+| Hallazgo | Estado | Evidencia |
+|---|---|---|
+| B1 listener leak (frontend) | ✅ Verificado | `resources/views/pokedex/index.blade.php`: `clickHandler: null,` L359; `addEventListener('click', this.clickHandler)` L410; `removeEventListener` + reset null L420-421. |
+| B2 PHPStan DatagridController:22 | ✅ Verificado | `app/Http/Controllers/DatagridController.php` L21-22: `/** @var array<string, mixed> $params */` antes de `$params = $request->query();`. |
+| B3 tests anti-mutantes | ✅ Verificado | DatagridTest L81-82/L308/L324/L340/L357 (asserts bool), L273 `test_pokemon_detail_unseen_returns_false_booleans`, `tests/Unit/DatagridRegistryTest.php` presente. |
+
+## B4 — nuevo guard dir ≠ out (aplicado con TDD)
+- `app/Console/Commands/OptimizeIconsToWebp.php` handle(): tras los guards de `$dir`/`$out`, `if (realpath($out) === realpath($dir))` → error "Output directory must differ from the source directory." + FAILURE. (Simplificado: `is_string($dir)` eliminado por `function.alreadyNarrowedType` a level 8 — el guard previo ya lo estrecha.)
+- Test `test_command_rejects_same_input_and_output_directory`: `--dir=x --out=x` → exit 1, mensaje, no genera `.webp` junto a los PNG, 0 llamadas al converter (rojo → verde).
+- No rompe el flujo normal (dir ≠ out por defecto).
+
+## Verificación final
+- ✅ Suite completa: **213 passed, 1 skipped, 0 failed** (2º intento; el 1º tuvo 2 failed transitorios por interferencia de DB del WIP de exploraciones — DatagridTest pasa 21/21 aislado).
+- ✅ PHPStan level 8 sobre DatagridController + OptimizeIconsToWebp: **No errors**.
+- ✅ Pint: pass.
+- ⚠️ `active/ANALISIS_BACKEND.md` actualizado pero NO commiteado (contiene secciones del WIP de exploraciones de otro agente).
+
+---
+
+# Análisis Backend — Filtro de esfuerzo (EVs) en datagrid de pokémon
+
+## Decisión de diseño (documentada)
+`filter[effort]=Ataque|2` debe matchear pokémon que otorgan EVs en esa stat:
+`whereHas('stats', fn ($q) => $q->where('stat', $id)->where('effort', '>', 0))`.
+
+El `RelationFilter` actual solo aplica `whereIn(columna, mapped)` (usado por `types`). **Opción elegida: A — extender `RelationFilter`** con un 4º parámetro opcional `?Closure $constraint` (default `null` → comportamiento actual de whereIn intacto; `types` no se toca). `DatagridService::applyRelationFilter` despacha al constraint si existe. Es la opción más simple: un parámetro opcional, cero cambios de contrato público, sin tocar el servicio de paginación/filtros.
+
+## Cambios
+| Archivo | Cambio |
+|---|---|
+| `app/Datagrid/RelationFilter.php` | Nuevo `public readonly ?Closure $constraint` (opcional). PHPDoc: `Closure(Builder, list<mixed>): void\|null`. |
+| `app/Datagrid/DatagridService.php` | `applyRelationFilter`: si `$filter->constraint !== null` → `($filter->constraint)($q, $mapped)`; si no, whereIn actual. |
+| `app/Providers/DatagridServiceProvider.php` | `relationFilters['effort'] = new RelationFilter('stats', 'stat', map: statId, constraint: whereIn('stat', $mapped) + where('effort', '>', 0))`. Helper `statId(mixed): ?int` espejo de `tipoId` con `StatEnum` (int/numeric directo o label español case-insensitive). Import `StatEnum`. |
+
+## Semántica declarada
+- `filter[effort]=Ataque` o `filter[effort]=2` → mismo resultado.
+- Label inválido / id inexistente → `statId` devuelve `null` → `$mapped = []` → **filtro ignorado silenciosamente** (misma semántica que `types`).
+- Se combina con `filter[types]` como AND (cada relationFilter es un whereHas independiente).
+
+## Tests (TDD rojo → verde) en `tests/Feature/DatagridTest.php`
+1. `test_pokemon_list_filter_effort_by_label` — Ataque effort>0 aparece; Ataque effort=0 no.
+2. `test_pokemon_list_filter_effort_by_id` — `filter[effort]=2` mismo resultado.
+3. `test_pokemon_list_filter_effort_label_invalid_ignored` — label inexistente → 200 sin filtrar (ignorado).
+4. `test_pokemon_list_filter_effort_combines_with_types` — AND con types.
+El helper `createPokemon` gana un 4º parámetro opcional `$efforts` (map stat => effort) para crear stats con effort>0.
+
+## Riesgos
+- `constraint` con closure tipado para PHPStan level 8 (contravariance: el closure recibe `Builder` del whereHas — tipo `Builder<PokemonStat>`; el closure declarado `Builder` es supertipo, OK).
+- WIP de exploraciones ajeno en el árbol: git add EXPLÍCITO, nunca -A.
+
+## Estado final (filtro effort — completado)
+
+### Implementado
+- **Opción A**: `RelationFilter` con 4º parámetro opcional `?Closure $constraint` (`Closure(Builder<Model>, list<mixed>): void|null`). `applyRelationFilter` despacha al constraint si existe; si no, el whereIn actual (contrato de `types` intacto).
+- Provider: `'effort' => new RelationFilter('stats', 'stat', map: statId, constraint: whereIn('stat', $mapped) + where('effort', '>', 0))`.
+- Helper `statId()`: espejo de `tipoId` con `StatEnum` (int/numeric directo o label español case-insensitive → `$case->value` o `null`).
+
+### Semántica (declarada para QA/frontend)
+- `filter[effort]=Ataque` == `filter[effort]=2` (label español o id de stat).
+- Label inválido → filtro **ignorado silenciosamente** (misma semántica que `types`).
+- Se combina con `filter[types]` en AND (whereHas independientes).
+
+### Tests (TDD rojo → verde)
+- 4 nuevos en DatagridTest: `by_label` (Ataque effort>0 aparece, effort=0 no), `by_id` (2), `label_invalid_ignored` (200 sin filtrar), `combines_with_types` (AND). Helper `createPokemon` gana `$efforts` opcional.
+- DatagridTest: **25 passed** (21 previos + 4 nuevos); mis tests aislados: **55 passed, 1 skipped**.
+- Suite completa: corrida verde obtenida (**230 passed, 0 failed** en intento 3 de 4); el resto de corridas con fallos caóticos por interferencia de DB del WIP de exploraciones (otro agente corriendo su suite en paralelo — verificado: todos mis archivos pasan aislados).
+
+### Verificación
+- ✅ PHPStan level 8 sobre RelationFilter + DatagridService + DatagridServiceProvider: **No errors** (2 iteraciones de fix: import de `Builder`/`Model` para el PHPDoc y genérico `Builder<Model>`).
+- ✅ Pint: pass.
+- ✅ Git add explícito (4 archivos); WIP ajeno intacto.
+
+---
+
+# Análisis Backend — M1-M4 (mejoras del Arquitecto, paquete pokedex-filtro-effort)
+
+## Tabla de aplicación
+| Item | Aplicado (archivo:línea) | Test |
+|---|---|---|
+| **M1** DRY `labelToId` | `app/Providers/DatagridServiceProvider.php`: `labelToId(mixed, list<StatEnum\|TipoEnum>): ?int` (helper privado, mismo cuerpo que antes); `statId()` y `tipoId()` delegan (`StatEnum::cases()` / `TipoEnum::cases()`). Sin cambio de comportamiento: tests existentes de types/effort pasan sin modificar. | — (regresión cubierta por los 26 tests de DatagridTest) |
+| **M2** guard `filter[effort]=0` | `statId()`: `$id === 0 ? null : $id` → `filter[effort]=0` ahora es "filtro ignorado" (antes "0 resultados"). `tipoId` NO cambia. | `test_pokemon_list_filter_effort_zero_ignored` (rojo → verde): 2 pokémon, `filter[effort]=0` → 200 con count 2. |
+| **M3** viewData `$stats` | `app/Http/Controllers/PlayerController.php`: `use App\Enums\StatEnum;` (orden alfabético tras `TipoEnum`) + `'stats' => StatEnum::options(),` en `pokedex()`. | `PlayerControllerTest::test_pokedex_passes_counts_and_types` ampliado: `viewData('stats') === StatEnum::options()`. |
+| **M4** comentario blade | `resources/views/pokedex/index.blade.php:449`: `// Close type filter on outside click` → `// Close filter dropdowns on outside click`. | — |
+
+## Verificación
+- ✅ TDD M2/M3: 2 tests rojos → verde. DatagridTest 26 + PlayerControllerTest 3 + PokedexViewTest 3 = **32 passed**.
+- ✅ Suite completa: verde en 2 de 3 intentos (**231 passed, 0 failed**); el intento intermedio falló por interferencia de DB del WIP de exploraciones (otro agente; todos mis archivos pasan aislados).
+- ✅ PHPStan level 8 sobre `DatagridServiceProvider.php` + `PlayerController.php`: 3 errores, todos PREEXISTENTES en `reclutamiento()`/`equipos()` (verificado con stash: 6 errores sin mis cambios → 3 con ellos; ninguno en las líneas de M1/M3).
+- ✅ Pint: pass. `c3fcaa0b62` verificado en la cadena de commits (HEAD ~ a80269b5).
+- ✅ Git add explícito (5 archivos); WIP ajeno intacto.

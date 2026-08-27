@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class EvolutionChain extends Model
 {
@@ -21,7 +22,10 @@ class EvolutionChain extends Model
         'data' => 'json',
     ];
 
-    public function pokemon()
+    /**
+     * @return HasMany<Pokemon, $this>
+     */
+    public function pokemon(): HasMany
     {
         return $this->hasMany(Pokemon::class);
     }

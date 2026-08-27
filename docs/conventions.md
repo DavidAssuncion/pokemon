@@ -18,7 +18,7 @@
 | Constantes | UPPER_SNAKE_CASE | `SESSION_VERSION` |
 | Tablas | snake_case, plural, inglés | `pokemon_stats`, `team_members` |
 | Columnas | snake_case, inglés | `capture_rate`, `base_experience` |
-| Rutas | kebab-case, inglés | `/habitats/{id}`, `/iconos/shiny/{filename}` |
+| Rutas | kebab-case, inglés | `/habitats/{id}`, `/datagrid/{model}`, `/iconos/shiny/{filename}` |
 | Migraciones | `{fecha}_{orden}_{descripcion}.php` | `2026_02_24_171456_create_pokemon_table.php` |
 
 ### Idioma
@@ -76,11 +76,30 @@ app/
 ## Frontend
 
 - **Livewire 3** para componentes interactivos.
-- **Alpine.js** para animaciones y transiciones.
+- **Alpine.js** para animaciones y transiciones, y para estados de UI complejos (Pokédex asíncrona, dropdowns).
 - **Tailwind CSS 4** con Vite. Sin CSS personalizado (todo utility-first).
 - **Blade**: layouts via `@extends('layouts.app')`, partials via `@include()`.
 - Vistas organizadas por módulo: `resources/views/habitats/`, `resources/views/crud/<modulo>/`, etc.
-- Iconos de pokémon en `resources/iconos/` (PNG). Servidos por ruta dedicada con validación de seguridad.
+
+### Iconos de pokémon (WebP)
+
+- Los iconos se **sirven en WebP** desde `public/images/iconos_webp/{id}.webp` (ruta pública estática; `.htaccess` con `Cache-Control: public, max-age=31536000, immutable` — solo Apache).
+- Los **PNG originales** quedan en `public/images/iconos/{id}.png` como fuente y fallback de la Pokédex.
+- El contrato `icon` de cualquier API/vista es `/images/iconos_webp/{id}.webp`.
+- **Al añadir iconos nuevos, correr `php artisan iconos:optimize-webp --dir public/images/iconos --out public/images/iconos_webp`** (paso de deploy): convierte solo la raíz de `--dir`, escribe únicamente en `--out` (guard realpath dir≠out), es idempotente contra la salida y conserva los PNG.
+
+### Dropdowns Alpine (patrón consolidado)
+
+- Un único listener `click` global por componente para cerrar dropdowns al hacer click fuera: se registra en `init()` (`document.addEventListener('click', handler)`) y se **elimina en `destroy()`** (`removeEventListener` + reset a `null`), junto con observer/abort de fetches pendientes (patrón de `pokedexApp()`).
+- Estado de apertura con flag booleano por dropdown (`showTypeFilter`, `showEffortFilter`, ...); `@click.stop` en acciones internas para no disparar el cierre.
+
+## Datagrid (consultas JSON)
+
+- Para consultas JSON de solo lectura usar el subsistema `app/Datagrid/` (ver `docs/architecture.md`).
+- Registrar el modelo en `DatagridServiceProvider` con su `DatagridDefinition` (whitelist explícita): nada de lo que envíe el cliente se aplica al query sin pasar por la definición.
+- Los slugs se registran en minúscula; modelo no registrado → 404; parámetros no whitelisted → ignorados silenciosamente.
+- `RelationFilter` para filtros de relación (whereHas); usar `$constraint` (Closure) solo cuando el whereHas necesita lógica custom (ej. `effort > 0`).
+- `meta.counts` solo si la UI necesita contadores globales (independientes de filtros/paginación).
 
 ## Tests
 

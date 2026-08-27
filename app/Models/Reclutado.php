@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Reclutado extends Model
 {
@@ -21,12 +23,18 @@ class Reclutado extends Model
         'es_shiny' => 'boolean',
     ];
 
-    public function pokemon()
+    /**
+     * @return BelongsTo<Pokemon, $this>
+     */
+    public function pokemon(): BelongsTo
     {
         return $this->belongsTo(Pokemon::class, 'pokemon_id');
     }
 
-    public function teamMember()
+    /**
+     * @return HasOne<TeamMember, $this>
+     */
+    public function teamMember(): HasOne
     {
         return $this->hasOne(TeamMember::class, 'pokemon_id');
     }
