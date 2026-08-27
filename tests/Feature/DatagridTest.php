@@ -78,6 +78,8 @@ class DatagridTest extends TestCase
         $this->assertSame(1, $response->json('meta.last_page'));
         $this->assertSame(1, $response->json('data.0.id'));
         $this->assertSame('bulbasaur', $response->json('data.0.name'));
+        $this->assertFalse($response->json('data.0.visto'));
+        $this->assertFalse($response->json('data.0.atrapado'));
     }
 
     public function test_pokemon_list_applies_exact_filter(): void
@@ -268,6 +270,20 @@ class DatagridTest extends TestCase
         $this->getJson('/datagrid/pokemon/999/detalle')->assertNotFound();
     }
 
+    public function test_pokemon_detail_unseen_returns_false_booleans(): void
+    {
+        $this->createPokemon(1, 'bulbasaur');
+
+        $response = $this->getJson('/datagrid/pokemon/1/detalle');
+
+        $response->assertOk();
+        $this->assertFalse($response->json('visto'));
+        $this->assertFalse($response->json('atrapado'));
+        $this->assertSame([], $response->json('types'));
+        $this->assertSame([], $response->json('stats'));
+        $this->assertNull($response->json('habitat_name'));
+    }
+
     public function test_registered_models_respond_200(): void
     {
         $this->getJson('/datagrid/pokedex')->assertOk();
@@ -289,6 +305,7 @@ class DatagridTest extends TestCase
         $response->assertOk();
         // Sin registro en pokedex => pokedex.visto es NULL tras el leftJoin => no visto
         $this->assertSame([1], array_column($response->json('data'), 'id'));
+        $this->assertFalse($response->json('data.0.visto'));
         $this->assertSame(1, $response->json('meta.counts.no_vistos'));
         $this->assertSame(2, $response->json('meta.counts.total'));
     }
@@ -304,6 +321,7 @@ class DatagridTest extends TestCase
 
         $response->assertOk();
         $this->assertSame([2], array_column($response->json('data'), 'id'));
+        $this->assertTrue($response->json('data.0.visto'));
     }
 
     public function test_pokemon_list_filter_atrapado_1_returns_captured(): void
@@ -319,6 +337,7 @@ class DatagridTest extends TestCase
 
         $response->assertOk();
         $this->assertSame([2], array_column($response->json('data'), 'id'));
+        $this->assertTrue($response->json('data.0.atrapado'));
     }
 
     public function test_pokemon_list_filter_atrapado_0_returns_not_captured(): void
@@ -335,6 +354,7 @@ class DatagridTest extends TestCase
         $response->assertOk();
         // Sin registro (NULL) y con atrapado=false ambos cuentan como "no atrapado"
         $this->assertSame([1, 3], array_column($response->json('data'), 'id'));
+        $this->assertFalse($response->json('data.0.atrapado'));
     }
 
     public function test_pokemon_list_items_include_icon_and_types(): void
