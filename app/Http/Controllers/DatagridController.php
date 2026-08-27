@@ -17,18 +17,14 @@ class DatagridController extends Controller
 
     public function index(Request $request, string $model): JsonResponse
     {
-        if (! $this->datagrid->registered($model)) {
-            abort(404);
-        }
+        $this->requireRegistered($model);
 
         return response()->json($this->datagrid->list($model, $request->query()));
     }
 
     public function show(Request $request, string $model, int $id): JsonResponse
     {
-        if (! $this->datagrid->registered($model)) {
-            abort(404);
-        }
+        $this->requireRegistered($model);
 
         $detail = $this->datagrid->detail($model, $id);
 
@@ -37,5 +33,12 @@ class DatagridController extends Controller
         }
 
         return response()->json($detail);
+    }
+
+    private function requireRegistered(string $model): void
+    {
+        if (! $this->datagrid->registered($model)) {
+            abort(404);
+        }
     }
 }

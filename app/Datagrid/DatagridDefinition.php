@@ -18,20 +18,21 @@ use Illuminate\Database\Eloquent\Model;
 final class DatagridDefinition
 {
     /**
-     * @param class-string<Model> $model
-     * @param list<string> $searchable Columnas SQL (cualificadas o no) para el LIKE de `search`
-     * @param array<string, string> $filterable Clave pública del filtro => columna SQL
-     * @param array<string, RelationFilter> $relationFilters Filtros vía whereHas (p. ej. `types`)
-     * @param array<string, string> $sortable Clave pública del sort => columna SQL
-     * @param list<string> $with Relaciones a eager load en el listado
-     * @param list<string> $visible Campos incluidos en cada item de `data`
-     * @param list<string> $boolFields Campos visibles/filtrables normalizados a booleano
-     * @param array<string, Closure(Model): mixed> $itemFields Campos calculados por item (p. ej. `icon`, `types`)
-     * @param Closure(Builder<Model>): Builder<Model>|null $baseQuery Personalización del query (p. ej. join de la Pokédex)
-     * @param Closure(): array<string, int>|null $counts Contadores globales para `meta.counts`
-     * @param Closure(Model): array<string, mixed>|null $detail Resolvedor del detalle (por defecto: campos visibles)
+     * @param  class-string<Model>  $model
+     * @param  list<string>  $searchable Columnas SQL (cualificadas o no) para el LIKE de `search`
+     * @param  array<string, string>  $filterable Clave pública del filtro => columna SQL
+     * @param  array<string, RelationFilter>  $relationFilters Filtros vía whereHas (p. ej. `types`)
+     * @param  array<string, string>  $sortable Clave pública del sort => columna SQL
+     * @param  list<string>  $with Relaciones a eager load en el listado
+     * @param  list<string>  $visible Campos incluidos en cada item de `data`
+     * @param  list<string>  $boolFields Campos visibles/filtrables normalizados a booleano
+     * @param  array<string, Closure(Model): mixed>  $itemFields Campos calculados por item (p. ej. `icon`, `types`)
+     * @param  Closure(Builder<Model>): Builder<Model>|null  $baseQuery Personalización del query (p. ej. join de la Pokédex)
+     * @param  Closure(): array<string, int>|null  $counts Contadores globales para `meta.counts`
+     * @param  Closure(Model): array<string, mixed>|null  $detail Resolvedor del detalle (por defecto: campos visibles)
      */
     public function __construct(
+        /** @var class-string<Model> */
         public readonly string $model,
         public readonly array $searchable = [],
         public readonly array $filterable = [],

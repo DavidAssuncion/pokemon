@@ -18,6 +18,7 @@ use App\Models\Reclutado;
 use App\Models\Team;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Collection;
 use Illuminate\Support\ServiceProvider;
 
 final class DatagridServiceProvider extends ServiceProvider
@@ -54,10 +55,7 @@ final class DatagridServiceProvider extends ServiceProvider
             boolFields: ['visto', 'atrapado'],
             itemFields: [
                 'icon' => fn (Model $model): string => '/images/iconos/'.($this->requirePokemon($model))->id.'.webp',
-                'types' => fn (Model $model): array => $this->requirePokemon($model)->types
-                    ->map(fn (PokemonType $type): string => $type->tipo_nombre)
-                    ->values()
-                    ->toArray(),
+                'types' => fn (Model $model): array => $this->typeNames($this->requirePokemon($model)->types),
             ],
             baseQuery: function (Builder $query): Builder {
                 $query->getQuery()->leftJoin('pokedex', 'pokedex.pokemon_id', '=', 'pokemon.id');
@@ -65,29 +63,18 @@ final class DatagridServiceProvider extends ServiceProvider
 
                 return $query;
             },
-            counts: fn (): array => [
-                'total' => Pokemon::query()->getQuery()->count(),
-                'vistos' => Pokedex::query()->getQuery()->where('visto', true)->count(),
-                'atrapados' => Pokedex::query()->getQuery()->where('atrapado', true)->count(),
-                'no_vistos' => max(0, Pokemon::query()->getQuery()->count() - Pokedex::query()->getQuery()->where('visto', true)->count()),
-            ],
+            counts: fn (): array => $this->pokemonCounts(),
             detail: function (Model $model): array {
-                if (! $model instanceof Pokemon) {
-                    throw new \LogicException('Datagrid pokemon detail resolver requires a Pokemon model.');
-                }
-
-                $model->loadMissing(['stats', 'types', 'habitats']);
+                $pokemon = $this->requirePokemon($model);
+                $pokemon->loadMissing(['stats', 'types', 'habitats']);
 
                 return [
-                    'id' => $model->id,
-                    'name' => $model->name,
-                    'visto' => (bool) $model->getAttribute('visto'),
-                    'atrapado' => (bool) $model->getAttribute('atrapado'),
-                    'types' => $model->types
-                        ->map(fn (PokemonType $type): string => $type->tipo_nombre)
-                        ->values()
-                        ->toArray(),
-                    'stats' => $model->stats
+                    'id' => $pokemon->id,
+                    'name' => $pokemon->name,
+                    'visto' => (bool) $pokemon->getAttribute('visto'),
+                    'atrapado' => (bool) $pokemon->getAttribute('atrapado'),
+                    'types' => $this->typeNames($pokemon->types),
+                    'stats' => $pokemon->stats
                         ->sortBy(fn (PokemonStat $stat): int => $stat->stat->value)
                         ->map(fn (PokemonStat $stat): array => [
                             'name' => $stat->stat_nombre,
@@ -95,7 +82,7 @@ final class DatagridServiceProvider extends ServiceProvider
                         ])
                         ->values()
                         ->toArray(),
-                    'habitat_name' => $model->habitats->first()?->name,
+                    'habitat_name' => $pokemon->habitats->first()?->name,
                 ];
             },
         ));
@@ -152,10 +139,37 @@ final class DatagridServiceProvider extends ServiceProvider
     private function requirePokemon(Model $model): Pokemon
     {
         if (! $model instanceof Pokemon) {
-            throw new \LogicException('Datagrid pokemon item fields require a Pokemon model.');
+            throw new \LogicException('Datagrid pokemon resolvers require a Pokemon model.');
         }
 
         return $model;
+    }
+
+    /**
+     * @param  Collection<int, PokemonType>  $types
+     * @return list<string>
+     */
+    private function typeNames(Collection $types): array
+    {
+        return $types->map(fn (PokemonType $type): string => $type->tipo_nombre)
+            ->values()
+            ->toArray();
+    }
+
+    /**
+     * @return array{total: int, vistos: int, atrapados: int, no_vistos: int}
+     */
+    private function pokemonCounts(): array
+    {
+        $total = Pokemon::query()->getQuery()->count();
+        $vistos = Pokedex::query()->getQuery()->where('visto', true)->count();
+
+        return [
+            'total' => $total,
+            'vistos' => $vistos,
+            'atrapados' => Pokedex::query()->getQuery()->where('atrapado', true)->count(),
+            'no_vistos' => max(0, $total - $vistos),
+        ];
     }
 
     private function tipoId(mixed $value): ?int
