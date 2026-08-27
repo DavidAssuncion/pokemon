@@ -22,6 +22,7 @@ use Illuminate\Support\Facades\DB;
 use Mockery;
 use RuntimeException;
 use Src\Exploraciones\App\FinalizarExploracionCommand;
+use Src\Exploraciones\App\ProcesarExploracionCommand;
 use Src\Shared\Bus\CommandBus;
 use Src\Shared\Domain\NivelHelper;
 use Tests\TestCase;
@@ -487,22 +488,41 @@ class ExploracionesTest extends TestCase
         return $ctx;
     }
 
+    /**
+     * Mock de clase de ExploracionActiva (no final) que delega al modelo real
+     * todo excepto el update que marca `regreso` (lanza a mitad del flujo,
+     * tras persistir recompensas). Compatible con el refresh() del handler.
+     */
+    private function mockExploracionQueFallaAlMarcarRegreso(ExploracionActiva $real): ExploracionActiva
+    {
+        $mock = Mockery::mock(ExploracionActiva::class)->makePartial();
+        $mock->shouldReceive('update')->andReturnUsing(
+            function (array $attributes) use ($real): bool {
+                if (array_key_exists('regreso', $attributes)) {
+                    throw new RuntimeException('fallo forzado al marcar regreso');
+                }
+
+                return $real->update($attributes);
+            }
+        );
+        $mock->shouldReceive('newQueryWithoutScopes')->andReturnUsing(fn (): mixed => $real->newQueryWithoutScopes());
+        $mock->setRawAttributes($real->getAttributes());
+        $mock->exists = true;
+
+        return $mock;
+    }
+
     public function test_finalizar_fallo_a_mitad_hace_rollback_total(): void
     {
         $ctx = $this->crearExploracionParaFinalizar();
         $bus = app(CommandBus::class);
-
-        // Fallo forzado A MITAD: todas las recompensas ya se escribieron, pero el
-        // update que marca el regreso lanza (mock parcial de la instancia). Es el
-        // bug real: recompensas incrementadas + regreso sin marcar.
-        $exploracion = Mockery::mock($ctx['exploracion'])->makePartial();
-        $exploracion->shouldReceive('update')->andThrow(new RuntimeException('fallo forzado al marcar regreso'));
+        $exploracion = $this->mockExploracionQueFallaAlMarcarRegreso($ctx['exploracion']);
 
         try {
             $bus->dispatch(new FinalizarExploracionCommand($exploracion));
             $this->fail('Se esperaba una excepción');
         } catch (RuntimeException) {
-            // esperado
+            // esperado: fallo A MITAD, tras persistir las recompensas reales
         }
 
         // Rollback total: nada de lo escrito antes del fallo queda persistido
@@ -519,10 +539,7 @@ class ExploracionesTest extends TestCase
     {
         $ctx = $this->crearExploracionParaFinalizar(captureRate: 0);
         $bus = app(CommandBus::class);
-
-        // Primera llamada: falla a mitad (update de regreso lanza)
-        $exploracion = Mockery::mock($ctx['exploracion'])->makePartial();
-        $exploracion->shouldReceive('update')->andThrow(new RuntimeException('fallo forzado al marcar regreso'));
+        $exploracion = $this->mockExploracionQueFallaAlMarcarRegreso($ctx['exploracion']);
 
         try {
             $bus->dispatch(new FinalizarExploracionCommand($exploracion));
@@ -549,6 +566,38 @@ class ExploracionesTest extends TestCase
 
         // Jobs post-commit ejecutados tras el commit del reintento
         $this->assertDatabaseHas('pokedex', ['pokemon_id' => 1, 'visto' => true]);
+    }
+
+    public function test_procesar_con_forzar_regreso_y_finalizar_fallando_hace_rollback_total(): void
+    {
+        // Bitacora vacía con ultimo_procesado hace 10 min: el tick GENERARÁ
+        // encuentros (2) que deberán revertirse junto con las recompensas.
+        $ctx = $this->crearContexto(['indefinido' => true, 'inicio' => now()->subMinutes(30)]);
+        $ctx['exploracion']->update([
+            'eventos' => [
+                'bitacora' => [],
+                'ultimo_procesado' => now()->subMinutes(10)->toIso8601String(),
+            ],
+        ]);
+
+        $exploracion = $this->mockExploracionQueFallaAlMarcarRegreso($ctx['exploracion']);
+
+        try {
+            app(CommandBus::class)->dispatch(new ProcesarExploracionCommand($exploracion, forzarRegreso: true));
+            $this->fail('Se esperaba una excepción');
+        } catch (RuntimeException) {
+            // esperado: el Finalizar (anidado) persiste recompensas y lanza al marcar regreso
+        }
+
+        // Rollback TOTAL del dispatch anidado: ni el tick ni las recompensas persisten
+        $exploracionFinal = $ctx['exploracion']->fresh();
+        $this->assertSame([], $exploracionFinal->eventos['bitacora'] ?? []);
+        $this->assertNull($exploracionFinal->regreso);
+        $this->assertDatabaseCount('reclutables', 0);
+        $this->assertDatabaseCount('caramelos', 0);
+        $this->assertDatabaseCount('caramelos_ev', 0);
+        $this->assertDatabaseCount('caramelos_tipo', 0);
+        $this->assertDatabaseCount('pokedex', 0);
     }
 
     public function test_finalizar_exploracion_ya_finalizada_es_no_op(): void

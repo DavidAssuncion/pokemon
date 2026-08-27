@@ -14,6 +14,14 @@ use Src\Shared\Bus\Command;
 use Src\Shared\Bus\CommandBus;
 use Src\Shared\Bus\CommandHandler;
 
+/**
+ * Tick de exploración: genera encuentros pendientes y, si toca, despacha
+ * FinalizarExploracionCommand a través del bus.
+ *
+ * @todo Excepción temporal a la regla de dependencias: src/ importa
+ *       App\Models/App\Jobs/Illuminate (deuda WIP). Ticket v2: extraer
+ *       repositorio/interfaz en Domain o mover handlers a app/.
+ */
 final class ProcesarExploracionHandler implements CommandHandler
 {
     private const MINUTOS_POR_ENCUENTRO = 5;
