@@ -356,6 +356,7 @@ function pokedexApp() {
         controller: null,
         detailController: null,
         observer: null,
+        clickHandler: null,
 
         get emptyMessage() {
             if (this.searchQuery.trim() || this.typeFilter) {
@@ -401,11 +402,12 @@ function pokedexApp() {
             this.counts = @json($counts ?? null) || initial?.meta?.counts || fallbackCounts;
 
             // Close type filter on outside click
-            document.addEventListener('click', (e) => {
+            this.clickHandler = (e) => {
                 if (!e.target.closest('[x-data]')?.contains(e.target)) {
                     this.showTypeFilter = false;
                 }
-            });
+            };
+            document.addEventListener('click', this.clickHandler);
 
             this.$nextTick(() => this.setupObserver());
         },
@@ -414,6 +416,10 @@ function pokedexApp() {
             this.observer?.disconnect();
             this.controller?.abort();
             this.detailController?.abort();
+            if (this.clickHandler) {
+                document.removeEventListener('click', this.clickHandler);
+                this.clickHandler = null;
+            }
         },
 
         setupObserver() {
