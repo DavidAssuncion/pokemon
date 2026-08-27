@@ -1,46 +1,71 @@
-# Análisis Frontend — Fix imágenes pokémon en equipos/index.blade.php
+# Análisis Frontend — Imágenes 128px + fix JS habitat detail
 
 ## Vistas a tocar
 
-### `resources/views/equipos/index.blade.php` (única vista afectada)
+### `resources/views/reclutamiento/index.blade.php` (Tarea 1a)
+- Grid actual: `grid grid-cols-3 sm:grid-cols-5 md:grid-cols-7 lg:grid-cols-9 gap-3` con celdas < 128px en todos los breakpoints.
+- Área imagen actual: `aspect-square relative bg-gray-50 dark:bg-gray-900 p-2` con `<img class="w-full h-full object-contain">`.
+- Fix: área → `w-32 h-32 mx-auto relative` (transparente, patrón habitats/equipos), img conserva `w-full h-full object-contain`, badge de cantidad conservado (necesita `relative`).
+- Grid nueva (celdas ≥ 128px verificadas, contenedor full-width px-4 sm:px-6):
+  - base 343px: 2 cols → 165px ✓ | sm 592: 4 → 139 ✓ | md 720: 5 → 134 ✓
+  - lg 976: 6 → 152 ✓ | xl 1232: 7 → 165 ✓ | 2xl 1488: 9 → 154 ✓
+  - Cadena: `grid-cols-2 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7 2xl:grid-cols-9`
 
-4 `<img>` con `:src="'/images/iconos/' + ..."`:
+### `resources/views/equipos/index.blade.php` (Tarea 1b)
+- 5 ubicaciones `w-24 h-24` → `w-32 h-32` (128px):
+  1. Icono miembro de equipo (línea ~112): `w-24 h-24 object-contain mx-auto` → w-32 h-32.
+  2. Placeholder slot vacío (línea ~128): `w-24 h-24 mx-auto rounded border-2 border-dashed` → w-32 h-32.
+  3. Wrapper disponible (línea ~213): `<div class="w-24 h-24 mx-auto">` → w-32 h-32.
+  4. Wrapper asignado (línea ~265): `<div class="w-24 h-24 mx-auto">` → w-32 h-32 (conservar `grayscale` + card `opacity-60`).
+  5. Tooltip (línea ~343): `w-24 h-24 object-contain mx-auto` → w-32 h-32 (cabe en card w-56).
+- Grids disponible/asignado actuales: `grid-cols-3 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-6 xl:grid-cols-7 2xl:grid-cols-9` → celdas < 128px (99-113px). Nueva cadena (columna derecha 2/3 en lg+):
+  - base 343: 2 → 167 ✓ | sm 592: 3 → 192 ✓ | md 720: 4 → 174 ✓
+  - lg (col ≈635px): 4 → 152 ✓ | xl (≈805px): 5 → 154 ✓ | 2xl (≈976px): 6 → 156 ✓
+  - Cadena: `grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6`
+- Limitación conocida: columna izquierda (cards de equipo, 1/3 en lg) tiene celdas ≈92px en lg → la imagen de 128px se recorta ligeramente por `overflow-hidden` de la card (ya ocurría con 96px en lg). Se cumple la instrucción literal: bump a w-32 h-32 sin restructurar.
 
-1. **Icono miembro de equipo** (columna izquierda, dentro de card de equipo, ~línea 108):
-   - Actual: `class="w-12 h-12 object-contain mx-auto rounded bg-gray-100 dark:bg-gray-900"` → 48px + fondo + rounded.
-   - Fix: `class="w-24 h-24 object-contain mx-auto"` (patrón exacto de habitats/show.blade.php línea 168).
-   - Acompañante: placeholder de slot vacío `w-12 h-12` → `w-24 h-24` (mismo patrón que habitats/show línea 177).
+### `resources/views/habitats/show.blade.php` (Tarea 2 — JS roto)
+**CAUSA RAÍZ (verificada renderizando la vista):** línea 341
+```js
+get availableTeams() {
+    return @json($teams)->filter(t => !this.equiposEnExploracion.includes(t.id));
+},
+```
+`->` es operador de PHP, **no es JavaScript válido** → el render produce `return [{...}]->filter(...)` → **SyntaxError al parsear TODO el `<script>`** → `habitatShow()` nunca se define → `x-data="habitatShow()"` falla → TODOS los clics muertos (cards de equipo, filas de nivel, botón explorar).
 
-2. **Pokémon disponible** (columna derecha, grid "Reclutados Disponibles", ~línea 214):
-   - `<img class="w-full h-full object-contain">` dentro de `<div class="aspect-square p-1.5">`.
-   - La imagen se renderiza al tamaño de la celda del grid (58px en lg con 10 columnas) → por debajo de 96px.
-   - Fix: wrapper → `<div class="w-24 h-24 mx-auto">` (mismo patrón que habitats/show líneas 217-224), img se mantiene `w-full h-full object-contain` → exactamente 96px.
-   - Grid: `grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10` → celdas < 96px en todos los breakpoints. Nueva cadena con celdas ≥ 96px (verificado por cálculo de anchos):
-     `grid-cols-3 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-6 xl:grid-cols-7 2xl:grid-cols-9`
-     - base 343px: 3 cols → 109px ✓ | sm 608: 5 → 115 ✓ | md 736: 6 → 116 ✓
-     - lg (col 2/3 ≈ 653px): 6 → 102 ✓ | xl (≈813px): 7 → 109 ✓ | 2xl (≈984px): 9 → 102 ✓
+**Causa secundaria:** `@click="selectTeam({{ $team->id }}, '{{ addslashes($team->name) }}')"` — `addslashes` NO protege atributos HTML: un nombre con `"` rompe el atributo (la card deja de responder silenciosamente). Mismo problema en `@keydown.space.prevent` y `@keydown.enter.prevent`.
 
-3. **Pokémon asignado** (columna derecha, grid "Asignados", ~línea 266):
-   - Mismo fix que #2 (wrapper `w-24 h-24 mx-auto` + misma cadena de columnas).
-   - CONSERVAR `grayscale` (filtro gris de asignados) y `opacity-60` de la card.
+**Verificado:** `json_encode(Team::with('members.reclutado.pokemon')->get())` es válido (3.3KB) — el problema NO es `@json($teams)` en sí, sino el `->filter`. `$equiposEnExploracion` es Collection (controller lo mapea) ✓. `@stack('scripts')` existe en el layout ✓.
 
-4. **Tooltip hover** (modal tooltip de stats, ~línea 340):
-   - `class="w-16 h-16 object-contain mx-auto"` (64px) → `class="w-24 h-24 object-contain mx-auto"` (96px, cabe en card w-56).
+**Fix:**
+1. Inicializar `teams: @json($teams)` como propiedad (JSON verificado válido).
+2. Getter seguro:
+```js
+get availableTeams() {
+    return (this.teams || []).filter(t => !this.equiposEnExploracion.includes(t.id));
+},
+```
+3. Patrón data-attribute para clic y teclado:
+```blade
+@click="selectTeam({{ $team->id }}, $el.dataset.teamName)"
+@keydown.space.prevent="selectTeam({{ $team->id }}, $el.dataset.teamName)"
+@keydown.enter.prevent="selectTeam({{ $team->id }}, $el.dataset.teamName)"
+data-team-name="{{ $team->name }}"
+```
+(`{{ }}` escapa HTML; `dataset` devuelve el valor decodificado; `$el` es la card en Alpine).
 
 ## DTOs consumidos
-- Ninguno nuevo; se conservan todos los bindings Alpine (`:src`, `x-for`, `getMember`, `onerror`, etc.).
+- Ninguno nuevo. `$teams` (array de Team Eloquent), `$equiposEnExploracion` (Collection), `$sightedPokemonIds` (array ints).
 
 ## Tests
-- Sin Dusk en el proyecto. Verificación: `php artisan view:cache`, grep de clases eliminadas, `vendor/bin/pint --dirty --format agent`.
+- Sin Dusk en el proyecto. Verificación: render real de la vista con datos (tinker) + `php artisan view:cache` + `vendor/bin/pint --dirty --format agent`.
 
-## Estados UI a cubrir
-- Imagen disponible/asignada: 96px transparente sin borde; hover overlay intacto.
-- Asignados: 96px + `grayscale` + card `opacity-60`.
-- Miembro de equipo: 96px sin fondo; placeholder vacío 96px con borde dashed.
-- Tooltip: 96px centrado.
-- `onerror` (ocultar imagen si no existe) intacto en todas.
+## Estados UI
+- Reclutamiento: imagen 128px transparente; badge cantidad intacto; empty state intacto.
+- Equipos: disponible/asignado 128px; asignado con `grayscale` + `opacity-60`; hover overlay intacto; tooltip 128px; placeholder vacío 128px dashed.
+- Habitat detail: clic en card de equipo y fila de nivel abre el modal de exploración; teclado (Enter/Space) funciona; equipos en exploración siguen bloqueados.
 
 ## Riesgos accesibilidad/UX
-- Celdas < 96px solo en pantallas < 336px (celda 90px, recorte ~5px del box de 96px, tolerado; pokedex ya tiene iconos < 96px en 320px).
-- La cadena de columnas del grid cambia densidad (lg: 10 → 6), necesario para cumplir mínimo 96px.
-- No tocar cards (`bg-white dark:bg-gray-800`, bordes) ni botones ni modales: son elementos NO-imagen y deben conservar sus fondos.
+- Menos densidad en grids (necesario para mínimo 128px).
+- Cards de equipo en lg recortan ligeramente imágenes laterales (limitación aceptada, instrucción literal del usuario).
+- `data-team-name` con `{{ }}` escapa `"`/`&`/`<` → dataset seguro.

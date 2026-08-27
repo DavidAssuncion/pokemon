@@ -22,7 +22,7 @@ class PlayerController extends Controller
 
     public function pokedex(): View
     {
-        $allPokemon = Pokemon::all();
+        $allPokemon = Pokemon::orderBy('id')->get();
 
         $pokedexEntries = Pokedex::all()->keyBy('pokemon_id');
 

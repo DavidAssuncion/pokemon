@@ -26,11 +26,11 @@
 
         <!-- Pokemon grid -->
         <template x-if="items.length > 0">
-            <div class="grid grid-cols-3 sm:grid-cols-5 md:grid-cols-7 lg:grid-cols-9 gap-3">
+            <div class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7 2xl:grid-cols-9 gap-3">
                 <template x-for="item in items" :key="item.id">
                     <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden text-center">
                         <!-- Image -->
-                        <div class="aspect-square relative bg-gray-50 dark:bg-gray-900 p-2">
+                        <div class="w-32 h-32 mx-auto relative">
                             <img
                                 :src="'/images/iconos/' + item.pokemon_id + '.png'"
                                 :alt="item.nombre"

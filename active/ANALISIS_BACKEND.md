@@ -217,3 +217,35 @@ Además, la vista llama `POST /reclutamiento/recruit` y `POST /reclutamiento/dis
 - ⚠️ Infection: 0 mutaciones generadas — estado preexistente (config source = `src/` solo; el fix es en `app/`). Verificado idéntico antes/después del cambio.
 - ✅ Verificación dev DB (sin mutar): la fila existente `reclutables` (id=10, pokemon_id=1 bulbasaur, cantidad=1) ya NO se pierde — la query corregida la devuelve para la vista.
 - Sin commit (pendiente revisión del usuario).
+
+---
+
+# Análisis Backend — 3 Bug Fixes (recruit, discard candies, pokedex order)
+
+## Qué voy a tocar
+- `app/Http/Controllers/ReclutamientoController.php`:
+  - `recruit()`: añadir creación de `Reclutado` (import `App\Models\Reclutado`). Mantener decrement/delete actual.
+  - `discardAll()`: calcular caramelos por fase de evolución y upsert en `caramelos` (import `App\Models\Caramelo` + `DB::raw`). Borrar todo después.
+- `app/Http/Controllers/PlayerController.php`: `pokedex()` → `Pokemon::orderBy('id')->get()`.
+- `tests/Feature/ReclutamientoControllerTest.php`: actualizar tests de recruit (assert Reclutado creado) + tests nuevos de candies en discardAll.
+- `tests/Feature/PlayerControllerTest.php` (nuevo): test de orden en pokedex.
+
+## Tests a escribir (TDD, rojo → verde)
+1. `test_recruit_creates_reclutado_and_decrements_cantidad` — cantidad 5 → 4, Reclutado con pokemon_id, es_shiny=false.
+2. `test_recruit_with_cantidad_one_creates_reclutado_and_deletes` — cantidad 1 → fila borrada + Reclutado creado.
+3. `test_discard_all_awards_candies_by_phase` — chain 3 pokemon (species 1,2,3): bulbasaur x3 (fase 1) + ivysaur x2 (fase 2) → 3 + 4 = 7 caramelos; reclutables 0; response candies.
+4. `test_discard_all_accumulates_into_existing_caramelo` — caramelo previo 5 + 2 → 7 (upsert con incremento).
+5. `test_discard_all_handles_multiple_chains` — 2 chains independientes.
+6. `test_pokedex_orders_pokemon_by_id` — crear ids 2 y 1, GET /pokedex, viewData[0]['id'] == 1.
+
+## Riesgos
+- `updateOrCreate` + `DB::raw` increment: el unique en `evolution_chain_id` garantiza 1 fila por chain.
+- `$pokemon->evolutionChain` null → `$chain?->pokemon` null → fase 1 (`?? 1`); chain sin chain_id se salta.
+- `where('species_id', '<=', ...)` sobre Collection (mismo patrón que CalcularRecompensasJob).
+- PHPStan: `$request->validate()` dynamic call es categoría tolerada preexistente en el repo; controladores nuevos del mismo estilo.
+
+## Validación
+- `php artisan test --compact tests/Feature/ReclutamientoControllerTest.php`
+- `php artisan test --compact` (suite completa).
+- `vendor/bin/phpstan analyse` level 6.
+- `vendor/bin/pint --dirty --format agent`.

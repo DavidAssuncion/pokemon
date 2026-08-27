@@ -129,12 +129,13 @@
                                 class="rounded-lg p-3 border-2 transition-all {{ $bloqueado ? 'bg-gray-100 dark:bg-gray-900/30 border-gray-200 dark:border-gray-700 opacity-60 cursor-not-allowed' : 'bg-gray-50 dark:bg-gray-900/50 cursor-pointer hover:border-gray-300 dark:hover:border-gray-600' }}"
                                 :class="{{ $bloqueado ? 'false' : "selectedTeamId === {$team->id} ? 'border-blue-500 dark:border-blue-400 ring-1 ring-blue-200 dark:ring-blue-800' : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'" }}"
                                 @if(!$bloqueado)
-                                @click="selectTeam({{ $team->id }}, '{{ addslashes($team->name) }}')"
+                                @click="selectTeam({{ $team->id }}, $el.dataset.teamName)"
                                 role="button"
                                 tabindex="0"
-                                @keydown.space.prevent="selectTeam({{ $team->id }}, '{{ addslashes($team->name) }}')"
-                                @keydown.enter.prevent="selectTeam({{ $team->id }}, '{{ addslashes($team->name) }}')"
+                                @keydown.space.prevent="selectTeam({{ $team->id }}, $el.dataset.teamName)"
+                                @keydown.enter.prevent="selectTeam({{ $team->id }}, $el.dataset.teamName)"
                                 @endif
+                                data-team-name="{{ $team->name }}"
                                 aria-label="{{ $bloqueado ? 'Equipo en exploración' : 'Seleccionar equipo ' . $team->name }}"
                             >
                                 <div class="flex items-center justify-between mb-2">
@@ -332,13 +333,14 @@ function habitatShow() {
         returnTime: '18:00',
         sightedPokemonIds: @json($sightedPokemonIds ?? []),
         equiposEnExploracion: @json($equiposEnExploracion->pluck('equipo_id')->toArray()),
+        teams: @json($teams),
 
         get canStartExploration() {
             return this.selectedTeamId !== null && this.selectedLevel !== null;
         },
 
         get availableTeams() {
-            return @json($teams)->filter(t => !this.equiposEnExploracion.includes(t.id));
+            return (this.teams || []).filter(t => !this.equiposEnExploracion.includes(t.id));
         },
 
         init() {
