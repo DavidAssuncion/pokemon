@@ -14,6 +14,7 @@ Route::get('/equipos', [PlayerController::class, 'equipos']);
 
 // Reclutamiento queue actions (used by reclutamiento view)
 Route::post('/reclutamiento/recruit', [ReclutamientoController::class, 'recruit']);
+Route::post('/reclutamiento/discard', [ReclutamientoController::class, 'discard']);
 Route::post('/reclutamiento/discard-all', [ReclutamientoController::class, 'discardAll']);
 
 // Redirect old /reclutados to /equipos

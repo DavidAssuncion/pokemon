@@ -70,7 +70,7 @@ class PlayerController extends Controller
     {
         $teams = Team::with('members.reclutado.pokemon')->get();
 
-        $reclutados = Reclutado::with('pokemon')->get();
+        $reclutados = Reclutado::with('pokemon.types')->get();
 
         $teamIds = $reclutados->filter(function ($r) {
             return $r->teamMember !== null;

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Jobs\ActualizarPokedexJob;
 use App\Models\Caramelo;
 use App\Models\Reclutable;
 use App\Models\Reclutado;
@@ -30,6 +31,8 @@ class ReclutamientoController extends Controller
             'movimientos' => null,
         ]);
 
+        ActualizarPokedexJob::dispatch($reclutable->pokemon_id, 'RECLUTADO');
+
         if ($reclutable->cantidad > 1) {
             $reclutable->decrement('cantidad');
         } else {
@@ -39,10 +42,48 @@ class ReclutamientoController extends Controller
         return response()->json(['success' => true]);
     }
 
+    public function discard(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'reclutable_id' => 'required|exists:reclutables,id',
+            'cantidad' => 'required|integer|min:1',
+        ]);
+
+        $reclutable = Reclutable::with('pokemon.evolutionChain.pokemon')
+            ->findOrFail($data['reclutable_id']);
+
+        $cantidad = min((int) $data['cantidad'], $reclutable->cantidad);
+
+        $this->otorgarCaramelos([$reclutable], $cantidad);
+
+        if ($cantidad >= $reclutable->cantidad) {
+            $reclutable->delete();
+        } else {
+            $reclutable->decrement('cantidad', $cantidad);
+        }
+
+        return response()->json(['success' => true]);
+    }
+
     public function discardAll(): JsonResponse
     {
         $reclutables = Reclutable::with('pokemon.evolutionChain.pokemon')->get();
 
+        $candyRewards = $this->otorgarCaramelos($reclutables->all());
+
+        Reclutable::query()->delete();
+
+        return response()->json(['success' => true, 'candies' => $candyRewards]);
+    }
+
+    /**
+     * Award candies for the discarded pokemon: evolution phase × discarded amount.
+     *
+     * @param  array<int, Reclutable>  $reclutables
+     * @return array<int, int>
+     */
+    private function otorgarCaramelos(array $reclutables, ?int $cantidad = null): array
+    {
         $candyRewards = [];
         foreach ($reclutables as $reclutable) {
             $pokemon = $reclutable->pokemon;
@@ -54,8 +95,9 @@ class ReclutamientoController extends Controller
                 ->where('species_id', '<=', $pokemon->species_id)
                 ->count() ?? 1;
 
+            $descartados = $cantidad ?? $reclutable->cantidad;
             $chainId = $pokemon->evolution_chain_id;
-            $candyRewards[$chainId] = ($candyRewards[$chainId] ?? 0) + ($reclutable->cantidad * $phase);
+            $candyRewards[$chainId] = ($candyRewards[$chainId] ?? 0) + ($descartados * $phase);
         }
 
         foreach ($candyRewards as $chainId => $amount) {
@@ -70,8 +112,6 @@ class ReclutamientoController extends Controller
             }
         }
 
-        Reclutable::query()->delete();
-
-        return response()->json(['success' => true, 'candies' => $candyRewards]);
+        return $candyRewards;
     }
 }

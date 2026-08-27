@@ -249,3 +249,63 @@ Además, la vista llama `POST /reclutamiento/recruit` y `POST /reclutamiento/dis
 - `php artisan test --compact` (suite completa).
 - `vendor/bin/phpstan analyse` level 6.
 - `vendor/bin/pint --dirty --format agent`.
+
+---
+
+# Análisis Backend — Pokédex en recruit, discard individual, TeamController JSON, types en equipos
+
+## Qué voy a tocar
+
+### 1. `app/Http/Controllers/ReclutamientoController.php`
+- `recruit()`: tras `Reclutado::create(...)`, despachar `ActualizarPokedexJob::dispatch($reclutable->pokemon_id, 'RECLUTADO')`. Verificado el job: upsert `visto=true/atrapado=true` para RECLUTADO (con guard anti-degradación) y despacha `RecompilarHabitatJsonJob` por hábitat. Cumple lo pedido → se usa tal cual.
+- Nuevo `discard(Request): JsonResponse`:
+  - Valida `reclutable_id` (exists) + `cantidad` (required|integer|min:1).
+  - Carga `Reclutable::with('pokemon.evolutionChain.pokemon')`.
+  - Clamp: `$cantidad = min($cantidad, $reclutable->cantidad)`.
+  - Caramelos: refactor del loop de `discardAll()` a `otorgarCaramelos(array $reclutables, ?int $cantidad = null)` (privado). `discardAll` pasa `null` (usa `cantidad` completa de cada fila); `discard` pasa la cantidad clampada (fase × cantidad descartada).
+  - Descuento: si `$cantidad >= $reclutable->cantidad` → `delete()`, si no `decrement('cantidad', $cantidad)`.
+  - Retorna `{ success: true }`.
+- `discardAll()` refactorizado para reutilizar `otorgarCaramelos`.
+
+### 2. `routes/player.php`
+- `Route::post('/reclutamiento/discard', [ReclutamientoController::class, 'discard']);`
+
+### 3. `app/Http/Controllers/TeamController.php` — JSON para AJAX
+- Métodos `store/update/destroy/addMember/removeMember` → retorno `RedirectResponse|JsonResponse`.
+- Rama `$request->wantsJson()`:
+  - `store`: `Team::create()` directo con Eloquent (el repo `guardar` devuelve void y hace updateOrCreate; la interfaz no expone id — opción autorizada por la tarea) → `['team' => ['id', 'name', 'members' => []]]`.
+  - `update`: `['team' => ['id', 'name']]`.
+  - `destroy`: guard `$team->isExploring()` → 422 `['error' => 'No se puede borrar un equipo con exploraciones activas']`; éxito → `['success' => true]`. Se añade `Request` al método (route model binding + request inyectado).
+  - `addMember`: guards de negocio (equipo explorando, slot ocupado, pokémon ya en equipo) → 422 `['error' => ...]`; éxito → `['member' => ['id', 'team_id', 'pokemon_id', 'slot']]`.
+  - `removeMember`: guard equipo explorando → 422; éxito → `['success' => true]`.
+- Rama no-JSON: comportamiento actual intacto (`redirect()->back()`, con `->with('error')` en los guards — misma semántica que el código existente).
+- Validación: los errores de validación ya devuelven JSON 422 automáticamente cuando el request `expectsJson()` (front envía `Accept: application/json`).
+
+### 4. `app/Http/Controllers/PlayerController.php`
+- `equipos()`: `Reclutado::with('pokemon')` → `Reclutado::with('pokemon.types')`.
+
+### 5. Tests
+- `tests/Feature/ReclutamientoControllerTest.php` (nuevos):
+  - `test_recruit_marks_pokedex_as_seen_and_captured` — assert DB `pokedex` visto=true/atrapado=true (QUEUE_CONNECTION=sync en phpunit.xml → el job corre en el request).
+  - `test_discard_decrements_cantidad_and_awards_candies` — 5 → 2 descartados → cantidad 3 + caramelo fase×2.
+  - `test_discard_with_cantidad_above_available_clamps` — cantidad 99 sobre 3 → clamp a 3 → borra fila + caramelo fase×3.
+  - `test_discard_with_full_cantidad_deletes_record` — cantidad == disponible → fila borrada + caramelo fase×2.
+  - `test_discard_validates_cantidad` — falta cantidad → 422, fila intacta.
+- `tests/Feature/EquiposControllerTest.php` (nuevos):
+  - `test_add_member_json_returns_member_payload` — postJson → 200 + `member` shape.
+  - `test_add_member_json_rejects_slot_occupied` — 422 JSON `error`.
+  - `test_add_member_json_rejects_pokemon_already_in_team` — 422 JSON `error`.
+  - `test_destroy_json_rejects_team_with_active_exploration` — deleteJson + ExploracionActiva activa → 422 JSON + team sigue existiendo.
+  - `test_remove_member_json_returns_success` — postJson → 200 `success` + miembro borrado.
+- Tests existentes sin header JSON siguen pasando (rama redirect).
+
+## Riesgos
+- `discard` con cantidad 0 o negativa → validation `min:1` lo bloquea (422).
+- `otorgarCaramelos` con `$cantidad` param: discardAll no debe cambiar comportamiento — se verifica con tests existentes de candies.
+- `destroy` inyecta `Request` junto a `Team $team` (route model binding) — Laravel resuelve ambos.
+- PHPStan: `$request->validate()` dynamic call es categoría tolerada preexistente en el repo.
+
+## Validación
+- `php artisan test --compact tests/Feature/ReclutamientoControllerTest.php tests/Feature/EquiposControllerTest.php`
+- `php artisan test --compact` (suite completa, DB laravel_test).
+- `vendor/bin/pint --dirty --format agent`.

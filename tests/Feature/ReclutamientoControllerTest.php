@@ -111,6 +111,97 @@ class ReclutamientoControllerTest extends TestCase
         $response->assertUnprocessable()->assertJsonValidationErrors('reclutable_id');
     }
 
+    public function test_recruit_marks_pokedex_as_seen_and_captured(): void
+    {
+        $pokemon = $this->crearPokemon();
+        $reclutable = Reclutable::create(['pokemon_id' => $pokemon->id, 'cantidad' => 1]);
+
+        $response = $this->postJson('/reclutamiento/recruit', [
+            'reclutable_id' => $reclutable->id,
+        ]);
+
+        $response->assertOk()->assertJson(['success' => true]);
+        $this->assertDatabaseHas('pokedex', [
+            'pokemon_id' => $pokemon->id,
+            'visto' => true,
+            'atrapado' => true,
+        ]);
+    }
+
+    public function test_discard_decrements_cantidad_and_awards_candies(): void
+    {
+        $chain = EvolutionChain::create(['data' => '{"stages": 3}']);
+        $bulbasaur = $this->crearPokemon(1, 'bulbasaur', 1, $chain->id);
+        $ivysaur = $this->crearPokemon(2, 'ivysaur', 2, $chain->id);
+        $venusaur = $this->crearPokemon(3, 'venusaur', 3, $chain->id);
+        $reclutable = Reclutable::create(['pokemon_id' => $bulbasaur->id, 'cantidad' => 5]);
+
+        $response = $this->postJson('/reclutamiento/discard', [
+            'reclutable_id' => $reclutable->id,
+            'cantidad' => 2,
+        ]);
+
+        // fase 1 × 2 descartados = 2 caramelos
+        $response->assertOk()->assertJson(['success' => true]);
+        $this->assertDatabaseHas('reclutables', ['id' => $reclutable->id, 'cantidad' => 3]);
+        $this->assertDatabaseHas('caramelos', [
+            'evolution_chain_id' => $chain->id,
+            'cantidad' => 2,
+        ]);
+    }
+
+    public function test_discard_with_cantidad_above_available_clamps_to_available(): void
+    {
+        $chain = EvolutionChain::create(['data' => '{"stages": 1}']);
+        $bulbasaur = $this->crearPokemon(1, 'bulbasaur', 1, $chain->id);
+        $reclutable = Reclutable::create(['pokemon_id' => $bulbasaur->id, 'cantidad' => 3]);
+
+        $response = $this->postJson('/reclutamiento/discard', [
+            'reclutable_id' => $reclutable->id,
+            'cantidad' => 99,
+        ]);
+
+        // Clamp a 3 → igual a la cantidad disponible → registro eliminado, fase 1 × 3 caramelos
+        $response->assertOk()->assertJson(['success' => true]);
+        $this->assertDatabaseMissing('reclutables', ['id' => $reclutable->id]);
+        $this->assertDatabaseHas('caramelos', [
+            'evolution_chain_id' => $chain->id,
+            'cantidad' => 3,
+        ]);
+    }
+
+    public function test_discard_with_full_cantidad_deletes_record(): void
+    {
+        $chain = EvolutionChain::create(['data' => '{"stages": 1}']);
+        $bulbasaur = $this->crearPokemon(1, 'bulbasaur', 1, $chain->id);
+        $reclutable = Reclutable::create(['pokemon_id' => $bulbasaur->id, 'cantidad' => 2]);
+
+        $response = $this->postJson('/reclutamiento/discard', [
+            'reclutable_id' => $reclutable->id,
+            'cantidad' => 2,
+        ]);
+
+        $response->assertOk()->assertJson(['success' => true]);
+        $this->assertDatabaseMissing('reclutables', ['id' => $reclutable->id]);
+        $this->assertDatabaseHas('caramelos', [
+            'evolution_chain_id' => $chain->id,
+            'cantidad' => 2,
+        ]);
+    }
+
+    public function test_discard_validates_cantidad(): void
+    {
+        $pokemon = $this->crearPokemon();
+        $reclutable = Reclutable::create(['pokemon_id' => $pokemon->id, 'cantidad' => 3]);
+
+        $response = $this->postJson('/reclutamiento/discard', [
+            'reclutable_id' => $reclutable->id,
+        ]);
+
+        $response->assertUnprocessable()->assertJsonValidationErrors('cantidad');
+        $this->assertDatabaseHas('reclutables', ['id' => $reclutable->id, 'cantidad' => 3]);
+    }
+
     public function test_discard_all_awards_candies_by_evolution_phase(): void
     {
         $chain = EvolutionChain::create(['data' => '{"stages": 3}']);
