@@ -106,7 +106,7 @@
                                             <template x-if="getMember(team, slot)">
                                                 <div class="relative">
                                                     <img
-                                                        :src="'/images/iconos/' + getMember(team, slot).pokemon_id + '.png'"
+                                                        :src="'/images/iconos_webp/' + getMember(team, slot).pokemon_id + '.webp'"
                                                         loading="lazy"
                                                         decoding="async"
                                                         :alt="getMember(team, slot).nombre"
@@ -214,7 +214,7 @@
                             >
                                 <div class="w-24 h-24 mx-auto">
                                     <img
-                                        :src="'/images/iconos/' + pokemon.pokemon_id + '.png'"
+                                        :src="'/images/iconos_webp/' + pokemon.pokemon_id + '.webp'"
                                         loading="lazy"
                                         decoding="async"
                                         :alt="pokemon.nombre"
@@ -268,7 +268,7 @@
                             <div class="relative bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden text-center group opacity-60">
                                 <div class="w-24 h-24 mx-auto">
                                     <img
-                                        :src="'/images/iconos/' + pokemon.pokemon_id + '.png'"
+                                        :src="'/images/iconos_webp/' + pokemon.pokemon_id + '.webp'"
                                         loading="lazy"
                                         decoding="async"
                                         :alt="pokemon.nombre"
@@ -344,7 +344,7 @@
         >
             <div class="text-center mb-2">
                 <img
-                    :src="'/images/iconos/' + hoveredPokemon.pokemon_id + '.png'"
+                    :src="'/images/iconos_webp/' + hoveredPokemon.pokemon_id + '.webp'"
                     loading="lazy"
                     decoding="async"
                     :alt="hoveredPokemon.nombre"

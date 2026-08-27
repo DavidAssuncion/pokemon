@@ -16,7 +16,7 @@
                     <template x-for="pokemon in getPokemons(level)" :key="pokemon.id">
                         <div class="relative w-14 h-14 flex-shrink-0 group" role="listitem">
                             <img
-                                :src="'/images/iconos/' + pokemon.id + '.png'"
+                                :src="'/images/iconos_webp/' + pokemon.id + '.webp'"
                                 loading="lazy"
                                 decoding="async"
                                 :alt="pokemon.name"

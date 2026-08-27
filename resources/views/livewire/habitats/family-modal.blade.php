@@ -69,7 +69,7 @@
                                 <template x-for="family in availableFamilies" :key="family.evolution_chain_id">
                                     <div class="family-card" :class="{'opacity-50 pointer-events-none': loading}" @click="assign(family.evolution_chain_id)" role="listitem" tabindex="0" @keydown.enter.prevent="assign(family.evolution_chain_id)" @keydown.space.prevent="assign(family.evolution_chain_id)">
                                         <img
-                                            :src="'/images/iconos/' + family.base.id + '.png'"
+                                            :src="'/images/iconos_webp/' + family.base.id + '.webp'"
                                             loading="lazy"
                                             decoding="async"
                                             :alt="family.base.name"
@@ -89,7 +89,7 @@
                                 <template x-for="family in unassignedFamilies" :key="family.evolution_chain_id">
                                     <div class="family-card" :class="{'opacity-50 pointer-events-none': loading}" @click="assign(family.evolution_chain_id)" role="listitem" tabindex="0" @keydown.enter.prevent="assign(family.evolution_chain_id)" @keydown.space.prevent="assign(family.evolution_chain_id)">
                                         <img
-                                            :src="'/images/iconos/' + family.base.id + '.png'"
+                                            :src="'/images/iconos_webp/' + family.base.id + '.webp'"
                                             loading="lazy"
                                             decoding="async"
                                             :alt="family.base.name"
@@ -124,7 +124,7 @@
                                 <template x-for="family in assignedFamilies" :key="family.evolution_chain_id">
                                     <div class="family-card border-red-200 dark:border-red-800 hover:border-red-400 dark:hover:border-red-500" :class="{'opacity-50 pointer-events-none': loading}" @click="remove(family.evolution_chain_id)" role="listitem" tabindex="0" @keydown.enter.prevent="remove(family.evolution_chain_id)" @keydown.space.prevent="remove(family.evolution_chain_id)">
                                         <img
-                                            :src="'/images/iconos/' + family.base.id + '.png'"
+                                            :src="'/images/iconos_webp/' + family.base.id + '.webp'"
                                             loading="lazy"
                                             decoding="async"
                                             :alt="family.base.name"
@@ -159,7 +159,7 @@
                                 <template x-for="pokemon in (levelPreview[level] || [])" :key="pokemon.id">
                                     <div class="relative w-14 h-14 flex-shrink-0" role="listitem">
                                         <img
-                                            :src="'/images/iconos/' + pokemon.id + '.png'"
+                                            :src="'/images/iconos_webp/' + pokemon.id + '.webp'"
                                             loading="lazy"
                                             decoding="async"
                                             :alt="pokemon.name"

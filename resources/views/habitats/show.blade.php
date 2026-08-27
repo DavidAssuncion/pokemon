@@ -157,7 +157,7 @@
                                         @if(isset($team->members[$i]))
                                             <div class="flex-1 text-center">
                                                 <img
-                                                    src="/images/iconos/{{ $team->members[$i]->reclutado->pokemon_id }}.png"
+                                                    src="/images/iconos_webp/{{ $team->members[$i]->reclutado->pokemon_id }}.webp"
                                                     loading="lazy"
                                                     decoding="async"
                                                     alt="{{ $team->members[$i]->reclutado->nombre ?? '' }}"

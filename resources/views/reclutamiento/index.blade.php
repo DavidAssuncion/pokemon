@@ -32,7 +32,7 @@
                         <!-- Image -->
                         <div class="w-32 h-32 mx-auto relative">
                             <img
-                                :src="'/images/iconos/' + item.pokemon_id + '.png'"
+                                :src="'/images/iconos_webp/' + item.pokemon_id + '.webp'"
                                 loading="lazy"
                                 decoding="async"
                                 :alt="item.nombre"
