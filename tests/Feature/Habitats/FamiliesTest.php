@@ -8,6 +8,7 @@ use App\Models\EvolutionChain;
 use App\Models\Habitat;
 use App\Models\Pokemon;
 use App\Models\PokemonEvolution;
+use App\Models\Province;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
@@ -25,7 +26,8 @@ class FamiliesTest extends TestCase
     {
         parent::setUp();
 
-        // Create habitat
+        // Create province and habitat
+        Province::create(['id' => 1, 'name' => 'Kanto']);
         $habitat = Habitat::create([
             'id' => 1,
             'name' => 'Bosque',

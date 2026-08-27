@@ -3,8 +3,7 @@
 @section('title', 'Reclutamiento')
 
 @section('content')
-<div class="min-h-screen bg-gray-50 dark:bg-gray-900" x-data="reclutamientoApp()" x-init="init()">
-    <div class="max-w-6xl mx-auto px-4 py-8">
+<div x-data="reclutamientoApp()" x-init="init()">
         <!-- Header -->
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
             <div>
@@ -69,7 +68,6 @@
                 <p class="text-gray-400 dark:text-gray-500 text-sm mt-1">Explora hábitats para capturar Pokémon</p>
             </div>
         </template>
-    </div>
 
     <!-- Confirm Discard All Modal -->
     <template x-if="showDiscardModal">

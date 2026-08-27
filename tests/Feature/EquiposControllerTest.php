@@ -125,10 +125,10 @@ class EquiposControllerTest extends TestCase
         $this->assertDatabaseMissing('team_members', ['id' => $member->id]);
     }
 
-    public function test_reclutados_index_returns_200(): void
+    public function test_reclutados_redirects_to_equipos(): void
     {
         $response = $this->get('/reclutados');
 
-        $response->assertStatus(200);
+        $response->assertRedirect('/equipos');
     }
 }

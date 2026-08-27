@@ -3,8 +3,7 @@
 @section('title', 'Pokédex')
 
 @section('content')
-<div class="min-h-screen bg-gray-50 dark:bg-gray-900" x-data="pokedexApp()" x-init="init()">
-    <div class="max-w-7xl mx-auto px-4 py-8">
+<div x-data="pokedexApp()" x-init="init()">
         <!-- Header -->
         <div class="mb-6">
             <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Pokédex</h1>
@@ -108,7 +107,6 @@
                 <p class="text-gray-500 dark:text-gray-400">No se encontraron Pokémon</p>
             </div>
         </template>
-    </div>
 
     <!-- Detail Modal -->
     <template x-if="showModal && selectedPokemon">

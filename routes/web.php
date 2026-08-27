@@ -17,7 +17,8 @@ Route::get('/cruds', [DashboardController::class, 'cruds'])->name('cruds');
 
 //Route::get('/combate', \App\Livewire\Combate::class);
 
-require __DIR__.'/reclutados.php';
+// Reclutados merged into Equipos — old /reclutados redirects to /equipos (see player.php)
+// require __DIR__.'/reclutados.php';
 require __DIR__.'/habitats.php';
 require __DIR__.'/player.php';
 require __DIR__.'/exploraciones.php';

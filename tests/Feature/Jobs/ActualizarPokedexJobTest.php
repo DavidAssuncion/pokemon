@@ -97,7 +97,8 @@ class ActualizarPokedexJobTest extends TestCase
     {
         Queue::fake();
 
-        ActualizarPokedexJob::dispatch($this->pokemonId, 'AVISTADO');
+        $job = new ActualizarPokedexJob($this->pokemonId, 'AVISTADO');
+        $job->handle();
 
         Queue::assertPushed(RecompilarHabitatJsonJob::class, 1);
     }

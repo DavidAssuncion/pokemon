@@ -3,8 +3,7 @@
 @section('title', 'Equipos')
 
 @section('content')
-<div class="min-h-screen bg-gray-50 dark:bg-gray-900" x-data="equiposApp()" x-init="init()">
-    <div class="max-w-7xl mx-auto px-4 py-8">
+<div x-data="equiposApp()" x-init="init()">
         <!-- Header -->
         <div class="mb-6">
             <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Gestión de Equipos</h1>
@@ -129,7 +128,7 @@
                                                     <div class="w-12 h-12 mx-auto rounded border-2 border-dashed border-gray-300 dark:border-gray-600 flex items-center justify-center">
                                                         <span class="text-gray-300 dark:text-gray-600 text-lg">+</span>
                                                     </div>
-                                                    <p class="text-[10px] text-gray-400 dark:text-gray-500 mt-0.5">Slot {{ slot }}</p>
+                                                    <p class="text-[10px] text-gray-400 dark:text-gray-500 mt-0.5">Slot <span x-text="slot"></span></p>
                                                 </div>
                                             </template>
                                         </div>
@@ -251,9 +250,7 @@
                         <!-- Empty available -->
                         <template x-if="availablePokemons.length === 0">
                             <div class="col-span-full text-center py-8">
-                                <p class="text-sm text-gray-400 dark:text-gray-500">
-                                    {{ searchQuery || typeFilter ? 'No se encontraron Pokémon' : 'No hay Pokémon disponibles para asignar' }}
-                                </p>
+                                <p class="text-sm text-gray-400 dark:text-gray-500" x-text="searchQuery || typeFilter ? 'No se encontraron Pokémon' : 'No hay Pokémon disponibles para asignar'"></p>
                             </div>
                         </template>
                     </div>
@@ -298,7 +295,6 @@
                 </div>
             </div>
         </div>
-    </div>
 
     <!-- Confirm Delete Team Modal -->
     <template x-if="showDeleteModal">

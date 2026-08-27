@@ -3,8 +3,7 @@
 @section('title', 'Hábitat - ' . ($habitat['name'] ?? ''))
 
 @section('content')
-<div class="min-h-screen bg-gray-50 dark:bg-gray-900" x-data="habitatShow()" x-init="init()">
-    <div class="max-w-7xl mx-auto px-4 py-8">
+<div x-data="habitatShow()" x-init="init()">
         <!-- Top Section: 3 columns -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
             <!-- Left: Back + Name -->
@@ -296,7 +295,6 @@
                 </div>
             </div>
         </div>
-    </div>
 
     <!-- Exploration Modal -->
     <template x-if="showExplorationModal">

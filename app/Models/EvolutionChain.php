@@ -13,6 +13,7 @@ class EvolutionChain extends Model
     protected $table = 'evolution_chains';
 
     protected $fillable = [
+        'id',
         'data',
     ];
 
