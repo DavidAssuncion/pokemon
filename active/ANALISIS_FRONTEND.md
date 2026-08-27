@@ -1,36 +1,46 @@
-# Análisis Frontend — Grid hábitats 8/row + reestructura show.blade.php (teams+niveles en 2/3)
+# Análisis Frontend — Fix imágenes pokémon en equipos/index.blade.php
 
 ## Vistas a tocar
 
-### 1. `resources/views/habitats/index.blade.php`
-- Grid de hábitats: `grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5` → `grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8` (8 por fila en xl).
-- Nombre del hábitat centrado: añadir `text-center` al `<p>` del nombre.
-- Resto intacto: tabs Alpine, cards `aspect-square` 300x300, dark mode, onerror.
+### `resources/views/equipos/index.blade.php` (única vista afectada)
 
-### 2. `resources/views/habitats/show.blade.php`
-- El grid superior (`lg:grid-cols-3` con back/título/imagen + botones construcción en fila) y el grid inferior (Equipos 1/3 + Niveles 2/3) se fusionan en UN solo `grid lg:grid-cols-3 gap-6`:
-  - **Izquierda 1/3** (`space-y-4`): back link, título, card imagen `w-fit` (sin cambios), y los 3 botones de construcción (Granjas/Entrenadores/Mazmorras) **apilados verticalmente** (`w-full`, `space-y-3`), conservando estado disabled + `title` + aviso naranja cuando `$bloqueadoConstruccion`.
-  - **Derecha 2/3** (`lg:col-span-2 space-y-6`): lista de exploraciones activas (se mantiene visible, encima del panel de equipos), panel **Equipos** con grid de cards `grid sm:grid-cols-2 gap-3` (misma card, iconos miembros `w-10 h-10` → `w-8 h-8` para compactar), empty state "No hay equipos creados" con `sm:col-span-2`, y debajo panel **Niveles** con las 3 filas clickeables (comportamiento intacto: selectLevel, highlight azul, overlay "?" no avistado, counts).
-  - Se añade título de panel ("Equipos" / "Niveles") al header de cada panel según el diagrama del Arquitecto; se conserva el subtítulo existente.
-  - El botón fallback "Iniciar Exploración" (usa `checkAndOpenModal()` + `canStartExploration`) se conserva al final de la columna 2/3 para no perder funcionalidad.
-- El modal de exploración y el script `habitatShow()` con TODOS sus métodos quedan **intactos** (`selectTeam`, `selectLevel`, `checkAndOpenModal`, `isSighted`, `confirmExploration`, getters, etc.).
+4 `<img>` con `:src="'/images/iconos/' + ..."`:
+
+1. **Icono miembro de equipo** (columna izquierda, dentro de card de equipo, ~línea 108):
+   - Actual: `class="w-12 h-12 object-contain mx-auto rounded bg-gray-100 dark:bg-gray-900"` → 48px + fondo + rounded.
+   - Fix: `class="w-24 h-24 object-contain mx-auto"` (patrón exacto de habitats/show.blade.php línea 168).
+   - Acompañante: placeholder de slot vacío `w-12 h-12` → `w-24 h-24` (mismo patrón que habitats/show línea 177).
+
+2. **Pokémon disponible** (columna derecha, grid "Reclutados Disponibles", ~línea 214):
+   - `<img class="w-full h-full object-contain">` dentro de `<div class="aspect-square p-1.5">`.
+   - La imagen se renderiza al tamaño de la celda del grid (58px en lg con 10 columnas) → por debajo de 96px.
+   - Fix: wrapper → `<div class="w-24 h-24 mx-auto">` (mismo patrón que habitats/show líneas 217-224), img se mantiene `w-full h-full object-contain` → exactamente 96px.
+   - Grid: `grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10` → celdas < 96px en todos los breakpoints. Nueva cadena con celdas ≥ 96px (verificado por cálculo de anchos):
+     `grid-cols-3 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-6 xl:grid-cols-7 2xl:grid-cols-9`
+     - base 343px: 3 cols → 109px ✓ | sm 608: 5 → 115 ✓ | md 736: 6 → 116 ✓
+     - lg (col 2/3 ≈ 653px): 6 → 102 ✓ | xl (≈813px): 7 → 109 ✓ | 2xl (≈984px): 9 → 102 ✓
+
+3. **Pokémon asignado** (columna derecha, grid "Asignados", ~línea 266):
+   - Mismo fix que #2 (wrapper `w-24 h-24 mx-auto` + misma cadena de columnas).
+   - CONSERVAR `grayscale` (filtro gris de asignados) y `opacity-60` de la card.
+
+4. **Tooltip hover** (modal tooltip de stats, ~línea 340):
+   - `class="w-16 h-16 object-contain mx-auto"` (64px) → `class="w-24 h-24 object-contain mx-auto"` (96px, cabe en card w-56).
 
 ## DTOs consumidos
-- `$habitat` (id, name, image, levels), `$exploracionesActivas`, `$teams`, `$equiposEnExploracion`, `$sightedPokemonIds` — mismo shape actual, **sin cambios backend**.
+- Ninguno nuevo; se conservan todos los bindings Alpine (`:src`, `x-for`, `getMember`, `onerror`, etc.).
 
 ## Tests
-- No hay Dusk en el proyecto (solo `tests/Feature` + `tests/Unit`); ningún test referencia las vistas de hábitats ni las clases del grid.
-- Verificación: `php artisan view:cache`, `vendor/bin/pint --dirty --format agent`, grep de bindings Alpine (`selectTeam`, `selectLevel`, `checkAndOpenModal`, `canStartExploration`, `isSighted`) presentes en la vista.
+- Sin Dusk en el proyecto. Verificación: `php artisan view:cache`, grep de clases eliminadas, `vendor/bin/pint --dirty --format agent`.
 
 ## Estados UI a cubrir
-- **Grid 8/row**: 8 cards por fila en xl, 6 en lg, 4 md, 3 sm, 2 base.
-- **Nombre centrado**: `text-center` en el `<p>` del card.
-- **Show — columna 1/3**: botones apilados `w-full`; disabled con `opacity-50 cursor-not-allowed` + tooltip lock + aviso naranja; imagen `w-auto` sin romper layout.
-- **Show — columna 2/3**: 2 columnas de teams en sm+, empty state centrado a todo el ancho, filas de nivel clickeables con overlay "?" para no avistados, botón fallback habilitado solo con equipo+nivel seleccionados.
-- **Modal auto-open**: seleccionar equipo + nivel abre el modal con las 3 opciones de duración.
+- Imagen disponible/asignada: 96px transparente sin borde; hover overlay intacto.
+- Asignados: 96px + `grayscale` + card `opacity-60`.
+- Miembro de equipo: 96px sin fondo; placeholder vacío 96px con borde dashed.
+- Tooltip: 96px centrado.
+- `onerror` (ocultar imagen si no existe) intacto en todas.
 
 ## Riesgos accesibilidad/UX
-- Las cards de equipo en 2 columnas son más estrechas: se compactan iconos (w-8) y se mantiene `truncate` en nombres; `min-w` no aplica (grid colapsa correctamente).
-- El botón fallback queda al final de la columna derecha; su estado `:disabled` depende de `canStartExploration` (getter existente, sin cambios).
-- El overlay "?" conserva `rounded` sobre img sin `rounded` (fuera de alcance, ya anotado).
-- Sin `aria-selected` dinámico en tabs de index (ya anotado en análisis previo para QA).
+- Celdas < 96px solo en pantallas < 336px (celda 90px, recorte ~5px del box de 96px, tolerado; pokedex ya tiene iconos < 96px en 320px).
+- La cadena de columnas del grid cambia densidad (lg: 10 → 6), necesario para cumplir mínimo 96px.
+- No tocar cards (`bg-white dark:bg-gray-800`, bordes) ni botones ni modales: son elementos NO-imagen y deben conservar sus fondos.

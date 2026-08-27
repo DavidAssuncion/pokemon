@@ -109,7 +109,7 @@
                                                         :src="'/images/iconos/' + getMember(team, slot).pokemon_id + '.png'"
                                                         :alt="getMember(team, slot).nombre"
                                                         :title="getMember(team, slot).nombre"
-                                                        class="w-12 h-12 object-contain mx-auto rounded bg-gray-100 dark:bg-gray-900"
+                                                        class="w-24 h-24 object-contain mx-auto"
                                                         onerror="this.style.display='none'"
                                                     >
                                                     <button
@@ -125,7 +125,7 @@
                                             </template>
                                             <template x-if="!getMember(team, slot)">
                                                 <div>
-                                                    <div class="w-12 h-12 mx-auto rounded border-2 border-dashed border-gray-300 dark:border-gray-600 flex items-center justify-center">
+                                                    <div class="w-24 h-24 mx-auto rounded border-2 border-dashed border-gray-300 dark:border-gray-600 flex items-center justify-center">
                                                         <span class="text-gray-300 dark:text-gray-600 text-lg">+</span>
                                                     </div>
                                                     <p class="text-[10px] text-gray-400 dark:text-gray-500 mt-0.5">Slot <span x-text="slot"></span></p>
@@ -204,13 +204,13 @@
                 <!-- Available Pokemon Section -->
                 <div>
                     <h2 class="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">Reclutados Disponibles</h2>
-                    <div class="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 gap-2">
+                    <div class="grid grid-cols-3 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-6 xl:grid-cols-7 2xl:grid-cols-9 gap-2">
                         <template x-for="pokemon in availablePokemons" :key="pokemon.id">
                             <div
                                 class="relative bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden text-center group"
                                 x-data="{ showTeamDropdown: false }"
                             >
-                                <div class="aspect-square p-1.5">
+                                <div class="w-24 h-24 mx-auto">
                                     <img
                                         :src="'/images/iconos/' + pokemon.pokemon_id + '.png'"
                                         :alt="pokemon.nombre"
@@ -259,10 +259,10 @@
                 <!-- Assigned Pokemon Section -->
                 <div>
                     <h2 class="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">Asignados</h2>
-                    <div class="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 gap-2">
+                    <div class="grid grid-cols-3 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-6 xl:grid-cols-7 2xl:grid-cols-9 gap-2">
                         <template x-for="pokemon in assignedPokemons" :key="pokemon.id">
                             <div class="relative bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden text-center group opacity-60">
-                                <div class="aspect-square p-1.5">
+                                <div class="w-24 h-24 mx-auto">
                                     <img
                                         :src="'/images/iconos/' + pokemon.pokemon_id + '.png'"
                                         :alt="pokemon.nombre"
@@ -340,7 +340,7 @@
                 <img
                     :src="'/images/iconos/' + hoveredPokemon.pokemon_id + '.png'"
                     :alt="hoveredPokemon.nombre"
-                    class="w-16 h-16 object-contain mx-auto"
+                    class="w-24 h-24 object-contain mx-auto"
                 >
                 <p class="text-sm font-medium text-gray-900 dark:text-white mt-1" x-text="hoveredPokemon.nombre"></p>
                 <p class="text-xs text-gray-400 dark:text-gray-500" x-text="'#' + hoveredPokemon.pokemon_id"></p>
