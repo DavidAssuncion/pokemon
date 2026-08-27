@@ -8,7 +8,7 @@ use Src\Battle\Domain\Posicion;
 use Src\Pokemon\Domain\PokemonEntity;
 
 /**
- * DTO para los datos de un equipo en IniciarBatalla.
+ * DTO para los datos de un equipo de batalla.
  * Reemplaza el array asociativo sin contrato.
  */
 class DTOEquipoBatalla

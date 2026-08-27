@@ -17,8 +17,6 @@ use Src\Equipos\Domain\TeamRepositoryInterface;
 use Src\Equipos\Infra\EloquentTeamRepository;
 use Src\Habitats\Domain\Repositories\HabitatRepositoryInterface;
 use Src\Habitats\Infra\HabitatRepository;
-use Src\Reclutamiento\Domain\ReclutamientoRepositoryInterface;
-use Src\Reclutamiento\Infra\EloquentReclutamientoRepository;
 use Src\Shared\Bus\CommandBus;
 use Src\Shared\Bus\UnitOfWork;
 use Src\Shared\Domain\NivelHelper;
@@ -31,7 +29,6 @@ class AppServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->app->bind(TeamRepositoryInterface::class, EloquentTeamRepository::class);
-        $this->app->bind(ReclutamientoRepositoryInterface::class, EloquentReclutamientoRepository::class);
         $this->app->bind(FabricaBatallaInterface::class, FabricaBatallaMock::class);
         $this->app->bind(HabitatRepositoryInterface::class, HabitatRepository::class);
         $this->app->bind(WebpConverterInterface::class, WebpConverter::class);

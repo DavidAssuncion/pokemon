@@ -15,10 +15,10 @@ Route::get('/iconos/shiny/{filename}', [IconoController::class, 'shiny']);
 
 Route::get('/cruds', [DashboardController::class, 'cruds'])->name('cruds');
 
+// Combate archivado — ver src/Battle/
 //Route::get('/combate', \App\Livewire\Combate::class);
 
 // Reclutados merged into Equipos — old /reclutados redirects to /equipos (see player.php)
-// require __DIR__.'/reclutados.php';
 require __DIR__.'/habitats.php';
 require __DIR__.'/player.php';
 require __DIR__.'/exploraciones.php';

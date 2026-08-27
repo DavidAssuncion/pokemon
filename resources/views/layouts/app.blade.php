@@ -25,7 +25,6 @@
                             ['route' => '/exploraciones', 'label' => 'Exploraciones'],
                             ['route' => '/equipos', 'label' => 'Equipos'],
                             ['route' => '/reclutamiento', 'label' => 'Reclutamiento'],
-                            ['route' => '/combate', 'label' => 'Combate'],
                         ];
                     @endphp
                     @foreach($navItems as $item)

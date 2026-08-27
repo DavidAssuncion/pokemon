@@ -21,7 +21,6 @@
                 ['route' => '/habitats', 'icon' => '🌿', 'label' => 'Hábitats', 'active' => request()->is('habitats*')],
                 ['route' => '/equipos', 'icon' => '👥', 'label' => 'Equipos', 'active' => request()->is('equipos*')],
                 ['route' => '/reclutamiento', 'icon' => '🎯', 'label' => 'Reclutamiento', 'active' => request()->is('reclutamiento*')],
-                ['route' => '/combate', 'icon' => '⚔️', 'label' => 'Combate', 'active' => request()->is('combate*')],
             ];
         @endphp
 
