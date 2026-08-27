@@ -76,9 +76,9 @@ class PokedexViewTest extends TestCase
     {
         $pokemons = [
             'data' => [
-                ['id' => 1, 'name' => 'bulbasaur', 'visto' => true, 'atrapado' => true, 'types' => ['Planta'], 'icon' => '/images/iconos/1.webp'],
-                ['id' => 2, 'name' => 'ivysaur', 'visto' => false, 'atrapado' => false, 'types' => ['Planta'], 'icon' => '/images/iconos/2.webp'],
-                ['id' => 3, 'name' => 'venusaur', 'visto' => false, 'atrapado' => false, 'types' => ['Planta'], 'icon' => '/images/iconos/3.webp'],
+                ['id' => 1, 'name' => 'bulbasaur', 'visto' => true, 'atrapado' => true, 'types' => ['Planta'], 'icon' => '/images/iconos_webp/1.webp'],
+                ['id' => 2, 'name' => 'ivysaur', 'visto' => false, 'atrapado' => false, 'types' => ['Planta'], 'icon' => '/images/iconos_webp/2.webp'],
+                ['id' => 3, 'name' => 'venusaur', 'visto' => false, 'atrapado' => false, 'types' => ['Planta'], 'icon' => '/images/iconos_webp/3.webp'],
             ],
             'meta' => [
                 'total' => 3,
@@ -100,5 +100,9 @@ class PokedexViewTest extends TestCase
         $view->assertSee('Eléctrico', false);
         // Los contadores del header vienen de meta.counts
         $view->assertSee('counts.vistos', false);
+        // Fallback de icono EXPLÍCITO a la carpeta PNG: los PNG viven en /images/iconos/,
+        // nunca se deriva la ruta desde el webp (/images/iconos_webp/{id}.png -> 404)
+        $view->assertSee("'/images/iconos/' + pokemon.id + '.png'", false);
+        $view->assertDontSee("'/images/iconos_webp/' + pokemon.id + '.png'", false);
     }
 }
