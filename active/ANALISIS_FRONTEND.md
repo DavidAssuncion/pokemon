@@ -1,41 +1,36 @@
-# Análisis Frontend — Layout full-width con nav centrado + grid hábitats 5/row + restructura show.blade.php
+# Análisis Frontend — Grid hábitats 8/row + reestructura show.blade.php (teams+niveles en 2/3)
 
 ## Vistas a tocar
 
-### 1. `resources/views/layouts/app.blade.php`
-- Quitar el link logo "🎮 Pokemon" (no existe en el markup actual: el logo ya no está; confirmar solo nav links).
-- Contenedor header: `max-w-7xl mx-auto px-4` → `px-4 sm:px-6` (full width, sin boxed).
-- `<main>`: `max-w-7xl mx-auto px-4 py-6` → `px-4 sm:px-6 py-6`.
-- Nav: `justify-between` → `justify-center`; el wrapper de links queda centrado.
-- Toggle dark: sale del wrapper de links y pasa a `absolute right-0 top-1/2 -translate-y-1/2` dentro del nav `relative` (el nav ya vive dentro del contenedor con `px-4 sm:px-6`, así `right-0` lo alinea con el borde del contenido).
-- Se conservan: flash messages, `@vite`, script anti-flash dark mode, `[x-cloak]`, `@stack('scripts')`.
-
-### 2. `resources/views/habitats/index.blade.php`
-- Grid de hábitats: `grid-cols-1 sm:grid-cols-2 lg:grid-cols-3` → `grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5` (5 por fila en desktop).
+### 1. `resources/views/habitats/index.blade.php`
+- Grid de hábitats: `grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5` → `grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8` (8 por fila en xl).
+- Nombre del hábitat centrado: añadir `text-center` al `<p>` del nombre.
 - Resto intacto: tabs Alpine, cards `aspect-square` 300x300, dark mode, onerror.
 
-### 3. `resources/views/habitats/show.blade.php`
-- Sección superior apilada → grid `lg:grid-cols-3`:
-  - Izquierda 1/3: back link, título, imagen auto-sized (`w-fit` + `w-auto h-auto max-w-full` en un card con `p-3`).
-  - Derecha 2/3: 3 botones construcción (Granjas/Entrenadores/Mazmorras) en fila `flex flex-wrap` con `flex-1 min-w-[200px]`, estado disabled + `title` lock cuando `$bloqueadoConstruccion`, y aviso naranja `text-xs`.
-- Abajo se conserva: lista exploraciones activas, grid `lg:grid-cols-3` (Equipos 1/3 + Niveles 2/3), modal auto-open, script `habitatShow()`.
-- Iconos pokémon (Niveles y Equipos): quitar fondo/borde → `w-full h-full object-contain` / `w-10 h-10 object-contain mx-auto` (PNGs transparentes). Mantener overlay "?" de no avistado.
+### 2. `resources/views/habitats/show.blade.php`
+- El grid superior (`lg:grid-cols-3` con back/título/imagen + botones construcción en fila) y el grid inferior (Equipos 1/3 + Niveles 2/3) se fusionan en UN solo `grid lg:grid-cols-3 gap-6`:
+  - **Izquierda 1/3** (`space-y-4`): back link, título, card imagen `w-fit` (sin cambios), y los 3 botones de construcción (Granjas/Entrenadores/Mazmorras) **apilados verticalmente** (`w-full`, `space-y-3`), conservando estado disabled + `title` + aviso naranja cuando `$bloqueadoConstruccion`.
+  - **Derecha 2/3** (`lg:col-span-2 space-y-6`): lista de exploraciones activas (se mantiene visible, encima del panel de equipos), panel **Equipos** con grid de cards `grid sm:grid-cols-2 gap-3` (misma card, iconos miembros `w-10 h-10` → `w-8 h-8` para compactar), empty state "No hay equipos creados" con `sm:col-span-2`, y debajo panel **Niveles** con las 3 filas clickeables (comportamiento intacto: selectLevel, highlight azul, overlay "?" no avistado, counts).
+  - Se añade título de panel ("Equipos" / "Niveles") al header de cada panel según el diagrama del Arquitecto; se conserva el subtítulo existente.
+  - El botón fallback "Iniciar Exploración" (usa `checkAndOpenModal()` + `canStartExploration`) se conserva al final de la columna 2/3 para no perder funcionalidad.
+- El modal de exploración y el script `habitatShow()` con TODOS sus métodos quedan **intactos** (`selectTeam`, `selectLevel`, `checkAndOpenModal`, `isSighted`, `confirmExploration`, getters, etc.).
 
 ## DTOs consumidos
-- `$habitat` (array: id, name, image, levels), `$provincias`, `$exploracionesActivas`, `$teams`, `$equiposEnExploracion`, `$sightedPokemonIds` — mismo shape actual, **sin cambios backend**.
+- `$habitat` (id, name, image, levels), `$exploracionesActivas`, `$teams`, `$equiposEnExploracion`, `$sightedPokemonIds` — mismo shape actual, **sin cambios backend**.
 
 ## Tests
-- No hay Dusk en el proyecto. Cambio puramente de presentación.
-- Verificación: `php artisan view:cache`, grep de `max-w-7xl` en layout y `bg-gray-100 dark:bg-gray-800` en imgs de show.blade.php, `vendor/bin/pint --dirty`.
+- No hay Dusk en el proyecto (solo `tests/Feature` + `tests/Unit`); ningún test referencia las vistas de hábitats ni las clases del grid.
+- Verificación: `php artisan view:cache`, `vendor/bin/pint --dirty --format agent`, grep de bindings Alpine (`selectTeam`, `selectLevel`, `checkAndOpenModal`, `canStartExploration`, `isSighted`) presentes en la vista.
 
 ## Estados UI a cubrir
-- **Nav**: links centrados, active azul, `whitespace-nowrap` + `overflow-x-auto` móvil, toggle visible a la derecha (absolute) en cualquier ancho.
-- **Grid 5/row**: 5 cards por fila en lg+, 2/3/4 en pantallas menores.
-- **Show top**: imagen auto-sized sin romper layout (max-w-full evita overflow), botones disabled con `opacity-50` + tooltip lock, aviso naranja.
-- **Iconos**: sin fondo/borde, overlay "?" para no avistados se mantiene.
+- **Grid 8/row**: 8 cards por fila en xl, 6 en lg, 4 md, 3 sm, 2 base.
+- **Nombre centrado**: `text-center` en el `<p>` del card.
+- **Show — columna 1/3**: botones apilados `w-full`; disabled con `opacity-50 cursor-not-allowed` + tooltip lock + aviso naranja; imagen `w-auto` sin romper layout.
+- **Show — columna 2/3**: 2 columnas de teams en sm+, empty state centrado a todo el ancho, filas de nivel clickeables con overlay "?" para no avistados, botón fallback habilitado solo con equipo+nivel seleccionados.
+- **Modal auto-open**: seleccionar equipo + nivel abre el modal con las 3 opciones de duración.
 
 ## Riesgos accesibilidad/UX
-- El toggle absolute puede solaparse con links en móvil muy estrecho (mitigado por `overflow-x-auto` en el wrapper).
-- Imagen de hábitat en show puede ser grande: `max-w-full` la limita al ancho del card `w-fit`.
-- El overlay "?" conserva `rounded` sobre img sin `rounded` (solo visible sobre PNG transparente; sin impacto visual, fuera de alcance).
+- Las cards de equipo en 2 columnas son más estrechas: se compactan iconos (w-8) y se mantiene `truncate` en nombres; `min-w` no aplica (grid colapsa correctamente).
+- El botón fallback queda al final de la columna derecha; su estado `:disabled` depende de `canStartExploration` (getter existente, sin cambios).
+- El overlay "?" conserva `rounded` sobre img sin `rounded` (fuera de alcance, ya anotado).
 - Sin `aria-selected` dinámico en tabs de index (ya anotado en análisis previo para QA).

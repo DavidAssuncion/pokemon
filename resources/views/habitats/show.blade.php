@@ -4,10 +4,10 @@
 
 @section('content')
 <div x-data="habitatShow()" x-init="init()">
-        <!-- Top Section: 1/3 (back/title/image) + 2/3 (construction buttons) -->
-        <div class="grid lg:grid-cols-3 gap-6 mb-6">
-            <!-- Left 1/3: Back, Title, Image (auto size) -->
-            <div class="space-y-3">
+        <!-- Main: Left 1/3 (back/title/image/construction) + Right 2/3 (explorations/teams/levels) -->
+        <div class="grid lg:grid-cols-3 gap-6">
+            <!-- Left 1/3: Back, Title, Image (auto size), stacked construction buttons -->
+            <div class="space-y-4">
                 <a href="/habitats" class="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 text-sm font-medium transition-colors inline-flex items-center gap-1">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
@@ -24,19 +24,17 @@
                         onerror="this.style.display='none'"
                     >
                 </div>
-            </div>
 
-            <!-- Right 2/3: Construction buttons -->
-            <div class="lg:col-span-2 flex flex-col justify-start gap-3">
+                <!-- Construction buttons (stacked, full width) -->
                 @php
                     $bloqueadoConstruccion = $exploracionesActivas && $exploracionesActivas->count() > 0;
                 @endphp
-                <div class="flex flex-wrap gap-3">
+                <div class="space-y-3">
                     <button
                         @click="{{ $bloqueadoConstruccion ? '' : "alert('Función próximamente')" }}"
                         {{ $bloqueadoConstruccion ? 'disabled' : '' }}
                         @if($bloqueadoConstruccion) title="No disponible durante exploraciones activas" @endif
-                        class="flex-1 min-w-[200px] px-4 py-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-sm font-medium text-gray-700 dark:text-gray-300 transition-colors flex items-center justify-center gap-2 {{ $bloqueadoConstruccion ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-50 dark:hover:bg-gray-700' }}"
+                        class="w-full px-4 py-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-sm font-medium text-gray-700 dark:text-gray-300 transition-colors flex items-center justify-center gap-2 {{ $bloqueadoConstruccion ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-50 dark:hover:bg-gray-700' }}"
                     >
                         <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-4 0a1 1 0 01-1-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 01-1 1"/>
@@ -47,7 +45,7 @@
                         @click="{{ $bloqueadoConstruccion ? '' : "alert('Función próximamente')" }}"
                         {{ $bloqueadoConstruccion ? 'disabled' : '' }}
                         @if($bloqueadoConstruccion) title="No disponible durante exploraciones activas" @endif
-                        class="flex-1 min-w-[200px] px-4 py-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-sm font-medium text-gray-700 dark:text-gray-300 transition-colors flex items-center justify-center gap-2 {{ $bloqueadoConstruccion ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-50 dark:hover:bg-gray-700' }}"
+                        class="w-full px-4 py-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-sm font-medium text-gray-700 dark:text-gray-300 transition-colors flex items-center justify-center gap-2 {{ $bloqueadoConstruccion ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-50 dark:hover:bg-gray-700' }}"
                     >
                         <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
@@ -58,7 +56,7 @@
                         @click="{{ $bloqueadoConstruccion ? '' : "alert('Función próximamente')" }}"
                         {{ $bloqueadoConstruccion ? 'disabled' : '' }}
                         @if($bloqueadoConstruccion) title="No disponible durante exploraciones activas" @endif
-                        class="flex-1 min-w-[200px] px-4 py-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-sm font-medium text-gray-700 dark:text-gray-300 transition-colors flex items-center justify-center gap-2 {{ $bloqueadoConstruccion ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-50 dark:hover:bg-gray-700' }}"
+                        class="w-full px-4 py-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-sm font-medium text-gray-700 dark:text-gray-300 transition-colors flex items-center justify-center gap-2 {{ $bloqueadoConstruccion ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-50 dark:hover:bg-gray-700' }}"
                     >
                         <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
@@ -72,143 +70,134 @@
                 </p>
                 @endif
             </div>
-        </div>
 
-        <!-- Active Explorations List -->
-        @if($exploracionesActivas && $exploracionesActivas->count() > 0)
-        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 mb-6 overflow-hidden">
-            <div class="px-4 py-3 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
-                <h3 class="text-sm font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-                    <svg class="w-4 h-4 text-yellow-500" fill="currentColor" viewBox="0 0 20 20">
-                        <path d="M10 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 004 14h12a1 1 0 00.707-1.707L16 11.586V8a6 6 0 00-6-6z"/>
-                    </svg>
-                    Exploraciones activas
-                </h3>
-                <span class="px-2 py-0.5 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 text-xs font-bold rounded-full">
-                    {{ $exploracionesActivas->count() }}
-                </span>
-            </div>
-            <div class="divide-y divide-gray-200 dark:divide-gray-700">
-                @foreach($exploracionesActivas as $exp)
-                <div class="px-4 py-3 flex items-center justify-between">
-                    <div class="flex items-center gap-3">
-                        <div class="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
-                            <svg class="w-4 h-4 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
+            <!-- Right 2/3: Explorations, Teams, Levels -->
+            <div class="lg:col-span-2 space-y-6">
+                <!-- Active Explorations List -->
+                @if($exploracionesActivas && $exploracionesActivas->count() > 0)
+                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+                    <div class="px-4 py-3 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
+                        <h3 class="text-sm font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                            <svg class="w-4 h-4 text-yellow-500" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M10 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 004 14h12a1 1 0 00.707-1.707L16 11.586V8a6 6 0 00-6-6z"/>
                             </svg>
-                        </div>
-                        <div>
-                            <p class="text-sm font-medium text-gray-900 dark:text-white">{{ $exp->team->name ?? 'Equipo eliminado' }}</p>
-                            <p class="text-xs text-gray-500 dark:text-gray-400">Nivel {{ $exp->nivel }}</p>
-                        </div>
+                            Exploraciones activas
+                        </h3>
+                        <span class="px-2 py-0.5 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 text-xs font-bold rounded-full">
+                            {{ $exploracionesActivas->count() }}
+                        </span>
                     </div>
-                    <span class="px-2 py-0.5 text-[10px] font-bold rounded-full uppercase
-                        {{ $exp->inicio_exploracion
-                            ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400'
-                            : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400' }}">
-                        {{ $exp->inicio_exploracion ? 'En curso' : 'Preparando' }}
-                    </span>
+                    <div class="divide-y divide-gray-200 dark:divide-gray-700">
+                        @foreach($exploracionesActivas as $exp)
+                        <div class="px-4 py-3 flex items-center justify-between">
+                            <div class="flex items-center gap-3">
+                                <div class="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
+                                    <svg class="w-4 h-4 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                    </svg>
+                                </div>
+                                <div>
+                                    <p class="text-sm font-medium text-gray-900 dark:text-white">{{ $exp->team->name ?? 'Equipo eliminado' }}</p>
+                                    <p class="text-xs text-gray-500 dark:text-gray-400">Nivel {{ $exp->nivel }}</p>
+                                </div>
+                            </div>
+                            <span class="px-2 py-0.5 text-[10px] font-bold rounded-full uppercase
+                                {{ $exp->inicio_exploracion
+                                    ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400'
+                                    : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400' }}">
+                                {{ $exp->inicio_exploracion ? 'En curso' : 'Preparando' }}
+                            </span>
+                        </div>
+                        @endforeach
+                    </div>
                 </div>
-                @endforeach
-            </div>
-        </div>
-        @endif
+                @endif
 
-        <!-- Bottom Section: Teams (1/3) + Levels (2/3) -->
-        <div class="grid lg:grid-cols-3 gap-6">
-            <!-- Left 1/3: Teams Panel -->
-            <div class="space-y-4">
+                <!-- Teams Panel: 2-column grid of team cards -->
                 <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
                     <div class="p-4 border-b border-gray-200 dark:border-gray-700">
+                        <h3 class="text-sm font-semibold text-gray-900 dark:text-white">Equipos</h3>
                         <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Selecciona un equipo para explorar</p>
                     </div>
-                    <div class="p-4 space-y-3">
-                        @forelse($teams as $team)
-                        @php
-                            $equipoEnExploracion = $equiposEnExploracion->firstWhere('equipo_id', $team->id);
-                            $bloqueado = $equipoEnExploracion !== null;
-                        @endphp
-                        <div
-                            class="rounded-lg p-3 border-2 transition-all {{ $bloqueado ? 'bg-gray-100 dark:bg-gray-900/30 border-gray-200 dark:border-gray-700 opacity-60 cursor-not-allowed' : 'bg-gray-50 dark:bg-gray-900/50 cursor-pointer hover:border-gray-300 dark:hover:border-gray-600' }}"
-                            :class="{{ $bloqueado ? 'false' : "selectedTeamId === {$team->id} ? 'border-blue-500 dark:border-blue-400 ring-1 ring-blue-200 dark:ring-blue-800' : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'" }}"
-                            @if(!$bloqueado)
-                            @click="selectTeam({{ $team->id }}, '{{ addslashes($team->name) }}')"
-                            role="button"
-                            tabindex="0"
-                            @keydown.space.prevent="selectTeam({{ $team->id }}, '{{ addslashes($team->name) }}')"
-                            @keydown.enter.prevent="selectTeam({{ $team->id }}, '{{ addslashes($team->name) }}')"
-                            @endif
-                            aria-label="{{ $bloqueado ? 'Equipo en exploración' : 'Seleccionar equipo ' . $team->name }}"
-                        >
-                            <div class="flex items-center justify-between mb-2">
-                                <span class="text-sm font-medium text-gray-900 dark:text-white flex items-center gap-1.5">
-                                    @if($bloqueado)
-                                        <svg class="w-3.5 h-3.5 text-gray-500 dark:text-gray-400" fill="currentColor" viewBox="0 0 20 20">
-                                            <path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd"/>
-                                        </svg>
-                                    @endif
-                                    {{ $team->name }}
-                                </span>
-                                @if($bloqueado)
-                                    <span class="px-2 py-0.5 bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400 text-[10px] font-bold rounded-full uppercase">
-                                        En exploración
-                                    </span>
+                    <div class="p-4">
+                        <div class="grid sm:grid-cols-2 gap-3">
+                            @forelse($teams as $team)
+                            @php
+                                $equipoEnExploracion = $equiposEnExploracion->firstWhere('equipo_id', $team->id);
+                                $bloqueado = $equipoEnExploracion !== null;
+                            @endphp
+                            <div
+                                class="rounded-lg p-3 border-2 transition-all {{ $bloqueado ? 'bg-gray-100 dark:bg-gray-900/30 border-gray-200 dark:border-gray-700 opacity-60 cursor-not-allowed' : 'bg-gray-50 dark:bg-gray-900/50 cursor-pointer hover:border-gray-300 dark:hover:border-gray-600' }}"
+                                :class="{{ $bloqueado ? 'false' : "selectedTeamId === {$team->id} ? 'border-blue-500 dark:border-blue-400 ring-1 ring-blue-200 dark:ring-blue-800' : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'" }}"
+                                @if(!$bloqueado)
+                                @click="selectTeam({{ $team->id }}, '{{ addslashes($team->name) }}')"
+                                role="button"
+                                tabindex="0"
+                                @keydown.space.prevent="selectTeam({{ $team->id }}, '{{ addslashes($team->name) }}')"
+                                @keydown.enter.prevent="selectTeam({{ $team->id }}, '{{ addslashes($team->name) }}')"
                                 @endif
-                            </div>
-                            @if($bloqueado)
-                            <p class="text-[10px] text-gray-500 dark:text-gray-400 mt-1">
-                                🔒 En exploración ({{ $equipoEnExploracion['habitat_name'] }})
-                            </p>
-                            @endif
-                            <div class="flex gap-2">
-                                @for($i = 0; $i < 3; $i++)
-                                    @if(isset($team->members[$i]))
-                                        <div class="flex-1 text-center">
-                                            <img
-                                                src="/images/iconos/{{ $team->members[$i]->reclutado->pokemon_id }}.png"
-                                                alt="{{ $team->members[$i]->reclutado->nombre ?? '' }}"
-                                                title="{{ $team->members[$i]->reclutado->nombre ?? '' }}"
-                                                class="w-10 h-10 object-contain mx-auto"
-                                                onerror="this.style.display='none'"
-                                            >
-                                            <p class="text-[10px] text-gray-500 dark:text-gray-400 truncate mt-0.5">
-                                                {{ $team->members[$i]->reclutado->nombre ?? '---' }}
-                                            </p>
-                                        </div>
-                                    @else
-                                        <div class="flex-1 text-center">
-                                            <div class="w-10 h-10 mx-auto rounded border-2 border-dashed border-gray-300 dark:border-gray-600"></div>
-                                            <p class="text-[10px] text-gray-400 dark:text-gray-500 mt-0.5">Vacío</p>
-                                        </div>
+                                aria-label="{{ $bloqueado ? 'Equipo en exploración' : 'Seleccionar equipo ' . $team->name }}"
+                            >
+                                <div class="flex items-center justify-between mb-2">
+                                    <span class="text-sm font-medium text-gray-900 dark:text-white flex items-center gap-1.5">
+                                        @if($bloqueado)
+                                            <svg class="w-3.5 h-3.5 text-gray-500 dark:text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                                                <path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd"/>
+                                            </svg>
+                                        @endif
+                                        {{ $team->name }}
+                                    </span>
+                                    @if($bloqueado)
+                                        <span class="px-2 py-0.5 bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400 text-[10px] font-bold rounded-full uppercase">
+                                            En exploración
+                                        </span>
                                     @endif
-                                @endfor
+                                </div>
+                                @if($bloqueado)
+                                <p class="text-[10px] text-gray-500 dark:text-gray-400 mt-1">
+                                    🔒 En exploración ({{ $equipoEnExploracion['habitat_name'] }})
+                                </p>
+                                @endif
+                                <div class="flex gap-2">
+                                    @for($i = 0; $i < 3; $i++)
+                                        @if(isset($team->members[$i]))
+                                            <div class="flex-1 text-center">
+                                                <img
+                                                    src="/images/iconos/{{ $team->members[$i]->reclutado->pokemon_id }}.png"
+                                                    alt="{{ $team->members[$i]->reclutado->nombre ?? '' }}"
+                                                    title="{{ $team->members[$i]->reclutado->nombre ?? '' }}"
+                                                    class="w-8 h-8 object-contain mx-auto"
+                                                    onerror="this.style.display='none'"
+                                                >
+                                                <p class="text-[10px] text-gray-500 dark:text-gray-400 truncate mt-0.5">
+                                                    {{ $team->members[$i]->reclutado->nombre ?? '---' }}
+                                                </p>
+                                            </div>
+                                        @else
+                                            <div class="flex-1 text-center">
+                                                <div class="w-8 h-8 mx-auto rounded border-2 border-dashed border-gray-300 dark:border-gray-600"></div>
+                                                <p class="text-[10px] text-gray-400 dark:text-gray-500 mt-0.5">Vacío</p>
+                                            </div>
+                                        @endif
+                                    @endfor
+                                </div>
                             </div>
+                            @empty
+                            <div class="sm:col-span-2 text-center py-8">
+                                <svg class="w-12 h-12 mx-auto text-gray-300 dark:text-gray-600 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                </svg>
+                                <p class="text-sm text-gray-500 dark:text-gray-400">No hay equipos creados</p>
+                            </div>
+                            @endforelse
                         </div>
-                        @empty
-                        <div class="text-center py-8">
-                            <svg class="w-12 h-12 mx-auto text-gray-300 dark:text-gray-600 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
-                            </svg>
-                            <p class="text-sm text-gray-500 dark:text-gray-400">No hay equipos creados</p>
-                        </div>
-                        @endforelse
                     </div>
                 </div>
 
-                <!-- Exploration Button (fallback; modal auto-opens when team + level are selected) -->
-                <button
-                    @click="checkAndOpenModal()"
-                    :disabled="!canStartExploration"
-                    class="w-full px-4 py-3 bg-green-600 text-white rounded-xl text-sm font-bold transition-all hover:bg-green-700 disabled:bg-gray-300 dark:disabled:bg-gray-700 disabled:text-gray-500 dark:disabled:text-gray-500 disabled:cursor-not-allowed uppercase tracking-wide"
-                >
-                    Iniciar Exploración
-                </button>
-            </div>
-
-            <!-- Right 2/3: Levels Panel (clickable level rows with pokemon icons) -->
-            <div class="lg:col-span-2">
+                <!-- Niveles Panel: 3 clickable level rows -->
                 <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
                     <div class="p-4 border-b border-gray-200 dark:border-gray-700">
+                        <h3 class="text-sm font-semibold text-gray-900 dark:text-white">Niveles</h3>
                         <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Selecciona un nivel para explorar</p>
                     </div>
                     <div class="p-4 space-y-3">
@@ -249,6 +238,15 @@
                         @endforeach
                     </div>
                 </div>
+
+                <!-- Exploration Button (fallback; modal auto-opens when team + level are selected) -->
+                <button
+                    @click="checkAndOpenModal()"
+                    :disabled="!canStartExploration"
+                    class="w-full px-4 py-3 bg-green-600 text-white rounded-xl text-sm font-bold transition-all hover:bg-green-700 disabled:bg-gray-300 dark:disabled:bg-gray-700 disabled:text-gray-500 dark:disabled:text-gray-500 disabled:cursor-not-allowed uppercase tracking-wide"
+                >
+                    Iniciar Exploración
+                </button>
             </div>
         </div>
 

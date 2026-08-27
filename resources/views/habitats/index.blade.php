@@ -27,7 +27,7 @@
     @foreach($provincias as $i => $province)
         <div x-show="activeTab === {{ $i }}" x-cloak class="province-panel">
             <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">{{ $province['name'] }}</h2>
-            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
+            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-6">
                 @foreach($province['habitats'] as $habitat)
                     <a
                         href="/habitats/{{ $habitat['id'] }}"
@@ -44,7 +44,7 @@
                         </div>
                         <!-- Name: white padding area -->
                         <div class="px-4 py-3 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700">
-                            <p class="text-sm font-medium text-gray-900 dark:text-white">{{ $habitat['name'] }}</p>
+                            <p class="text-sm font-medium text-center text-gray-900 dark:text-white">{{ $habitat['name'] }}</p>
                         </div>
                     </a>
                 @endforeach
