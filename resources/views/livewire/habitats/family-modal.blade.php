@@ -70,6 +70,8 @@
                                     <div class="family-card" :class="{'opacity-50 pointer-events-none': loading}" @click="assign(family.evolution_chain_id)" role="listitem" tabindex="0" @keydown.enter.prevent="assign(family.evolution_chain_id)" @keydown.space.prevent="assign(family.evolution_chain_id)">
                                         <img
                                             :src="'/images/iconos/' + family.base.id + '.png'"
+                                            loading="lazy"
+                                            decoding="async"
                                             :alt="family.base.name"
                                             class="w-full h-20 object-contain mx-auto mb-2"
                                             onerror="this.style.display='none'"
@@ -88,6 +90,8 @@
                                     <div class="family-card" :class="{'opacity-50 pointer-events-none': loading}" @click="assign(family.evolution_chain_id)" role="listitem" tabindex="0" @keydown.enter.prevent="assign(family.evolution_chain_id)" @keydown.space.prevent="assign(family.evolution_chain_id)">
                                         <img
                                             :src="'/images/iconos/' + family.base.id + '.png'"
+                                            loading="lazy"
+                                            decoding="async"
                                             :alt="family.base.name"
                                             class="w-full h-20 object-contain mx-auto mb-2"
                                             onerror="this.style.display='none'"
@@ -121,6 +125,8 @@
                                     <div class="family-card border-red-200 dark:border-red-800 hover:border-red-400 dark:hover:border-red-500" :class="{'opacity-50 pointer-events-none': loading}" @click="remove(family.evolution_chain_id)" role="listitem" tabindex="0" @keydown.enter.prevent="remove(family.evolution_chain_id)" @keydown.space.prevent="remove(family.evolution_chain_id)">
                                         <img
                                             :src="'/images/iconos/' + family.base.id + '.png'"
+                                            loading="lazy"
+                                            decoding="async"
                                             :alt="family.base.name"
                                             class="w-full h-20 object-contain mx-auto mb-2"
                                             onerror="this.style.display='none'"
@@ -154,6 +160,8 @@
                                     <div class="relative w-14 h-14 flex-shrink-0" role="listitem">
                                         <img
                                             :src="'/images/iconos/' + pokemon.id + '.png'"
+                                            loading="lazy"
+                                            decoding="async"
                                             :alt="pokemon.name"
                                             :title="pokemon.name"
                                             class="w-full h-full object-contain rounded"

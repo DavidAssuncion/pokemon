@@ -107,6 +107,8 @@
                                                 <div class="relative">
                                                     <img
                                                         :src="'/images/iconos/' + getMember(team, slot).pokemon_id + '.png'"
+                                                        loading="lazy"
+                                                        decoding="async"
                                                         :alt="getMember(team, slot).nombre"
                                                         :title="getMember(team, slot).nombre"
                                                         class="w-24 h-24 object-contain mx-auto"
@@ -213,6 +215,8 @@
                                 <div class="w-24 h-24 mx-auto">
                                     <img
                                         :src="'/images/iconos/' + pokemon.pokemon_id + '.png'"
+                                        loading="lazy"
+                                        decoding="async"
                                         :alt="pokemon.nombre"
                                         :title="pokemon.nombre"
                                         class="w-full h-full object-contain"
@@ -265,6 +269,8 @@
                                 <div class="w-24 h-24 mx-auto">
                                     <img
                                         :src="'/images/iconos/' + pokemon.pokemon_id + '.png'"
+                                        loading="lazy"
+                                        decoding="async"
                                         :alt="pokemon.nombre"
                                         :title="pokemon.nombre + ' — ' + getTeamName(pokemon.team_id)"
                                         class="w-full h-full object-contain grayscale"
@@ -339,6 +345,8 @@
             <div class="text-center mb-2">
                 <img
                     :src="'/images/iconos/' + hoveredPokemon.pokemon_id + '.png'"
+                    loading="lazy"
+                    decoding="async"
                     :alt="hoveredPokemon.nombre"
                     class="w-24 h-24 object-contain mx-auto"
                 >

@@ -79,7 +79,7 @@
             <div>
                 @foreach($reclutados as $r)
                 <div class="reclutado-item">
-                    <img src="iconos/{{ $r->pokemon->name}}.png" alt="{{ $r->pokemon->name ?? '' }}" class="icono">
+                    <img src="iconos/{{ $r->pokemon->name}}.png" alt="{{ $r->pokemon->name ?? '' }}" loading="lazy" decoding="async" class="icono">
                     <strong>{{ $r->nombre }}</strong>
                 </div>
                 @endforeach

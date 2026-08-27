@@ -17,6 +17,8 @@
                         <div class="relative w-14 h-14 flex-shrink-0 group" role="listitem">
                             <img
                                 :src="'/images/iconos/' + pokemon.id + '.png'"
+                                loading="lazy"
+                                decoding="async"
                                 :alt="pokemon.name"
                                 :title="pokemon.name"
                                 class="w-full h-full object-contain rounded border border-gray-200 dark:border-gray-700"

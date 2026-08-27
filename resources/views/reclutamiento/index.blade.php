@@ -33,6 +33,8 @@
                         <div class="w-32 h-32 mx-auto relative">
                             <img
                                 :src="'/images/iconos/' + item.pokemon_id + '.png'"
+                                loading="lazy"
+                                decoding="async"
                                 :alt="item.nombre"
                                 class="w-full h-full object-contain"
                                 onerror="this.style.display='none'"

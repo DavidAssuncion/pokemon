@@ -36,7 +36,7 @@
                         @if($bloqueadoConstruccion) title="No disponible durante exploraciones activas" @endif
                         class="w-full px-4 py-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-sm font-medium text-gray-700 dark:text-gray-300 transition-colors flex items-center justify-center gap-2 {{ $bloqueadoConstruccion ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-50 dark:hover:bg-gray-700' }}"
                     >
-                        <img src="/images/reward/item/303.png" class="w-8 h-8 object-contain" alt="Granjas">
+                        <img src="/images/reward/item/303.png" loading="lazy" decoding="async" class="w-8 h-8 object-contain" alt="Granjas">
                         Granjas
                     </button>
                     <button
@@ -45,7 +45,7 @@
                         @if($bloqueadoConstruccion) title="No disponible durante exploraciones activas" @endif
                         class="w-full px-4 py-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-sm font-medium text-gray-700 dark:text-gray-300 transition-colors flex items-center justify-center gap-2 {{ $bloqueadoConstruccion ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-50 dark:hover:bg-gray-700' }}"
                     >
-                        <img src="/images/reward/item/1503.png" class="w-8 h-8 object-contain" alt="Entrenadores">
+                        <img src="/images/reward/item/1503.png" loading="lazy" decoding="async" class="w-8 h-8 object-contain" alt="Entrenadores">
                         Entrenadores
                     </button>
                     <button
@@ -54,7 +54,7 @@
                         @if($bloqueadoConstruccion) title="No disponible durante exploraciones activas" @endif
                         class="w-full px-4 py-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-sm font-medium text-gray-700 dark:text-gray-300 transition-colors flex items-center justify-center gap-2 {{ $bloqueadoConstruccion ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-50 dark:hover:bg-gray-700' }}"
                     >
-                        <img src="/images/misc/raid.png" class="w-8 h-8 object-contain" alt="Mazmorras">
+                        <img src="/images/misc/raid.png" loading="lazy" decoding="async" class="w-8 h-8 object-contain" alt="Mazmorras">
                         Mazmorras
                     </button>
                 </div>
@@ -158,6 +158,8 @@
                                             <div class="flex-1 text-center">
                                                 <img
                                                     src="/images/iconos/{{ $team->members[$i]->reclutado->pokemon_id }}.png"
+                                                    loading="lazy"
+                                                    decoding="async"
                                                     alt="{{ $team->members[$i]->reclutado->nombre ?? '' }}"
                                                     title="{{ $team->members[$i]->reclutado->nombre ?? '' }}"
                                                     class="w-24 h-24 object-contain mx-auto"
@@ -216,7 +218,7 @@
                                 </template>
                                 <template x-if="isSighted({{ $pokemon['id'] ?? $pokemon['species_id'] ?? 0 }})">
                                     <div class="relative w-24 h-24">
-                                        <img src="{{ $pokemon['icon'] }}" alt="{{ $pokemon['name'] }}" title="{{ $pokemon['name'] }}" class="w-full h-full object-contain" onerror="this.style.display='none'">
+                                        <img src="{{ $pokemon['icon'] }}" loading="lazy" decoding="async" alt="{{ $pokemon['name'] }}" title="{{ $pokemon['name'] }}" class="w-full h-full object-contain" onerror="this.style.display='none'">
                                     </div>
                                 </template>
                                 @empty
