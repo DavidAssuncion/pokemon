@@ -19,9 +19,7 @@
                     @click="setFilter('vistos')"
                     role="tab"
                     :aria-selected="activeFilter === 'vistos'"
-                    :class="activeFilter === 'vistos'
-                        ? 'bg-blue-600 text-white dark:bg-blue-500'
-                        : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-700'"
+                    :class="tabClass('vistos')"
                     class="px-4 py-2 rounded-lg text-sm font-medium transition-colors"
                 >
                     Vistos
@@ -30,9 +28,7 @@
                     @click="setFilter('no_vistos')"
                     role="tab"
                     :aria-selected="activeFilter === 'no_vistos'"
-                    :class="activeFilter === 'no_vistos'
-                        ? 'bg-blue-600 text-white dark:bg-blue-500'
-                        : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-700'"
+                    :class="tabClass('no_vistos')"
                     class="px-4 py-2 rounded-lg text-sm font-medium transition-colors"
                 >
                     No vistos
@@ -41,9 +37,7 @@
                     @click="setFilter('atrapados')"
                     role="tab"
                     :aria-selected="activeFilter === 'atrapados'"
-                    :class="activeFilter === 'atrapados'
-                        ? 'bg-blue-600 text-white dark:bg-blue-500'
-                        : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-700'"
+                    :class="tabClass('atrapados')"
                     class="px-4 py-2 rounded-lg text-sm font-medium transition-colors"
                 >
                     Atrapados
@@ -524,6 +518,12 @@ function pokedexApp() {
             }
             this.activeFilter = tab;
             this.resetAndFetch();
+        },
+
+        tabClass(tab) {
+            return this.activeFilter === tab
+                ? 'bg-blue-600 text-white dark:bg-blue-500'
+                : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-700';
         },
 
         onSearchInput() {
