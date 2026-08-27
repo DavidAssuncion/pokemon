@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Providers;
 
+use App\Bus\DatabaseUnitOfWork;
+use App\Bus\LaravelCommandBus;
 use App\Models\User;
 use App\Support\WebpConverter;
 use App\Support\WebpConverterInterface;
@@ -17,6 +19,8 @@ use Src\Habitats\Domain\Repositories\HabitatRepositoryInterface;
 use Src\Habitats\Infra\HabitatRepository;
 use Src\Reclutamiento\Domain\ReclutamientoRepositoryInterface;
 use Src\Reclutamiento\Infra\EloquentReclutamientoRepository;
+use Src\Shared\Bus\CommandBus;
+use Src\Shared\Bus\UnitOfWork;
 use Src\Shared\Domain\NivelHelper;
 
 class AppServiceProvider extends ServiceProvider
@@ -31,6 +35,8 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(FabricaBatallaInterface::class, FabricaBatallaMock::class);
         $this->app->bind(HabitatRepositoryInterface::class, HabitatRepository::class);
         $this->app->bind(WebpConverterInterface::class, WebpConverter::class);
+        $this->app->bind(CommandBus::class, LaravelCommandBus::class);
+        $this->app->bind(UnitOfWork::class, DatabaseUnitOfWork::class);
     }
 
     /**

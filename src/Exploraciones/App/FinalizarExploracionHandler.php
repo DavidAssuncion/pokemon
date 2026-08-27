@@ -12,141 +12,40 @@ use App\Models\ExploracionActiva;
 use App\Models\Pokemon;
 use App\Models\Reclutable;
 use App\Models\User;
-use Carbon\Carbon;
-use Carbon\CarbonInterface;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Str;
-use Src\Exploraciones\Domain\SimuladorEncuentros;
+use LogicException;
+use Src\Shared\Bus\Command;
+use Src\Shared\Bus\CommandHandler;
+use Src\Shared\Bus\UnitOfWork;
 use Src\Shared\Domain\NivelHelper;
 
-final class ProcesarExploracionService
+final class FinalizarExploracionHandler implements CommandHandler
 {
-    private const MINUTOS_POR_ENCUENTRO = 5;
+    public function __construct(
+        private readonly UnitOfWork $unitOfWork,
+    ) {
+    }
 
-    /**
-     * Procesa un tick de exploración: genera encuentros nuevos desde el último
-     * tick y, si toca, ejecuta la vuelta completa (recompensas + regreso).
-     */
-    public function procesar(ExploracionActiva $exploracion, bool $forzarRegreso = false): void
+    public function handle(Command $command): mixed
     {
+        if (! $command instanceof FinalizarExploracionCommand) {
+            throw new LogicException('FinalizarExploracionHandler requires a FinalizarExploracionCommand.');
+        }
+
+        $exploracion = $command->exploracion;
+
+        // Idempotencia: si ya regresó, no repartir recompensas otra vez.
         if ($exploracion->regreso !== null) {
-            return;
+            return null;
         }
 
-        $inicio = $this->inicioExploracion($exploracion);
-        $fin = $this->finExploracion($exploracion, $inicio);
-        $inicioVuelta = $fin !== null
-            ? $fin->copy()->subMinutes(intdiv((int) abs($fin->diffInMinutes($inicio)), 4))
-            : null;
-
-        $eventos = $exploracion->eventos ?? [];
-        $desde = $this->ultimoProcesado($eventos) ?? $inicio;
-        $hasta = $this->limiteTick(now(), $fin, $inicioVuelta);
-
-        if ($hasta->greaterThan($desde)) {
-            $nuevos = SimuladorEncuentros::generarEventos(
-                SimuladorEncuentros::poolPonderado($this->poolHabitat($exploracion)),
-                intdiv((int) abs($hasta->diffInMinutes($desde)), self::MINUTOS_POR_ENCUENTRO),
-                $desde,
-                $hasta,
-            );
-
-            if ($nuevos !== []) {
-                $bitacora = $eventos['bitacora'] ?? [];
-                $eventos['bitacora'] = [...$bitacora, ...$nuevos];
-            }
+        // Guard anti-stale: aunque el modelo en memoria diga lo contrario, si la
+        // DB ya tiene regreso (p. ej. otra corrida del scheduler), no duplicar.
+        if (ExploracionActiva::whereKey($exploracion->getKey())->value('regreso') !== null) {
+            return null;
         }
 
-        $eventos['ultimo_procesado'] = $hasta->toIso8601String();
-        $exploracion->update(['eventos' => $eventos]);
-
-        $completada = $forzarRegreso
-            || ($inicioVuelta !== null && now()->greaterThanOrEqualTo($inicioVuelta));
-
-        if ($completada) {
-            $this->finalizar($exploracion);
-        }
-    }
-
-    private function inicioExploracion(ExploracionActiva $exploracion): CarbonInterface
-    {
-        if ($exploracion->inicio_exploracion !== null) {
-            return $exploracion->inicio_exploracion->copy();
-        }
-
-        if ($exploracion->created_at !== null) {
-            return $exploracion->created_at->copy();
-        }
-
-        return now();
-    }
-
-    private function finExploracion(ExploracionActiva $exploracion, CarbonInterface $inicio): ?CarbonInterface
-    {
-        if ($exploracion->hora_limite !== null) {
-            return Carbon::today()->setTimeFromTimeString($exploracion->hora_limite);
-        }
-
-        if ($exploracion->duracion_horas !== null) {
-            return $inicio->copy()->addHours($exploracion->duracion_horas);
-        }
-
-        return null;
-    }
-
-    private function limiteTick(
-        CarbonInterface $ahora,
-        ?CarbonInterface $fin,
-        ?CarbonInterface $inicioVuelta,
-    ): CarbonInterface {
-        $limite = $ahora;
-
-        if ($fin !== null && $fin->lessThan($limite)) {
-            $limite = $fin;
-        }
-
-        if ($inicioVuelta !== null && $inicioVuelta->lessThan($limite)) {
-            $limite = $inicioVuelta;
-        }
-
-        return $limite;
-    }
-
-    /**
-     * @param  array<string, mixed>  $eventos
-     */
-    private function ultimoProcesado(array $eventos): ?CarbonInterface
-    {
-        $ultimo = $eventos['ultimo_procesado'] ?? null;
-
-        return is_string($ultimo) ? Carbon::parse($ultimo) : null;
-    }
-
-    /**
-     * Pool de encuentros: pokémon del hábitat asignados al nivel de la exploración.
-     *
-     * @return array<int, array{id: int, capture_rate: int, hatch: int|null}>
-     */
-    private function poolHabitat(ExploracionActiva $exploracion): array
-    {
-        $habitat = $exploracion->habitat;
-        if ($habitat === null) {
-            return [];
-        }
-
-        return $habitat->pokemon()
-            ->wherePivot('level', $exploracion->nivel)
-            ->get()
-            ->map(fn (Pokemon $pokemon) => [
-                'id' => $pokemon->id,
-                'capture_rate' => $pokemon->capture_rate,
-                'hatch' => $pokemon->hatch,
-            ])
-            ->values()
-            ->all();
-    }
-
-    private function finalizar(ExploracionActiva $exploracion): void
-    {
         $eventos = $exploracion->eventos ?? [];
         $bitacora = $eventos['bitacora'] ?? [];
 
@@ -163,9 +62,9 @@ final class ProcesarExploracionService
         $query->getQuery()->whereIn('id', array_values(array_unique($derrotados)));
         $pokemons = $query->get()->keyBy('id');
 
-        // Pokedex (AVISTADO) e intento de captura por cada derrotado. La captura se
-        // resuelve aquí (misma regla que CapturarPokemonJob) para que el resumen
-        // de resultado refleje exactamente los reclutables generados.
+        // Pokedex (AVISTADO): los jobs se despachan tras el commit (afterCommit)
+        // para que con cola sync no corran si la transacción revierte.
+        $pokedexIds = [];
         $capturadosPorEspecie = [];
         foreach ($derrotados as $pokemonId) {
             $pokemon = $pokemons->get($pokemonId);
@@ -173,7 +72,7 @@ final class ProcesarExploracionService
                 continue;
             }
 
-            ActualizarPokedexJob::dispatch($pokemonId, 'AVISTADO');
+            $pokedexIds[] = $pokemonId;
 
             $captureChance = min(1.0, ($pokemon->capture_rate ?? 45) / 255);
             if (mt_rand(1, 100) / 100 <= $captureChance) {
@@ -186,6 +85,14 @@ final class ProcesarExploracionService
 
                 $capturadosPorEspecie[$pokemonId] = ($capturadosPorEspecie[$pokemonId] ?? 0) + 1;
             }
+        }
+
+        if ($pokedexIds !== []) {
+            $this->unitOfWork->afterCommit(function () use ($pokedexIds): void {
+                foreach ($pokedexIds as $pokemonId) {
+                    ActualizarPokedexJob::dispatch($pokemonId, 'AVISTADO');
+                }
+            });
         }
 
         // Caramelos de familia: fase × nº de derrotados por cadena evolutiva
@@ -312,6 +219,8 @@ final class ProcesarExploracionService
         );
 
         $exploracion->update(['regreso' => now(), 'eventos' => $eventos]);
+
+        return null;
     }
 
     /**
@@ -324,7 +233,7 @@ final class ProcesarExploracionService
      * @param  array<int, Pokemon|null>  $basePorCadena
      * @param  array<int, int>  $evPorStat
      * @param  array<string, int>  $caramelosTipo
-     * @param  \Illuminate\Database\Eloquent\Collection<int, Pokemon>  $pokemons
+     * @param  Collection<int, Pokemon>  $pokemons
      * @return array<string, mixed>
      */
     private function resumenResultado(
@@ -335,7 +244,7 @@ final class ProcesarExploracionService
         array $evPorStat,
         array $caramelosTipo,
         int $expTotal,
-        \Illuminate\Database\Eloquent\Collection $pokemons,
+        Collection $pokemons,
     ): array {
         $idsUnicos = array_values(array_unique($derrotados));
         sort($idsUnicos);

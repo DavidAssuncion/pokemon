@@ -19,6 +19,10 @@ use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use Mockery;
+use RuntimeException;
+use Src\Exploraciones\App\FinalizarExploracionCommand;
+use Src\Shared\Bus\CommandBus;
 use Src\Shared\Domain\NivelHelper;
 use Tests\TestCase;
 
@@ -455,5 +459,122 @@ class ExploracionesTest extends TestCase
         foreach ($caramelosTipo as $caramelo) {
             $this->assertSame($conteos[2], $caramelo['cantidad']);
         }
+    }
+
+    // ==========================================
+    // CommandBus: rollback transaccional de FinalizarExploracion
+    // ==========================================
+
+    /**
+     * Crea una exploración con bitacora CONTROLADA (1 derrotado determinista)
+     * lista para finalizar sin depender del tick/RNG.
+     */
+    private function crearExploracionParaFinalizar(int $captureRate = 255): array
+    {
+        $ctx = $this->crearContexto(['indefinido' => true]);
+
+        if ($captureRate !== 255) {
+            Pokemon::where('id', 1)->update(['capture_rate' => $captureRate]);
+        }
+
+        $ctx['exploracion']->update([
+            'eventos' => [
+                'bitacora' => [['tipo' => 'pokemon', 'pokemon_id' => 1]],
+                'ultimo_procesado' => now()->toIso8601String(),
+            ],
+        ]);
+
+        return $ctx;
+    }
+
+    public function test_finalizar_fallo_a_mitad_hace_rollback_total(): void
+    {
+        $ctx = $this->crearExploracionParaFinalizar();
+        $bus = app(CommandBus::class);
+
+        // Fallo forzado A MITAD: todas las recompensas ya se escribieron, pero el
+        // update que marca el regreso lanza (mock parcial de la instancia). Es el
+        // bug real: recompensas incrementadas + regreso sin marcar.
+        $exploracion = Mockery::mock($ctx['exploracion'])->makePartial();
+        $exploracion->shouldReceive('update')->andThrow(new RuntimeException('fallo forzado al marcar regreso'));
+
+        try {
+            $bus->dispatch(new FinalizarExploracionCommand($exploracion));
+            $this->fail('Se esperaba una excepción');
+        } catch (RuntimeException) {
+            // esperado
+        }
+
+        // Rollback total: nada de lo escrito antes del fallo queda persistido
+        $this->assertDatabaseCount('reclutables', 0);
+        $this->assertDatabaseCount('caramelos', 0);
+        $this->assertDatabaseCount('caramelos_ev', 0);
+        $this->assertDatabaseCount('caramelos_tipo', 0);
+        $this->assertNull($ctx['exploracion']->fresh()->regreso);
+        // Los jobs post-commit NO se ejecutaron (no hubo commit)
+        $this->assertDatabaseCount('pokedex', 0);
+    }
+
+    public function test_reintento_tras_fallo_no_duplica_recompensas(): void
+    {
+        $ctx = $this->crearExploracionParaFinalizar(captureRate: 0);
+        $bus = app(CommandBus::class);
+
+        // Primera llamada: falla a mitad (update de regreso lanza)
+        $exploracion = Mockery::mock($ctx['exploracion'])->makePartial();
+        $exploracion->shouldReceive('update')->andThrow(new RuntimeException('fallo forzado al marcar regreso'));
+
+        try {
+            $bus->dispatch(new FinalizarExploracionCommand($exploracion));
+            $this->fail('Se esperaba una excepción en la primera llamada');
+        } catch (RuntimeException) {
+            // esperado
+        }
+
+        // Reintento con el modelo real: las recompensas NO se duplican
+        $bus->dispatch(new FinalizarExploracionCommand($ctx['exploracion']));
+
+        $exploracionFinal = $ctx['exploracion']->fresh();
+        $this->assertNotNull($exploracionFinal->regreso);
+
+        // Caramelos de familia: fase 1 × 1 derrotado, UNA sola vez (no duplicado)
+        $this->assertDatabaseHas('caramelos', [
+            'evolution_chain_id' => $ctx['chain']->id,
+            'cantidad' => 1,
+        ]);
+        $this->assertDatabaseCount('caramelos', 1);
+
+        // capture_rate 0 → nunca captura → reclutables intactos
+        $this->assertDatabaseCount('reclutables', 0);
+
+        // Jobs post-commit ejecutados tras el commit del reintento
+        $this->assertDatabaseHas('pokedex', ['pokemon_id' => 1, 'visto' => true]);
+    }
+
+    public function test_finalizar_exploracion_ya_finalizada_es_no_op(): void
+    {
+        $ctx = $this->crearExploracionParaFinalizar();
+        // Se marca regreso en DB (el modelo en memoria queda stale)
+        DB::table('exploraciones_activas')
+            ->where('id', $ctx['exploracion']->id)
+            ->update(['regreso' => now()]);
+
+        app(CommandBus::class)->dispatch(new FinalizarExploracionCommand($ctx['exploracion']));
+
+        // No-op: no se duplican recompensas
+        $this->assertDatabaseCount('reclutables', 0);
+        $this->assertDatabaseCount('caramelos', 0);
+        $this->assertDatabaseCount('pokedex', 0);
+    }
+
+    public function test_jobs_pokedex_se_ejecutan_tras_el_commit(): void
+    {
+        $ctx = $this->crearExploracionParaFinalizar();
+
+        app(CommandBus::class)->dispatch(new FinalizarExploracionCommand($ctx['exploracion']));
+
+        // QUEUE_CONNECTION=sync + afterCommit: el job corre DESPUÉS del commit
+        $this->assertDatabaseHas('pokedex', ['pokemon_id' => 1, 'visto' => true]);
+        $this->assertNotNull($ctx['exploracion']->fresh()->regreso);
     }
 }

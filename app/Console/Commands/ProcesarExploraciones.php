@@ -6,13 +6,20 @@ namespace App\Console\Commands;
 
 use App\Models\ExploracionActiva;
 use Illuminate\Console\Command;
-use Src\Exploraciones\App\ProcesarExploracionService;
+use Src\Exploraciones\App\ProcesarExploracionCommand;
+use Src\Shared\Bus\CommandBus;
 
 class ProcesarExploraciones extends Command
 {
     protected $signature = 'exploraciones:procesar';
 
     protected $description = 'Procesa las exploraciones activas: encuentros, vuelta y recompensas';
+
+    public function __construct(
+        private readonly CommandBus $bus,
+    ) {
+        parent::__construct();
+    }
 
     /**
      * Execute the console command.
@@ -24,7 +31,7 @@ class ProcesarExploraciones extends Command
             ->get();
 
         foreach ($exploraciones as $exploracion) {
-            app(ProcesarExploracionService::class)->procesar($exploracion);
+            $this->bus->dispatch(new ProcesarExploracionCommand($exploracion));
         }
 
         $this->info(sprintf('Exploraciones procesadas: %d', $exploraciones->count()));
