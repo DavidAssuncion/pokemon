@@ -25,4 +25,9 @@ class Reclutado extends Model
     {
         return $this->belongsTo(Pokemon::class, 'pokemon_id');
     }
+
+    public function teamMember()
+    {
+        return $this->hasOne(TeamMember::class, 'pokemon_id');
+    }
 }

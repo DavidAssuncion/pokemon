@@ -14,9 +14,6 @@ class TeamMember extends Model
         'team_id', 'pokemon_id', 'slot', 'behavior',
     ];
 
-    protected $casts = [
-    ];
-
     public function reclutado()
     {
         return $this->belongsTo(Reclutado::class, 'pokemon_id');

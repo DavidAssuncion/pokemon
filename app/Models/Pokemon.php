@@ -6,6 +6,9 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Pokemon extends Model
 {
@@ -23,5 +26,39 @@ class Pokemon extends Model
         'height',
         'weight',
         'hatch',
+        'evolution_chain_id',
     ];
+
+    /**
+     * @return BelongsTo<EvolutionChain, $this>
+     */
+    public function evolutionChain(): BelongsTo
+    {
+        return $this->belongsTo(EvolutionChain::class, 'evolution_chain_id');
+    }
+
+    /**
+     * @return BelongsToMany<Habitat, $this>
+     */
+    public function habitats(): BelongsToMany
+    {
+        return $this->belongsToMany(Habitat::class, 'pokemon_habitat')
+            ->withPivot('level');
+    }
+
+    /**
+     * @return HasMany<PokemonStat, $this>
+     */
+    public function stats(): HasMany
+    {
+        return $this->hasMany(PokemonStat::class);
+    }
+
+    /**
+     * @return HasMany<PokemonType, $this>
+     */
+    public function types(): HasMany
+    {
+        return $this->hasMany(PokemonType::class);
+    }
 }

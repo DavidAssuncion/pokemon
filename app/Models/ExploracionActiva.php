@@ -5,13 +5,23 @@ declare(strict_types=1);
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class ExploracionActiva extends Model
 {
     protected $table = 'exploraciones_activas';
 
     protected $fillable = [
-        'equipo_id', 'eventos', 'inicio_exploracion', 'llegada_destino', 'regreso',
+        'equipo_id',
+        'habitat_id',
+        'nivel',
+        'duracion_horas',
+        'hora_limite',
+        'indefinido',
+        'eventos',
+        'inicio_exploracion',
+        'llegada_destino',
+        'regreso',
     ];
 
     protected $casts = [
@@ -19,10 +29,22 @@ class ExploracionActiva extends Model
         'inicio_exploracion' => 'datetime',
         'llegada_destino' => 'datetime',
         'regreso' => 'datetime',
+        'indefinido' => 'boolean',
     ];
 
-    public function team()
+    /**
+     * @return BelongsTo<Team, $this>
+     */
+    public function team(): BelongsTo
     {
         return $this->belongsTo(Team::class, 'equipo_id');
+    }
+
+    /**
+     * @return BelongsTo<Habitat, $this>
+     */
+    public function habitat(): BelongsTo
+    {
+        return $this->belongsTo(Habitat::class);
     }
 }

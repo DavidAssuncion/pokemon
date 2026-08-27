@@ -19,3 +19,9 @@ Route::get('/habitats-img/{id}.webp', function (int $id) {
         'Content-Type' => 'image/webp',
     ]);
 });
+
+Route::get('/api/habitats/{id}/families', [HabitatsController::class, 'families']);
+Route::post('/api/habitats/{id}/families', [HabitatsController::class, 'assignFamily']);
+Route::delete('/api/habitats/{id}/families/{chainId}', [HabitatsController::class, 'removeFamily']);
+
+Route::get('/api/habitats/unassigned-families', [HabitatsController::class, 'unassignedFamilies']);

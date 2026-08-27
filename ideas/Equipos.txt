@@ -1,0 +1,9 @@
+Seccion a 2 columnas
+Izquierda los equipos formados por 3 integrantes, posibilidad de elimnar individualmente o borrar todo el grupo (esta accion requiere confirmacion)
+Se pueden crear nuevos grupos, no hay limite por el momento
+
+En la seccion derecha se mostraran los pokemon Reclutados, en primer lugar, se mostraran los disponibles, los ya elegidos se mostraran con un filtro de imagen gris.
+Esta seccion se podra filtrar, aparece un modal con la seleccion por tipos o nombre 
+Mantener encima de un pokemon hace que se muestren sus stats  
+Pulsar en pokemon disponible hace que aparezca un menu para Añadir a un Equipo, Ver Detalle, Expulsar (esta accion requiere confirmacion).
+Pulsar en pokemon no disponible hace que aparezca un menu para Eliminar de (Nombre equipo), Ver Detalle

@@ -31,6 +31,14 @@ class TeamController extends Controller
         return redirect()->back();
     }
 
+    public function update(Request $request, \App\Models\Team $team): RedirectResponse
+    {
+        $data = $request->validate(['name' => 'required|string|max:255']);
+        $team->update(['name' => $data['name']]);
+
+        return redirect()->back();
+    }
+
     public function destroy(\App\Models\Team $team): RedirectResponse
     {
         $this->teamRepository->eliminar($team->id);

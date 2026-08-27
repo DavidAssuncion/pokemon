@@ -78,6 +78,7 @@ class PokemonSeeder extends Seeder
                     'base_experience' => (int) $row['base_experience'],
                     'capture_rate' => (int) $species['capture_rate'],
                     'hatch' => ! empty($species['hatch_counter']) ? (int) $species['hatch_counter'] : null,
+                    'evolution_chain_id' => ! empty($species['evolution_chain_id']) ? (int) $species['evolution_chain_id'] : null,
                 ]
             );
 
@@ -106,14 +107,15 @@ class PokemonSeeder extends Seeder
                 }
             }
 
-            // Seed evolution data
+            // Seed evolution data: only for pokemon that evolve (evolves_from_species_id not null)
             $evolution = $evolutionByPokemon[$pokemonId] ?? null;
-            if ($evolution !== null) {
+            $evolvesFromSpeciesId = ! empty($species['evolves_from_species_id']) ? (int) $species['evolves_from_species_id'] : null;
+
+            if ($evolvesFromSpeciesId !== null) {
                 PokemonEvolution::updateOrCreate(
                     ['evolved_species_id' => $pokemonId],
                     [
-                        'evolution_chain_id' => ! empty($species['evolution_chain_id']) ? (int) $species['evolution_chain_id'] : null,
-                        'evolves_from_species_id' => ! empty($species['evolves_from_species_id']) ? (int) $species['evolves_from_species_id'] : null,
+                        'evolves_from_species_id' => $evolvesFromSpeciesId,
                         'minimum_level' => ! empty($evolution['minimum_level']) ? (int) $evolution['minimum_level'] : 40,
                     ]
                 );

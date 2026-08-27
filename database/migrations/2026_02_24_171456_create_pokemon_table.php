@@ -21,6 +21,7 @@ return new class () extends Migration {
             $table->integer('height');
             $table->integer('weight');
             $table->integer('hatch')->nullable();
+            $table->integer('evolution_chain_id')->nullable();
         });
     }
 

@@ -14,7 +14,6 @@ return new class () extends Migration {
     {
         Schema::create('pokemon_evolution', function (Blueprint $table) {
             $table->id();
-            $table->integer('evolution_chain_id')->nullable();
             $table->foreignId('evolved_species_id')->constrained('pokemon')->onDelete('cascade');
             $table->integer('evolves_from_species_id')->nullable();
             $table->integer('minimum_level');

@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>@yield('title', 'Aplicación')</title>
     <link rel="stylesheet" href="/css/app.css">
-    @livewireStyles
 </head>
 <body>
     <header class="app-header">
@@ -14,6 +13,7 @@
             <a class="nav-link" href="/habitats">Hábitats</a>
             <a class="nav-link" href="/reclutados">Reclutados</a>
             <a class="nav-link" href="/reclutamiento">Reclutamiento</a>
+            <a class="nav-link" href="/equipos">Equipos</a>
             <a class="nav-link" href="/combate">Combate</a>
         </nav>
     </header>
@@ -21,8 +21,6 @@
     <main>
         @yield('content')
     </main>
-
-    @livewireScripts
     @stack('scripts')
 </body>
 </html>

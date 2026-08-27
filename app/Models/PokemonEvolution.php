@@ -13,7 +13,6 @@ class PokemonEvolution extends Model
     protected $table = 'pokemon_evolution';
 
     protected $fillable = [
-        'evolution_chain_id',
         'evolved_species_id',
         'evolves_from_species_id',
         'minimum_level',

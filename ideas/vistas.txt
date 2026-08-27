@@ -1,0 +1,21 @@
+Pokédex
+Lista de avistados, detalle de estos, donde encontrarlos
+
+Hábitats
+Gestion de granja y lanzamiento de exploraciones, retos, entrenadores
+
+Exploraciones activas
+pues eso xd
+
+Equipos
+Miembros reclutados, formacion de equipo, asignacion a estos
+
+Reclutamiento
+Lista de pokemons tras ser derrotados que quieren unirse a tus filas
+
+Combate
+Enfrentar gimnasios + alto mando, implementar combate seguido sin pausas para curarse
+
+Logros
+Fuera del MVP, pequeñas recompensas, platinear, 
+Haz 100.000 daño de fuego -> +5% ataques de fuego…

@@ -19,4 +19,6 @@ Route::get('/cruds', [DashboardController::class, 'cruds'])->name('cruds');
 
 require __DIR__.'/reclutados.php';
 require __DIR__.'/habitats.php';
+require __DIR__.'/player.php';
+require __DIR__.'/exploraciones.php';
 // require __DIR__ . '/../src/Crud/routes.php';

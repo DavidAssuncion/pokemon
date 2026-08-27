@@ -1,0 +1,55 @@
+En la tabla Habits se incluira una columna pokemons, un json/collection con los pokemons con los pokemon vinculados, con visto:bool 
+Si el pokemon no ha sido visto, no mostrara imagen en el detalle del habitat
+
+En la vista del detalle, mostraremos 2 secciones principales
+Seccion de arriba, dividida en tres tercios
+    - volver atras, nombre, imagen del habitat detalle,
+    - Granjas, entrenadores, mazmorras (botones lanzan modal)
+Seccion de abajo dividia en 2 columnas, 1/3, 2/3
+    - 1/3, los equipos con sus pokemon posibilidad
+    - 2/3, los pokemon del habitat (Si el pokemon no ha sido visto, no mostrara imagen en el detalle del habitat)
+
+Para generar una exploracion deberemos pulsar la seccion de uno de nuestros equipos, se marcara el seleccionado, y tambien deberemos pulsar un nivel (1,2,3)
+Cuando ambos esten seleccionados se activara un modal:
+
+Quieres mandar a explorar Equipo X a la zona y
+Formulario (minimo una opcion a marcar) 
+- X horas (input value)
+- Regresar antes de las XX:XX (input value)
+- indefinido
+Si - No
+Esto generara una exploracion
+
+Los equipos solo cambiaran al modificarlos activamente
+Los pokemon del habitat no deberian cambiar con regularidad, es importante que tengamos la informacion super cacheada y al instante. 
+Esta pagina debera generar llamadas por detras para traer el detalle de la farm/id correspondiente  los trainer/id asociados, esta informacion se mostrara en modales
+Los entrenadores no deberian cambiar, puede ponerse tambien como columna y json preparados para cachearlos al extremo
+
+La granja tendra diferentes infraestructuras o maquinas
+Para cada familia se podra construir una "Refugio" -> aumentara los % de aparicion y captura de la especie, si se marca el toogle "Condiciones insalubres" se consigue lo contrario, que aparezcan menos de esa especie, y no se capturen tantas. Desactiva los efectos de complementos
+El refugio tendra hasta 5 niveles, al construirlo sera nivel 1 y permite mejoras y complementos, los complementos pueden subir de nivel aunque el refugio no lo haga
+Los complementos hacen referencia a los stats y EV, aplica para toda la familia de pokemon, va hasta 5 niveles tambien, y requieren materiales para mejorar
+1 -> 64 EV
+2 -> 128 EV
+3 -> 256 EV
+4 -> 384 EV
+5 -> 512 EV
+
+Los % de aparicion y capturas seran
+1 aparicion + captura x1.25
+2 aparicion + captura x1.5
+3 aparicion + captura x2
+4 aparicion + captura x2.5
+5 Solo aparece este pokemon captura +200% 
+
+Para subir de nivel los complementos, caramelos que aporta *3 + caramelos de pokemon que cuesta (192 caramelos EV HP + 64 caramelos del pokemon), 1536 caramelos ev ataque + 512 caramelos del pokemon
+Necesitas 8064 caramelos de ese pokemon para maxearlo y 34617 del stat
+
+Para subir de nivel el refugio:
+1 (crear) 25 caramelos
+2 75 caramelos
+3 225 caramelos
+4 450 caramelos
+5 2700 caramelos
+3475 en total
+Refugio+EV = 11539

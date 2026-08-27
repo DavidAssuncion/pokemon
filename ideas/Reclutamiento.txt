@@ -1,0 +1,9 @@
+Tras derrotar un pokemon en exploraciones se intentara un intento de captura.
+Si se captura, aparecera en Reclutamiento
+Es posible que tengamos varios de un mismo tipo, como todos seran iguales, la forma de mostrar la pantalla sera ordenando por cantidad, y por fecha de actualizacion.
+Los pokemon debiles habra un momento que tenga 999 porque no quiero mas, las nuevas posibilidades, si me interesan.
+
+Se mostrara los pokemons en filas de 9 columnas, con el numero abajo, 16px de tamaño, y un boton Reclutar
+Reclutar lo añade a la tabla reclutados y resta un 1 a la cantidad en reclutamiento, si solo hay 1, elimina el registro sin dejar huella. 
+
+No se deberia permitir reclutar pokemons nuevos si no tienen comida y espacio disponible. Cada pokemon vive en un solo habitat

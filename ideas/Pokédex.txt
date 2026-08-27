@@ -1,0 +1,10 @@
+Registro documental de pokemon atrapados o avistados.
+
+Crear registro en Pokedex con los pokemon avistados o reclutados
+pokemon_id visto (bool) atrapado (bool) 
+
+Tras terminar un combate, exploracion, o evolucionar, se lanzara un jobs parametrizado con visto o atrapado y el ID
+ActualizarPokedexEvent(id, enum(AVISTADO, RECLUTADO))
+Este evento buscara el habitat del pokemon, y lo marcara visible, volvera a recompilar el json de los pokemon de ruta
+
+Si el pokemon no ha sido visto, no mostrara imagen en los habitats

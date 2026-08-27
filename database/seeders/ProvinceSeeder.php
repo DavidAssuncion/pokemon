@@ -15,14 +15,22 @@ class ProvinceSeeder extends Seeder
     public function run(): void
     {
         $provinces = [
+            //Bonguri Blanco
             'Galicia',
+            //Bonguri Amarillo
             'Euskadi',
+            //Bonguri Negro
             'Barcelona',
+            //Bonguri Verde
             'Extremadura',
+            //Bonguri Rosa
             'Nova Alacant',
+            //Bonguri Azul
             'Mutxamel',
+            //Bonguri Rojo
             'Andalucia',
         ];
+
 
         foreach ($provinces as $provinceName) {
             Province::updateOrCreate(
