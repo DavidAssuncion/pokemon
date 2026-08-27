@@ -20,6 +20,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
 use Illuminate\Support\ServiceProvider;
+use LogicException;
 
 final class DatagridServiceProvider extends ServiceProvider
 {
@@ -139,7 +140,7 @@ final class DatagridServiceProvider extends ServiceProvider
     private function requirePokemon(Model $model): Pokemon
     {
         if (! $model instanceof Pokemon) {
-            throw new \LogicException('Datagrid pokemon resolvers require a Pokemon model.');
+            throw new LogicException(sprintf('Datagrid pokemon resolvers require a Pokemon model, got %s.', $model::class));
         }
 
         return $model;
@@ -151,9 +152,7 @@ final class DatagridServiceProvider extends ServiceProvider
      */
     private function typeNames(Collection $types): array
     {
-        return $types->map(fn (PokemonType $type): string => $type->tipo_nombre)
-            ->values()
-            ->toArray();
+        return array_values($types->map(fn (PokemonType $type): string => $type->tipo_nombre)->all());
     }
 
     /**

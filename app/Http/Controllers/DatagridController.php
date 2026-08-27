@@ -19,7 +19,10 @@ class DatagridController extends Controller
     {
         $this->requireRegistered($model);
 
-        return response()->json($this->datagrid->list($model, $request->query()));
+        /** @var array<string, mixed> $params */
+        $params = $request->query();
+
+        return response()->json($this->datagrid->list($model, $params));
     }
 
     public function show(Request $request, string $model, int $id): JsonResponse
