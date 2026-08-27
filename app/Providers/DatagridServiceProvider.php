@@ -55,7 +55,7 @@ final class DatagridServiceProvider extends ServiceProvider
             visible: ['id', 'name', 'visto', 'atrapado'],
             boolFields: ['visto', 'atrapado'],
             itemFields: [
-                'icon' => fn (Model $model): string => '/images/iconos/'.($this->requirePokemon($model))->id.'.webp',
+                'icon' => fn (Model $model): string => '/images/iconos_webp/'.($this->requirePokemon($model))->id.'.webp',
                 'types' => fn (Model $model): array => $this->typeNames($this->requirePokemon($model)->types),
             ],
             baseQuery: function (Builder $query): Builder {

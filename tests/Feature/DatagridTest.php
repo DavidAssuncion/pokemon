@@ -366,9 +366,9 @@ class DatagridTest extends TestCase
 
         $response->assertOk();
         $item = $response->json('data.0');
-        $this->assertSame('/images/iconos/1.webp', $item['icon']);
+        $this->assertSame('/images/iconos_webp/1.webp', $item['icon']);
         $this->assertSame(['Eléctrico'], $item['types']);
-        $this->assertSame('/images/iconos/2.webp', $response->json('data.1.icon'));
+        $this->assertSame('/images/iconos_webp/2.webp', $response->json('data.1.icon'));
         $this->assertSame(['Agua'], $response->json('data.1.types'));
     }
 }
