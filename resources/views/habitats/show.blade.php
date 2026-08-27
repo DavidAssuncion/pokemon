@@ -4,71 +4,73 @@
 
 @section('content')
 <div x-data="habitatShow()" x-init="init()">
-        <!-- Top Section: Back + Title + Buttons (stacked) -->
-        <div class="mb-6">
-            <a href="/habitats" class="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 text-sm font-medium transition-colors mb-2 inline-flex items-center gap-1">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
-                </svg>
-                Volver a hábitats
-            </a>
-            <h1 class="text-2xl font-bold text-gray-900 dark:text-white mb-4">🏔️ {{ $habitat['name'] }}</h1>
-
-            <!-- Construction buttons (inline under title) -->
-            @php
-                $bloqueadoConstruccion = $exploracionesActivas && $exploracionesActivas->count() > 0;
-            @endphp
-            <div class="flex flex-wrap gap-2 mb-4">
-                <button
-                    @click="{{ $bloqueadoConstruccion ? '' : "alert('Función próximamente')" }}"
-                    {{ $bloqueadoConstruccion ? 'disabled' : '' }}
-                    @if($bloqueadoConstruccion) title="No disponible durante exploraciones activas" @endif
-                    class="flex-1 min-w-[160px] px-4 py-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-sm font-medium text-gray-700 dark:text-gray-300 transition-colors flex items-center justify-center gap-2 {{ $bloqueadoConstruccion ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-50 dark:hover:bg-gray-700' }}"
-                >
-                    <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-4 0a1 1 0 01-1-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 01-1 1"/>
+        <!-- Top Section: 1/3 (back/title/image) + 2/3 (construction buttons) -->
+        <div class="grid lg:grid-cols-3 gap-6 mb-6">
+            <!-- Left 1/3: Back, Title, Image (auto size) -->
+            <div class="space-y-3">
+                <a href="/habitats" class="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 text-sm font-medium transition-colors inline-flex items-center gap-1">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
                     </svg>
-                    Granjas
-                </button>
-                <button
-                    @click="{{ $bloqueadoConstruccion ? '' : "alert('Función próximamente')" }}"
-                    {{ $bloqueadoConstruccion ? 'disabled' : '' }}
-                    @if($bloqueadoConstruccion) title="No disponible durante exploraciones activas" @endif
-                    class="flex-1 min-w-[160px] px-4 py-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-sm font-medium text-gray-700 dark:text-gray-300 transition-colors flex items-center justify-center gap-2 {{ $bloqueadoConstruccion ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-50 dark:hover:bg-gray-700' }}"
-                >
-                    <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
-                    </svg>
-                    Entrenadores
-                </button>
-                <button
-                    @click="{{ $bloqueadoConstruccion ? '' : "alert('Función próximamente')" }}"
-                    {{ $bloqueadoConstruccion ? 'disabled' : '' }}
-                    @if($bloqueadoConstruccion) title="No disponible durante exploraciones activas" @endif
-                    class="flex-1 min-w-[160px] px-4 py-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-sm font-medium text-gray-700 dark:text-gray-300 transition-colors flex items-center justify-center gap-2 {{ $bloqueadoConstruccion ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-50 dark:hover:bg-gray-700' }}"
-                >
-                    <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
-                    </svg>
-                    Mazmorras
-                </button>
-                @if($bloqueadoConstruccion)
-                <p class="text-[10px] text-center text-orange-600 dark:text-orange-400 basis-full">
-                    No disponible durante exploraciones activas
-                </p>
-                @endif
-            </div>
-
-            <!-- Habitat Image (full width below title) -->
-            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
-                <div class="aspect-[16/9] relative bg-gray-100 dark:bg-gray-900">
+                    Volver a hábitats
+                </a>
+                <h1 class="text-2xl font-bold text-gray-900 dark:text-white">🏔️ {{ $habitat['name'] }}</h1>
+                <!-- Image: auto size (natural), NOT full width -->
+                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-3 overflow-hidden w-fit">
                     <img
                         src="{{ $habitat['image'] ?? '' }}"
                         alt="{{ $habitat['name'] }}"
-                        class="w-full h-full object-cover"
+                        class="w-auto h-auto max-w-full rounded-lg"
                         onerror="this.style.display='none'"
                     >
                 </div>
+            </div>
+
+            <!-- Right 2/3: Construction buttons -->
+            <div class="lg:col-span-2 flex flex-col justify-start gap-3">
+                @php
+                    $bloqueadoConstruccion = $exploracionesActivas && $exploracionesActivas->count() > 0;
+                @endphp
+                <div class="flex flex-wrap gap-3">
+                    <button
+                        @click="{{ $bloqueadoConstruccion ? '' : "alert('Función próximamente')" }}"
+                        {{ $bloqueadoConstruccion ? 'disabled' : '' }}
+                        @if($bloqueadoConstruccion) title="No disponible durante exploraciones activas" @endif
+                        class="flex-1 min-w-[200px] px-4 py-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-sm font-medium text-gray-700 dark:text-gray-300 transition-colors flex items-center justify-center gap-2 {{ $bloqueadoConstruccion ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-50 dark:hover:bg-gray-700' }}"
+                    >
+                        <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-4 0a1 1 0 01-1-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 01-1 1"/>
+                        </svg>
+                        Granjas
+                    </button>
+                    <button
+                        @click="{{ $bloqueadoConstruccion ? '' : "alert('Función próximamente')" }}"
+                        {{ $bloqueadoConstruccion ? 'disabled' : '' }}
+                        @if($bloqueadoConstruccion) title="No disponible durante exploraciones activas" @endif
+                        class="flex-1 min-w-[200px] px-4 py-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-sm font-medium text-gray-700 dark:text-gray-300 transition-colors flex items-center justify-center gap-2 {{ $bloqueadoConstruccion ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-50 dark:hover:bg-gray-700' }}"
+                    >
+                        <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                        </svg>
+                        Entrenadores
+                    </button>
+                    <button
+                        @click="{{ $bloqueadoConstruccion ? '' : "alert('Función próximamente')" }}"
+                        {{ $bloqueadoConstruccion ? 'disabled' : '' }}
+                        @if($bloqueadoConstruccion) title="No disponible durante exploraciones activas" @endif
+                        class="flex-1 min-w-[200px] px-4 py-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-sm font-medium text-gray-700 dark:text-gray-300 transition-colors flex items-center justify-center gap-2 {{ $bloqueadoConstruccion ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-50 dark:hover:bg-gray-700' }}"
+                    >
+                        <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+                        </svg>
+                        Mazmorras
+                    </button>
+                </div>
+                @if($bloqueadoConstruccion)
+                <p class="text-xs text-center text-orange-600 dark:text-orange-400">
+                    No disponible durante exploraciones activas
+                </p>
+                @endif
             </div>
         </div>
 
@@ -118,7 +120,6 @@
             <div class="space-y-4">
                 <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
                     <div class="p-4 border-b border-gray-200 dark:border-gray-700">
-                        <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Equipos</h3>
                         <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Selecciona un equipo para explorar</p>
                     </div>
                     <div class="p-4 space-y-3">
@@ -167,7 +168,7 @@
                                                 src="/images/iconos/{{ $team->members[$i]->reclutado->pokemon_id }}.png"
                                                 alt="{{ $team->members[$i]->reclutado->nombre ?? '' }}"
                                                 title="{{ $team->members[$i]->reclutado->nombre ?? '' }}"
-                                                class="w-10 h-10 object-contain mx-auto rounded bg-gray-100 dark:bg-gray-800"
+                                                class="w-10 h-10 object-contain mx-auto"
                                                 onerror="this.style.display='none'"
                                             >
                                             <p class="text-[10px] text-gray-500 dark:text-gray-400 truncate mt-0.5">
@@ -208,7 +209,6 @@
             <div class="lg:col-span-2">
                 <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
                     <div class="p-4 border-b border-gray-200 dark:border-gray-700">
-                        <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Niveles</h3>
                         <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Selecciona un nivel para explorar</p>
                     </div>
                     <div class="p-4 space-y-3">
@@ -232,7 +232,7 @@
                                         src="{{ $pokemon['icon'] }}"
                                         alt="{{ $pokemon['name'] }}"
                                         title="{{ $pokemon['name'] }}"
-                                        class="w-full h-full object-contain rounded bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700"
+                                        class="w-full h-full object-contain"
                                         onerror="this.style.display='none'"
                                     >
                                     <!-- grayscale if not sighted -->

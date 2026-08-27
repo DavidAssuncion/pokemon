@@ -14,9 +14,8 @@
 </head>
 <body class="bg-gray-50 dark:bg-gray-900 min-h-screen">
     <header class="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 sticky top-0 z-30">
-        <div class="max-w-7xl mx-auto px-4">
-            <nav class="flex items-center justify-between h-14" aria-label="Navegación principal">
-                <a href="/" class="text-lg font-bold text-gray-900 dark:text-white">🎮 Pokemon</a>
+        <div class="px-4 sm:px-6">
+            <nav class="relative flex items-center justify-center h-14" aria-label="Navegación principal">
                 <div class="flex items-center gap-1 overflow-x-auto">
                     @php
                         $navItems = [
@@ -36,18 +35,19 @@
                             {{ $item['label'] }}
                         </a>
                     @endforeach
-                    <!-- Dark mode toggle -->
-                    <button x-data="{ dark: localStorage.getItem('theme') === 'dark' }"
-                            @click="dark = !dark; localStorage.setItem('theme', dark ? 'dark' : 'light'); document.documentElement.classList.toggle('dark', dark)"
-                            class="p-2 ml-2 rounded-lg text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
-                        <span x-text="dark ? '☀️' : '🌙'"></span>
-                    </button>
                 </div>
+                <!-- Dark mode toggle -->
+                <button x-data="{ dark: localStorage.getItem('theme') === 'dark' }"
+                        @click="dark = !dark; localStorage.setItem('theme', dark ? 'dark' : 'light'); document.documentElement.classList.toggle('dark', dark)"
+                        class="absolute right-0 top-1/2 -translate-y-1/2 p-2 rounded-lg text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                        aria-label="Cambiar tema">
+                    <span x-text="dark ? '☀️' : '🌙'"></span>
+                </button>
             </nav>
         </div>
     </header>
 
-    <main class="max-w-7xl mx-auto px-4 py-6">
+    <main class="px-4 sm:px-6 py-6">
         @if(session('success'))
             <div class="mb-4 px-4 py-3 rounded-lg bg-green-50 text-green-700 dark:bg-green-900/30 dark:text-green-300 border border-green-200 dark:border-green-800 text-sm">
                 {{ session('success') }}
