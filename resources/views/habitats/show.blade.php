@@ -4,41 +4,26 @@
 
 @section('content')
 <div x-data="habitatShow()" x-init="init()">
-        <!-- Top Section: 3 columns -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-            <!-- Left: Back + Name -->
-            <div class="flex flex-col justify-center">
-                <a href="/habitats" class="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 text-sm font-medium transition-colors mb-2 inline-flex items-center gap-1">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
-                    </svg>
-                    Volver a hábitats
-                </a>
-                <h1 class="text-2xl font-bold text-gray-900 dark:text-white">{{ $habitat['name'] }}</h1>
-            </div>
+        <!-- Top Section: Back + Title + Buttons (stacked) -->
+        <div class="mb-6">
+            <a href="/habitats" class="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 text-sm font-medium transition-colors mb-2 inline-flex items-center gap-1">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                </svg>
+                Volver a hábitats
+            </a>
+            <h1 class="text-2xl font-bold text-gray-900 dark:text-white mb-4">🏔️ {{ $habitat['name'] }}</h1>
 
-            <!-- Center: Habitat Image -->
-            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
-                <div class="aspect-[16/9] relative bg-gray-100 dark:bg-gray-900">
-                    <img
-                        src="{{ $habitat['image'] ?? '' }}"
-                        alt="{{ $habitat['name'] }}"
-                        class="w-full h-full object-cover"
-                        onerror="this.style.display='none'"
-                    >
-                </div>
-            </div>
-
-            <!-- Right: Placeholder buttons -->
+            <!-- Construction buttons (inline under title) -->
             @php
                 $bloqueadoConstruccion = $exploracionesActivas && $exploracionesActivas->count() > 0;
             @endphp
-            <div class="flex flex-col justify-center gap-2">
+            <div class="flex flex-wrap gap-2 mb-4">
                 <button
                     @click="{{ $bloqueadoConstruccion ? '' : "alert('Función próximamente')" }}"
                     {{ $bloqueadoConstruccion ? 'disabled' : '' }}
                     @if($bloqueadoConstruccion) title="No disponible durante exploraciones activas" @endif
-                    class="w-full px-4 py-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-sm font-medium text-gray-700 dark:text-gray-300 transition-colors flex items-center justify-center gap-2 {{ $bloqueadoConstruccion ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-50 dark:hover:bg-gray-700' }}"
+                    class="flex-1 min-w-[160px] px-4 py-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-sm font-medium text-gray-700 dark:text-gray-300 transition-colors flex items-center justify-center gap-2 {{ $bloqueadoConstruccion ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-50 dark:hover:bg-gray-700' }}"
                 >
                     <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-4 0a1 1 0 01-1-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 01-1 1"/>
@@ -49,7 +34,7 @@
                     @click="{{ $bloqueadoConstruccion ? '' : "alert('Función próximamente')" }}"
                     {{ $bloqueadoConstruccion ? 'disabled' : '' }}
                     @if($bloqueadoConstruccion) title="No disponible durante exploraciones activas" @endif
-                    class="w-full px-4 py-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-sm font-medium text-gray-700 dark:text-gray-300 transition-colors flex items-center justify-center gap-2 {{ $bloqueadoConstruccion ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-50 dark:hover:bg-gray-700' }}"
+                    class="flex-1 min-w-[160px] px-4 py-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-sm font-medium text-gray-700 dark:text-gray-300 transition-colors flex items-center justify-center gap-2 {{ $bloqueadoConstruccion ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-50 dark:hover:bg-gray-700' }}"
                 >
                     <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
@@ -60,7 +45,7 @@
                     @click="{{ $bloqueadoConstruccion ? '' : "alert('Función próximamente')" }}"
                     {{ $bloqueadoConstruccion ? 'disabled' : '' }}
                     @if($bloqueadoConstruccion) title="No disponible durante exploraciones activas" @endif
-                    class="w-full px-4 py-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-sm font-medium text-gray-700 dark:text-gray-300 transition-colors flex items-center justify-center gap-2 {{ $bloqueadoConstruccion ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-50 dark:hover:bg-gray-700' }}"
+                    class="flex-1 min-w-[160px] px-4 py-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-sm font-medium text-gray-700 dark:text-gray-300 transition-colors flex items-center justify-center gap-2 {{ $bloqueadoConstruccion ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-50 dark:hover:bg-gray-700' }}"
                 >
                     <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
@@ -68,10 +53,22 @@
                     Mazmorras
                 </button>
                 @if($bloqueadoConstruccion)
-                <p class="text-[10px] text-center text-orange-600 dark:text-orange-400">
+                <p class="text-[10px] text-center text-orange-600 dark:text-orange-400 basis-full">
                     No disponible durante exploraciones activas
                 </p>
                 @endif
+            </div>
+
+            <!-- Habitat Image (full width below title) -->
+            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+                <div class="aspect-[16/9] relative bg-gray-100 dark:bg-gray-900">
+                    <img
+                        src="{{ $habitat['image'] ?? '' }}"
+                        alt="{{ $habitat['name'] }}"
+                        class="w-full h-full object-cover"
+                        onerror="this.style.display='none'"
+                    >
+                </div>
             </div>
         </div>
 
@@ -115,7 +112,7 @@
         </div>
         @endif
 
-        <!-- Bottom Section: Teams (1/3) + Pokemon Grid (2/3) -->
+        <!-- Bottom Section: Teams (1/3) + Levels (2/3) -->
         <div class="grid lg:grid-cols-3 gap-6">
             <!-- Left 1/3: Teams Panel -->
             <div class="space-y-4">
@@ -197,48 +194,9 @@
                     </div>
                 </div>
 
-                <!-- Level Selection -->
-                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
-                    <div class="p-4 border-b border-gray-200 dark:border-gray-700">
-                        <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Nivel de exploración</h3>
-                    </div>
-                    <div class="p-4 space-y-2">
-                        @foreach([1,2,3] as $level)
-                        <button
-                            @click="selectedLevel = {{ $level }}"
-                            :class="selectedLevel === {{ $level }}
-                                ? 'border-blue-500 dark:border-blue-400 bg-blue-50 dark:bg-blue-900/20'
-                                : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'"
-                            class="w-full p-3 rounded-lg border-2 text-left transition-all"
-                            aria-label="Nivel {{ $level }}"
-                        >
-                            <div class="flex items-center justify-between">
-                                <span class="text-sm font-medium text-gray-900 dark:text-white">Nivel {{ $level }}</span>
-                                <span class="text-xs text-gray-500 dark:text-gray-400">
-                                    {{ !empty($habitat['levels'][$level]) ? count($habitat['levels'][$level]) : 0 }} pokémon
-                                </span>
-                            </div>
-                            @if(!empty($habitat['levels'][$level]))
-                            <div class="flex flex-wrap gap-1 mt-2">
-                                @foreach($habitat['levels'][$level] as $pokemon)
-                                <img
-                                    src="{{ $pokemon['icon'] }}"
-                                    alt="{{ $pokemon['name'] }}"
-                                    title="{{ $pokemon['name'] }}"
-                                    class="w-8 h-8 object-contain rounded bg-gray-100 dark:bg-gray-800"
-                                    onerror="this.style.display='none'"
-                                >
-                                @endforeach
-                            </div>
-                            @endif
-                        </button>
-                        @endforeach
-                    </div>
-                </div>
-
-                <!-- Exploration Button -->
+                <!-- Exploration Button (fallback; modal auto-opens when team + level are selected) -->
                 <button
-                    @click="canStartExploration && openExplorationModal()"
+                    @click="checkAndOpenModal()"
                     :disabled="!canStartExploration"
                     class="w-full px-4 py-3 bg-green-600 text-white rounded-xl text-sm font-bold transition-all hover:bg-green-700 disabled:bg-gray-300 dark:disabled:bg-gray-700 disabled:text-gray-500 dark:disabled:text-gray-500 disabled:cursor-not-allowed uppercase tracking-wide"
                 >
@@ -246,51 +204,49 @@
                 </button>
             </div>
 
-            <!-- Right 2/3: Pokemon Grid -->
+            <!-- Right 2/3: Levels Panel (clickable level rows with pokemon icons) -->
             <div class="lg:col-span-2">
                 <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
                     <div class="p-4 border-b border-gray-200 dark:border-gray-700">
-                        <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Pokémon del hábitat</h3>
+                        <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Niveles</h3>
+                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Selecciona un nivel para explorar</p>
                     </div>
-                    <div class="p-4">
-                        @php
-                            $allPokemon = [];
-                            if (!empty($habitat['levels'])) {
-                                foreach ($habitat['levels'] as $level => $pokemonList) {
-                                    foreach ($pokemonList as $pokemon) {
-                                        $allPokemon[] = $pokemon;
-                                    }
-                                }
-                            }
-                        @endphp
-                        @if(count($allPokemon) > 0)
-                        <div class="grid grid-cols-6 sm:grid-cols-8 lg:grid-cols-10 gap-2">
-                            @foreach($allPokemon as $pokemon)
-                            <div
-                                class="relative aspect-square flex items-center justify-center rounded-lg bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 group"
-                                :class="{ 'grayscale opacity-40': !isSighted({{ $pokemon['id'] ?? $pokemon['species_id'] ?? 0 }}) }"
-                                title="{{ $pokemon['name'] }}"
-                            >
-                                <img
-                                    src="{{ $pokemon['icon'] ?? '/images/iconos/' . ($pokemon['id'] ?? $pokemon['species_id'] ?? 0) . '.png' }}"
-                                    alt="{{ $pokemon['name'] }}"
-                                    class="w-full h-full object-contain p-1"
-                                    onerror="this.style.display='none'"
-                                >
-                                <div class="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center">
-                                    <span class="text-[10px] text-white px-1 truncate max-w-full">{{ $pokemon['name'] }}</span>
-                                </div>
+                    <div class="p-4 space-y-3">
+                        @foreach([1,2,3] as $level)
+                        <button
+                            @click="selectLevel({{ $level }})"
+                            :class="selectedLevel === {{ $level }}
+                                ? 'border-blue-500 dark:border-blue-400 bg-blue-50 dark:bg-blue-900/20'
+                                : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'"
+                            class="w-full p-4 rounded-xl border-2 text-left transition-all"
+                            aria-label="Nivel {{ $level }}"
+                        >
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="text-sm font-semibold text-gray-900 dark:text-white">Nivel {{ $level }}</span>
+                                <span class="text-xs text-gray-500 dark:text-gray-400">{{ count($habitat['levels'][$level] ?? []) }} pokémon</span>
                             </div>
-                            @endforeach
-                        </div>
-                        @else
-                        <div class="text-center py-12">
-                            <svg class="w-16 h-16 mx-auto text-gray-300 dark:text-gray-600 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
-                            </svg>
-                            <p class="text-gray-500 dark:text-gray-400">No hay Pokémon en este hábitat</p>
-                        </div>
-                        @endif
+                            <div class="flex flex-wrap gap-2">
+                                @forelse($habitat['levels'][$level] ?? [] as $pokemon)
+                                <div class="relative w-12 h-12">
+                                    <img
+                                        src="{{ $pokemon['icon'] }}"
+                                        alt="{{ $pokemon['name'] }}"
+                                        title="{{ $pokemon['name'] }}"
+                                        class="w-full h-full object-contain rounded bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700"
+                                        onerror="this.style.display='none'"
+                                    >
+                                    <!-- grayscale if not sighted -->
+                                    <div x-show="!isSighted({{ $pokemon['id'] ?? $pokemon['species_id'] ?? 0 }})"
+                                         class="absolute inset-0 bg-gray-900/70 rounded flex items-center justify-center">
+                                        <span class="text-white text-xs">?</span>
+                                    </div>
+                                </div>
+                                @empty
+                                <span class="text-xs text-gray-400 dark:text-gray-500">Sin Pokémon en este nivel</span>
+                                @endforelse
+                            </div>
+                        </button>
+                        @endforeach
                     </div>
                 </div>
             </div>
@@ -399,6 +355,18 @@ function habitatShow() {
             }
             this.selectedTeamId = id;
             this.selectedTeamName = name;
+            this.checkAndOpenModal();
+        },
+
+        selectLevel(level) {
+            this.selectedLevel = level;
+            this.checkAndOpenModal();
+        },
+
+        checkAndOpenModal() {
+            if (this.selectedTeamId !== null && this.selectedLevel !== null) {
+                this.openExplorationModal();
+            }
         },
 
         isSighted(pokemonId) {

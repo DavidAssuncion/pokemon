@@ -59,3 +59,33 @@
 - Nuevos directorios `pokedex/`, `reclutamiento/`, `equipos/` — requieren controlador (el backend los creará)
 - El campo `habitat_name` en pokedex debe ser appendado por el controlador
 - Reclutamiento necesita modelo `Reclutable` (o se usa `Reclutado` con cantidad)
+
+---
+
+# Tarea actual: Restructurar `resources/views/habitats/show.blade.php`
+
+## Vistas/componentes a tocar
+- `resources/views/habitats/show.blade.php` (único archivo; sin partials nuevos)
+
+## DTOs consumidos (sin cambios)
+- `$habitat` (array: name, image, id, levels[1..3][] => {id|species_id, name, icon})
+- `$teams`, `$equiposEnExploracion`, `$exploracionesActivas`, `$sightedPokemonIds`
+
+## Cambios estructurales
+1. **Top**: quitar grid 3 columnas → columna única: back link + título + botones construcción (inline, flex-wrap) → imagen full-width (aspect-[16/9]) debajo.
+2. **Niveles + Pokémon**: fusionar panel "Nivel de exploración" + "Pokémon del hábitat" en UN panel "Niveles" (2/3 derecho) con 3 filas clickeables (selectLevel). Equipos queda 1/3 izquierdo. Grid `lg:grid-cols-3`.
+3. **Modal automático**: `selectTeam()`/`selectLevel()` llaman `checkAndOpenModal()`; si ambos seleccionados → `openExplorationModal()`. Botón "Iniciar Exploración" queda como fallback llamando `checkAndOpenModal()`.
+4. Mantener: modal duración (3 opciones), lista exploraciones activas, botones construcción con disabled, grayscale no vistos (`isSighted` + overlay "?" en filas de nivel).
+
+## Estados UI a cubrir
+- Nivel sin pokémon → "0 pokémon" + hint vacío
+- Equipo en exploración → bloqueado (existing)
+- Sin equipos → empty state (existing)
+- Modal: auto-apertura con team+nivel, cancelar cierra sin limpiar selección
+
+## Tests
+- No existen tests para esta vista. Verificación: `php artisan view:cache` (compila Blade) + revisión manual de bindings Alpine.
+
+## Riesgos
+- Overlay `x-show="!isSighted(...)"` requiere `isSighted` existente (sí, se mantiene).
+- `@keydown` en filas nivel: usar `<button>` nativo (accesible por defecto, sin role/tabindex manual).
