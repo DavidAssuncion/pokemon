@@ -7,6 +7,7 @@ namespace App\Http\Controllers;
 use App\Models\ExploracionActiva;
 use App\Models\Pokedex;
 use App\Models\Pokemon;
+use App\Models\Reclutable;
 use App\Models\Reclutado;
 use App\Models\Team;
 use Illuminate\View\View;
@@ -50,22 +51,19 @@ class PlayerController extends Controller
 
     public function reclutamiento(): View
     {
-        $reclutados = Reclutado::with('pokemon')->get();
+        $reclutables = Reclutable::with('pokemon')
+            ->orderBy('updated_at', 'desc')
+            ->get()
+            ->map(fn (Reclutable $r) => [
+                'id' => $r->id,
+                'pokemon_id' => $r->pokemon_id,
+                'nombre' => $r->pokemon?->name ?? 'Desconocido',
+                'cantidad' => $r->cantidad,
+            ])
+            ->values()
+            ->toArray();
 
-        // Group by pokemon_id and count quantities
-        $grouped = $reclutados->groupBy('pokemon_id')->map(function ($group, $pokemonId) {
-            $first = $group->first();
-            $pokemon = $first->pokemon;
-
-            return [
-                'id' => $pokemonId,
-                'pokemon_id' => $pokemonId,
-                'nombre' => $pokemon->name ?? 'Desconocido',
-                'cantidad' => $group->count(),
-            ];
-        })->values()->toArray();
-
-        return view('reclutamiento.index', ['reclutables' => $grouped]);
+        return view('reclutamiento.index', ['reclutables' => $reclutables]);
     }
 
     public function equipos(): View

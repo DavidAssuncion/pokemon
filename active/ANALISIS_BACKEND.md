@@ -159,3 +159,61 @@ Dos fixes urgentes solicitados por el usuario:
 - ✅ Dev DB intacta: 7 provinces / 46 habitats / 1350 pokemon (idéntico al baseline).
 - ✅ `vendor/bin/pint --dirty --format agent`: pass (sin cambios).
 - ✅ No se ha hecho commit (pendiente revisión del usuario).
+
+---
+
+# Análisis Backend — Bug: pokemons de `reclutables` no aparecen en Reclutamiento
+
+## Causa raíz (confirmada)
+`app/Http/Controllers/PlayerController.php::reclutamiento()` consulta el modelo `Reclutado` (capturados/equipos) en vez de `Reclutable` (cola de reclutamiento). La vista `reclutamiento/index.blade.php` espera `reclutables` con shape `{id, pokemon_id, nombre, cantidad}`.
+
+Además, la vista llama `POST /reclutamiento/recruit` y `POST /reclutamiento/discard-all` — rutas inexistentes (verificado en `routes/player.php` y `route:list` implícito por lectura de web.php → player.php).
+
+## Qué voy a tocar
+
+### Modificar
+1. `app/Http/Controllers/PlayerController.php`
+   - `reclutamiento()`: consultar `Reclutable::with('pokemon')->orderBy('updated_at','desc')->get()` → mapear a arrays `{id, pokemon_id, nombre, cantidad}`.
+   - Añadir `use App\Models\Reclutable;`.
+   - **Mantener** `use App\Models\Reclutado;` — sigue usándose en `equipos()` (líneas 75-79).
+
+### Crear
+2. `app/Http/Controllers/ReclutamientoController.php` (vía `php artisan make:controller`)
+   - `recruit(Request)`: valida `reclutable_id` (required|exists), decrementa `cantidad` si > 1, si no borra la fila. Retorna `JsonResponse {success: true}`.
+   - `discardAll()`: `Reclutable::query()->delete()`. Retorna `JsonResponse {success: true}`.
+   - Sin lógica de caramelos por ahora (pendiente futuro).
+
+3. `routes/player.php`: añadir
+   - `Route::post('/reclutamiento/recruit', [ReclutamientoController::class, 'recruit']);`
+   - `Route::post('/reclutamiento/discard-all', [ReclutamientoController::class, 'discardAll']);`
+
+4. `tests/Feature/ReclutamientoControllerTest.php` (TDD — test primero):
+   - GET /reclutamiento lista los `Reclutable` (no los `Reclutado`) con nombre/cantidad correctos.
+   - POST /reclutamiento/recruit decrementa cantidad (5 → 4) y responde JSON success.
+   - POST /reclutamiento/recruit borra la fila cuando cantidad llegaría a 0 (cantidad 1).
+   - POST /reclutamiento/recruit valida `reclutable_id` requerido (422).
+   - POST /reclutamiento/discard-all vacía la tabla y responde JSON success.
+
+## Riesgos
+- La vista ya actualiza el estado en cliente (optimista); el servidor debe ser idempotente y tolerante (fetch con .catch, respuestas JSON 200).
+- `decrement` sobre `unsignedInteger` no puede bajar de 0; se protege borrando la fila cuando cantidad ≤ 1.
+- No hay migración nueva: `reclutables` ya existe (2026_08_26_000002).
+- Infection sólo cubre `src/` (config); el cambio es en `app/` — se corre igualmente para confirmar que no regresa nada.
+
+## Validación
+- `php artisan test --compact` (suite completa, DB laravel_test).
+- `vendor/bin/phpstan analyse` level 6.
+- `vendor/bin/infection` (MSI ≥ 80% en src/).
+- `vendor/bin/pint --dirty --format agent`.
+
+## Resultado (completado)
+- ✅ TDD: 6 tests nuevos en `tests/Feature/ReclutamientoControllerTest.php` (rojo → verde).
+- ✅ `PlayerController::reclutamiento()` consulta `Reclutable` (con `?->` para pokemon null-safe).
+- ✅ `ReclutamientoController` creado con `recruit()` y `discardAll()` → `JsonResponse {success: true}`.
+- ✅ Rutas registradas: `POST /reclutamiento/recruit`, `POST /reclutamiento/discard-all` (route:list OK).
+- ✅ Suite completa: 111 passed (265 assertions) — incluye los 8 de EquiposControllerTest.
+- ✅ Pint: pass.
+- ✅ PHPStan: 421 errores totales vs 415 baseline = +6, todos de categorías preexistentes toleradas en el repo (`staticMethod.dynamicCall` en `$request->validate()` — igual que TeamController:21/ExploracionActivaController:22 — y `$this->assert*` en tests — igual que FamiliesTest/HabitatsControllerTest). Cero errores nuevos en controladores.
+- ⚠️ Infection: 0 mutaciones generadas — estado preexistente (config source = `src/` solo; el fix es en `app/`). Verificado idéntico antes/después del cambio.
+- ✅ Verificación dev DB (sin mutar): la fila existente `reclutables` (id=10, pokemon_id=1 bulbasaur, cantidad=1) ya NO se pierde — la query corregida la devuelve para la vista.
+- Sin commit (pendiente revisión del usuario).

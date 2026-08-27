@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Http\Controllers\PlayerController;
+use App\Http\Controllers\ReclutamientoController;
 use App\Http\Controllers\TeamController;
 use Illuminate\Support\Facades\Route;
 
@@ -10,6 +11,10 @@ use Illuminate\Support\Facades\Route;
 Route::get('/pokedex', [PlayerController::class, 'pokedex']);
 Route::get('/reclutamiento', [PlayerController::class, 'reclutamiento']);
 Route::get('/equipos', [PlayerController::class, 'equipos']);
+
+// Reclutamiento queue actions (used by reclutamiento view)
+Route::post('/reclutamiento/recruit', [ReclutamientoController::class, 'recruit']);
+Route::post('/reclutamiento/discard-all', [ReclutamientoController::class, 'discardAll']);
 
 // Redirect old /reclutados to /equipos
 Route::get('/reclutados', fn () => redirect('/equipos'));

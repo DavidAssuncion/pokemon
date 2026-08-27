@@ -14,7 +14,7 @@
                     </svg>
                     Volver a hábitats
                 </a>
-                <h1 class="text-2xl font-bold text-gray-900 dark:text-white">🏔️ {{ $habitat['name'] }}</h1>
+                <h1 class="text-2xl font-bold text-gray-900 dark:text-white">{{ $habitat['name'] }}</h1>
                 <!-- Image: auto size (natural), NOT full width -->
                 <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-3 overflow-hidden w-fit">
                     <img
@@ -117,7 +117,6 @@
                 <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
                     <div class="p-4 border-b border-gray-200 dark:border-gray-700">
                         <h3 class="text-sm font-semibold text-gray-900 dark:text-white">Equipos</h3>
-                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Selecciona un equipo para explorar</p>
                     </div>
                     <div class="p-4">
                         <div class="grid sm:grid-cols-3 gap-3">
@@ -198,7 +197,6 @@
                 <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
                     <div class="p-4 border-b border-gray-200 dark:border-gray-700">
                         <h3 class="text-sm font-semibold text-gray-900 dark:text-white">Niveles</h3>
-                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Selecciona un nivel para explorar</p>
                     </div>
                     <div class="p-4 space-y-3">
                         @foreach([1,2,3] as $level)
