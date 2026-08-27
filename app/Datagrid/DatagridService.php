@@ -196,6 +196,12 @@ final class DatagridService
         }
 
         $query->whereHas($filter->relation, function (Builder $q) use ($filter, $mapped): void {
+            if ($filter->constraint !== null) {
+                ($filter->constraint)($q, $mapped);
+
+                return;
+            }
+
             $q->getQuery()->whereIn($filter->column, $mapped);
         });
     }

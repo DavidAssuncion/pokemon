@@ -7,6 +7,7 @@ namespace App\Providers;
 use App\Datagrid\DatagridDefinition;
 use App\Datagrid\DatagridRegistry;
 use App\Datagrid\RelationFilter;
+use App\Enums\StatEnum;
 use App\Enums\TipoEnum;
 use App\Models\Habitat;
 use App\Models\Pokedex;
@@ -44,6 +45,15 @@ final class DatagridServiceProvider extends ServiceProvider
             ],
             relationFilters: [
                 'types' => new RelationFilter('types', 'type', fn (mixed $value): ?int => $this->tipoId($value)),
+                'effort' => new RelationFilter(
+                    relation: 'stats',
+                    column: 'stat',
+                    map: fn (mixed $value): ?int => $this->statId($value),
+                    constraint: function (Builder $q, array $mapped): void {
+                        $q->getQuery()->whereIn('stat', $mapped);
+                        $q->getQuery()->where('effort', '>', 0);
+                    },
+                ),
             ],
             sortable: [
                 'id' => 'id',
@@ -169,6 +179,27 @@ final class DatagridServiceProvider extends ServiceProvider
             'atrapados' => Pokedex::query()->getQuery()->where('atrapado', true)->count(),
             'no_vistos' => max(0, $total - $vistos),
         ];
+    }
+
+    private function statId(mixed $value): ?int
+    {
+        if (is_int($value)) {
+            return $value;
+        }
+
+        if (is_numeric($value)) {
+            return (int) $value;
+        }
+
+        $label = strtolower(trim((string) $value));
+
+        foreach (StatEnum::cases() as $case) {
+            if (strtolower($case->label()) === $label) {
+                return $case->value;
+            }
+        }
+
+        return null;
     }
 
     private function tipoId(mixed $value): ?int

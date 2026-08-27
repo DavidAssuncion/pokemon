@@ -23,8 +23,9 @@ class DatagridTest extends TestCase
     /**
      * @param  list<TipoEnum>  $types
      * @param  array<int, int>  $stats
+     * @param  array<int, int>  $efforts  stat => effort (EVs otorgados)
      */
-    private function createPokemon(int $id, string $name, array $types = [], array $stats = []): void
+    private function createPokemon(int $id, string $name, array $types = [], array $stats = [], array $efforts = []): void
     {
         Pokemon::create([
             'id' => $id,
@@ -49,7 +50,7 @@ class DatagridTest extends TestCase
                 'pokemon_id' => $id,
                 'stat' => $stat,
                 'base_stat' => $value,
-                'effort' => 0,
+                'effort' => $efforts[$stat] ?? 0,
             ]);
         }
     }
@@ -370,5 +371,68 @@ class DatagridTest extends TestCase
         $this->assertSame(['Eléctrico'], $item['types']);
         $this->assertSame('/images/iconos_webp/2.webp', $response->json('data.1.icon'));
         $this->assertSame(['Agua'], $response->json('data.1.types'));
+    }
+
+    public function test_pokemon_list_filter_effort_by_label(): void
+    {
+        // bulbasaur: Ataque effort 2, HP effort 0
+        $this->createPokemon(1, 'bulbasaur', [], [
+            StatEnum::HP->value => 45,
+            StatEnum::ATTACK->value => 49,
+        ], [StatEnum::ATTACK->value => 2]);
+        // ivysaur: Ataque effort 0, HP effort 1
+        $this->createPokemon(2, 'ivysaur', [], [
+            StatEnum::HP->value => 60,
+            StatEnum::ATTACK->value => 62,
+        ], [StatEnum::HP->value => 1]);
+
+        $response = $this->getJson('/datagrid/pokemon?filter[effort]=Ataque');
+
+        $response->assertOk();
+        $this->assertSame([1], array_column($response->json('data'), 'id'));
+    }
+
+    public function test_pokemon_list_filter_effort_by_id(): void
+    {
+        $this->createPokemon(1, 'bulbasaur', [], [
+            StatEnum::HP->value => 45,
+            StatEnum::ATTACK->value => 49,
+        ], [StatEnum::ATTACK->value => 2]);
+        $this->createPokemon(2, 'ivysaur', [], [
+            StatEnum::HP->value => 60,
+            StatEnum::ATTACK->value => 62,
+        ], [StatEnum::HP->value => 1]);
+
+        $response = $this->getJson('/datagrid/pokemon?filter[effort]=2');
+
+        $response->assertOk();
+        $this->assertSame([1], array_column($response->json('data'), 'id'));
+    }
+
+    public function test_pokemon_list_filter_effort_label_invalid_ignored(): void
+    {
+        $this->createPokemon(1, 'bulbasaur', [], [StatEnum::ATTACK->value => 49], [StatEnum::ATTACK->value => 2]);
+        $this->createPokemon(2, 'ivysaur');
+
+        $response = $this->getJson('/datagrid/pokemon?filter[effort]=NoExiste');
+
+        $response->assertOk();
+        // Label inválido => statId devuelve null => filtro ignorado silenciosamente
+        $this->assertCount(2, $response->json('data'));
+    }
+
+    public function test_pokemon_list_filter_effort_combines_with_types(): void
+    {
+        // pikachu: Eléctrico + Ataque effort 2
+        $this->createPokemon(1, 'pikachu', [TipoEnum::ELECTRIC], [StatEnum::ATTACK->value => 55], [StatEnum::ATTACK->value => 2]);
+        // raichu: Eléctrico + Ataque effort 0
+        $this->createPokemon(2, 'raichu', [TipoEnum::ELECTRIC], [StatEnum::ATTACK->value => 90]);
+        // squirtle: Agua + Ataque effort 1
+        $this->createPokemon(3, 'squirtle', [TipoEnum::WATER], [StatEnum::ATTACK->value => 48], [StatEnum::ATTACK->value => 1]);
+
+        $response = $this->getJson('/datagrid/pokemon?filter[effort]=Ataque&filter[types]=Eléctrico');
+
+        $response->assertOk();
+        $this->assertSame([1], array_column($response->json('data'), 'id'));
     }
 }
