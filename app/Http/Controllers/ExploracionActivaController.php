@@ -13,8 +13,9 @@ use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Src\Exploraciones\App\ProcesarExploracionService;
+use Src\Exploraciones\App\ProcesarExploracionCommand;
 use Src\Habitats\App\ValidadorExploracion;
+use Src\Shared\Bus\CommandBus;
 
 class ExploracionActivaController extends Controller
 {
@@ -33,7 +34,7 @@ class ExploracionActivaController extends Controller
 
     public function __construct(
         private readonly ValidadorExploracion $validadorExploracion,
-        private readonly ProcesarExploracionService $procesarExploracion,
+        private readonly CommandBus $bus,
     ) {
     }
 
@@ -103,7 +104,7 @@ class ExploracionActivaController extends Controller
      */
     public function recoger(Request $request, ExploracionActiva $exploracion): RedirectResponse|JsonResponse
     {
-        $this->procesarExploracion->procesar($exploracion, forzarRegreso: true);
+        $this->bus->dispatch(new ProcesarExploracionCommand($exploracion, forzarRegreso: true));
 
         if ($request->wantsJson()) {
             return response()->json(['ok' => true]);
