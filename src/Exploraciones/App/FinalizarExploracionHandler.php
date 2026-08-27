@@ -12,6 +12,7 @@ use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Collection as BaseCollection;
 use LogicException;
 use Src\Exploraciones\Domain\CalculadorRecompensas;
+use Src\Exploraciones\Domain\Recompensas\PokemonDerrotado;
 use Src\Exploraciones\Domain\Recompensas\ResultadoRecompensas;
 use Src\Exploraciones\Presentation\TransformadorResultadoExploracion;
 use Src\Shared\Bus\Command;
@@ -49,55 +50,79 @@ final class FinalizarExploracionHandler implements CommandHandler
             return null;
         }
 
-        $pokemons = $this->cargarPokemonsDerrotados($exploracion);
+        $eventos = $exploracion->eventos ?? [];
+        $idsDerrotados = $this->idsDerrotados($eventos);
+        $pokemons = $this->cargarPokemonsDerrotados($idsDerrotados);
         $derrotados = NormalizadorPokemonDerrotado::normalizar(
-            $pokemons,
-            $this->idsDerrotados($exploracion->eventos ?? []),
+            $this->expandirDerrotados($pokemons, $idsDerrotados),
         );
-        $recompensas = $this->calculador->calcular($derrotados, $this->rollAleatorio(), $this->nivelSalvaje());
 
-        $this->persistir->persistir($recompensas, $exploracion);
+        $usuario = User::first();
+        $recompensas = $this->calculador->calcular(
+            $derrotados,
+            $this->rollAleatorio(),
+            $usuario !== null ? $usuario->nivel() : 1,
+        );
+
+        $this->persistir->persistir($recompensas, $exploracion->team, $usuario);
         $this->despacharAvistados($pokemons->pluck('id'));
-        $this->registrarResultado($exploracion, $recompensas, $pokemons);
+        $this->registrarResultado($exploracion, $recompensas, $pokemons, $idsDerrotados);
         $exploracion->update(['regreso' => now(), 'eventos' => $exploracion->eventos]);
 
         return null;
     }
 
     /**
-     * @return Collection<int, Pokemon> keyBy id, con evolutionChain.pokemon, stats y types.
-     */
-    private function cargarPokemonsDerrotados(ExploracionActiva $exploracion): Collection
-    {
-        $ids = $this->idsDerrotados($exploracion->eventos ?? []);
-
-        if ($ids === []) {
-            return new Collection();
-        }
-
-        return Pokemon::query()
-            ->with('evolutionChain.pokemon', 'stats', 'types')
-            ->whereIn('id', $ids)
-            ->get()
-            ->keyBy('id');
-    }
-
-    /**
-     * IDs de pokémon derrotados según la bitácora (una entrada por evento).
+     * IDs de pokémon derrotados según la bitácora (una entrada por derrota).
      *
      * @param  array<string, mixed>  $eventos
      * @return list<int>
      */
     private function idsDerrotados(array $eventos): array
     {
-        $derrotados = [];
-        foreach ($eventos['bitacora'] ?? [] as $evento) {
-            if (($evento['tipo'] ?? null) === 'pokemon') {
-                $derrotados[] = (int) $evento['pokemon_id'];
-            }
+        /** @var list<array<string, mixed>> $bitacora */
+        $bitacora = $eventos['bitacora'] ?? [];
+
+        return collect($bitacora)
+            ->filter(fn (array $evento): bool => ($evento['tipo'] ?? null) === 'pokemon')
+            ->pluck('pokemon_id')
+            ->map(fn (mixed $id): int => (int) $id)
+            ->values()
+            ->all();
+    }
+
+    /**
+     * @param  list<int>  $idsDerrotados
+     * @return Collection<int, Pokemon> keyBy id, con evolutionChain.pokemon, stats y types.
+     */
+    private function cargarPokemonsDerrotados(array $idsDerrotados): Collection
+    {
+        $ids = collect($idsDerrotados)->unique()->values();
+
+        if ($ids->isEmpty()) {
+            return new Collection();
         }
 
-        return $derrotados;
+        $query = Pokemon::query()->with('evolutionChain.pokemon', 'stats', 'types');
+        $query->getQuery()->whereIn('id', $ids);
+
+        return $query->get()->keyBy('id');
+    }
+
+    /**
+     * Expande los ids de la bitácora a una entrada por derrota, descartando
+     * ids sin pokémon cargado (no deberían ocurrir: la bitácora viene del pool).
+     *
+     * @param  Collection<int, Pokemon>  $pokemons  keyBy id
+     * @param  list<int>  $idsDerrotados
+     * @return BaseCollection<int, Pokemon>
+     */
+    private function expandirDerrotados(Collection $pokemons, array $idsDerrotados): BaseCollection
+    {
+        return collect($idsDerrotados)
+            ->map(fn (int $id): ?Pokemon => $pokemons->get($id))
+            ->filter()
+            ->values();
     }
 
     /**
@@ -121,27 +146,24 @@ final class FinalizarExploracionHandler implements CommandHandler
      */
     private function rollAleatorio(): callable
     {
-        return fn (int $captureRate): bool => mt_rand(1, 100) / 100 <= min(1.0, $captureRate / 255);
-    }
-
-    private function nivelSalvaje(): int
-    {
-        $usuario = User::first();
-
-        return $usuario !== null ? $usuario->nivel() : 1;
+        return fn (PokemonDerrotado $pokemon): bool => mt_rand(1, 100) / 100 <= min(1.0, $pokemon->captureRate / 255);
     }
 
     /**
      * Escribe eventos['derrotados'] (bitácora) y eventos['resultado'] (DTO → JSON)
      * en el modelo para persistirlos junto con el regreso.
+     *
+     * @param  Collection<int, Pokemon>  $pokemons
+     * @param  list<int>  $idsDerrotados
      */
     private function registrarResultado(
         ExploracionActiva $exploracion,
         ResultadoRecompensas $recompensas,
         Collection $pokemons,
+        array $idsDerrotados,
     ): void {
         $eventos = $exploracion->eventos ?? [];
-        $eventos['derrotados'] = $this->idsDerrotados($eventos);
+        $eventos['derrotados'] = $idsDerrotados;
         $eventos['resultado'] = $this->transformador->desde($recompensas, $pokemons);
 
         $exploracion->eventos = $eventos;
