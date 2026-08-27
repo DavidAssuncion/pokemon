@@ -11,6 +11,7 @@ use App\Models\PokemonEvolution;
 use App\Models\Province;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use Src\Habitats\Infra\HabitatRepository;
 use Tests\TestCase;
 
 class FamiliesTest extends TestCase
@@ -168,6 +169,10 @@ class FamiliesTest extends TestCase
         $this->assertEquals($this->chainId3Stages, $data[0]['evolution_chain_id']);
         $this->assertEquals(1, $data[0]['base']['id']);
         $this->assertCount(2, $data[0]['evolutions']);
+        // Los iconos de las familias se sirven como WebP
+        $this->assertSame('/images/iconos_webp/1.webp', $data[0]['base']['icon']);
+        $this->assertSame('/images/iconos_webp/2.webp', $data[0]['evolutions'][0]['icon']);
+        $this->assertSame('/images/iconos_webp/3.webp', $data[0]['evolutions'][1]['icon']);
     }
 
     public function test_obtener_familias_sin_habitat_solo_cadenas_vacias(): void
@@ -187,7 +192,25 @@ class FamiliesTest extends TestCase
             $this->assertArrayHasKey('evolution_chain_id', $family);
             $this->assertArrayHasKey('base', $family);
             $this->assertArrayHasKey('evolutions', $family);
+            // Los iconos de las familias se sirven como WebP
+            $this->assertSame('/images/iconos_webp/'.$family['base']['id'].'.webp', $family['base']['icon']);
+
+            foreach ($family['evolutions'] as $evolution) {
+                $this->assertSame('/images/iconos_webp/'.$evolution['id'].'.webp', $evolution['icon']);
+            }
         }
+    }
+
+    public function test_detalle_habitat_iconos_son_webp(): void
+    {
+        DB::table('pokemon_habitat')->insert([
+            ['pokemon_id' => 1, 'habitat_id' => $this->habitatId, 'level' => 1],
+        ]);
+
+        $detail = (new HabitatRepository())->getHabitatDetail($this->habitatId);
+
+        $this->assertSame('/images/iconos_webp/1.webp', $detail->levels[1][0]['icon']);
+        $this->assertSame('/images/iconos_webp/1.webp', $detail->toArray()['levels'][1][0]['icon']);
     }
 
     // ==========================================

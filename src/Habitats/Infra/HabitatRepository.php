@@ -23,6 +23,13 @@ use Src\Habitats\Presentation\DTOFamiliaSinHabitat;
 use Src\Habitats\Presentation\DTOFamiliasSinHabitat;
 use Src\Habitats\Presentation\DTOHabitatDetalle;
 
+/**
+ * Repositorio Eloquent de hábitats.
+ *
+ * El campo `icon` de los JSON servidos apunta a WebP optimizado:
+ * `/images/iconos_webp/{id}.webp`. Los PNG originales quedan en
+ * `/images/iconos/{id}.png` como fuente/fallback.
+ */
 class HabitatRepository implements HabitatRepositoryInterface
 {
     public function allProvinciasWithHabitats(): ProvinciasCollection
@@ -87,7 +94,7 @@ class HabitatRepository implements HabitatRepositoryInterface
                 'id' => $pokemon->id,
                 'name' => $pokemon->name,
                 'level' => intval($pokemon->pivot->level ?? 2),
-                'icon' => "/images/iconos/{$pokemon->id}.png",
+                'icon' => "/images/iconos_webp/{$pokemon->id}.webp",
             ]);
 
         foreach ($habitatPokemon as $pokemon) {
@@ -310,7 +317,7 @@ class HabitatRepository implements HabitatRepositoryInterface
         return $pokemon->map(fn ($p) => [
             'id' => (int) $p['id'],
             'name' => $p['name'],
-            'icon' => "/images/iconos/{$p['id']}.png",
+            'icon' => "/images/iconos_webp/{$p['id']}.webp",
             'stage' => $stages[(int) $p['id']] ?? 3,
         ])->values()->toArray();
     }
@@ -328,7 +335,7 @@ class HabitatRepository implements HabitatRepositoryInterface
             $entry = [
                 'id' => $member['id'],
                 'name' => $member['name'],
-                'icon' => "/images/iconos/{$member['id']}.png",
+                'icon' => "/images/iconos_webp/{$member['id']}.webp",
                 'level' => $this->levelForStage($member['stage'], $totalStages),
             ];
 
@@ -361,7 +368,7 @@ class HabitatRepository implements HabitatRepositoryInterface
             $entry = [
                 'id' => $member['id'],
                 'name' => $member['name'],
-                'icon' => "/images/iconos/{$member['id']}.png",
+                'icon' => "/images/iconos_webp/{$member['id']}.webp",
             ];
 
             if ($member['stage'] === 1) {
