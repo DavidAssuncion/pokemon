@@ -14,7 +14,7 @@
     </script>
 </head>
 <body class="bg-gray-50 dark:bg-gray-900 min-h-screen">
-    <header class="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 sticky top-0 z-30">
+    <header class="bg-white dark:bg-gray-900 sticky top-0 z-30 relative">
         <div class="px-4 sm:px-6">
             <nav class="relative flex items-center justify-center h-14" aria-label="Navegación principal">
                 <div class="flex items-center gap-1 overflow-x-auto">
@@ -22,6 +22,7 @@
                         $navItems = [
                             ['route' => '/pokedex', 'label' => 'Pokédex'],
                             ['route' => '/habitats', 'label' => 'Hábitats'],
+                            ['route' => '/exploraciones', 'label' => 'Exploraciones'],
                             ['route' => '/equipos', 'label' => 'Equipos'],
                             ['route' => '/reclutamiento', 'label' => 'Reclutamiento'],
                             ['route' => '/combate', 'label' => 'Combate'],
@@ -37,14 +38,23 @@
                         </a>
                     @endforeach
                 </div>
-                <!-- Dark mode toggle -->
-                <button x-data="{ dark: localStorage.getItem('theme') === 'dark' }"
-                        @click="dark = !dark; localStorage.setItem('theme', dark ? 'dark' : 'light'); document.documentElement.classList.toggle('dark', dark)"
-                        class="absolute right-0 top-1/2 -translate-y-1/2 p-2 rounded-lg text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-                        aria-label="Cambiar tema">
-                    <span x-text="dark ? '☀️' : '🌙'"></span>
-                </button>
+                <!-- Nivel jugador + Dark mode toggle -->
+                <div class="absolute right-0 top-1/2 -translate-y-1/2 flex items-center gap-2">
+                    <span class="px-2.5 py-1 bg-blue-600 text-white text-xs font-bold rounded-full" title="Nivel {{ $nivelJugador ?? 1 }}">
+                        Nv {{ $nivelJugador ?? 1 }}
+                    </span>
+                    <button x-data="{ dark: localStorage.getItem('theme') === 'dark' }"
+                            @click="dark = !dark; localStorage.setItem('theme', dark ? 'dark' : 'light'); document.documentElement.classList.toggle('dark', dark)"
+                            class="p-2 rounded-lg text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                            aria-label="Cambiar tema">
+                        <span x-text="dark ? '☀️' : '🌙'"></span>
+                    </button>
+                </div>
             </nav>
+        </div>
+        <!-- Level progress bar (5px) -->
+        <div class="absolute bottom-0 left-0 right-0 h-[5px] bg-gray-200 dark:bg-gray-700" aria-hidden="true">
+            <div class="h-full bg-blue-500 transition-all duration-500" style="width: {{ $progresoNivel ?? 0 }}%"></div>
         </div>
     </header>
 
