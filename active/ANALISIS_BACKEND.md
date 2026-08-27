@@ -157,3 +157,36 @@ $query->leftJoin('pokedex', 'pokedex.pokemon_id', '=', 'pokemon.id')
 - Los `staticMethod.dynamicCall` de Eloquent en `app/Datagrid/` se eliminaron usando `$query->getQuery()->whereIn/orderBy` y `find()`; solo quedó el patrón tolerado preexistente en el repo.
 - El closure `detail` usa `Model $model` + `instanceof Pokemon` (contravariance PHPStan) y `getAttribute('visto'/'atrapado')` (columnas del join no declaradas en el modelo).
 - `Pokedex` con `per_page` default 100, primera página ordenada por id (comportamiento histórico preservado: `sort=id&order=asc` desde PlayerController).
+
+---
+
+## Corrección QA (bloqueo `52c44d54` → commit de fix)
+
+### Hallazgo 1 (BLOQUEANTE) — `filter[visto]=0` / `filter[atrapado]=0` sobre leftJoin
+**Causa**: `pokedex` solo tiene filas con `visto=true` (el job `ActualizarPokedexJob` nunca escribe `false`); los no avistados son `pokedex.visto = NULL` tras el leftJoin. `WHERE pokedex.visto IN (false)` no matchea NULL → 0 items con `meta.counts.no_vistos = 1350`.
+
+**Fix** (`app/Datagrid/DatagridService.php`, `applyFilters`): cuando un filtro bool incluye `false`, se genera `WHERE col IN (valores) OR col IS NULL` (la fila ausente del leftJoin también significa false). Aplica a `visto` y `atrapado` (ambos boolFields) y es inocuo para columnas no-nullable (`es_shiny`/`visto` de la propia tabla pokedex tienen default false).
+
+**Tests añadidos** (`tests/Feature/DatagridTest.php`):
+- `test_pokemon_list_filter_visto_0_returns_unseen` — sin registro pokedex aparece con `filter[visto]=0` + counts coherentes.
+- `test_pokemon_list_filter_visto_1_returns_seen` — solo avistados.
+- `test_pokemon_list_filter_atrapado_1_returns_captured` — solo atrapados.
+- `test_pokemon_list_filter_atrapado_0_returns_not_captured` — NULL y false cuentan como "no atrapado".
+
+### Hallazgo 2 (CONTRATO) — item del listado con `icon` y `types[]`
+**Fix**: nuevo `itemFields: array<string, Closure(Model): mixed>` en `DatagridDefinition` (resueltos en `toVisibleArray` tras los campos visibles). Registro de `pokemon` en `DatagridServiceProvider`:
+- `with: ['types']` (eager load, 1 query extra por página).
+- `icon` → `/images/iconos/{id}.webp` (derivado del id).
+- `types` → labels en español vía `tipo_nombre` (mismo mapeo TipoEnum que `filter[types]`).
+- `requirePokemon(Model): Pokemon` con `instanceof` (contravariance PHPStan, mismo patrón que el resolver `detail`).
+
+**Test añadido**: `test_pokemon_list_items_include_icon_and_types` (icon termina en `.webp`, types con labels en español).
+
+El contrato coincide con el que ya exige `tests/Feature/PokedexViewTest.php` del frontend (PASS).
+
+### Verificación
+- ✅ TDD rojo → verde (3 rojos → 25 passed en DatagridTest+PlayerControllerTest+PokedexViewTest).
+- ✅ Suite completa: **153 passed, 1 skipped** (432 assertions).
+- ✅ Pint: pass.
+- ✅ PHPStan: 497 totales (+8 vs 489) — los 8 son `staticMethod.dynamicCall` de asserts en DatagridTest (categoría tolerada preexistente); **0 errores en `app/Datagrid/` y `app/Providers/DatagridServiceProvider.php`**.
+- ✅ Commit nuevo de corrección (el anterior quedó en el historial, no se amendeó por trazabilidad del bloqueo).

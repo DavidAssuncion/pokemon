@@ -276,4 +276,79 @@ class DatagridTest extends TestCase
         $this->getJson('/datagrid/habitat')->assertOk();
         $this->getJson('/datagrid/province')->assertOk();
     }
+
+    public function test_pokemon_list_filter_visto_0_returns_unseen(): void
+    {
+        $this->createPokemon(1, 'bulbasaur');
+        $this->createPokemon(2, 'ivysaur');
+
+        Pokedex::create(['pokemon_id' => 2, 'visto' => true, 'atrapado' => false]);
+
+        $response = $this->getJson('/datagrid/pokemon?filter[visto]=0');
+
+        $response->assertOk();
+        // Sin registro en pokedex => pokedex.visto es NULL tras el leftJoin => no visto
+        $this->assertSame([1], array_column($response->json('data'), 'id'));
+        $this->assertSame(1, $response->json('meta.counts.no_vistos'));
+        $this->assertSame(2, $response->json('meta.counts.total'));
+    }
+
+    public function test_pokemon_list_filter_visto_1_returns_seen(): void
+    {
+        $this->createPokemon(1, 'bulbasaur');
+        $this->createPokemon(2, 'ivysaur');
+
+        Pokedex::create(['pokemon_id' => 2, 'visto' => true, 'atrapado' => false]);
+
+        $response = $this->getJson('/datagrid/pokemon?filter[visto]=1');
+
+        $response->assertOk();
+        $this->assertSame([2], array_column($response->json('data'), 'id'));
+    }
+
+    public function test_pokemon_list_filter_atrapado_1_returns_captured(): void
+    {
+        $this->createPokemon(1, 'bulbasaur');
+        $this->createPokemon(2, 'ivysaur');
+        $this->createPokemon(3, 'venusaur');
+
+        Pokedex::create(['pokemon_id' => 2, 'visto' => true, 'atrapado' => true]);
+        Pokedex::create(['pokemon_id' => 3, 'visto' => true, 'atrapado' => false]);
+
+        $response = $this->getJson('/datagrid/pokemon?filter[atrapado]=1');
+
+        $response->assertOk();
+        $this->assertSame([2], array_column($response->json('data'), 'id'));
+    }
+
+    public function test_pokemon_list_filter_atrapado_0_returns_not_captured(): void
+    {
+        $this->createPokemon(1, 'bulbasaur');
+        $this->createPokemon(2, 'ivysaur');
+        $this->createPokemon(3, 'venusaur');
+
+        Pokedex::create(['pokemon_id' => 2, 'visto' => true, 'atrapado' => true]);
+        Pokedex::create(['pokemon_id' => 3, 'visto' => true, 'atrapado' => false]);
+
+        $response = $this->getJson('/datagrid/pokemon?filter[atrapado]=0');
+
+        $response->assertOk();
+        // Sin registro (NULL) y con atrapado=false ambos cuentan como "no atrapado"
+        $this->assertSame([1, 3], array_column($response->json('data'), 'id'));
+    }
+
+    public function test_pokemon_list_items_include_icon_and_types(): void
+    {
+        $this->createPokemon(1, 'pikachu', [TipoEnum::ELECTRIC]);
+        $this->createPokemon(2, 'squirtle', [TipoEnum::WATER]);
+
+        $response = $this->getJson('/datagrid/pokemon');
+
+        $response->assertOk();
+        $item = $response->json('data.0');
+        $this->assertSame('/images/iconos/1.webp', $item['icon']);
+        $this->assertSame(['Eléctrico'], $item['types']);
+        $this->assertSame('/images/iconos/2.webp', $response->json('data.1.icon'));
+        $this->assertSame(['Agua'], $response->json('data.1.types'));
+    }
 }

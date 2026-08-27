@@ -26,6 +26,7 @@ final class DatagridDefinition
      * @param list<string> $with Relaciones a eager load en el listado
      * @param list<string> $visible Campos incluidos en cada item de `data`
      * @param list<string> $boolFields Campos visibles/filtrables normalizados a booleano
+     * @param array<string, Closure(Model): mixed> $itemFields Campos calculados por item (p. ej. `icon`, `types`)
      * @param Closure(Builder<Model>): Builder<Model>|null $baseQuery Personalización del query (p. ej. join de la Pokédex)
      * @param Closure(): array<string, int>|null $counts Contadores globales para `meta.counts`
      * @param Closure(Model): array<string, mixed>|null $detail Resolvedor del detalle (por defecto: campos visibles)
@@ -39,6 +40,7 @@ final class DatagridDefinition
         public readonly array $with = [],
         public readonly array $visible = [],
         public readonly array $boolFields = [],
+        public readonly array $itemFields = [],
         public readonly ?Closure $baseQuery = null,
         public readonly ?Closure $counts = null,
         public readonly ?Closure $detail = null,

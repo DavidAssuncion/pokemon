@@ -159,6 +159,17 @@ final class DatagridService
 
             if (in_array($field, $definition->boolFields, true)) {
                 $values = array_map(fn (string $v): bool => $this->toBool($v), $values);
+
+                if (in_array(false, $values, true)) {
+                    // Columnas booleanas sobre leftJoin: la fila ausente es NULL,
+                    // y NULL también significa false (no avistado / no atrapado).
+                    $query->getQuery()->where(function (QueryBuilder $q) use ($column, $values): void {
+                        $q->whereIn($column, $values);
+                        $q->orWhereNull($column);
+                    });
+
+                    continue;
+                }
             }
 
             $query->getQuery()->whereIn($column, $values);
@@ -217,6 +228,10 @@ final class DatagridService
             if (array_key_exists($field, $row)) {
                 $row[$field] = $this->toBool($row[$field]);
             }
+        }
+
+        foreach ($definition->itemFields as $field => $resolver) {
+            $row[$field] = $resolver($model);
         }
 
         return $row;

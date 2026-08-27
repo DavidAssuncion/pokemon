@@ -49,8 +49,16 @@ final class DatagridServiceProvider extends ServiceProvider
                 'visto' => 'pokedex.visto',
                 'atrapado' => 'pokedex.atrapado',
             ],
+            with: ['types'],
             visible: ['id', 'name', 'visto', 'atrapado'],
             boolFields: ['visto', 'atrapado'],
+            itemFields: [
+                'icon' => fn (Model $model): string => '/images/iconos/'.($this->requirePokemon($model))->id.'.webp',
+                'types' => fn (Model $model): array => $this->requirePokemon($model)->types
+                    ->map(fn (PokemonType $type): string => $type->tipo_nombre)
+                    ->values()
+                    ->toArray(),
+            ],
             baseQuery: function (Builder $query): Builder {
                 $query->getQuery()->leftJoin('pokedex', 'pokedex.pokemon_id', '=', 'pokemon.id');
                 $query->getQuery()->select('pokemon.*', 'pokedex.visto', 'pokedex.atrapado');
@@ -139,6 +147,15 @@ final class DatagridServiceProvider extends ServiceProvider
         ));
 
         return $registry;
+    }
+
+    private function requirePokemon(Model $model): Pokemon
+    {
+        if (! $model instanceof Pokemon) {
+            throw new \LogicException('Datagrid pokemon item fields require a Pokemon model.');
+        }
+
+        return $model;
     }
 
     private function tipoId(mixed $value): ?int
