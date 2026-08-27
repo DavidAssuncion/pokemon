@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Providers;
 
+use App\Support\WebpConverter;
+use App\Support\WebpConverterInterface;
 use Illuminate\Support\ServiceProvider;
 use Src\Battle\Domain\FabricaBatallaInterface;
 use Src\Battle\Infrastructure\FabricaBatallaMock;
@@ -25,6 +27,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(ReclutamientoRepositoryInterface::class, EloquentReclutamientoRepository::class);
         $this->app->bind(FabricaBatallaInterface::class, FabricaBatallaMock::class);
         $this->app->bind(HabitatRepositoryInterface::class, HabitatRepository::class);
+        $this->app->bind(WebpConverterInterface::class, WebpConverter::class);
     }
 
     /**

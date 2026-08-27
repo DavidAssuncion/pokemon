@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Datagrid\DatagridService;
+use App\Enums\TipoEnum;
 use App\Models\ExploracionActiva;
-use App\Models\Pokedex;
-use App\Models\Pokemon;
 use App\Models\Reclutable;
 use App\Models\Reclutado;
 use App\Models\Team;
@@ -17,36 +17,19 @@ class PlayerController extends Controller
 {
     public function __construct(
         public readonly ObtenerEquipos $obtenerEquipos,
+        private readonly DatagridService $datagrid,
     ) {
     }
 
     public function pokedex(): View
     {
-        $allPokemon = Pokemon::orderBy('id')->get();
+        $page = $this->datagrid->list('pokemon', ['per_page' => 100, 'sort' => 'id', 'order' => 'asc']);
 
-        $pokedexEntries = Pokedex::all()->keyBy('pokemon_id');
-
-        $pokemons = $allPokemon->map(function ($pokemon) use ($pokedexEntries) {
-            $entry = $pokedexEntries->get($pokemon->id);
-
-            $stats = $pokemon->stats()->get()->map(fn ($stat) => [
-                'name' => $stat->stat_nombre,
-                'value' => $stat->base_stat,
-            ])->values()->toArray();
-
-            $types = $pokemon->types()->get()->map(fn ($type) => $type->tipo_nombre)->values()->toArray();
-
-            return [
-                'id' => $pokemon->id,
-                'name' => $pokemon->name,
-                'visto' => $entry ? $entry->visto : false,
-                'atrapado' => $entry ? $entry->atrapado : false,
-                'stats' => $stats,
-                'types' => $types,
-            ];
-        })->toArray();
-
-        return view('pokedex.index', ['pokemons' => $pokemons]);
+        return view('pokedex.index', [
+            'pokemons' => $page,
+            'counts' => $page['meta']['counts'] ?? ['total' => 0, 'vistos' => 0, 'atrapados' => 0, 'no_vistos' => 0],
+            'tipos' => TipoEnum::options(),
+        ]);
     }
 
     public function reclutamiento(): View
