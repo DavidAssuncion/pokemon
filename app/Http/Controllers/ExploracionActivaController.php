@@ -254,6 +254,15 @@ class ExploracionActivaController extends Controller
             ];
         }
 
+        $caramelosTipo = [];
+        foreach ($resultado['caramelos_tipo'] ?? [] as $caramelo) {
+            $caramelosTipo[] = [
+                'tipo' => $caramelo['tipo'] ?? null,
+                'slug' => $caramelo['slug'] ?? null,
+                'cantidad' => (int) ($caramelo['cantidad'] ?? 0),
+            ];
+        }
+
         $equipo = $exp->team;
         $habitat = $exp->habitat;
 
@@ -267,6 +276,7 @@ class ExploracionActivaController extends Controller
                 'capturados' => $capturados,
                 'caramelos_familia' => $caramelosFamilia,
                 'caramelos_ev' => $caramelosEv,
+                'caramelos_tipo' => $caramelosTipo,
                 'exp' => (int) ($resultado['exp'] ?? 0),
             ],
         ];

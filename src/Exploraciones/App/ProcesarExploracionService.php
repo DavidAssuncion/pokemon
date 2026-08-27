@@ -7,12 +7,14 @@ namespace Src\Exploraciones\App;
 use App\Jobs\ActualizarPokedexJob;
 use App\Models\Caramelo;
 use App\Models\CarameloEv;
+use App\Models\CarameloTipo;
 use App\Models\ExploracionActiva;
 use App\Models\Pokemon;
 use App\Models\Reclutable;
 use App\Models\User;
 use Carbon\Carbon;
 use Carbon\CarbonInterface;
+use Illuminate\Support\Str;
 use Src\Exploraciones\Domain\SimuladorEncuentros;
 use Src\Shared\Domain\NivelHelper;
 
@@ -157,7 +159,7 @@ final class ProcesarExploracionService
 
         $eventos['derrotados'] = $derrotados;
 
-        $query = Pokemon::query()->with('evolutionChain.pokemon', 'stats');
+        $query = Pokemon::query()->with('evolutionChain.pokemon', 'stats', 'types');
         $query->getQuery()->whereIn('id', array_values(array_unique($derrotados)));
         $pokemons = $query->get()->keyBy('id');
 
@@ -240,6 +242,31 @@ final class ProcesarExploracionService
             }
         }
 
+        // Caramelos de tipo: 1 por cada tipo del pokemon derrotado
+        $caramelosTipo = [];
+        foreach ($derrotados as $pokemonId) {
+            $pokemon = $pokemons->get($pokemonId);
+            if ($pokemon === null) {
+                continue;
+            }
+
+            foreach ($pokemon->types as $tipo) {
+                $nombre = $tipo->tipo_nombre ?? null;
+                if ($nombre === null) {
+                    continue;
+                }
+
+                $caramelosTipo[$nombre] = ($caramelosTipo[$nombre] ?? 0) + 1;
+
+                $existente = CarameloTipo::where('tipo', $nombre)->first();
+                if ($existente !== null) {
+                    $existente->increment('cantidad');
+                } else {
+                    CarameloTipo::create(['tipo' => $nombre, 'cantidad' => 1]);
+                }
+            }
+        }
+
         // EXP: recompensa completa por derrotado para el jugador y cada miembro del equipo
         $usuario = User::first();
         $nivelSalvaje = $usuario !== null ? $usuario->nivel() : 1;
@@ -279,6 +306,7 @@ final class ProcesarExploracionService
             $caramelosFamilia,
             $basePorCadena,
             $evPorStat,
+            $caramelosTipo,
             $expTotal,
             $pokemons,
         );
@@ -288,13 +316,14 @@ final class ProcesarExploracionService
 
     /**
      * Resumen de recompensas persistido en eventos['resultado'] para la página
-     * de exploraciones: avistados, capturados, caramelos familia/EV y exp.
+     * de exploraciones: avistados, capturados, caramelos familia/EV/tipo y exp.
      *
      * @param  list<int>  $derrotados
      * @param  array<int, int>  $capturadosPorEspecie
      * @param  array<int, int>  $caramelosFamilia
      * @param  array<int, Pokemon|null>  $basePorCadena
      * @param  array<int, int>  $evPorStat
+     * @param  array<string, int>  $caramelosTipo
      * @param  \Illuminate\Database\Eloquent\Collection<int, Pokemon>  $pokemons
      * @return array<string, mixed>
      */
@@ -304,6 +333,7 @@ final class ProcesarExploracionService
         array $caramelosFamilia,
         array $basePorCadena,
         array $evPorStat,
+        array $caramelosTipo,
         int $expTotal,
         \Illuminate\Database\Eloquent\Collection $pokemons,
     ): array {
@@ -351,12 +381,32 @@ final class ProcesarExploracionService
             $caramelosEvResumen[] = ['stat' => $stat, 'cantidad' => $cantidad];
         }
 
+        $caramelosTipoResumen = [];
+        ksort($caramelosTipo);
+        foreach ($caramelosTipo as $tipo => $cantidad) {
+            $caramelosTipoResumen[] = [
+                'tipo' => $tipo,
+                'slug' => $this->slugTipo($tipo),
+                'cantidad' => $cantidad,
+            ];
+        }
+
         return [
             'avistados' => $avistados,
             'capturados' => $capturados,
             'caramelos_familia' => $caramelosFamiliaResumen,
             'caramelos_ev' => $caramelosEvResumen,
+            'caramelos_tipo' => $caramelosTipoResumen,
             'exp' => $expTotal,
         ];
+    }
+
+    /**
+     * Nombre de archivo (sin acentos, minúsculas) para la imagen del caramelo
+     * de tipo: 'Eléctrico' → 'electrico', 'Dragón' → 'dragon'.
+     */
+    private function slugTipo(string $nombre): string
+    {
+        return strtolower(Str::ascii($nombre));
     }
 }

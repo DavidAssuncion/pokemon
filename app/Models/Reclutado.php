@@ -6,6 +6,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Reclutado extends Model
@@ -37,5 +38,13 @@ class Reclutado extends Model
     public function teamMember(): HasOne
     {
         return $this->hasOne(TeamMember::class, 'pokemon_id');
+    }
+
+    /**
+     * @return HasMany<ReclutadoExpTipo, $this>
+     */
+    public function expTipos(): HasMany
+    {
+        return $this->hasMany(ReclutadoExpTipo::class);
     }
 }

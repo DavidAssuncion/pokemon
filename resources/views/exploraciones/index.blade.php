@@ -277,6 +277,32 @@
                                 </div>
                             @endif
 
+                            @if(!empty($resultado['caramelos_tipo']))
+                                <div class="bg-gray-50 dark:bg-gray-900/50 rounded-lg p-3">
+                                    <p class="text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wide mb-2">Caramelos de tipo</p>
+                                    <div class="flex flex-wrap gap-3">
+                                        @foreach($resultado['caramelos_tipo'] as $caramelo)
+                                            <div class="text-center" title="{{ $caramelo['tipo'] }}">
+                                                <div class="relative inline-block">
+                                                    <img
+                                                        src="/images/type_candy/{{ $caramelo['slug'] }}.png"
+                                                        loading="lazy"
+                                                        decoding="async"
+                                                        alt="{{ $caramelo['tipo'] }}"
+                                                        class="w-12 h-12 object-contain"
+                                                        onerror="this.style.display='none'"
+                                                    >
+                                                    <span class="absolute -top-1.5 -right-1.5 px-1.5 py-0.5 bg-amber-600 text-white text-[10px] font-bold rounded-full">
+                                                        ×{{ $caramelo['cantidad'] }}
+                                                    </span>
+                                                </div>
+                                                <p class="text-[10px] text-gray-500 dark:text-gray-400 truncate w-12">{{ $caramelo['tipo'] }}</p>
+                                            </div>
+                                        @endforeach
+                                    </div>
+                                </div>
+                            @endif
+
                             <div class="bg-indigo-50 dark:bg-indigo-900/20 rounded-lg p-3 flex items-center justify-center">
                                 <p class="text-sm font-bold text-indigo-700 dark:text-indigo-300">+{{ $resultado['exp'] ?? 0 }} EXP</p>
                             </div>

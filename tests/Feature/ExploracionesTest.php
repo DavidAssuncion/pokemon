@@ -10,6 +10,7 @@ use App\Models\ExploracionActiva;
 use App\Models\Habitat;
 use App\Models\Pokemon;
 use App\Models\PokemonStat;
+use App\Models\PokemonType;
 use App\Models\Province;
 use App\Models\Reclutado;
 use App\Models\Team;
@@ -420,5 +421,39 @@ class ExploracionesTest extends TestCase
         $expEsperado = ($conteos[1] ?? 0) * NivelHelper::expDerrota(64, 5)
             + ($conteos[2] ?? 0) * NivelHelper::expDerrota(62, 5);
         $this->assertSame($expEsperado, $resultado['exp']);
+    }
+
+    public function test_finalizacion_otorga_caramelos_de_tipo_por_derrotado(): void
+    {
+        $ctx = $this->crearContexto(['duracion_horas' => 1, 'inicio' => now()->subHours(2)]);
+
+        // Pool determinista: solo charmander (2 tipos) en el hábitat para que el
+        // test no dependa del RNG de selección de especie.
+        DB::table('pokemon_habitat')->where('pokemon_id', 1)->delete();
+
+        PokemonType::create(['pokemon_id' => 2, 'type' => 13, 'slot' => 1]); // Eléctrico
+        PokemonType::create(['pokemon_id' => 2, 'type' => 10, 'slot' => 2]); // Fuego
+
+        $this->artisan('exploraciones:procesar')->assertSuccessful();
+
+        $ctx['exploracion']->refresh();
+        $derrotados = $ctx['exploracion']->eventos['derrotados'];
+        $conteos = $this->conteoPorEspecie($ctx['exploracion']->eventos['bitacora']);
+
+        $this->assertNotEmpty($derrotados);
+        $this->assertSame(0, $conteos[1] ?? 0);
+
+        // 1 caramelo por cada tipo del pokemon derrotado, por derrota
+        $this->assertDatabaseHas('caramelos_tipo', ['tipo' => 'Eléctrico', 'cantidad' => $conteos[2]]);
+        $this->assertDatabaseHas('caramelos_tipo', ['tipo' => 'Fuego', 'cantidad' => $conteos[2]]);
+        $this->assertDatabaseCount('caramelos_tipo', 2);
+
+        // Resumen en eventos: ksort por tipo (PHP 8.4: 'Eléctrico' < 'Fuego')
+        $caramelosTipo = $ctx['exploracion']->eventos['resultado']['caramelos_tipo'];
+        $this->assertSame(['Eléctrico', 'Fuego'], array_column($caramelosTipo, 'tipo'));
+        $this->assertSame(['electrico', 'fuego'], array_column($caramelosTipo, 'slug'));
+        foreach ($caramelosTipo as $caramelo) {
+            $this->assertSame($conteos[2], $caramelo['cantidad']);
+        }
     }
 }

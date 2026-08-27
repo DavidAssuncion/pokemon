@@ -238,6 +238,7 @@ class ExploracionesPageTest extends TestCase
             'capturados' => [],
             'caramelos_familia' => [],
             'caramelos_ev' => [],
+            'caramelos_tipo' => [],
             'exp' => 0,
         ], $terminadas[0]['resultado']);
     }

@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Http\Controllers\PlayerController;
+use App\Http\Controllers\ReclutadoController;
 use App\Http\Controllers\ReclutamientoController;
 use App\Http\Controllers\TeamController;
 use Illuminate\Support\Facades\Route;
@@ -26,3 +27,8 @@ Route::put('/teams/{team}', [TeamController::class, 'update']);
 Route::delete('/teams/{team}', [TeamController::class, 'destroy']);
 Route::post('/teams/add-member', [TeamController::class, 'addMember']);
 Route::post('/teams/remove-member', [TeamController::class, 'removeMember']);
+
+// Reclutado detail: type candy feeding + evolution
+Route::get('/reclutado/{reclutado}', [ReclutadoController::class, 'show']);
+Route::post('/reclutado/{reclutado}/dar-caramelo', [ReclutadoController::class, 'darCaramelo']);
+Route::post('/reclutado/{reclutado}/evolucionar', [ReclutadoController::class, 'evolucionar']);
