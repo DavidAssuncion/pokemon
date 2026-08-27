@@ -7,12 +7,11 @@ namespace App\Jobs;
 use App\Models\Pokedex;
 use App\Models\Pokemon;
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 
-class ActualizarPokedexJob implements ShouldQueue
+class ActualizarPokedexJob
 {
     use Dispatchable;
     use InteractsWithQueue;

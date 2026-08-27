@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace App\Console\Commands;
 
-use App\Jobs\ProcesarExploracionJob;
 use App\Models\ExploracionActiva;
 use Illuminate\Console\Command;
+use Src\Exploraciones\App\ProcesarExploracionService;
 
 class ProcesarExploraciones extends Command
 {
@@ -24,7 +24,7 @@ class ProcesarExploraciones extends Command
             ->get();
 
         foreach ($exploraciones as $exploracion) {
-            ProcesarExploracionJob::dispatch($exploracion->id);
+            app(ProcesarExploracionService::class)->procesar($exploracion);
         }
 
         $this->info(sprintf('Exploraciones procesadas: %d', $exploraciones->count()));

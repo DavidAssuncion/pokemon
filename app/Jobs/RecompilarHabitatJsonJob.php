@@ -7,12 +7,11 @@ namespace App\Jobs;
 use App\Models\Habitat;
 use App\Models\Pokedex;
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 
-class RecompilarHabitatJsonJob implements ShouldQueue
+class RecompilarHabitatJsonJob
 {
     use Dispatchable;
     use InteractsWithQueue;

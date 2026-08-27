@@ -340,6 +340,24 @@ class ExploracionesTest extends TestCase
         $this->artisan('exploraciones:procesar')->assertSuccessful();
     }
 
+    public function test_comando_procesa_sincronamente_sin_worker(): void
+    {
+        // Reproduce la configuración de producción: QUEUE_CONNECTION=database sin worker.
+        // Si el comando volviera a despachar un job, este quedaría en `jobs` y la bitácora vacía.
+        config()->set('queue.default', 'database');
+
+        $ctx = $this->crearContexto(['duracion_horas' => 4, 'inicio' => now()->subHour()]);
+
+        $this->artisan('exploraciones:procesar')->assertSuccessful();
+
+        // Sin worker no debe quedar NINGÚN job en la cola.
+        $this->assertDatabaseCount('jobs', 0);
+
+        // La bitácora se genera síncronamente, sin depender de un worker.
+        $ctx['exploracion']->refresh();
+        $this->assertNotEmpty($ctx['exploracion']->eventos['bitacora']);
+    }
+
     public function test_servicio_guarda_resumen_de_resultado_en_eventos(): void
     {
         $ctx = $this->crearContexto(['duracion_horas' => 1, 'inicio' => now()->subHours(2)]);

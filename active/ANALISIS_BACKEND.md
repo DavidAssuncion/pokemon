@@ -651,3 +651,98 @@ El helper `createPokemon` gana un 4º parámetro opcional `$efforts` (map stat =
 - ✅ PHPStan level 8 sobre `DatagridServiceProvider.php` + `PlayerController.php`: 3 errores, todos PREEXISTENTES en `reclutamiento()`/`equipos()` (verificado con stash: 6 errores sin mis cambios → 3 con ellos; ninguno en las líneas de M1/M3).
 - ✅ Pint: pass. `c3fcaa0b62` verificado en la cadena de commits (HEAD ~ a80269b5).
 - ✅ Git add explícito (5 archivos); WIP ajeno intacto.
+
+---
+
+# Análisis Backend — Fix: procesamiento síncrono de exploraciones (sin dependencia de cola)
+
+## Problema reportado
+La bitácora no se genera para exploraciones activas. Causa raíz (confirmada con tinker read-only contra BD dev):
+- `QUEUE_CONNECTION=database` en `.env`; `ProcesarExploraciones` despacha `ProcesarExploracionJob` (ShouldQueue) a la cola `database` y **no hay worker** → los jobs quedan en `jobs` para siempre.
+- **Evidencia en BD dev**: tabla `jobs` con **8 filas** de `App\Jobs\ProcesarExploracionJob` (queue=default), exploraciones activas 34 y 35 (habitat 13, nivel 1, duración 4h) con `eventos = null`.
+- El scheduler (`Schedule::command('exploraciones:procesar')->everyFiveMinutes()`) tampoco corre sin `schedule:work`/cron.
+
+## Diagnóstico habitat 13 (read-only, BD dev)
+- Habitat 13 = **Corriente Marina**.
+- Pool nivel 1: **1 pokémon** (bulbasaur, capture_rate=45, hatch=20) → **NO vacío**.
+- Pool nivel 2: 0. Pool nivel 3: 0. (Solo relevante si el usuario inicia exploraciones nivel 2/3 en este hábitat → bitácora legítimamente vacía.)
+
+## Qué voy a tocar
+| Archivo | Cambio |
+|---|---|
+| `app/Console/Commands/ProcesarExploraciones.php` | Sustituir `ProcesarExploracionJob::dispatch($exploracion->id)` por llamada directa síncrona `app(ProcesarExploracionService::class)->procesar($exploracion)`. Import nuevo `Src\Exploraciones\App\ProcesarExploracionService`; se elimina el import del Job. |
+| `tests/Feature/ExploracionesTest.php` | Nuevo test que reproduce la config de producción: `queue.default=database`, correr el comando, assert bitácora poblada + `jobs` sin filas (sin Queue::fake: queremos el camino síncrono real). |
+| `active/ANALISIS_BACKEND.md` | Esta sección. |
+
+## Qué NO toco
+- `app/Jobs/ProcesarExploracionJob.php` — se queda en su sitio (ya no lo usa el comando; grep: solo lo usaba el comando).
+- BD dev (solo lecturas; sin migraciones).
+- Scheduler (`routes/console.php`) — intacto; el fix no lo afecta.
+- WIP ajeno: `active/ANALISIS_FRONTEND.md`, `scripts/rename_pokemon_icon_files.sh` (sin commitear, fuera de alcance; no commit).
+
+## Hallazgo secundario (reportar, NO arreglar — fuera de alcance)
+`ProcesarExploracionService::finalizar()` despacha `ActualizarPokedexJob` (ShouldQueue) → con `QUEUE_CONNECTION=database` y sin worker, los AVISTADO de pokedex y la recompilación del JSON de hábitat (`RecompilarHabitatJsonJob`, encadenado desde el job) seguirían sin ejecutarse al completar la vuelta. El fix del comando resuelve la BITÁCORA; el pokedex queda pendiente de decisión del usuario (sync del job o worker).
+
+## Tests (TDD rojo → verde)
+1. `test_comando_procesa_sincronamente_sin_worker` (nuevo): `config()->set('queue.default', 'database')` → `artisan('exploraciones:procesar')` → `assertDatabaseCount('jobs', 0)` + bitácora poblada. ROJO con el código actual (el dispatch deja 1 fila en `jobs` y la bitácora queda vacía) → VERDE con el fix.
+   - Se usa una exploración DENTRO de su duración (4h, inicio hace 1h) para que `finalizar()` no dispare `ActualizarPokedexJob` (evita falso positivo del hallazgo secundario; el assert de `jobs=0` queda limpio).
+2. Suite existente de ExploracionesTest (13 tests) — ya invocan el comando y asertan bitácora; no necesitan cambios (ninguno aserta el dispatch del Job; verificado por grep).
+
+## Riesgos
+- `app(Foo::class)` con Larastan tipa el retorno a `Foo` → sin error PHPStan level 6.
+- `config()->set('queue.default', ...)` resuelve la conexión por demanda → efectivo en tests.
+- Sin commits (instrucción de la tarea): solo reportar.
+
+## Verificación
+- `php artisan test --compact tests/Feature/ExploracionesTest.php`
+- `php artisan test --compact`
+- `vendor/bin/pint --dirty --format agent`
+- PHPStan sobre los archivos tocados.
+
+---
+
+# Análisis Backend — Pipeline pokedex síncrono (sin worker de cola)
+
+## Contexto verificado (tinker read-only, BD dev)
+
+- Exploraciones **34 y 35** (habitat 13 Corriente Marina, nivel 1, duración 4h): `regreso = NULL`, `eventos = null`.
+- Tabla `jobs`: **8 filas** (jobs `ProcesarExploracionJob` atascados de ticks anteriores con el código viejo).
+- El fix síncrono del comando (`ProcesarExploraciones` → `ProcesarExploracionService::procesar()` directo) está aplicado en el árbol pero SIN commitear, y **el proceso `schedule:work` en ejecución NO lo recogió** (proceso long-running; el tick de 16:30 despachó con el código viejo → eventos sigue null). Requiere reiniciar `schedule:work`.
+- `QUEUE_CONNECTION=database` en `.env`; `QUEUE_CONNECTION=sync` en phpunit.xml (por eso los tests pasaban con ShouldQueue).
+
+## Problema secundario confirmado
+
+`ProcesarExploracionService::finalizar()` y `ServicioCaptura`/`ReclutamientoController` despachan `ActualizarPokedexJob` (ShouldQueue) → encadena `RecompilarHabitatJsonJob` (ShouldQueue) → con cola `database` y sin worker, los AVISTADO/RECLUTADO de pokedex y la recompilación del JSON de hábitat no ocurren. `CapturarPokemonJob` (ShouldQueue) igual desde `ServicioCaptura`.
+
+## Decisión (juego single-player)
+
+Quitar `ShouldQueue` de `ActualizarPokedexJob`, `RecompilarHabitatJsonJob` y `CapturarPokemonJob` → `dispatch()` ejecuta inline vía `Dispatcher::dispatchNow()` (verificado en `vendor/.../Bus/Dispatcher.php`: `dispatch()` → `commandShouldBeQueued() === false` → `dispatchNow`). Misma clase, misma firma, mismo `handle()`.
+
+## Qué voy a tocar
+
+| Archivo | Cambio |
+|---|---|
+| `app/Jobs/ActualizarPokedexJob.php` | Quitar `implements ShouldQueue` + import `Illuminate\Contracts\Queue\ShouldQueue`. El `RecompilarHabitatJsonJob::dispatch()` interno también queda síncrono. |
+| `app/Jobs/RecompilarHabitatJsonJob.php` | Ídem. |
+| `app/Jobs/CapturarPokemonJob.php` | Ídem. |
+| `tests/Feature/ServicioCapturaTest.php` | `Queue::fake()`/`assertPushed` → `Bus::fake()`/`assertDispatched` (ver mecanismo abajo). |
+| `tests/Feature/Jobs/ActualizarPokedexJobTest.php` | `test_dispatches_recompilar_habitat_json_job` (Queue::fake + assertPushed) → aserción del EFECTO en BD: el JSON `pokemons` del hábitat queda recompilado síncronamente tras el dispatch. |
+| `active/ANALISIS_BACKEND.md` | Esta sección. |
+
+## Mecanismo verificado (por qué Queue::fake() ya no sirve)
+
+`Dispatchable::dispatch()` → `PendingDispatch::__destruct()` → Bus `Dispatcher::dispatch()`: si el job NO implementa `ShouldQueue` → `dispatchNow()` → ejecución inline **sin tocar la cola**. `Queue::fake()` reemplaza el binding `queue` (solo intercepta `push` de jobs ShouldQueue), así que `Queue::assertPushed` fallaría para jobs síncronos. `Bus::fake()` reemplaza el `Dispatcher` y SÍ registra `dispatch()` de cualquier job → `Bus::assertDispatched` con closures de parámetros mantiene el espíritu del contrato (params de captura, AVISTADO, etc.). Sin fake, los tests de jobs (`RecompilarHabitatJsonJobTest`, `CapturarPokemonJobTest`, resto de `ActualizarPokedexJobTest`) ejecutan inline como ya hacían con QUEUE_CONNECTION=sync → sin cambios.
+
+## Riesgos
+
+- `Bus::fake()` intercepta TODOS los dispatch del test (sin ejecutar) → los tests de ServicioCaptura siguen validando el contrato de dispatch, no efectos (los efectos los cubren los tests de jobs, que corren sin fake).
+- `ActualizarPokedexJobTest::test_avistado_recompila...` sin fake → ejecuta el pipeline completo inline (pokedex + JSON hábitat) → prueba real del camino síncrono sin worker.
+- `ProcesarExploracionJob` / `CalcularRecompensasJob` siguen con `ShouldQueue` pero ya no los despacha nadie en producción (grep) — fuera de alcance (no se tocan; se reportan como candidatos a limpieza).
+- No tocar BD dev (solo lecturas). No tocar WIP ajeno (`ANALISIS_FRONTEND.md`, `scripts/rename_pokemon_icon_files.sh`).
+
+## Verificación
+
+- `php artisan test --compact` (suite completa)
+- `vendor/bin/pint --dirty --format agent`
+- PHPStan level 6 sobre los archivos tocados.
+- Commit atómico con el fix del comando + jobs síncronos + tests.

@@ -5,13 +5,11 @@ declare(strict_types=1);
 namespace Tests\Feature\Jobs;
 
 use App\Jobs\ActualizarPokedexJob;
-use App\Jobs\RecompilarHabitatJsonJob;
 use App\Models\Habitat;
 use App\Models\Pokedex;
 use App\Models\Pokemon;
 use App\Models\Province;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Queue;
 use Tests\TestCase;
 
 class ActualizarPokedexJobTest extends TestCase
@@ -93,13 +91,17 @@ class ActualizarPokedexJobTest extends TestCase
         $this->assertTrue($pokedex->atrapado);
     }
 
-    public function test_dispatches_recompilar_habitat_json_job(): void
+    public function test_avistado_recompila_json_del_habitat_sincronamente(): void
     {
-        Queue::fake();
+        // Sin Queue::fake: RecompilarHabitatJsonJob se ejecuta inline (sin
+        // ShouldQueue) y el JSON del hábitat refleja el nuevo AVISTADO.
+        ActualizarPokedexJob::dispatch($this->pokemonId, 'AVISTADO');
 
-        $job = new ActualizarPokedexJob($this->pokemonId, 'AVISTADO');
-        $job->handle();
+        $habitat = Habitat::find(1);
+        $this->assertNotNull($habitat->pokemons);
 
-        Queue::assertPushed(RecompilarHabitatJsonJob::class, 1);
+        $bulbaData = collect($habitat->pokemons)->firstWhere('nombre', 'bulbasaur');
+        $this->assertNotNull($bulbaData);
+        $this->assertTrue($bulbaData['visto']);
     }
 }
