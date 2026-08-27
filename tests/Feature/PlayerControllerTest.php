@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Feature;
 
+use App\Enums\StatEnum;
 use App\Enums\TipoEnum;
 use App\Models\Pokedex;
 use App\Models\Pokemon;
@@ -60,6 +61,7 @@ class PlayerControllerTest extends TestCase
             'no_vistos' => 1,
         ], $response->viewData('counts'));
         $this->assertSame(TipoEnum::options(), $response->viewData('tipos'));
+        $this->assertSame(StatEnum::options(), $response->viewData('stats'));
         $this->assertSame(3, $response->viewData('pokemons')['meta']['total']);
     }
 }

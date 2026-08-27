@@ -183,26 +183,20 @@ final class DatagridServiceProvider extends ServiceProvider
 
     private function statId(mixed $value): ?int
     {
-        if (is_int($value)) {
-            return $value;
-        }
+        $id = $this->labelToId($value, StatEnum::cases());
 
-        if (is_numeric($value)) {
-            return (int) $value;
-        }
-
-        $label = strtolower(trim((string) $value));
-
-        foreach (StatEnum::cases() as $case) {
-            if (strtolower($case->label()) === $label) {
-                return $case->value;
-            }
-        }
-
-        return null;
+        return $id === 0 ? null : $id;
     }
 
     private function tipoId(mixed $value): ?int
+    {
+        return $this->labelToId($value, TipoEnum::cases());
+    }
+
+    /**
+     * @param  list<StatEnum|TipoEnum>  $cases
+     */
+    private function labelToId(mixed $value, array $cases): ?int
     {
         if (is_int($value)) {
             return $value;
@@ -214,7 +208,7 @@ final class DatagridServiceProvider extends ServiceProvider
 
         $label = strtolower(trim((string) $value));
 
-        foreach (TipoEnum::cases() as $case) {
+        foreach ($cases as $case) {
             if (strtolower($case->label()) === $label) {
                 return $case->value;
             }

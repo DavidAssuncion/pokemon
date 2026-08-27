@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers;
 
 use App\Datagrid\DatagridService;
+use App\Enums\StatEnum;
 use App\Enums\TipoEnum;
 use App\Models\ExploracionActiva;
 use App\Models\Reclutable;
@@ -29,6 +30,7 @@ class PlayerController extends Controller
             'pokemons' => $page,
             'counts' => $page['meta']['counts'] ?? ['total' => 0, 'vistos' => 0, 'atrapados' => 0, 'no_vistos' => 0],
             'tipos' => TipoEnum::options(),
+            'stats' => StatEnum::options(),
         ]);
     }
 

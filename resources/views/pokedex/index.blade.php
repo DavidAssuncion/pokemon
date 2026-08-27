@@ -446,7 +446,7 @@ function pokedexApp() {
             };
             this.counts = @json($counts ?? null) || initial?.meta?.counts || fallbackCounts;
 
-            // Close type filter on outside click
+            // Close filter dropdowns on outside click
             this.clickHandler = (e) => {
                 if (!e.target.closest('[x-data]')?.contains(e.target)) {
                     this.showTypeFilter = false;

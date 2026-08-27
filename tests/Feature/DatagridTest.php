@@ -421,6 +421,18 @@ class DatagridTest extends TestCase
         $this->assertCount(2, $response->json('data'));
     }
 
+    public function test_pokemon_list_filter_effort_zero_ignored(): void
+    {
+        $this->createPokemon(1, 'bulbasaur', [], [StatEnum::ATTACK->value => 49], [StatEnum::ATTACK->value => 2]);
+        $this->createPokemon(2, 'ivysaur');
+
+        $response = $this->getJson('/datagrid/pokemon?filter[effort]=0');
+
+        $response->assertOk();
+        // effort=0 no es un stat válido => filtro ignorado (no "0 resultados")
+        $this->assertCount(2, $response->json('data'));
+    }
+
     public function test_pokemon_list_filter_effort_combines_with_types(): void
     {
         // pikachu: Eléctrico + Ataque effort 2
