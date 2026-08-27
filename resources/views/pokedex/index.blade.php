@@ -112,13 +112,15 @@
                 >
                     <!-- Image -->
                     <div class="aspect-square relative bg-gray-50 dark:bg-gray-900 p-2">
-                        <img
-                            :src="'/images/iconos/' + pokemon.id + '.png'"
-                            :alt="pokemon.visto ? pokemon.name : 'Pokemon desconocido'"
-                            class="w-full h-full object-contain transition-transform group-hover:scale-110"
-                            :class="{ 'grayscale opacity-40': !pokemon.visto }"
-                            onerror="this.style.display='none'"
-                        >
+                        <template x-if="!pokemon.visto">
+                            <img src="/images/reward/pokemon_encounter/0.png" alt="Pokemon desconocido"
+                                 class="w-full h-full object-contain">
+                        </template>
+                        <template x-if="pokemon.visto">
+                            <img :src="'/images/iconos/' + pokemon.id + '.png'" :alt="pokemon.name"
+                                 class="w-full h-full object-contain transition-transform group-hover:scale-110"
+                                 onerror="this.style.display='none'">
+                        </template>
                         <!-- Captured badge -->
                         <template x-if="pokemon.atrapado">
                             <span class="absolute top-1 right-1 px-1 py-0.5 bg-green-500 text-white text-[10px] font-bold rounded">
@@ -172,13 +174,15 @@
 
                 <!-- Header -->
                 <div class="p-6 pb-4 text-center border-b border-gray-200 dark:border-gray-700">
-                    <img
-                        :src="'/images/iconos/' + selectedPokemon.id + '.png'"
-                        :alt="selectedPokemon.visto ? selectedPokemon.name : 'Desconocido'"
-                        class="w-24 h-24 object-contain mx-auto mb-3"
-                        :class="{ 'grayscale opacity-40': !selectedPokemon.visto }"
-                        onerror="this.style.display='none'"
-                    >
+                    <template x-if="!selectedPokemon.visto">
+                        <img src="/images/reward/pokemon_encounter/0.png" alt="Pokemon desconocido"
+                             class="w-24 h-24 object-contain mx-auto mb-3">
+                    </template>
+                    <template x-if="selectedPokemon.visto">
+                        <img :src="'/images/iconos/' + selectedPokemon.id + '.png'" :alt="selectedPokemon.name"
+                             class="w-24 h-24 object-contain mx-auto mb-3"
+                             onerror="this.style.display='none'">
+                    </template>
                     <p class="text-xs text-gray-400 dark:text-gray-500" x-text="'#' + selectedPokemon.id"></p>
                     <h2 class="text-xl font-bold text-gray-900 dark:text-white" x-text="selectedPokemon.visto ? selectedPokemon.name : '???'"></h2>
                     <template x-if="selectedPokemon.atrapado">

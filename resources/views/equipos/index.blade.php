@@ -109,7 +109,7 @@
                                                         :src="'/images/iconos/' + getMember(team, slot).pokemon_id + '.png'"
                                                         :alt="getMember(team, slot).nombre"
                                                         :title="getMember(team, slot).nombre"
-                                                        class="w-32 h-32 object-contain mx-auto"
+                                                        class="w-24 h-24 object-contain mx-auto"
                                                         onerror="this.style.display='none'"
                                                     >
                                                     <button
@@ -125,7 +125,7 @@
                                             </template>
                                             <template x-if="!getMember(team, slot)">
                                                 <div>
-                                                    <div class="w-32 h-32 mx-auto rounded border-2 border-dashed border-gray-300 dark:border-gray-600 flex items-center justify-center">
+                                                    <div class="w-24 h-24 mx-auto rounded border-2 border-dashed border-gray-300 dark:border-gray-600 flex items-center justify-center">
                                                         <span class="text-gray-300 dark:text-gray-600 text-lg">+</span>
                                                     </div>
                                                     <p class="text-[10px] text-gray-400 dark:text-gray-500 mt-0.5">Slot <span x-text="slot"></span></p>
@@ -210,7 +210,7 @@
                                 class="relative bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden text-center group"
                                 x-data="{ showTeamDropdown: false }"
                             >
-                                <div class="w-32 h-32 mx-auto">
+                                <div class="w-24 h-24 mx-auto">
                                     <img
                                         :src="'/images/iconos/' + pokemon.pokemon_id + '.png'"
                                         :alt="pokemon.nombre"
@@ -262,7 +262,7 @@
                     <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-2">
                         <template x-for="pokemon in assignedPokemons" :key="pokemon.id">
                             <div class="relative bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden text-center group opacity-60">
-                                <div class="w-32 h-32 mx-auto">
+                                <div class="w-24 h-24 mx-auto">
                                     <img
                                         :src="'/images/iconos/' + pokemon.pokemon_id + '.png'"
                                         :alt="pokemon.nombre"
@@ -340,7 +340,7 @@
                 <img
                     :src="'/images/iconos/' + hoveredPokemon.pokemon_id + '.png'"
                     :alt="hoveredPokemon.nombre"
-                    class="w-32 h-32 object-contain mx-auto"
+                    class="w-24 h-24 object-contain mx-auto"
                 >
                 <p class="text-sm font-medium text-gray-900 dark:text-white mt-1" x-text="hoveredPokemon.nombre"></p>
                 <p class="text-xs text-gray-400 dark:text-gray-500" x-text="'#' + hoveredPokemon.pokemon_id"></p>

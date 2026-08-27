@@ -1,48 +1,46 @@
-# Análisis Frontend — Filtro tipo Pokédex + Descartar individual + AJAX Equipos sin reload
+# Análisis Frontend — Imágenes Pokémon 96px en Equipos + Placeholder no visto en Pokédex/Hábitat + Iconos construcción
 
 ## Vistas a tocar
 
-### 1. `resources/views/pokedex/index.blade.php` — filtro por TIPO
-- Añadir dropdown "Tipo" junto a botones Todos/Vistos/Atrapados, con el mismo patrón visual del filtro de tipo de equipos (`bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg`).
-- `@php $tipos = \App\Enums\TipoEnum::options(); @endphp` → `[id => nombre]` (18 tipos, labels en español, verificado).
-- Estado Alpine: `typeFilter: null`, `showTypeFilter: false`. Getter `filteredPokemons`: filtrar con `p.types && p.types.includes(this.typeFilter)`.
-- Cierre al hacer click fuera con el patrón de `equiposApp.init()` (copiar tal cual, instrucción del Arquitecto).
-- Indicador "✕" dentro del botón cuando `typeFilter` está activo (`@click.stop` sobre un `<span>`, HTML válido button>span), con `x-text="typeFilter || 'Tipo'"`.
-- Datos verificados: `PlayerController::pokedex()` ya pasa `types` = array de nombres (`['Fuego']`) en cada pokemon.
+### 1. `resources/views/equipos/index.blade.php` — imágenes Pokémon a 96px (w-24)
+- Revertir TODAS las imágenes de Pokémon de `w-32 h-32` → `w-24 h-24` (5 ubicaciones):
+  1. Ícono de miembro en card de equipo (`class="w-32 h-32 object-contain mx-auto"`).
+  2. Placeholder de slot vacío (`w-32 h-32 mx-auto rounded border-2 border-dashed ...`).
+  3. Wrapper de grid "Reclutados Disponibles" (`<div class="w-32 h-32 mx-auto">`).
+  4. Wrapper de grid "Asignados" (idéntico al anterior).
+  5. Imagen del tooltip de stats (`class="w-32 h-32 object-contain mx-auto"`).
+- Mantener: transparente, sin bg/borde en imágenes, `grayscale` en asignados, bindings Alpine, `onerror` display none.
+- `resources/views/reclutamiento/index.blade.php` NO se toca (se queda en 128px).
 
-### 2. `resources/views/reclutamiento/index.blade.php` — botón Descartar + modal con cantidad
-- Botón rojo "Descartar" bajo "Reclutar" en cada card (`openDiscardModal(item)`).
-- Modal individual `x-if="showDiscardModal && discardItem"`: título "Descartar [nombre]", input number (min 1, max = item.cantidad, default 1), botones rápidos 25/50/75/Todos vía `setDiscardPercent(pct)`, texto "Se convertirán en caramelos de la familia [nombre]", Cancelar/Confirmar (rojo).
-- `confirmDiscard()`: `POST /reclutamiento/discard` con `{ reclutable_id, cantidad }`; update de estado local (quitar item si cantidad agotada, sino restar).
-- **Conflicto detectado**: `showDiscardModal` YA existe para el modal de "Descartar todos". Para evitar que ambos modales se rendericen a la vez, renombro el flag del modal de "Descartar todos" a `showDiscardAllModal` (comportamiento del modal intacto, "se mantiene") y uso `showDiscardModal` para el modal individual, tal como pide el snippet de `openDiscardModal`.
-- Estados nuevos: `discardItem: null`, `discardQuantity: 1`.
-- Ruta backend `POST /reclutamiento/discard` aún no existe en `routes/player.php` (la añadirá el backend en paralelo; patrón idéntico a `/reclutamiento/recruit` y `/reclutamiento/discard-all`, ambos `JsonResponse` con csrf-token meta ya presente en layout).
-- Guard extra en `confirmDiscard`: `Math.max(1, Math.min(this.discardQuantity || 1, this.discardItem.cantidad))` (protege input vacío/NaN).
+### 2. `resources/views/pokedex/index.blade.php` — placeholder para no visto
+- Grid card: reemplazar `<img>` con `:class="{ 'grayscale opacity-40': !pokemon.visto }"` por dos `<template x-if>`:
+  - `!pokemon.visto` → `<img src="/images/reward/pokemon_encounter/0.png" alt="Pokemon desconocido">`.
+  - `pokemon.visto` → img normal con `transition-transform group-hover:scale-110` y `onerror` (snippet del Arquitecto).
+- Modal detalle: misma lógica con `selectedPokemon`; mantener `w-24 h-24 object-contain mx-auto mb-3` en ambos.
+- Imagen verificada: `public/images/reward/pokemon_encounter/0.png` existe.
 
-### 3. `resources/views/equipos/index.blade.php` — AJAX sin recarga
-- `createTeam`: push `{ ...data.team, members: [] }` al array `teams`; cerrar form.
-- `deleteTeam`: `teams.filter(...)` + liberar `teamPokemonIds` recorriendo `teamToDelete.members` con `m.pokemon_id`.
-- `addToTeam`: push `data.member` a `team.members` (`id`, `team_id`, `pokemon_id`, `slot`, `behavior`, `reclutado: pokemon`) + `teamPokemonIds.push(pokemon.id)`.
-- `removeMember`: filtrar miembro del team + liberar `teamPokemonIds`.
-- `removeFromTeam`: **fix necesario** — `reclutado.team_id` NO existe en el JSON (verificado por tinker: `Reclutado::with('pokemon')` no serializa `team_id`; el modelo no tiene accessor ni columna). Buscar team por `t.members.some(m => m.pokemon_id === pokemon.id)` (OJO del Arquitecto: `member.pokemon_id` es id de Reclutado, igual que `pokemon.id` — verificado: `team_members.pokemon_id` → FK a `reclutados.id`).
-- `startRename`: `PUT /teams/{id}` → `data.team.name` actualiza el objeto local.
-- Errores: helper `handleError(response)` que ante 422 parsea `{ error }` y hace `alert(error)`; usado en `else` de cada operación.
-- El filtro de tipo de equipos (getter `availablePokemons`) NO se toca (fuera de alcance; `tipo_nombre` no se serializa en `pokemon.types` pero es comportamiento existente del backend, no de esta tarea).
-- Backend devolverá JSON (`team`, `member`) — hoy los endpoints devuelven `RedirectResponse`; el backend en paralelo los cambia (no toco controladores).
+### 3. `resources/views/habitats/show.blade.php` — Niveles: placeholder en no avistado
+- Reemplazar el overlay oscuro con "?" (`x-show="!isSighted(...)"`) por dos `<template x-if>` con placeholder `0.png` vs ícono real; mantener `w-24 h-24` y `relative`.
+- `isSighted()` ya existe en `habitatShow()`; `{{ $pokemon['id'] ?? $pokemon['species_id'] ?? 0 }}` se interpola en PHP.
+
+### 4. `resources/views/habitats/show.blade.php` — botones construcción con `<img>` en vez de SVG
+- Granjas → `/images/reward/item/303.png`; Entrenadores → `/images/reward/item/1503.png`; Mazmorras → `/images/misc/raid.png`.
+- Tamaño uniforme `w-8 h-8 object-contain` en los tres; mantener texto, clases, disabled, title.
+- Imágenes verificadas en `public/images/` (303.png, 1503.png, raid.png existen).
 
 ## DTOs consumidos
-- Ninguno nuevo. `$pokemons` (array con `types`), `$reclutables` (`{id, pokemon_id, nombre, cantidad}`), `$teams` (`members[].pokemon_id` = id Reclutado, `members[].reclutado`), `$reclutados`, `$teamIds`, `$equiposEnExploracion`.
+- Ninguno nuevo. `$teams`, `$reclutados`, `$teamIds` (equipos); `$pokemons` con `visto/atrapado` (pokédex); `$habitat['levels']`, `$sightedPokemonIds`, `$exploracionesActivas` (hábitat).
 
 ## Tests
-- Sin Dusk en el proyecto. Verificación: `php artisan view:cache` (compila sin errores), `vendor/bin/pint --dirty --format agent`, render real de las 3 vistas con tinker.
+- Sin Dusk en el proyecto (verificado en análisis previo). Verificación: `php artisan view:cache` compila sin errores, `vendor/bin/pint --dirty --format agent`, greps de confirmación.
 
 ## Estados UI cubiertos
-- Pokédex: dropdown tipo con hover/active, filtro combinado con búsqueda y Todos/Vistos/Atrapados, ✕ limpiar filtro, empty state existente.
-- Reclutamiento: card con 2 botones, modal individual (input, rápidos, cancelar, confirmar), item eliminado vs cantidad reducida, modal discard-all coexistente.
-- Equipos: alta/borrado/rename/add/remove sin recarga; badge INVÁLIDO y slots se actualizan en vivo; 422 → alert.
+- Equipos: miembro real, slot vacío, grid disponible, grid asignado (grayscale), tooltip.
+- Pokédex: tarjeta vista/no vista, modal vista/no vista, `onerror` oculta imágenes faltantes.
+- Hábitat: nivel con pokémon avistado, nivel con no avistado, nivel vacío ("Sin Pokémon en este nivel"), botones construcción habilitados/disabled (opacity-50).
 
 ## Riesgos accesibilidad/UX
-- Span ✕ con `@click.stop` dentro de button: válido, `aria-label` incluido.
-- Input number sin validación manual estricta → guard `Math.max(1, ...)` en confirm.
-- Conflicto de flags de modal resuelto por renombrado interno (sin cambio visual en discard-all).
-- `removeFromTeam` dependía de `team_id` inexistente → el fix restaura el botón naranja "→" (antes muerto).
+- Placeholder con `alt="Pokemon desconocido"` / `alt="?"`: informativo, sin duplicar nombres reales para no spoilear especies no vistas.
+- `<template x-if>` con condición interpolada en PHP en hábitat: ambos `<template>` evalúan en Alpine; solo uno se renderiza.
+- Imágenes de botones construcción llevan `alt` descriptivo (accesibilidad, reemplaza SVG que era decorativo con `aria-hidden` implícito).
+- `w-8 h-8` en botones con `gap-2 flex items-center justify-center`: alineación vertical correcta.
