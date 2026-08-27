@@ -42,6 +42,47 @@
                 >
                     Atrapados
                 </button>
+                <div class="relative">
+                    <button
+                        @click="showTypeFilter = !showTypeFilter"
+                        class="px-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors flex items-center gap-2"
+                    >
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/>
+                        </svg>
+                        <span x-text="typeFilter || 'Tipo'"></span>
+                        <span
+                            x-show="typeFilter"
+                            @click.stop="typeFilter = null"
+                            class="ml-0.5 text-red-500 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 font-bold"
+                            aria-label="Quitar filtro de tipo"
+                            title="Quitar filtro de tipo"
+                        >✕</span>
+                    </button>
+                    <template x-if="showTypeFilter">
+                        <div class="absolute left-0 top-full mt-1 z-40 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-lg p-3 w-48 max-h-64 overflow-y-auto">
+                            <button
+                                @click="typeFilter = null; showTypeFilter = false"
+                                class="w-full text-left px-3 py-1.5 text-sm rounded hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                                :class="typeFilter === null ? 'text-blue-600 dark:text-blue-400 font-medium' : 'text-gray-700 dark:text-gray-300'"
+                            >
+                                Todos
+                            </button>
+                            @php
+                                $tipos = \App\Enums\TipoEnum::options();
+                            @endphp
+                            @foreach($tipos as $id => $nombre)
+                            <button
+                                @click="typeFilter = '{{ $nombre }}'; showTypeFilter = false"
+                                class="w-full text-left px-3 py-1.5 text-sm rounded hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                                :class="typeFilter === '{{ $nombre }}' ? 'text-blue-600 dark:text-blue-400 font-medium' : 'text-gray-700 dark:text-gray-300'"
+                            >
+                                {{ $nombre }}
+                            </button>
+                            @endforeach
+                        </div>
+                    </template>
+                </div>
             </div>
             <div class="relative flex-1 max-w-xs">
                 <input
@@ -213,6 +254,8 @@ function pokedexApp() {
     return {
         pokemons: @json($pokemons ?? []),
         activeFilter: 'all',
+        typeFilter: null,
+        showTypeFilter: false,
         searchQuery: '',
         showModal: false,
         selectedPokemon: null,
@@ -244,11 +287,21 @@ function pokedexApp() {
                 );
             }
 
+            // Apply type filter
+            if (this.typeFilter) {
+                result = result.filter(p => p.types && p.types.includes(this.typeFilter));
+            }
+
             return result;
         },
 
         init() {
-            // Compute stats
+            // Close type filter on outside click
+            document.addEventListener('click', (e) => {
+                if (!e.target.closest('[x-data]')?.contains(e.target)) {
+                    this.showTypeFilter = false;
+                }
+            });
         },
 
         openDetail(pokemon) {

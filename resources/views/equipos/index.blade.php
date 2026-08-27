@@ -455,14 +455,18 @@ function equiposApp() {
                 });
 
                 if (response.ok) {
-                    window.location.reload();
+                    const data = await response.json();
+                    if (data.team) {
+                        this.teams.push({ ...data.team, members: [] });
+                        this.showNewTeamForm = false;
+                        this.newTeamName = '';
+                    }
+                } else {
+                    await this.handleError(response);
                 }
             } catch (err) {
                 console.error('Error creating team:', err);
             }
-
-            this.newTeamName = '';
-            this.showNewTeamForm = false;
         },
 
         confirmDeleteTeam(team) {
@@ -483,14 +487,21 @@ function equiposApp() {
                 });
 
                 if (response.ok) {
-                    window.location.reload();
+                    this.teams = this.teams.filter(t => t.id !== this.teamToDelete.id);
+                    // Liberar miembros: quitar del teamPokemonIds los pokemon de ese team
+                    this.teamToDelete.members.forEach(m => {
+                        if (m.pokemon_id) {
+                            this.teamPokemonIds = this.teamPokemonIds.filter(id => id !== m.pokemon_id);
+                        }
+                    });
+                    this.showDeleteModal = false;
+                    this.teamToDelete = null;
+                } else {
+                    await this.handleError(response);
                 }
             } catch (err) {
                 console.error('Error deleting team:', err);
             }
-
-            this.showDeleteModal = false;
-            this.teamToDelete = null;
         },
 
         async addToTeam(pokemon, team) {
@@ -517,7 +528,25 @@ function equiposApp() {
                 });
 
                 if (response.ok) {
-                    window.location.reload();
+                    const data = await response.json();
+                    if (data.member) {
+                        // Añadir miembro al team
+                        const team = this.teams.find(t => t.id === data.member.team_id);
+                        if (team) {
+                            team.members.push({
+                                id: data.member.id,
+                                team_id: data.member.team_id,
+                                pokemon_id: data.member.pokemon_id,
+                                slot: data.member.slot,
+                                behavior: data.member.behavior || 'VANGUARDIA',
+                                reclutado: pokemon,
+                            });
+                        }
+                        // Marcar como asignado
+                        this.teamPokemonIds.push(pokemon.id);
+                    }
+                } else {
+                    await this.handleError(response);
                 }
             } catch (err) {
                 console.error('Error adding member:', err);
@@ -540,7 +569,12 @@ function equiposApp() {
                 });
 
                 if (response.ok) {
-                    window.location.reload();
+                    // Quitar miembro del team
+                    team.members = team.members.filter(m => m.id !== member.id);
+                    // Liberar pokemon
+                    this.teamPokemonIds = this.teamPokemonIds.filter(id => id !== pokemon.id);
+                } else {
+                    await this.handleError(response);
                 }
             } catch (err) {
                 console.error('Error removing member:', err);
@@ -548,7 +582,7 @@ function equiposApp() {
         },
 
         removeFromTeam(pokemon) {
-            const team = this.teams.find(t => t.id === pokemon.team_id);
+            const team = this.teams.find(t => t.members.some(m => m.pokemon_id === pokemon.id));
             if (team) {
                 this.removeMember(team, pokemon);
             }
@@ -565,9 +599,26 @@ function equiposApp() {
                         'Accept': 'application/json',
                     },
                     body: JSON.stringify({ name: newName.trim() }),
-                }).then(r => {
-                    if (r.ok) window.location.reload();
+                }).then(r => r.json()).then(data => {
+                    if (data.team) {
+                        team.name = data.team.name;
+                    } else if (data.error) {
+                        alert(data.error);
+                    }
                 }).catch(err => console.error('Error renaming:', err));
+            }
+        },
+
+        async handleError(response) {
+            if (response.status === 422) {
+                let message = 'Error de validación';
+                try {
+                    const data = await response.json();
+                    message = data.error || message;
+                } catch (err) {
+                    // Ignorar: el cuerpo no es JSON
+                }
+                alert(message);
             }
         },
     };

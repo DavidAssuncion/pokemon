@@ -52,6 +52,12 @@
                             >
                                 Reclutar
                             </button>
+                            <button
+                                @click="openDiscardModal(item)"
+                                class="mt-1 w-full px-2 py-1 bg-red-600 text-white rounded text-[10px] font-medium hover:bg-red-700 transition-colors"
+                            >
+                                Descartar
+                            </button>
                         </div>
                     </div>
                 </template>
@@ -70,9 +76,9 @@
         </template>
 
     <!-- Confirm Discard All Modal -->
-    <template x-if="showDiscardModal">
-        <div class="fixed inset-0 z-50 flex items-center justify-center p-4" @keydown.escape.window="showDiscardModal = false">
-            <div class="absolute inset-0 bg-black/60" @click="showDiscardModal = false"></div>
+    <template x-if="showDiscardAllModal">
+        <div class="fixed inset-0 z-50 flex items-center justify-center p-4" @keydown.escape.window="showDiscardAllModal = false">
+            <div class="absolute inset-0 bg-black/60" @click="showDiscardAllModal = false"></div>
             <div class="relative bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-sm p-6">
                 <div class="text-center mb-4">
                     <div class="w-12 h-12 mx-auto mb-3 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
@@ -87,7 +93,7 @@
                 </div>
                 <div class="flex gap-3">
                     <button
-                        @click="showDiscardModal = false"
+                        @click="showDiscardAllModal = false"
                         class="flex-1 px-4 py-2.5 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg text-sm font-medium hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
                     >
                         Cancelar
@@ -102,6 +108,86 @@
             </div>
         </div>
     </template>
+
+    <!-- Individual Discard Modal -->
+    <template x-if="showDiscardModal && discardItem">
+        <div
+            class="fixed inset-0 z-50 flex items-center justify-center p-4"
+            @keydown.escape.window="showDiscardModal = false; discardItem = null"
+        >
+            <!-- Backdrop -->
+            <div class="absolute inset-0 bg-black/60" @click="showDiscardModal = false; discardItem = null"></div>
+            <!-- Modal content -->
+            <div class="relative bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-sm p-6">
+                <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-4">
+                    Descartar <span x-text="discardItem.nombre"></span>
+                </h3>
+
+                <!-- Quantity input -->
+                <div class="mb-4">
+                    <label for="discard-quantity" class="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">
+                        Cantidad
+                    </label>
+                    <input
+                        id="discard-quantity"
+                        type="number"
+                        min="1"
+                        :max="discardItem.cantidad"
+                        x-model.number="discardQuantity"
+                        class="w-full px-3 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition-colors"
+                    >
+                </div>
+
+                <!-- Quick quantity buttons -->
+                <div class="grid grid-cols-4 gap-2 mb-4">
+                    <button
+                        @click="setDiscardPercent(25)"
+                        class="px-2 py-1.5 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg text-xs font-medium hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                    >
+                        25%
+                    </button>
+                    <button
+                        @click="setDiscardPercent(50)"
+                        class="px-2 py-1.5 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg text-xs font-medium hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                    >
+                        50%
+                    </button>
+                    <button
+                        @click="setDiscardPercent(75)"
+                        class="px-2 py-1.5 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg text-xs font-medium hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                    >
+                        75%
+                    </button>
+                    <button
+                        @click="setDiscardPercent(100)"
+                        class="px-2 py-1.5 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg text-xs font-medium hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                    >
+                        Todos
+                    </button>
+                </div>
+
+                <p class="text-sm text-gray-500 dark:text-gray-400 mb-6">
+                    Se convertirán en caramelos de la familia
+                    <span class="font-medium text-gray-900 dark:text-white" x-text="discardItem.nombre"></span>
+                </p>
+
+                <div class="flex gap-3">
+                    <button
+                        @click="showDiscardModal = false; discardItem = null"
+                        class="flex-1 px-4 py-2.5 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg text-sm font-medium hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                    >
+                        Cancelar
+                    </button>
+                    <button
+                        @click="confirmDiscard()"
+                        class="flex-1 px-4 py-2.5 bg-red-600 text-white rounded-lg text-sm font-bold hover:bg-red-700 transition-colors"
+                    >
+                        Confirmar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </template>
 </div>
 
 @push('scripts')
@@ -109,7 +195,10 @@
 function reclutamientoApp() {
     return {
         items: @json($reclutables ?? []),
+        showDiscardAllModal: false,
         showDiscardModal: false,
+        discardItem: null,
+        discardQuantity: 1,
 
         init() {
             // Initialize from server data
@@ -135,12 +224,12 @@ function reclutamientoApp() {
         },
 
         confirmDiscardAll() {
-            this.showDiscardModal = true;
+            this.showDiscardAllModal = true;
         },
 
         discardAll() {
             this.items = [];
-            this.showDiscardModal = false;
+            this.showDiscardAllModal = false;
 
             fetch('/reclutamiento/discard-all', {
                 method: 'POST',
@@ -150,6 +239,47 @@ function reclutamientoApp() {
                     'Accept': 'application/json',
                 },
             }).catch(err => console.error('Error:', err));
+        },
+
+        openDiscardModal(item) {
+            this.discardItem = item;
+            this.discardQuantity = 1;
+            this.showDiscardModal = true;
+        },
+
+        setDiscardPercent(pct) {
+            const total = this.discardItem.cantidad;
+            if (pct === 100) { this.discardQuantity = total; return; }
+            this.discardQuantity = Math.max(1, Math.round(total * pct / 100));
+        },
+
+        async confirmDiscard() {
+            const qty = Math.max(1, Math.min(this.discardQuantity || 1, this.discardItem.cantidad));
+            try {
+                const response = await fetch('/reclutamiento/discard', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '',
+                        'Accept': 'application/json',
+                    },
+                    body: JSON.stringify({ reclutable_id: this.discardItem.id, cantidad: qty }),
+                });
+                if (response.ok) {
+                    // Update local state
+                    if (qty >= this.discardItem.cantidad) {
+                        this.items = this.items.filter(i => i.id !== this.discardItem.id);
+                    } else {
+                        this.discardItem.cantidad -= qty;
+                    }
+                    this.showDiscardModal = false;
+                    this.discardItem = null;
+                } else {
+                    alert('Error al descartar');
+                }
+            } catch (err) {
+                console.error('Error discarding:', err);
+            }
         },
     };
 }

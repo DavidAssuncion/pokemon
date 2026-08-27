@@ -1,71 +1,48 @@
-# Análisis Frontend — Imágenes 128px + fix JS habitat detail
+# Análisis Frontend — Filtro tipo Pokédex + Descartar individual + AJAX Equipos sin reload
 
 ## Vistas a tocar
 
-### `resources/views/reclutamiento/index.blade.php` (Tarea 1a)
-- Grid actual: `grid grid-cols-3 sm:grid-cols-5 md:grid-cols-7 lg:grid-cols-9 gap-3` con celdas < 128px en todos los breakpoints.
-- Área imagen actual: `aspect-square relative bg-gray-50 dark:bg-gray-900 p-2` con `<img class="w-full h-full object-contain">`.
-- Fix: área → `w-32 h-32 mx-auto relative` (transparente, patrón habitats/equipos), img conserva `w-full h-full object-contain`, badge de cantidad conservado (necesita `relative`).
-- Grid nueva (celdas ≥ 128px verificadas, contenedor full-width px-4 sm:px-6):
-  - base 343px: 2 cols → 165px ✓ | sm 592: 4 → 139 ✓ | md 720: 5 → 134 ✓
-  - lg 976: 6 → 152 ✓ | xl 1232: 7 → 165 ✓ | 2xl 1488: 9 → 154 ✓
-  - Cadena: `grid-cols-2 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7 2xl:grid-cols-9`
+### 1. `resources/views/pokedex/index.blade.php` — filtro por TIPO
+- Añadir dropdown "Tipo" junto a botones Todos/Vistos/Atrapados, con el mismo patrón visual del filtro de tipo de equipos (`bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg`).
+- `@php $tipos = \App\Enums\TipoEnum::options(); @endphp` → `[id => nombre]` (18 tipos, labels en español, verificado).
+- Estado Alpine: `typeFilter: null`, `showTypeFilter: false`. Getter `filteredPokemons`: filtrar con `p.types && p.types.includes(this.typeFilter)`.
+- Cierre al hacer click fuera con el patrón de `equiposApp.init()` (copiar tal cual, instrucción del Arquitecto).
+- Indicador "✕" dentro del botón cuando `typeFilter` está activo (`@click.stop` sobre un `<span>`, HTML válido button>span), con `x-text="typeFilter || 'Tipo'"`.
+- Datos verificados: `PlayerController::pokedex()` ya pasa `types` = array de nombres (`['Fuego']`) en cada pokemon.
 
-### `resources/views/equipos/index.blade.php` (Tarea 1b)
-- 5 ubicaciones `w-24 h-24` → `w-32 h-32` (128px):
-  1. Icono miembro de equipo (línea ~112): `w-24 h-24 object-contain mx-auto` → w-32 h-32.
-  2. Placeholder slot vacío (línea ~128): `w-24 h-24 mx-auto rounded border-2 border-dashed` → w-32 h-32.
-  3. Wrapper disponible (línea ~213): `<div class="w-24 h-24 mx-auto">` → w-32 h-32.
-  4. Wrapper asignado (línea ~265): `<div class="w-24 h-24 mx-auto">` → w-32 h-32 (conservar `grayscale` + card `opacity-60`).
-  5. Tooltip (línea ~343): `w-24 h-24 object-contain mx-auto` → w-32 h-32 (cabe en card w-56).
-- Grids disponible/asignado actuales: `grid-cols-3 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-6 xl:grid-cols-7 2xl:grid-cols-9` → celdas < 128px (99-113px). Nueva cadena (columna derecha 2/3 en lg+):
-  - base 343: 2 → 167 ✓ | sm 592: 3 → 192 ✓ | md 720: 4 → 174 ✓
-  - lg (col ≈635px): 4 → 152 ✓ | xl (≈805px): 5 → 154 ✓ | 2xl (≈976px): 6 → 156 ✓
-  - Cadena: `grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6`
-- Limitación conocida: columna izquierda (cards de equipo, 1/3 en lg) tiene celdas ≈92px en lg → la imagen de 128px se recorta ligeramente por `overflow-hidden` de la card (ya ocurría con 96px en lg). Se cumple la instrucción literal: bump a w-32 h-32 sin restructurar.
+### 2. `resources/views/reclutamiento/index.blade.php` — botón Descartar + modal con cantidad
+- Botón rojo "Descartar" bajo "Reclutar" en cada card (`openDiscardModal(item)`).
+- Modal individual `x-if="showDiscardModal && discardItem"`: título "Descartar [nombre]", input number (min 1, max = item.cantidad, default 1), botones rápidos 25/50/75/Todos vía `setDiscardPercent(pct)`, texto "Se convertirán en caramelos de la familia [nombre]", Cancelar/Confirmar (rojo).
+- `confirmDiscard()`: `POST /reclutamiento/discard` con `{ reclutable_id, cantidad }`; update de estado local (quitar item si cantidad agotada, sino restar).
+- **Conflicto detectado**: `showDiscardModal` YA existe para el modal de "Descartar todos". Para evitar que ambos modales se rendericen a la vez, renombro el flag del modal de "Descartar todos" a `showDiscardAllModal` (comportamiento del modal intacto, "se mantiene") y uso `showDiscardModal` para el modal individual, tal como pide el snippet de `openDiscardModal`.
+- Estados nuevos: `discardItem: null`, `discardQuantity: 1`.
+- Ruta backend `POST /reclutamiento/discard` aún no existe en `routes/player.php` (la añadirá el backend en paralelo; patrón idéntico a `/reclutamiento/recruit` y `/reclutamiento/discard-all`, ambos `JsonResponse` con csrf-token meta ya presente en layout).
+- Guard extra en `confirmDiscard`: `Math.max(1, Math.min(this.discardQuantity || 1, this.discardItem.cantidad))` (protege input vacío/NaN).
 
-### `resources/views/habitats/show.blade.php` (Tarea 2 — JS roto)
-**CAUSA RAÍZ (verificada renderizando la vista):** línea 341
-```js
-get availableTeams() {
-    return @json($teams)->filter(t => !this.equiposEnExploracion.includes(t.id));
-},
-```
-`->` es operador de PHP, **no es JavaScript válido** → el render produce `return [{...}]->filter(...)` → **SyntaxError al parsear TODO el `<script>`** → `habitatShow()` nunca se define → `x-data="habitatShow()"` falla → TODOS los clics muertos (cards de equipo, filas de nivel, botón explorar).
-
-**Causa secundaria:** `@click="selectTeam({{ $team->id }}, '{{ addslashes($team->name) }}')"` — `addslashes` NO protege atributos HTML: un nombre con `"` rompe el atributo (la card deja de responder silenciosamente). Mismo problema en `@keydown.space.prevent` y `@keydown.enter.prevent`.
-
-**Verificado:** `json_encode(Team::with('members.reclutado.pokemon')->get())` es válido (3.3KB) — el problema NO es `@json($teams)` en sí, sino el `->filter`. `$equiposEnExploracion` es Collection (controller lo mapea) ✓. `@stack('scripts')` existe en el layout ✓.
-
-**Fix:**
-1. Inicializar `teams: @json($teams)` como propiedad (JSON verificado válido).
-2. Getter seguro:
-```js
-get availableTeams() {
-    return (this.teams || []).filter(t => !this.equiposEnExploracion.includes(t.id));
-},
-```
-3. Patrón data-attribute para clic y teclado:
-```blade
-@click="selectTeam({{ $team->id }}, $el.dataset.teamName)"
-@keydown.space.prevent="selectTeam({{ $team->id }}, $el.dataset.teamName)"
-@keydown.enter.prevent="selectTeam({{ $team->id }}, $el.dataset.teamName)"
-data-team-name="{{ $team->name }}"
-```
-(`{{ }}` escapa HTML; `dataset` devuelve el valor decodificado; `$el` es la card en Alpine).
+### 3. `resources/views/equipos/index.blade.php` — AJAX sin recarga
+- `createTeam`: push `{ ...data.team, members: [] }` al array `teams`; cerrar form.
+- `deleteTeam`: `teams.filter(...)` + liberar `teamPokemonIds` recorriendo `teamToDelete.members` con `m.pokemon_id`.
+- `addToTeam`: push `data.member` a `team.members` (`id`, `team_id`, `pokemon_id`, `slot`, `behavior`, `reclutado: pokemon`) + `teamPokemonIds.push(pokemon.id)`.
+- `removeMember`: filtrar miembro del team + liberar `teamPokemonIds`.
+- `removeFromTeam`: **fix necesario** — `reclutado.team_id` NO existe en el JSON (verificado por tinker: `Reclutado::with('pokemon')` no serializa `team_id`; el modelo no tiene accessor ni columna). Buscar team por `t.members.some(m => m.pokemon_id === pokemon.id)` (OJO del Arquitecto: `member.pokemon_id` es id de Reclutado, igual que `pokemon.id` — verificado: `team_members.pokemon_id` → FK a `reclutados.id`).
+- `startRename`: `PUT /teams/{id}` → `data.team.name` actualiza el objeto local.
+- Errores: helper `handleError(response)` que ante 422 parsea `{ error }` y hace `alert(error)`; usado en `else` de cada operación.
+- El filtro de tipo de equipos (getter `availablePokemons`) NO se toca (fuera de alcance; `tipo_nombre` no se serializa en `pokemon.types` pero es comportamiento existente del backend, no de esta tarea).
+- Backend devolverá JSON (`team`, `member`) — hoy los endpoints devuelven `RedirectResponse`; el backend en paralelo los cambia (no toco controladores).
 
 ## DTOs consumidos
-- Ninguno nuevo. `$teams` (array de Team Eloquent), `$equiposEnExploracion` (Collection), `$sightedPokemonIds` (array ints).
+- Ninguno nuevo. `$pokemons` (array con `types`), `$reclutables` (`{id, pokemon_id, nombre, cantidad}`), `$teams` (`members[].pokemon_id` = id Reclutado, `members[].reclutado`), `$reclutados`, `$teamIds`, `$equiposEnExploracion`.
 
 ## Tests
-- Sin Dusk en el proyecto. Verificación: render real de la vista con datos (tinker) + `php artisan view:cache` + `vendor/bin/pint --dirty --format agent`.
+- Sin Dusk en el proyecto. Verificación: `php artisan view:cache` (compila sin errores), `vendor/bin/pint --dirty --format agent`, render real de las 3 vistas con tinker.
 
-## Estados UI
-- Reclutamiento: imagen 128px transparente; badge cantidad intacto; empty state intacto.
-- Equipos: disponible/asignado 128px; asignado con `grayscale` + `opacity-60`; hover overlay intacto; tooltip 128px; placeholder vacío 128px dashed.
-- Habitat detail: clic en card de equipo y fila de nivel abre el modal de exploración; teclado (Enter/Space) funciona; equipos en exploración siguen bloqueados.
+## Estados UI cubiertos
+- Pokédex: dropdown tipo con hover/active, filtro combinado con búsqueda y Todos/Vistos/Atrapados, ✕ limpiar filtro, empty state existente.
+- Reclutamiento: card con 2 botones, modal individual (input, rápidos, cancelar, confirmar), item eliminado vs cantidad reducida, modal discard-all coexistente.
+- Equipos: alta/borrado/rename/add/remove sin recarga; badge INVÁLIDO y slots se actualizan en vivo; 422 → alert.
 
 ## Riesgos accesibilidad/UX
-- Menos densidad en grids (necesario para mínimo 128px).
-- Cards de equipo en lg recortan ligeramente imágenes laterales (limitación aceptada, instrucción literal del usuario).
-- `data-team-name` con `{{ }}` escapa `"`/`&`/`<` → dataset seguro.
+- Span ✕ con `@click.stop` dentro de button: válido, `aria-label` incluido.
+- Input number sin validación manual estricta → guard `Math.max(1, ...)` en confirm.
+- Conflicto de flags de modal resuelto por renombrado interno (sin cambio visual en discard-all).
+- `removeFromTeam` dependía de `team_id` inexistente → el fix restaura el botón naranja "→" (antes muerto).
