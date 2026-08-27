@@ -148,6 +148,36 @@ class OptimizeIconsToWebpTest extends TestCase
         }
     }
 
+    public function test_command_rejects_same_input_and_output_directory(): void
+    {
+        $dir = sys_get_temp_dir().'/iconos-same-'.uniqid();
+        mkdir($dir);
+        copy(public_path('images/iconos/1.png'), $dir.'/1.png');
+
+        try {
+            $converter = new FakeWebpConverter(true);
+            $this->app->instance(WebpConverterInterface::class, $converter);
+
+            $this->artisan('iconos:optimize-webp', ['--dir' => $dir, '--out' => $dir])
+                ->expectsOutput('Output directory must differ from the source directory.')
+                ->assertExitCode(1);
+
+            // No genera webp junto a los PNG
+            $this->assertFileDoesNotExist($dir.'/1.webp');
+            $this->assertCount(0, $converter->calls);
+        } finally {
+            $files = glob($dir.'/*');
+
+            if ($files !== false) {
+                foreach ($files as $file) {
+                    unlink($file);
+                }
+            }
+
+            rmdir($dir);
+        }
+    }
+
     public function test_command_returns_failure_without_backend(): void
     {
         $converter = new WebpConverter();

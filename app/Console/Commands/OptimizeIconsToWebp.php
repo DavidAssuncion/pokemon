@@ -45,6 +45,12 @@ class OptimizeIconsToWebp extends Command
             return self::FAILURE;
         }
 
+        if (realpath($out) === realpath($dir)) {
+            $this->error('Output directory must differ from the source directory.');
+
+            return self::FAILURE;
+        }
+
         if (! $this->ensureWritableOutput($out)) {
             $this->error("Output directory is not writable: {$out}");
 
