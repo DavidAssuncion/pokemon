@@ -4,6 +4,16 @@ set -e
 # Rol del contenedor: app | worker | scheduler | horizon
 ROLE=${CONTAINER_ROLE:-app}
 
+# Crear directorios de escritura necesarios en runtime (el bind-mount de ./storage
+# oculta los creados en build-time, y en hosts como Windows el storage/ no los trae).
+mkdir -p /var/www/html/storage/framework/cache/data \
+    /var/www/html/storage/framework/cache \
+    /var/www/html/storage/framework/sessions \
+    /var/www/html/storage/framework/views \
+    /var/www/html/storage/framework/testing \
+    /var/www/html/storage/logs \
+    /var/www/html/bootstrap/cache || true
+
 # App key: se genera automáticamente si no se provee una (las sesiones/livewire lo requieren)
 if [ -z "$APP_KEY" ]; then
     echo "[entrypoint] Generando APP_KEY..."
