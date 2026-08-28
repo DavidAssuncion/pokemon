@@ -28,8 +28,7 @@ auth.json
 bootstrap/cache/packages.php
 bootstrap/cache/services.php
 
-# Imágenes estáticas (se descargan/montan posteriormente, no en la imagen)
-/public/images
+# Imágenes estáticas que no deben entrar en la imagen (uploads y storage symlink)
 /public/uploads
 /public/storage
 
