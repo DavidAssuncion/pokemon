@@ -14,6 +14,13 @@ mkdir -p /var/www/html/storage/framework/cache/data \
     /var/www/html/storage/logs \
     /var/www/html/bootstrap/cache || true
 
+# Crear .env si no existe (el .env está excluido del build por .dockerignore;
+# la mayoría de valores se inyectan por environment, pero key:generate lo necesita).
+if [ ! -f /var/www/html/.env ]; then
+    echo "[entrypoint] Creando .env desde .env.example..."
+    cp /var/www/html/.env.example /var/www/html/.env
+fi
+
 # App key: se genera automáticamente si no se provee una (las sesiones/livewire lo requieren)
 if [ -z "$APP_KEY" ]; then
     echo "[entrypoint] Generando APP_KEY..."
