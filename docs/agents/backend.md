@@ -33,7 +33,7 @@ Leer siempre:
    - Riesgos identificados.
 2. Implementar con TDD: test rojo → verde → refactor.
 3. Añadir tests: unit (Domain), feature (Use Cases), acceptance (E2E).
-4. Ejecutar `php artisan test --compact` + `vendor/bin/phpstan analyse` + `vendor/bin/infection`.
+4. Ejecutar `php artisan test --compact` + `vendor/bin/phpstan analyse` + `vendor/bin/infection` + `vendor/bin/phpmd src/ text phpmd.xml`.
 5. Verificar checklists implementación/validación.
 6. Handoff a QA con commit hash (10 chars), task name, prioridad.
 
@@ -49,6 +49,7 @@ Controllers, Services, Models, Policies, Events, Jobs, Commands, Requests, Migra
 
 * Tests verdes (unit, feature, acceptance).
 * PHPStan level 6+ clean.
+* vendor/bin/phpmd src/ text phpmd.xml
 * Infection mutation score ≥ 80%.
 * Checklists OK.
 * Sin código muerto.

@@ -44,7 +44,7 @@ Leer además los contextos de los módulos afectados:
 6. Detectar casos límite.
 7. Proponer mejoras.
 8. Generar una especificación funcional.
-9. Entregar la tarea al Arquitecto.
+9. Delega la tarea a los desarrolladores Backend + Frontend.
 
 ---
 

@@ -1,0 +1,11 @@
+<?xml version="1.0"?>
+<ruleset name="Custom Standard">
+    <description>Reglas de longitud de funciones</description>
+
+    <!-- Cambia el valor '20' por tu límite máximo de líneas -->
+    <rule ref="Generic.Metrics.FunctionLength">
+        <properties>
+            <property name="maxLength" value="35"/>
+        </properties>
+    </rule>
+</ruleset>

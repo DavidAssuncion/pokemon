@@ -9,7 +9,6 @@ parameters:
     paths:
         - src/
         - app/
-        - tests/
 
     level: 6
 
@@ -23,6 +22,7 @@ parameters:
             - database/
             - config/
             - routes/
+            - tests/
             - tests/Unit/Infra (?)
             - tests/Feature/Infra (?)
 
