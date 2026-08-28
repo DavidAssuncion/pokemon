@@ -12,6 +12,8 @@ use Illuminate\Database\Seeder;
 
 class PokemonSeeder extends Seeder
 {
+    private const CHUNK_SIZE = 500;
+
     /**
      * Run the database seeds.
      */
@@ -36,18 +38,12 @@ class PokemonSeeder extends Seeder
         $statsByPokemon = [];
         foreach ($statsRows as $stat) {
             $pokemonId = (int) $stat['pokemon_id'];
-            if (! isset($statsByPokemon[$pokemonId])) {
-                $statsByPokemon[$pokemonId] = [];
-            }
             $statsByPokemon[$pokemonId][] = $stat;
         }
 
         $typesByPokemon = [];
         foreach ($typesRows as $type) {
             $pokemonId = (int) $type['pokemon_id'];
-            if (! isset($typesByPokemon[$pokemonId])) {
-                $typesByPokemon[$pokemonId] = [];
-            }
             $typesByPokemon[$pokemonId][] = $type;
         }
 
@@ -57,7 +53,11 @@ class PokemonSeeder extends Seeder
             $evolutionByPokemon[$pokemonId] = $evolution;
         }
 
-        // Seed Pokemon
+        $pokemonRowsToInsert = [];
+        $statsToInsert = [];
+        $typesToInsert = [];
+        $evolutionsToInsert = [];
+
         foreach ($pokemonRows as $row) {
             $speciesId = (int) $row['species_id'];
             $species = $speciesDataByKey[$speciesId] ?? null;
@@ -68,58 +68,70 @@ class PokemonSeeder extends Seeder
 
             $pokemonId = (int) $row['id'];
 
-            Pokemon::updateOrCreate(
-                ['id' => $pokemonId],
-                [
-                    'name' => $row['name'],
-                    'species_id' => $speciesId,
-                    'height' => (int) $row['height'],
-                    'weight' => (int) $row['weight'],
-                    'base_experience' => (int) $row['base_experience'],
-                    'capture_rate' => (int) $species['capture_rate'],
-                    'hatch' => ! empty($species['hatch_counter']) ? (int) $species['hatch_counter'] : null,
-                    'evolution_chain_id' => ! empty($species['evolution_chain_id']) ? (int) $species['evolution_chain_id'] : null,
-                ]
-            );
+            $pokemonRowsToInsert[] = [
+                'id' => $pokemonId,
+                'name' => $row['name'],
+                'species_id' => $speciesId,
+                'height' => (int) $row['height'],
+                'weight' => (int) $row['weight'],
+                'base_experience' => (int) $row['base_experience'],
+                'capture_rate' => (int) $species['capture_rate'],
+                'hatch' => ! empty($species['hatch_counter']) ? (int) $species['hatch_counter'] : null,
+                'evolution_chain_id' => ! empty($species['evolution_chain_id']) ? (int) $species['evolution_chain_id'] : null,
+            ];
 
-            // Seed stats for this Pokemon
-            if (isset($statsByPokemon[$pokemonId])) {
-                foreach ($statsByPokemon[$pokemonId] as $stat) {
-                    PokemonStat::updateOrCreate(
-                        ['pokemon_id' => $pokemonId, 'stat' => (int) $stat['stat_id']],
-                        [
-                            'base_stat' => (int) $stat['base_stat'],
-                            'effort' => (int) $stat['effort'],
-                        ]
-                    );
-                }
+            foreach ($statsByPokemon[$pokemonId] ?? [] as $stat) {
+                $statsToInsert[] = [
+                    'pokemon_id' => $pokemonId,
+                    'stat' => (int) $stat['stat_id'],
+                    'base_stat' => (int) $stat['base_stat'],
+                    'effort' => (int) $stat['effort'],
+                ];
             }
 
-            // Seed types for this Pokemon
-            if (isset($typesByPokemon[$pokemonId])) {
-                foreach ($typesByPokemon[$pokemonId] as $type) {
-                    PokemonType::updateOrCreate(
-                        ['pokemon_id' => $pokemonId, 'slot' => (int) $type['slot']],
-                        [
-                            'type' => (int) $type['type_id'],
-                        ]
-                    );
-                }
+            foreach ($typesByPokemon[$pokemonId] ?? [] as $type) {
+                $typesToInsert[] = [
+                    'pokemon_id' => $pokemonId,
+                    'slot' => (int) $type['slot'],
+                    'type' => (int) $type['type_id'],
+                ];
             }
 
-            // Seed evolution data: only for pokemon that evolve (evolves_from_species_id not null)
             $evolution = $evolutionByPokemon[$pokemonId] ?? null;
             $evolvesFromSpeciesId = ! empty($species['evolves_from_species_id']) ? (int) $species['evolves_from_species_id'] : null;
 
             if ($evolvesFromSpeciesId !== null) {
-                PokemonEvolution::updateOrCreate(
-                    ['evolved_species_id' => $pokemonId],
-                    [
-                        'evolves_from_species_id' => $evolvesFromSpeciesId,
-                        'minimum_level' => ! empty($evolution['minimum_level']) ? (int) $evolution['minimum_level'] : 40,
-                    ]
-                );
+                $evolutionsToInsert[] = [
+                    'evolved_species_id' => $pokemonId,
+                    'evolves_from_species_id' => $evolvesFromSpeciesId,
+                    'minimum_level' => ! empty($evolution['minimum_level']) ? (int) $evolution['minimum_level'] : 40,
+                ];
             }
+        }
+
+        foreach (array_chunk($pokemonRowsToInsert, self::CHUNK_SIZE) as $chunk) {
+            Pokemon::upsert($chunk, ['id'], [
+                'name',
+                'species_id',
+                'height',
+                'weight',
+                'base_experience',
+                'capture_rate',
+                'hatch',
+                'evolution_chain_id',
+            ]);
+        }
+
+        foreach (array_chunk($statsToInsert, self::CHUNK_SIZE) as $chunk) {
+            PokemonStat::upsert($chunk, ['pokemon_id', 'stat'], ['base_stat', 'effort']);
+        }
+
+        foreach (array_chunk($typesToInsert, self::CHUNK_SIZE) as $chunk) {
+            PokemonType::upsert($chunk, ['pokemon_id', 'slot'], ['type']);
+        }
+
+        foreach (array_chunk($evolutionsToInsert, self::CHUNK_SIZE) as $chunk) {
+            PokemonEvolution::upsert($chunk, ['evolved_species_id'], ['evolves_from_species_id', 'minimum_level']);
         }
     }
 

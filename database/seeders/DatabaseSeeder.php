@@ -25,10 +25,12 @@ class DatabaseSeeder extends Seeder
             \Database\Seeders\ReclutadosSeeder::class,
         ]);
 
-        User::create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
-            'password' => Hash::make('password'),
-        ]);
+        User::updateOrCreate(
+            ['email' => 'test@example.com'],
+            [
+                'name' => 'Test User',
+                'password' => Hash::make('password'),
+            ]
+        );
     }
 }
