@@ -4,6 +4,8 @@
 # Las credenciales de la base de datos están FIJAS en este archivo y NO
 # dependen del .env del host (la config local del desarrollador usa su propio
 # Postgres). Solo los PUERTOS EXPUESTOS (APP_PORT/DB_PORT) son configurables.
+# Las imágenes públicas se montan por BIND-MOUNT desde ./public/images del
+# host (app, worker y scheduler): pon los PNG/webp ahí y aparecen en el container.
 
 services:
   db:
@@ -59,7 +61,7 @@ services:
         condition: service_healthy
     volumes:
       - ./storage:/var/www/html/storage
-      - images_data:/var/www/html/public/images
+      - ./public/images:/var/www/html/public/images
     healthcheck:
       test: ["CMD", "curl", "-sf", "http://localhost:80/up"]
       interval: 15s
@@ -95,7 +97,7 @@ services:
         condition: service_healthy
     volumes:
       - ./storage:/var/www/html/storage
-      - images_data:/var/www/html/public/images
+      - ./public/images:/var/www/html/public/images
 
   scheduler:
     image: pokemon-app:latest
@@ -125,8 +127,7 @@ services:
         condition: service_healthy
     volumes:
       - ./storage:/var/www/html/storage
-      - images_data:/var/www/html/public/images
+      - ./public/images:/var/www/html/public/images
 
 volumes:
   db_data:
-  images_data:
