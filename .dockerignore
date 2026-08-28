@@ -1,0 +1,52 @@
+# Dependencias
+/vendor
+/node_modules
+/public/build
+/public/hot
+
+# Entornos y secretos
+.env
+.env.*
+!.env.example
+storage/*.key
+auth.json
+
+# Control de versiones
+.git
+.gitignore
+.github
+
+# Logs y caché
+*.log
+.phpunit.result.cache
+.phpunit.cache
+/.phpunit.cache
+
+# Directorios de build/context no necesarios en la imagen
+/storage
+/bootstrap/cache/*.php
+bootstrap/cache/packages.php
+bootstrap/cache/services.php
+
+# Imágenes estáticas (se descargan/montan posteriormente, no en la imagen)
+/public/images
+/public/uploads
+/public/storage
+
+# Herramientas del host
+.agents
+.opencode
+.vscode
+.idea
+.phpactor.json
+.phpunit.result.cache
+infection.json5
+deptrac.yaml
+phpstan.neon
+phpstan-hardener.neon
+pint.json
+TODO
+docs
+documentacion
+ideas
+active

@@ -1,0 +1,130 @@
+# docker-compose.yml
+#
+# Stack autocontenido de Pokémon Battle Game (Laravel 12 + PostgreSQL).
+# Las credenciales de la base de datos están FIJAS en este archivo y NO
+# dependen del .env del host (la config local del desarrollador usa su propio
+# Postgres). Solo los PUERTOS EXPUESTOS (APP_PORT/DB_PORT) son configurables.
+
+services:
+  db:
+    image: postgres:18-alpine
+    container_name: pokemon_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: pokemon
+      POSTGRES_USER: pokemon
+      POSTGRES_PASSWORD: secret
+    volumes:
+      - db_data:/var/lib/postgresql
+      - ./docker/postgres/create-testing-database.sql:/docker-entrypoint-initdb.d/10-create-testing-database.sql:ro
+    ports:
+      - "${DB_PORT:-5432}:5432"
+    healthcheck:
+      test: ["CMD", "pg_isready", "-q", "-d", "pokemon", "-U", "pokemon"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: pokemon-app:latest
+    container_name: pokemon_app
+    restart: unless-stopped
+    environment:
+      APP_NAME: ${APP_NAME:-Pokemon Battle Game}
+      APP_ENV: ${APP_ENV:-local}
+      APP_KEY: ${APP_KEY:-}
+      APP_DEBUG: ${APP_DEBUG:-true}
+      APP_URL: ${APP_URL:-http://localhost:${APP_PORT:-80}}
+      LOG_CHANNEL: stack
+      CONTAINER_ROLE: app
+      TZ: UTC
+      DB_CONNECTION: pgsql
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_DATABASE: pokemon
+      DB_USERNAME: pokemon
+      DB_PASSWORD: secret
+      SESSION_DRIVER: database
+      QUEUE_CONNECTION: database
+      CACHE_STORE: database
+      RUN_MIGRATIONS: ${RUN_MIGRATIONS:-true}
+      RUN_SEEDERS: ${RUN_SEEDERS:-false}
+    ports:
+      - "${APP_PORT:-80}:80"
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - ./storage:/var/www/html/storage
+      - images_data:/var/www/html/public/images
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:80/up"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+  worker:
+    image: pokemon-app:latest
+    container_name: pokemon_worker
+    restart: unless-stopped
+    environment:
+      APP_NAME: ${APP_NAME:-Pokemon Battle Game}
+      APP_ENV: ${APP_ENV:-local}
+      APP_KEY: ${APP_KEY:-}
+      APP_DEBUG: ${APP_DEBUG:-true}
+      APP_URL: ${APP_URL:-http://localhost:${APP_PORT:-80}}
+      LOG_CHANNEL: stack
+      CONTAINER_ROLE: worker
+      TZ: UTC
+      DB_CONNECTION: pgsql
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_DATABASE: pokemon
+      DB_USERNAME: pokemon
+      DB_PASSWORD: secret
+      SESSION_DRIVER: database
+      QUEUE_CONNECTION: database
+      CACHE_STORE: database
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - ./storage:/var/www/html/storage
+      - images_data:/var/www/html/public/images
+
+  scheduler:
+    image: pokemon-app:latest
+    container_name: pokemon_scheduler
+    restart: unless-stopped
+    environment:
+      APP_NAME: ${APP_NAME:-Pokemon Battle Game}
+      APP_ENV: ${APP_ENV:-local}
+      APP_KEY: ${APP_KEY:-}
+      APP_DEBUG: ${APP_DEBUG:-true}
+      APP_URL: ${APP_URL:-http://localhost:${APP_PORT:-80}}
+      LOG_CHANNEL: stack
+      CONTAINER_ROLE: scheduler
+      TZ: UTC
+      DB_CONNECTION: pgsql
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_DATABASE: pokemon
+      DB_USERNAME: pokemon
+      DB_PASSWORD: secret
+      SESSION_DRIVER: database
+      QUEUE_CONNECTION: database
+      CACHE_STORE: database
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - ./storage:/var/www/html/storage
+      - images_data:/var/www/html/public/images
+
+volumes:
+  db_data:
+  images_data:

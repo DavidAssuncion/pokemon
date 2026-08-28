@@ -9,6 +9,7 @@ use App\Bus\LaravelCommandBus;
 use App\Models\User;
 use App\Support\WebpConverter;
 use App\Support\WebpConverterInterface;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 use Src\Battle\Domain\FabricaBatallaInterface;
@@ -42,7 +43,9 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         // Single-player: compartir nivel y progreso del jugador con todas las vistas (header del layout).
-        $user = User::first();
+        // Se verifica la existencia de la tabla para no romper el boot en una base recién migrada
+        // (p. ej. al ejecutar `artisan migrate` sobre una BD vacía), donde `users` aún no existe.
+        $user = Schema::hasTable('users') ? User::first() : null;
         // getAttribute() evita el cast del modelo: en BDs sin la columna migrada el valor
         // llega null, y (int) lo normaliza a 0 (mismo comportamiento que sin usuario).
         $experiencia = $user !== null ? (int) $user->getAttribute('experiencia') : 0;

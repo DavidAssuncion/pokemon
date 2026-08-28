@@ -1,0 +1,86 @@
+#!/usr/bin/env bash
+set -e
+
+# Rol del contenedor: app | worker | scheduler | horizon
+ROLE=${CONTAINER_ROLE:-app}
+
+# App key: se genera automáticamente si no se provee una (las sesiones/livewire lo requieren)
+if [ -z "$APP_KEY" ]; then
+    echo "[entrypoint] Generando APP_KEY..."
+    php artisan key:generate --force --no-interaction
+fi
+
+# Asegurar permisos de escritura en storage y bootstrap/cache para el usuario de Apache (www-data)
+# necesario porque storage/ suele ser un bind-mount del host con otro uid/gid.
+php artisan storage:link --no-interaction >/dev/null 2>&1 || true
+chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache 2>/dev/null || true
+chmod -R ug+rwX /var/www/html/storage /var/www/html/bootstrap/cache 2>/dev/null || true
+
+# Espera a que la base de datos esté lista antes de arrancar
+WAIT_FOR_DB=${WAIT_FOR_DB:-true}
+
+if [[ "$WAIT_FOR_DB" == "true" ]]; then
+    echo "[entrypoint] Esperando a PostgreSQL en ${DB_HOST:-db}:${DB_PORT:-5432}..."
+    until php -r "
+        \$c = @pg_connect('host=${DB_HOST:-db} port=${DB_PORT:-5432} dbname=${DB_DATABASE:-pokemon} user=${DB_USERNAME:-pokemon} password=${DB_PASSWORD:-secret}');
+        exit(\$c ? 0 : 1);
+    "; do
+        sleep 2
+    done
+    echo "[entrypoint] PostgreSQL disponible."
+fi
+
+# Gestión de migraciones (solo en el rol app, controlado por RUN_MIGRATIONS)
+if [[ "$ROLE" == "app" && "${RUN_MIGRATIONS:-false}" == "true" ]]; then
+    echo "[entrypoint] Ejecutando migraciones..."
+    php artisan migrate --force --no-interaction
+
+    if [[ "${RUN_SEEDERS:-false}" == "true" ]]; then
+        echo "[entrypoint] Ejecutando seeders..."
+        php artisan db:seed --force --no-interaction
+    fi
+else
+    # Worker/scheduler: esperar a que la tabla "users" exista (migraciones del rol app terminadas)
+    # porque AppServiceProvider::boot() consulta User::first() y falla si la tabla no existe.
+    if [[ "$ROLE" != "app" ]]; then
+        echo "[entrypoint] Esperando a que las migraciones se apliquen (tabla 'users')..."
+        until php -r "
+            \$pdo = @new PDO('pgsql:host=${DB_HOST:-db};port=${DB_PORT:-5432};dbname=${DB_DATABASE:-pokemon}', '${DB_USERNAME:-pokemon}', '${DB_PASSWORD:-secret}');
+            \$exists = \$pdo->query(\"SELECT to_regclass('public.users') IS NOT NULL AS ok\")->fetchColumn();
+            exit(\$exists ? 0 : 1);
+        " 2>/dev/null; do
+            sleep 3
+        done
+        echo "[entrypoint] Migraciones listas."
+    fi
+fi
+
+# Optimizaciones de producción
+if [[ "${APP_ENV:-production}" == "production" ]]; then
+    echo "[entrypoint] Optimizando (config/cache/route/event views)..."
+    php artisan config:cache --no-interaction || true
+    php artisan route:cache --no-interaction || true
+    php artisan event:cache --no-interaction || true
+    php artisan view:cache --no-interaction || true
+fi
+
+umask 002
+
+case "$ROLE" in
+    app)
+        echo "[entrypoint] Arrancando Apache (rol: app)..."
+        exec "$@"
+        ;;
+    worker)
+        echo "[entrypoint] Arrancando queue:work (rol: worker)..."
+        exec php artisan queue:work --tries=1 --timeout=0
+        ;;
+    scheduler)
+        echo "[entrypoint] Arrancando schedule:work (rol: scheduler)..."
+        exec php artisan schedule:work
+        ;;
+    *)
+        echo "[entrypoint] Rol desconocido: $ROLE"
+        exit 1
+        ;;
+esac
