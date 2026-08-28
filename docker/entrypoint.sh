@@ -53,8 +53,18 @@ if [[ "$ROLE" == "app" && "${RUN_MIGRATIONS:-false}" == "true" ]]; then
     php artisan migrate --force --no-interaction
 
     if [[ "${RUN_SEEDERS:-false}" == "true" ]]; then
-        echo "[entrypoint] Ejecutando seeders..."
-        php artisan db:seed --force --no-interaction
+        DB_EMPTY=$(php -r "
+            \$pdo = new PDO('pgsql:host=${DB_HOST:-db};port=${DB_PORT:-5432};dbname=${DB_DATABASE:-pokemon}', '${DB_USERNAME:-pokemon}', '${DB_PASSWORD:-secret}');
+            \$count = \$pdo->query('SELECT to_regclass(\'public.users\') IS NOT NULL')->fetchColumn();
+            \$users = \$count ? (int) \$pdo->query('SELECT count(*) FROM users')->fetchColumn() : 0;
+            exit(\$users === 0 ? 0 : 1);
+        " 2>/dev/null)
+        if [ $? -eq 0 ]; then
+            echo "[entrypoint] Base vacía, ejecutando seeders..."
+            php artisan db:seed --force --no-interaction
+        else
+            echo "[entrypoint] Base con datos, seeders omitidos (idempotencia)."
+        fi
     fi
 else
     # Worker/scheduler: esperar a que la tabla "users" exista (migraciones del rol app terminadas)
