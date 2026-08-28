@@ -103,7 +103,7 @@ COPY --from=composer --chown=www-data:www-data /app/vendor /var/www/html/vendor
 COPY --from=frontend --chown=www-data:www-data /app/public/build /var/www/html/public/build
 
 # Permisos de escritura para storage y bootstrap/cache
-RUN mkdir -p storage/framework/{cache,data,sessions,testing,views} \
+RUN mkdir -p storage/framework/{cache,data,sessions,testing,views} bootstrap/cache \
     && chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache \
     && chmod -R ug+rwX /var/www/html/storage /var/www/html/bootstrap/cache
 
