@@ -68,11 +68,9 @@ services:
       start_period: 30s
 
   worker:
-    build:
-      context: .
-      dockerfile: Dockerfile
     image: pokemon-app:latest
     container_name: pokemon_worker
+    pull_policy: never
     restart: unless-stopped
     environment:
       APP_NAME: ${APP_NAME:-Pokemon Battle Game}
@@ -100,11 +98,9 @@ services:
       - images_data:/var/www/html/public/images
 
   scheduler:
-    build:
-      context: .
-      dockerfile: Dockerfile
     image: pokemon-app:latest
     container_name: pokemon_scheduler
+    pull_policy: never
     restart: unless-stopped
     environment:
       APP_NAME: ${APP_NAME:-Pokemon Battle Game}
