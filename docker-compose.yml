@@ -68,6 +68,9 @@ services:
       start_period: 30s
 
   worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
     image: pokemon-app:latest
     container_name: pokemon_worker
     restart: unless-stopped
@@ -97,6 +100,9 @@ services:
       - images_data:/var/www/html/public/images
 
   scheduler:
+    build:
+      context: .
+      dockerfile: Dockerfile
     image: pokemon-app:latest
     container_name: pokemon_scheduler
     restart: unless-stopped
