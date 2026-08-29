@@ -128,6 +128,54 @@ Nueva página `/exploraciones` (GET). El backend agent añadirá la ruta + méto
 
 ---
 
+# Análisis Frontend — Modal Admin-Gestión de hábitat: pestaña "Ya Asignados" por niveles + optimización sin refresco
+
+## Fecha
+2026-08-29
+
+## Contexto
+El BACKEND añade en paralelo `PATCH /api/habitats/{habitatId}/pokemon/{pokemonId}` (body `{level:1|2|3}`, `X-CSRF-TOKEN`, `Accept: application/json`, 200 OK / 422 {message}). La ruta aún NO existe en `routes/habitats.php` (verificado) y el repo ya tiene `movePokemonToLevel()` + `DTOPokemonNivelActualizado` → contrato asumido. Yo (FRONTEND) toco SOLO `resources/views/habitats/show.blade.php`.
+
+## Vistas a tocar
+1. **`resources/views/habitats/show.blade.php`** (única):
+   - Renombrar label pestaña interna 'unassign': "Desasignar" → **"Ya Asignados"** (el valor interno `gestionTab === 'unassign'` se conserva para no tocar la lógica).
+   - Reestructurar la pestaña: 3 secciones (Nivel 1/2/3). Dentro de cada una, una tarjeta por CADA pokémon (base + evoluciones) cuyo `level` encaje. Tarjeta = icono webp con onerror + nombre + selector de nivel (3 botones 1/2/3, azul el activo) + X **solo en la tarjeta base** (quita TODA la familia).
+   - Getter Alpine `assignedByLevel` que agrupa `assignedFamilies` → `{1:[],2:[],3:[]}` decorando cada entrada con `evolution_chain_id` (para PATCH/X) e `is_base`.
+   - **Optimización "sin refresco pesado"**: `openGestionModal()` sigue cargando ambas listas SOLO al abrir. `assignFamily`/`removeFamily`/nuevo `updatePokemonLevel` mutan estado local y NO llaman a `load*()`.
+
+## DTOs consumidos (contrato verificado en src/)
+```
+GET /api/habitats/unassigned-families → [{evolution_chain_id, base:{id,name,icon}, evolutions:[{id,name,icon}], types:[{id,name}]}]
+GET /api/habitats/{id}/families       → [{evolution_chain_id, base:{id,name,icon,level}, evolutions:[{id,name,icon,level}]}]  (SIN types)
+POST /api/habitats/{id}/families      → 201 {habitat_id, evolution_chain_id, assigned_count}  (NO devuelve la familia → reconstruyo local)
+DELETE /api/habitats/{id}/families/{chainId} → 200 {habitat_id, evolution_chain_id, removed_count}
+PATCH /api/habitats/{id}/pokemon/{pokemonId} → 200 (body no usado) / 422 {message}
+```
+- `level` llega en base/evolutions del endpoint "families" (repo `levelForStage`: totalStages===1 → 2; si no, min(stage,3)).
+- Al **asignar**, el POST no devuelve la familia: reconstruyo el entry con `buildAssignedFamilyFromUnassigned` (aprox. client-side del `levelForStage` del backend para cadenas lineales; self-heals al reabrir el modal, que sí recarga). Defensivo: si el body trajera `evolution_chain_id`+`base`, lo uso directo.
+- Al **quitar**, reconstruyo el entry de `unassignedFamilies` desde el objeto asignado (le quito `level` y pongo `types: []`, porque el DTO asignado no trae types). Los chips de tipos de esa familia no aparecerán hasta reabrir (sancionado: "reconstruirla desde el objeto que tenías").
+- Al **mover nivel**, muto `family.base.level` / `family.evolutions[i].level` (proxy reactivo Alpine → el getter re-agrupa solo).
+
+## Estados UI cubiertos
+- Ya Asignados: vacío global ("No hay familias asignadas"), vacío por nivel ("Sin pokémon en este nivel" solo si hay familias pero ninguna en ese nivel), carga (`gestionLoading` deshabilita X y selectores, opacity).
+- Selector de nivel: estado activo (azul) vs inactivo (gris); deshabilitado durante operaciones.
+- Errores: cualquier !response.ok → `alert(err.message)` y SIN mutar estado (asignar/quitar/mover).
+- Asignar: intacta (filtros búsqueda/tipo, chips de types, grid, empty); solo cambia que `assignFamily` ya no recarga.
+
+## Riesgos accesibilidad/UX
+- X solo en la tarjeta base: `aria-label="Quitar la familia completa de {nombre}"`, `title="Quitar familia completa"` para dejar claro que retira TODA la familia (requisito negocio). La base puede haberse movido de nivel vía PATCH → la X la sigue (is_base, no `level`).
+- `assignedByLevel` descarta entradas sin level 1-3 válido (defensa contra objetos mínimos); con `buildAssignedFamilyFromUnassigned` nunca se produce en el flujo normal.
+- Repetición del div del selector: 3 botones hardcodeados (patrón `[1,2,3]` del panel Niveles existente) en vez de `x-for` anidado para evitar problemas de scope/keys en Alpine.
+- Andes: `Number(family.base?.id)` etc. defensivos (base siempre existe en DTO pero no cuesta).
+- Posible discrepancia temporal de niveles al asignar (aprox. lineal) → se corrige al reabrir el modal.
+
+## Verificación (sin entorno de tests frontend; Dusk no instalado)
+- Lectura cuidadosa: escapes Blade (`{{ }}`, `@json` intactos), `x-for`/`x-if`/`:key`/`:class`/`x-text` correctos, URLs con `{{ $habitat['id'] }}` como ya hace el archivo.
+- `php artisan view:cache` (compila todas las vistas; si alguna otra falla, se reporta) y revisión `git diff`.
+- NO ejecuto `npm run build` (no toco assets ni manifest).
+
+---
+
 # Análisis Frontend — Header: badge de nivel + barra de progreso 5px como border inferior
 
 ## Fecha

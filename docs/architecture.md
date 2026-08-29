@@ -45,8 +45,45 @@ Entidad de dominio compartida entre batalla automática y manual.
 | Carpeta | Contenido |
 |---|---|
 | `Domain/` | `HabitatEntity`, `ProvinceEntity`, `HabitatsCollection`, `ProvinciasCollection`, `Repositories/` |
-| `App/` | 3 casos de uso: `ObtenerHabitatsPorProvincia`, `ObtenerHabitatDetalle`, `ObtenerPokemonsPorHabitat` |
-| `Infra/` | `HabitatRepository` |
+| `App/` | 8 casos de uso: `ObtenerHabitatsPorProvincia`, `ObtenerHabitatDetalle`, `ObtenerPokemonsPorHabitat`, `ObtenerFamiliasDisponibles`, `ObtenerFamiliasSinHabitat`, `AsignarFamiliaAHabitat`, `EliminarFamiliaDeHabitat`, `MoverPokemonDeNivel` |
+| `Infra/` | `HabitatRepository` (god-class ~477 líneas, pendiente de dividir — ver deuda en `docs/context.md`) |
+| `Presentation/` | `DTOHabitatDetalle`, `DTOFamiliasDisponibles`, `DTOFamiliasSinHabitat`, `DTOFamiliaDisponible`, `DTOFamiliaSinHabitat`, `DTOFamiliaEliminada`, `DTOPokemonNivelActualizado` |
+
+#### API de familias de hábitats (admin "Gestión")
+
+Endpoints (ver `routes/habitats.php` y `HabitatsController`):
+
+```
+GET    /api/habitats/{id}/families          → familias asignadas con level real por miembro
+POST   /api/habitats/{id}/families          → 201 familia COMPLETA asignada (body: {evolution_chain_id})
+DELETE /api/habitats/{id}/families/{chainId}→ quita TODA la familia del hábitat
+PATCH  /api/habitats/{habitat}/pokemon/{pokemon} → mueve un pokémon de nivel (body: {level: 1|2|3})
+GET    /api/habitats/unassigned-families    → familias sin hábitat (solo base, con types[])
+```
+
+Contrato de familia (aditivo, compartido por `DTOFamiliaDisponible` y `DTOFamiliaSinHabitat`):
+
+```
+{
+  evolution_chain_id: int,
+  base:      { id: int, name: string, icon: string, level: int },
+  evolutions: [{ id: int, name: string, icon: string, level: int }],
+  types:     [{ id: int, name: string }]   // unión dedup de tipos de TODOS los miembros, ordenada por id
+}
+```
+
+Reglas de negocio del reparto de niveles (`levelForStage` en `HabitatRepository`):
+
+- Reparto por fases: base → nivel 1, 2ª evolución → 2, 3ª → 3 (`min(stage, 3)`).
+- Familias unicetapa → nivel 2 (`totalStages === 1 → 2`).
+- Familias ramificadas → todas las evoluciones al mismo nivel real (Eevee: base 1, Vaporeon/Jolteon 2).
+- El POST de asignar devuelve la familia completa con niveles reales (sin inferencia client-side).
+- El DELETE quita TODA la familia (decisión de negocio; la X del modal solo existe en la tarjeta base).
+- El PATCH mueve UN pokémon (reordenamiento manual por pokémon, no por familia).
+
+UI: modal Alpine `habitatShow()` en `resources/views/habitats/show.blade.php`. Sin refresco pesado:
+la query inicial solo al abrir el modal; asignar/quitar/mover mutan estado local tras 200 OK.
+Sustituye al componente Livewire `FamilyModal` (eliminado; hábitats ya no usa Livewire).
 
 ### Equipos (`src/Equipos/`)
 
@@ -131,6 +168,7 @@ Reglas del contrato (ver `tests/Feature/DatagridTest.php`):
 | **Whitelist declarativa** | Campos consultables por modelo (anti inyección) | `DatagridDefinition` |
 | **Composition Root** | Registro de definiciones del datagrid | `DatagridServiceProvider` |
 | **Strategy (constraint)** | whereHas custom por filtro de relación | `RelationFilter::$constraint` |
+| **Estado local con fetch API (Alpine)** | Modal de gestión sin recarga: query inicial al abrir, mutaciones locales tras 200 OK | `habitats/show.blade.php` (`habitatShow()`) |
 
 ## Flujo de datos — Batalla manual (Livewire)
 
@@ -185,7 +223,7 @@ Blade → Alpine pokedexApp()
 | Capa | Archivos | Responsabilidad |
 |---|---|---|
 | **Datagrid** | `Datagrid/{DatagridService,DatagridRegistry,DatagridDefinition,RelationFilter}.php` | Consulta JSON de solo lectura con whitelist por modelo |
-| **Livewire** | `Combate.php` | Componente interactivo de batalla |
+| **Livewire** | `Combate.php` | Componente interactivo de batalla. Los hábitats migraron de Livewire a Alpine + fetch API (modal "Gestión", ver sección Habitats) |
 | **Controllers** | 9 controladores + base `Controller` | HTTP: Hábitats, Reclutados, Teams, Player (pokédex/reclutamiento/equipos), Datagrid, Exploraciones, Iconos, Dashboard |
 | **Models** | 13 modelos | Eloquent ORM (tablas del sistema) |
 | **Providers** | 4 providers | Registro de servicios: App, BattleEffect, Datagrid |
@@ -195,7 +233,8 @@ Blade → Alpine pokedexApp()
 
 ## Base de datos
 
-SQLite. 18 migraciones. Esquema relacional:
+PostgreSQL en el entorno de ejecución (Docker); los tests usan SQLite en memoria (`:memory:`).
+29 migraciones. Esquema relacional:
 
 ```
 provinces ──→ habitats ──→ pokemon_habitat ──→ pokemon ──→ pokemon_stats

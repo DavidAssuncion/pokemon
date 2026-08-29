@@ -69,7 +69,7 @@ app/
 
 ## Base de datos
 
-- SQLite en desarrollo y testing.
+- PostgreSQL en el entorno de ejecución (Docker); SQLite en memoria (`:memory:`) para tests.
 - Migraciones con `Schema::create()` y métodos fluidos de Blueprint.
 - Seeders con datos reales de pokémon (151+ especies, 8 provincias, hábitats).
 

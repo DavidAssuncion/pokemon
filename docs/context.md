@@ -16,6 +16,7 @@ El proyecto tiene funcionalidad base estable:
 - **Pokédex asíncrona** — pestañas server-side (Vistos/No vistos/Atrapados), filtros de tipo y esfuerzo (EV), búsqueda con debounce, scroll infinito y modal de detalle bajo demanda.
 - **Iconos WebP** — 1032 iconos servidos como WebP desde `public/images/iconos_webp/` (generados con cwebp 1.3.2 `-q 80`, alfa preservado, −37 % de peso: 5,7 MiB → 3,6 MiB, 1032/1032 más ligeros; ~97 % menos que los PNG originales de 188 MB). Los PNG de `public/images/iconos/` se conservan como fuente y fallback.
 - **Sistema de agentes OpenCode** — 5 agentes orquestados (analista, arquitecto, backend, frontend, bibliotecario).
+- **Admin "Gestión" de familias en hábitats** — modal Alpine `habitatShow()` en `habitats/show.blade.php` para asignar familias sin hábitat, quitar familias completas y reordenar pokémon por nivel (1/2/3) vía API JSON. Endpoints: `GET/POST/DELETE /api/habitats/{id}/families`, `PATCH /api/habitats/{habitat}/pokemon/{pokemon}` (nuevo, `movePokemonLevel`) y `GET /api/habitats/unassigned-families`. Contrato aditivo `types[]` en los DTOs de familia. Sin refresco pesado: la query inicial solo al abrir el modal; mutaciones locales tras 200 OK. Sustituye al modal Livewire (`FamilyModal` eliminado).
 
 ## Decisiones arquitectónicas clave
 
@@ -45,7 +46,8 @@ Ver `docs/architecture.md` para la descripción detallada de cada módulo.
 
 ## Base de datos
 
-SQLite con 18 migraciones. Esquema principal:
+PostgreSQL en el entorno de ejecución (Docker); los tests usan SQLite en memoria (`:memory:`).
+29 migraciones. Esquema principal:
 
 - `provinces` → `habitats` → `pokemon_habitat` ↔ `pokemon`
 - `pokemon` → `pokemon_stats`, `pokemon_types`, `pokemon_evolution`
@@ -78,7 +80,7 @@ Seeders: provincias (8), hábitats, pokémon (151+), reclutados.
 2. Cache-busting de iconos: los WebP se sirven con `Cache-Control: immutable`; si un icono cambia con el mismo id, los clientes no lo refrescarán (pendiente de decisión/ticket).
 3. `infection.json5` solo cubre `src/`; el código de `app/` (Datagrid, WebP, comandos) no genera mutaciones.
 4. `phpstan.neon` líneas 26-27: baseline de errores tolerados preexistentes (categoría `staticMethod.dynamicCall` de asserts en tests y otros); ampliar limpieza gradualmente.
-5. `HabitatRepository` vive en `src/Habitats/Infra/` pero recibe datos de `app/` (backlog de arquitectura: mover a infraestructura Laravel o definir interfaz en Domain).
+5. `HabitatRepository` vive en `src/Habitats/Infra/` pero recibe datos de `app/` (backlog de arquitectura: mover a infraestructura Laravel o definir interfaz en Domain). Es además una god-class de ~477 líneas pendiente de dividir (asignación de familias, niveles, tipos y detalle conviven en el mismo repositorio).
 6. Tests: existen pocos tests, la cobertura es baja (aunque Datagrid/WebP/Pokédex ya tienen cobertura de feature/unit).
 7. Manejar migración de sesiones de batalla cuando cambia la estructura serializada.
 8. El módulo Pokemon (`src/Pokemon/Domain`) tiene entidades pero los App/ use cases están vacíos.
@@ -97,6 +99,8 @@ Seeders: provincias (8), hábitats, pokémon (151+), reclutados.
 - `resources/views/pokedex/index.blade.php` — Pokédex asíncrona (componente Alpine `pokedexApp()`)
 - `public/images/iconos_webp/` — 1032 iconos WebP servidos con cache immutable
 - `app/Livewire/Combate.php` — Componente de batalla manual (686 líneas)
+- `resources/views/habitats/show.blade.php` — Detalle de hábitat + modal "Admin - Gestión" (Alpine `habitatShow()`)
+- `tests/Feature/Habitats/FamiliesTest.php` — 21 tests de la API de familias (GET/POST/DELETE/PATCH)
 - `src/Battle/Domain/` — Lógica de combate (14 archivos)
 - `src/Battle/Domain/Chain/` — Cadena de daño (10 manejadores)
 - `src/Battle/Domain/Effects/` — Sistema de efectos (10 archivos)

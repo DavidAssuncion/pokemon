@@ -1,51 +1,89 @@
-# Análisis Backend — Detalle reclutado + alimentación caramelos de tipo + evolución
+# Análisis Backend — POST /api/habitats/{id}/families devuelve la familia completa con niveles reales
+
+## Fecha
+2026-08-29
 
 ## Contexto verificado
 
-- `caramelos_tipo.tipo` guarda el **label español** del tipo (p. ej. 'Fuego', 'Volador', 'Eléctrico') — confirmado en `src/Exploraciones/App/ProcesarExploracionService.php:254` (`$tipo->tipo_nombre`).
-- `reclutados.exp` es JSON `['total' => int]` (cast array). Se actualiza en `ProcesarExploracionService` / `CalcularRecompensasJob`.
-- `NivelHelper` (curva ×10): `experienciaParaNivel(n)` = 10·n³; `nivelDesdeExperiencia(e)`.
-- Umbrales reales (curva ×10, NO 5000): nivel 1→2 = 70; 15→16 = 7210; 35→36 = 37810.
+- Problema: al asignar una familia ramificada (ej. Eevee), el frontend reconstruía la familia
+  client-side con `buildAssignedFamilyFromUnassigned`, que falla en cadenas ramificadas
+  (infiere niveles 2,3,3; el backend asigna 2,2 vía `levelForStage`). El POST actual devuelve
+  `DTOFamiliaAsignada` (`habitat_id, evolution_chain_id, assigned_count`), insuficiente.
+- Solución acordada (documentada en `active/ANALISIS_FRONTEND_HABITAT_ASSIGNFAMILY.md`): el POST
+  devuelve 201 con la familia COMPLETA `{evolution_chain_id, base:{id,name,icon,level},
+  evolutions:[{id,name,icon,level}]}` — exactamente el shape de `DTOFamiliaDisponible`, que el
+  frontend ya consume en GET `/api/habitats/{id}/families` (pestaña "Ya Asignados") y en el
+  Livewire `FamilyModal`.
+- `HabitatRepository::buildAvailableFamilyFromChain(int $chainId, array $members)` ya produce
+  `DTOFamiliaDisponible` con `level` real por miembro (`levelForStage($member['stage'], $totalStages)`),
+  idéntico al `level` que el upsert de `assignFamily` persiste. Es LA fuente correcta de niveles.
+- `DTOFamiliaAsignada` solo se referencia desde `HabitatRepository`, `AsignarFamiliaAHabitat`,
+  `HabitatRepositoryInterface` (grep verificado). Tras el cambio queda sin referencias → se elimina
+  (regla "sin código muerto").
+- `app/Livewire/Habitats/FamilyModal.php::assign()` llama a `asignarFamiliaAHabitat->handle(...)`
+  e IGNORA el retorno → no se rompe al cambiar el tipo de retorno.
+- Tests existentes que assert `assigned_count`/`habitat_id` del POST: 3 (3/2/1 etapas). Se actualizan
+  al nuevo shape (se deriva el total de miembros como `1 + count(evolutions)` y se conservan los
+  asserts de BD). `test_obtener_familias_sin_habitat_solo_cadenas_vacias` assert `count(3)` → la
+  cadena ramificada nueva se crea DENTRO del test nuevo (no en `setUp`) para no alterar ese conteo.
 
-## Resolución de `siguienteEvolucion` (pregunta crítica)
+## Decisión de diseño
 
-Inspeccionados datos reales (dev DB, solo lectura):
-
-- `pokemon.evolution_chain_id` NO sirve como fuente única: la cadena 2 (charmander) contiene además mega/gmax (ids 10034/10035/10196) con el MISMO `species_id` (6); ordenar por `species_id` daría charizard-mega-x como "siguiente" de charizard. ✗
-- `pokemon_evolution` SÍ sirve:
-  - `evolves_from_species_id` = `species_id` del pokémon actual (charmander=4, charmeleon=5).
-  - `evolved_species_id` = **FK directa a `pokemon.id`** de la siguiente etapa (4→5 charmeleon, 5→6 charizard). Verificado: `Pokemon::find(6)` = charizard base.
-  - Las formas alternas (mega/gmax) son filas extra con `evolved_species_id` ≥ 10000 y `minimum_level` ≥ al canónico; **no** hay filas con `evolves_from_species_id` = 6 (charizard no evoluciona → null). ✓
-
-**Regla implementada**: `PokemonEvolution::where('evolves_from_species_id', $pokemon->species_id)->where('evolved_species_id', '<', 10000)->orderBy('minimum_level')->orderBy('evolved_species_id')->first()` → `Pokemon::find($evolucion->evolved_species_id)`. Fallback a `evolution_chain_id` NO necesario (la tabla pokemon_evolution es la fuente completa y correcta).
+**Opción 1 (mínima, recomendada)**: `assignFamily` retorna `DTOFamiliaDisponible` reutilizando
+`buildAvailableFamilyFromChain`. El controlador sigue haciendo `response()->json($result->toArray(), 201)`
+sin cambios. No se añade `family` anidado ni se mantienen claves viejas.
 
 ## Qué voy a tocar
 
 | Archivo | Acción | Propósito |
 |---|---|---|
-| `database/migrations/2026_08_28_000004_create_reclutados_exp_tipo_table.php` | Crear | Tabla exp por tipo por reclutado (UNIQUE reclutado_id+tipo, CASCADE). |
-| `app/Models/ReclutadoExpTipo.php` | Crear | Modelo estándar (fillable, casts, belongsTo Reclutado). |
-| `app/Models/Reclutado.php` | Modificar | Relación `expTipos(): HasMany`. |
-| `src/Reclutamiento/App/ServicioEvolucion.php` | Crear | 5 métodos estáticos: `umbralParaNivel`, `siguienteEvolucion`, `tiposRequeridos`, `requisitos`, `puedeEvolucionar`. (App layer, mismo patrón que `ServicioCaptura` — importa App\Models permitido; Deptrac no matchea `src/*/App`.) |
-| `app/Http/Controllers/ReclutadoController.php` | Crear | `show`, `darCaramelo`, `evolucionar` (artisan make:controller). |
-| `routes/player.php` | Modificar | 3 rutas `/reclutado/...` con route-model binding. |
-| `resources/views/reclutado/show.blade.php` | Crear | Vista mínima funcional (backend handoff; frontend la pulirá). |
-| `tests/Feature/ReclutadoEvolucionTest.php` | Crear | Feature tests (abajo). |
+| `src/Habitats/Presentation/DTOFamiliaAsignada.php` | Eliminar | Queda sin referencias tras el cambio (código muerto). |
+| `src/Habitats/Infra/HabitatRepository.php` | Modificar | `assignFamily(): DTOFamiliaDisponible`; tras upsert+cache, construir y devolver la familia vía `buildAvailableFamilyFromChain` (`?? throw \LogicException` porque la base siempre existe). Se elimina la variable `$assignedCount`. |
+| `src/Habitats/Domain/Repositories/HabitatRepositoryInterface.php` | Modificar | Firma `assignFamily(...): DTOFamiliaDisponible` (import nuevo, quitar import de DTOFamiliaAsignada). |
+| `src/Habitats/App/AsignarFamiliaAHabitat.php` | Modificar | `handle(...): DTOFamiliaDisponible` (import nuevo, quitar import de DTOFamiliaAsignada). |
+| `app/Http/Controllers/HabitatsController.php` | Sin cambios | `$result->toArray()` + 201 ya producen el nuevo shape (verificado, sin PHPDoc que ajustar). |
+| `tests/Feature/Habitats/FamiliesTest.php` | Modificar | Actualizar 3 tests POST al nuevo shape + NUEVO test de cadena ramificada (Eevee: base nivel 1, TODAS las evoluciones nivel 2). |
 
-## Tests a escribir
+## Tests (TDD: rojo → verde)
 
-1. `siguienteEvolucion`: charmander→charmeleon, charmeleon→charizard, charizard→null.
-2. `umbralParaNivel`: 1→2 = 70, 15→16 = 7210, 35→36 = 37810 (fórmula, no el ejemplo del ticket).
-3. `tiposRequeridos`: charmeleon → ['Fuego']; charizard → ['Fuego', 'Volador'].
-4. `darCaramelo`: descuenta pool + suma 100; 422 sin caramelos; 422 tipo no requerido.
-5. `evolucionar`: 422 sin cumplir; consume exp (borra filas a 0); cambia pokemon_id; despacha ActualizarPokedexJob('RECLUTADO').
-6. `GET /reclutado/{id}` → 200 con datos de vista (requisitos con necesario/actual/caramelosDisponibles/slug).
+1. `test_asignar_familia_3_etapas_inserta_levels_1_2_3` — 201; `evolution_chain_id`,
+   `base.{id,level}=1`, `evolutions[0].level=2`, `evolutions[1].level=3`; sin `assigned_count`.
+2. `test_asignar_familia_2_etapas_rattata_inserta_levels_1_2` — 201; base id 19 level 1,
+   evolutions[0] id 20 level 2.
+3. `test_asignar_familia_1_etapa_inserta_level_2` — 201; base id 151 level 2, evolutions vacío.
+4. `test_asignar_familia_ramificada_asigna_nivel_2_a_todas_las_evoluciones` — NUEVO: cadena
+   Eevee→Vaporeon/Jolteon; 201; base level 1, AMBAS evoluciones level 2 (no 2,3); BD con level 2
+   en ambas. La cadena se crea dentro del test (no en setUp) para no romper
+   `test_obtener_familias_sin_habitat_solo_cadenas_vacias` (assertCount 3).
+
+## Shape exacto del JSON de respuesta (entregable para frontend)
+
+```json
+{
+  "evolution_chain_id": 22,
+  "base": { "id": 133, "name": "Eevee", "icon": "/images/iconos_webp/133.webp", "level": 1 },
+  "evolutions": [
+    { "id": 134, "name": "Vaporeon", "icon": "/images/iconos_webp/134.webp", "level": 2 },
+    { "id": 135, "name": "Jolteon",  "icon": "/images/iconos_webp/135.webp", "level": 2 }
+  ]
+}
+```
+Status 201. Sin `habitat_id` ni `assigned_count` (se deriva: `1 + evolutions.length`).
 
 ## Riesgos
 
-- **Accents en tipos**: 'Eléctrico'/'Psíquico' — slug con `Str::ascii()` + `strtolower` → 'electrico'/'psiquico'. Keys de requisitos por tipo_nombre exacto (misma cadena que caramelos_tipo).
-- **FK `evolved_species_id`** apunta a `pokemon.id` (no a species_id): usar `Pokemon::find`, no `where('species_id')`.
-- **Formas alternas** (≥10000): excluidas con `where('evolved_species_id', '<', 10000)` para que mega/gmax nunca sean "siguiente evolución".
-- **exp null** en reclutados recién capturados: `$reclutado->exp['total'] ?? 0` → nivel 1.
-- **No tocar dev DB**: tests con RefreshDatabase sobre `laravel_test` (phpunit.xml).
-- **Concurrencia** de dar-caramelo: operaciones atómicas con `decrement`/`increment`; updateOrCreate con unique key.
+- **Contrato de otros endpoints intacto**: GET families, GET unassigned-families, DELETE, PATCH
+  no cambian (no toco `buildAvailableFamilyFromChain`, `buildUnassignedFamilyFromChain`,
+  `removeFamily`, `movePokemonToLevel`).
+- **PHPStan**: `buildAvailableFamilyFromChain` devuelve `?DTOFamiliaDisponible`; tras validar
+  `$members` no vacío la base siempre existe, pero para satisfacer el static analysis se usa
+  `$family ?? throw new \LogicException(...)`.
+- **No tocar vistas/Blade ni Livewire**: el frontend consume el body directo; `FamilyModal`
+  ignora el retorno → sin cambios.
+- **BD local**: no ejecutar `php artisan test` (sin BD desde host); tests listos para CI
+  (RefreshDatabase sqlite :memory:).
+
+## Entorno
+
+- SÍ ejecutar `vendor/bin/pint --dirty --format agent` y `php -l` de cada archivo tocado.
+- NO ejecutar `php artisan test`.
