@@ -26,7 +26,11 @@ class ProcesarExploraciones extends Command
      */
     public function handle(): int
     {
-        $exploraciones = ExploracionActiva::whereNull('regreso')
+        // Multiplayer: el comando procesa TODOS los usuarios, no solo el
+        // autenticado (CLI sin sesión; el scope de BelongsToUser quedaría inactivo,
+        // pero se explicita para no depender del estado de auth).
+        $exploraciones = ExploracionActiva::withoutUserScope()
+            ->whereNull('regreso')
             ->with('team.members', 'habitat')
             ->get();
 

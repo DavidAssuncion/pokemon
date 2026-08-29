@@ -9,6 +9,7 @@ use App\Models\Habitat;
 use App\Models\Pokedex;
 use App\Models\Pokemon;
 use App\Models\Province;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -17,10 +18,14 @@ class ActualizarPokedexJobTest extends TestCase
     use RefreshDatabase;
 
     private int $pokemonId;
+    private int $userId;
 
     protected function setUp(): void
     {
         parent::setUp();
+
+        $user = User::factory()->create();
+        $this->userId = $user->id;
 
         $province = Province::create(['id' => 1, 'name' => 'Kanto']);
         $habitat = Habitat::create(['id' => 1, 'name' => 'Bosque', 'province_id' => 1]);
@@ -42,9 +47,11 @@ class ActualizarPokedexJobTest extends TestCase
 
     public function test_avistado_creates_pokedex_entry_with_visto_true(): void
     {
-        ActualizarPokedexJob::dispatch($this->pokemonId, 'AVISTADO');
+        ActualizarPokedexJob::dispatch($this->userId, $this->pokemonId, 'AVISTADO');
 
-        $pokedex = Pokedex::where('pokemon_id', $this->pokemonId)->first();
+        $pokedex = Pokedex::where('user_id', $this->userId)
+            ->where('pokemon_id', $this->pokemonId)
+            ->first();
         $this->assertNotNull($pokedex);
         $this->assertTrue($pokedex->visto);
         $this->assertFalse($pokedex->atrapado);
@@ -52,9 +59,11 @@ class ActualizarPokedexJobTest extends TestCase
 
     public function test_reclutado_creates_pokedex_entry_with_both_true(): void
     {
-        ActualizarPokedexJob::dispatch($this->pokemonId, 'RECLUTADO');
+        ActualizarPokedexJob::dispatch($this->userId, $this->pokemonId, 'RECLUTADO');
 
-        $pokedex = Pokedex::where('pokemon_id', $this->pokemonId)->first();
+        $pokedex = Pokedex::where('user_id', $this->userId)
+            ->where('pokemon_id', $this->pokemonId)
+            ->first();
         $this->assertNotNull($pokedex);
         $this->assertTrue($pokedex->visto);
         $this->assertTrue($pokedex->atrapado);
@@ -63,13 +72,15 @@ class ActualizarPokedexJobTest extends TestCase
     public function test_avistado_does_not_overwrite_reclutado(): void
     {
         // First mark as RECLUTADO
-        ActualizarPokedexJob::dispatch($this->pokemonId, 'RECLUTADO');
+        ActualizarPokedexJob::dispatch($this->userId, $this->pokemonId, 'RECLUTADO');
 
-        $pokedex = Pokedex::where('pokemon_id', $this->pokemonId)->first();
+        $pokedex = Pokedex::where('user_id', $this->userId)
+            ->where('pokemon_id', $this->pokemonId)
+            ->first();
         $this->assertTrue($pokedex->atrapado);
 
         // Then mark as AVISTADO — atrapado should remain true (M1: never downgrade)
-        ActualizarPokedexJob::dispatch($this->pokemonId, 'AVISTADO');
+        ActualizarPokedexJob::dispatch($this->userId, $this->pokemonId, 'AVISTADO');
 
         $pokedex->refresh();
         $this->assertTrue($pokedex->visto);
@@ -79,15 +90,20 @@ class ActualizarPokedexJobTest extends TestCase
     public function test_upsert_updates_existing_record(): void
     {
         Pokedex::create([
+            'user_id' => $this->userId,
             'pokemon_id' => $this->pokemonId,
             'visto' => true,
             'atrapado' => false,
         ]);
 
-        ActualizarPokedexJob::dispatch($this->pokemonId, 'RECLUTADO');
+        ActualizarPokedexJob::dispatch($this->userId, $this->pokemonId, 'RECLUTADO');
 
-        $this->assertEquals(1, Pokedex::where('pokemon_id', $this->pokemonId)->count());
-        $pokedex = Pokedex::where('pokemon_id', $this->pokemonId)->first();
+        $this->assertEquals(1, Pokedex::where('user_id', $this->userId)
+            ->where('pokemon_id', $this->pokemonId)
+            ->count());
+        $pokedex = Pokedex::where('user_id', $this->userId)
+            ->where('pokemon_id', $this->pokemonId)
+            ->first();
         $this->assertTrue($pokedex->atrapado);
     }
 
@@ -95,7 +111,7 @@ class ActualizarPokedexJobTest extends TestCase
     {
         // Sin Queue::fake: RecompilarHabitatJsonJob se ejecuta inline (sin
         // ShouldQueue) y el JSON del hábitat refleja el nuevo AVISTADO.
-        ActualizarPokedexJob::dispatch($this->pokemonId, 'AVISTADO');
+        ActualizarPokedexJob::dispatch($this->userId, $this->pokemonId, 'AVISTADO');
 
         $habitat = Habitat::find(1);
         $this->assertNotNull($habitat->pokemons);
@@ -103,5 +119,22 @@ class ActualizarPokedexJobTest extends TestCase
         $bulbaData = collect($habitat->pokemons)->firstWhere('nombre', 'bulbasaur');
         $this->assertNotNull($bulbaData);
         $this->assertTrue($bulbaData['visto']);
+    }
+
+    public function test_avistado_de_un_usuario_no_crea_filas_para_otro(): void
+    {
+        $otroUsuario = User::factory()->create();
+
+        ActualizarPokedexJob::dispatch($this->userId, $this->pokemonId, 'RECLUTADO');
+
+        $this->assertDatabaseMissing('pokedex', [
+            'user_id' => $otroUsuario->id,
+            'pokemon_id' => $this->pokemonId,
+        ]);
+        $this->assertDatabaseHas('pokedex', [
+            'user_id' => $this->userId,
+            'pokemon_id' => $this->pokemonId,
+            'atrapado' => true,
+        ]);
     }
 }

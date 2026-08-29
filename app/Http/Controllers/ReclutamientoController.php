@@ -5,10 +5,11 @@ declare(strict_types=1);
 namespace App\Http\Controllers;
 
 use App\Jobs\ActualizarPokedexJob;
-use App\Models\Caramelo;
+use App\Models\PlayerInventory;
 use App\Models\Pokemon;
 use App\Models\Reclutable;
 use App\Models\Reclutado;
+use App\Support\ItemCatalogo;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -21,10 +22,13 @@ class ReclutamientoController extends Controller
             'reclutable_id' => 'required|exists:reclutables,id',
         ]);
 
+        // Propiedad: el global scope BelongsToUser + findOrFail → 404 si el
+        // reclutable es de otro jugador (la regla exists no filtra por usuario).
         $reclutable = Reclutable::findOrFail($data['reclutable_id']);
 
         // Create the recruited pokemon
         Reclutado::create([
+            'user_id' => auth()->id(),
             'pokemon_id' => $reclutable->pokemon_id,
             'nombre' => null, // default: uses pokemon name in UI
             'exp' => null,
@@ -33,7 +37,7 @@ class ReclutamientoController extends Controller
             'movimientos' => null,
         ]);
 
-        ActualizarPokedexJob::dispatch($reclutable->pokemon_id, 'RECLUTADO');
+        ActualizarPokedexJob::dispatch(auth()->id(), $reclutable->pokemon_id, 'RECLUTADO');
 
         if ($reclutable->cantidad > 1) {
             $reclutable->decrement('cantidad');
@@ -56,7 +60,7 @@ class ReclutamientoController extends Controller
 
         $cantidad = min((int) $data['cantidad'], $reclutable->cantidad);
 
-        $this->otorgarCaramelos([$reclutable], $cantidad);
+        $this->otorgarCaramelos([$reclutable], auth()->id(), $cantidad);
 
         if ($cantidad >= $reclutable->cantidad) {
             $reclutable->delete();
@@ -69,9 +73,10 @@ class ReclutamientoController extends Controller
 
     public function discardAll(): JsonResponse
     {
+        // Global scope BelongsToUser: solo los reclutables del usuario autenticado.
         $reclutables = Reclutable::with('pokemon')->get();
 
-        $candyRewards = $this->otorgarCaramelos($reclutables->all());
+        $candyRewards = $this->otorgarCaramelos($reclutables->all(), auth()->id());
 
         Reclutable::query()->delete();
 
@@ -79,12 +84,13 @@ class ReclutamientoController extends Controller
     }
 
     /**
-     * Award candies for the discarded pokemon: evolution phase × discarded amount.
+     * Award candies for the discarded pokemon: evolution phase × discarded amount,
+     * to the authenticated player's inventory (player_inventory, item_key familia:{chain}).
      *
      * @param  array<int, Reclutable>  $reclutables
      * @return array<int, int>
      */
-    private function otorgarCaramelos(array $reclutables, ?int $cantidad = null): array
+    private function otorgarCaramelos(array $reclutables, ?int $userId, ?int $cantidad = null): array
     {
         $candyRewards = [];
         $miembrosPorCadena = $this->miembrosDeLasCadenas($reclutables);
@@ -104,15 +110,10 @@ class ReclutamientoController extends Controller
         }
 
         foreach ($candyRewards as $chainId => $amount) {
-            $existing = Caramelo::where('evolution_chain_id', $chainId)->first();
-            if ($existing) {
-                $existing->increment('cantidad', $amount);
-            } else {
-                Caramelo::create([
-                    'evolution_chain_id' => $chainId,
-                    'cantidad' => $amount,
-                ]);
-            }
+            PlayerInventory::firstOrCreate(
+                ['user_id' => $userId ?? 1, 'item_key' => ItemCatalogo::keyFamilia($chainId)],
+                ['cantidad' => 0],
+            )->increment('cantidad', $amount);
         }
 
         return $candyRewards;

@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace Src\Reclutamiento\App;
 
-use App\Models\CarameloTipo;
+use App\Models\PlayerInventory;
 use App\Models\Pokemon;
 use App\Models\PokemonEvolution;
 use App\Models\PokemonType;
 use App\Models\Reclutado;
-use App\Models\ReclutadoExpTipo;
-use Illuminate\Support\Str;
+use App\Support\ItemCatalogo;
 use Src\Shared\Domain\NivelHelper;
+use Src\Shared\Domain\SlugTipo;
 
 /**
  * Lógica de evolución por caramelos de tipo.
@@ -20,6 +20,9 @@ use Src\Shared\Domain\NivelHelper;
  * `evolves_from_species_id` es el species_id del pokémon actual y
  * `evolved_species_id` apunta directamente a `pokemon.id` de la siguiente
  * etapa. Las formas alternas (mega/gmax, id ≥ 10000) se excluyen.
+ *
+ * La exp de tipo vive en el JSON `reclutados.exp` (cast ExpReclutado) y los
+ * caramelos en `player_inventory` del jugador (item_key `tipo:{slug}`).
  */
 final class ServicioEvolucion
 {
@@ -67,11 +70,12 @@ final class ServicioEvolucion
     }
 
     /**
-     * Requisitos completos para la vista.
+     * Requisitos completos para la vista, con la exp de tipo del JSON y los
+     * caramelos del inventario del jugador.
      *
      * @return list<array{tipo: string, slug: string, necesario: int, actual: int, caramelosDisponibles: int}>
      */
-    public static function requisitos(Reclutado $reclutado): array
+    public static function requisitos(Reclutado $reclutado, int $userId): array
     {
         $siguiente = self::siguienteEvolucion($reclutado->pokemon);
         if ($siguiente === null) {
@@ -79,28 +83,36 @@ final class ServicioEvolucion
         }
 
         $umbral = self::umbralParaNivel(self::nivelDe($reclutado));
-        $actualPorTipo = $reclutado->expTipos->pluck('cantidad', 'tipo');
 
-        $requisitos = [];
-        foreach (self::tiposRequeridos($siguiente) as $tipo) {
-            $requisitos[] = [
-                'tipo' => $tipo,
-                'slug' => strtolower(Str::ascii($tipo)),
-                'necesario' => $umbral,
-                'actual' => (int) ($actualPorTipo[$tipo] ?? 0),
-                'caramelosDisponibles' => self::caramelosDisponibles($tipo),
-            ];
-        }
+        return array_map(
+            fn (string $tipo): array => self::requisitoTipo($tipo, $umbral, $reclutado, $userId),
+            self::tiposRequeridos($siguiente),
+        );
+    }
 
-        return $requisitos;
+    /**
+     * Requisito de UN tipo: umbral compartido, exp de tipo del JSON y caramelos
+     * del inventario del jugador.
+     *
+     * @return array{tipo: string, slug: string, necesario: int, actual: int, caramelosDisponibles: int}
+     */
+    private static function requisitoTipo(string $tipo, int $umbral, Reclutado $reclutado, int $userId): array
+    {
+        return [
+            'tipo' => $tipo,
+            'slug' => SlugTipo::de($tipo),
+            'necesario' => $umbral,
+            'actual' => $reclutado->exp->expTipo($tipo),
+            'caramelosDisponibles' => self::caramelosDisponibles($tipo, $userId),
+        ];
     }
 
     /**
      * True si el reclutado cumple todos los requisitos de la evolución.
      */
-    public static function puedeEvolucionar(Reclutado $reclutado): bool
+    public static function puedeEvolucionar(Reclutado $reclutado, int $userId): bool
     {
-        $requisitos = self::requisitos($reclutado);
+        $requisitos = self::requisitos($reclutado, $userId);
         if ($requisitos === []) {
             return false;
         }
@@ -115,43 +127,32 @@ final class ServicioEvolucion
     }
 
     /**
-     * Nivel actual del reclutado a partir de su exp total.
+     * Nivel actual del reclutado a partir de su exp total (cast ExpReclutado).
      */
     public static function nivelDe(Reclutado $reclutado): int
     {
-        return NivelHelper::nivelDesdeExperiencia((int) ($reclutado->exp['total'] ?? 0));
+        return NivelHelper::nivelDesdeExperiencia($reclutado->exp->total());
     }
 
     /**
-     * Caramelos disponibles en el pool global para un tipo.
+     * Caramelos disponibles en el inventario del jugador para un tipo.
      */
-    public static function caramelosDisponibles(string $tipo): int
+    public static function caramelosDisponibles(string $tipo, int $userId): int
     {
-        return (int) (CarameloTipo::where('tipo', $tipo)->value('cantidad') ?? 0);
+        return (int) (PlayerInventory::where('user_id', $userId)
+            ->where('item_key', ItemCatalogo::keyTipo($tipo))
+            ->value('cantidad') ?? 0);
     }
 
     /**
-     * Registra la exp de tipo consumida en `reclutados_exp_tipo` tras evolucionar.
-     * Las filas que llegan a 0 o menos se eliminan.
+     * Consume la exp de tipo del JSON `reclutados.exp` tras evolucionar
+     * (cast ExpReclutado::consumirTipos: resta el umbral y elimina ≤ 0).
      *
      * @param  list<string>  $tipos
      */
     public static function consumirExpTipo(Reclutado $reclutado, array $tipos, int $umbral): void
     {
-        foreach ($tipos as $tipo) {
-            $expTipo = ReclutadoExpTipo::where('reclutado_id', $reclutado->id)
-                ->where('tipo', $tipo)
-                ->first();
-
-            if ($expTipo === null) {
-                continue;
-            }
-
-            if ($expTipo->cantidad <= $umbral) {
-                $expTipo->delete();
-            } else {
-                $expTipo->decrement('cantidad', $umbral);
-            }
-        }
+        $reclutado->exp = $reclutado->exp->consumirTipos($tipos, $umbral);
+        $reclutado->save();
     }
 }

@@ -9,6 +9,7 @@ use App\Models\Habitat;
 use App\Models\Pokedex;
 use App\Models\Pokemon;
 use App\Models\Province;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -19,10 +20,13 @@ class RecompilarHabitatJsonJobTest extends TestCase
     private int $habitatId;
     private int $pokemonId1;
     private int $pokemonId2;
+    private int $userId;
 
     protected function setUp(): void
     {
         parent::setUp();
+
+        $this->userId = User::factory()->create()->id;
 
         $province = Province::create(['id' => 1, 'name' => 'Kanto']);
         $habitat = Habitat::create(['id' => 1, 'name' => 'Bosque', 'province_id' => 1]);
@@ -74,8 +78,8 @@ class RecompilarHabitatJsonJobTest extends TestCase
 
     public function test_compiles_pokemon_json_with_pokedex_entries(): void
     {
-        Pokedex::create(['pokemon_id' => $this->pokemonId1, 'visto' => true, 'atrapado' => true]);
-        Pokedex::create(['pokemon_id' => $this->pokemonId2, 'visto' => true, 'atrapado' => false]);
+        Pokedex::create(['user_id' => $this->userId, 'pokemon_id' => $this->pokemonId1, 'visto' => true, 'atrapado' => true]);
+        Pokedex::create(['user_id' => $this->userId, 'pokemon_id' => $this->pokemonId2, 'visto' => true, 'atrapado' => false]);
 
         RecompilarHabitatJsonJob::dispatch($this->habitatId);
 

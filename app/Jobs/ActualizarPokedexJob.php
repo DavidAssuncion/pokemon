@@ -22,6 +22,7 @@ class ActualizarPokedexJob
      * Create a new job instance.
      */
     public function __construct(
+        public int $userId,
         public int $pokemonId,
         /** @var 'AVISTADO'|'RECLUTADO' */
         public string $estado,
@@ -38,14 +39,16 @@ class ActualizarPokedexJob
 
         // If already captured, don't downgrade to sighted-only
         if (! $atrapado) {
-            $existing = Pokedex::where('pokemon_id', $this->pokemonId)->first();
+            $existing = Pokedex::where('user_id', $this->userId)
+                ->where('pokemon_id', $this->pokemonId)
+                ->first();
             if ($existing && $existing->atrapado) {
                 return;
             }
         }
 
         Pokedex::updateOrCreate(
-            ['pokemon_id' => $this->pokemonId],
+            ['user_id' => $this->userId, 'pokemon_id' => $this->pokemonId],
             ['visto' => $visto, 'atrapado' => $atrapado]
         );
 

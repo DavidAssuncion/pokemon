@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace Src\Exploraciones\App;
 
-use App\Models\Caramelo;
-use App\Models\CarameloEv;
-use App\Models\CarameloTipo;
+use App\Models\PlayerInventory;
 use App\Models\Reclutable;
+use App\Models\Reclutado;
 use App\Models\Team;
 use App\Models\User;
+use App\Support\ItemCatalogo;
 use Illuminate\Support\Collection;
 use Src\Exploraciones\Domain\Recompensas\RecompensaCaptura;
 use Src\Exploraciones\Domain\Recompensas\RecompensaEv;
@@ -20,27 +20,33 @@ use Src\Exploraciones\Domain\Recompensas\ResultadoRecompensas;
 /**
  * Persiste en DB todas las recompensas de una exploración (increment-or-create
  * atómico por clave única; EXP al jugador y a los miembros del equipo).
+ * Los caramelos y capturas van al inventario/reclutables del DUEÑO de la
+ * exploración (user_id NOT NULL con FK cascade: el dueño siempre existe).
  * No final: los tests sustituyen persistir() por un mock parcial.
  */
 class PersistirRecompensas
 {
     public function persistir(ResultadoRecompensas $recompensas, ?Team $equipo, ?User $usuario): void
     {
-        $this->guardarCaramelosFamilia($recompensas->caramelosFamilia);
-        $this->guardarCaramelosEv($recompensas->caramelosEv);
-        $this->guardarCaramelosTipo($recompensas->caramelosTipo);
-        $this->aplicarCapturas($recompensas->capturas);
+        $this->guardarCaramelosFamilia($recompensas->caramelosFamilia, $usuario);
+        $this->guardarCaramelosEv($recompensas->caramelosEv, $usuario);
+        $this->guardarCaramelosTipo($recompensas->caramelosTipo, $usuario);
+        $this->aplicarCapturas($recompensas->capturas, $usuario);
         $this->aplicarExperiencia($recompensas->expTotal, $equipo, $usuario);
     }
 
     /**
      * @param  Collection<int, RecompensaFamilia>  $caramelos
      */
-    private function guardarCaramelosFamilia(Collection $caramelos): void
+    private function guardarCaramelosFamilia(Collection $caramelos, ?User $usuario): void
     {
+        if ($usuario === null) {
+            return;
+        }
+
         foreach ($caramelos as $caramelo) {
-            Caramelo::updateOrCreate(
-                ['evolution_chain_id' => $caramelo->evolutionChainId],
+            PlayerInventory::firstOrCreate(
+                ['user_id' => $usuario->id, 'item_key' => ItemCatalogo::keyFamilia($caramelo->evolutionChainId)],
                 ['cantidad' => 0],
             )->increment('cantidad', $caramelo->cantidad);
         }
@@ -49,11 +55,15 @@ class PersistirRecompensas
     /**
      * @param  Collection<int, RecompensaEv>  $caramelos
      */
-    private function guardarCaramelosEv(Collection $caramelos): void
+    private function guardarCaramelosEv(Collection $caramelos, ?User $usuario): void
     {
+        if ($usuario === null) {
+            return;
+        }
+
         foreach ($caramelos as $caramelo) {
-            CarameloEv::updateOrCreate(
-                ['stat' => $caramelo->stat],
+            PlayerInventory::firstOrCreate(
+                ['user_id' => $usuario->id, 'item_key' => ItemCatalogo::keyEv($caramelo->stat)],
                 ['cantidad' => 0],
             )->increment('cantidad', $caramelo->cantidad);
         }
@@ -62,11 +72,15 @@ class PersistirRecompensas
     /**
      * @param  Collection<int, RecompensaTipo>  $caramelos
      */
-    private function guardarCaramelosTipo(Collection $caramelos): void
+    private function guardarCaramelosTipo(Collection $caramelos, ?User $usuario): void
     {
+        if ($usuario === null) {
+            return;
+        }
+
         foreach ($caramelos as $caramelo) {
-            CarameloTipo::updateOrCreate(
-                ['tipo' => $caramelo->tipo],
+            PlayerInventory::firstOrCreate(
+                ['user_id' => $usuario->id, 'item_key' => ItemCatalogo::keyTipo($caramelo->tipo)],
                 ['cantidad' => 0],
             )->increment('cantidad', $caramelo->cantidad);
         }
@@ -75,11 +89,15 @@ class PersistirRecompensas
     /**
      * @param  Collection<int, RecompensaCaptura>  $capturas
      */
-    private function aplicarCapturas(Collection $capturas): void
+    private function aplicarCapturas(Collection $capturas, ?User $usuario): void
     {
+        if ($usuario === null) {
+            return;
+        }
+
         foreach ($capturas as $captura) {
-            Reclutable::updateOrCreate(
-                ['pokemon_id' => $captura->pokemonId],
+            Reclutable::firstOrCreate(
+                ['user_id' => $usuario->id, 'pokemon_id' => $captura->pokemonId],
                 ['cantidad' => 0],
             )->increment('cantidad', $captura->cantidad);
         }
@@ -96,15 +114,18 @@ class PersistirRecompensas
         }
 
         foreach ($equipo->members as $miembro) {
-            $reclutado = $miembro->reclutado;
-            if ($reclutado === null) {
-                continue;
+            if ($miembro->reclutado !== null) {
+                $this->sumarExpTotal($miembro->reclutado, $expTotal);
             }
-
-            /** @var array<string, int> $expActual */
-            $expActual = $reclutado->exp ?? ['total' => 0];
-            $expActual['total'] = ($expActual['total'] ?? 0) + $expTotal;
-            $reclutado->update(['exp' => $expActual]);
         }
+    }
+
+    private function sumarExpTotal(Reclutado $reclutado, int $expTotal): void
+    {
+        // El cast ExpReclutado devuelve el VO: se normaliza a array para sumar
+        // el total y se reasigna (el set del cast normaliza de nuevo).
+        $expActual = $reclutado->exp->toArray();
+        $expActual['total'] += $expTotal;
+        $reclutado->update(['exp' => $expActual]);
     }
 }

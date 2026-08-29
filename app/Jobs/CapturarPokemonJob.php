@@ -21,6 +21,7 @@ class CapturarPokemonJob
      * Create a new job instance.
      */
     public function __construct(
+        public int $userId,
         public int $pokemonId,
         public float $captureChance = 0.3,
     ) {
@@ -33,15 +34,10 @@ class CapturarPokemonJob
     {
         $roll = mt_rand(1, 100) / 100;
         if ($roll <= $this->captureChance) {
-            $existing = Reclutable::where('pokemon_id', $this->pokemonId)->first();
-            if ($existing) {
-                $existing->increment('cantidad');
-            } else {
-                Reclutable::create([
-                    'pokemon_id' => $this->pokemonId,
-                    'cantidad' => 1,
-                ]);
-            }
+            Reclutable::firstOrCreate(
+                ['user_id' => $this->userId, 'pokemon_id' => $this->pokemonId],
+                ['cantidad' => 0],
+            )->increment('cantidad');
         }
     }
 }

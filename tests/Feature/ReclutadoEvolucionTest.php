@@ -6,21 +6,32 @@ namespace Tests\Feature;
 
 use App\Enums\TipoEnum;
 use App\Jobs\ActualizarPokedexJob;
-use App\Models\CarameloTipo;
+use App\Models\PlayerInventory;
 use App\Models\Pokemon;
 use App\Models\PokemonEvolution;
 use App\Models\PokemonType;
 use App\Models\Reclutado;
-use App\Models\ReclutadoExpTipo;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Bus;
 use Src\Reclutamiento\App\ServicioEvolucion;
 use Src\Shared\Domain\NivelHelper;
+use Src\Shared\Domain\SlugTipo;
 use Tests\TestCase;
 
 class ReclutadoEvolucionTest extends TestCase
 {
     use RefreshDatabase;
+
+    private User $usuario;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        $this->usuario = User::factory()->create();
+        $this->actingAs($this->usuario);
+    }
 
     private function crearPokemon(int $id, string $name, int $speciesId): Pokemon
     {
@@ -64,12 +75,22 @@ class ReclutadoEvolucionTest extends TestCase
     private function crearReclutado(int $pokemonId, int $expTotal, string $nombre = 'Charmander'): Reclutado
     {
         return Reclutado::create([
+            'user_id' => $this->usuario->id,
             'nombre' => $nombre,
             'pokemon_id' => $pokemonId,
             'exp' => ['total' => $expTotal],
             'es_shiny' => false,
             'obj_equipados' => [],
             'movimientos' => [],
+        ]);
+    }
+
+    private function crearInventarioTipo(string $tipo, int $cantidad): void
+    {
+        PlayerInventory::create([
+            'user_id' => $this->usuario->id,
+            'item_key' => 'tipo:'.SlugTipo::de($tipo),
+            'cantidad' => $cantidad,
         ]);
     }
 
@@ -127,9 +148,9 @@ class ReclutadoEvolucionTest extends TestCase
     {
         $this->crearCadenaCharmander();
         $reclutado = $this->crearReclutado(4, 33750); // nivel 15 → umbral 7210
-        CarameloTipo::create(['tipo' => 'Fuego', 'cantidad' => 5]);
+        $this->crearInventarioTipo('Fuego', 5);
 
-        $requisitos = ServicioEvolucion::requisitos($reclutado);
+        $requisitos = ServicioEvolucion::requisitos($reclutado, $this->usuario->id);
 
         $this->assertCount(1, $requisitos);
         $this->assertSame('Fuego', $requisitos[0]['tipo']);
@@ -147,7 +168,7 @@ class ReclutadoEvolucionTest extends TestCase
         PokemonType::create(['pokemon_id' => 26, 'type' => TipoEnum::ELECTRIC, 'slot' => 1]);
         $reclutado = $this->crearReclutado(25, 0);
 
-        $requisitos = ServicioEvolucion::requisitos($reclutado);
+        $requisitos = ServicioEvolucion::requisitos($reclutado, $this->usuario->id);
 
         $this->assertSame('Eléctrico', $requisitos[0]['tipo']);
         $this->assertSame('electrico', $requisitos[0]['slug']);
@@ -158,11 +179,11 @@ class ReclutadoEvolucionTest extends TestCase
         $this->crearCadenaCharmander();
         $reclutado = $this->crearReclutado(4, 33750); // nivel 15 → umbral 7210
 
-        $this->assertFalse(ServicioEvolucion::puedeEvolucionar($reclutado));
+        $this->assertFalse(ServicioEvolucion::puedeEvolucionar($reclutado, $this->usuario->id));
 
-        ReclutadoExpTipo::create(['reclutado_id' => $reclutado->id, 'tipo' => 'Fuego', 'cantidad' => 7210]);
+        $reclutado->update(['exp' => ['total' => 33750, 'tipos' => ['Fuego' => 7210]]]);
 
-        $this->assertTrue(ServicioEvolucion::puedeEvolucionar($reclutado->fresh()));
+        $this->assertTrue(ServicioEvolucion::puedeEvolucionar($reclutado->fresh(), $this->usuario->id));
     }
 
     public function test_puede_evolucionar_con_doble_tipo_requiere_ambos(): void
@@ -171,18 +192,18 @@ class ReclutadoEvolucionTest extends TestCase
         $reclutado = $this->crearReclutado(5, 428750); // charmeleon nivel 35 → umbral 37810
 
         // Solo Fuego completo: todavía no puede (falta Volador)
-        ReclutadoExpTipo::create(['reclutado_id' => $reclutado->id, 'tipo' => 'Fuego', 'cantidad' => 37810]);
-        $this->assertFalse(ServicioEvolucion::puedeEvolucionar($reclutado->fresh()));
+        $reclutado->update(['exp' => ['total' => 428750, 'tipos' => ['Fuego' => 37810]]]);
+        $this->assertFalse(ServicioEvolucion::puedeEvolucionar($reclutado->fresh(), $this->usuario->id));
 
-        ReclutadoExpTipo::create(['reclutado_id' => $reclutado->id, 'tipo' => 'Volador', 'cantidad' => 37810]);
-        $this->assertTrue(ServicioEvolucion::puedeEvolucionar($reclutado->fresh()));
+        $reclutado->update(['exp' => ['total' => 428750, 'tipos' => ['Fuego' => 37810, 'Volador' => 37810]]]);
+        $this->assertTrue(ServicioEvolucion::puedeEvolucionar($reclutado->fresh(), $this->usuario->id));
     }
 
     public function test_dar_caramelo_descunta_pool_y_suma_100_al_reclutado(): void
     {
         $this->crearCadenaCharmander();
         $reclutado = $this->crearReclutado(4, 33750);
-        CarameloTipo::create(['tipo' => 'Fuego', 'cantidad' => 3]);
+        $this->crearInventarioTipo('Fuego', 3);
 
         $response = $this->postJson("/reclutado/{$reclutado->id}/dar-caramelo", ['tipo' => 'Fuego']);
 
@@ -192,37 +213,41 @@ class ReclutadoEvolucionTest extends TestCase
             'caramelos_disponibles' => 2,
             'puede_evolucionar' => false,
         ]);
-        $this->assertDatabaseHas('caramelos_tipo', ['tipo' => 'Fuego', 'cantidad' => 2]);
-        $this->assertDatabaseHas('reclutados_exp_tipo', [
-            'reclutado_id' => $reclutado->id,
-            'tipo' => 'Fuego',
-            'cantidad' => 100,
+        $this->assertDatabaseHas('player_inventory', [
+            'user_id' => $this->usuario->id,
+            'item_key' => 'tipo:fuego',
+            'cantidad' => 2,
         ]);
+        $this->assertSame(100, $reclutado->fresh()->exp->expTipo('Fuego'));
     }
 
     public function test_dar_caramelo_422_sin_caramelos_disponibles(): void
     {
         $this->crearCadenaCharmander();
         $reclutado = $this->crearReclutado(4, 33750);
-        CarameloTipo::create(['tipo' => 'Fuego', 'cantidad' => 0]);
+        $this->crearInventarioTipo('Fuego', 0);
 
         $response = $this->postJson("/reclutado/{$reclutado->id}/dar-caramelo", ['tipo' => 'Fuego']);
 
         $response->assertUnprocessable()->assertJson(['error' => 'No hay caramelos de tipo Fuego']);
-        $this->assertDatabaseHas('caramelos_tipo', ['tipo' => 'Fuego', 'cantidad' => 0]);
-        $this->assertDatabaseMissing('reclutados_exp_tipo', ['reclutado_id' => $reclutado->id]);
+        $this->assertDatabaseHas('player_inventory', [
+            'user_id' => $this->usuario->id,
+            'item_key' => 'tipo:fuego',
+            'cantidad' => 0,
+        ]);
+        $this->assertSame(0, $reclutado->fresh()->exp->expTipo('Fuego'));
     }
 
     public function test_dar_caramelo_422_si_el_tipo_no_es_requerido(): void
     {
         $this->crearCadenaCharmander();
         $reclutado = $this->crearReclutado(4, 33750);
-        CarameloTipo::create(['tipo' => 'Agua', 'cantidad' => 5]);
+        $this->crearInventarioTipo('Agua', 5);
 
         $response = $this->postJson("/reclutado/{$reclutado->id}/dar-caramelo", ['tipo' => 'Agua']);
 
         $response->assertUnprocessable()->assertJson(['error' => 'Ese tipo no es necesario para la evolución']);
-        $this->assertDatabaseMissing('reclutados_exp_tipo', ['reclutado_id' => $reclutado->id]);
+        $this->assertSame(0, $reclutado->fresh()->exp->expTipo('Agua'));
     }
 
     public function test_evolucionar_cambia_pokemon_consume_exp_y_despacha_pokedex(): void
@@ -230,20 +255,18 @@ class ReclutadoEvolucionTest extends TestCase
         Bus::fake();
         $this->crearCadenaCharmander();
         $reclutado = $this->crearReclutado(4, 33750);
-        ReclutadoExpTipo::create(['reclutado_id' => $reclutado->id, 'tipo' => 'Fuego', 'cantidad' => 8000]);
+        $reclutado->update(['exp' => ['total' => 33750, 'tipos' => ['Fuego' => 8000]]]);
 
         $response = $this->postJson("/reclutado/{$reclutado->id}/evolucionar");
 
         $response->assertOk()->assertJson(['success' => true, 'pokemon_id' => 5]);
         $this->assertSame(5, $reclutado->fresh()->pokemon_id);
-        // 8000 - 7210 = 790 restantes
-        $this->assertDatabaseHas('reclutados_exp_tipo', [
-            'reclutado_id' => $reclutado->id,
-            'tipo' => 'Fuego',
-            'cantidad' => 790,
-        ]);
+        // 8000 - 7210 = 790 restantes en el JSON exp.tipos
+        $this->assertSame(790, $reclutado->fresh()->exp->expTipo('Fuego'));
         Bus::assertDispatched(ActualizarPokedexJob::class, function ($job) {
-            return $job->pokemonId === 5 && $job->estado === 'RECLUTADO';
+            return $job->userId === $this->usuario->id
+                && $job->pokemonId === 5
+                && $job->estado === 'RECLUTADO';
         });
     }
 
@@ -252,18 +275,18 @@ class ReclutadoEvolucionTest extends TestCase
         Bus::fake();
         $this->crearCadenaCharmander();
         $reclutado = $this->crearReclutado(4, 33750);
-        ReclutadoExpTipo::create(['reclutado_id' => $reclutado->id, 'tipo' => 'Fuego', 'cantidad' => 7210]);
+        $reclutado->update(['exp' => ['total' => 33750, 'tipos' => ['Fuego' => 7210]]]);
 
         $this->postJson("/reclutado/{$reclutado->id}/evolucionar")->assertOk();
 
-        $this->assertDatabaseMissing('reclutados_exp_tipo', ['reclutado_id' => $reclutado->id]);
+        $this->assertArrayNotHasKey('Fuego', $reclutado->fresh()->exp->toArray()['tipos']);
     }
 
     public function test_evolucionar_422_si_no_cumple_requisitos(): void
     {
         $this->crearCadenaCharmander();
         $reclutado = $this->crearReclutado(4, 33750);
-        ReclutadoExpTipo::create(['reclutado_id' => $reclutado->id, 'tipo' => 'Fuego', 'cantidad' => 5000]);
+        $reclutado->update(['exp' => ['total' => 33750, 'tipos' => ['Fuego' => 5000]]]);
 
         $response = $this->postJson("/reclutado/{$reclutado->id}/evolucionar");
 
@@ -276,25 +299,22 @@ class ReclutadoEvolucionTest extends TestCase
         Bus::fake();
         $this->crearCadenaCharmander();
         $reclutado = $this->crearReclutado(5, 428750); // charmeleon nivel 35 → umbral 37810
-        ReclutadoExpTipo::create(['reclutado_id' => $reclutado->id, 'tipo' => 'Fuego', 'cantidad' => 37810]);
-        ReclutadoExpTipo::create(['reclutado_id' => $reclutado->id, 'tipo' => 'Volador', 'cantidad' => 40000]);
+        $reclutado->update([
+            'exp' => ['total' => 428750, 'tipos' => ['Fuego' => 37810, 'Volador' => 40000]],
+        ]);
 
         $response = $this->postJson("/reclutado/{$reclutado->id}/evolucionar");
 
         $response->assertOk()->assertJson(['success' => true, 'pokemon_id' => 6]);
         $this->assertSame(6, $reclutado->fresh()->pokemon_id);
-        // Fuego llega a 0 → fila eliminada; Volador conserva 40000 - 37810 = 2190
-        $this->assertDatabaseMissing('reclutados_exp_tipo', [
-            'reclutado_id' => $reclutado->id,
-            'tipo' => 'Fuego',
-        ]);
-        $this->assertDatabaseHas('reclutados_exp_tipo', [
-            'reclutado_id' => $reclutado->id,
-            'tipo' => 'Volador',
-            'cantidad' => 2190,
-        ]);
+        // Fuego llega a 0 → desaparece del JSON; Volador conserva 40000 - 37810 = 2190
+        $tipos = $reclutado->fresh()->exp->toArray()['tipos'];
+        $this->assertArrayNotHasKey('Fuego', $tipos);
+        $this->assertSame(2190, $tipos['Volador']);
         Bus::assertDispatched(ActualizarPokedexJob::class, function ($job) {
-            return $job->pokemonId === 6 && $job->estado === 'RECLUTADO';
+            return $job->userId === $this->usuario->id
+                && $job->pokemonId === 6
+                && $job->estado === 'RECLUTADO';
         });
     }
 
@@ -302,7 +322,7 @@ class ReclutadoEvolucionTest extends TestCase
     {
         $this->crearCadenaCharmander();
         $reclutado = $this->crearReclutado(4, 33750);
-        CarameloTipo::create(['tipo' => 'Fuego', 'cantidad' => 5]);
+        $this->crearInventarioTipo('Fuego', 5);
 
         $response = $this->get("/reclutado/{$reclutado->id}");
 

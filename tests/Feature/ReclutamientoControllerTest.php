@@ -4,16 +4,27 @@ declare(strict_types=1);
 
 namespace Tests\Feature;
 
-use App\Models\Caramelo;
+use App\Models\PlayerInventory;
 use App\Models\Pokemon;
 use App\Models\Reclutable;
 use App\Models\Reclutado;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
 class ReclutamientoControllerTest extends TestCase
 {
     use RefreshDatabase;
+
+    private User $usuario;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        $this->usuario = User::factory()->create();
+        $this->actingAs($this->usuario);
+    }
 
     private function crearPokemon(
         int $id = 1,
@@ -33,10 +44,19 @@ class ReclutamientoControllerTest extends TestCase
         ]);
     }
 
+    private function crearReclutable(int $pokemonId, int $cantidad): Reclutable
+    {
+        return Reclutable::create([
+            'user_id' => $this->usuario->id,
+            'pokemon_id' => $pokemonId,
+            'cantidad' => $cantidad,
+        ]);
+    }
+
     public function test_reclutamiento_page_lists_reclutables(): void
     {
         $pokemon = $this->crearPokemon();
-        Reclutable::create(['pokemon_id' => $pokemon->id, 'cantidad' => 5]);
+        $this->crearReclutable($pokemon->id, 5);
 
         $response = $this->get('/reclutamiento');
 
@@ -52,6 +72,7 @@ class ReclutamientoControllerTest extends TestCase
     {
         $pokemon = $this->crearPokemon();
         Reclutado::create([
+            'user_id' => $this->usuario->id,
             'nombre' => 'Bulbi',
             'pokemon_id' => $pokemon->id,
             'exp' => ['exp' => 100],
@@ -68,7 +89,7 @@ class ReclutamientoControllerTest extends TestCase
     public function test_recruit_creates_reclutado_and_decrements_cantidad(): void
     {
         $pokemon = $this->crearPokemon();
-        $reclutable = Reclutable::create(['pokemon_id' => $pokemon->id, 'cantidad' => 5]);
+        $reclutable = $this->crearReclutable($pokemon->id, 5);
 
         $response = $this->postJson('/reclutamiento/recruit', [
             'reclutable_id' => $reclutable->id,
@@ -77,6 +98,7 @@ class ReclutamientoControllerTest extends TestCase
         $response->assertOk()->assertJson(['success' => true]);
         $this->assertDatabaseHas('reclutables', ['id' => $reclutable->id, 'cantidad' => 4]);
         $this->assertDatabaseHas('reclutados', [
+            'user_id' => $this->usuario->id,
             'pokemon_id' => $pokemon->id,
             'nombre' => null,
             'es_shiny' => false,
@@ -87,7 +109,7 @@ class ReclutamientoControllerTest extends TestCase
     public function test_recruit_with_cantidad_one_creates_reclutado_and_deletes(): void
     {
         $pokemon = $this->crearPokemon();
-        $reclutable = Reclutable::create(['pokemon_id' => $pokemon->id, 'cantidad' => 1]);
+        $reclutable = $this->crearReclutable($pokemon->id, 1);
 
         $response = $this->postJson('/reclutamiento/recruit', [
             'reclutable_id' => $reclutable->id,
@@ -96,6 +118,7 @@ class ReclutamientoControllerTest extends TestCase
         $response->assertOk()->assertJson(['success' => true]);
         $this->assertDatabaseMissing('reclutables', ['id' => $reclutable->id]);
         $this->assertDatabaseHas('reclutados', [
+            'user_id' => $this->usuario->id,
             'pokemon_id' => $pokemon->id,
             'nombre' => null,
             'es_shiny' => false,
@@ -113,7 +136,7 @@ class ReclutamientoControllerTest extends TestCase
     public function test_recruit_marks_pokedex_as_seen_and_captured(): void
     {
         $pokemon = $this->crearPokemon();
-        $reclutable = Reclutable::create(['pokemon_id' => $pokemon->id, 'cantidad' => 1]);
+        $reclutable = $this->crearReclutable($pokemon->id, 1);
 
         $response = $this->postJson('/reclutamiento/recruit', [
             'reclutable_id' => $reclutable->id,
@@ -121,6 +144,7 @@ class ReclutamientoControllerTest extends TestCase
 
         $response->assertOk()->assertJson(['success' => true]);
         $this->assertDatabaseHas('pokedex', [
+            'user_id' => $this->usuario->id,
             'pokemon_id' => $pokemon->id,
             'visto' => true,
             'atrapado' => true,
@@ -132,18 +156,19 @@ class ReclutamientoControllerTest extends TestCase
         $bulbasaur = $this->crearPokemon(1, 'bulbasaur', 1, 51);
         $this->crearPokemon(2, 'ivysaur', 2, 51);
         $this->crearPokemon(3, 'venusaur', 3, 51);
-        $reclutable = Reclutable::create(['pokemon_id' => $bulbasaur->id, 'cantidad' => 5]);
+        $reclutable = $this->crearReclutable($bulbasaur->id, 5);
 
         $response = $this->postJson('/reclutamiento/discard', [
             'reclutable_id' => $reclutable->id,
             'cantidad' => 2,
         ]);
 
-        // fase 1 × 2 descartados = 2 caramelos
+        // fase 1 × 2 descartados = 2 caramelos al inventario del usuario
         $response->assertOk()->assertJson(['success' => true]);
         $this->assertDatabaseHas('reclutables', ['id' => $reclutable->id, 'cantidad' => 3]);
-        $this->assertDatabaseHas('caramelos', [
-            'evolution_chain_id' => 51,
+        $this->assertDatabaseHas('player_inventory', [
+            'user_id' => $this->usuario->id,
+            'item_key' => 'familia:51',
             'cantidad' => 2,
         ]);
     }
@@ -151,7 +176,7 @@ class ReclutamientoControllerTest extends TestCase
     public function test_discard_with_cantidad_above_available_clamps_to_available(): void
     {
         $bulbasaur = $this->crearPokemon(1, 'bulbasaur', 1, 51);
-        $reclutable = Reclutable::create(['pokemon_id' => $bulbasaur->id, 'cantidad' => 3]);
+        $reclutable = $this->crearReclutable($bulbasaur->id, 3);
 
         $response = $this->postJson('/reclutamiento/discard', [
             'reclutable_id' => $reclutable->id,
@@ -161,8 +186,9 @@ class ReclutamientoControllerTest extends TestCase
         // Clamp a 3 → igual a la cantidad disponible → registro eliminado, fase 1 × 3 caramelos
         $response->assertOk()->assertJson(['success' => true]);
         $this->assertDatabaseMissing('reclutables', ['id' => $reclutable->id]);
-        $this->assertDatabaseHas('caramelos', [
-            'evolution_chain_id' => 51,
+        $this->assertDatabaseHas('player_inventory', [
+            'user_id' => $this->usuario->id,
+            'item_key' => 'familia:51',
             'cantidad' => 3,
         ]);
     }
@@ -170,7 +196,7 @@ class ReclutamientoControllerTest extends TestCase
     public function test_discard_with_full_cantidad_deletes_record(): void
     {
         $bulbasaur = $this->crearPokemon(1, 'bulbasaur', 1, 51);
-        $reclutable = Reclutable::create(['pokemon_id' => $bulbasaur->id, 'cantidad' => 2]);
+        $reclutable = $this->crearReclutable($bulbasaur->id, 2);
 
         $response = $this->postJson('/reclutamiento/discard', [
             'reclutable_id' => $reclutable->id,
@@ -179,8 +205,9 @@ class ReclutamientoControllerTest extends TestCase
 
         $response->assertOk()->assertJson(['success' => true]);
         $this->assertDatabaseMissing('reclutables', ['id' => $reclutable->id]);
-        $this->assertDatabaseHas('caramelos', [
-            'evolution_chain_id' => 51,
+        $this->assertDatabaseHas('player_inventory', [
+            'user_id' => $this->usuario->id,
+            'item_key' => 'familia:51',
             'cantidad' => 2,
         ]);
     }
@@ -188,7 +215,7 @@ class ReclutamientoControllerTest extends TestCase
     public function test_discard_validates_cantidad(): void
     {
         $pokemon = $this->crearPokemon();
-        $reclutable = Reclutable::create(['pokemon_id' => $pokemon->id, 'cantidad' => 3]);
+        $reclutable = $this->crearReclutable($pokemon->id, 3);
 
         $response = $this->postJson('/reclutamiento/discard', [
             'reclutable_id' => $reclutable->id,
@@ -204,9 +231,9 @@ class ReclutamientoControllerTest extends TestCase
         $ivysaur = $this->crearPokemon(2, 'ivysaur', 2, 51);
         $venusaur = $this->crearPokemon(3, 'venusaur', 3, 51);
 
-        Reclutable::create(['pokemon_id' => $bulbasaur->id, 'cantidad' => 3]);
-        Reclutable::create(['pokemon_id' => $ivysaur->id, 'cantidad' => 2]);
-        Reclutable::create(['pokemon_id' => $venusaur->id, 'cantidad' => 1]);
+        $this->crearReclutable($bulbasaur->id, 3);
+        $this->crearReclutable($ivysaur->id, 2);
+        $this->crearReclutable($venusaur->id, 1);
 
         $response = $this->postJson('/reclutamiento/discard-all');
 
@@ -216,8 +243,9 @@ class ReclutamientoControllerTest extends TestCase
             'candies' => [51 => 10],
         ]);
         $this->assertDatabaseCount('reclutables', 0);
-        $this->assertDatabaseHas('caramelos', [
-            'evolution_chain_id' => 51,
+        $this->assertDatabaseHas('player_inventory', [
+            'user_id' => $this->usuario->id,
+            'item_key' => 'familia:51',
             'cantidad' => 10,
         ]);
     }
@@ -225,17 +253,22 @@ class ReclutamientoControllerTest extends TestCase
     public function test_discard_all_accumulates_into_existing_caramelo(): void
     {
         $bulbasaur = $this->crearPokemon(1, 'bulbasaur', 1, 51);
-        Caramelo::create(['evolution_chain_id' => 51, 'cantidad' => 5]);
-        Reclutable::create(['pokemon_id' => $bulbasaur->id, 'cantidad' => 2]);
+        PlayerInventory::create([
+            'user_id' => $this->usuario->id,
+            'item_key' => 'familia:51',
+            'cantidad' => 5,
+        ]);
+        $this->crearReclutable($bulbasaur->id, 2);
 
         $response = $this->postJson('/reclutamiento/discard-all');
 
         $response->assertOk();
-        $this->assertDatabaseHas('caramelos', [
-            'evolution_chain_id' => 51,
+        $this->assertDatabaseHas('player_inventory', [
+            'user_id' => $this->usuario->id,
+            'item_key' => 'familia:51',
             'cantidad' => 7, // 5 + 2 x fase 1
         ]);
-        $this->assertSame(1, Caramelo::count());
+        $this->assertSame(1, PlayerInventory::count());
     }
 
     public function test_discard_all_handles_multiple_chains_independently(): void
@@ -243,8 +276,8 @@ class ReclutamientoControllerTest extends TestCase
         $bulbasaur = $this->crearPokemon(1, 'bulbasaur', 1, 51);
         $charmander = $this->crearPokemon(2, 'charmander', 4, 52);
 
-        Reclutable::create(['pokemon_id' => $bulbasaur->id, 'cantidad' => 3]);
-        Reclutable::create(['pokemon_id' => $charmander->id, 'cantidad' => 1]);
+        $this->crearReclutable($bulbasaur->id, 3);
+        $this->crearReclutable($charmander->id, 1);
 
         $response = $this->postJson('/reclutamiento/discard-all');
 
@@ -252,8 +285,16 @@ class ReclutamientoControllerTest extends TestCase
             'success' => true,
             'candies' => [51 => 3, 52 => 1],
         ]);
-        $this->assertDatabaseHas('caramelos', ['evolution_chain_id' => 51, 'cantidad' => 3]);
-        $this->assertDatabaseHas('caramelos', ['evolution_chain_id' => 52, 'cantidad' => 1]);
+        $this->assertDatabaseHas('player_inventory', [
+            'user_id' => $this->usuario->id,
+            'item_key' => 'familia:51',
+            'cantidad' => 3,
+        ]);
+        $this->assertDatabaseHas('player_inventory', [
+            'user_id' => $this->usuario->id,
+            'item_key' => 'familia:52',
+            'cantidad' => 1,
+        ]);
         $this->assertDatabaseCount('reclutables', 0);
     }
 }

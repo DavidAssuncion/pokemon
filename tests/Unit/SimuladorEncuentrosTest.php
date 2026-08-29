@@ -135,7 +135,11 @@ class SimuladorEncuentrosTest extends TestCase
 
     public function test_timestamps_se_reparten_en_slots_de_cinco_minutos(): void
     {
-        $inicio = Carbon::parse('2026-08-28 10:00:00');
+        // Timezone explícito UTC: este test no arranca la app Laravel (extends
+        // PHPUnit TestCase) y el timezone por defecto del proceso depende del
+        // orden de ejecución (Laravel lo fija a Europe/Madrid tras el primer
+        // boot). Con UTC explícito el resultado es determinista en cualquier orden.
+        $inicio = Carbon::parse('2026-08-28 10:00:00', 'UTC');
         $fin = $inicio->copy()->addMinutes(25);
 
         // aleatorio fijo 0.5 → jitter de 150s dentro de cada slot de 300s

@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Tests\Feature;
 
-use App\Models\CarameloEv;
 use App\Models\ExploracionActiva;
 use App\Models\Habitat;
+use App\Models\PlayerInventory;
 use App\Models\Pokemon;
 use App\Models\PokemonStat;
 use App\Models\PokemonType;
@@ -78,14 +78,16 @@ class ExploracionesTest extends TestCase
 
         $user = User::factory()->create(['experiencia' => 1_250]); // nivel 5 (10 × 5³)
 
-        $team = Team::create(['name' => 'Equipo Test']);
+        $team = Team::create(['name' => 'Equipo Test', 'user_id' => $user->id]);
 
         $reclutado1 = Reclutado::create([
+            'user_id' => $user->id,
             'pokemon_id' => 1,
             'nombre' => 'Bulbi',
             'exp' => ['total' => 0],
         ]);
         $reclutado2 = Reclutado::create([
+            'user_id' => $user->id,
             'pokemon_id' => 2,
             'nombre' => 'Char',
             'exp' => ['total' => 0],
@@ -95,6 +97,7 @@ class ExploracionesTest extends TestCase
         TeamMember::create(['team_id' => $team->id, 'pokemon_id' => $reclutado2->id, 'slot' => 2, 'behavior' => 'COMBATIENTE']);
 
         $exploracion = ExploracionActiva::create([
+            'user_id' => $user->id,
             'equipo_id' => $team->id,
             'habitat_id' => $habitat->id,
             'nivel' => 1,
@@ -205,24 +208,30 @@ class ExploracionesTest extends TestCase
             $this->assertDatabaseHas('reclutables', ['pokemon_id' => $pokemonId, 'cantidad' => $cantidad]);
         }
 
-        // Caramelos de familia: phase × count (bulbasaur phase 1, charmander phase 2)
+        // Caramelos de familia: phase × count (bulbasaur phase 1, charmander phase 2),
+        // persistidos en el inventario del dueño de la exploración.
         $familiaEsperada = ($conteos[1] ?? 0) * 1 + ($conteos[2] ?? 0) * 2;
-        $this->assertDatabaseHas('caramelos', [
-            'evolution_chain_id' => $ctx['chainId'],
+        $this->assertDatabaseHas('player_inventory', [
+            'user_id' => $ctx['user']->id,
+            'item_key' => 'familia:'.$ctx['chainId'],
             'cantidad' => $familiaEsperada,
         ]);
 
-        // Caramelos EV: solo stats con effort > 0
+        // Caramelos EV: solo stats con effort > 0, con item_key 'ev:{stat}'
         $evEsperado = [
             1 => 2 * ($conteos[1] ?? 0),
             2 => 1 * ($conteos[2] ?? 0),
             3 => 1 * ($conteos[1] ?? 0),
         ];
-        $filasEv = CarameloEv::orderBy('stat')->get();
+        $filasEv = PlayerInventory::where('item_key', 'like', 'ev:%')->orderBy('item_key')->get();
         $this->assertCount(count(array_filter($evEsperado, fn (int $cantidad) => $cantidad > 0)), $filasEv);
         foreach ($evEsperado as $stat => $cantidad) {
             if ($cantidad > 0) {
-                $this->assertDatabaseHas('caramelos_ev', ['stat' => $stat, 'cantidad' => $cantidad]);
+                $this->assertDatabaseHas('player_inventory', [
+                    'user_id' => $ctx['user']->id,
+                    'item_key' => 'ev:'.$stat,
+                    'cantidad' => $cantidad,
+                ]);
             }
         }
 
@@ -230,8 +239,8 @@ class ExploracionesTest extends TestCase
         $expEsperado = ($conteos[1] ?? 0) * NivelHelper::expDerrota(64, 5)
             + ($conteos[2] ?? 0) * NivelHelper::expDerrota(62, 5);
         $this->assertSame(1_250 + $expEsperado, $ctx['user']->refresh()->experiencia);
-        $this->assertSame($expEsperado, $ctx['reclutado1']->refresh()->exp['total']);
-        $this->assertSame($expEsperado, $ctx['reclutado2']->refresh()->exp['total']);
+        $this->assertSame($expEsperado, $ctx['reclutado1']->refresh()->exp->total());
+        $this->assertSame($expEsperado, $ctx['reclutado2']->refresh()->exp->total());
     }
 
     public function test_indefinido_no_completa_hasta_recoger(): void
@@ -244,7 +253,9 @@ class ExploracionesTest extends TestCase
         $this->assertNull($ctx['exploracion']->regreso);
         $this->assertNotEmpty($ctx['exploracion']->eventos['bitacora']);
 
-        $this->post("/exploraciones/{$ctx['exploracion']->id}/recoger")->assertRedirect();
+        // El recoger es una ruta autenticada: se pide como el dueño de la exploración.
+        $this->actingAs($ctx['user'])->post("/exploraciones/{$ctx['exploracion']->id}/recoger")
+            ->assertRedirect();
 
         $ctx['exploracion']->refresh();
         $this->assertNotNull($ctx['exploracion']->regreso);
@@ -255,7 +266,7 @@ class ExploracionesTest extends TestCase
     {
         $ctx = $this->crearContexto(['indefinido' => true, 'inicio' => now()->subHours(3)]);
 
-        $this->postJson("/exploraciones/{$ctx['exploracion']->id}/recoger")
+        $this->actingAs($ctx['user'])->postJson("/exploraciones/{$ctx['exploracion']->id}/recoger")
             ->assertOk()
             ->assertJson(['ok' => true]);
 
@@ -284,8 +295,7 @@ class ExploracionesTest extends TestCase
 
         $ctx['exploracion']->refresh();
         $this->assertSame([], $ctx['exploracion']->eventos['bitacora']);
-        $this->assertDatabaseCount('caramelos', 0);
-        $this->assertDatabaseCount('caramelos_ev', 0);
+        $this->assertDatabaseCount('player_inventory', 0);
     }
 
     public function test_hora_limite_pasada_completa_en_siguiente_tick(): void
@@ -324,18 +334,39 @@ class ExploracionesTest extends TestCase
 
     public function test_sin_usuario_usa_nivel_uno_y_no_falla(): void
     {
-        $ctx = $this->crearContexto(['duracion_horas' => 1, 'inicio' => now()->subHours(2)]);
-        User::query()->delete();
+        // El dueño no se resuelve (relación user → null; con la FK cascade no puede
+        // faltar por la vía normal): nivel salvaje 1, exp a los miembros del equipo
+        // y SIN caramelos/capturas (no hay dueño que los reciba), sin lanzar.
+        $ctx = $this->crearExploracionParaFinalizar();
+        $exploracion = $this->mockExploracionSinUsuario($ctx['exploracion']);
 
-        $this->artisan('exploraciones:procesar')->assertSuccessful();
+        app(CommandBus::class)->dispatch(new FinalizarExploracionCommand($exploracion));
 
-        $ctx['exploracion']->refresh();
-        $this->assertNotNull($ctx['exploracion']->regreso);
+        $this->assertNotNull($ctx['exploracion']->refresh()->regreso);
 
-        $conteos = $this->conteoPorEspecie($ctx['exploracion']->eventos['bitacora']);
-        $expEsperado = ($conteos[1] ?? 0) * NivelHelper::expDerrota(64, 1)
-            + ($conteos[2] ?? 0) * NivelHelper::expDerrota(62, 1);
-        $this->assertSame($expEsperado, $ctx['reclutado1']->refresh()->exp['total']);
+        // Nivel salvaje 1: exp de derrota del bulbasaur (base_experience 64) con nivel 1
+        $expEsperado = NivelHelper::expDerrota(64, 1);
+        $this->assertSame($expEsperado, $ctx['reclutado1']->refresh()->exp->total());
+
+        // El usuario no recibe exp ni caramelos (no hay dueño resuelto).
+        $this->assertSame(1_250, $ctx['user']->refresh()->experiencia);
+        $this->assertDatabaseCount('player_inventory', 0);
+    }
+
+    /**
+     * Mock parcial que simula una exploración SIN dueño (relación user → null),
+     * caso artificialmente imposible por la FK cascade (solo alcanzable si el
+     * usuario desaparece a mitad de procesamiento).
+     */
+    private function mockExploracionSinUsuario(ExploracionActiva $real): ExploracionActiva
+    {
+        $mock = Mockery::mock(ExploracionActiva::class)->makePartial();
+        $mock->shouldReceive('getAttribute')->with('user')->andReturn(null);
+        $mock->shouldReceive('newQueryWithoutScopes')->andReturnUsing(fn (): mixed => $real->newQueryWithoutScopes());
+        $mock->setRawAttributes($real->getAttributes());
+        $mock->exists = true;
+
+        return $mock;
     }
 
     public function test_nivel_de_usuario_deriva_de_la_experiencia(): void
@@ -455,10 +486,20 @@ class ExploracionesTest extends TestCase
         $this->assertNotEmpty($derrotados);
         $this->assertSame(0, $conteos[1] ?? 0);
 
-        // 1 caramelo por cada tipo del pokemon derrotado, por derrota
-        $this->assertDatabaseHas('caramelos_tipo', ['tipo' => 'Eléctrico', 'cantidad' => $conteos[2]]);
-        $this->assertDatabaseHas('caramelos_tipo', ['tipo' => 'Fuego', 'cantidad' => $conteos[2]]);
-        $this->assertDatabaseCount('caramelos_tipo', 2);
+        // 1 caramelo por cada tipo del pokemon derrotado, por derrota, en el inventario del dueño
+        $this->assertDatabaseHas('player_inventory', [
+            'user_id' => $ctx['user']->id,
+            'item_key' => 'tipo:electrico',
+            'cantidad' => $conteos[2],
+        ]);
+        $this->assertDatabaseHas('player_inventory', [
+            'user_id' => $ctx['user']->id,
+            'item_key' => 'tipo:fuego',
+            'cantidad' => $conteos[2],
+        ]);
+        // Solo 2 filas de caramelos de TIPO (el inventario también tiene familia/EV
+        // de la misma exploración: se filtra por item_key).
+        $this->assertSame(2, PlayerInventory::where('item_key', 'like', 'tipo:%')->count());
 
         // Resumen en eventos: ksort por tipo (PHP 8.4: 'Eléctrico' < 'Fuego')
         $caramelosTipo = $ctx['exploracion']->eventos['resultado']['caramelos_tipo'];
@@ -534,9 +575,7 @@ class ExploracionesTest extends TestCase
 
         // Rollback total: nada de lo escrito antes del fallo queda persistido
         $this->assertDatabaseCount('reclutables', 0);
-        $this->assertDatabaseCount('caramelos', 0);
-        $this->assertDatabaseCount('caramelos_ev', 0);
-        $this->assertDatabaseCount('caramelos_tipo', 0);
+        $this->assertDatabaseCount('player_inventory', 0);
         $this->assertNull($ctx['exploracion']->fresh()->regreso);
         // Los jobs post-commit NO se ejecutaron (no hubo commit)
         $this->assertDatabaseCount('pokedex', 0);
@@ -561,12 +600,15 @@ class ExploracionesTest extends TestCase
         $exploracionFinal = $ctx['exploracion']->fresh();
         $this->assertNotNull($exploracionFinal->regreso);
 
-        // Caramelos de familia: fase 1 × 1 derrotado, UNA sola vez (no duplicado)
-        $this->assertDatabaseHas('caramelos', [
-            'evolution_chain_id' => $ctx['chainId'],
+        // Caramelos de familia: fase 1 × 1 derrotado, UNA sola vez (no duplicado),
+        // en el inventario del dueño de la exploración. El inventario puede tener
+        // además EV/capturas: se filtra por item_key para la cuenta.
+        $this->assertDatabaseHas('player_inventory', [
+            'user_id' => $ctx['user']->id,
+            'item_key' => 'familia:'.$ctx['chainId'],
             'cantidad' => 1,
         ]);
-        $this->assertDatabaseCount('caramelos', 1);
+        $this->assertSame(1, PlayerInventory::where('item_key', 'familia:'.$ctx['chainId'])->count());
 
         // capture_rate 0 → nunca captura → reclutables intactos
         $this->assertDatabaseCount('reclutables', 0);
@@ -601,9 +643,7 @@ class ExploracionesTest extends TestCase
         $this->assertSame([], $exploracionFinal->eventos['bitacora'] ?? []);
         $this->assertNull($exploracionFinal->regreso);
         $this->assertDatabaseCount('reclutables', 0);
-        $this->assertDatabaseCount('caramelos', 0);
-        $this->assertDatabaseCount('caramelos_ev', 0);
-        $this->assertDatabaseCount('caramelos_tipo', 0);
+        $this->assertDatabaseCount('player_inventory', 0);
         $this->assertDatabaseCount('pokedex', 0);
     }
 
@@ -619,7 +659,7 @@ class ExploracionesTest extends TestCase
 
         // No-op: no se duplican recompensas
         $this->assertDatabaseCount('reclutables', 0);
-        $this->assertDatabaseCount('caramelos', 0);
+        $this->assertDatabaseCount('player_inventory', 0);
         $this->assertDatabaseCount('pokedex', 0);
     }
 
@@ -660,8 +700,9 @@ class ExploracionesTest extends TestCase
         $this->assertNotNull($ctx['exploracion']->fresh()->regreso);
 
         // Caramelos de familia: fase 1 (bulbasaur, min species_id 1) × 2 derrotas = 2
-        $this->assertDatabaseHas('caramelos', [
-            'evolution_chain_id' => 51,
+        $this->assertDatabaseHas('player_inventory', [
+            'user_id' => $ctx['user']->id,
+            'item_key' => 'familia:51',
             'cantidad' => 2,
         ]);
 
@@ -703,11 +744,12 @@ class ExploracionesTest extends TestCase
         $this->assertNotNull($ctx['exploracion']->fresh()->regreso);
 
         // Caramelos de familia: UNA fila para la cadena 51 con 2 derrotas × fase 2 = 4
-        $this->assertDatabaseHas('caramelos', [
-            'evolution_chain_id' => 51,
+        $this->assertDatabaseHas('player_inventory', [
+            'user_id' => $ctx['user']->id,
+            'item_key' => 'familia:51',
             'cantidad' => 4,
         ]);
-        $this->assertDatabaseCount('caramelos', 1);
+        $this->assertSame(1, PlayerInventory::where('item_key', 'familia:51')->count());
 
         // Resultado: base = menor species_id de TODA la familia (bulbasaur, id 1)
         $resultado = $ctx['exploracion']->fresh()->eventos['resultado'];

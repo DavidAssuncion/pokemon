@@ -7,7 +7,6 @@ namespace Src\Exploraciones\App;
 use App\Jobs\ActualizarPokedexJob;
 use App\Models\ExploracionActiva;
 use App\Models\Pokemon;
-use App\Models\User;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Collection as BaseCollection;
 use LogicException;
@@ -59,7 +58,30 @@ final class FinalizarExploracionHandler implements CommandHandler
             $miembrosPorCadena,
         );
 
-        $usuario = User::first();
+        $this->repartirRecompensas($exploracion, $derrotados, $pokemons, $miembrosPorCadena, $idsDerrotados);
+
+        return null;
+    }
+
+    /**
+     * Calcula, persiste y registra todas las recompensas y marca el regreso.
+     * Multiplayer: el dueño de la exploración (relación belongsTo del trait
+     * BelongsToUser). Con FK cascade el dueño siempre existe; si no se resuelve
+     * (caso artificial), nivel salvaje 1 y sin recompensas al jugador.
+     *
+     * @param  BaseCollection<int, Pokemon>  $derrotados
+     * @param  Collection<int, Pokemon>  $pokemons
+     * @param  array<int, Collection<int, Pokemon>>  $miembrosPorCadena
+     * @param  list<int>  $idsDerrotados
+     */
+    private function repartirRecompensas(
+        ExploracionActiva $exploracion,
+        BaseCollection $derrotados,
+        Collection $pokemons,
+        array $miembrosPorCadena,
+        array $idsDerrotados,
+    ): void {
+        $usuario = $exploracion->user;
         $recompensas = $this->calculador->calcular(
             $derrotados,
             $this->rollAleatorio(),
@@ -67,11 +89,9 @@ final class FinalizarExploracionHandler implements CommandHandler
         );
 
         $this->persistir->persistir($recompensas, $exploracion->team, $usuario);
-        $this->despacharAvistados($pokemons->pluck('id'));
+        $this->despacharAvistados($pokemons->pluck('id'), $exploracion->user_id);
         $this->registrarResultado($exploracion, $recompensas, $pokemons, $miembrosPorCadena, $idsDerrotados);
         $exploracion->update(['regreso' => now(), 'eventos' => $exploracion->eventos]);
-
-        return null;
     }
 
     /**
@@ -158,15 +178,15 @@ final class FinalizarExploracionHandler implements CommandHandler
     /**
      * @param  BaseCollection<int, int>  $pokemonIds
      */
-    private function despacharAvistados(BaseCollection $pokemonIds): void
+    private function despacharAvistados(BaseCollection $pokemonIds, int $userId): void
     {
         if ($pokemonIds->isEmpty()) {
             return;
         }
 
-        $this->unitOfWork->afterCommit(function () use ($pokemonIds): void {
+        $this->unitOfWork->afterCommit(function () use ($pokemonIds, $userId): void {
             foreach ($pokemonIds->unique() as $pokemonId) {
-                ActualizarPokedexJob::dispatch($pokemonId, 'AVISTADO');
+                ActualizarPokedexJob::dispatch($userId, $pokemonId, 'AVISTADO');
             }
         });
     }

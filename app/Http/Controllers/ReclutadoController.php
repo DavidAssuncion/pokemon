@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace App\Http\Controllers;
 
 use App\Jobs\ActualizarPokedexJob;
-use App\Models\CarameloTipo;
+use App\Models\PlayerInventory;
 use App\Models\Reclutado;
-use App\Models\ReclutadoExpTipo;
+use App\Support\ItemCatalogo;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -19,10 +19,10 @@ class ReclutadoController extends Controller
 {
     public function show(Reclutado $reclutado): View
     {
-        $reclutado->load('pokemon.types', 'expTipos');
+        $reclutado->load('pokemon.types');
 
         $siguiente = ServicioEvolucion::siguienteEvolucion($reclutado->pokemon);
-        $expTotal = (int) ($reclutado->exp['total'] ?? 0);
+        $expTotal = $reclutado->exp->total();
 
         return view('reclutado.show', [
             'reclutado' => [
@@ -41,8 +41,8 @@ class ReclutadoController extends Controller
                     'imagen' => "/images/iconos/{$siguiente->id}.png",
                 ]
                 : null,
-            'requisitos' => ServicioEvolucion::requisitos($reclutado),
-            'puedeEvolucionar' => ServicioEvolucion::puedeEvolucionar($reclutado),
+            'requisitos' => ServicioEvolucion::requisitos($reclutado, auth()->id()),
+            'puedeEvolucionar' => ServicioEvolucion::puedeEvolucionar($reclutado, auth()->id()),
         ]);
     }
 
@@ -60,32 +60,47 @@ class ReclutadoController extends Controller
             return response()->json(['error' => 'Ese tipo no es necesario para la evolución'], 422);
         }
 
-        $caramelo = CarameloTipo::where('tipo', $tipo)->first();
-        if ($caramelo === null || $caramelo->cantidad <= 0) {
+        $userId = auth()->id();
+
+        $caramelo = DB::transaction(function () use ($tipo, $userId): ?PlayerInventory {
+            // Lock de la fila del inventario del jugador: evita doble consumo
+            // concurrente (decrement atómico tras el chequeo de stock).
+            $caramelo = PlayerInventory::where('user_id', $userId)
+                ->where('item_key', ItemCatalogo::keyTipo($tipo))
+                ->lockForUpdate()
+                ->first();
+
+            if ($caramelo === null || $caramelo->cantidad <= 0) {
+                return null;
+            }
+
+            $caramelo->decrement('cantidad');
+
+            return $caramelo;
+        });
+
+        if ($caramelo === null) {
             return response()->json(['error' => "No hay caramelos de tipo {$tipo}"], 422);
         }
 
-        $caramelo->decrement('cantidad');
-
-        $expTipo = ReclutadoExpTipo::firstOrCreate(
-            ['reclutado_id' => $reclutado->id, 'tipo' => $tipo],
-            ['cantidad' => 0]
-        );
-        $expTipo->increment('cantidad', 100);
+        // Exp de tipo al JSON del reclutado (cast inmutable: se reasigna).
+        $reclutado->exp = $reclutado->exp->sumarExpTipo($tipo, 100);
+        $reclutado->save();
 
         return response()->json([
             'success' => true,
-            'actual' => $expTipo->cantidad,
+            'actual' => $reclutado->exp->expTipo($tipo),
             'caramelos_disponibles' => $caramelo->cantidad,
-            'puede_evolucionar' => ServicioEvolucion::puedeEvolucionar($reclutado->fresh()),
+            'puede_evolucionar' => ServicioEvolucion::puedeEvolucionar($reclutado, $userId),
         ]);
     }
 
     public function evolucionar(Reclutado $reclutado): JsonResponse
     {
+        $userId = auth()->id();
         $siguiente = ServicioEvolucion::siguienteEvolucion($reclutado->pokemon);
 
-        if ($siguiente === null || ! ServicioEvolucion::puedeEvolucionar($reclutado)) {
+        if ($siguiente === null || ! ServicioEvolucion::puedeEvolucionar($reclutado, $userId)) {
             return response()->json(['error' => 'No cumple los requisitos'], 422);
         }
 
@@ -97,7 +112,7 @@ class ReclutadoController extends Controller
             $reclutado->update(['pokemon_id' => $siguiente->id]);
         });
 
-        ActualizarPokedexJob::dispatch($siguiente->id, 'RECLUTADO');
+        ActualizarPokedexJob::dispatch($userId, $siguiente->id, 'RECLUTADO');
 
         return response()->json(['success' => true, 'pokemon_id' => $siguiente->id]);
     }

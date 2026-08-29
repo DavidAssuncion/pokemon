@@ -15,7 +15,7 @@ class ServicioCaptura
      *
      * @param int[] $pokemonDefeatedIds - IDs of defeated pokemon
      */
-    public function procesarCapturas(array $pokemonDefeatedIds): void
+    public function procesarCapturas(array $pokemonDefeatedIds, int $userId): void
     {
         foreach ($pokemonDefeatedIds as $pokemonId) {
             $pokemon = Pokemon::find($pokemonId);
@@ -24,11 +24,11 @@ class ServicioCaptura
             }
 
             // Mark as sighted in pokedex
-            ActualizarPokedexJob::dispatch($pokemonId, 'AVISTADO');
+            ActualizarPokedexJob::dispatch($userId, $pokemonId, 'AVISTADO');
 
             // Attempt capture based on capture_rate
             $captureChance = ($pokemon->capture_rate ?? 45) / 255;
-            CapturarPokemonJob::dispatch($pokemonId, $captureChance);
+            CapturarPokemonJob::dispatch($userId, $pokemonId, $captureChance);
         }
     }
 }
