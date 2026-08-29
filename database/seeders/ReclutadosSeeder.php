@@ -16,6 +16,10 @@ class ReclutadosSeeder extends Seeder
      */
     public function run(): void
     {
+        if (DB::table('teams')->exists()) {
+            return;
+        }
+
         // Starter pokemon names (try common variants)
         $starterNames = [
             'Marill',

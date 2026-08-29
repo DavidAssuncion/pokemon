@@ -19,9 +19,7 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         $this->call([
-            ProvinceSeeder::class,
-            HabitatSeeder::class,
-            PokemonSeeder::class,
+            CatalogoSeeder::class,
             \Database\Seeders\ReclutadosSeeder::class,
         ]);
 

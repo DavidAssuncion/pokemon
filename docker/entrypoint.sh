@@ -53,16 +53,18 @@ if [[ "$ROLE" == "app" && "${RUN_MIGRATIONS:-false}" == "true" ]]; then
     php artisan migrate --force --no-interaction
 
     if [[ "${RUN_SEEDERS:-false}" == "true" ]]; then
+        echo "[entrypoint] Actualizando datos de catálogo (idempotente)..."
+        php artisan db:seed --class=CatalogoSeeder --force --no-interaction
+
         if php -r "
             \$pdo = new PDO('pgsql:host=${DB_HOST:-db};port=${DB_PORT:-5432};dbname=${DB_DATABASE:-pokemon}', '${DB_USERNAME:-pokemon}', '${DB_PASSWORD:-secret}');
-            \$count = \$pdo->query('SELECT to_regclass(\'public.users\') IS NOT NULL')->fetchColumn();
-            \$users = \$count ? (int) \$pdo->query('SELECT count(*) FROM users')->fetchColumn() : 0;
+            \$users = (int) \$pdo->query('SELECT count(*) FROM users')->fetchColumn();
             exit(\$users === 0 ? 0 : 1);
         " >/dev/null 2>&1; then
-            echo "[entrypoint] Base vacía, ejecutando seeders..."
-            php artisan db:seed --force --no-interaction
+            echo "[entrypoint] Instalación limpia, ejecutando datos de jugador..."
+            php artisan db:seed --class=ReclutadosSeeder --force --no-interaction
         else
-            echo "[entrypoint] Base con datos, seeders omitidos (idempotencia)."
+            echo "[entrypoint] Datos de jugador ya presentes (omitidos)."
         fi
     fi
 else
