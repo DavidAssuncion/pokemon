@@ -78,7 +78,11 @@ final class NormalizadorPokemonDerrotado
 
         $miembros = $miembrosPorCadena[$pokemon->evolution_chain_id] ?? null;
 
-        return $miembros?->where('species_id', '<=', $pokemon->species_id)->count() ?? 1;
+        if ($miembros === null) {
+            return 1;
+        }
+
+        return $miembros->where('species_id', '<=', $pokemon->species_id)->count();
     }
 
     /**
