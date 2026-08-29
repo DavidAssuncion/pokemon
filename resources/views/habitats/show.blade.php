@@ -45,7 +45,7 @@
                         <span class="w-8 shrink-0 flex justify-center">
                             <img src="/images/misc/farm.webp" loading="lazy" decoding="async" class="w-8 h-8 object-contain" alt="Granjas">
                         </span>
-                        <span class="flex-1 text-sm text-center font-medium text-gray-700 dark:text-gray-300">Granjas</span>
+                        <span class="flex-1 text-sm text-left font-medium text-gray-700 dark:text-gray-300">Granjas</span>
                     </button>
                     <button
                         @click="{{ $bloqueadoConstruccion ? '' : "alert('Función próximamente')" }}"
@@ -56,7 +56,7 @@
                         <span class="w-8 shrink-0 flex justify-center">
                             <img src="/images/misc/trainer.webp" loading="lazy" decoding="async" class="w-8 h-8 object-contain" alt="Entrenadores">
                         </span>
-                        <span class="flex-1 text-sm text-center font-medium text-gray-700 dark:text-gray-300">Entrenadores</span>
+                        <span class="flex-1 text-sm text-left font-medium text-gray-700 dark:text-gray-300">Entrenadores</span>
                     </button>
                     <button
                         @click="{{ $bloqueadoConstruccion ? '' : "alert('Función próximamente')" }}"
@@ -67,7 +67,7 @@
                         <span class="w-8 shrink-0 flex justify-center">
                             <img src="/images/misc/raid.webp" loading="lazy" decoding="async" class="w-8 h-8 object-contain" alt="Mazmorras">
                         </span>
-                        <span class="flex-1 text-sm text-center font-medium text-gray-700 dark:text-gray-300">Mazmorras</span>
+                        <span class="flex-1 text-sm text-left font-medium text-gray-700 dark:text-gray-300">Mazmorras</span>
                     </button>
                     <button
                         @click="openGestionModal()"
