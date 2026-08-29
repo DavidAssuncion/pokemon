@@ -138,6 +138,7 @@ class ExploracionesPageTest extends TestCase
         $this->assertSame('charmander', $bitacora[1]['nombre']);
         $this->assertSame(2, $bitacora[1]['cantidad']);
         $this->assertSame('Ataque', $bitacora[2]['stat_nombre']);
+        $this->assertSame('atk', $bitacora[2]['stat_slug']);
         $this->assertSame(1, $bitacora[2]['cantidad']);
         $this->assertSame('2026-08-27T12:37:12Z', $bitacora[0]['timestamp']);
     }
@@ -188,7 +189,7 @@ class ExploracionesPageTest extends TestCase
                         ['pokemon_id' => $pokemons['bulbasaur']->id, 'nombre' => 'bulbasaur', 'cantidad' => 2],
                     ],
                     'caramelos_familia' => [
-                        ['evolution_chain_id' => $pokemons['chain']->id, 'nombre' => 'bulbasaur', 'cantidad' => 3],
+                        ['evolution_chain_id' => $pokemons['chain']->id, 'nombre' => 'bulbasaur', 'pokemon_id' => $pokemons['bulbasaur']->id, 'cantidad' => 3],
                     ],
                     'caramelos_ev' => [
                         ['stat' => 2, 'cantidad' => 4],
@@ -215,11 +216,11 @@ class ExploracionesPageTest extends TestCase
             $resultado['capturados'],
         );
         $this->assertSame(
-            [['evolution_chain_id' => $pokemons['chain']->id, 'nombre' => 'bulbasaur', 'cantidad' => 3]],
+            [['evolution_chain_id' => $pokemons['chain']->id, 'nombre' => 'bulbasaur', 'pokemon_id' => $pokemons['bulbasaur']->id, 'cantidad' => 3]],
             $resultado['caramelos_familia'],
         );
         $this->assertSame(
-            [['stat' => 2, 'stat_nombre' => 'Ataque', 'cantidad' => 4]],
+            [['stat' => 2, 'stat_nombre' => 'Ataque', 'stat_slug' => 'atk', 'cantidad' => 4]],
             $resultado['caramelos_ev'],
         );
         $this->assertSame(250, $resultado['exp']);

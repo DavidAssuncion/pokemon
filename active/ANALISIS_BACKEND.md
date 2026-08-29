@@ -87,3 +87,78 @@ Status 201. Sin `habitat_id` ni `assigned_count` (se deriva: `1 + evolutions.len
 
 - SÍ ejecutar `vendor/bin/pint --dirty --format agent` y `php -l` de cada archivo tocado.
 - NO ejecutar `php artisan test`.
+---
+
+# Análisis Backend — El "primer integrante" de una familia es el de menor `species_id`
+
+## Fecha
+2026-08-29
+
+## Contexto verificado
+
+- Decisión de negocio confirmada: el primer integrante de una familia evolutiva es el de **menor
+  `species_id`** (NO el base evolutivo/bebé). Los assets `candy_pokemon/` se generaron así
+  (existe `113.webp` Chansey; NO existe `440.webp` Happiny ni `239.webp` Elekid).
+- Afecta a: (a) `caramelos_familia` de exploraciones (imagen `/images/candy_pokemon/{id}.webp`),
+  (b) Admin Gestión: `base` del DTO de familia + orden de las respuestas GET families /
+  unassigned-families por `species_id`.
+- Se MANTIENE: reparto de niveles por fase evolutiva (BFS: base evolutiva → stage 1→nivel 1,
+  etc.; ramificadas → mismo nivel). `levelForStage`/`totalStages`/BFS intactos.
+- Caso clave: Happiny(440)→Chansey(113)→Blissey(242). BFS: base evolutiva 440 (stage 1),
+  Chansey stage 2, Blissey stage 3. Con la regla nueva: base DTO = 113 (min species_id),
+  evolutions = [242, 440] (en ese orden). Los niveles siguen saliendo del BFS (440 nivel 1,
+  113 nivel 2, 242 nivel 3) aunque 440 vaya en `evolutions`.
+- Tests existentes revisados: bulbasaur=1/ivysaur=2/venusaur=3 (min species = base evolutiva),
+  rattata=19/raticate=20, mew=151, Eevee 133/134/135 → TODOS coinciden con la regla nueva
+  (el min species_id es también el base evolutivo). Ninguno asume base por stage con species_id
+  no correlacionado → NO requieren adaptación.
+- `ExploracionesTest::test_servicio_guarda_resumen_de_resultado_en_eventos` usa asserts parciales
+  de `caramelos_familia` (sin assert exacto de claves) → añadir `pokemon_id` no lo rompe.
+- `ExploracionesPageTest::test_terminadas_incluyen_resumen_de_resultado` usa `assertSame` exacto
+  → hay que añadir `pokemon_id` (fixture) y `stat_slug` (esperado). `test_activas_contiene_bitacora_transformada`
+  → assert aditivo de `stat_slug`.
+
+## Qué voy a tocar
+
+| Archivo | Acción | Propósito |
+|---|---|---|
+| `src/Habitats/Infra/HabitatRepository.php` | Modificar | `getFamilyMembersByChain`: select + `species_id` y sort por species_id asc/id; `splitFamilyMembers`: "primero vs resto"; `getUnassignedFamilies`/`getFamiliesByHabitat`: orden por species_id mínimo de la cadena (helper `sortChainIdsByMinSpeciesId`); PHPDoc shapes. |
+| `src/Exploraciones/Presentation/TransformadorResultadoExploracion.php` | Modificar | `nombreBaseDeCadena` → `pokemonBaseDeCadena(): ?Pokemon`; `caramelosFamilia` añade `pokemon_id`; docblocks de `desde()`/`caramelosFamilia()`. |
+| `app/Http/Controllers/ExploracionActivaController.php` | Modificar | Const `STAT_SLUGS`; `transformarEvento` rama `caramelo_ev` → `stat_slug`; `toTerminada` → `stat_slug` en caramelos_ev y passthrough `pokemon_id` en caramelos_familia. |
+| `tests/Feature/Habitats/FamiliesTest.php` | Modificar | 2 tests nuevos (bebé posterior + orden por species_id mínimo). |
+| `tests/Feature/ExploracionesTransformadorTest.php` | Crear | 2 tests del transformador (pokemon_id = 113; sin base → null). |
+| `tests/Feature/ExploracionesPageTest.php` | Modificar | Asserts de `stat_slug` y `pokemon_id` (fixtures ajustados). |
+| `tests/Feature/ExploracionesTest.php` | Modificar | Assert aditivo `pokemon_id` en `test_servicio_guarda_resumen_de_resultado_en_eventos`. |
+
+No toco: `levelForStage`/`totalStages`/BFS, DTOs (los shapes `base`/`evolutions` no cambian),
+interfaz, vistas/Blade.
+
+## Tests (TDD: rojo → verde)
+
+1. `test_familia_con_bebe_posterior_usa_menor_species_id_como_base` — cadena Happiny(440)/
+   Chansey(113)/Blissey(242) con `pokemon_evolution` 440→null, 113→440, 242→113 →
+   GET `/api/habitats/unassigned-families` → `base.id = 113` y `evolutions = [242, 440]` (orden).
+2. `test_familias_sin_asignar_ordenadas_por_species_id_minimo_de_cadena` — 2 cadenas nuevas con
+   species_id 10 y 1 → la de species_id 1 aparece antes en la respuesta.
+3. `test_caramelos_familia_usa_el_miembro_de_menor_species_id_como_pokemon_id` (transformador):
+   `pokemon_id = 113` (no 440) con `nombre = 'chansey'`.
+4. `test_caramelos_familia_sin_pokemon_de_la_cadena_devuelve_pokemon_id_null` (transformador).
+5. ExploracionesPageTest: `stat_slug = 'atk'` (stat 2) en bitácora; `pokemon_id` + `stat_slug` en
+   terminada.
+6. ExploracionesTest: `pokemon_id = 1` (bulbasaur, min species) en el resumen real del pipeline.
+
+## Riesgos
+
+- Orden de respuesta nuevo en unassigned-families: los tests existentes no dependen del orden de
+  familias (solo `firstWhere` / foreach / assertCount) → sin impacto. La cadena nueva del test 1
+  se crea DENTRO del test (no en setUp) para no romper `assertCount(3)`.
+- PHPStan: tipar `$minByChain` con docblock `@var array<int, int>`; cast (int) de min.
+- phpunit assertSame: el orden de claves del array no importa en la comparación; añadir claves es
+  aditivo.
+- BD local: NO ejecutar `php artisan test` (sin BD desde host); tests listos para CI
+  (RefreshDatabase sqlite :memory:).
+
+## Entorno
+
+- SÍ ejecutar `vendor/bin/pint --dirty --format agent` y `php -l` de cada archivo tocado.
+- NO ejecutar `php artisan test`.

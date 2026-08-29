@@ -135,15 +135,17 @@ class HabitatRepository implements HabitatRepositoryInterface
             ->values()
             ->toArray();
 
+        $chainIds = $this->sortChainIdsByMinSpeciesId($chainIds);
+
         $result = new DTOFamiliasDisponibles();
 
         foreach ($chainIds as $chainId) {
-            $members = $this->getFamilyMembersByChain((int) $chainId);
+            $members = $this->getFamilyMembersByChain($chainId);
             if ($members === []) {
                 continue;
             }
 
-            $family = $this->buildAvailableFamilyFromChain((int) $chainId, $members);
+            $family = $this->buildAvailableFamilyFromChain($chainId, $members);
             if ($family !== null) {
                 $result->add($family);
             }
@@ -169,15 +171,17 @@ class HabitatRepository implements HabitatRepositoryInterface
             ->values()
             ->toArray();
 
+        $unassignedChains = $this->sortChainIdsByMinSpeciesId($unassignedChains);
+
         $result = new DTOFamiliasSinHabitat();
 
         foreach ($unassignedChains as $chainId) {
-            $members = $this->getFamilyMembersByChain((int) $chainId);
+            $members = $this->getFamilyMembersByChain($chainId);
             if ($members === []) {
                 continue;
             }
 
-            $family = $this->buildUnassignedFamilyFromChain((int) $chainId, $members);
+            $family = $this->buildUnassignedFamilyFromChain($chainId, $members);
             if ($family !== null) {
                 $result->add($family);
             }
@@ -275,13 +279,20 @@ class HabitatRepository implements HabitatRepositoryInterface
     /**
      * Resuelve todos los miembros de la cadena con su etapa evolutiva,
      * empezando por la base (evolves_from_species_id null) y haciendo BFS.
+     * Los miembros se ordenan por species_id asc (el "primer integrante" de la
+     * familia, criterio de negocio) con desempate por id.
      *
-     * @return array<int, array{id: int, name: string, icon: string, stage: int}>
+     * @return array<int, array{id: int, name: string, icon: string, stage: int, species_id: int}>
      */
     private function getFamilyMembersByChain(int $chainId): array
     {
-        // Miembros de la familia (por pokemon.evolution_chain_id)
-        $pokemon = Pokemon::where('evolution_chain_id', $chainId)->get(['id', 'name']);
+        // Miembros de la familia (por pokemon.evolution_chain_id), ordenados por species_id
+        $pokemon = Pokemon::where('evolution_chain_id', $chainId)
+            ->get(['id', 'name', 'species_id'])
+            ->sortBy([
+                ['species_id', 'asc'],
+                ['id', 'asc'],
+            ]);
 
         if ($pokemon->isEmpty()) {
             return [];
@@ -336,11 +347,37 @@ class HabitatRepository implements HabitatRepositoryInterface
             'name' => $p['name'],
             'icon' => $this->iconPath((int) $p['id']),
             'stage' => $stages[(int) $p['id']] ?? 3,
+            'species_id' => (int) $p['species_id'],
         ])->values()->toArray();
     }
 
     /**
-     * @param  array<int, array{id: int, name: string, icon: string, stage: int}>  $members
+     * Ordena los ids de cadena evolutiva por el species_id mínimo de sus miembros
+     * (el "primer integrante" de cada familia, criterio de negocio).
+     *
+     * @param  list<int>  $chainIds
+     * @return list<int>
+     */
+    private function sortChainIdsByMinSpeciesId(array $chainIds): array
+    {
+        if ($chainIds === []) {
+            return [];
+        }
+
+        /** @var array<int, int> $minSpeciesByChain */
+        $minSpeciesByChain = Pokemon::whereIn('evolution_chain_id', $chainIds)
+            ->get(['evolution_chain_id', 'species_id'])
+            ->groupBy('evolution_chain_id')
+            ->map(fn ($members): int => (int) $members->min('species_id'))
+            ->all();
+
+        usort($chainIds, fn (int $a, int $b): int => ($minSpeciesByChain[$a] ?? PHP_INT_MAX) <=> ($minSpeciesByChain[$b] ?? PHP_INT_MAX));
+
+        return $chainIds;
+    }
+
+    /**
+     * @param  array<int, array{id: int, name: string, icon: string, stage: int, species_id: int}>  $members
      */
     private function buildAvailableFamilyFromChain(int $chainId, array $members): ?DTOFamiliaDisponible
     {
@@ -366,7 +403,7 @@ class HabitatRepository implements HabitatRepositoryInterface
     }
 
     /**
-     * @param  array<int, array{id: int, name: string, icon: string, stage: int}>  $members
+     * @param  array<int, array{id: int, name: string, icon: string, stage: int, species_id: int}>  $members
      */
     private function buildUnassignedFamilyFromChain(int $chainId, array $members): ?DTOFamiliaSinHabitat
     {
@@ -389,35 +426,30 @@ class HabitatRepository implements HabitatRepositoryInterface
     }
 
     /**
-     * Divide los miembros de una familia entre base (stage 1) y evoluciones,
-     * construyendo la entrada de cada uno con el builder recibido.
+     * Divide los miembros de una familia entre el "primer integrante" (menor
+     * species_id, ya ordenado por getFamilyMembersByChain) y el resto de
+     * evoluciones, construyendo la entrada de cada uno con el builder recibido.
      *
      * @template TEntry of array
      *
-     * @param  array<int, array{id: int, name: string, icon: string, stage: int}>  $members
-     * @param  callable(array{id: int, name: string, icon: string, stage: int}): TEntry  $entryBuilder
+     * @param  array<int, array{id: int, name: string, icon: string, stage: int, species_id: int}>  $members
+     * @param  callable(array{id: int, name: string, icon: string, stage: int, species_id: int}): TEntry  $entryBuilder
      * @return array{0: ?TEntry, 1: array<int, TEntry>}
      */
     private function splitFamilyMembers(array $members, callable $entryBuilder): array
     {
-        $base = null;
-        $evolutions = [];
-
-        foreach ($members as $member) {
-            $entry = $entryBuilder($member);
-
-            if ($member['stage'] === 1) {
-                $base = $entry;
-            } else {
-                $evolutions[] = $entry;
-            }
+        if ($members === []) {
+            return [null, []];
         }
+
+        $base = $entryBuilder($members[0]);
+        $evolutions = array_map($entryBuilder, array_slice($members, 1));
 
         return [$base, $evolutions];
     }
 
     /**
-     * @param  array<int, array{id: int, name: string, icon: string, stage: int}>  $members
+     * @param  array<int, array{id: int, name: string, icon: string, stage: int, species_id: int}>  $members
      * @return array<int, array{id: int, name: string}>
      */
     private function getChainTypes(array $members): array
@@ -437,7 +469,7 @@ class HabitatRepository implements HabitatRepositoryInterface
     }
 
     /**
-     * @param  array<int, array{id: int, name: string, icon: string, stage: int}>  $members
+     * @param  array<int, array{id: int, name: string, icon: string, stage: int, species_id: int}>  $members
      */
     private function totalStages(array $members): int
     {
@@ -461,7 +493,7 @@ class HabitatRepository implements HabitatRepositoryInterface
     }
 
     /**
-     * @param  array<int, array{id: int, name: string, icon: string, stage: int}>  $members
+     * @param  array<int, array{id: int, name: string, icon: string, stage: int, species_id: int}>  $members
      */
     private function assertFamilyMembersExist(int $evolutionChainId, array $members): void
     {

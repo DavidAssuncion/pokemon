@@ -32,6 +32,19 @@ class ExploracionActivaController extends Controller
         6 => 'Velocidad',
     ];
 
+    /**
+     * Slugs de stat (índice = stat id), usados por el frontend para los iconos
+     * de los caramelos EV.
+     */
+    private const STAT_SLUGS = [
+        1 => 'hp',
+        2 => 'atk',
+        3 => 'def',
+        4 => 'atksp',
+        5 => 'defsp',
+        6 => 'spd',
+    ];
+
     public function __construct(
         private readonly ValidadorExploracion $validadorExploracion,
         private readonly CommandBus $bus,
@@ -241,6 +254,7 @@ class ExploracionActivaController extends Controller
             $caramelosFamilia[] = [
                 'evolution_chain_id' => (int) ($caramelo['evolution_chain_id'] ?? 0),
                 'nombre' => $caramelo['nombre'] ?? null,
+                'pokemon_id' => $caramelo['pokemon_id'] ?? null,
                 'cantidad' => (int) ($caramelo['cantidad'] ?? 0),
             ];
         }
@@ -251,6 +265,7 @@ class ExploracionActivaController extends Controller
             $caramelosEv[] = [
                 'stat' => $stat,
                 'stat_nombre' => self::STAT_NOMBRES[$stat] ?? null,
+                'stat_slug' => self::STAT_SLUGS[$stat] ?? null,
                 'cantidad' => (int) ($caramelo['cantidad'] ?? 0),
             ];
         }
@@ -294,6 +309,7 @@ class ExploracionActivaController extends Controller
 
         if ($tipo === 'caramelo_ev') {
             $evento['stat_nombre'] = self::STAT_NOMBRES[(int) ($evento['stat'] ?? 0)] ?? null;
+            $evento['stat_slug'] = self::STAT_SLUGS[(int) ($evento['stat'] ?? 0)] ?? null;
         } elseif (isset($evento['pokemon_id'])) {
             $evento['nombre'] = $nombres[(int) $evento['pokemon_id']] ?? null;
         }

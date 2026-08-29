@@ -24,7 +24,7 @@ final class TransformadorResultadoExploracion
      * @return array{
      *     avistados: list<array{pokemon_id: int, nombre: string}>,
      *     capturados: list<array{pokemon_id: int, nombre: string, cantidad: int}>,
-     *     caramelos_familia: list<array{evolution_chain_id: int, nombre: string|null, cantidad: int}>,
+     *     caramelos_familia: list<array{evolution_chain_id: int, nombre: string|null, pokemon_id: int|null, cantidad: int}>,
      *     caramelos_ev: list<array{stat: int, cantidad: int}>,
      *     caramelos_tipo: list<array{tipo: string, slug: string, cantidad: int}>,
      *     exp: int,
@@ -83,16 +83,19 @@ final class TransformadorResultadoExploracion
     /**
      * @param  BaseCollection<int, RecompensaFamilia>  $caramelos
      * @param  Collection<int, Pokemon>  $pokemons
-     * @return list<array{evolution_chain_id: int, nombre: string|null, cantidad: int}>
+     * @return list<array{evolution_chain_id: int, nombre: string|null, pokemon_id: int|null, cantidad: int}>
      */
     private function caramelosFamilia(BaseCollection $caramelos, Collection $pokemons): array
     {
         return $caramelos
             ->sortBy('evolutionChainId')
             ->map(function (RecompensaFamilia $caramelo) use ($pokemons): array {
+                $base = $this->pokemonBaseDeCadena($caramelo->evolutionChainId, $pokemons);
+
                 return [
                     'evolution_chain_id' => $caramelo->evolutionChainId,
-                    'nombre' => $this->nombreBaseDeCadena($caramelo->evolutionChainId, $pokemons),
+                    'nombre' => $base?->name,
+                    'pokemon_id' => $base?->id,
                     'cantidad' => $caramelo->cantidad,
                 ];
             })
@@ -101,11 +104,12 @@ final class TransformadorResultadoExploracion
     }
 
     /**
-     * Nombre del pokémon base de la cadena (menor species_id) entre los derrotados.
+     * Miembro base de la cadena (menor species_id) entre los derrotados cargados;
+     * es el pokémon que identifica a la familia (imagen candy_pokemon/{id}.webp).
      *
      * @param  Collection<int, Pokemon>  $pokemons
      */
-    private function nombreBaseDeCadena(int $evolutionChainId, Collection $pokemons): ?string
+    private function pokemonBaseDeCadena(int $evolutionChainId, Collection $pokemons): ?Pokemon
     {
         $deLaCadena = $pokemons->first(
             fn (Pokemon $pokemon): bool => (int) $pokemon->evolution_chain_id === $evolutionChainId
@@ -113,8 +117,7 @@ final class TransformadorResultadoExploracion
 
         return $deLaCadena?->evolutionChain?->pokemon
             ->sortBy('species_id')
-            ->first()
-            ?->name;
+            ->first();
     }
 
     /**

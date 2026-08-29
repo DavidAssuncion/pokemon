@@ -397,11 +397,13 @@ class ExploracionesTest extends TestCase
             $this->assertSame($conteos[$capturado['pokemon_id']], $capturado['cantidad']);
         }
 
-        // Caramelos de familia: una sola cadena, nombre base = bulbasaur, fase × conteo
+        // Caramelos de familia: una sola cadena, nombre base = bulbasaur, fase × conteo.
+        // El pokemon_id del caramelo es el miembro de menor species_id (bulbasaur, species 1 < 4).
         $this->assertCount(1, $resultado['caramelos_familia']);
         $familia = $resultado['caramelos_familia'][0];
         $this->assertSame($ctx['chain']->id, $familia['evolution_chain_id']);
         $this->assertSame('bulbasaur', $familia['nombre']);
+        $this->assertSame(1, $familia['pokemon_id']);
         $this->assertSame(
             ($conteos[1] ?? 0) * 1 + ($conteos[2] ?? 0) * 2,
             $familia['cantidad'],

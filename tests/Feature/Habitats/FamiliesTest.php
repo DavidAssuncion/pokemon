@@ -668,4 +668,123 @@ class FamiliesTest extends TestCase
             'habitat_id' => $this->habitatId,
         ]);
     }
+
+    // ==========================================
+    // Primer integrante de la familia = menor species_id
+    // ==========================================
+
+    public function test_familia_con_bebe_posterior_usa_el_menor_species_id_como_base(): void
+    {
+        // Cadena Happiny(440) -> Chansey(113) -> Blissey(242): el bebé (440) es la base
+        // evolutiva, pero el menor species_id es Chansey (113) → el DTO debe usar 113 como base.
+        // La cadena se crea dentro del test para no alterar test_obtener_familias_sin_habitat_solo_cadenas_vacias.
+        $chain = EvolutionChain::create(['data' => '{"stages": 3}']);
+
+        Pokemon::create([
+            'id' => 440,
+            'name' => 'happiny',
+            'species_id' => 440,
+            'base_experience' => 110,
+            'capture_rate' => 130,
+            'height' => 6,
+            'weight' => 244,
+            'evolution_chain_id' => $chain->id,
+        ]);
+        Pokemon::create([
+            'id' => 113,
+            'name' => 'chansey',
+            'species_id' => 113,
+            'base_experience' => 395,
+            'capture_rate' => 30,
+            'height' => 11,
+            'weight' => 346,
+            'evolution_chain_id' => $chain->id,
+        ]);
+        Pokemon::create([
+            'id' => 242,
+            'name' => 'blissey',
+            'species_id' => 242,
+            'base_experience' => 608,
+            'capture_rate' => 30,
+            'height' => 15,
+            'weight' => 468,
+            'evolution_chain_id' => $chain->id,
+        ]);
+
+        PokemonEvolution::create([
+            'evolved_species_id' => 440,
+            'evolves_from_species_id' => null,
+            'minimum_level' => 1,
+        ]);
+        PokemonEvolution::create([
+            'evolved_species_id' => 113,
+            'evolves_from_species_id' => 440,
+            'minimum_level' => 1,
+        ]);
+        PokemonEvolution::create([
+            'evolved_species_id' => 242,
+            'evolves_from_species_id' => 113,
+            'minimum_level' => 1,
+        ]);
+
+        $data = $this->getJson('/api/habitats/unassigned-families')->json();
+        $family = collect($data)->firstWhere('evolution_chain_id', $chain->id);
+
+        $this->assertNotNull($family, 'La familia con bebé posterior debería aparecer como no asignada');
+        // El "primer integrante" es el de menor species_id: Chansey (113), no Happiny (440).
+        $this->assertSame(113, $family['base']['id']);
+        $this->assertSame('chansey', $family['base']['name']);
+        // Evoluciones en el orden del array ordenado por species_id: Blissey (242) antes que Happiny (440).
+        $this->assertSame([242, 440], array_column($family['evolutions'], 'id'));
+    }
+
+    public function test_familias_sin_asignar_se_ordenan_por_species_id_minimo_de_la_cadena(): void
+    {
+        // Dos familias nuevas sin asignar: una con base species_id 10 y otra con species_id 1.
+        // La de menor species_id (1) debe aparecer ANTES que la de 10 en la respuesta.
+        $chainSpecies10 = EvolutionChain::create(['data' => '{"stages": 1}']);
+        Pokemon::create([
+            'id' => 10,
+            'name' => 'paras',
+            'species_id' => 10,
+            'base_experience' => 57,
+            'capture_rate' => 190,
+            'height' => 3,
+            'weight' => 54,
+            'evolution_chain_id' => $chainSpecies10->id,
+        ]);
+        PokemonEvolution::create([
+            'evolved_species_id' => 10,
+            'evolves_from_species_id' => null,
+            'minimum_level' => 1,
+        ]);
+
+        $chainSpecies1 = EvolutionChain::create(['data' => '{"stages": 1}']);
+        Pokemon::create([
+            'id' => 300,
+            'name' => 'alt-bulbasaur',
+            'species_id' => 1,
+            'base_experience' => 64,
+            'capture_rate' => 45,
+            'height' => 7,
+            'weight' => 69,
+            'evolution_chain_id' => $chainSpecies1->id,
+        ]);
+        PokemonEvolution::create([
+            'evolved_species_id' => 300,
+            'evolves_from_species_id' => null,
+            'minimum_level' => 1,
+        ]);
+
+        $data = $this->getJson('/api/habitats/unassigned-families')->json();
+        $familias = collect($data);
+
+        $indiceSpecies1 = $familias->search(fn (array $familia): bool => $familia['base']['id'] === 300);
+        $indiceSpecies10 = $familias->search(fn (array $familia): bool => $familia['base']['id'] === 10);
+
+        $this->assertNotFalse($indiceSpecies1, 'La familia con species_id 1 debería estar en la respuesta');
+        $this->assertNotFalse($indiceSpecies10, 'La familia con species_id 10 debería estar en la respuesta');
+        // La familia con menor species_id mínimo (1) aparece ANTES que la de species_id 10.
+        $this->assertLessThan($indiceSpecies10, $indiceSpecies1);
+    }
 }
