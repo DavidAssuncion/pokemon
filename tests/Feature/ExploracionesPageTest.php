@@ -255,6 +255,45 @@ class ExploracionesPageTest extends TestCase
         $this->assertCount(1, $response->viewData('terminadas'));
     }
 
+    public function test_store_con_return_time_guarda_hora_limite_12_50_en_europe_madrid(): void
+    {
+        // Regresión bug de zona horaria: el return_time '12:50' del usuario se interpretaba
+        // como hora UTC (2h tarde). Con la zona de la app en Europe/Madrid la hora_limite
+        // debe representar HOY 12:50 en Madrid (UTC+2 en verano → 10:50Z).
+        $province = Province::create(['name' => 'Kanto']);
+        $habitat = Habitat::create(['name' => 'Bosque', 'province_id' => $province->id]);
+        $team = Team::create(['name' => 'Equipo Test']);
+
+        $this->post('/exploraciones', [
+            'team_id' => $team->id,
+            'habitat_id' => $habitat->id,
+            'level' => 1,
+            'return_time' => '12:50',
+        ])->assertRedirect();
+
+        /** @var ExploracionActiva $exploracion */
+        $exploracion = ExploracionActiva::query()->first();
+        $this->assertNotNull($exploracion->hora_limite);
+
+        // hora_limite no tiene cast datetime: se lee como string de la columna time.
+        $horaLimite = Carbon::parse($exploracion->hora_limite);
+        $this->assertSame('Europe/Madrid', $horaLimite->timezoneName);
+        $this->assertSame('12:50', $horaLimite->format('H:i'));
+
+        // Equivalencia sin hardcodear el offset (DST-safe): el instante coincide con
+        // hoy 12:50 en Madrid expresado en UTC.
+        $esperado = Carbon::today('Europe/Madrid')->setTimeFromTimeString('12:50');
+        $this->assertSame(
+            $esperado->utc()->format('H:i'),
+            $horaLimite->utc()->format('H:i'),
+        );
+
+        // E2E: el fin emitido por toActiva() coincide con hoy 12:50 en Madrid.
+        /** @var list<array<string, mixed>> $activas */
+        $activas = $this->get('/exploraciones')->viewData('activas');
+        $this->assertTrue(Carbon::parse($activas[0]['fin'])->equalTo($esperado));
+    }
+
     public function test_cerrar_elimina_la_exploracion_completada(): void
     {
         $exploracion = $this->crearExploracion(['regreso' => now()->subMinutes(5)]);

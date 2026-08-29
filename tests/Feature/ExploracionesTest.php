@@ -290,6 +290,10 @@ class ExploracionesTest extends TestCase
 
     public function test_hora_limite_pasada_completa_en_siguiente_tick(): void
     {
+        // Hora fija para que now()->subHour() nunca cruce de día (ventana 00:00-01:00):
+        // la hora_limite es el H:i de hoy a las 09:00 → hoy 09:00 < ahora 10:00 → completa.
+        $this->travelTo(Carbon::parse('2026-08-28 10:00:00'));
+
         $ctx = $this->crearContexto([
             'hora_limite' => now()->subHour()->format('H:i'),
             'inicio' => now()->subHours(2),
@@ -298,6 +302,8 @@ class ExploracionesTest extends TestCase
         $this->artisan('exploraciones:procesar')->assertSuccessful();
 
         $this->assertNotNull($ctx['exploracion']->refresh()->regreso);
+
+        $this->travelBack();
     }
 
     public function test_hora_limite_futura_no_completa(): void

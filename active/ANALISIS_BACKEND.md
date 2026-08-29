@@ -348,3 +348,71 @@ que la relación `evolutionChain->pokemon` (misma columna, mismo conteo).
 
 - `vendor/bin/pint --dirty --format agent` + `php -l` en todo lo tocado.
 - NO ejecutar `php artisan test` (sin BD desde host); tests a CI.
+
+---
+
+# Fix zona horaria: `config/app.php` UTC → Europe/Madrid (bug "regresar antes de las 12:50" 2h tarde)
+
+## Fecha
+
+2026-08-29 — Agente BACKEND.
+
+## Diagnóstico (confirmado)
+
+- `config/app.php:70` → `'timezone' => 'UTC'`; el usuario está en Europe/Madrid (UTC+2 en verano).
+- `ExploracionActivaController::store()` (línea 87) interpreta el `return_time` "HH:MM" local
+  como hora UTC: `Carbon::today()->setTimeFromTimeString($data['return_time'])` → la
+  `hora_limite` se persiste 2h tarde → `toActiva()`/`finExploracion()` (línea 315-316) y
+  `ProcesarExploracionHandler::finExploracion()` (línea 98-99, `Carbon::today()->setTimeFromTimeString($exp->hora_limite)`)
+  calculan el fin 2h tarde → la exploración termina tarde y el frontend (`toLocaleTimeString('es-ES')`)
+  muestra +2h. Bug funcional, no solo visual.
+- Fix mínimo: cambiar la zona de la app en `config/app.php`. No hace falta tocar src/ ni el
+  controlador: TODAS las interpretaciones de `hora_limite` pasan por `Carbon::today()` (zona de la
+  app) → al cambiar la zona, el ciclo completo store → fin → tick queda coherente en Madrid.
+
+## Impacto en tests (auditoría completa)
+
+| Test | Dependencia de zona | Acción |
+|---|---|---|
+| `tests/Unit/SimuladorEncuentrosTest.php:150-152` (asserts `+00:00` en ISO) | NO bootea la app (`PHPUnit\Framework\TestCase`); parse y emisión usan la misma tz por defecto de PHP | NINGUNA (zona-agnóstico por construcción) |
+| `tests/Unit/Exploraciones/CalculadorTiemposTest.php` | Idem (unit puro, `format('Y-m-d H:i:s')` relativo) | NINGUNA |
+| `tests/Unit/Exploraciones/*`, `ExploracionActivaTest`, `TeamTest`, `ValidadorExploracionTest`, `HabitatsControllerTest`, `EquiposControllerTest` | Solo `now()` relativo | NINGUNA |
+| `tests/Feature/ExploracionesViewTest.php` (fixtures con `Z`) | Fixtures de vista passthrough, sin Carbon | NINGUNA (los `Z` son entradas, no salidas de la app) |
+| `tests/Feature/ExploracionesPageTest.php` (bitácora con `Z`) | `transformarEvento` hace passthrough del timestamp | NINGUNA; asserts de `inicio`/`fin` ya usan `equalTo` (instantes) |
+| `tests/Feature/ExploracionesTest.php:294` (`test_hora_limite_pasada_completa_en_siguiente_tick`) | `now()->subHour()->format('H:i')` coherente en la nueva zona, PERO flaky en la ventana 00:00–01:00 (subHour cruza de día → hora_limite futura) | AJUSTE: `travelTo` fijo (patrón del test hermano) para eliminar la ventana de medianoche |
+| `tests/Feature/ExploracionesTest.php:308` (`test_hora_limite_futura_no_completa`) | Ya tiene `travelTo('2026-08-28 10:00:00')` → determinista | NINGUNA |
+
+## Tests a escribir (TDD)
+
+1. NUEVO en `tests/Feature/ExploracionesPageTest.php`:
+   `test_store_con_return_time_guarda_hora_limite_12_50_en_europe_madrid`
+   - POST `/exploraciones` con `team_id`, `habitat_id`, `level`, `return_time='12:50'`.
+   - Asserts: `hora_limite` parseada → `timezoneName === 'Europe/Madrid'` y `format('H:i') === '12:50'`;
+     equivalencia UTC sin hardcodear offset (`Carbon::today('Europe/Madrid')->setTimeFromTimeString('12:50')->utc()->format('H:i')`);
+     E2E: `fin` emitido por `toActiva()` (GET /exploraciones) `equalTo` hoy 12:50 Madrid.
+   - Nota: `hora_limite` NO tiene cast datetime en `ExploracionActiva` → se lee como string
+     (columna `time`; el Carbon se persiste vía `prepareBindings` como 'Y-m-d H:i:s'); el assert
+     parsea con Carbon en la zona de la app (Europe/Madrid) → robusto a ambos formatos
+     ('2026-08-28 12:50:00' o '12:50:00').
+
+## Archivos a tocar
+
+| Archivo | Acción |
+|---|---|
+| `config/app.php` | `'timezone' => 'UTC'` → `'Europe/Madrid'` |
+| `tests/Feature/ExploracionesTest.php` | `test_hora_limite_pasada_completa_en_siguiente_tick`: añadir `travelTo` fijo + `travelBack` |
+| `tests/Feature/ExploracionesPageTest.php` | +1 test de regresión (POST store con return_time) |
+| `active/ANALISIS_BACKEND.md` | Análisis previo (este) |
+
+## Riesgos identificados
+
+1. No hay cobertura previa de `store()` (POST /exploraciones) → el test de regresión cubre el
+   hueco y fija la zona en el camino store → fin.
+2. `Carbon::parse($exploracion->hora_limite)` depende de la zona de la app (Europe/Madrid) — es
+   justo la regresión que se quiere fijar.
+3. El offset exacto depende del DST (verano +2, invierno +1): los asserts usan equivalencia
+   calculada en runtime (nunca hardcodear '10:50').
+4. Tests NO ejecutables en local (sin BD): van a CI (RefreshDatabase + SQLite :memory:);
+   validación local: pint + php -l + phpstan (phpstan no analiza tests/).
+5. No tocar vistas/Blade ni src/ (sin uso explícito de zona UTC en src/ — confirmado por grep:
+   `timezone|UTC` solo aparece en config/app.php).
