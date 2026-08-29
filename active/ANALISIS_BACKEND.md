@@ -268,3 +268,83 @@ que la relación `evolutionChain->pokemon` (misma columna, mismo conteo).
 - NO ejecutar `php artisan test` (sin BD desde host); tests a CI.
 - Grep final: `EvolutionChain` SOLO en docs/ y active/ (0 en src/, app/, tests/);
   `evolutionChain` en código → 0.
+
+---
+
+# Endurecimiento P1 (Hardener) — eliminación de `evolution_chains` (commits `daeadef198` + `c6877c5`)
+
+## Fecha
+2026-08-29
+
+## Contexto verificado
+
+- La tabla `evolution_chains` fue eliminada (`daeadef198`) y `fase()` quedó con guard clause
+  explícita (`c6877c5`). El mapa de miembros por cadena se construye en
+  `FinalizarExploracionHandler::cargarMiembrosDeCadenas` con
+  `whereIn('evolution_chain_id', $chainIds)->get(['id','name','species_id','evolution_chain_id'])`.
+- `TransformadorResultadoExploracion::pokemonBaseDeCadena` (líneas ~121-135): el fallback
+  `$pokemons->first(fn ...)` elige el PRIMER derrotado de la cadena SIN ordenar, mientras el
+  docblock dice "menor species_id" → indeterminista (depende del orden de la query).
+- `caramelos` conserva columna `evolution_chain_id` + `unique` (migración
+  `2026_08_29_000001_drop_foreign_evolution_chain_from_caramelos`); FK eliminada.
+- `CalculadorRecompensas::calcularCaramelosFamilia`: `groupBy('evolutionChainId')` →
+  `sum('fase')` → UNA `RecompensaFamilia` por cadena. `fase()` = nº de miembros del mapa con
+  `species_id <= actual` (sin cadena en mapa → 1).
+- Tests de regresión existentes: `test_finalizacion_con_chain_id_sin_tabla_evolution_chains_finaliza_ok`
+  (bitácora 2× bulbasaur, fase 1) y `test_caramelos_familia_sin_mapa_fallback_a_los_derrotados_de_la_cadena`
+  (orden SQLite rowid → no matan indeterminismo).
+
+## Mejoras a aplicar (3, aprobadas por el Hardener)
+
+### 1. Determinismo del fallback en `pokemonBaseDeCadena`
+- **Archivo**: `src/Exploraciones/Presentation/TransformadorResultadoExploracion.php`.
+- **Cambio**: `sortBy('species_id')` ANTES del `first(fn ...)` → el primer coincidente de la
+  colección ordenada es el de menor species_id (sortBy estable). Docblock actualizado.
+- **Tests**: NUEVO unit en `ExploracionesTransformadorTest` con colección construida a mano
+  (charmander sp4 primero, bulbasaur sp1 después) → RED con el código actual (devolvería
+  charmander), GREEN tras el fix.
+
+### 2. Test de flujo completo con fase > 1 determinista (mata M1/M2 del handler)
+- **Archivo**: `tests/Feature/ExploracionesTest.php`.
+- **Patrón**: clon de `test_finalizacion_con_chain_id_sin_tabla_evolution_chains_finaliza_ok`
+  (crearContexto indefinido + bitácora controlada + CommandBus).
+- **Bitácora**: 2 derrotas de charmander (id 2, species_id 4, fase 2 en cadena {bulbasaur sp1,
+  charmander sp4}).
+- **Asserts**: regreso OK; `caramelos` UNA fila `evolution_chain_id 51, cantidad 4`
+  (2 × fase 2); `eventos['resultado']['caramelos_familia']` = `[{51, 'bulbasaur', 1, 4}]`.
+- **Mata**: M1 `whereIn('evolution_chain_id',...)` → `whereIn('id',...)` (mapa vacío → fase 1 →
+  cantidad 2 ≠ 4) y M2 pérdida de `species_id` en el select del mapa (fase 1 → cantidad 2 ≠ 4).
+
+### 3. Test de 2 cadenas en la misma exploración (mata `sortBy('evolutionChainId')`)
+- **Archivo**: `tests/Feature/ExploracionesTransformadorTest.php` (unit del transformador, más
+  simple y directo que el flujo completo).
+- **Setup**: pokémon en 2 cadenas (51: bulbasaur sp1 + charmander sp4; 52: pikachu sp25 +
+  raichu sp26); `ResultadoRecompensas` con 2 `RecompensaFamilia` insertadas desordenadas
+  [52, 51]; mapa con ambas cadenas.
+- **Asserts**: salida EXACTA `[{51, 'bulbasaur', 1, 5}, {52, 'pikachu', 3, 3}]` → 2 entradas
+  independientes (base = min species_id de SU cadena, sin cruces) y ordenadas por
+  `evolution_chain_id` (inserción [52,51] ≠ esperado → mata la eliminación del sort).
+
+## Archivos a tocar
+
+| Archivo | Acción |
+|---|---|
+| `src/Exploraciones/Presentation/TransformadorResultadoExploracion.php` | Fix fallback + docblock |
+| `tests/Feature/ExploracionesTransformadorTest.php` | +2 tests (fallback determinista, 2 cadenas) |
+| `tests/Feature/ExploracionesTest.php` | +1 test (fase 2 determinista) |
+| `active/ANALISIS_BACKEND.md` | Análisis previo (este) |
+
+## Riesgos identificados
+
+1. El fallback con `sortBy('species_id')` cambia el orden de la colección keyBy id del handler:
+   `avistados`/`capturados` usan `sortBy('id')`/`get()` propios → sin impacto.
+2. Tests NO ejecutables en local (sin BD): van a CI (RefreshDatabase + SQLite :memory:); la
+   validación local se limita a pint + php -l + phpstan (sin BD).
+3. No tocar vistas/Blade ni tests existentes (solo añadir).
+4. `sortBy` es estable → empates de species_id conservan orden de inserción (determinista dado
+   el mismo query).
+
+## Validación
+
+- `vendor/bin/pint --dirty --format agent` + `php -l` en todo lo tocado.
+- NO ejecutar `php artisan test` (sin BD desde host); tests a CI.

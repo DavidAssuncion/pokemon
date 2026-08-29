@@ -112,7 +112,8 @@ final class TransformadorResultadoExploracion
 
     /**
      * Miembro base de la familia (menor species_id) de TODOS sus miembros; si no
-     * hay mapa (o la cadena no está), fallback a los derrotados de esa cadena.
+     * hay mapa (o la cadena no está), fallback a los derrotados de esa cadena
+     * ordenados por species_id (mismo criterio: menor species_id, determinista).
      * Es el pokémon que identifica a la familia (imagen candy_pokemon/{id}.webp).
      *
      * @param  Collection<int, Pokemon>  $pokemons
@@ -129,9 +130,11 @@ final class TransformadorResultadoExploracion
             return $miembros->sortBy('species_id')->first();
         }
 
-        return $pokemons->first(
-            fn (Pokemon $pokemon): bool => (int) $pokemon->evolution_chain_id === $evolutionChainId
-        );
+        return $pokemons
+            ->sortBy('species_id')
+            ->first(
+                fn (Pokemon $pokemon): bool => (int) $pokemon->evolution_chain_id === $evolutionChainId
+            );
     }
 
     /**

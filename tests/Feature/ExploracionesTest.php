@@ -670,4 +670,48 @@ class ExploracionesTest extends TestCase
             ],
         ], $resultado['caramelos_familia']);
     }
+
+    public function test_finalizacion_con_fase_dos_determinista_persiste_cantidad_por_fase(): void
+    {
+        // Bitácora controlada con 2 derrotas de charmander (id 2, species 4): en la cadena
+        // {bulbasaur sp1, charmander sp4} charmander tiene fase 2 → caramelos = 2 × fase 2 = 4.
+        // Si el mapa de miembros fallara (whereIn erróneo o select sin species_id) la fase
+        // caería a 1 → cantidad 2 ≠ 4 → el test falla.
+        $ctx = $this->crearContexto(['indefinido' => true]);
+        // bulbasaur (species 1) y charmander (species 4) en la cadena 51 (la fila de
+        // evolution_chains nunca existió).
+        Pokemon::whereIn('id', [1, 2])->update(['evolution_chain_id' => 51]);
+
+        $ctx['exploracion']->update([
+            'eventos' => [
+                'bitacora' => [
+                    ['tipo' => 'pokemon', 'pokemon_id' => 2],
+                    ['tipo' => 'pokemon', 'pokemon_id' => 2],
+                ],
+                'ultimo_procesado' => now()->toIso8601String(),
+            ],
+        ]);
+
+        app(CommandBus::class)->dispatch(new FinalizarExploracionCommand($ctx['exploracion']));
+
+        $this->assertNotNull($ctx['exploracion']->fresh()->regreso);
+
+        // Caramelos de familia: UNA fila para la cadena 51 con 2 derrotas × fase 2 = 4
+        $this->assertDatabaseHas('caramelos', [
+            'evolution_chain_id' => 51,
+            'cantidad' => 4,
+        ]);
+        $this->assertDatabaseCount('caramelos', 1);
+
+        // Resultado: base = menor species_id de TODA la familia (bulbasaur, id 1)
+        $resultado = $ctx['exploracion']->fresh()->eventos['resultado'];
+        $this->assertSame([
+            [
+                'evolution_chain_id' => 51,
+                'nombre' => 'bulbasaur',
+                'pokemon_id' => 1,
+                'cantidad' => 4,
+            ],
+        ], $resultado['caramelos_familia']);
+    }
 }

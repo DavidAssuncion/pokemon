@@ -16,7 +16,9 @@ El proyecto tiene funcionalidad base estable:
 - **Pokédex asíncrona** — pestañas server-side (Vistos/No vistos/Atrapados), filtros de tipo y esfuerzo (EV), búsqueda con debounce, scroll infinito y modal de detalle bajo demanda.
 - **Iconos WebP** — 1032 iconos servidos como WebP desde `public/images/iconos_webp/` (generados con cwebp 1.3.2 `-q 80`, alfa preservado, −37 % de peso: 5,7 MiB → 3,6 MiB, 1032/1032 más ligeros; ~97 % menos que los PNG originales de 188 MB). Los PNG de `public/images/iconos/` se conservan como fuente y fallback.
 - **Sistema de agentes OpenCode** — 5 agentes orquestados (analista, arquitecto, backend, frontend, bibliotecario).
-- **Admin "Gestión" de familias en hábitats** — modal Alpine `habitatShow()` en `habitats/show.blade.php` para asignar familias sin hábitat, quitar familias completas y reordenar pokémon por nivel (1/2/3) vía API JSON. Endpoints: `GET/POST/DELETE /api/habitats/{id}/families`, `PATCH /api/habitats/{habitat}/pokemon/{pokemon}` (nuevo, `movePokemonLevel`) y `GET /api/habitats/unassigned-families`. Contrato aditivo `types[]` en los DTOs de familia. Sin refresco pesado: la query inicial solo al abrir el modal; mutaciones locales tras 200 OK. Sustituye al modal Livewire (`FamilyModal` eliminado).
+- **Admin "Gestión" de familias en hábitats** — modal Alpine `habitatShow()` en `habitats/show.blade.php` para asignar familias sin hábitat, quitar familias completas y reordenar pokémon por nivel (1/2/3) vía API JSON. Endpoints: `GET/POST/DELETE /api/habitats/{id}/families`, `PATCH /api/habitats/{habitat}/pokemon/{pokemon}` (nuevo, `movePokemonLevel`) y `GET /api/habitats/unassigned-families`. Contrato aditivo `types[]` en los DTOs de familia.   Sin refresco pesado: la query inicial solo al abrir el modal; mutaciones locales tras 200 OK. Sustituye al modal Livewire (`FamilyModal` eliminado).
+- **Caramelos con imagen en exploraciones y "primer integrante" = menor `species_id`** — en `/exploraciones` todos los caramelos muestran su asset (`candy_pokemon/{id}.webp`, `candy_ev/{slug}.webp`, `candy_type/{slug}.webp`) con fallback único al placeholder `candy_pokemon/0.webp`. Regla de negocio confirmada por el cliente: el primer integrante de una familia evolutiva es el de menor `species_id` (no el base evolutivo/bebé); afecta a la tarjeta "base" del Admin Gestión de hábitats, al orden de las familias y a `caramelos_familia[].pokemon_id` de exploraciones. El reparto de niveles por BFS evolutivo NO cambió (detalle y quirk en `docs/architecture.md`).
+- **Eliminada la tabla `evolution_chains` (bug 23503)** — las familias evolutivas se agrupan por la columna `pokemon.evolution_chain_id` (entero, sin FK ni tabla): `FinalizarExploracionHandler::cargarMiembrosDeCadenas()` y `ReclutamientoController::miembrosDeLasCadenas()` cargan el mapa `chainId => Collection<Pokemon>` que consumen `NormalizadorPokemonDerrotado::fase()` (fase = miembros del mapa con species_id ≤ actual; sin cadena → fase 1) y `TransformadorResultadoExploracion::pokemonBaseDeCadena()` (min species_id del mapa). Solución con 2 migraciones nuevas (drop FK + drop tabla, down reversibles), modelo `EvolutionChain` eliminado y relaciones quitadas de `Pokemon`/`Caramelo`. `caramelos.evolution_chain_id` conserva columna + unique sin FK. Desvío documentado: `ReclutamientoController` sí usaba la relación (eager load + fase) y fue corregido con la columna; bonus: cadenas huérfanas → fase 1 (antes Error fatal). Módulos afectados: Exploraciones, Habitats (mapa ya existente), Reclutamiento.
 
 ## Decisiones arquitectónicas clave
 
@@ -47,11 +49,14 @@ Ver `docs/architecture.md` para la descripción detallada de cada módulo.
 ## Base de datos
 
 PostgreSQL en el entorno de ejecución (Docker); los tests usan SQLite en memoria (`:memory:`).
-29 migraciones. Esquema principal:
+31 migraciones. Esquema principal:
 
 - `provinces` → `habitats` → `pokemon_habitat` ↔ `pokemon`
 - `pokemon` → `pokemon_stats`, `pokemon_types`, `pokemon_evolution`
-- `abilities`, `evolution_chains`
+- `abilities`
+- Familias evolutivas agrupadas por la columna `pokemon.evolution_chain_id` (sin tabla;
+  `evolution_chains` eliminada en bug 23503; `caramelos.evolution_chain_id` conserva
+  columna + unique, sin FK)
 - `pokedex` (avistamientos/capturas por pokémon, 1:1 con `pokemon`)
 - `reclutados` (pokémon capturados por el jugador)
 - `teams` → `team_members` (equipos de 3)
@@ -101,6 +106,10 @@ Seeders: provincias (8), hábitats, pokémon (151+), reclutados.
 - `app/Livewire/Combate.php` — Componente de batalla manual (686 líneas)
 - `resources/views/habitats/show.blade.php` — Detalle de hábitat + modal "Admin - Gestión" (Alpine `habitatShow()`)
 - `tests/Feature/Habitats/FamiliesTest.php` — 21 tests de la API de familias (GET/POST/DELETE/PATCH)
+- `src/Exploraciones/Presentation/TransformadorResultadoExploracion.php` — Transformador de resultados de exploraciones (`caramelos_familia[].pokemon_id` = min species_id)
+- `app/Http/Controllers/ExploracionActivaController.php` — Controlador de exploraciones; const `STATS` unificada (nombres + slugs de estadísticas)
+- `tests/Feature/ExploracionesTransformadorTest.php` — Tests del transformador (pokemon_id min species_id / null)
+- `public/images/candy_pokemon/`, `public/images/candy_ev/`, `public/images/candy_type/` — Assets de caramelos (fallback único `candy_pokemon/0.webp`)
 - `src/Battle/Domain/` — Lógica de combate (14 archivos)
 - `src/Battle/Domain/Chain/` — Cadena de daño (10 manejadores)
 - `src/Battle/Domain/Effects/` — Sistema de efectos (10 archivos)

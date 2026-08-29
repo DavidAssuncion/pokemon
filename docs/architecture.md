@@ -80,6 +80,13 @@ Reglas de negocio del reparto de niveles (`levelForStage` en `HabitatRepository`
 - El POST de asignar devuelve la familia completa con niveles reales (sin inferencia client-side).
 - El DELETE quita TODA la familia (decisión de negocio; la X del modal solo existe en la tarjeta base).
 - El PATCH mueve UN pokémon (reordenamiento manual por pokémon, no por familia).
+- El **"primer integrante" de la familia es el de menor `species_id`** (decisión de negocio
+  confirmada por el cliente): `getFamilyMembersByChain` ordena por `species_id` asc (desempate
+  id) y la "base" de display del DTO = `$members[0]` (min species_id); GET families y
+  unassigned-families se ordenan por el species_id mínimo de la cadena
+  (`sortChainIdsByMinSpeciesId`). El reparto de niveles (BFS evolutivo) NO cambia: en
+  Happiny(440)/Chansey(113)/Blissey(242) la base de display es Chansey 113, pero los niveles
+  siguen siendo 440→1, 113→2, 242→3 (quirk: la X está en la base de display, nivel 2).
 
 UI: modal Alpine `habitatShow()` en `resources/views/habitats/show.blade.php`. Sin refresco pesado:
 la query inicial solo al abrir el modal; asignar/quitar/mover mutan estado local tras 200 OK.
@@ -99,9 +106,44 @@ Sustituye al componente Livewire `FamilyModal` (eliminado; hábitats ya no usa L
 | `Domain/` | `ReclutamientoSrv` |
 | `App/` | `ObtenerPokemonsReclutados` |
 
+### Exploraciones (`src/Exploraciones/`)
+
+| Carpeta | Contenido |
+|---|---|
+| `Domain/` | `CalculadorTiempos`, `CalculadorRecompensas`, `SimuladorEncuentros`, `Recompensas/` (`RecompensaFamilia`, `RecompensaEv`, `RecompensaCaptura`, `RecompensaTipo`, `PokemonDerrotado`, `ResultadoRecompensas`) |
+| `App/` | `ProcesarExploracionHandler`/`ProcesarExploracionCommand`, `FinalizarExploracionHandler`/`FinalizarExploracionCommand`, `PersistirRecompensas`, `NormalizadorPokemonDerrotado` |
+| `Presentation/` | `TransformadorResultadoExploracion` (shape de resultados para `/exploraciones`) |
+
+Contrato aditivo de resultados (`TransformadorResultadoExploracion` + `ExploracionActivaController`):
+
+- `caramelos_familia[].pokemon_id` — id del miembro de menor `species_id` (misma regla que
+  Habitats; `null` si la cadena no tiene pokémon).
+- `caramelos_ev[].stat_slug` — `hp|atk|def|atksp|defsp|spd`, resuelto desde la const `STATS`
+  unificada del controlador (`[1=>PS/hp, 2=>Ataque/atk, 3=>Defensa/def, 4=>Ataque Especial/atksp,
+  5=>Defensa Especial/defsp, 6=>Velocidad/spd]`).
+
+#### Familias por columna `pokemon.evolution_chain_id` (bug 23503 — tabla `evolution_chains` eliminada)
+
+- La agrupación de familias es por la COLUMNA `pokemon.evolution_chain_id` (entero, sin FK). El
+  mapa `array<int, Collection<int, Pokemon>>` (`chainId => miembros ligeros: id, name,
+  species_id, evolution_chain_id`) se construye con
+  `whereIn('evolution_chain_id', $ids)->get([...])->groupBy('evolution_chain_id')->all()` en:
+  - `FinalizarExploracionHandler::cargarMiembrosDeCadenas()` → lo pasa a `normalizar()` y `desde()`.
+  - `ReclutamientoController::miembrosDeLasCadenas()` (desvío: este controlador SÍ usaba la
+    relación `evolutionChain` en eager load y fase; corregido con la columna).
+- `NormalizadorPokemonDerrotado::fase()` = nº de miembros del mapa con `species_id <= actual`
+  (mismo criterio que el `hasMany` anterior); sin cadena en el mapa → fase 1 (antes: Error
+  fatal con la relación null).
+- `TransformadorResultadoExploracion::pokemonBaseDeCadena()` = min `species_id` del mapa;
+  fallback determinista sobre los derrotados de esa cadena con `sortBy('species_id')`
+  (estable); `null` si no hay miembros (comportamiento intencional documentado por test).
+- `caramelos.evolution_chain_id` conserva columna + unique, ahora SIN FK (entero simple). El
+  `down()` de la migración que recrea la FK es best-effort (asume filas válidas; el bug 23503
+  dejaba cadenas huérfanas).
+
 ### Crud (`src/Crud/`)
 
-13 submódulos: `Abilities`, `EvolutionChains`, `ExploracionesActivas`, `Habitats`, `Pokemon`, `PokemonEvolution`, `PokemonHabitat`, `PokemonStats`, `PokemonTypes`, `Provinces`, `Reclutados`, `TeamMembers`, `Teams`.
+12 submódulos: `Abilities`, `ExploracionesActivas`, `Habitats`, `Pokemon`, `PokemonEvolution`, `PokemonHabitat`, `PokemonStats`, `PokemonTypes`, `Provinces`, `Reclutados`, `TeamMembers`, `Teams`.
 
 ### Shared (`src/Shared/`)
 
@@ -225,7 +267,7 @@ Blade → Alpine pokedexApp()
 | **Datagrid** | `Datagrid/{DatagridService,DatagridRegistry,DatagridDefinition,RelationFilter}.php` | Consulta JSON de solo lectura con whitelist por modelo |
 | **Livewire** | `Combate.php` | Componente interactivo de batalla. Los hábitats migraron de Livewire a Alpine + fetch API (modal "Gestión", ver sección Habitats) |
 | **Controllers** | 9 controladores + base `Controller` | HTTP: Hábitats, Reclutados, Teams, Player (pokédex/reclutamiento/equipos), Datagrid, Exploraciones, Iconos, Dashboard |
-| **Models** | 13 modelos | Eloquent ORM (tablas del sistema) |
+| **Models** | 17 modelos | Eloquent ORM (tablas del sistema) |
 | **Providers** | 4 providers | Registro de servicios: App, BattleEffect, Datagrid |
 | **Support** | `WebpConverterInterface.php`, `WebpConverter.php` | Conversión PNG→WebP (GD/Imagick/CLI cwebp) |
 | **Console** | `Commands/OptimizeIconsToWebp.php` | `iconos:optimize-webp` (`--dir`, `--out`, idempotente) |
@@ -234,16 +276,20 @@ Blade → Alpine pokedexApp()
 ## Base de datos
 
 PostgreSQL en el entorno de ejecución (Docker); los tests usan SQLite en memoria (`:memory:`).
-29 migraciones. Esquema relacional:
+31 migraciones. Esquema relacional:
 
 ```
 provinces ──→ habitats ──→ pokemon_habitat ──→ pokemon ──→ pokemon_stats
                                                           ──→ pokemon_types
                                                           ──→ pokemon_evolution
-                                                          ──→ evolution_chains
                                                           ──→ abilities
                                                           ──→ pokedex (1:1)
 
 pokemon ──→ reclutados ──→ team_members ──→ teams
                        ──→ exploraciones_activas
+
+Familias evolutivas: grupo de filas de `pokemon` con el MISMO valor en la columna
+`pokemon.evolution_chain_id` (entero, sin FK ni tabla). `caramelos.evolution_chain_id`
+también es entero simple SIN FK (columna + unique conservadas). La tabla
+`evolution_chains` fue eliminada (bug 23503).
 ```
