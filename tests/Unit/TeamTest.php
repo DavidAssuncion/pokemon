@@ -8,6 +8,7 @@ use App\Models\ExploracionActiva;
 use App\Models\Habitat;
 use App\Models\Province;
 use App\Models\Team;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -17,7 +18,7 @@ class TeamTest extends TestCase
 
     public function test_team_is_not_exploring_when_no_exploraciones(): void
     {
-        $team = Team::create(['name' => 'Alpha']);
+        $team = Team::create(['name' => 'Alpha', 'user_id' => User::factory()->create()->id]);
 
         $this->assertFalse($team->isExploring());
     }
@@ -26,9 +27,10 @@ class TeamTest extends TestCase
     {
         $province = Province::create(['id' => 1, 'name' => 'Kanto']);
         $habitat = Habitat::create(['id' => 1, 'name' => 'Bosque', 'province_id' => 1]);
-        $team = Team::create(['name' => 'Alpha']);
+        $team = Team::create(['name' => 'Alpha', 'user_id' => User::factory()->create()->id]);
 
         ExploracionActiva::create([
+            'user_id' => $team->user_id,
             'equipo_id' => $team->id,
             'habitat_id' => $habitat->id,
             'nivel' => 1,
@@ -41,9 +43,10 @@ class TeamTest extends TestCase
     {
         $province = Province::create(['id' => 1, 'name' => 'Kanto']);
         $habitat = Habitat::create(['id' => 1, 'name' => 'Bosque', 'province_id' => 1]);
-        $team = Team::create(['name' => 'Alpha']);
+        $team = Team::create(['name' => 'Alpha', 'user_id' => User::factory()->create()->id]);
 
         $exploracion = ExploracionActiva::create([
+            'user_id' => $team->user_id,
             'equipo_id' => $team->id,
             'habitat_id' => $habitat->id,
             'nivel' => 1,
@@ -57,9 +60,10 @@ class TeamTest extends TestCase
     {
         $province = Province::create(['id' => 1, 'name' => 'Kanto']);
         $habitat = Habitat::create(['id' => 1, 'name' => 'Bosque', 'province_id' => 1]);
-        $team = Team::create(['name' => 'Alpha']);
+        $team = Team::create(['name' => 'Alpha', 'user_id' => User::factory()->create()->id]);
 
         $completed = ExploracionActiva::create([
+            'user_id' => $team->user_id,
             'equipo_id' => $team->id,
             'habitat_id' => $habitat->id,
             'nivel' => 1,
@@ -67,6 +71,7 @@ class TeamTest extends TestCase
         $completed->update(['regreso' => now()]);
 
         ExploracionActiva::create([
+            'user_id' => $team->user_id,
             'equipo_id' => $team->id,
             'habitat_id' => $habitat->id,
             'nivel' => 2,

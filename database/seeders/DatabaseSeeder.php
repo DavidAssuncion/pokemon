@@ -23,11 +23,13 @@ class DatabaseSeeder extends Seeder
             \Database\Seeders\ReclutadosSeeder::class,
         ]);
 
+        // Usuario demo multi-jugador: identificado por name (único desde la Fase 1).
         User::updateOrCreate(
-            ['email' => 'test@example.com'],
+            ['name' => 'demo'],
             [
-                'name' => 'Test User',
+                'email' => 'demo@example.com',
                 'password' => Hash::make('password'),
+                'experiencia' => 0,
             ]
         );
     }

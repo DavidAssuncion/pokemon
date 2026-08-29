@@ -9,6 +9,7 @@ use App\Models\Habitat;
 use App\Models\Pokemon;
 use App\Models\Province;
 use App\Models\Team;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
@@ -82,9 +83,10 @@ class HabitatTest extends TestCase
     public function test_has_exploraciones_has_many_relationship(): void
     {
         $habitat = $this->createHabitat();
-        $team = Team::create(['name' => 'Alpha']);
+        $team = Team::create(['name' => 'Alpha', 'user_id' => User::factory()->create()->id]);
 
         ExploracionActiva::create([
+            'user_id' => $team->user_id,
             'equipo_id' => $team->id,
             'habitat_id' => $habitat->id,
             'nivel' => 1,

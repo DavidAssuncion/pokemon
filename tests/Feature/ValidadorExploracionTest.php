@@ -8,6 +8,7 @@ use App\Models\ExploracionActiva;
 use App\Models\Habitat;
 use App\Models\Province;
 use App\Models\Team;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Src\Habitats\App\ValidadorExploracion;
 use Tests\TestCase;
@@ -28,7 +29,7 @@ class ValidadorExploracionTest extends TestCase
 
     public function test_team_is_available_when_no_exploraciones(): void
     {
-        $team = Team::create(['name' => 'Alpha']);
+        $team = Team::create(['name' => 'Alpha', 'user_id' => User::factory()->create()->id]);
 
         $this->assertTrue($this->validator->equipoDisponible($team->id));
     }
@@ -37,9 +38,10 @@ class ValidadorExploracionTest extends TestCase
     {
         $province = Province::create(['id' => 1, 'name' => 'Kanto']);
         $habitat = Habitat::create(['id' => 1, 'name' => 'Bosque', 'province_id' => 1]);
-        $team = Team::create(['name' => 'Alpha']);
+        $team = Team::create(['name' => 'Alpha', 'user_id' => User::factory()->create()->id]);
 
         ExploracionActiva::create([
+            'user_id' => $team->user_id,
             'equipo_id' => $team->id,
             'habitat_id' => $habitat->id,
             'nivel' => 1,
@@ -52,9 +54,10 @@ class ValidadorExploracionTest extends TestCase
     {
         $province = Province::create(['id' => 1, 'name' => 'Kanto']);
         $habitat = Habitat::create(['id' => 1, 'name' => 'Bosque', 'province_id' => 1]);
-        $team = Team::create(['name' => 'Alpha']);
+        $team = Team::create(['name' => 'Alpha', 'user_id' => User::factory()->create()->id]);
 
         $exploracion = ExploracionActiva::create([
+            'user_id' => $team->user_id,
             'equipo_id' => $team->id,
             'habitat_id' => $habitat->id,
             'nivel' => 1,
@@ -79,9 +82,10 @@ class ValidadorExploracionTest extends TestCase
     {
         $province = Province::create(['id' => 1, 'name' => 'Kanto']);
         $habitat = Habitat::create(['id' => 1, 'name' => 'Bosque', 'province_id' => 1]);
-        $team = Team::create(['name' => 'Alpha']);
+        $team = Team::create(['name' => 'Alpha', 'user_id' => User::factory()->create()->id]);
 
         ExploracionActiva::create([
+            'user_id' => $team->user_id,
             'equipo_id' => $team->id,
             'habitat_id' => $habitat->id,
             'nivel' => 1,
@@ -94,9 +98,10 @@ class ValidadorExploracionTest extends TestCase
     {
         $province = Province::create(['id' => 1, 'name' => 'Kanto']);
         $habitat = Habitat::create(['id' => 1, 'name' => 'Bosque', 'province_id' => 1]);
-        $team = Team::create(['name' => 'Alpha']);
+        $team = Team::create(['name' => 'Alpha', 'user_id' => User::factory()->create()->id]);
 
         $exploracion = ExploracionActiva::create([
+            'user_id' => $team->user_id,
             'equipo_id' => $team->id,
             'habitat_id' => $habitat->id,
             'nivel' => 1,
@@ -112,15 +117,17 @@ class ValidadorExploracionTest extends TestCase
     {
         $province = Province::create(['id' => 1, 'name' => 'Kanto']);
         $habitat = Habitat::create(['id' => 1, 'name' => 'Bosque', 'province_id' => 1]);
-        $team1 = Team::create(['name' => 'Alpha']);
-        $team2 = Team::create(['name' => 'Bravo']);
+        $team1 = Team::create(['name' => 'Alpha', 'user_id' => User::factory()->create()->id]);
+        $team2 = Team::create(['name' => 'Bravo', 'user_id' => User::factory()->create()->id]);
 
         $exploracion1 = ExploracionActiva::create([
+            'user_id' => $team1->user_id,
             'equipo_id' => $team1->id,
             'habitat_id' => $habitat->id,
             'nivel' => 1,
         ]);
         ExploracionActiva::create([
+            'user_id' => $team2->user_id,
             'equipo_id' => $team2->id,
             'habitat_id' => $habitat->id,
             'nivel' => 1,
@@ -138,7 +145,7 @@ class ValidadorExploracionTest extends TestCase
 
     public function test_team_is_available_for_combate_when_no_exploraciones(): void
     {
-        $team = Team::create(['name' => 'Alpha']);
+        $team = Team::create(['name' => 'Alpha', 'user_id' => User::factory()->create()->id]);
 
         $this->assertTrue($this->validator->equipoDisponibleParaCombate($team->id));
     }
@@ -147,9 +154,10 @@ class ValidadorExploracionTest extends TestCase
     {
         $province = Province::create(['id' => 1, 'name' => 'Kanto']);
         $habitat = Habitat::create(['id' => 1, 'name' => 'Bosque', 'province_id' => 1]);
-        $team = Team::create(['name' => 'Alpha']);
+        $team = Team::create(['name' => 'Alpha', 'user_id' => User::factory()->create()->id]);
 
         ExploracionActiva::create([
+            'user_id' => $team->user_id,
             'equipo_id' => $team->id,
             'habitat_id' => $habitat->id,
             'nivel' => 1,
@@ -162,9 +170,10 @@ class ValidadorExploracionTest extends TestCase
     {
         $province = Province::create(['id' => 1, 'name' => 'Kanto']);
         $habitat = Habitat::create(['id' => 1, 'name' => 'Bosque', 'province_id' => 1]);
-        $team = Team::create(['name' => 'Alpha']);
+        $team = Team::create(['name' => 'Alpha', 'user_id' => User::factory()->create()->id]);
 
         $exploracion = ExploracionActiva::create([
+            'user_id' => $team->user_id,
             'equipo_id' => $team->id,
             'habitat_id' => $habitat->id,
             'nivel' => 1,
@@ -180,15 +189,17 @@ class ValidadorExploracionTest extends TestCase
     {
         $province = Province::create(['id' => 1, 'name' => 'Kanto']);
         $habitat = Habitat::create(['id' => 1, 'name' => 'Bosque', 'province_id' => 1]);
-        $team = Team::create(['name' => 'Alpha']);
+        $team = Team::create(['name' => 'Alpha', 'user_id' => User::factory()->create()->id]);
 
         ExploracionActiva::create([
+            'user_id' => $team->user_id,
             'equipo_id' => $team->id,
             'habitat_id' => $habitat->id,
             'nivel' => 1,
         ]);
 
         $completed = ExploracionActiva::create([
+            'user_id' => $team->user_id,
             'equipo_id' => $team->id,
             'habitat_id' => $habitat->id,
             'nivel' => 2,
@@ -205,15 +216,17 @@ class ValidadorExploracionTest extends TestCase
     {
         $province = Province::create(['id' => 1, 'name' => 'Kanto']);
         $habitat = Habitat::create(['id' => 1, 'name' => 'Bosque', 'province_id' => 1]);
-        $team1 = Team::create(['name' => 'Alpha']);
-        $team2 = Team::create(['name' => 'Bravo']);
+        $team1 = Team::create(['name' => 'Alpha', 'user_id' => User::factory()->create()->id]);
+        $team2 = Team::create(['name' => 'Bravo', 'user_id' => User::factory()->create()->id]);
 
         ExploracionActiva::create([
+            'user_id' => $team1->user_id,
             'equipo_id' => $team1->id,
             'habitat_id' => $habitat->id,
             'nivel' => 1,
         ]);
         ExploracionActiva::create([
+            'user_id' => $team2->user_id,
             'equipo_id' => $team2->id,
             'habitat_id' => $habitat->id,
             'nivel' => 3,

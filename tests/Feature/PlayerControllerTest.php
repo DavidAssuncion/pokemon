@@ -8,12 +8,18 @@ use App\Enums\StatEnum;
 use App\Enums\TipoEnum;
 use App\Models\Pokedex;
 use App\Models\Pokemon;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
 class PlayerControllerTest extends TestCase
 {
     use RefreshDatabase;
+
+    private function userId(): int
+    {
+        return User::factory()->create()->id;
+    }
 
     private function createPokemon(int $id, string $name): void
     {
@@ -48,8 +54,8 @@ class PlayerControllerTest extends TestCase
         $this->createPokemon(2, 'ivysaur');
         $this->createPokemon(3, 'venusaur');
 
-        Pokedex::create(['pokemon_id' => 1, 'visto' => true, 'atrapado' => true]);
-        Pokedex::create(['pokemon_id' => 2, 'visto' => true, 'atrapado' => false]);
+        Pokedex::create(['user_id' => $this->userId(), 'pokemon_id' => 1, 'visto' => true, 'atrapado' => true]);
+        Pokedex::create(['user_id' => $this->userId(), 'pokemon_id' => 2, 'visto' => true, 'atrapado' => false]);
 
         $response = $this->get('/pokedex');
 

@@ -416,3 +416,119 @@ que la relación `evolutionChain->pokemon` (misma columna, mismo conteo).
    validación local: pint + php -l + phpstan (phpstan no analiza tests/).
 5. No tocar vistas/Blade ni src/ (sin uso explícito de zona UTC en src/ — confirmado por grep:
    `timezone|UTC` solo aparece en config/app.php).
+
+---
+
+## Fase 1 conversión multiplayer — fundación de datos (2026-08-29)
+
+### Objetivo
+
+Preparar la estructura de datos para multi-jugador: `user_id` en todas las tablas
+player-owned (con backfill condicional a usuario legacy), `player_inventory` (sustituye a
+`caramelos`/`caramelos_ev`/`caramelos_tipo`), `reclutados.exp` como `jsonb` con cast DTO
+`ExpReclutado` (absorbe `reclutados_exp_tipo`), `habitats.min_lvl_*` (solo columnas) e
+índices de rendimiento. NO se toca auth, ni wiring de `player_inventory`, ni lógica
+min_lvl, ni controladores (fases B/C/D).
+
+### Decisiones cerradas (brief)
+
+- `user_id` NOT NULL + FK users onDelete cascade en: reclutados, teams, reclutables,
+  pokedex, exploraciones_activas.
+- Backfill condicional al usuario legacy (`Legacy` / `legacy@local`, password aleatorio):
+  SOLO si hay filas que migrar; en tests las tablas están vacías → no crea usuarios.
+- `reclutados.exp` json → jsonb; shape `{"total": int, "tipos": {tipo: int}}`.
+- `reclutados_exp_tipo` → vuelca a `exp.tipos` y se elimina.
+- `caramelos*` → `player_inventory(id, user_id, item_key string(64), cantidad, unique(user_id, item_key))`.
+  item_key canónico: `familia:{evolution_chain_id}`, `ev:{stat}`, `tipo:{slug}` (slug vía
+  `SlugTipo::de()` — mismo resultado que `strtolower(Str::ascii())` y consistente con el
+  dominio: 'Eléctrico' → 'electrico').
+- `habitats` + `min_lvl_1/2/3` (unsignedInteger, nullable). `users.email` nullable,
+  `users.name` unique.
+
+### Qué toco
+
+- **11 migraciones nuevas** (2026_08_29_000001..000011): users; user_id en
+  reclutados/teams/reclutables/pokedex/exploraciones_activas; player_inventory; volcado de
+  caramelos; volcado de reclutados_exp_tipo; min_lvl habitats; índices de rendimiento
+  (pokemon.evolution_chain_id, pokemon_habitat(habitat_id, level), team_members.team_id,
+  habitats.province_id, pokemon_evolution.evolves_from_species_id, reclutados.pokemon_id —
+  verificados: NINGUNO existe hoy; team_members.pokemon_id ya es unique → no se añade).
+- **app/Support/LegacyUserMigrator.php**: helper compartido de backfill condicional (chequea
+  TODAS las tablas de la fase: si alguna tiene filas crea/obtiene el usuario legacy por email).
+- **app/Models/Concerns/BelongsToUser.php**: trait con global scope (`user_id = auth()->id()`,
+  inactivo sin auth) + `user()` + `scopeWithoutUserScope()`.
+- **app/Models/Casts/ExpReclutado.php**: cast + VO inmutable (total, expTipo, sumarExpTipo,
+  consumirTipos; fromRaw tolera legacy '{"total": N}', '{}', null, array).
+- **Modelos**: + trait/fillable/user_id en Team, Reclutado, Reclutable, Pokedex,
+  ExploracionActiva; NUEVO PlayerInventory; BORRADOS Caramelo, CarameloEv, CarameloTipo,
+  ReclutadoExpTipo (+ relación `expTipos()` de Reclutado). UserFactory: name con
+  `fake()->unique()->name()`.
+- **Seeders**: DatabaseSeeder (usuario demo por name, experiencia 0); ReclutadosSeeder
+  (crea/obtiene el usuario demo y lo asigna a reclutados/teams).
+
+### Tests a escribir
+
+1. `tests/Unit/ExpReclutadoTest.php` — VO: total, expTipo default 0, sumarExpTipo inmutable
+   (no muta total), consumirTipos (resta, elimina a 0), legacy sin 'tipos', null, toArray,
+   persistencia vía cast en Reclutado.
+2. `tests/Feature/UserScopeTest.php` — aislamiento por usuario (Team/Reclutado/Reclutable/
+   Pokedex/PlayerInventory), sin auth no filtra, withoutUserScope lo ignora.
+3. `tests/Feature/MigracionDatosTest.php` — rollback 4 pasos (11..8), insertar datos viejos,
+   re-migrate, assert player_inventory + exp.tipos + tablas eliminadas + usuario legacy;
+   + no crea legacy sin datos; + down() best-effort restaura.
+4. `tests/Unit/PlayerInventoryTest.php` (sustituye a CarameloTest — modelo eliminado) —
+   unique(user_id, item_key), mismo key en usuarios distintos OK, cast cantidad int.
+5. `tests/Feature/MigrationStatusTest.php` — actualizado al nuevo esquema (caramelos ya no
+   existen, player_inventory existe con unique, user_id NOT NULL, email nullable + name
+   unique, min_lvl, tipo exp jsonb/text).
+
+### Riesgos identificados
+
+1. **Código que rompe al borrar modelos** (NO lo arreglo — es de fases B/C): importan
+   Caramelo/CarameloEv/CarameloTipo/ReclutadoExpTipo o `expTipos`:
+   `src/Exploraciones/App/PersistirRecompensas.php`,
+   `src/Reclutamiento/App/ServicioEvolucion.php`,
+   `app/Http/Controllers/ReclutadoController.php` (también `$reclutado->exp['total']` —
+   rompe con el cast objeto), `app/Http/Controllers/ReclutamientoController.php`,
+   `tests/Feature/ReclutadoEvolucionTest.php` y derivados. Los tests de controladores los
+   reescriben los agentes de fases B/C; aquí solo arreglo mínimo los que fallan por
+   modelos/factory (user_id NOT NULL) y documento.
+2. **Datagrid 'pokemon'** leftJoins pokedex 1:1 (`pokedex.pokemon_id`) — con filas por
+   usuario el join duplica filas: lo reescribe el agente de la fase B (scope por usuario en
+   baseQuery). Misma historia para el registro 'pokedex'.
+3. **AppServiceProvider::boot()** hace `User::first()` (single-player) — el agente de auth
+   debe pasar a usuario autenticado.
+4. **Down() de migraciones 8/9** son best-effort (restauran desde player_inventory /
+   exp.tipos sin borrar el destino). Rollback total histórico (más allá de la 8) puede
+   fallar porque la FK de caramelos ya no existe (recreada sin FK, y la migración
+   `2026_08_29_000001_drop_foreign_evolution_chain_from_caramelos` espera la FK en su down).
+5. **SQLite**: `jsonb` → `text` (grammar), `change()` nativo OK en L12; `dropUnique` +
+   `unique` compuesto reconstruyen la tabla. Validado por el propio suite en CI.
+6. **Entorno local**: los tests usan Postgres local (phpunit.xml `pokemon/secret` no existe;
+   se corren con `DB_USERNAME=laravel DB_PASSWORD=laravel LOG_CHANNEL=stderr`); 5 fallos
+   preexistentes ambientales (iconos PNG ausentes + SimuladorEncuentrosTest) NO son de esta
+   tarea.
+7. **UserFactory name unique**: `fake()->unique()->name()` para no chocar con el nuevo
+   unique(name).
+8. **Scopes y rutas**: el scope global hace que route-model-binding de otros usuarios dé
+   404 (comportamiento deseado del multi-player; los controladores lo adaptan en B).
+
+### Resultado (verificación local)
+
+- Suite de alcance (36 tests) VERDE: ExpReclutado (12), PlayerInventory (5), UserScope (4),
+  MigracionDatos (3), MigrationStatus (12).
+- `migrate:fresh --seed` en Postgres dev: OK (usuario demo id 1, teams/reclutados con user_id,
+  exp jsonb, player_inventory vacía y SIN usuario legacy — correcto).
+- SQLite NO ejecutable en local (PHP sin pdo_sqlite): compatibilidad verificada a nivel de
+  grammar (typeJsonb → text, compileChange nativo); CI (per docs) cubre la corrida empírica.
+- Pint limpio; PHPStan: mis archivos a 0 errores (201 total vs 189 baseline = +12 solo en los
+  4 archivos que referencian modelos eliminados — deuda de fases B/C); PHPMD sin cambios en
+  src/; Infection sin cambios (solo cubre src/, no tocado).
+- Suite completa: 263 passed / 80 failed. Los 80 = bucket fases B/C (8 archivos de test:
+  EquiposControllerTest, ExploracionesTest, ExploracionesPageTest, ReclutadoEvolucionTest,
+  ReclutamientoControllerTest, ActualizarPokedexJobTest, CapturarPokemonJobTest,
+  RecompilarHabitatJsonJobTest) + 4 preexistentes ambientales (OptimizeIconsToWebpTest ×3,
+  SimuladorEncuentrosTest — ya fallaban en baseline).
+- Fix de estabilidad añadido: `DatagridService::applySort()` ordena por PK cuando no hay
+  `sort` (Postgres devuelve orden arbitrario sin ORDER BY; los nuevos índices cambiaron el
+  plan y rompían los tests de orden del datagrid).

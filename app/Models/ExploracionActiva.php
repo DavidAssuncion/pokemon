@@ -4,14 +4,18 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Models\Concerns\BelongsToUser;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class ExploracionActiva extends Model
 {
+    use BelongsToUser;
+
     protected $table = 'exploraciones_activas';
 
     protected $fillable = [
+        'user_id',
         'equipo_id',
         'habitat_id',
         'nivel',

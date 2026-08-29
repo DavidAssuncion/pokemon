@@ -212,6 +212,11 @@ final class DatagridService
     private function applySort(Builder $query, DatagridDefinition $definition, mixed $sort, mixed $order): void
     {
         if (! is_string($sort) || $sort === '' || ! array_key_exists($sort, $definition->sortable)) {
+            // Sin sort explícito el orden es determinista por PK: Postgres no
+            // garantiza orden sin ORDER BY y el plan puede cambiar entre
+            // migraciones (índices/estadísticas), rompiendo la estabilidad.
+            $query->getQuery()->orderBy($query->getModel()->getQualifiedKeyName(), 'asc');
+
             return;
         }
 

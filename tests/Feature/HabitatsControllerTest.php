@@ -7,6 +7,7 @@ namespace Tests\Feature;
 use App\Models\Habitat;
 use App\Models\Pokemon;
 use App\Models\Province;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
@@ -56,8 +57,9 @@ class HabitatsControllerTest extends TestCase
 
     public function test_show_passes_exploraciones_activas(): void
     {
-        $team = \App\Models\Team::create(['name' => 'Alpha']);
+        $team = \App\Models\Team::create(['name' => 'Alpha', 'user_id' => User::factory()->create()->id]);
         \App\Models\ExploracionActiva::create([
+            'user_id' => $team->user_id,
             'equipo_id' => $team->id,
             'habitat_id' => $this->habitatId,
             'nivel' => 1,
@@ -71,8 +73,9 @@ class HabitatsControllerTest extends TestCase
 
     public function test_show_passes_equipos_en_exploracion(): void
     {
-        $team = \App\Models\Team::create(['name' => 'Bravo']);
+        $team = \App\Models\Team::create(['name' => 'Bravo', 'user_id' => User::factory()->create()->id]);
         \App\Models\ExploracionActiva::create([
+            'user_id' => $team->user_id,
             'equipo_id' => $team->id,
             'habitat_id' => $this->habitatId,
             'nivel' => 1,
@@ -86,8 +89,9 @@ class HabitatsControllerTest extends TestCase
 
     public function test_show_does_not_include_completed_exploraciones(): void
     {
-        $team = \App\Models\Team::create(['name' => 'Explorador']);
+        $team = \App\Models\Team::create(['name' => 'Explorador', 'user_id' => User::factory()->create()->id]);
         $exploracion = \App\Models\ExploracionActiva::create([
+            'user_id' => $team->user_id,
             'equipo_id' => $team->id,
             'habitat_id' => $this->habitatId,
             'nivel' => 1,

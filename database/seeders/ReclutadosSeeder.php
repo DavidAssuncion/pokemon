@@ -7,6 +7,7 @@ namespace Database\Seeders;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 
 class ReclutadosSeeder extends Seeder
@@ -20,6 +21,10 @@ class ReclutadosSeeder extends Seeder
             return;
         }
 
+        // El usuario demo se crea/obtiene aquí porque este seeder corre antes de
+        // que DatabaseSeeder cree su propio usuario (reclutados/teams lo necesitan).
+        $userId = $this->demoUserId();
+
         // Starter pokemon names (try common variants)
         $starterNames = [
             'Marill',
@@ -30,7 +35,7 @@ class ReclutadosSeeder extends Seeder
             'Starly',
         ];
 
-        DB::transaction(function () use ($starterNames) {
+        DB::transaction(function () use ($starterNames, $userId) {
             $reclutadosMap = [];
 
             foreach ($starterNames as $name) {
@@ -53,6 +58,7 @@ class ReclutadosSeeder extends Seeder
                 }
 
                 $reclutadoId = DB::table('reclutados')->insertGetId([
+                    'user_id' => $userId,
                     'nombre' => $pokemon->name,
                     'pokemon_id' => $pokemon->id,
                     'exp' => json_encode(new \stdClass()),
@@ -69,6 +75,7 @@ class ReclutadosSeeder extends Seeder
             // Create two default teams
             // Team 1: Marill, Slugma, Paras
             $team1Id = DB::table('teams')->insertGetId([
+                'user_id' => $userId,
                 'name' => 'Equipo A',
                 'created_at' => Carbon::now(),
                 'updated_at' => Carbon::now(),
@@ -80,6 +87,7 @@ class ReclutadosSeeder extends Seeder
 
             // Team 2: Eevee, Zigzagoon (Galar), Starly
             $team2Id = DB::table('teams')->insertGetId([
+                'user_id' => $userId,
                 'name' => 'Equipo B',
                 'created_at' => Carbon::now(),
                 'updated_at' => Carbon::now(),
@@ -90,6 +98,27 @@ class ReclutadosSeeder extends Seeder
             $this->insertTeamMemberIfExists($reclutadosMap, 'Zigzagoon', $team2Id, 2, 'RECOLECTOR');
             $this->insertTeamMemberIfExists($reclutadosMap, 'Starly', $team2Id, 3, 'SOPORTE');
         });
+    }
+
+    /**
+     * Id del usuario demo (creado si no existe).
+     */
+    private function demoUserId(): int
+    {
+        $user = DB::table('users')->where('name', 'demo')->first();
+
+        if ($user !== null) {
+            return (int) $user->id;
+        }
+
+        return (int) DB::table('users')->insertGetId([
+            'name' => 'demo',
+            'email' => 'demo@example.com',
+            'password' => Hash::make('password'),
+            'experiencia' => 0,
+            'created_at' => Carbon::now(),
+            'updated_at' => Carbon::now(),
+        ]);
     }
 
     private function insertTeamMemberIfExists(array $map, string $name, int $teamId, int $slot, string $behavior): void

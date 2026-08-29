@@ -6,6 +6,7 @@ namespace Tests\Unit;
 
 use App\Models\Pokemon;
 use App\Models\Reclutable;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -31,6 +32,7 @@ class ReclutableTest extends TestCase
         $pokemon = $this->createPokemon();
 
         $reclutable = Reclutable::create([
+            'user_id' => User::factory()->create()->id,
             'pokemon_id' => $pokemon->id,
             'cantidad' => 5,
         ]);
@@ -47,6 +49,7 @@ class ReclutableTest extends TestCase
         $pokemon = $this->createPokemon();
 
         $reclutable = Reclutable::create([
+            'user_id' => User::factory()->create()->id,
             'pokemon_id' => $pokemon->id,
         ]);
         $reclutable->refresh();
@@ -59,9 +62,10 @@ class ReclutableTest extends TestCase
         $this->expectException(\Illuminate\Database\QueryException::class);
 
         $pokemon = $this->createPokemon();
+        $user = User::factory()->create();
 
-        Reclutable::create(['pokemon_id' => $pokemon->id]);
-        Reclutable::create(['pokemon_id' => $pokemon->id]);
+        Reclutable::create(['user_id' => $user->id, 'pokemon_id' => $pokemon->id]);
+        Reclutable::create(['user_id' => $user->id, 'pokemon_id' => $pokemon->id]);
     }
 
     public function test_belongs_to_pokemon_relationship(): void
@@ -69,6 +73,7 @@ class ReclutableTest extends TestCase
         $pokemon = $this->createPokemon();
 
         $reclutable = Reclutable::create([
+            'user_id' => User::factory()->create()->id,
             'pokemon_id' => $pokemon->id,
             'cantidad' => 3,
         ]);

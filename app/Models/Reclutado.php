@@ -4,21 +4,24 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Models\Casts\ExpReclutado;
+use App\Models\Concerns\BelongsToUser;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Reclutado extends Model
 {
+    use BelongsToUser;
+
     protected $table = 'reclutados';
 
     protected $fillable = [
-        'nombre', 'pokemon_id', 'exp', 'es_shiny', 'obj_equipados', 'movimientos',
+        'user_id', 'nombre', 'pokemon_id', 'exp', 'es_shiny', 'obj_equipados', 'movimientos',
     ];
 
     protected $casts = [
-        'exp' => 'array',
+        'exp' => ExpReclutado::class,
         'obj_equipados' => 'array',
         'movimientos' => 'array',
         'es_shiny' => 'boolean',
@@ -38,13 +41,5 @@ class Reclutado extends Model
     public function teamMember(): HasOne
     {
         return $this->hasOne(TeamMember::class, 'pokemon_id');
-    }
-
-    /**
-     * @return HasMany<ReclutadoExpTipo, $this>
-     */
-    public function expTipos(): HasMany
-    {
-        return $this->hasMany(ReclutadoExpTipo::class);
     }
 }

@@ -6,6 +6,7 @@ namespace Tests\Unit;
 
 use App\Models\Pokedex;
 use App\Models\Pokemon;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -31,6 +32,7 @@ class PokedexTest extends TestCase
         $pokemon = $this->createPokemon();
 
         $pokedex = Pokedex::create([
+            'user_id' => User::factory()->create()->id,
             'pokemon_id' => $pokemon->id,
             'visto' => true,
             'atrapado' => true,
@@ -49,6 +51,7 @@ class PokedexTest extends TestCase
         $pokemon = $this->createPokemon();
 
         $pokedex = Pokedex::create([
+            'user_id' => User::factory()->create()->id,
             'pokemon_id' => $pokemon->id,
         ]);
         $pokedex->refresh();
@@ -62,9 +65,10 @@ class PokedexTest extends TestCase
         $this->expectException(\Illuminate\Database\QueryException::class);
 
         $pokemon = $this->createPokemon();
+        $user = User::factory()->create();
 
-        Pokedex::create(['pokemon_id' => $pokemon->id]);
-        Pokedex::create(['pokemon_id' => $pokemon->id]);
+        Pokedex::create(['user_id' => $user->id, 'pokemon_id' => $pokemon->id]);
+        Pokedex::create(['user_id' => $user->id, 'pokemon_id' => $pokemon->id]);
     }
 
     public function test_belongs_to_pokemon_relationship(): void
@@ -72,6 +76,7 @@ class PokedexTest extends TestCase
         $pokemon = $this->createPokemon();
 
         $pokedex = Pokedex::create([
+            'user_id' => User::factory()->create()->id,
             'pokemon_id' => $pokemon->id,
             'visto' => true,
             'atrapado' => false,

@@ -12,6 +12,7 @@ use App\Models\Pokemon;
 use App\Models\PokemonStat;
 use App\Models\PokemonType;
 use App\Models\Province;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
@@ -19,6 +20,11 @@ use Tests\TestCase;
 class DatagridTest extends TestCase
 {
     use RefreshDatabase;
+
+    private function userId(): int
+    {
+        return User::factory()->create()->id;
+    }
 
     /**
      * @param  list<TipoEnum>  $types
@@ -213,8 +219,8 @@ class DatagridTest extends TestCase
         $this->createPokemon(2, 'ivysaur');
         $this->createPokemon(3, 'venusaur');
 
-        Pokedex::create(['pokemon_id' => 1, 'visto' => true, 'atrapado' => true]);
-        Pokedex::create(['pokemon_id' => 2, 'visto' => true, 'atrapado' => false]);
+        Pokedex::create(['user_id' => $this->userId(), 'pokemon_id' => 1, 'visto' => true, 'atrapado' => true]);
+        Pokedex::create(['user_id' => $this->userId(), 'pokemon_id' => 2, 'visto' => true, 'atrapado' => false]);
 
         $response = $this->getJson('/datagrid/pokemon');
 
@@ -238,7 +244,7 @@ class DatagridTest extends TestCase
             StatEnum::SPEED->value => 45,
         ]);
 
-        Pokedex::create(['pokemon_id' => 1, 'visto' => true, 'atrapado' => true]);
+        Pokedex::create(['user_id' => $this->userId(), 'pokemon_id' => 1, 'visto' => true, 'atrapado' => true]);
 
         Province::create(['id' => 1, 'name' => 'Kanto']);
         Habitat::create(['id' => 1, 'province_id' => 1, 'name' => 'Bosque']);
@@ -299,7 +305,7 @@ class DatagridTest extends TestCase
         $this->createPokemon(1, 'bulbasaur');
         $this->createPokemon(2, 'ivysaur');
 
-        Pokedex::create(['pokemon_id' => 2, 'visto' => true, 'atrapado' => false]);
+        Pokedex::create(['user_id' => $this->userId(), 'pokemon_id' => 2, 'visto' => true, 'atrapado' => false]);
 
         $response = $this->getJson('/datagrid/pokemon?filter[visto]=0');
 
@@ -316,7 +322,7 @@ class DatagridTest extends TestCase
         $this->createPokemon(1, 'bulbasaur');
         $this->createPokemon(2, 'ivysaur');
 
-        Pokedex::create(['pokemon_id' => 2, 'visto' => true, 'atrapado' => false]);
+        Pokedex::create(['user_id' => $this->userId(), 'pokemon_id' => 2, 'visto' => true, 'atrapado' => false]);
 
         $response = $this->getJson('/datagrid/pokemon?filter[visto]=1');
 
@@ -331,8 +337,8 @@ class DatagridTest extends TestCase
         $this->createPokemon(2, 'ivysaur');
         $this->createPokemon(3, 'venusaur');
 
-        Pokedex::create(['pokemon_id' => 2, 'visto' => true, 'atrapado' => true]);
-        Pokedex::create(['pokemon_id' => 3, 'visto' => true, 'atrapado' => false]);
+        Pokedex::create(['user_id' => $this->userId(), 'pokemon_id' => 2, 'visto' => true, 'atrapado' => true]);
+        Pokedex::create(['user_id' => $this->userId(), 'pokemon_id' => 3, 'visto' => true, 'atrapado' => false]);
 
         $response = $this->getJson('/datagrid/pokemon?filter[atrapado]=1');
 
@@ -347,8 +353,8 @@ class DatagridTest extends TestCase
         $this->createPokemon(2, 'ivysaur');
         $this->createPokemon(3, 'venusaur');
 
-        Pokedex::create(['pokemon_id' => 2, 'visto' => true, 'atrapado' => true]);
-        Pokedex::create(['pokemon_id' => 3, 'visto' => true, 'atrapado' => false]);
+        Pokedex::create(['user_id' => $this->userId(), 'pokemon_id' => 2, 'visto' => true, 'atrapado' => true]);
+        Pokedex::create(['user_id' => $this->userId(), 'pokemon_id' => 3, 'visto' => true, 'atrapado' => false]);
 
         $response = $this->getJson('/datagrid/pokemon?filter[atrapado]=0');
 
