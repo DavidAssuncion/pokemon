@@ -4,24 +4,25 @@ declare(strict_types=1);
 
 namespace Src\Habitats\Infra;
 
+use App\Enums\TipoEnum;
 use App\Models\Habitat;
 use App\Models\Pokemon;
 use App\Models\PokemonEvolution;
+use App\Models\PokemonType;
 use App\Models\Province;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Src\Habitats\Domain\HabitatEntity;
 use Src\Habitats\Domain\HabitatsCollection;
 use Src\Habitats\Domain\ProvinceEntity;
 use Src\Habitats\Domain\ProvinciasCollection;
 use Src\Habitats\Domain\Repositories\HabitatRepositoryInterface;
-use Src\Habitats\Presentation\DTOFamiliaAsignada;
 use Src\Habitats\Presentation\DTOFamiliaDisponible;
 use Src\Habitats\Presentation\DTOFamiliaEliminada;
 use Src\Habitats\Presentation\DTOFamiliasDisponibles;
 use Src\Habitats\Presentation\DTOFamiliaSinHabitat;
 use Src\Habitats\Presentation\DTOFamiliasSinHabitat;
 use Src\Habitats\Presentation\DTOHabitatDetalle;
+use Src\Habitats\Presentation\DTOPokemonNivelActualizado;
 
 /**
  * Repositorio Eloquent de hábitats.
@@ -94,7 +95,7 @@ class HabitatRepository implements HabitatRepositoryInterface
                 'id' => $pokemon->id,
                 'name' => $pokemon->name,
                 'level' => intval($pokemon->pivot->level ?? 2),
-                'icon' => "/images/iconos_webp/{$pokemon->id}.webp",
+                'icon' => $this->iconPath($pokemon->id),
             ]);
 
         foreach ($habitatPokemon as $pokemon) {
@@ -185,47 +186,39 @@ class HabitatRepository implements HabitatRepositoryInterface
         return $result;
     }
 
-    public function assignFamily(int $habitatId, int $evolutionChainId): DTOFamiliaAsignada
+    public function assignFamily(int $habitatId, int $evolutionChainId): DTOFamiliaDisponible
     {
-        if (Habitat::find($habitatId) === null) {
-            throw new \InvalidArgumentException("El hábitat {$habitatId} no existe");
-        }
+        $this->assertHabitatExists($habitatId);
 
         $members = $this->getFamilyMembersByChain($evolutionChainId);
-        if ($members === []) {
-            throw new \InvalidArgumentException("La cadena evolutiva {$evolutionChainId} no existe o no tiene pokémon");
-        }
+        $this->assertFamilyMembersExist($evolutionChainId, $members);
 
         $totalStages = $this->totalStages($members);
 
-        $assignedCount = 0;
-
-        DB::transaction(function () use ($habitatId, $members, $totalStages, &$assignedCount) {
+        DB::transaction(function () use ($habitatId, $members, $totalStages) {
             $records = array_map(fn (array $member) => [
                 'pokemon_id' => $member['id'],
                 'habitat_id' => $habitatId,
                 'level' => $this->levelForStage($member['stage'], $totalStages),
             ], $members);
 
-            $assignedCount = DB::table('pokemon_habitat')
+            DB::table('pokemon_habitat')
                 ->upsert($records, ['pokemon_id', 'habitat_id'], ['level']);
         });
 
-        Cache::forget("habitats.family_chain.{$evolutionChainId}");
+        // Reconstruye la familia completa con los niveles REALES por miembro (incluye ramificaciones:
+        // levelForStage aplica el mismo reparto que el upsert anterior).
+        $family = $this->buildAvailableFamilyFromChain($evolutionChainId, $members);
 
-        return new DTOFamiliaAsignada($habitatId, $evolutionChainId, $assignedCount);
+        return $family ?? throw new \LogicException("La cadena evolutiva {$evolutionChainId} no tiene pokémon base");
     }
 
     public function removeFamily(int $habitatId, int $evolutionChainId): DTOFamiliaEliminada
     {
-        if (Habitat::find($habitatId) === null) {
-            throw new \InvalidArgumentException("El hábitat {$habitatId} no existe");
-        }
+        $this->assertHabitatExists($habitatId);
 
         $members = $this->getFamilyMembersByChain($evolutionChainId);
-        if ($members === []) {
-            throw new \InvalidArgumentException("La cadena evolutiva {$evolutionChainId} no existe o no tiene pokémon");
-        }
+        $this->assertFamilyMembersExist($evolutionChainId, $members);
 
         $pokemonIds = array_map(fn (array $member) => $member['id'], $members);
 
@@ -238,21 +231,45 @@ class HabitatRepository implements HabitatRepositoryInterface
                 ->delete();
         });
 
-        Cache::forget("habitats.family_chain.{$evolutionChainId}");
-
         return new DTOFamiliaEliminada($habitatId, $evolutionChainId, $removedCount);
     }
 
-    /**
-     * @return array<int, int>
-     */
-    public function getFamilyPokemonsByChain(int $evolutionChainId): array
+    public function movePokemonToLevel(int $habitatId, int $pokemonId, int $level): DTOPokemonNivelActualizado
     {
-        return Cache::remember("habitats.family_chain.{$evolutionChainId}", 3600, function () use ($evolutionChainId) {
-            return Pokemon::where('evolution_chain_id', $evolutionChainId)
-                ->pluck('id')
-                ->toArray();
-        });
+        if ($level < 1 || $level > 3) {
+            throw new \InvalidArgumentException("El nivel {$level} no es válido. Debe estar entre 1 y 3");
+        }
+
+        $this->assertHabitatExists($habitatId);
+
+        $pokemon = Pokemon::find($pokemonId);
+        if ($pokemon === null) {
+            throw new \InvalidArgumentException("El pokémon {$pokemonId} no existe");
+        }
+
+        $row = DB::table('pokemon_habitat')
+            ->where('pokemon_id', $pokemonId)
+            ->where('habitat_id', $habitatId)
+            ->lockForUpdate()
+            ->first();
+
+        if ($row === null) {
+            throw new \InvalidArgumentException("El pokémon {$pokemonId} no está asignado al hábitat {$habitatId}");
+        }
+
+        $previousLevel = (int) $row->level;
+
+        DB::table('pokemon_habitat')
+            ->where('pokemon_id', $pokemonId)
+            ->where('habitat_id', $habitatId)
+            ->update(['level' => $level]);
+
+        return new DTOPokemonNivelActualizado(
+            habitatId: $habitatId,
+            pokemonId: $pokemonId,
+            previousLevel: $previousLevel,
+            newLevel: $level,
+        );
     }
 
     /**
@@ -297,7 +314,7 @@ class HabitatRepository implements HabitatRepositoryInterface
         $stages = [];
         $stage = 1;
         $current = [$baseId];
-        while (! empty($current) && $stage <= 3) {
+        while ($current !== [] && $stage <= 3) {
             $next = [];
             foreach ($current as $pid) {
                 $stages[$pid] = $stage;
@@ -317,7 +334,7 @@ class HabitatRepository implements HabitatRepositoryInterface
         return $pokemon->map(fn ($p) => [
             'id' => (int) $p['id'],
             'name' => $p['name'],
-            'icon' => "/images/iconos_webp/{$p['id']}.webp",
+            'icon' => $this->iconPath((int) $p['id']),
             'stage' => $stages[(int) $p['id']] ?? 3,
         ])->values()->toArray();
     }
@@ -329,22 +346,12 @@ class HabitatRepository implements HabitatRepositoryInterface
     {
         $totalStages = $this->totalStages($members);
 
-        $base = null;
-        $evolutions = [];
-        foreach ($members as $member) {
-            $entry = [
-                'id' => $member['id'],
-                'name' => $member['name'],
-                'icon' => "/images/iconos_webp/{$member['id']}.webp",
-                'level' => $this->levelForStage($member['stage'], $totalStages),
-            ];
-
-            if ($member['stage'] === 1) {
-                $base = $entry;
-            } else {
-                $evolutions[] = $entry;
-            }
-        }
+        [$base, $evolutions] = $this->splitFamilyMembers($members, fn (array $member): array => [
+            'id' => $member['id'],
+            'name' => $member['name'],
+            'icon' => $this->iconPath($member['id']),
+            'level' => $this->levelForStage($member['stage'], $totalStages),
+        ]);
 
         if ($base === null) {
             return null;
@@ -354,6 +361,7 @@ class HabitatRepository implements HabitatRepositoryInterface
             evolutionChainId: $chainId,
             base: $base,
             evolutions: $evolutions,
+            types: $this->getChainTypes($members),
         );
     }
 
@@ -362,21 +370,11 @@ class HabitatRepository implements HabitatRepositoryInterface
      */
     private function buildUnassignedFamilyFromChain(int $chainId, array $members): ?DTOFamiliaSinHabitat
     {
-        $base = null;
-        $evolutions = [];
-        foreach ($members as $member) {
-            $entry = [
-                'id' => $member['id'],
-                'name' => $member['name'],
-                'icon' => "/images/iconos_webp/{$member['id']}.webp",
-            ];
-
-            if ($member['stage'] === 1) {
-                $base = $entry;
-            } else {
-                $evolutions[] = $entry;
-            }
-        }
+        [$base, $evolutions] = $this->splitFamilyMembers($members, fn (array $member): array => [
+            'id' => $member['id'],
+            'name' => $member['name'],
+            'icon' => $this->iconPath($member['id']),
+        ]);
 
         if ($base === null) {
             return null;
@@ -386,7 +384,56 @@ class HabitatRepository implements HabitatRepositoryInterface
             evolutionChainId: $chainId,
             base: $base,
             evolutions: $evolutions,
+            types: $this->getChainTypes($members),
         );
+    }
+
+    /**
+     * Divide los miembros de una familia entre base (stage 1) y evoluciones,
+     * construyendo la entrada de cada uno con el builder recibido.
+     *
+     * @template TEntry of array
+     *
+     * @param  array<int, array{id: int, name: string, icon: string, stage: int}>  $members
+     * @param  callable(array{id: int, name: string, icon: string, stage: int}): TEntry  $entryBuilder
+     * @return array{0: ?TEntry, 1: array<int, TEntry>}
+     */
+    private function splitFamilyMembers(array $members, callable $entryBuilder): array
+    {
+        $base = null;
+        $evolutions = [];
+
+        foreach ($members as $member) {
+            $entry = $entryBuilder($member);
+
+            if ($member['stage'] === 1) {
+                $base = $entry;
+            } else {
+                $evolutions[] = $entry;
+            }
+        }
+
+        return [$base, $evolutions];
+    }
+
+    /**
+     * @param  array<int, array{id: int, name: string, icon: string, stage: int}>  $members
+     * @return array<int, array{id: int, name: string}>
+     */
+    private function getChainTypes(array $members): array
+    {
+        $ids = array_map(fn (array $member) => $member['id'], $members);
+
+        $types = PokemonType::whereIn('pokemon_id', $ids)
+            ->get()
+            ->pluck('type')
+            ->map(fn (TipoEnum $type) => ['id' => $type->value, 'name' => $type->label()])
+            ->unique('id')
+            ->sortBy('id')
+            ->values()
+            ->toArray();
+
+        return $types;
     }
 
     /**
@@ -404,5 +451,27 @@ class HabitatRepository implements HabitatRepositoryInterface
         }
 
         return min($stage, 3);
+    }
+
+    private function assertHabitatExists(int $habitatId): void
+    {
+        if (Habitat::find($habitatId) === null) {
+            throw new \InvalidArgumentException("El hábitat {$habitatId} no existe");
+        }
+    }
+
+    /**
+     * @param  array<int, array{id: int, name: string, icon: string, stage: int}>  $members
+     */
+    private function assertFamilyMembersExist(int $evolutionChainId, array $members): void
+    {
+        if ($members === []) {
+            throw new \InvalidArgumentException("La cadena evolutiva {$evolutionChainId} no existe o no tiene pokémon");
+        }
+    }
+
+    private function iconPath(int $pokemonId): string
+    {
+        return "/images/iconos_webp/{$pokemonId}.webp";
     }
 }

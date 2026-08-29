@@ -25,7 +25,7 @@ class DTOFamiliasDisponibles extends Collection
     }
 
     /**
-     * @return array<int, array{evolution_chain_id: int, base: array{id: int, name: string, icon: string, level: int}, evolutions: array<int, array{id: int, name: string, icon: string, level: int}>}>
+     * @return array<int, array{evolution_chain_id: int, base: array{id: int, name: string, icon: string, level: int}, evolutions: array<int, array{id: int, name: string, icon: string, level: int}>, types: array<int, array{id: int, name: string}>}>
      */
     public function toArray(): array
     {

@@ -5,11 +5,12 @@ declare(strict_types=1);
 namespace Src\Habitats\Domain\Repositories;
 
 use Src\Habitats\Domain\ProvinciasCollection;
-use Src\Habitats\Presentation\DTOFamiliaAsignada;
+use Src\Habitats\Presentation\DTOFamiliaDisponible;
 use Src\Habitats\Presentation\DTOFamiliaEliminada;
 use Src\Habitats\Presentation\DTOFamiliasDisponibles;
 use Src\Habitats\Presentation\DTOFamiliasSinHabitat;
 use Src\Habitats\Presentation\DTOHabitatDetalle;
+use Src\Habitats\Presentation\DTOPokemonNivelActualizado;
 
 interface HabitatRepositoryInterface
 {
@@ -26,12 +27,9 @@ interface HabitatRepositoryInterface
 
     public function getUnassignedFamilies(): DTOFamiliasSinHabitat;
 
-    public function assignFamily(int $habitatId, int $evolutionChainId): DTOFamiliaAsignada;
+    public function assignFamily(int $habitatId, int $evolutionChainId): DTOFamiliaDisponible;
 
     public function removeFamily(int $habitatId, int $evolutionChainId): DTOFamiliaEliminada;
 
-    /**
-     * @return array<int, int>
-     */
-    public function getFamilyPokemonsByChain(int $evolutionChainId): array;
+    public function movePokemonToLevel(int $habitatId, int $pokemonId, int $level): DTOPokemonNivelActualizado;
 }

@@ -3,6 +3,12 @@
 @section('title', 'Hábitat - ' . ($habitat['name'] ?? ''))
 
 @section('content')
+@php
+    // Clases shell compartidas (dedup de patrones repetidos en paneles/modal).
+    $cardPanelClass = 'bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden';
+    $constructionButtonClass = 'w-full px-4 py-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-sm font-medium text-gray-700 dark:text-gray-300 transition-colors flex items-center justify-center gap-2';
+    $familyCardClass = 'bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-3 text-center';
+@endphp
 <div x-data="habitatShow()" x-init="init()">
         <!-- Main: Left 1/4 (back/title/image/construction) + Right 3/4 (explorations/teams/levels) -->
         <div class="grid lg:grid-cols-4 gap-6">
@@ -34,7 +40,7 @@
                         @click="{{ $bloqueadoConstruccion ? '' : "alert('Función próximamente')" }}"
                         {{ $bloqueadoConstruccion ? 'disabled' : '' }}
                         @if($bloqueadoConstruccion) title="No disponible durante exploraciones activas" @endif
-                        class="w-full px-4 py-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-sm font-medium text-gray-700 dark:text-gray-300 transition-colors flex items-center justify-center gap-2 {{ $bloqueadoConstruccion ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-50 dark:hover:bg-gray-700' }}"
+                        class="{{ $constructionButtonClass }} {{ $bloqueadoConstruccion ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-50 dark:hover:bg-gray-700' }}"
                     >
                         <img src="/images/misc/item/farm.webp" loading="lazy" decoding="async" class="w-8 h-8 object-contain" alt="Granjas">
                         Granjas
@@ -43,7 +49,7 @@
                         @click="{{ $bloqueadoConstruccion ? '' : "alert('Función próximamente')" }}"
                         {{ $bloqueadoConstruccion ? 'disabled' : '' }}
                         @if($bloqueadoConstruccion) title="No disponible durante exploraciones activas" @endif
-                        class="w-full px-4 py-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-sm font-medium text-gray-700 dark:text-gray-300 transition-colors flex items-center justify-center gap-2 {{ $bloqueadoConstruccion ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-50 dark:hover:bg-gray-700' }}"
+                        class="{{ $constructionButtonClass }} {{ $bloqueadoConstruccion ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-50 dark:hover:bg-gray-700' }}"
                     >
                         <img src="/images/misc/item/trainer.webp" loading="lazy" decoding="async" class="w-8 h-8 object-contain" alt="Entrenadores">
                         Entrenadores
@@ -52,10 +58,20 @@
                         @click="{{ $bloqueadoConstruccion ? '' : "alert('Función próximamente')" }}"
                         {{ $bloqueadoConstruccion ? 'disabled' : '' }}
                         @if($bloqueadoConstruccion) title="No disponible durante exploraciones activas" @endif
-                        class="w-full px-4 py-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-sm font-medium text-gray-700 dark:text-gray-300 transition-colors flex items-center justify-center gap-2 {{ $bloqueadoConstruccion ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-50 dark:hover:bg-gray-700' }}"
+                        class="{{ $constructionButtonClass }} {{ $bloqueadoConstruccion ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-50 dark:hover:bg-gray-700' }}"
                     >
                         <img src="/images/misc/raid.png" loading="lazy" decoding="async" class="w-8 h-8 object-contain" alt="Mazmorras">
                         Mazmorras
+                    </button>
+                    <button
+                        @click="openGestionModal()"
+                        class="w-full px-4 py-3 bg-blue-600 text-white rounded-xl text-sm font-bold transition-colors hover:bg-blue-700 flex items-center justify-center gap-2 uppercase tracking-wide"
+                    >
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                        </svg>
+                        Admin - Gestion
                     </button>
                 </div>
                 @if($bloqueadoConstruccion)
@@ -69,7 +85,7 @@
             <div class="lg:col-span-3 space-y-6">
                 <!-- Active Explorations List -->
                 @if($exploracionesActivas && $exploracionesActivas->count() > 0)
-                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+                <div class="{{ $cardPanelClass }}">
                     <div class="px-4 py-3 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
                         <h3 class="text-sm font-semibold text-gray-900 dark:text-white flex items-center gap-2">
                             <svg class="w-4 h-4 text-yellow-500" fill="currentColor" viewBox="0 0 20 20">
@@ -108,7 +124,7 @@
                 @endif
 
                 <!-- Teams Panel: 3-column grid of team cards -->
-                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+                <div class="{{ $cardPanelClass }}">
                     <div class="p-4 border-b border-gray-200 dark:border-gray-700">
                         <h3 class="text-sm font-semibold text-gray-900 dark:text-white">Equipos</h3>
                     </div>
@@ -191,7 +207,7 @@
                 </div>
 
                 <!-- Niveles Panel: 3 clickable level rows -->
-                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+                <div class="{{ $cardPanelClass }}">
                     <div class="p-4 border-b border-gray-200 dark:border-gray-700">
                         <h3 class="text-sm font-semibold text-gray-900 dark:text-white">Niveles</h3>
                     </div>
@@ -310,6 +326,188 @@
             </div>
         </div>
     </template>
+
+    <!-- Admin Gestion Modal -->
+    <template x-if="showGestionModal">
+        <div class="fixed inset-0 z-50 flex items-center justify-center p-4" @keydown.escape.window="closeGestionModal()">
+            <div class="absolute inset-0 bg-black/60" @click="closeGestionModal()"></div>
+            <div class="relative bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
+                <!-- Header -->
+                <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+                    <h3 class="text-lg font-bold text-gray-900 dark:text-white">Admin - Gestión de Familias</h3>
+                    <button @click="closeGestionModal()" class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400" aria-label="Cerrar modal">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                    </button>
+                </div>
+
+                <!-- Tabs -->
+                <div class="border-b border-gray-200 dark:border-gray-700 px-6">
+                    <nav class="flex gap-6" role="tablist" aria-label="Gestión de familias">
+                        <button
+                            role="tab"
+                            :aria-selected="gestionTab === 'assign'"
+                            :class="['py-3 text-sm font-medium border-b-2 transition-colors', gestionTab === 'assign' ? 'border-blue-500 text-blue-600 dark:text-blue-400' : 'border-transparent text-gray-500 hover:text-gray-700 dark:hover:text-gray-300']"
+                            @click="gestionTab = 'assign'"
+                        >
+                            Asignar
+                        </button>
+                        <button
+                            role="tab"
+                            :aria-selected="gestionTab === 'unassign'"
+                            :class="['py-3 text-sm font-medium border-b-2 transition-colors', gestionTab === 'unassign' ? 'border-red-500 text-red-600 dark:text-red-400' : 'border-transparent text-gray-500 hover:text-gray-700 dark:hover:text-gray-300']"
+                            @click="gestionTab = 'unassign'"
+                        >
+                            Ya Asignados
+                        </button>
+                    </nav>
+                </div>
+
+                <!-- Content -->
+                <div class="flex-1 overflow-y-auto p-6">
+                    <!-- ASSIGN TAB -->
+                    <template x-if="gestionTab === 'assign'">
+                        <div class="space-y-4">
+                            <!-- Filters -->
+                            <div class="flex flex-col sm:flex-row gap-3">
+                                <input
+                                    type="text"
+                                    x-model="assignSearch"
+                                    placeholder="Buscar familia por nombre..."
+                                    class="flex-1 px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
+                                >
+                                <select
+                                    x-model="assignTypeFilter"
+                                    class="px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
+                                >
+                                    <option value="">Todos los tipos</option>
+                                    <template x-for="tipo in allTypes" :key="tipo.id">
+                                        <option :value="tipo.id" x-text="tipo.name"></option>
+                                    </template>
+                                </select>
+                            </div>
+
+                            <!-- Unassigned families grid -->
+                            <div x-show="filteredUnassigned.length === 0 && !gestionLoading" class="text-center py-12 text-gray-500 dark:text-gray-400">
+                                <p>No hay familias sin hábitat que coincidan con la búsqueda</p>
+                            </div>
+                            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+                                <template x-for="family in filteredUnassigned" :key="family.evolution_chain_id">
+                                    <button
+                                        type="button"
+                                        :disabled="gestionLoading"
+                                        @click="assignFamily(family)"
+                                        class="group {{ $familyCardClass }} hover:border-blue-400 dark:hover:border-blue-500 hover:shadow-md transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                                        :title="family.base.name"
+                                    >
+                                        <div class="w-full aspect-square bg-gray-100 dark:bg-gray-900 rounded-lg flex items-center justify-center overflow-hidden mb-2">
+                                            <img
+                                                :src="'/images/iconos_webp/' + family.base.id + '.webp'"
+                                                loading="lazy"
+                                                decoding="async"
+                                                :alt="family.base.name"
+                                                class="w-full h-full object-contain group-hover:scale-105 transition-transform"
+                                                onerror="this.style.display='none'"
+                                            >
+                                        </div>
+                                        <p class="text-sm font-medium text-gray-900 dark:text-white truncate" x-text="family.base.name"></p>
+                                        <div class="flex flex-wrap justify-center gap-1 mt-1">
+                                            <template x-for="tipo in (family.types || [])" :key="tipo.id">
+                                                <span class="px-1.5 py-0.5 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 text-[10px] font-medium rounded">
+                                                    <span x-text="tipo.name"></span>
+                                                </span>
+                                            </template>
+                                        </div>
+                                    </button>
+                                </template>
+                            </div>
+                        </div>
+                    </template>
+
+                    <!-- YA ASIGNADOS TAB: agrupado por nivel (1, 2, 3) -->
+                    <template x-if="gestionTab === 'unassign'">
+                        <div class="space-y-6">
+                            <div x-show="assignedFamilies.length === 0 && !gestionLoading" class="text-center py-12 text-gray-500 dark:text-gray-400">
+                                <p>No hay familias asignadas a este hábitat</p>
+                            </div>
+
+                            <template x-for="level in [1, 2, 3]" :key="'level-' + level">
+                                <div>
+                                    <div class="flex items-center justify-between mb-3">
+                                        <h4 class="text-sm font-semibold text-gray-900 dark:text-white">Nivel <span x-text="level"></span></h4>
+                                        <span class="text-xs text-gray-500 dark:text-gray-400" x-text="assignedByLevel[level].length + ' pokémon'"></span>
+                                    </div>
+
+                                    <div x-show="assignedByLevel[level].length > 0" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+                                        <template x-for="pokemon in assignedByLevel[level]" :key="pokemon.evolution_chain_id + '-' + pokemon.id">
+                                            <div class="relative {{ $familyCardClass }} group">
+                                                <template x-if="pokemon.is_base">
+                                                    <button
+                                                        type="button"
+                                                        :disabled="gestionLoading"
+                                                        @click="removeFamily(pokemon.evolution_chain_id)"
+                                                        class="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full text-xs flex items-center justify-center hover:bg-red-600 transition-colors disabled:opacity-30"
+                                                        :aria-label="'Quitar la familia completa de ' + pokemon.name"
+                                                        title="Quitar familia completa"
+                                                    >
+                                                        ✕
+                                                    </button>
+                                                </template>
+                                                <div class="w-full aspect-square bg-gray-100 dark:bg-gray-900 rounded-lg flex items-center justify-center overflow-hidden mb-2">
+                                                    <img
+                                                        :src="'/images/iconos_webp/' + pokemon.id + '.webp'"
+                                                        loading="lazy"
+                                                        decoding="async"
+                                                        :alt="pokemon.name"
+                                                        class="w-full h-full object-contain"
+                                                        onerror="this.style.display='none'"
+                                                    >
+                                                </div>
+                                                <p class="text-sm font-medium text-gray-900 dark:text-white truncate" x-text="pokemon.name"></p>
+                                                <p class="text-[10px] text-gray-500 dark:text-gray-400 mt-0.5" x-text="pokemon.is_base ? 'Base de la familia' : 'Evolución'"></p>
+                                                <div class="flex justify-center gap-1 mt-2">
+                                                    <button
+                                                        type="button"
+                                                        :disabled="gestionLoading"
+                                                        @click="updatePokemonLevel(pokemon.evolution_chain_id, pokemon.id, 1)"
+                                                        :class="pokemon.level === 1 ? 'bg-blue-600 text-white border-blue-600' : 'bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-300 border-gray-200 dark:border-gray-600 hover:border-blue-400'"
+                                                        class="w-8 h-7 text-xs font-bold rounded border transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                                                        :aria-label="'Mover ' + pokemon.name + ' al nivel 1'"
+                                                        title="Nivel 1"
+                                                    >1</button>
+                                                    <button
+                                                        type="button"
+                                                        :disabled="gestionLoading"
+                                                        @click="updatePokemonLevel(pokemon.evolution_chain_id, pokemon.id, 2)"
+                                                        :class="pokemon.level === 2 ? 'bg-blue-600 text-white border-blue-600' : 'bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-300 border-gray-200 dark:border-gray-600 hover:border-blue-400'"
+                                                        class="w-8 h-7 text-xs font-bold rounded border transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                                                        :aria-label="'Mover ' + pokemon.name + ' al nivel 2'"
+                                                        title="Nivel 2"
+                                                    >2</button>
+                                                    <button
+                                                        type="button"
+                                                        :disabled="gestionLoading"
+                                                        @click="updatePokemonLevel(pokemon.evolution_chain_id, pokemon.id, 3)"
+                                                        :class="pokemon.level === 3 ? 'bg-blue-600 text-white border-blue-600' : 'bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-300 border-gray-200 dark:border-gray-600 hover:border-blue-400'"
+                                                        class="w-8 h-7 text-xs font-bold rounded border transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                                                        :aria-label="'Mover ' + pokemon.name + ' al nivel 3'"
+                                                        title="Nivel 3"
+                                                    >3</button>
+                                                </div>
+                                            </div>
+                                        </template>
+                                    </div>
+
+                                    <div x-show="assignedByLevel[level].length === 0 && assignedFamilies.length > 0 && !gestionLoading" class="text-center py-6 text-gray-400 dark:text-gray-500 border border-dashed border-gray-200 dark:border-gray-700 rounded-xl">
+                                        <p>Sin pokémon en este nivel</p>
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
+                    </template>
+                </div>
+            </div>
+        </div>
+    </template>
 </div>
 
 @push('scripts')
@@ -326,6 +524,16 @@ function habitatShow() {
         sightedPokemonIds: @json($sightedPokemonIds ?? []),
         equiposEnExploracion: @json($equiposEnExploracion->pluck('equipo_id')->toArray()),
         teams: @json($teams),
+
+        // Admin Gestion state
+        showGestionModal: false,
+        gestionTab: 'assign',
+        gestionLoading: false,
+        unassignedFamilies: [],
+        assignedFamilies: [],
+        assignSearch: '',
+        assignTypeFilter: '',
+        allTypes: @json(collect(\App\Enums\TipoEnum::options())->map(fn ($name, $id) => ['id' => (int) $id, 'name' => $name])->values()->all()),
 
         get canStartExploration() {
             return this.selectedTeamId !== null && this.selectedLevel !== null;
@@ -420,6 +628,217 @@ function habitatShow() {
 
             document.body.appendChild(form);
             form.submit();
+        },
+
+        get filteredUnassigned() {
+            const query = (this.assignSearch || '').trim().toLowerCase();
+            const typeId = this.assignTypeFilter ? Number(this.assignTypeFilter) : null;
+
+            return (this.unassignedFamilies || []).filter(family => {
+                const nameMatch = !query || (family.base.name || '').toLowerCase().includes(query);
+                let typeMatch = true;
+                if (typeId) {
+                    typeMatch = (family.types || []).some(t => Number(t.id) === typeId);
+                }
+                return nameMatch && typeMatch;
+            });
+        },
+
+        openGestionModal() {
+            this.showGestionModal = true;
+            this.gestionTab = 'assign';
+            this.assignSearch = '';
+            this.assignTypeFilter = '';
+            this.loadUnassignedFamilies();
+            this.loadAssignedFamilies();
+        },
+
+        closeGestionModal() {
+            this.showGestionModal = false;
+        },
+
+        async loadUnassignedFamilies() {
+            this.gestionLoading = true;
+            try {
+                const response = await fetch('/api/habitats/unassigned-families', {
+                    headers: { 'Accept': 'application/json' },
+                });
+                if (!response.ok) throw new Error('Error al cargar familias');
+                const data = await response.json();
+                this.unassignedFamilies = (data || []).map(f => ({
+                    ...f,
+                    total_stages: 1 + (f.evolutions?.length || 0),
+                }));
+            } catch (e) {
+                alert('Error al cargar familias: ' + e.message);
+            } finally {
+                this.gestionLoading = false;
+            }
+        },
+
+        async loadAssignedFamilies() {
+            this.gestionLoading = true;
+            try {
+                const response = await fetch('/api/habitats/{{ $habitat['id'] }}/families', {
+                    headers: { 'Accept': 'application/json' },
+                });
+                if (!response.ok) throw new Error('Error al cargar familias asignadas');
+                const data = await response.json();
+                this.assignedFamilies = (data || []).map(f => ({
+                    ...f,
+                    total_stages: 1 + (f.evolutions?.length || 0),
+                }));
+            } catch (e) {
+                alert('Error al cargar familias asignadas: ' + e.message);
+            } finally {
+                this.gestionLoading = false;
+            }
+        },
+
+        get assignedByLevel() {
+            const grouped = { 1: [], 2: [], 3: [] };
+            (this.assignedFamilies || []).forEach((family) => {
+                if (Number.isFinite(Number(family.base?.level))) {
+                    grouped[Number(family.base.level)]?.push({
+                        ...family.base,
+                        evolution_chain_id: family.evolution_chain_id,
+                        is_base: true,
+                    });
+                }
+                (family.evolutions || []).forEach((evo) => {
+                    if (Number.isFinite(Number(evo.level))) {
+                        grouped[Number(evo.level)]?.push({
+                            ...evo,
+                            evolution_chain_id: family.evolution_chain_id,
+                            is_base: false,
+                        });
+                    }
+                });
+            });
+            return grouped;
+        },
+
+        async assignFamily(family) {
+            if (this.gestionLoading) return;
+            this.gestionLoading = true;
+            try {
+                const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || '';
+                const response = await fetch('/api/habitats/{{ $habitat['id'] }}/families', {
+                    method: 'POST',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': csrfToken,
+                    },
+                    body: JSON.stringify({ evolution_chain_id: family.evolution_chain_id }),
+                });
+                if (!response.ok) {
+                    const err = await response.json();
+                    throw new Error(err.message || 'Error al asignar la familia');
+                }
+
+                // Refresco local SIN recargar listados: quito de no asignadas siempre.
+                this.unassignedFamilies = (this.unassignedFamilies || []).filter(f => f.evolution_chain_id !== family.evolution_chain_id);
+
+                // El POST devuelve (201) la familia COMPLETA con los niveles reales por miembro
+                // (base.level / evolutions[].level). La añadimos decorada con total_stages, igual
+                // que hacen los loaders, para que assignedByLevel agrupe con datos reales y no
+                // con la inferencia client-side del antiguo helper.
+                const data = await response.json().catch(() => null);
+                if (data && data.evolution_chain_id && data.base) {
+                    this.assignedFamilies = [
+                        { ...data, total_stages: 1 + (data.evolutions?.length || 0) },
+                        ...(this.assignedFamilies || []),
+                    ];
+                }
+                // Fallback defensivo: si el body NO trae la estructura completa (p. ej. el backend
+                // aún no entrega el nuevo shape), NO inferimos niveles y no añadimos la familia a
+                // assignedFamilies (un objeto mínimo sin level rompería la pestaña Ya Asignados y
+                // assignedByLevel). Como ya la quitamos de unassignedFamilies, no hay duplicados:
+                // se auto-corrige al reabrir el modal, que sí recarga los listados.
+            } catch (e) {
+                alert('Error al asignar: ' + e.message);
+            } finally {
+                this.gestionLoading = false;
+            }
+        },
+
+        async updatePokemonLevel(chainId, pokemonId, level) {
+            if (this.gestionLoading) return;
+            this.gestionLoading = true;
+            try {
+                const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || '';
+                const response = await fetch('/api/habitats/{{ $habitat['id'] }}/pokemon/' + pokemonId, {
+                    method: 'PATCH',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': csrfToken,
+                    },
+                    body: JSON.stringify({ level: level }),
+                });
+                if (!response.ok) {
+                    const err = await response.json().catch(() => ({}));
+                    throw new Error(err.message || 'Error al mover el pokémon de nivel');
+                }
+
+                // Refresco local SIN recargar: muto el nivel de ese pokémon para que re-agrupe solo.
+                const family = (this.assignedFamilies || []).find(f => f.evolution_chain_id === chainId);
+                if (!family) return;
+
+                if (Number(family.base?.id) === pokemonId) {
+                    family.base.level = level;
+                    return;
+                }
+
+                const evo = (family.evolutions || []).find(e => Number(e.id) === pokemonId);
+                if (evo) {
+                    evo.level = level;
+                }
+            } catch (e) {
+                alert('Error al mover de nivel: ' + e.message);
+            } finally {
+                this.gestionLoading = false;
+            }
+        },
+
+        async removeFamily(chainId) {
+            if (this.gestionLoading) return;
+            this.gestionLoading = true;
+            try {
+                const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || '';
+                const response = await fetch('/api/habitats/{{ $habitat['id'] }}/families/' + chainId, {
+                    method: 'DELETE',
+                    headers: {
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': csrfToken,
+                    },
+                });
+                if (!response.ok) {
+                    const err = await response.json();
+                    throw new Error(err.message || 'Error al desasignar la familia');
+                }
+
+                // Refresco local SIN recargar: quito de asignadas y devuelvo a no asignadas (sin levels, con types).
+                const family = (this.assignedFamilies || []).find(f => f.evolution_chain_id === chainId);
+                this.assignedFamilies = (this.assignedFamilies || []).filter(f => f.evolution_chain_id !== chainId);
+
+                if (family) {
+                    this.unassignedFamilies = [
+                        {
+                            evolution_chain_id: family.evolution_chain_id,
+                            base: { id: family.base?.id, name: family.base?.name, icon: family.base?.icon },
+                            evolutions: (family.evolutions || []).map(evo => ({ id: evo.id, name: evo.name, icon: evo.icon })),
+                            types: family.types || [],
+                        },
+                        ...(this.unassignedFamilies || []),
+                    ];
+                }
+            } catch (e) {
+                alert('Error al desasignar: ' + e.message);
+            } finally {
+                this.gestionLoading = false;
+            }
         },
     };
 }

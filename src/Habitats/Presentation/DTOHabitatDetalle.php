@@ -22,7 +22,7 @@ class DTOHabitatDetalle
     }
 
     /**
-     * @return array{id: int, name: string, image: string, levels: array}
+     * @return array{id: int, name: string, image: string, levels: array<int, array<int, array{id: int, name: string, icon: string}>>}
      */
     public function toArray(): array
     {

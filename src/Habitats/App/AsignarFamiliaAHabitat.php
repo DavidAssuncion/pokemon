@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Src\Habitats\App;
 
 use Src\Habitats\Domain\Repositories\HabitatRepositoryInterface;
-use Src\Habitats\Presentation\DTOFamiliaAsignada;
+use Src\Habitats\Presentation\DTOFamiliaDisponible;
 
 class AsignarFamiliaAHabitat
 {
@@ -13,7 +13,7 @@ class AsignarFamiliaAHabitat
     {
     }
 
-    public function handle(int $habitatId, int $evolutionChainId): DTOFamiliaAsignada
+    public function handle(int $habitatId, int $evolutionChainId): DTOFamiliaDisponible
     {
         return $this->repository->assignFamily($habitatId, $evolutionChainId);
     }

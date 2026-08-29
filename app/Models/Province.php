@@ -18,6 +18,9 @@ class Province extends Model
         'name',
     ];
 
+    /**
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany<Habitat, $this>
+     */
     public function habitats()
     {
         return $this->hasMany(Habitat::class);

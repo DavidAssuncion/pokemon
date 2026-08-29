@@ -25,7 +25,7 @@ class DTOFamiliasSinHabitat extends Collection
     }
 
     /**
-     * @return array<int, array{evolution_chain_id: int, base: array{id: int, name: string, icon: string}, evolutions: array<int, array{id: int, name: string, icon: string}>}>
+     * @return array<int, array{evolution_chain_id: int, base: array{id: int, name: string, icon: string}, evolutions: array<int, array{id: int, name: string, icon: string}>, types: array<int, array{id: int, name: string}>}>
      */
     public function toArray(): array
     {

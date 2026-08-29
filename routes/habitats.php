@@ -23,5 +23,6 @@ Route::get('/habitats-img/{id}.webp', function (int $id) {
 Route::get('/api/habitats/{id}/families', [HabitatsController::class, 'families']);
 Route::post('/api/habitats/{id}/families', [HabitatsController::class, 'assignFamily']);
 Route::delete('/api/habitats/{id}/families/{chainId}', [HabitatsController::class, 'removeFamily']);
+Route::patch('/api/habitats/{habitat}/pokemon/{pokemon}', [HabitatsController::class, 'movePokemonLevel']);
 
 Route::get('/api/habitats/unassigned-families', [HabitatsController::class, 'unassignedFamilies']);

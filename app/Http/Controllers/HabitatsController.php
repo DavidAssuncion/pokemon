@@ -13,6 +13,7 @@ use Illuminate\View\View;
 use Src\Equipos\App\ObtenerEquipos;
 use Src\Habitats\App\AsignarFamiliaAHabitat;
 use Src\Habitats\App\EliminarFamiliaDeHabitat;
+use Src\Habitats\App\MoverPokemonDeNivel;
 use Src\Habitats\App\ObtenerFamiliasDisponibles;
 use Src\Habitats\App\ObtenerFamiliasSinHabitat;
 use Src\Habitats\App\ObtenerHabitatDetalle;
@@ -30,6 +31,7 @@ class HabitatsController extends Controller
         public readonly ObtenerFamiliasSinHabitat $obtenerFamiliasSinHabitat,
         public readonly AsignarFamiliaAHabitat $asignarFamiliaAHabitat,
         public readonly EliminarFamiliaDeHabitat $eliminarFamiliaDeHabitat,
+        public readonly MoverPokemonDeNivel $moverPokemonDeNivel,
     ) {
     }
 
@@ -134,5 +136,20 @@ class HabitatsController extends Controller
         $families = $this->obtenerFamiliasSinHabitat->handle();
 
         return response()->json($families->toArray());
+    }
+
+    public function movePokemonLevel(int $habitat, int $pokemon, Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'level' => ['required', 'integer', 'between:1,3'],
+        ]);
+
+        try {
+            $result = $this->moverPokemonDeNivel->handle($habitat, $pokemon, (int) $validated['level']);
+
+            return response()->json($result->toArray());
+        } catch (\InvalidArgumentException $e) {
+            return response()->json(['message' => $e->getMessage()], 422);
+        }
     }
 }
