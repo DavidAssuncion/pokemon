@@ -37,6 +37,15 @@
                         <span class="px-2 py-0.5 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 text-[10px] font-bold rounded-full uppercase">
                             Nivel {{ $exp['nivel'] }}
                         </span>
+                        @if(($exp['min_lvl'] ?? null) !== null && ($nivelJugador ?? 1) < $exp['min_lvl'])
+                            <span class="px-2 py-0.5 bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400 text-[10px] font-bold rounded-full uppercase inline-flex items-center gap-1"
+                                  title="Requiere nivel {{ $exp['min_lvl'] }} de jugador">
+                                <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                                    <path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd"/>
+                                </svg>
+                                Requiere Nv {{ $exp['min_lvl'] }}
+                            </span>
+                        @endif
                     </div>
                     @php
                         $volviendo = ($exp['estado'] ?? 'explorando') === 'volviendo';
@@ -199,6 +208,15 @@
                         <span class="px-2 py-0.5 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 text-[10px] font-bold rounded-full uppercase">
                             Nivel {{ $terminada['nivel'] }}
                         </span>
+                        @if(($terminada['min_lvl'] ?? null) !== null && ($nivelJugador ?? 1) < $terminada['min_lvl'])
+                            <span class="px-2 py-0.5 bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400 text-[10px] font-bold rounded-full uppercase inline-flex items-center gap-1"
+                                  title="Requiere nivel {{ $terminada['min_lvl'] }} de jugador">
+                                <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                                    <path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd"/>
+                                </svg>
+                                Requiere Nv {{ $terminada['min_lvl'] }}
+                            </span>
+                        @endif
                     </div>
                     <button
                         @click="cerrarResultados({{ $terminada['id'] }})"

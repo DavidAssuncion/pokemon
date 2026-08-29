@@ -37,8 +37,19 @@
                         </a>
                     @endforeach
                 </div>
-                <!-- Nivel jugador + Dark mode toggle -->
+                <!-- Usuario autenticado + Nivel jugador + Dark mode toggle -->
                 <div class="absolute right-0 top-1/2 -translate-y-1/2 flex items-center gap-2">
+                    @auth
+                        <span class="hidden sm:inline-flex text-sm font-medium text-gray-700 dark:text-gray-300 max-w-[10rem] truncate" title="{{ auth()->user()->name }}">
+                            {{ auth()->user()->name }}
+                        </span>
+                        <form method="POST" action="{{ url('/logout') }}" class="inline">
+                            @csrf
+                            <button type="submit" class="px-2.5 py-1 text-xs font-medium text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-700 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white transition-colors">
+                                Salir
+                            </button>
+                        </form>
+                    @endauth
                     <span class="px-2.5 py-1 bg-blue-600 text-white text-xs font-bold rounded-full" title="Nivel {{ $nivelJugador ?? 1 }}">
                         Nv {{ $nivelJugador ?? 1 }}
                     </span>

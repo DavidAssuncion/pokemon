@@ -220,18 +220,40 @@
                         <h3 class="text-sm font-semibold text-gray-900 dark:text-white">Niveles</h3>
                     </div>
                     <div class="p-4 space-y-3">
+                        <p x-show="avisoNivel" x-cloak x-text="avisoNivel" role="status"
+                           class="text-xs text-orange-700 dark:text-orange-300 bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg px-3 py-2"></p>
                         @foreach([1,2,3] as $level)
+                        @php
+                            $minLvl = $habitat['min_lvl_' . $level] ?? null;
+                            $bloqueadoNivel = $minLvl !== null && ($nivelJugador ?? 1) < $minLvl;
+                        @endphp
                         <button
                             @click="selectLevel({{ $level }})"
+                            {{ $bloqueadoNivel ? 'disabled' : '' }}
+                            @if($bloqueadoNivel) title="Requiere Nv {{ $minLvl }}" aria-disabled="true" @endif
                             :class="selectedLevel === {{ $level }}
                                 ? 'border-blue-500 dark:border-blue-400 bg-blue-50 dark:bg-blue-900/20'
                                 : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'"
-                            class="w-full p-4 rounded-xl border-2 text-left transition-all"
+                            class="w-full p-4 rounded-xl border-2 text-left transition-all {{ $bloqueadoNivel ? 'opacity-60 cursor-not-allowed border-dashed' : '' }}"
                             aria-label="Nivel {{ $level }}"
                         >
                             <div class="flex items-center justify-between mb-2">
-                                <span class="text-sm font-semibold text-gray-900 dark:text-white">Nivel {{ $level }}</span>
-                                <span class="text-xs text-gray-500 dark:text-gray-400">{{ count($habitat['levels'][$level] ?? []) }} pokémon</span>
+                                <span class="text-sm font-semibold text-gray-900 dark:text-white flex items-center gap-1.5">
+                                    @if($bloqueadoNivel)
+                                        <svg class="w-3.5 h-3.5 text-orange-500" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                                            <path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd"/>
+                                        </svg>
+                                    @endif
+                                    Nivel {{ $level }}
+                                </span>
+                                <span class="flex items-center gap-2">
+                                    @if($bloqueadoNivel)
+                                        <span class="px-2 py-0.5 bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400 text-[10px] font-bold rounded-full">
+                                            Requiere Nv {{ $minLvl }}
+                                        </span>
+                                    @endif
+                                    <span class="text-xs text-gray-500 dark:text-gray-400">{{ count($habitat['levels'][$level] ?? []) }} pokémon</span>
+                                </span>
                             </div>
                             <div class="flex flex-wrap gap-2">
                                 @forelse($habitat['levels'][$level] ?? [] as $pokemon)
@@ -532,6 +554,13 @@ function habitatShow() {
         sightedPokemonIds: @json($sightedPokemonIds ?? []),
         equiposEnExploracion: @json($equiposEnExploracion->pluck('equipo_id')->toArray()),
         teams: @json($teams),
+        minLvls: {
+            1: {{ $habitat['min_lvl_1'] ?? 'null' }},
+            2: {{ $habitat['min_lvl_2'] ?? 'null' }},
+            3: {{ $habitat['min_lvl_3'] ?? 'null' }},
+        },
+        nivelJugador: {{ $nivelJugador ?? 1 }},
+        avisoNivel: '',
 
         // Admin Gestion state
         showGestionModal: false,
@@ -544,7 +573,9 @@ function habitatShow() {
         allTypes: @json(collect(\App\Enums\TipoEnum::options())->map(fn ($name, $id) => ['id' => (int) $id, 'name' => $name])->values()->all()),
 
         get canStartExploration() {
-            return this.selectedTeamId !== null && this.selectedLevel !== null;
+            return this.selectedTeamId !== null
+                && this.selectedLevel !== null
+                && !this.levelBlocked(this.selectedLevel);
         },
 
         get availableTeams() {
@@ -553,6 +584,11 @@ function habitatShow() {
 
         init() {
             // No auto-selection for existing explorations
+        },
+
+        levelBlocked(level) {
+            const min = this.minLvls ? this.minLvls[level] : null;
+            return min !== null && min !== undefined && this.nivelJugador < min;
         },
 
         selectTeam(id, name) {
@@ -565,11 +601,21 @@ function habitatShow() {
         },
 
         selectLevel(level) {
+            if (this.levelBlocked(level)) {
+                this.avisoNivel = 'Requiere Nv ' + this.minLvls[level] + ' de jugador para explorar este nivel.';
+                return;
+            }
             this.selectedLevel = level;
+            this.avisoNivel = '';
             this.checkAndOpenModal();
         },
 
         checkAndOpenModal() {
+            if (this.selectedLevel !== null && this.levelBlocked(this.selectedLevel)) {
+                this.avisoNivel = 'Requiere Nv ' + this.minLvls[this.selectedLevel] + ' de jugador para explorar este nivel.';
+                this.selectedLevel = null;
+                return;
+            }
             if (this.selectedTeamId !== null && this.selectedLevel !== null) {
                 this.openExplorationModal();
             }

@@ -18,7 +18,7 @@
                 {{ $reclutado['nombre'] ?? $reclutado['pokemon_nombre'] }}
             </h1>
             <p class="text-sm text-gray-500 dark:text-gray-400">
-                Nivel {{ $reclutado['nivel'] }} &middot; {{ number_format($reclutado['exp_total']) }} exp
+                Nivel {{ $reclutado['nivel'] }} &middot; {{ number_format($reclutado['exp_total'] ?? 0) }} exp
             </p>
         </div>
     </div>
@@ -37,10 +37,10 @@
                         <div>
                             <p class="font-medium text-gray-800 dark:text-gray-200">{{ $requisito['tipo'] }}</p>
                             <p class="text-sm text-gray-500 dark:text-gray-400">
-                                {{ number_format($requisito['actual']) }} / {{ number_format($requisito['necesario']) }} exp
+                                {{ number_format($requisito['actual'] ?? 0) }} / {{ number_format($requisito['necesario'] ?? 0) }} exp
                             </p>
                             <p class="text-xs text-gray-400 dark:text-gray-500">
-                                Caramelos de tipo: {{ $requisito['caramelosDisponibles'] }}
+                                Caramelos de tipo: {{ $requisito['caramelosDisponibles'] ?? 0 }}
                             </p>
                         </div>
                         <button
@@ -48,7 +48,7 @@
                             class="px-3 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors dar-caramelo-btn"
                             data-url="{{ url('/reclutado/'.$reclutado['id'].'/dar-caramelo') }}"
                             data-tipo="{{ $requisito['tipo'] }}"
-                            {{ $requisito['caramelosDisponibles'] <= 0 ? 'disabled' : '' }}
+                            {{ ($requisito['caramelosDisponibles'] ?? 0) <= 0 ? 'disabled' : '' }}
                         >
                             Dar caramelo (+100)
                         </button>

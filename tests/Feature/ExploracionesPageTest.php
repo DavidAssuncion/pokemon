@@ -9,6 +9,7 @@ use App\Models\Habitat;
 use App\Models\Pokemon;
 use App\Models\Province;
 use App\Models\Team;
+use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -17,6 +18,19 @@ class ExploracionesPageTest extends TestCase
 {
     use RefreshDatabase;
 
+    private User $usuario;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        // Multi-jugador: las rutas del juego requieren autenticación y las tablas
+        // player-owned (teams, exploraciones_activas) tienen user_id NOT NULL.
+        // Los tests HTTP se ejecutan como un usuario autenticado dueño de los datos.
+        $this->usuario = User::factory()->create();
+        $this->actingAs($this->usuario);
+    }
+
     /**
      * @param  array<string, mixed>  $atributos
      */
@@ -24,11 +38,13 @@ class ExploracionesPageTest extends TestCase
     {
         $province = Province::create(['name' => 'Kanto']);
         $habitat = Habitat::create(['name' => 'Bosque', 'province_id' => $province->id]);
-        $team = Team::create(['name' => 'Equipo Test']);
+        $team = Team::create(['name' => 'Equipo Test', 'user_id' => auth()->id()]);
 
         return ExploracionActiva::create(array_merge([
+            'user_id' => auth()->id(),
             'equipo_id' => $team->id,
             'habitat_id' => $habitat->id,
+            'user_id' => $this->usuario->id,
             'nivel' => 1,
             'duracion_horas' => 4,
             'hora_limite' => null,
@@ -262,7 +278,7 @@ class ExploracionesPageTest extends TestCase
         // debe representar HOY 12:50 en Madrid (UTC+2 en verano → 10:50Z).
         $province = Province::create(['name' => 'Kanto']);
         $habitat = Habitat::create(['name' => 'Bosque', 'province_id' => $province->id]);
-        $team = Team::create(['name' => 'Equipo Test']);
+        $team = Team::create(['name' => 'Equipo Test', 'user_id' => $this->usuario->id]);
 
         $this->post('/exploraciones', [
             'team_id' => $team->id,

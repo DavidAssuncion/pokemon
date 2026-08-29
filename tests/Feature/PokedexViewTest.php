@@ -6,12 +6,22 @@ namespace Tests\Feature;
 
 use App\Enums\TipoEnum;
 use App\Models\Pokemon;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
 class PokedexViewTest extends TestCase
 {
     use RefreshDatabase;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        // Las rutas del juego requieren autenticación (multi-jugador): los tests
+        // HTTP de la Pokédex se ejecutan como un usuario autenticado.
+        $this->actingAs(User::factory()->create());
+    }
 
     /**
      * La vista Pokédex renderiza el componente asíncrono (datagrid) sin errores

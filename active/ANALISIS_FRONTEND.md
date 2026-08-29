@@ -257,3 +257,104 @@ Contrato asumido (aditivo; la vista debe seguir funcionando si el backend aún n
 - `php artisan view:cache` (compila todas las vistas; reporta si algo no compila).
 - `git diff` para revisar que solo cambiaron las 2 vistas (+ este análisis).
 - NO `npm run build` (no toco assets).
+
+---
+
+# Análisis Frontend — Multi-jugador FASE 2: auth (login/register), header con usuario y bloqueo de niveles por min_lvl
+
+## Fecha
+2026-08-29
+
+## Contexto
+El proyecto se convierte a multi-jugador. FASE 1 (datos) commiteada (`03d8457`): tablas con
+`user_id`, `reclutados.exp` es cast DTO (`ExpReclutado`), `player_inventory` con `item_key`,
+`habitats.min_lvl_1/2/3` nullable (solo columnas; la lógica la añade el BACKEND en paralelo, fase C).
+Los BACKENDS B (auth), C (min_lvl) y D (inventario) corren EN PARALELO. Yo (FRONTEND) NO toco
+PHP (controladores/rutas/modelos). Verificado: `routes/*` NO tienen auth aún; `$nivelJugador`/
+`$progresoNivel` se comparten vía `AppServiceProvider::boot` (hoy con `User::first()`, el backend B
+lo cambiará al usuario autenticado); `DTOHabitatDetalle` aún NO expone `min_lvl_*` (backend C).
+
+## Vistas a tocar
+
+### 1. `resources/views/layouts/auth.blade.php` (NUEVO) + `auth/login.blade.php` + `auth/register.blade.php` (NUEVAS)
+- Layout auth: mismo head que `layouts/app` (csrf meta, vite, x-cloak, script de tema) pero SIN
+  header/nav: body centrado (`min-h-screen flex items-center justify-center`), card max-w-md,
+  dark mode, flash `session('status')` + `session('success'/'error')` tolerantes.
+- Formularios POST a `/login` y `/register` (URLs planas, NO `route()`: las rutas las crea el
+  backend B y `route()` reventaría si el nombre aún no existe). Campos: name + password (login);
+  name + password + password_confirmation (register). Errores con guard `isset($errors)` (tolerante
+  a render directo de test donde el middleware `ShareErrorsFromSession` NO comparte `$errors`),
+  `old('name')`, link cruzado login↔register.
+
+### 2. `resources/views/layouts/app.blade.php` — header con usuario autenticado
+- Bloque derecho (junto al badge Nv y toggle dark): `@auth` → nombre (`auth()->user()->name`,
+  `hidden sm:inline-flex` + truncate) + form POST `url('/logout')` con `@csrf` y botón "Salir";
+  `@guest` → nada (preview). Badge Nv y barra de progreso intactos.
+
+### 3. `resources/views/habitats/show.blade.php` — bloqueo visual por nivel (min_lvl)
+- Datos desde Blade al componente Alpine `habitatShow()` (mutación mínima):
+  - `minLvls: { 1: <min_lvl_1|null>, 2: ..., 3: ... }` desde `$habitat['min_lvl_N'] ?? null`.
+  - `nivelJugador: {{ $nivelJugador ?? 1 }}`, `avisoNivel: ''`.
+- Nuevo método `levelBlocked(level)`: `min !== null && nivelJugador < min`.
+- `selectLevel(level)`: si bloqueado → NO selecciona, setea `avisoNivel` ("Requiere Nv X...") y
+  retorna; si libre → limpia aviso y sigue.
+- `checkAndOpenModal()`: guard defensivo si `selectedLevel` quedara bloqueado (no abre modal).
+- `canStartExploration` getter: añade `!this.levelBlocked(this.selectedLevel)`.
+- Panel Niveles (Blade, por nivel): badge naranja "Requiere Nv X" + icono candado (SVG ya existente
+  en el archivo), clases `opacity-60 cursor-not-allowed border-dashed`, `disabled` + `title`.
+- Aviso inline bajo el header del panel: `x-show="avisoNivel" x-cloak x-text="avisoNivel"` (aria-live
+  no: role="status" basta; patrón del proyecto).
+
+### 4. `resources/views/exploraciones/index.blade.php` — badge requisito (tolerante)
+- En cards Activas y Terminadas, junto al badge "Nivel X": si `($exp['min_lvl'] ?? null) !== null`
+  y `($nivelJugador ?? 1) < min_lvl` → badge naranja "Requiere Nv X" (SVG candado, sin emoji).
+  Lógica de recogida/bitácora INTACTA.
+
+### 5. `resources/views/reclutado/show.blade.php` — defaults defensivos (sin cambio visual)
+- `$requisito['actual'] ?? 0`, `['necesario'] ?? 0`, `['caramelosDisponibles'] ?? 0` (texto y
+  condición `disabled`), `$reclutado['exp_total'] ?? 0`. El shape del contrato (tipo/slug/necesario/
+  actual/caramelosDisponibles) lo calcula el backend D desde `player_inventory`; la UI no cambia.
+
+## DTOs/variables consumidas (contrato asumido)
+```
+$nivelJugador (int), $progresoNivel (int 0-100) — View::share (backend B: del usuario autenticado)
+auth()->user()->name — Blade; POST /logout con CSRF (backend B)
+$habitat['min_lvl_1'|'min_lvl_2'|'min_lvl_3'] — int|null (backend C; HOY ausentes → ?? null)
+$exp['min_lvl'] (activas/terminadas) — int|null (backend C; HOY ausente → ?? null)
+$requisitos[]: {tipo, slug, necesario, actual, caramelosDisponibles} — backend D (defaults 0)
+```
+
+## Tests
+- `tests/Feature/HeaderNivelViewTest.php` (ACTUALIZAR): +2 tests con `actingAs` y `RefreshDatabase`:
+  usuario autenticado → nombre + `action="/logout"` + botón "Salir" + Nv; invitado → `assertDontSee`
+  del bloque logout. Los 3 tests existentes (render directo sin usuario) deben seguir verdes.
+- `tests/Feature/AuthViewsTest.php` (NUEVO, render directo, sin rutas HTTP): login → `action="/login"`,
+  campos name/password, link a /register; register → +password_confirmation y link a /login;
+  con `withViewErrors` → el error de validación se muestra; sin `$errors` (render directo) NO revienta.
+- `ExploracionesPageTest` / `PokedexViewTest`: sin actingAs → el bloque `@auth` no se renderiza;
+  no deberían romper. Se ejecutan para confirmar.
+- NO creo tests de controladores (instrucción explícita).
+
+## Estados UI cubiertos
+- Header: autenticado (nombre + logout + Nv + progreso) / invitado (solo Nv + toggle) / sin vars
+  compartidas (fallbacks Nv 1, 0%).
+- Auth: errores de validación (por campo y global), flash status, valores `old`, dark mode.
+- Habitats niveles: desbloqueado (normal), bloqueado (visual + disabled + aviso al hacer click),
+  sin datos min_lvl (backend C aún no entrega → todo desbloqueado).
+- Exploraciones: con min_lvl insuficiente → badge requisito; sin min_lvl → vista actual.
+- Reclutado: shape completo / keys ausentes → defaults 0 sin romper.
+
+## Riesgos accesibilidad/UX
+- Botones de nivel bloqueados: `disabled` + `title` + `aria-disabled`; el aviso inline usa
+  `role="status"` (no interrumpe lectores de pantalla con aria-live agresivo).
+- El nombre de usuario con truncate `max-w-[10rem]` evita desbordes en viewports pequeños; el badge
+  Nv permanece siempre visible.
+- Formularios auth: `autocomplete` (username/current-password/new-password), `autofocus` en login,
+  labels asociados (for/id).
+- Las URLs planas (`/login`, `/register`, `/logout`) evitan dependencia de nombres de ruta que el
+  backend B aún no define; si al final el backend nombra rutas distintas, es un cambio de 1 línea.
+
+## Verificación
+- `php artisan view:cache` (compila todas las vistas).
+- `php artisan test --compact --filter='HeaderNivel|AuthViews|ExploracionesPage|PokedexView'`.
+- NO `npm run build` (no toco assets ni manifest; Alpine ya se carga vía Vite).
