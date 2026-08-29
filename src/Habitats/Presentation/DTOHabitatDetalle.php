@@ -18,11 +18,14 @@ class DTOHabitatDetalle
         public readonly string $name,
         public readonly string $image,
         public readonly array $levels,
+        public readonly ?int $min_lvl_1 = null,
+        public readonly ?int $min_lvl_2 = null,
+        public readonly ?int $min_lvl_3 = null,
     ) {
     }
 
     /**
-     * @return array{id: int, name: string, image: string, levels: array<int, array<int, array{id: int, name: string, icon: string}>>}
+     * @return array{id: int, name: string, image: string, levels: array<int, array<int, array{id: int, name: string, icon: string}>>, min_lvl_1: ?int, min_lvl_2: ?int, min_lvl_3: ?int}
      */
     public function toArray(): array
     {
@@ -31,6 +34,9 @@ class DTOHabitatDetalle
             'name' => $this->name,
             'image' => $this->image,
             'levels' => $this->levels,
+            'min_lvl_1' => $this->min_lvl_1,
+            'min_lvl_2' => $this->min_lvl_2,
+            'min_lvl_3' => $this->min_lvl_3,
         ];
     }
 }

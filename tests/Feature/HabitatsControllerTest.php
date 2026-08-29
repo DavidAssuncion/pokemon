@@ -18,6 +18,8 @@ class HabitatsControllerTest extends TestCase
 
     private int $habitatId;
 
+    private User $usuario;
+
     protected function setUp(): void
     {
         parent::setUp();
@@ -25,6 +27,11 @@ class HabitatsControllerTest extends TestCase
         $province = Province::create(['id' => 1, 'name' => 'Kanto']);
         $habitat = Habitat::create(['id' => 1, 'name' => 'Bosque', 'province_id' => 1]);
         $this->habitatId = $habitat->id;
+
+        // Las rutas pasan por middleware 'auth' (Fase B): el usuario autenticado
+        // además activa el global scope por user_id en los listados.
+        $this->usuario = User::factory()->create();
+        $this->actingAs($this->usuario);
     }
 
     public function test_index_returns_200(): void
@@ -57,9 +64,9 @@ class HabitatsControllerTest extends TestCase
 
     public function test_show_passes_exploraciones_activas(): void
     {
-        $team = \App\Models\Team::create(['name' => 'Alpha', 'user_id' => User::factory()->create()->id]);
+        $team = \App\Models\Team::create(['name' => 'Alpha', 'user_id' => $this->usuario->id]);
         \App\Models\ExploracionActiva::create([
-            'user_id' => $team->user_id,
+            'user_id' => $this->usuario->id,
             'equipo_id' => $team->id,
             'habitat_id' => $this->habitatId,
             'nivel' => 1,
@@ -73,9 +80,9 @@ class HabitatsControllerTest extends TestCase
 
     public function test_show_passes_equipos_en_exploracion(): void
     {
-        $team = \App\Models\Team::create(['name' => 'Bravo', 'user_id' => User::factory()->create()->id]);
+        $team = \App\Models\Team::create(['name' => 'Bravo', 'user_id' => $this->usuario->id]);
         \App\Models\ExploracionActiva::create([
-            'user_id' => $team->user_id,
+            'user_id' => $this->usuario->id,
             'equipo_id' => $team->id,
             'habitat_id' => $this->habitatId,
             'nivel' => 1,
@@ -89,9 +96,9 @@ class HabitatsControllerTest extends TestCase
 
     public function test_show_does_not_include_completed_exploraciones(): void
     {
-        $team = \App\Models\Team::create(['name' => 'Explorador', 'user_id' => User::factory()->create()->id]);
+        $team = \App\Models\Team::create(['name' => 'Explorador', 'user_id' => $this->usuario->id]);
         $exploracion = \App\Models\ExploracionActiva::create([
-            'user_id' => $team->user_id,
+            'user_id' => $this->usuario->id,
             'equipo_id' => $team->id,
             'habitat_id' => $this->habitatId,
             'nivel' => 1,
@@ -104,6 +111,19 @@ class HabitatsControllerTest extends TestCase
             ->get();
 
         $this->assertCount(0, $activas);
+    }
+
+    public function test_show_pasa_los_min_lvl_del_habitat(): void
+    {
+        $habitat = Habitat::find($this->habitatId);
+        $habitat->forceFill(['min_lvl_1' => 5, 'min_lvl_2' => 10])->save();
+
+        $response = $this->get("/habitats/{$this->habitatId}");
+
+        $response->assertOk();
+        $this->assertSame(5, $response->viewData('habitat')['min_lvl_1']);
+        $this->assertSame(10, $response->viewData('habitat')['min_lvl_2']);
+        $this->assertNull($response->viewData('habitat')['min_lvl_3']);
     }
 
     public function test_api_pokemon_returns_json(): void

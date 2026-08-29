@@ -27,6 +27,30 @@ class ValidadorExploracionTest extends TestCase
 
     // ── equipoDisponible ───────────────────────────────────────────────
 
+    // ── cumpleNivelMinimo ──────────────────────────────────────────────
+
+    public function test_cumple_nivel_minimo_sin_restriccion_null(): void
+    {
+        $this->assertTrue($this->validator->cumpleNivelMinimo(1, null));
+    }
+
+    public function test_cumple_nivel_minimo_cuando_el_nivel_es_superior(): void
+    {
+        $this->assertTrue($this->validator->cumpleNivelMinimo(12, 10));
+    }
+
+    public function test_cumple_nivel_minimo_en_el_limite_exacto(): void
+    {
+        $this->assertTrue($this->validator->cumpleNivelMinimo(10, 10));
+    }
+
+    public function test_no_cumple_nivel_minimo_cuando_el_nivel_es_inferior(): void
+    {
+        $this->assertFalse($this->validator->cumpleNivelMinimo(9, 10));
+    }
+
+    // ── equipoDisponible ───────────────────────────────────────────────
+
     public function test_team_is_available_when_no_exploraciones(): void
     {
         $team = Team::create(['name' => 'Alpha', 'user_id' => User::factory()->create()->id]);

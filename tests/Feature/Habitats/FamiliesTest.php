@@ -10,6 +10,7 @@ use App\Models\Pokemon;
 use App\Models\PokemonEvolution;
 use App\Models\PokemonType;
 use App\Models\Province;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Src\Habitats\Infra\HabitatRepository;
@@ -27,6 +28,10 @@ class FamiliesTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+
+        // Las rutas /api/habitats/* pasan por middleware 'auth' (Fase B):
+        // se autentica un usuario de catálogo (los datos no son player-owned).
+        $this->actingAs(User::factory()->create());
 
         // Create province and habitat
         Province::create(['id' => 1, 'name' => 'Kanto']);

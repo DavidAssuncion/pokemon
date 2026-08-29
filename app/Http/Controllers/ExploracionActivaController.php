@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace App\Http\Controllers;
 
 use App\Models\ExploracionActiva;
+use App\Models\Habitat;
 use App\Models\Pokemon;
+use App\Models\User;
 use Carbon\Carbon;
 use Carbon\CarbonInterface;
 use Illuminate\Contracts\View\View;
@@ -13,6 +15,8 @@ use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\Rule;
 use Src\Exploraciones\App\ProcesarExploracionCommand;
 use Src\Habitats\App\ValidadorExploracion;
 use Src\Shared\Bus\CommandBus;
@@ -64,10 +68,13 @@ class ExploracionActivaController extends Controller
         ]);
     }
 
-    public function store(Request $request): RedirectResponse
+    public function store(Request $request): RedirectResponse|JsonResponse
     {
+        // El global scope de Team (BelongsToUser) NO se aplica a la regla exists
+        // (usa el query builder, no Eloquent): la propiedad se fuerza con el where
+        // explícito por user_id (anti-IDOR).
         $data = $request->validate([
-            'team_id' => 'required|exists:teams,id',
+            'team_id' => ['required', Rule::exists('teams', 'id')->where('user_id', Auth::id())],
             'habitat_id' => 'required|exists:habitats,id',
             'level' => 'required|integer|min:1|max:3',
             'duration_hours' => 'nullable|integer|min:1|max:72',
@@ -80,6 +87,22 @@ class ExploracionActivaController extends Controller
             return redirect()->back()->with('error', 'El equipo ya está en una exploración activa.');
         }
 
+        $usuario = $request->user();
+        $habitat = Habitat::find((int) $data['habitat_id']);
+        $minLvl = $habitat?->getAttribute('min_lvl_'.$data['level']);
+
+        if ($minLvl !== null && $usuario instanceof User
+            && ! $this->validadorExploracion->cumpleNivelMinimo($usuario->nivel(), (int) $minLvl)
+        ) {
+            $mensaje = "Requiere nivel Nv {$minLvl} para explorar esta zona.";
+
+            if ($request->wantsJson()) {
+                return response()->json(['message' => $mensaje], 422);
+            }
+
+            return redirect()->back()->with('error', $mensaje)->withInput();
+        }
+
         $indefinido = ($data['indefinido'] ?? false) || (! isset($data['duration_hours']) && ! isset($data['return_time']));
 
         $horaLimite = null;
@@ -88,6 +111,7 @@ class ExploracionActivaController extends Controller
         }
 
         ExploracionActiva::create([
+            'user_id' => $usuario?->id,
             'equipo_id' => $data['team_id'],
             'habitat_id' => $data['habitat_id'],
             'nivel' => $data['level'],
@@ -202,6 +226,7 @@ class ExploracionActivaController extends Controller
             'habitat' => $habitat !== null ? $habitat->name : 'Sin hábitat',
             'habitat_id' => $exp->habitat_id,
             'nivel' => $exp->nivel,
+            'min_lvl' => $this->minLvlDelHabitat($habitat, $exp->nivel),
             'indefinido' => $exp->indefinido,
             'duracion_horas' => $exp->duracion_horas,
             'inicio' => $inicio->toIso8601String(),
@@ -279,6 +304,7 @@ class ExploracionActivaController extends Controller
             'equipo' => $equipo !== null ? $equipo->name : 'Sin equipo',
             'habitat' => $habitat !== null ? $habitat->name : 'Sin hábitat',
             'nivel' => $exp->nivel,
+            'min_lvl' => $this->minLvlDelHabitat($habitat, $exp->nivel),
             'resultado' => [
                 'avistados' => $avistados,
                 'capturados' => $capturados,
@@ -308,6 +334,18 @@ class ExploracionActivaController extends Controller
         }
 
         return $evento;
+    }
+
+    /**
+     * Nivel mínimo de jugador requerido por el hábitat para el nivel de
+     * exploración dado (null = sin restricción). Lo consume el badge
+     * "Requiere Nv X" de la vista de exploraciones.
+     */
+    private function minLvlDelHabitat(?Habitat $habitat, int $nivel): ?int
+    {
+        $minLvl = $habitat?->getAttribute('min_lvl_'.$nivel);
+
+        return $minLvl !== null ? (int) $minLvl : null;
     }
 
     private function finExploracion(ExploracionActiva $exp, CarbonInterface $inicio): ?CarbonInterface

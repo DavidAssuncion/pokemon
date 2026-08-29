@@ -19,6 +19,16 @@ class ValidadorExploracion
     }
 
     /**
+     * Regla de negocio: un jugador puede explorar una zona si su nivel es
+     * mayor o igual al mínimo requerido por el hábitat para ese nivel de
+     * exploración. null = sin restricción.
+     */
+    public function cumpleNivelMinimo(int $nivelJugador, ?int $nivelMinimo): bool
+    {
+        return $nivelMinimo === null || $nivelJugador >= $nivelMinimo;
+    }
+
+    /**
      * Check if a team can be used for combat (not in active exploration).
      */
     public function equipoDisponibleParaCombate(int $teamId): bool

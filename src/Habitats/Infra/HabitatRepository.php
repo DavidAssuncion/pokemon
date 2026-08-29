@@ -116,6 +116,9 @@ class HabitatRepository implements HabitatRepositoryInterface
             name: $habitat->name,
             image: "/habitats-img/{$habitat->id}.webp",
             levels: $levels,
+            min_lvl_1: $this->minLvlNullable($habitat->getAttribute('min_lvl_1')),
+            min_lvl_2: $this->minLvlNullable($habitat->getAttribute('min_lvl_2')),
+            min_lvl_3: $this->minLvlNullable($habitat->getAttribute('min_lvl_3')),
         );
     }
 
@@ -505,5 +508,10 @@ class HabitatRepository implements HabitatRepositoryInterface
     private function iconPath(int $pokemonId): string
     {
         return "/images/iconos_webp/{$pokemonId}.webp";
+    }
+
+    private function minLvlNullable(mixed $valor): ?int
+    {
+        return $valor !== null ? (int) $valor : null;
     }
 }
