@@ -36,7 +36,7 @@
                         @if($bloqueadoConstruccion) title="No disponible durante exploraciones activas" @endif
                         class="w-full px-4 py-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-sm font-medium text-gray-700 dark:text-gray-300 transition-colors flex items-center justify-center gap-2 {{ $bloqueadoConstruccion ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-50 dark:hover:bg-gray-700' }}"
                     >
-                        <img src="/images/reward/item/303.png" loading="lazy" decoding="async" class="w-8 h-8 object-contain" alt="Granjas">
+                        <img src="/images/misc/item/farm.webp" loading="lazy" decoding="async" class="w-8 h-8 object-contain" alt="Granjas">
                         Granjas
                     </button>
                     <button
@@ -45,7 +45,7 @@
                         @if($bloqueadoConstruccion) title="No disponible durante exploraciones activas" @endif
                         class="w-full px-4 py-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-sm font-medium text-gray-700 dark:text-gray-300 transition-colors flex items-center justify-center gap-2 {{ $bloqueadoConstruccion ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-50 dark:hover:bg-gray-700' }}"
                     >
-                        <img src="/images/reward/item/1503.png" loading="lazy" decoding="async" class="w-8 h-8 object-contain" alt="Entrenadores">
+                        <img src="/images/misc/item/trainer.webp" loading="lazy" decoding="async" class="w-8 h-8 object-contain" alt="Entrenadores">
                         Entrenadores
                     </button>
                     <button
