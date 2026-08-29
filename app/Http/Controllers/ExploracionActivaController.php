@@ -20,29 +20,20 @@ use Src\Shared\Bus\CommandBus;
 class ExploracionActivaController extends Controller
 {
     /**
-     * Nombres de stat en español, alineados con el fallback JS de la vista
-     * (statName) — StatEnum::label() devuelve 'PS (HP)' para HP y divergiría.
+     * Datos de stat por id (índice = stat id): nombre en español alineado con
+     * el fallback JS de la vista (statName) — StatEnum::label() devuelve
+     * 'PS (HP)' para HP y divergiría — y slug usado por el frontend para los
+     * iconos de los caramelos EV.
+     *
+     * @var array<int, array{nombre: string, slug: string}>
      */
-    private const STAT_NOMBRES = [
-        1 => 'PS',
-        2 => 'Ataque',
-        3 => 'Defensa',
-        4 => 'Ataque Especial',
-        5 => 'Defensa Especial',
-        6 => 'Velocidad',
-    ];
-
-    /**
-     * Slugs de stat (índice = stat id), usados por el frontend para los iconos
-     * de los caramelos EV.
-     */
-    private const STAT_SLUGS = [
-        1 => 'hp',
-        2 => 'atk',
-        3 => 'def',
-        4 => 'atksp',
-        5 => 'defsp',
-        6 => 'spd',
+    private const STATS = [
+        1 => ['nombre' => 'PS', 'slug' => 'hp'],
+        2 => ['nombre' => 'Ataque', 'slug' => 'atk'],
+        3 => ['nombre' => 'Defensa', 'slug' => 'def'],
+        4 => ['nombre' => 'Ataque Especial', 'slug' => 'atksp'],
+        5 => ['nombre' => 'Defensa Especial', 'slug' => 'defsp'],
+        6 => ['nombre' => 'Velocidad', 'slug' => 'spd'],
     ];
 
     public function __construct(
@@ -262,10 +253,11 @@ class ExploracionActivaController extends Controller
         $caramelosEv = [];
         foreach ($resultado['caramelos_ev'] ?? [] as $caramelo) {
             $stat = (int) ($caramelo['stat'] ?? 0);
+            $statInfo = self::STATS[$stat] ?? null;
             $caramelosEv[] = [
                 'stat' => $stat,
-                'stat_nombre' => self::STAT_NOMBRES[$stat] ?? null,
-                'stat_slug' => self::STAT_SLUGS[$stat] ?? null,
+                'stat_nombre' => $statInfo['nombre'] ?? null,
+                'stat_slug' => $statInfo['slug'] ?? null,
                 'cantidad' => (int) ($caramelo['cantidad'] ?? 0),
             ];
         }
@@ -308,8 +300,9 @@ class ExploracionActivaController extends Controller
         $tipo = $evento['tipo'] ?? 'desconocido';
 
         if ($tipo === 'caramelo_ev') {
-            $evento['stat_nombre'] = self::STAT_NOMBRES[(int) ($evento['stat'] ?? 0)] ?? null;
-            $evento['stat_slug'] = self::STAT_SLUGS[(int) ($evento['stat'] ?? 0)] ?? null;
+            $statInfo = self::STATS[(int) ($evento['stat'] ?? 0)] ?? null;
+            $evento['stat_nombre'] = $statInfo['nombre'] ?? null;
+            $evento['stat_slug'] = $statInfo['slug'] ?? null;
         } elseif (isset($evento['pokemon_id'])) {
             $evento['nombre'] = $nombres[(int) $evento['pokemon_id']] ?? null;
         }
