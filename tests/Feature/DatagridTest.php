@@ -21,9 +21,12 @@ class DatagridTest extends TestCase
 {
     use RefreshDatabase;
 
-    private function userId(): int
+    private function actingAsUser(): User
     {
-        return User::factory()->create()->id;
+        $user = User::factory()->create();
+        $this->actingAs($user);
+
+        return $user;
     }
 
     /**
@@ -63,6 +66,7 @@ class DatagridTest extends TestCase
 
     public function test_pokemon_list_returns_normalized_response(): void
     {
+        $this->actingAsUser();
         $this->createPokemon(1, 'bulbasaur');
 
         $response = $this->getJson('/datagrid/pokemon');
@@ -91,6 +95,7 @@ class DatagridTest extends TestCase
 
     public function test_pokemon_list_applies_exact_filter(): void
     {
+        $this->actingAsUser();
         $this->createPokemon(1, 'bulbasaur');
         $this->createPokemon(2, 'ivysaur');
 
@@ -103,6 +108,7 @@ class DatagridTest extends TestCase
 
     public function test_pokemon_list_applies_in_filter(): void
     {
+        $this->actingAsUser();
         $this->createPokemon(1, 'bulbasaur');
         $this->createPokemon(2, 'ivysaur');
         $this->createPokemon(3, 'venusaur');
@@ -115,6 +121,7 @@ class DatagridTest extends TestCase
 
     public function test_pokemon_list_applies_relation_filter_types(): void
     {
+        $this->actingAsUser();
         $this->createPokemon(1, 'pikachu', [TipoEnum::ELECTRIC]);
         $this->createPokemon(2, 'squirtle', [TipoEnum::WATER]);
 
@@ -126,6 +133,7 @@ class DatagridTest extends TestCase
 
     public function test_pokemon_list_applies_relation_filter_types_in(): void
     {
+        $this->actingAsUser();
         $this->createPokemon(1, 'pikachu', [TipoEnum::ELECTRIC]);
         $this->createPokemon(2, 'squirtle', [TipoEnum::WATER]);
         $this->createPokemon(3, 'charmander', [TipoEnum::FIRE]);
@@ -138,6 +146,7 @@ class DatagridTest extends TestCase
 
     public function test_pokemon_list_applies_search_like(): void
     {
+        $this->actingAsUser();
         $this->createPokemon(1, 'bulbasaur');
         $this->createPokemon(2, 'ivysaur');
 
@@ -149,6 +158,7 @@ class DatagridTest extends TestCase
 
     public function test_pokemon_list_sorts_whitelisted_column(): void
     {
+        $this->actingAsUser();
         $this->createPokemon(1, 'bulbasaur');
         $this->createPokemon(2, 'ivysaur');
 
@@ -160,6 +170,7 @@ class DatagridTest extends TestCase
 
     public function test_pokemon_list_ignores_non_whitelisted_filter_and_sort(): void
     {
+        $this->actingAsUser();
         $this->createPokemon(1, 'bulbasaur');
         $this->createPokemon(2, 'ivysaur');
 
@@ -171,6 +182,7 @@ class DatagridTest extends TestCase
 
     public function test_pokemon_list_clamps_per_page(): void
     {
+        $this->actingAsUser();
         $this->createPokemon(1, 'bulbasaur');
 
         $this->assertSame(200, $this->getJson('/datagrid/pokemon?per_page=500')->json('meta.per_page'));
@@ -180,6 +192,8 @@ class DatagridTest extends TestCase
 
     public function test_pokemon_list_paginates(): void
     {
+        $this->actingAsUser();
+
         $rows = [];
         for ($i = 1; $i <= 150; $i++) {
             $rows[] = [
@@ -209,18 +223,21 @@ class DatagridTest extends TestCase
 
     public function test_unregistered_model_returns_404(): void
     {
+        $this->actingAsUser();
+
         $this->getJson('/datagrid/secreto')->assertNotFound();
         $this->getJson('/datagrid/secreto/1/detalle')->assertNotFound();
     }
 
     public function test_pokemon_list_returns_global_counts(): void
     {
+        $user = $this->actingAsUser();
         $this->createPokemon(1, 'bulbasaur');
         $this->createPokemon(2, 'ivysaur');
         $this->createPokemon(3, 'venusaur');
 
-        Pokedex::create(['user_id' => $this->userId(), 'pokemon_id' => 1, 'visto' => true, 'atrapado' => true]);
-        Pokedex::create(['user_id' => $this->userId(), 'pokemon_id' => 2, 'visto' => true, 'atrapado' => false]);
+        Pokedex::create(['user_id' => $user->id, 'pokemon_id' => 1, 'visto' => true, 'atrapado' => true]);
+        Pokedex::create(['user_id' => $user->id, 'pokemon_id' => 2, 'visto' => true, 'atrapado' => false]);
 
         $response = $this->getJson('/datagrid/pokemon');
 
@@ -235,6 +252,7 @@ class DatagridTest extends TestCase
 
     public function test_pokemon_detail_returns_full_shape(): void
     {
+        $user = $this->actingAsUser();
         $this->createPokemon(1, 'bulbasaur', [TipoEnum::GRASS, TipoEnum::POISON], [
             StatEnum::HP->value => 45,
             StatEnum::ATTACK->value => 49,
@@ -244,7 +262,7 @@ class DatagridTest extends TestCase
             StatEnum::SPEED->value => 45,
         ]);
 
-        Pokedex::create(['user_id' => $this->userId(), 'pokemon_id' => 1, 'visto' => true, 'atrapado' => true]);
+        Pokedex::create(['user_id' => $user->id, 'pokemon_id' => 1, 'visto' => true, 'atrapado' => true]);
 
         Province::create(['id' => 1, 'name' => 'Kanto']);
         Habitat::create(['id' => 1, 'province_id' => 1, 'name' => 'Bosque']);
@@ -274,11 +292,14 @@ class DatagridTest extends TestCase
 
     public function test_pokemon_detail_missing_returns_404(): void
     {
+        $this->actingAsUser();
+
         $this->getJson('/datagrid/pokemon/999/detalle')->assertNotFound();
     }
 
     public function test_pokemon_detail_unseen_returns_false_booleans(): void
     {
+        $this->actingAsUser();
         $this->createPokemon(1, 'bulbasaur');
 
         $response = $this->getJson('/datagrid/pokemon/1/detalle');
@@ -293,6 +314,8 @@ class DatagridTest extends TestCase
 
     public function test_registered_models_respond_200(): void
     {
+        $this->actingAsUser();
+
         $this->getJson('/datagrid/pokedex')->assertOk();
         $this->getJson('/datagrid/reclutado')->assertOk();
         $this->getJson('/datagrid/team')->assertOk();
@@ -302,10 +325,11 @@ class DatagridTest extends TestCase
 
     public function test_pokemon_list_filter_visto_0_returns_unseen(): void
     {
+        $user = $this->actingAsUser();
         $this->createPokemon(1, 'bulbasaur');
         $this->createPokemon(2, 'ivysaur');
 
-        Pokedex::create(['user_id' => $this->userId(), 'pokemon_id' => 2, 'visto' => true, 'atrapado' => false]);
+        Pokedex::create(['user_id' => $user->id, 'pokemon_id' => 2, 'visto' => true, 'atrapado' => false]);
 
         $response = $this->getJson('/datagrid/pokemon?filter[visto]=0');
 
@@ -319,10 +343,11 @@ class DatagridTest extends TestCase
 
     public function test_pokemon_list_filter_visto_1_returns_seen(): void
     {
+        $user = $this->actingAsUser();
         $this->createPokemon(1, 'bulbasaur');
         $this->createPokemon(2, 'ivysaur');
 
-        Pokedex::create(['user_id' => $this->userId(), 'pokemon_id' => 2, 'visto' => true, 'atrapado' => false]);
+        Pokedex::create(['user_id' => $user->id, 'pokemon_id' => 2, 'visto' => true, 'atrapado' => false]);
 
         $response = $this->getJson('/datagrid/pokemon?filter[visto]=1');
 
@@ -333,12 +358,13 @@ class DatagridTest extends TestCase
 
     public function test_pokemon_list_filter_atrapado_1_returns_captured(): void
     {
+        $user = $this->actingAsUser();
         $this->createPokemon(1, 'bulbasaur');
         $this->createPokemon(2, 'ivysaur');
         $this->createPokemon(3, 'venusaur');
 
-        Pokedex::create(['user_id' => $this->userId(), 'pokemon_id' => 2, 'visto' => true, 'atrapado' => true]);
-        Pokedex::create(['user_id' => $this->userId(), 'pokemon_id' => 3, 'visto' => true, 'atrapado' => false]);
+        Pokedex::create(['user_id' => $user->id, 'pokemon_id' => 2, 'visto' => true, 'atrapado' => true]);
+        Pokedex::create(['user_id' => $user->id, 'pokemon_id' => 3, 'visto' => true, 'atrapado' => false]);
 
         $response = $this->getJson('/datagrid/pokemon?filter[atrapado]=1');
 
@@ -349,12 +375,13 @@ class DatagridTest extends TestCase
 
     public function test_pokemon_list_filter_atrapado_0_returns_not_captured(): void
     {
+        $user = $this->actingAsUser();
         $this->createPokemon(1, 'bulbasaur');
         $this->createPokemon(2, 'ivysaur');
         $this->createPokemon(3, 'venusaur');
 
-        Pokedex::create(['user_id' => $this->userId(), 'pokemon_id' => 2, 'visto' => true, 'atrapado' => true]);
-        Pokedex::create(['user_id' => $this->userId(), 'pokemon_id' => 3, 'visto' => true, 'atrapado' => false]);
+        Pokedex::create(['user_id' => $user->id, 'pokemon_id' => 2, 'visto' => true, 'atrapado' => true]);
+        Pokedex::create(['user_id' => $user->id, 'pokemon_id' => 3, 'visto' => true, 'atrapado' => false]);
 
         $response = $this->getJson('/datagrid/pokemon?filter[atrapado]=0');
 
@@ -366,6 +393,7 @@ class DatagridTest extends TestCase
 
     public function test_pokemon_list_items_include_icon_and_types(): void
     {
+        $this->actingAsUser();
         $this->createPokemon(1, 'pikachu', [TipoEnum::ELECTRIC]);
         $this->createPokemon(2, 'squirtle', [TipoEnum::WATER]);
 
@@ -381,6 +409,8 @@ class DatagridTest extends TestCase
 
     public function test_pokemon_list_filter_effort_by_label(): void
     {
+        $this->actingAsUser();
+
         // bulbasaur: Ataque effort 2, HP effort 0
         $this->createPokemon(1, 'bulbasaur', [], [
             StatEnum::HP->value => 45,
@@ -400,6 +430,8 @@ class DatagridTest extends TestCase
 
     public function test_pokemon_list_filter_effort_by_id(): void
     {
+        $this->actingAsUser();
+
         $this->createPokemon(1, 'bulbasaur', [], [
             StatEnum::HP->value => 45,
             StatEnum::ATTACK->value => 49,
@@ -417,6 +449,7 @@ class DatagridTest extends TestCase
 
     public function test_pokemon_list_filter_effort_label_invalid_ignored(): void
     {
+        $this->actingAsUser();
         $this->createPokemon(1, 'bulbasaur', [], [StatEnum::ATTACK->value => 49], [StatEnum::ATTACK->value => 2]);
         $this->createPokemon(2, 'ivysaur');
 
@@ -429,6 +462,7 @@ class DatagridTest extends TestCase
 
     public function test_pokemon_list_filter_effort_zero_ignored(): void
     {
+        $this->actingAsUser();
         $this->createPokemon(1, 'bulbasaur', [], [StatEnum::ATTACK->value => 49], [StatEnum::ATTACK->value => 2]);
         $this->createPokemon(2, 'ivysaur');
 
@@ -441,6 +475,8 @@ class DatagridTest extends TestCase
 
     public function test_pokemon_list_filter_effort_combines_with_types(): void
     {
+        $this->actingAsUser();
+
         // pikachu: Eléctrico + Ataque effort 2
         $this->createPokemon(1, 'pikachu', [TipoEnum::ELECTRIC], [StatEnum::ATTACK->value => 55], [StatEnum::ATTACK->value => 2]);
         // raichu: Eléctrico + Ataque effort 0
@@ -452,5 +488,34 @@ class DatagridTest extends TestCase
 
         $response->assertOk();
         $this->assertSame([1], array_column($response->json('data'), 'id'));
+    }
+
+    public function test_pokedex_de_un_usuario_no_muestra_atrapados_de_otro(): void
+    {
+        $usuarioA = User::factory()->create();
+        $usuarioB = User::factory()->create();
+        $this->createPokemon(1, 'bulbasaur');
+        $this->createPokemon(2, 'ivysaur');
+
+        // Ambos usuarios tienen filas de bulbasaur (atrapado por los dos) y B atrapa ivysaur.
+        Pokedex::create(['user_id' => $usuarioA->id, 'pokemon_id' => 1, 'visto' => true, 'atrapado' => true]);
+        Pokedex::create(['user_id' => $usuarioB->id, 'pokemon_id' => 1, 'visto' => true, 'atrapado' => true]);
+        Pokedex::create(['user_id' => $usuarioB->id, 'pokemon_id' => 2, 'visto' => true, 'atrapado' => true]);
+
+        $this->actingAs($usuarioA);
+
+        $response = $this->getJson('/datagrid/pokemon');
+
+        $response->assertOk();
+        // Sin filas duplicadas por el leftJoin multi-usuario: un item por pokémon.
+        $this->assertCount(2, $response->json('data'));
+        $this->assertTrue($response->json('data.0.atrapado'), 'bulbasaur atrapado por A');
+        $this->assertFalse($response->json('data.1.atrapado'), 'ivysaur no es de A');
+        $this->assertSame([
+            'total' => 2,
+            'vistos' => 1,
+            'atrapados' => 1,
+            'no_vistos' => 1,
+        ], $response->json('meta.counts'));
     }
 }

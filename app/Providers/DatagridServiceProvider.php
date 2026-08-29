@@ -19,7 +19,9 @@ use App\Models\Reclutado;
 use App\Models\Team;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Query\JoinClause;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\ServiceProvider;
 use LogicException;
 
@@ -69,7 +71,20 @@ final class DatagridServiceProvider extends ServiceProvider
                 'types' => fn (Model $model): array => $this->typeNames($this->requirePokemon($model)->types),
             ],
             baseQuery: function (Builder $query): Builder {
-                $query->getQuery()->leftJoin('pokedex', 'pokedex.pokemon_id', '=', 'pokemon.id');
+                $userId = Auth::id();
+
+                $query->getQuery()->leftJoin('pokedex', function (JoinClause $join) use ($userId): void {
+                    $join->on('pokedex.pokemon_id', '=', 'pokemon.id');
+
+                    if ($userId !== null) {
+                        // Multiplayer: la pokédex del join es solo la del usuario autenticado
+                        // (una fila por usuario y pokémon; sin esto el join duplicaría filas).
+                        $join->where('pokedex.user_id', $userId);
+                    } else {
+                        // Sin sesión (CLI/jobs): unión vacía → visto/atrapado NULL ≡ false.
+                        $join->whereRaw('1 = 0');
+                    }
+                });
                 $query->getQuery()->select('pokemon.*', 'pokedex.visto', 'pokedex.atrapado');
 
                 return $query;
@@ -171,12 +186,28 @@ final class DatagridServiceProvider extends ServiceProvider
     private function pokemonCounts(): array
     {
         $total = Pokemon::query()->getQuery()->count();
-        $vistos = Pokedex::query()->getQuery()->where('visto', true)->count();
+        $userId = Auth::id();
+
+        if ($userId === null) {
+            // Sin sesión (CLI/jobs): misma semántica que la unión vacía del baseQuery.
+            return [
+                'total' => $total,
+                'vistos' => 0,
+                'atrapados' => 0,
+                'no_vistos' => $total,
+            ];
+        }
+
+        // El global scope de Pokedex ya acota al usuario autenticado; el where explícito
+        // mantiene el contrato aunque se consultara desde CLI sin scope activo.
+        $pokedex = Pokedex::query()->getQuery()->where('user_id', $userId);
+        $vistos = (clone $pokedex)->where('visto', true)->count();
+        $atrapados = (clone $pokedex)->where('atrapado', true)->count();
 
         return [
             'total' => $total,
             'vistos' => $vistos,
-            'atrapados' => Pokedex::query()->getQuery()->where('atrapado', true)->count(),
+            'atrapados' => $atrapados,
             'no_vistos' => max(0, $total - $vistos),
         ];
     }

@@ -16,9 +16,12 @@ class PlayerControllerTest extends TestCase
 {
     use RefreshDatabase;
 
-    private function userId(): int
+    private function actingAsUser(): User
     {
-        return User::factory()->create()->id;
+        $user = User::factory()->create();
+        $this->actingAs($user);
+
+        return $user;
     }
 
     private function createPokemon(int $id, string $name): void
@@ -36,6 +39,7 @@ class PlayerControllerTest extends TestCase
 
     public function test_pokedex_orders_pokemon_by_id(): void
     {
+        $this->actingAsUser();
         $this->createPokemon(2, 'ivysaur');
         $this->createPokemon(1, 'bulbasaur');
 
@@ -50,12 +54,13 @@ class PlayerControllerTest extends TestCase
 
     public function test_pokedex_passes_counts_and_types(): void
     {
+        $user = $this->actingAsUser();
         $this->createPokemon(1, 'bulbasaur');
         $this->createPokemon(2, 'ivysaur');
         $this->createPokemon(3, 'venusaur');
 
-        Pokedex::create(['user_id' => $this->userId(), 'pokemon_id' => 1, 'visto' => true, 'atrapado' => true]);
-        Pokedex::create(['user_id' => $this->userId(), 'pokemon_id' => 2, 'visto' => true, 'atrapado' => false]);
+        Pokedex::create(['user_id' => $user->id, 'pokemon_id' => 1, 'visto' => true, 'atrapado' => true]);
+        Pokedex::create(['user_id' => $user->id, 'pokemon_id' => 2, 'visto' => true, 'atrapado' => false]);
 
         $response = $this->get('/pokedex');
 
@@ -69,5 +74,31 @@ class PlayerControllerTest extends TestCase
         $this->assertSame(TipoEnum::options(), $response->viewData('tipos'));
         $this->assertSame(StatEnum::options(), $response->viewData('stats'));
         $this->assertSame(3, $response->viewData('pokemons')['meta']['total']);
+    }
+
+    public function test_pokedex_de_usuario_a_no_muestra_atrapados_de_b(): void
+    {
+        $usuarioA = User::factory()->create();
+        $usuarioB = User::factory()->create();
+        $this->createPokemon(1, 'bulbasaur');
+        $this->createPokemon(2, 'ivysaur');
+
+        Pokedex::create(['user_id' => $usuarioA->id, 'pokemon_id' => 1, 'visto' => true, 'atrapado' => true]);
+        Pokedex::create(['user_id' => $usuarioB->id, 'pokemon_id' => 2, 'visto' => true, 'atrapado' => true]);
+
+        $this->actingAs($usuarioA);
+
+        $response = $this->get('/pokedex');
+
+        $response->assertOk();
+        $rows = $response->viewData('pokemons')['data'];
+        $this->assertSame([
+            ['id' => 1, 'visto' => true, 'atrapado' => true],
+            ['id' => 2, 'visto' => false, 'atrapado' => false],
+        ], array_map(fn (array $row): array => [
+            'id' => $row['id'],
+            'visto' => $row['visto'],
+            'atrapado' => $row['atrapado'],
+        ], $rows));
     }
 }

@@ -9,7 +9,8 @@ use App\Models\TeamMember;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Src\Equipos\Domain\TeamAggregate;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\Rule;
 use Src\Equipos\Domain\TeamRepositoryInterface;
 
 class TeamController extends Controller
@@ -25,9 +26,9 @@ class TeamController extends Controller
             'name' => 'required|string|max:255',
         ]);
 
-        if ($request->wantsJson()) {
-            $team = Team::create(['name' => $data['name']]);
+        $team = Team::create(['name' => $data['name'], 'user_id' => Auth::id()]);
 
+        if ($request->wantsJson()) {
             return response()->json([
                 'team' => [
                     'id' => $team->id,
@@ -37,17 +38,12 @@ class TeamController extends Controller
             ]);
         }
 
-        // Use repository for persistence
-        $this->teamRepository->guardar(new TeamAggregate(
-            id: 0,
-            name: $data['name'],
-        ));
-
         return redirect()->back();
     }
 
     public function update(Request $request, Team $team): RedirectResponse|JsonResponse
     {
+        // El route-model-binding + global scope de Team ya devuelve 404 para equipos ajenos.
         $data = $request->validate(['name' => 'required|string|max:255']);
         $team->update(['name' => $data['name']]);
 
@@ -88,13 +84,17 @@ class TeamController extends Controller
     {
         $data = $request->validate([
             'team_id' => 'required|exists:teams,id',
-            'reclutado_id' => 'required|exists:reclutados,id',
+            // El reclutado debe ser del usuario autenticado (anti-IDOR).
+            'reclutado_id' => ['required', Rule::exists('reclutados', 'id')->where('user_id', Auth::id())],
             'slot' => 'required|integer|min:1|max:3',
             'behavior' => 'required|in:VANGUARDIA,COMBATIENTE,RECOLECTOR,SOPORTE',
         ]);
 
-        $team = Team::find($data['team_id']);
-        if ($team && $team->isExploring()) {
+        // El global scope de Team hace que un equipo ajeno resuelva a null:
+        // findOrFail devuelve 404 (misma semántica que update/destroy).
+        $team = Team::findOrFail($data['team_id']);
+
+        if ($team->isExploring()) {
             $error = 'No se puede modificar un equipo con exploraciones activas';
 
             if ($request->wantsJson()) {
@@ -155,20 +155,23 @@ class TeamController extends Controller
             'member_id' => 'required|exists:team_members,id',
         ]);
 
-        $member = TeamMember::find($data['member_id']);
-        if ($member) {
-            if ($member->team?->isExploring()) {
-                $error = 'No se puede modificar un equipo con exploraciones activas';
+        $member = TeamMember::findOrFail($data['member_id']);
 
-                if ($request->wantsJson()) {
-                    return response()->json(['error' => $error], 422);
-                }
+        // El belongsTo Team hereda el global scope: para un miembro de un equipo ajeno
+        // la relación resuelve null y abort(404) (anti-IDOR, mismo status que update/destroy).
+        abort_unless($member->team?->user_id === Auth::id(), 404);
 
-                return redirect()->back()->with('error', $error);
+        if ($member->team?->isExploring()) {
+            $error = 'No se puede modificar un equipo con exploraciones activas';
+
+            if ($request->wantsJson()) {
+                return response()->json(['error' => $error], 422);
             }
 
-            $member->delete();
+            return redirect()->back()->with('error', $error);
         }
+
+        $member->delete();
 
         if ($request->wantsJson()) {
             return response()->json(['success' => true]);

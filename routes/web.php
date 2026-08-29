@@ -2,25 +2,37 @@
 
 declare(strict_types=1);
 
+use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\HabitatsController;
 use App\Http\Controllers\IconoController;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', [HabitatsController::class, 'index']);
-Route::get('/habitats', [HabitatsController::class, 'index']);
+Route::middleware('guest')->group(function (): void {
+    Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
+    Route::post('/login', [AuthController::class, 'login']);
+    Route::get('/register', [AuthController::class, 'showRegister'])->name('register');
+    Route::post('/register', [AuthController::class, 'register']);
+});
 
-Route::get('/iconos/{filename}', [IconoController::class, 'show']);
-Route::get('/iconos/shiny/{filename}', [IconoController::class, 'shiny']);
+Route::middleware('auth')->group(function (): void {
+    Route::get('/', [HabitatsController::class, 'index']);
+    Route::get('/habitats', [HabitatsController::class, 'index']);
 
-Route::get('/cruds', [DashboardController::class, 'cruds'])->name('cruds');
+    Route::get('/iconos/{filename}', [IconoController::class, 'show']);
+    Route::get('/iconos/shiny/{filename}', [IconoController::class, 'shiny']);
 
-// Combate archivado — ver src/Battle/
-//Route::get('/combate', \App\Livewire\Combate::class);
+    Route::get('/cruds', [DashboardController::class, 'cruds'])->name('cruds');
 
-// Reclutados merged into Equipos — old /reclutados redirects to /equipos (see player.php)
-require __DIR__.'/habitats.php';
-require __DIR__.'/player.php';
-require __DIR__.'/exploraciones.php';
-require __DIR__.'/datagrid.php';
-// require __DIR__ . '/../src/Crud/routes.php';
+    Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
+
+    // Combate archivado — ver src/Battle/
+    //Route::get('/combate', \App\Livewire\Combate::class);
+
+    // Reclutados merged into Equipos — old /reclutados redirects to /equipos (see player.php)
+    require __DIR__.'/habitats.php';
+    require __DIR__.'/player.php';
+    require __DIR__.'/exploraciones.php';
+    require __DIR__.'/datagrid.php';
+    // require __DIR__ . '/../src/Crud/routes.php';
+});

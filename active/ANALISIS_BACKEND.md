@@ -532,3 +532,233 @@ min_lvl, ni controladores (fases B/C/D).
 - Fix de estabilidad añadido: `DatagridService::applySort()` ordena por PK cuando no hay
   `sort` (Postgres devuelve orden arbitrario sin ORDER BY; los nuevos índices cambiaron el
   plan y rompían los tests de orden del datagrid).
+
+---
+
+## Fase B — Autenticación + aislamiento por usuario + datagrid por usuario (2026-08-29)
+
+### Alcance (solo estos archivos)
+
+- NUEVO `app/Http/Controllers/AuthController.php`: showLogin, login (name+password, Auth::attempt,
+  regenerate, redirect '/' o intended), logout (POST, invalidar sesión), showRegister, register
+  (name unique, password confirmed min:8, experiencia 0, Auth::login, redirect '/').
+- `routes/web.php`: grupo guest (GET/POST /login, GET/POST /register, name('login') para el
+  redirect del middleware auth), POST /logout, grupo auth envolviendo TODO lo demás
+  (raíz, habitats, player, exploraciones, datagrid, cruds) con `Route::middleware('auth')->group()`
+  sobre los requires existentes (habitats.php, player.php, exploraciones.php, datagrid.php).
+- `app/Providers/AppServiceProvider.php`: User::first() → usuario autenticado. OJO: `auth()->user()`
+  en boot() devuelve null (la sesión aún no arranca en el boot de providers). Se resuelve con un
+  **View::composer('*')** que evalúa `auth()->user()` al renderizar (post-middleware). CLI sin
+  auth → experiencia 0 / nivel 1. Se conserva el guard `Schema::hasTable('users')` (evaluado en
+  boot, cacheado en closure).
+- `app/Http/Controllers/TeamController.php` (anti-IDOR):
+  - store: `Team::create(['name'=>..., 'user_id'=>auth()->id()])` en las DOS ramas (JSON y
+    repo). El repo `EloquentTeamRepository::guardar` NO recibe user_id → la rama no-JSON crea
+    sin user_id → violación NOT NULL. Solución: la rama no-JSON también pasa por
+    `Team::create([... user_id ...])` (contrato del repo sin cambios; TeamAggregate no porta
+    user_id).
+  - update/destroy: route-model-binding + global scope → 404 de equipos ajenos (ya ok).
+  - addMember: `team_id` validado con `exists:teams,id` + `Team::findOrFail` (el scope global
+    convierte equipo ajeno en 404, igual que update/destroy); `reclutado_id` con
+    `Rule::exists('reclutados','id')->where('user_id', auth()->id())` (422 para reclutados
+    ajenos). `member_id` en removeMember: `findOrFail` + `abort_unless($member->team?->user_id
+    === auth()->id(), 404)` (el belongsTo Team hereda el scope global → null para equipos
+    ajenos).
+- `app/Http/Controllers/PlayerController.php`: sin cambios de código (los listados ya filtran
+  por global scope). `whereNull('regreso')` de equipos() es filtrado de NEGOCIO (exploración
+  activa), NO global por usuario: se mantiene. Solo se refuerza con tests multi-usuario.
+- `app/Providers/DatagridServiceProvider.php` (datagrid por usuario):
+  - baseQuery 'pokemon': el leftJoin pasa a ser **leftJoin con condición en el ON**
+    (`pokedex.pokemon_id = pokemon.id AND pokedex.user_id = {id}`). Sin auth (id null) →
+    `user_id = NULL` nunca matchea → unión vacía → visto/atrapado NULL ≡ false (ya contemplado).
+    NO usar where() post-join porque descartaría los pokémon no avistados del listado.
+  - `pokemonCounts()`: vistos/atrapados solo del usuario autenticado; sin auth → 0/0 y
+    no_vistos = total (misma semántica que la unión vacía).
+- Tests: NUEVO `tests/Feature/AuthTest.php`; actualizados EquiposControllerTest,
+  PlayerControllerTest, DatagridTest (actingAs + user_id + asserts de propiedad A/B).
+
+### Piezas NO tocadas (deuda/coordinación)
+
+- Vistas auth (`resources/views/auth/*.blade.php`) → frontend. El frontend las creó en
+  paralelo (login/register + layouts/auth + AuthViewsTest); los tests de GET /login y
+  GET /register usan las vistas reales. Los fixtures con stubs (`tests/Feature/Fixtures/views`)
+  se descartaron al aparecer las vistas reales (eliminados).
+- ExploracionesPageTest / ExploracionesViewTest / PokedexViewTest / HeaderNivelViewTest /
+  HabitatsControllerTest: quedarán redirigiendo a /login sin sesión (efecto colateral del auth
+  middleware) → los absorben backend C/frontend; fuera de mi alcance.
+- El middleware guest/auth usa los alias por defecto de Laravel 12 (bootstrap/app.php sin
+  cambios).
+
+### Tests planeados (test rojo → verde)
+
+1. AuthTest: registro crea usuario (experiencia 0) y autentica; login ok; login fallido;
+   logout; rutas de juego → /login sin sesión; /login → '/' logueado; GET /login y /register
+   renderizan (stub vía addLocation).
+2. EquiposControllerTest: todos con actingAs + user_id en creates; NUEVOS: A no edita equipo
+   de B (404), A no elimina equipo de B (404), A no añade miembro a equipo de B (404),
+   A no añade reclutado de B (422 session error reclutado_id).
+3. DatagridTest: todos con actingAs; NUEVO: la pokédex de A no muestra atrapados de B ni
+   duplica filas cuando A y B tienen filas del mismo pokémon.
+4. PlayerControllerTest: actingAs + user_id consistente (mismo usuario para pokedex y request).
+
+### Riesgos
+
+- `Auth::attempt(['name'=>...])` funciona con el provider por defecto (retrieveByCredentials
+  filtra por cualquier columna; email no es especial). Verificar con test.
+- Composer de AppServiceProvider: `Schema::hasTable` solo en boot; el closure usa
+  `auth()->user()` por request (sin query extra por render; la sesión ya arrancó).
+- leftJoin con condición en ON: funciona en Postgres y SQLite (compatible grammar estándar);
+  paginate() respeta la condición del join (count con join).
+- `Team::findOrFail` en addMember devuelve 404 para equipo ajeno — mismo status que
+  update/destroy (consistente, sin fuga de existencia).
+
+---
+
+# Análisis Backend — Fase D: niveles mínimos de hábitat (min_lvl_1/2/3) + anti-IDOR exploraciones [2026-08-29]
+
+## Contexto verificado
+
+- FASE 1 (03d8457): columnas `habitats.min_lvl_1/2/3` (unsignedInteger NULLABLE, default null) SIN lógica;
+  `exploraciones_activas.user_id` NOT NULL + trait `BelongsToUser` (global scope `belongsToUser`, inactivo
+  sin auth); seeder demo (demo/password); modelos de caramelos eliminados.
+- El frontend YA consume los contratos (fases paralelas): `habitats/show.blade.php` usa
+  `$habitat['min_lvl_1'|'min_lvl_2'|'min_lvl_3']` (DTO detalle) y `exploraciones/index.blade.php` usa
+  `$exp['min_lvl']` y `$terminada['min_lvl']` para el badge "Requiere Nv X" → shapes confirmados.
+- `Rule::exists('teams','id')` usa el query builder (DB::table), NO Eloquent → el global scope de `Team`
+  NO se aplica → hay que añadir `->where('user_id', auth()->id())` (anti-IDOR del store).
+- `store()` NO pasa `user_id` al create → violaría NOT NULL (bug latente de la FASE 1). Se añade
+  `'user_id' => auth()->id()` (por la regla del team, solo se llega aquí autenticado).
+- `recoger`/`cerrar`: route model binding `{exploracion}` resuelve con el global scope (auth activo) →
+  exploración ajena = ModelNotFound → 404. Verificar con test.
+- `ValidadorExploracion::equipoDisponible/habitatTieneExploracionesActivas/exploracionesActivas` con scope
+  activo consultan SOLO las exploraciones del usuario autenticado → semántica per-player correcta para
+  multiplayer (equipo ya validado como propio por el store; bloqueo de construcción per-player). Sin cambios.
+- `nivel()` en User usa `NivelHelper` (curva 10×nivel³). Nivel 5 = 1.250 exp; nivel 10 = 10.000 exp.
+- Mensaje exacto del brief: `'Requiere nivel Nv {X} para explorar esta zona.'` (X = min_lvl).
+
+## Decisión de diseño
+
+- **min_lvl en dominio**: método nuevo `ValidadorExploracion::cumpleNivelMinimo(int $nivelJugador, ?int $nivelMinimo): bool`
+  (`$nivelMinimo === null || $nivelJugador >= $nivelMinimo`) — regla de negocio pura, testeable sin BD;
+  el controlador orquesta (lee el hábitat, pasa nivel del jugador). El valor `null` = sin restricción queda
+  documentado por la firma y los tests.
+- **Store**: validación con `Rule::exists('teams','id')->where('user_id', auth()->id())`; tras validar,
+  `$min = $habitat->getAttribute('min_lvl_'.$data['level'])`; si `$min !== null` y
+  `! cumpleNivelMinimo(nivel(), $min)` → `redirect()->back()->with('error', msg)->withInput()` o
+  `response()->json(['message' => msg], 422)` si `wantsJson()`.
+- **index**: aditivo `'min_lvl' => ?int` (el min del hábitat para el nivel de ESA exploración) en
+  `toActiva()` y `toTerminada()`; `null` = sin badge (ya consumido por la vista).
+- **DTOHabitatDetalle**: aditivo `min_lvl_1/2/3` (?int) en constructor + toArray (contrato aditivo).
+
+## Qué voy a tocar
+
+| Archivo | Acción | Propósito |
+|---|---|---|
+| `src/Habitats/App/ValidadorExploracion.php` | Modificar | + `cumpleNivelMinimo()`. |
+| `app/Http/Controllers/ExploracionActivaController.php` | Modificar | store: rule exists con user_id, chequeo min_lvl, user_id en create; index: `min_lvl` en toActiva/toTerminada. |
+| `src/Habitats/Presentation/DTOHabitatDetalle.php` | Modificar | + 3 campos ?int + toArray + PHPDoc. |
+| `src/Habitats/Infra/HabitatRepository.php` | Modificar | getHabitatDetail puebla min_lvl_1/2/3 (fallback DTO null-hábitat con nulls). |
+| `app/Models/Habitat.php` | Modificar | casts integer de min_lvl_* (solo lectura limpia). |
+| `tests/Feature/Habitats/MinLvlTest.php` | NUEVO | store bloquea < min (session y JSON), permite >=, permite null, equipo ajeno error, recoger/cerrar ajeno 404. |
+| `tests/Feature/ValidadorExploracionTest.php` | Modificar | + tests de `cumpleNivelMinimo` (null, límite exacto, inferior). |
+| `tests/Feature/HabitatsControllerTest.php` | Modificar | + assert de min_lvl_* en viewData del show. |
+
+## Tests (TDD: rojo → verde)
+
+1. `test_store_bloquea_cuando_nivel_jugador_menor_que_min_lvl` — habitat min_lvl_2=10, user nivel 5 (1.250 exp), POST level=2 → redirect back, session error, BD sin fila.
+2. `test_store_bloquea_min_lvl_responde_422_json` — mismo caso con `Accept: application/json` → 422 + mensaje exacto.
+3. `test_store_permite_cuando_nivel_jugador_igual_al_min_lvl` — user nivel 10 (10.000 exp), min_lvl_2=10 → success + fila en BD (user_id correcto).
+4. `test_store_permite_cuando_min_lvl_null` — min_lvl_1 null → success.
+5. `test_store_equipo_ajeno_error_validacion` — team de B, actingAs A → session errors team_id, sin fila.
+6. `test_recoger_exploracion_ajena_devuelve_404` — actingAs A, POST recoger sobre exploración de B → 404.
+7. `test_cerrar_exploracion_ajena_devuelve_404` — exploración de B con regreso (si no: cerrar ya da 404 por regreso null) → 404.
+8. `test_index_pasa_min_lvl_del_habitat_para_el_nivel` — GET /exploraciones con exp activa en habitat min_lvl_2=10 nivel 2 → view data `activas[0]['min_lvl'] === 10`; null en zona sin restricción.
+
+## Riesgos
+
+- Carreras de tests contra FASE B/C sobre la misma BD `laravel_test` (migrate:fresh intermitente) → re-ejecutar
+  el filtro hasta 3 veces; verificación con BD aislada no posible (sin permisos de creación) pero suite estable.
+- PHPStan level 6: acceso a `min_lvl_*` vía `getAttribute()` (mixed) con guards `!== null` + `(int)`; sin
+  anotaciones @property en modelos (convención actual).
+- NO tocar src/Exploraciones (C), vistas, ExploracionesTest/ExploracionesPageTest, Reclutamiento/Reclutado.
+
+---
+
+## Fase C — Caramelos → player_inventory, exp tipo en JSON, jobs y handler por usuario (2026-08-29)
+
+### Contexto
+
+- Fase 1 (03d8457) eliminó las tablas `caramelos`/`caramelos_ev`/`caramelos_tipo`/`reclutados_exp_tipo`
+  y sus modelos; creó `player_inventory(user_id, item_key, cantidad)` con `BelongsToUser` en los
+  modelos player-owned y el cast `ExpReclutado` en `reclutados.exp` (shape `{total, tipos}`).
+- Fase B (auth, paralela) NO ha llegado a este árbol: no hay AuthController ni middleware 'auth'
+  (bootstrap/app.php vacío). Sus tests con actingAs serán compatibles.
+- Baseline local: 106 tests rojos = fallout de la Fase 1 (creates sin `user_id` en fixtures de
+  tests que NO se actualizaron: ReclutamientoControllerTest, ReclutadoEvolucionTest,
+  ExploracionesTest, Jobs/*, ServicioCapturaTest, ExploracionesPageTest). El análisis de Fase B
+  delega EXPLÍCITAMENTE ExploracionesPageTest a "backend C" → lo absorbo (solo fixtures).
+
+### Decisiones de esta fase
+
+1. **ItemCatalogo** → `app/Support/ItemCatalogo.php` (infra: consulta App\Models + enums; no va a
+   src/Shared/App porque no existe la carpeta y es infraestructura, no dominio puro — mismo criterio
+   que WebpConverter). API estática:
+   - `keyFamilia(int): string` → `familia:{id}`
+   - `keyEv(int): string` → `ev:{stat}`
+   - `keyTipo(string): string` → `tipo:{slug}` (SlugTipo::de, mismo que la migración 000008)
+   - `resolve(string): array{nombre, imagen, categoria}`
+   - familia: primer integrante = min species_id (desempate id asc), misma regla que
+     `TransformadorResultadoExploracion::pokemonBaseDeCadena`; cadena sin pokémon → 'Desconocido' +
+     `/images/candy_pokemon/0.webp`.
+   - ev: nombre = `StatEnum::label()`; slug hp/atk/def/atksp/defsp/spd (const `STATS` del
+     ExploracionActivaController como referencia, duplicada con comentario — contrato aditivo).
+   - tipo: slug → label resolviendo `TipoEnum::cases()` con `SlugTipo::de(label) === slug`.
+   - key desconocida → 'Desconocido' + fallback + categoria 'desconocida' (nunca lanza).
+2. **PersistirRecompensas**: `guardarCaramelosFamilia/Ev/Tipo` escriben en `player_inventory`
+   con `user_id => $usuario?->id ?? 1` (fallback defensivo: con FK cascade el dueño nunca es null
+   en producción; `?? 1` solo aplica en el test artificial sin usuario). `aplicarCapturas` →
+   `Reclutable` con user_id. `aplicarExperiencia` recibe `?User` igual que antes pero adapta el
+   manejo del cast: `$reclutado->exp` YA ES `ExpReclutado` (objeto) → usar `->toArray()`.
+3. **FinalizarExploracionHandler**: `User::first()` → `$exploracion->user` (belongsTo del trait).
+   Nivel salvaje = `$usuario->nivel()`, 1 si null. Jobs de avistados llevan `$exploracion->user_id`.
+4. **Jobs**: `ActualizarPokedexJob(int $userId, int $pokemonId, string $estado)` y
+   `CapturarPokemonJob(int $userId, int $pokemonId, float $chance)` con updateOrCreate por
+   (user_id, pokemon_id). `RecompilarHabitatJsonJob` intacto (catálogo global). DEUDA: el JSON
+   del hábitat se recompila con la pokedex del usuario que disparó (multiplayer parcial).
+5. **ServicioEvolucion**: firmas con `int $userId` donde hace falta (requisitos, puedeEvolucionar,
+   caramelosDisponibles); `nivelDe` usa `$reclutado->exp->total()`; `consumirExpTipo` muta el JSON
+   vía `consumirTipos` + save. Sin Auth dentro de src/ (el controlador pasa el userId).
+6. **ReclutamientoController**: create con `user_id` (auth), jobs con userId, caramelos →
+   `player_inventory` del usuario. Propiedad del reclutable: global scope + findOrFail → 404.
+7. **ReclutadoController**: `darCaramelo` en transacción con `lockForUpdate` (user+keyTipo) →
+   422 si ≤0 → decrement → `sumarExpTipo(100)` + save. `evolucionar` consume el JSON + job con
+   userId. Propiedad del reclutado: route model binding + scope → 404.
+8. **ProcesarExploraciones**: `withoutUserScope()` para procesar a TODOS los usuarios (CLI sin auth).
+9. **ExploracionesTest sin usuario**: con FK cascade `user_id` NOT NULL, borrar usuarios borra la
+   exploración → imposible el caso "sin dueño" por la vía normal. Se reescribe con un mock parcial
+   que devuelve `user` → null (patrón `mockExploracionQueFallaAlMarcarRegreso` existente): nivel 1,
+   exp a los miembros del equipo, caramelos al fallback (dueño real en DB = id 1), sin crash.
+
+### Archivos a tocar
+
+- NUEVO `app/Support/ItemCatalogo.php`, `tests/Unit/ItemCatalogoTest.php`,
+  `tests/Feature/InventarioTest.php`.
+- `src/Exploraciones/App/PersistirRecompensas.php`, `FinalizarExploracionHandler.php`.
+- `app/Jobs/ActualizarPokedexJob.php`, `CapturarPokemonJob.php`.
+- `src/Reclutamiento/App/ServicioEvolucion.php`, `ServicioCaptura.php`.
+- `app/Http/Controllers/ReclutamientoController.php`, `ReclutadoController.php`.
+- `app/Console/Commands/ProcesarExploraciones.php`.
+- Tests: ReclutamientoControllerTest, ReclutadoEvolucionTest, ExploracionesTest,
+  ExploracionesPageTest, Jobs/{ActualizarPokedexJobTest, CapturarPokemonJobTest},
+  ServicioCapturaTest. (`RecompilarHabitatJsonJobTest` intacto.)
+
+### Riesgos
+
+- `$reclutado->exp['total']` (ArrayAccess sobre objeto) rompe en ServicioEvolucion::nivelDe y
+  PersistirRecompensas::aplicarExperiencia → adaptar al cast (`->total()` / `->toArray()`).
+- `?? 1` en player_inventory con BD sin usuarios → FK violation: solo ocurre en el test mock;
+  verificado que el dueño real queda en DB (id 1).
+- `lockForUpdate` es no-op en SQLite :memory: → el test de lock cubre el observable
+  (1 caramelo → 1 dar OK + 2º dar → 422) y se ejecuta contra Postgres local.
+- El `exists:reclutables,id` de la validación no filtra por usuario (regla global), pero el
+  findOrFail posterior con scope global → 404. Sin fuga de existencia (mismo status).
