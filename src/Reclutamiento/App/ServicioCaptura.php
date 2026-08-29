@@ -27,7 +27,7 @@ class ServicioCaptura
             ActualizarPokedexJob::dispatch($userId, $pokemonId, 'AVISTADO');
 
             // Attempt capture based on capture_rate
-            $captureChance = ($pokemon->capture_rate ?? 45) / 255;
+            $captureChance = min($pokemon->capture_rate ?? 45, 45) / 255;
             CapturarPokemonJob::dispatch($userId, $pokemonId, $captureChance);
         }
     }
