@@ -42,7 +42,7 @@
                         @if($bloqueadoConstruccion) title="No disponible durante exploraciones activas" @endif
                         class="{{ $constructionButtonClass }} {{ $bloqueadoConstruccion ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-50 dark:hover:bg-gray-700' }}"
                     >
-                        <img src="/images/misc/item/farm.webp" loading="lazy" decoding="async" class="w-8 h-8 object-contain" alt="Granjas">
+                        <img src="/images/misc/farm.webp" loading="lazy" decoding="async" class="w-8 h-8 object-contain" alt="Granjas">
                         Granjas
                     </button>
                     <button
@@ -51,7 +51,7 @@
                         @if($bloqueadoConstruccion) title="No disponible durante exploraciones activas" @endif
                         class="{{ $constructionButtonClass }} {{ $bloqueadoConstruccion ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-50 dark:hover:bg-gray-700' }}"
                     >
-                        <img src="/images/misc/item/trainer.webp" loading="lazy" decoding="async" class="w-8 h-8 object-contain" alt="Entrenadores">
+                        <img src="/images/misc/trainer.webp" loading="lazy" decoding="async" class="w-8 h-8 object-contain" alt="Entrenadores">
                         Entrenadores
                     </button>
                     <button
@@ -60,7 +60,7 @@
                         @if($bloqueadoConstruccion) title="No disponible durante exploraciones activas" @endif
                         class="{{ $constructionButtonClass }} {{ $bloqueadoConstruccion ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-50 dark:hover:bg-gray-700' }}"
                     >
-                        <img src="/images/misc/raid.png" loading="lazy" decoding="async" class="w-8 h-8 object-contain" alt="Mazmorras">
+                        <img src="/images/misc/raid.webp" loading="lazy" decoding="async" class="w-8 h-8 object-contain" alt="Mazmorras">
                         Mazmorras
                     </button>
                     <button
@@ -229,7 +229,7 @@
                                 @forelse($habitat['levels'][$level] ?? [] as $pokemon)
                                 <template x-if="!isSighted({{ $pokemon['id'] ?? $pokemon['species_id'] ?? 0 }})">
                                     <div class="relative w-24 h-24">
-                                        <img src="/images/reward/pokemon_encounter/0.png" alt="?" class="w-full h-full object-contain">
+                                        <img src="/images/misc/unknown.webp" alt="?" class="w-full h-full object-contain">
                                     </div>
                                 </template>
                                 <template x-if="isSighted({{ $pokemon['id'] ?? $pokemon['species_id'] ?? 0 }})">
