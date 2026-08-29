@@ -211,3 +211,49 @@ View::share: $nivelJugador (int), $progresoNivel (int 0-100)
 - Barra decorativa → `aria-hidden="true"` (el título del badge ya comunica el nivel).
 - Contenedor flex absoluto: en viewports muy pequeños el badge + toggle podrían solaparse con los links centrados. El nav ya tiene `overflow-x-auto` en los links; el badge es compacto (`px-2.5 py-1 text-xs`). Aceptado: patrón común; si el Arquitecto quiere, se puede ocultar el badge en `sm:` con `hidden sm:inline-flex` — NO aplicado por defecto para no inventar convenciones.
 - `title` en el badge da contexto semántico ("Nivel X") — accesible vía tooltip nativo.
+
+---
+
+# Análisis Frontend — Iconos de caramelos (bitácora + resultados) y alineación de botones de construcción
+
+## Fecha
+2026-08-29
+
+## Contexto
+El BACKEND en paralelo añade claves a eventos/resultados: `caramelo_ev.stat_slug` (hp|atk|def|atksp|defsp|spd), `caramelo_familia.pokemon_id` (bitácora y resultados), `caramelos_familia[].pokemon_id` (id del miembro de menor species_id), `caramelos_ev[].stat_slug`. Assets verificados en `public/images/`:
+- `candy_ev/{hp,atk,def,atksp,defsp,spd}.webp` — EXISTEN (6).
+- `candy_pokemon/{id}.webp` — EXISTE (parcial, incluye `0.webp` genérico).
+- `candy_type/{slug}.webp` — EXISTEN (18 slugs español).
+- `type_candy/` — NO EXISTE (ruta rota confirmada; la vista apunta ahí con .png).
+
+Contrato asumido (aditivo; la vista debe seguir funcionando si el backend aún no entrega las claves nuevas): `?pokemon_id`, `?stat_slug` se leen con `?? ''` / `!empty()` y el fallback visual cubre la ausencia.
+
+## Vistas a tocar (solo 2; NO tocar PHP ni tests — instrucción explícita del usuario)
+
+### 1. `resources/views/exploraciones/index.blade.php`
+- **Bitácora `caramelo_familia`** (~L112-119): SVG amber → `@if(!empty($evento['pokemon_id']))` `<img src="/images/candy_pokemon/{id}.webp">` (w-10 h-10, lazy/async, alt/title "Caramelo de {nombre}", onerror→`/images/candy_pokemon/0.webp` + `this.onerror=null`) `@else` SVG amber actual `@endif`. Texto "Caramelos de {nombre} ×N" intacto.
+- **Bitácora `caramelo_ev`** (~L120-132): SVG cyan → `@if(!empty($evento['stat_slug']))` `<img src="/images/candy_ev/{stat_slug}.webp">` (mismo patrón, alt/title "Caramelo EV {stat_nombre}") `@else` SVG cyan actual `@endif`. Texto "Caramelo EV {nombre} ×N" (con fallback JS `statName` existente) intacto. Timestamp intacto.
+- **Resultados `caramelos_familia`** (~L246-256): SVG amber → `<img src="/images/candy_pokemon/{{ $caramelo['pokemon_id'] ?? 0 }}.webp">` (w-8 h-8, alt/title "Caramelo de {nombre}", onerror→0.webp). Texto "Caramelos de {nombre}" + ×N intacto.
+- **Resultados `caramelos_ev`** (~L265-274): SVG cyan → `<img src="/images/candy_ev/{{ $caramelo['stat_slug'] ?? '' }}.webp">` (w-8 h-8, alt/title "Caramelo EV {stat_nombre}", onerror→0.webp). Texto + ×N intacto. Si `stat_slug` vacío → `/images/candy_ev/.webp` 404 → onerror cae a placeholder 0.webp (defensivo, sin rama @if porque el 404 es instantáneo y el placeholder es el mismo).
+- **Resultados `caramelos_tipo`** (~L288): CORRECCIÓN DE RUTA `type_candy/{slug}.png` → `candy_type/{slug}.webp`; onerror cambiado del patrón "ocultar" al patrón placeholder (`0.webp`) para cumplir "SIEMPRE imagen con fallback".
+
+### 2. `resources/views/habitats/show.blade.php` — alineación de los 4 botones apilados (L39-75)
+- Problema: `flex items-center justify-center gap-2` con icono+texto inline → el icono se desalinea según la longitud del texto (el centro del icono no coincide con el centro del bloque icono+texto).
+- Patrón: `$constructionButtonClass` (L9) pasa de `flex items-center justify-center gap-2` a `flex items-center gap-3`; cada botón: icono envuelto en `<span class="w-8 shrink-0 flex justify-center">` y texto en `<span class="flex-1 text-sm text-center font-medium text-gray-700 dark:text-gray-300">` (Admin: `font-bold uppercase tracking-wide`). El SVG engranaje w-6 h-6 queda centrado en el slot de 32px. Se conservan TODAS las clases de color/estado, `@click`, `disabled`, `title`.
+
+## Estados UI cubiertos
+- Bitácora: `pokemon_id` presente (img real) / ausente (SVG amber fallback); `stat_slug` presente (img EV) / ausente (SVG cyan fallback); asset faltante en servidor → onerror → `0.webp` genérico (y `onerror=null` evita loop infinito si 0.webp faltara).
+- Resultados: idem con `?? 0`/`?? ''` + onerror placeholder; caramelos tipo con ruta corregida y placeholder.
+- Botones hábitat: alineación idéntica para "Granjas", "Entrenadores", "Mazmorras" (bloqueados con disabled/opacity si hay exploraciones activas) y "Admin - Gestion" (siempre activo, azul) — estructura de slot igual en los 4.
+
+## Riesgos accesibilidad/UX
+- `alt`/`title` descriptivos en todos los `<img>` nuevos; `loading="lazy" decoding="async"` (patrón existente).
+- `onerror="this.src=...; this.onerror=null;"` → si el placeholder genérico también fallara no hay bucle de reemplazo (la imagen queda rota pero sin peticiones infinitas).
+- Los SVG de fallback conservan `aria-hidden="true"` y `shrink-0` (sin cambio de tamaño `w-5 h-5` para no alterar la línea de la bitácora).
+- Botones: el slot `w-8` fijo + `flex-1 text-center` centra el texto en el área restante; el icono queda alineado verticalmente entre los 4 botones (misma posición x en todos).
+
+## Verificación (sin Dusk instalado y sin tocar PHP — instrucción del usuario)
+- Lectura cuidadosa del Blade: `@if/@else/@endif` balanceados (nueva rama en bitácora), `{{ }}` correctos, comillas en atributos onerror (comillas simples dentro de dobles).
+- `php artisan view:cache` (compila todas las vistas; reporta si algo no compila).
+- `git diff` para revisar que solo cambiaron las 2 vistas (+ este análisis).
+- NO `npm run build` (no toco assets).

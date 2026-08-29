@@ -3,6 +3,9 @@
 @section('title', 'Exploraciones')
 
 @section('content')
+@php
+    $candyFallback = "this.src='/images/candy_pokemon/0.webp'; this.onerror=null;";
+@endphp
 <div x-data="exploracionesPage()">
     <!-- Header -->
     <div class="mb-6">
@@ -110,17 +113,33 @@
                                             Encontraste un <strong>{{ $evento['nombre'] ?? 'Pokémon' }}</strong>
                                         </span>
                                     @elseif($tipo === 'caramelo_familia')
-                                        <svg class="w-5 h-5 text-amber-500 shrink-0" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                                            <path d="M10 1.5a3 3 0 013 3v.75h1.25a3 3 0 013 3v3.1a5 5 0 110 4.3v3.1a3 3 0 01-3 3H13v.75a3 3 0 01-6 0v-.75H5.75a3 3 0 01-3-3v-3.1a5 5 0 110-4.3v-3.1a3 3 0 013-3H7v-.75a3 3 0 013-3z"/>
-                                        </svg>
+                                        @if(!empty($evento['pokemon_id']))
+                                            <img src="/images/candy_pokemon/{{ $evento['pokemon_id'] }}.webp" loading="lazy" decoding="async"
+                                                 alt="Caramelo de {{ $evento['nombre'] ?? 'Pokémon' }}"
+                                                 title="Caramelo de {{ $evento['nombre'] ?? 'Pokémon' }}"
+                                                 class="w-10 h-10 object-contain shrink-0"
+                                                 onerror="{{ $candyFallback }}">
+                                        @else
+                                            <svg class="w-5 h-5 text-amber-500 shrink-0" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                                <path d="M10 1.5a3 3 0 013 3v.75h1.25a3 3 0 013 3v3.1a5 5 0 110 4.3v3.1a3 3 0 01-3 3H13v.75a3 3 0 01-6 0v-.75H5.75a3 3 0 01-3-3v-3.1a5 5 0 110-4.3v-3.1a3 3 0 013-3H7v-.75a3 3 0 013-3z"/>
+                                            </svg>
+                                        @endif
                                         <span class="text-sm text-gray-700 dark:text-gray-300">
                                             Caramelos de <strong>{{ $evento['nombre'] ?? 'Pokémon' }}</strong>
                                             <span class="font-semibold text-gray-900 dark:text-white">×{{ $evento['cantidad'] ?? 1 }}</span>
                                         </span>
                                     @elseif($tipo === 'caramelo_ev')
-                                        <svg class="w-5 h-5 text-cyan-500 shrink-0" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                                            <path d="M10 1.5a3 3 0 013 3v.75h1.25a3 3 0 013 3v3.1a5 5 0 110 4.3v3.1a3 3 0 01-3 3H13v.75a3 3 0 01-6 0v-.75H5.75a3 3 0 01-3-3v-3.1a5 5 0 110-4.3v-3.1a3 3 0 013-3H7v-.75a3 3 0 013-3z"/>
-                                        </svg>
+                                        @if(!empty($evento['stat_slug']))
+                                            <img src="/images/candy_ev/{{ $evento['stat_slug'] }}.webp" loading="lazy" decoding="async"
+                                                 alt="Caramelo EV {{ $evento['stat_nombre'] ?? '' }}"
+                                                 title="Caramelo EV {{ $evento['stat_nombre'] ?? '' }}"
+                                                 class="w-10 h-10 object-contain shrink-0"
+                                                 onerror="{{ $candyFallback }}">
+                                        @else
+                                            <svg class="w-5 h-5 text-cyan-500 shrink-0" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                                <path d="M10 1.5a3 3 0 013 3v.75h1.25a3 3 0 013 3v3.1a5 5 0 110 4.3v3.1a3 3 0 01-3 3H13v.75a3 3 0 01-6 0v-.75H5.75a3 3 0 01-3-3v-3.1a5 5 0 110-4.3v-3.1a3 3 0 013-3H7v-.75a3 3 0 013-3z"/>
+                                            </svg>
+                                        @endif
                                         <span class="text-sm text-gray-700 dark:text-gray-300">
                                             Caramelo EV
                                             @if(!empty($evento['stat_nombre']))
@@ -246,9 +265,15 @@
                                         @foreach($resultado['caramelos_familia'] as $caramelo)
                                             <li class="flex items-center justify-between gap-2 text-sm">
                                                 <span class="flex items-center gap-2 text-gray-700 dark:text-gray-300 min-w-0">
-                                                    <svg class="w-4 h-4 text-amber-500 shrink-0" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                                                        <path d="M10 1.5a3 3 0 013 3v.75h1.25a3 3 0 013 3v3.1a5 5 0 110 4.3v3.1a3 3 0 01-3 3H13v.75a3 3 0 01-6 0v-.75H5.75a3 3 0 01-3-3v-3.1a5 5 0 110-4.3v-3.1a3 3 0 013-3H7v-.75a3 3 0 013-3z"/>
-                                                    </svg>
+                                                    <img
+                                                        src="/images/candy_pokemon/{{ $caramelo['pokemon_id'] ?? 0 }}.webp"
+                                                        loading="lazy"
+                                                        decoding="async"
+                                                        alt="Caramelo de {{ $caramelo['nombre'] }}"
+                                                        title="Caramelo de {{ $caramelo['nombre'] }}"
+                                                        class="w-8 h-8 object-contain shrink-0"
+                                                        onerror="{{ $candyFallback }}"
+                                                    >
                                                     <span class="truncate">Caramelos de {{ $caramelo['nombre'] }}</span>
                                                 </span>
                                                 <span class="font-semibold text-gray-900 dark:text-white shrink-0">×{{ $caramelo['cantidad'] }}</span>
@@ -265,9 +290,15 @@
                                         @foreach($resultado['caramelos_ev'] as $caramelo)
                                             <li class="flex items-center justify-between gap-2 text-sm">
                                                 <span class="flex items-center gap-2 text-gray-700 dark:text-gray-300 min-w-0">
-                                                    <svg class="w-4 h-4 text-cyan-500 shrink-0" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                                                        <path d="M10 1.5a3 3 0 013 3v.75h1.25a3 3 0 013 3v3.1a5 5 0 110 4.3v3.1a3 3 0 01-3 3H13v.75a3 3 0 01-6 0v-.75H5.75a3 3 0 01-3-3v-3.1a5 5 0 110-4.3v-3.1a3 3 0 013-3H7v-.75a3 3 0 013-3z"/>
-                                                    </svg>
+                                                    <img
+                                                        src="/images/candy_ev/{{ $caramelo['stat_slug'] ?? '' }}.webp"
+                                                        loading="lazy"
+                                                        decoding="async"
+                                                        alt="Caramelo EV {{ $caramelo['stat_nombre'] }}"
+                                                        title="Caramelo EV {{ $caramelo['stat_nombre'] }}"
+                                                        class="w-8 h-8 object-contain shrink-0"
+                                                        onerror="{{ $candyFallback }}"
+                                                    >
                                                     <span class="truncate">Caramelo EV {{ $caramelo['stat_nombre'] }}</span>
                                                 </span>
                                                 <span class="font-semibold text-gray-900 dark:text-white shrink-0">×{{ $caramelo['cantidad'] }}</span>
@@ -285,12 +316,12 @@
                                             <div class="text-center" title="{{ $caramelo['tipo'] }}">
                                                 <div class="relative inline-block">
                                                     <img
-                                                        src="/images/type_candy/{{ $caramelo['slug'] }}.png"
+                                                        src="/images/candy_type/{{ $caramelo['slug'] }}.webp"
                                                         loading="lazy"
                                                         decoding="async"
                                                         alt="{{ $caramelo['tipo'] }}"
                                                         class="w-12 h-12 object-contain"
-                                                        onerror="this.style.display='none'"
+                                                        onerror="{{ $candyFallback }}"
                                                     >
                                                     <span class="absolute -top-1.5 -right-1.5 px-1.5 py-0.5 bg-amber-600 text-white text-[10px] font-bold rounded-full">
                                                         ×{{ $caramelo['cantidad'] }}
