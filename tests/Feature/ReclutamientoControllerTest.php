@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Tests\Feature;
 
 use App\Models\Caramelo;
-use App\Models\EvolutionChain;
 use App\Models\Pokemon;
 use App\Models\Reclutable;
 use App\Models\Reclutado;
@@ -130,10 +129,9 @@ class ReclutamientoControllerTest extends TestCase
 
     public function test_discard_decrements_cantidad_and_awards_candies(): void
     {
-        $chain = EvolutionChain::create(['data' => '{"stages": 3}']);
-        $bulbasaur = $this->crearPokemon(1, 'bulbasaur', 1, $chain->id);
-        $ivysaur = $this->crearPokemon(2, 'ivysaur', 2, $chain->id);
-        $venusaur = $this->crearPokemon(3, 'venusaur', 3, $chain->id);
+        $bulbasaur = $this->crearPokemon(1, 'bulbasaur', 1, 51);
+        $this->crearPokemon(2, 'ivysaur', 2, 51);
+        $this->crearPokemon(3, 'venusaur', 3, 51);
         $reclutable = Reclutable::create(['pokemon_id' => $bulbasaur->id, 'cantidad' => 5]);
 
         $response = $this->postJson('/reclutamiento/discard', [
@@ -145,15 +143,14 @@ class ReclutamientoControllerTest extends TestCase
         $response->assertOk()->assertJson(['success' => true]);
         $this->assertDatabaseHas('reclutables', ['id' => $reclutable->id, 'cantidad' => 3]);
         $this->assertDatabaseHas('caramelos', [
-            'evolution_chain_id' => $chain->id,
+            'evolution_chain_id' => 51,
             'cantidad' => 2,
         ]);
     }
 
     public function test_discard_with_cantidad_above_available_clamps_to_available(): void
     {
-        $chain = EvolutionChain::create(['data' => '{"stages": 1}']);
-        $bulbasaur = $this->crearPokemon(1, 'bulbasaur', 1, $chain->id);
+        $bulbasaur = $this->crearPokemon(1, 'bulbasaur', 1, 51);
         $reclutable = Reclutable::create(['pokemon_id' => $bulbasaur->id, 'cantidad' => 3]);
 
         $response = $this->postJson('/reclutamiento/discard', [
@@ -165,15 +162,14 @@ class ReclutamientoControllerTest extends TestCase
         $response->assertOk()->assertJson(['success' => true]);
         $this->assertDatabaseMissing('reclutables', ['id' => $reclutable->id]);
         $this->assertDatabaseHas('caramelos', [
-            'evolution_chain_id' => $chain->id,
+            'evolution_chain_id' => 51,
             'cantidad' => 3,
         ]);
     }
 
     public function test_discard_with_full_cantidad_deletes_record(): void
     {
-        $chain = EvolutionChain::create(['data' => '{"stages": 1}']);
-        $bulbasaur = $this->crearPokemon(1, 'bulbasaur', 1, $chain->id);
+        $bulbasaur = $this->crearPokemon(1, 'bulbasaur', 1, 51);
         $reclutable = Reclutable::create(['pokemon_id' => $bulbasaur->id, 'cantidad' => 2]);
 
         $response = $this->postJson('/reclutamiento/discard', [
@@ -184,7 +180,7 @@ class ReclutamientoControllerTest extends TestCase
         $response->assertOk()->assertJson(['success' => true]);
         $this->assertDatabaseMissing('reclutables', ['id' => $reclutable->id]);
         $this->assertDatabaseHas('caramelos', [
-            'evolution_chain_id' => $chain->id,
+            'evolution_chain_id' => 51,
             'cantidad' => 2,
         ]);
     }
@@ -204,10 +200,9 @@ class ReclutamientoControllerTest extends TestCase
 
     public function test_discard_all_awards_candies_by_evolution_phase(): void
     {
-        $chain = EvolutionChain::create(['data' => '{"stages": 3}']);
-        $bulbasaur = $this->crearPokemon(1, 'bulbasaur', 1, $chain->id);
-        $ivysaur = $this->crearPokemon(2, 'ivysaur', 2, $chain->id);
-        $venusaur = $this->crearPokemon(3, 'venusaur', 3, $chain->id);
+        $bulbasaur = $this->crearPokemon(1, 'bulbasaur', 1, 51);
+        $ivysaur = $this->crearPokemon(2, 'ivysaur', 2, 51);
+        $venusaur = $this->crearPokemon(3, 'venusaur', 3, 51);
 
         Reclutable::create(['pokemon_id' => $bulbasaur->id, 'cantidad' => 3]);
         Reclutable::create(['pokemon_id' => $ivysaur->id, 'cantidad' => 2]);
@@ -218,27 +213,26 @@ class ReclutamientoControllerTest extends TestCase
         // 3 x fase 1 + 2 x fase 2 + 1 x fase 3 = 3 + 4 + 3 = 10
         $response->assertOk()->assertJson([
             'success' => true,
-            'candies' => [$chain->id => 10],
+            'candies' => [51 => 10],
         ]);
         $this->assertDatabaseCount('reclutables', 0);
         $this->assertDatabaseHas('caramelos', [
-            'evolution_chain_id' => $chain->id,
+            'evolution_chain_id' => 51,
             'cantidad' => 10,
         ]);
     }
 
     public function test_discard_all_accumulates_into_existing_caramelo(): void
     {
-        $chain = EvolutionChain::create(['data' => '{"stages": 1}']);
-        $bulbasaur = $this->crearPokemon(1, 'bulbasaur', 1, $chain->id);
-        Caramelo::create(['evolution_chain_id' => $chain->id, 'cantidad' => 5]);
+        $bulbasaur = $this->crearPokemon(1, 'bulbasaur', 1, 51);
+        Caramelo::create(['evolution_chain_id' => 51, 'cantidad' => 5]);
         Reclutable::create(['pokemon_id' => $bulbasaur->id, 'cantidad' => 2]);
 
         $response = $this->postJson('/reclutamiento/discard-all');
 
         $response->assertOk();
         $this->assertDatabaseHas('caramelos', [
-            'evolution_chain_id' => $chain->id,
+            'evolution_chain_id' => 51,
             'cantidad' => 7, // 5 + 2 x fase 1
         ]);
         $this->assertSame(1, Caramelo::count());
@@ -246,10 +240,8 @@ class ReclutamientoControllerTest extends TestCase
 
     public function test_discard_all_handles_multiple_chains_independently(): void
     {
-        $chain1 = EvolutionChain::create(['data' => '{"stages": 1}']);
-        $chain2 = EvolutionChain::create(['data' => '{"stages": 1}']);
-        $bulbasaur = $this->crearPokemon(1, 'bulbasaur', 1, $chain1->id);
-        $charmander = $this->crearPokemon(2, 'charmander', 4, $chain2->id);
+        $bulbasaur = $this->crearPokemon(1, 'bulbasaur', 1, 51);
+        $charmander = $this->crearPokemon(2, 'charmander', 4, 52);
 
         Reclutable::create(['pokemon_id' => $bulbasaur->id, 'cantidad' => 3]);
         Reclutable::create(['pokemon_id' => $charmander->id, 'cantidad' => 1]);
@@ -258,10 +250,10 @@ class ReclutamientoControllerTest extends TestCase
 
         $response->assertOk()->assertJson([
             'success' => true,
-            'candies' => [$chain1->id => 3, $chain2->id => 1],
+            'candies' => [51 => 3, 52 => 1],
         ]);
-        $this->assertDatabaseHas('caramelos', ['evolution_chain_id' => $chain1->id, 'cantidad' => 3]);
-        $this->assertDatabaseHas('caramelos', ['evolution_chain_id' => $chain2->id, 'cantidad' => 1]);
+        $this->assertDatabaseHas('caramelos', ['evolution_chain_id' => 51, 'cantidad' => 3]);
+        $this->assertDatabaseHas('caramelos', ['evolution_chain_id' => 52, 'cantidad' => 1]);
         $this->assertDatabaseCount('reclutables', 0);
     }
 }

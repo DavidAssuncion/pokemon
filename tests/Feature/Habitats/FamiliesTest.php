@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Tests\Feature\Habitats;
 
 use App\Enums\TipoEnum;
-use App\Models\EvolutionChain;
 use App\Models\Habitat;
 use App\Models\Pokemon;
 use App\Models\PokemonEvolution;
@@ -39,8 +38,8 @@ class FamiliesTest extends TestCase
         $this->habitatId = $habitat->id;
 
         // Create Evolution Chain with 3 stages (e.g., Bulbasaur -> Ivysaur -> Venusaur)
-        $chain3 = EvolutionChain::create(['data' => '{"stages": 3}']);
-        $this->chainId3Stages = $chain3->id;
+        // La tabla evolution_chains ya no existe: el id de cadena es un int directo en la columna.
+        $this->chainId3Stages = 51;
 
         $pokemonBulbasaur = Pokemon::create([
             'id' => 1,
@@ -90,8 +89,7 @@ class FamiliesTest extends TestCase
         ]);
 
         // Create Evolution Chain with 2 stages (e.g., Rattata -> Raticate)
-        $chain2 = EvolutionChain::create(['data' => '{"stages": 2}']);
-        $this->chainId2Stages = $chain2->id;
+        $this->chainId2Stages = 52;
 
         $pokemonRattata = Pokemon::create([
             'id' => 19,
@@ -126,8 +124,7 @@ class FamiliesTest extends TestCase
         ]);
 
         // Create Evolution Chain with 1 stage (e.g., Legendary)
-        $chain1 = EvolutionChain::create(['data' => '{"stages": 1}']);
-        $this->chainId1Stage = $chain1->id;
+        $this->chainId1Stage = 53;
 
         $pokemonMew = Pokemon::create([
             'id' => 151,
@@ -339,7 +336,7 @@ class FamiliesTest extends TestCase
     {
         // Cadena ramificada tipo Eevee: base (133) -> vaporeon (134) y jolteon (135), ambas stage 2.
         // La cadena se crea dentro del test para no alterar test_obtener_familias_sin_habitat_solo_cadenas_vacias.
-        $chainBranched = EvolutionChain::create(['data' => '{"stages": 2}']);
+        $chainBranchedId = 54;
 
         Pokemon::create([
             'id' => 133,
@@ -349,7 +346,7 @@ class FamiliesTest extends TestCase
             'capture_rate' => 45,
             'height' => 3,
             'weight' => 65,
-            'evolution_chain_id' => $chainBranched->id,
+            'evolution_chain_id' => $chainBranchedId,
         ]);
         Pokemon::create([
             'id' => 134,
@@ -359,7 +356,7 @@ class FamiliesTest extends TestCase
             'capture_rate' => 45,
             'height' => 10,
             'weight' => 290,
-            'evolution_chain_id' => $chainBranched->id,
+            'evolution_chain_id' => $chainBranchedId,
         ]);
         Pokemon::create([
             'id' => 135,
@@ -369,7 +366,7 @@ class FamiliesTest extends TestCase
             'capture_rate' => 45,
             'height' => 8,
             'weight' => 245,
-            'evolution_chain_id' => $chainBranched->id,
+            'evolution_chain_id' => $chainBranchedId,
         ]);
 
         PokemonEvolution::create([
@@ -389,13 +386,13 @@ class FamiliesTest extends TestCase
         ]);
 
         $response = $this->postJson("/api/habitats/{$this->habitatId}/families", [
-            'evolution_chain_id' => $chainBranched->id,
+            'evolution_chain_id' => $chainBranchedId,
         ]);
 
         $response->assertStatus(201);
         $data = $response->json();
 
-        $this->assertEquals($chainBranched->id, $data['evolution_chain_id']);
+        $this->assertEquals($chainBranchedId, $data['evolution_chain_id']);
         $this->assertEquals(133, $data['base']['id']);
         $this->assertEquals(1, $data['base']['level']);
         $this->assertCount(2, $data['evolutions']);
@@ -443,10 +440,10 @@ class FamiliesTest extends TestCase
     public function test_validacion_evolution_chain_sin_pokemon_lanza_excepcion(): void
     {
         // Chain id not assigned to any pokemon (no family members)
-        $emptyChain = EvolutionChain::create(['data' => '{}']);
+        $emptyChainId = 55;
 
         $response = $this->postJson("/api/habitats/{$this->habitatId}/families", [
-            'evolution_chain_id' => $emptyChain->id,
+            'evolution_chain_id' => $emptyChainId,
         ]);
 
         $response->assertStatus(422);
@@ -678,7 +675,7 @@ class FamiliesTest extends TestCase
         // Cadena Happiny(440) -> Chansey(113) -> Blissey(242): el bebé (440) es la base
         // evolutiva, pero el menor species_id es Chansey (113) → el DTO debe usar 113 como base.
         // La cadena se crea dentro del test para no alterar test_obtener_familias_sin_habitat_solo_cadenas_vacias.
-        $chain = EvolutionChain::create(['data' => '{"stages": 3}']);
+        $chainId = 56;
 
         Pokemon::create([
             'id' => 440,
@@ -688,7 +685,7 @@ class FamiliesTest extends TestCase
             'capture_rate' => 130,
             'height' => 6,
             'weight' => 244,
-            'evolution_chain_id' => $chain->id,
+            'evolution_chain_id' => $chainId,
         ]);
         Pokemon::create([
             'id' => 113,
@@ -698,7 +695,7 @@ class FamiliesTest extends TestCase
             'capture_rate' => 30,
             'height' => 11,
             'weight' => 346,
-            'evolution_chain_id' => $chain->id,
+            'evolution_chain_id' => $chainId,
         ]);
         Pokemon::create([
             'id' => 242,
@@ -708,7 +705,7 @@ class FamiliesTest extends TestCase
             'capture_rate' => 30,
             'height' => 15,
             'weight' => 468,
-            'evolution_chain_id' => $chain->id,
+            'evolution_chain_id' => $chainId,
         ]);
 
         PokemonEvolution::create([
@@ -728,7 +725,7 @@ class FamiliesTest extends TestCase
         ]);
 
         $data = $this->getJson('/api/habitats/unassigned-families')->json();
-        $family = collect($data)->firstWhere('evolution_chain_id', $chain->id);
+        $family = collect($data)->firstWhere('evolution_chain_id', $chainId);
 
         $this->assertNotNull($family, 'La familia con bebé posterior debería aparecer como no asignada');
         // El "primer integrante" es el de menor species_id: Chansey (113), no Happiny (440).
@@ -742,7 +739,7 @@ class FamiliesTest extends TestCase
     {
         // Dos familias nuevas sin asignar: una con base species_id 10 y otra con species_id 1.
         // La de menor species_id (1) debe aparecer ANTES que la de 10 en la respuesta.
-        $chainSpecies10 = EvolutionChain::create(['data' => '{"stages": 1}']);
+        $chainSpecies10Id = 57;
         Pokemon::create([
             'id' => 10,
             'name' => 'paras',
@@ -751,7 +748,7 @@ class FamiliesTest extends TestCase
             'capture_rate' => 190,
             'height' => 3,
             'weight' => 54,
-            'evolution_chain_id' => $chainSpecies10->id,
+            'evolution_chain_id' => $chainSpecies10Id,
         ]);
         PokemonEvolution::create([
             'evolved_species_id' => 10,
@@ -759,7 +756,7 @@ class FamiliesTest extends TestCase
             'minimum_level' => 1,
         ]);
 
-        $chainSpecies1 = EvolutionChain::create(['data' => '{"stages": 1}']);
+        $chainSpecies1Id = 58;
         Pokemon::create([
             'id' => 300,
             'name' => 'alt-bulbasaur',
@@ -768,7 +765,7 @@ class FamiliesTest extends TestCase
             'capture_rate' => 45,
             'height' => 7,
             'weight' => 69,
-            'evolution_chain_id' => $chainSpecies1->id,
+            'evolution_chain_id' => $chainSpecies1Id,
         ]);
         PokemonEvolution::create([
             'evolved_species_id' => 300,

@@ -6,7 +6,6 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
@@ -29,14 +28,6 @@ class Pokemon extends Model
         'hatch',
         'evolution_chain_id',
     ];
-
-    /**
-     * @return BelongsTo<EvolutionChain, $this>
-     */
-    public function evolutionChain(): BelongsTo
-    {
-        return $this->belongsTo(EvolutionChain::class, 'evolution_chain_id');
-    }
 
     /**
      * @return BelongsToMany<Habitat, $this>

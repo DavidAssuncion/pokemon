@@ -20,7 +20,10 @@ use Src\Exploraciones\Domain\Recompensas\ResultadoRecompensas;
 final class TransformadorResultadoExploracion
 {
     /**
-     * @param  Collection<int, Pokemon>  $pokemons  Derrotados cargados con evolutionChain.pokemon.
+     * @param  Collection<int, Pokemon>  $pokemons  Derrotados cargados con stats y types.
+     * @param  array<int, Collection<int, Pokemon>>|null  $miembrosPorCadena  Mapa de TODOS los
+     *                                              miembros de cada familia, keyed por
+     *                                              evolution_chain_id (columna).
      * @return array{
      *     avistados: list<array{pokemon_id: int, nombre: string}>,
      *     capturados: list<array{pokemon_id: int, nombre: string, cantidad: int}>,
@@ -30,12 +33,15 @@ final class TransformadorResultadoExploracion
      *     exp: int,
      * }
      */
-    public function desde(ResultadoRecompensas $recompensas, Collection $pokemons): array
-    {
+    public function desde(
+        ResultadoRecompensas $recompensas,
+        Collection $pokemons,
+        ?array $miembrosPorCadena = null,
+    ): array {
         return [
             'avistados' => $this->avistados($pokemons),
             'capturados' => $this->capturados($recompensas->capturas, $pokemons),
-            'caramelos_familia' => $this->caramelosFamilia($recompensas->caramelosFamilia, $pokemons),
+            'caramelos_familia' => $this->caramelosFamilia($recompensas->caramelosFamilia, $pokemons, $miembrosPorCadena),
             'caramelos_ev' => $this->caramelosEv($recompensas->caramelosEv),
             'caramelos_tipo' => $this->caramelosTipo($recompensas->caramelosTipo),
             'exp' => $recompensas->expTotal,
@@ -83,41 +89,49 @@ final class TransformadorResultadoExploracion
     /**
      * @param  BaseCollection<int, RecompensaFamilia>  $caramelos
      * @param  Collection<int, Pokemon>  $pokemons
+     * @param  array<int, Collection<int, Pokemon>>|null  $miembrosPorCadena
      * @return list<array{evolution_chain_id: int, nombre: string|null, pokemon_id: int|null, cantidad: int}>
      */
-    private function caramelosFamilia(BaseCollection $caramelos, Collection $pokemons): array
+    private function caramelosFamilia(BaseCollection $caramelos, Collection $pokemons, ?array $miembrosPorCadena): array
     {
         return $caramelos
-            ->sortBy('evolutionChainId')
-            ->map(function (RecompensaFamilia $caramelo) use ($pokemons): array {
-                $base = $this->pokemonBaseDeCadena($caramelo->evolutionChainId, $pokemons);
+                ->sortBy('evolutionChainId')
+                ->map(function (RecompensaFamilia $caramelo) use ($pokemons, $miembrosPorCadena): array {
+                    $base = $this->pokemonBaseDeCadena($caramelo->evolutionChainId, $pokemons, $miembrosPorCadena);
 
-                return [
-                    'evolution_chain_id' => $caramelo->evolutionChainId,
-                    'nombre' => $base?->name,
-                    'pokemon_id' => $base?->id,
-                    'cantidad' => $caramelo->cantidad,
-                ];
-            })
-            ->values()
-            ->all();
+                    return [
+                        'evolution_chain_id' => $caramelo->evolutionChainId,
+                        'nombre' => $base?->name,
+                        'pokemon_id' => $base?->id,
+                        'cantidad' => $caramelo->cantidad,
+                    ];
+                })
+                ->values()
+                ->all();
     }
 
     /**
-     * Miembro base de la cadena (menor species_id) entre los derrotados cargados;
-     * es el pokémon que identifica a la familia (imagen candy_pokemon/{id}.webp).
+     * Miembro base de la familia (menor species_id) de TODOS sus miembros; si no
+     * hay mapa (o la cadena no está), fallback a los derrotados de esa cadena.
+     * Es el pokémon que identifica a la familia (imagen candy_pokemon/{id}.webp).
      *
      * @param  Collection<int, Pokemon>  $pokemons
+     * @param  array<int, Collection<int, Pokemon>>|null  $miembrosPorCadena
      */
-    private function pokemonBaseDeCadena(int $evolutionChainId, Collection $pokemons): ?Pokemon
-    {
-        $deLaCadena = $pokemons->first(
+    private function pokemonBaseDeCadena(
+        int $evolutionChainId,
+        Collection $pokemons,
+        ?array $miembrosPorCadena,
+    ): ?Pokemon {
+        $miembros = $miembrosPorCadena[$evolutionChainId] ?? null;
+
+        if ($miembros !== null && $miembros->isNotEmpty()) {
+            return $miembros->sortBy('species_id')->first();
+        }
+
+        return $pokemons->first(
             fn (Pokemon $pokemon): bool => (int) $pokemon->evolution_chain_id === $evolutionChainId
         );
-
-        return $deLaCadena?->evolutionChain?->pokemon
-            ->sortBy('species_id')
-            ->first();
     }
 
     /**

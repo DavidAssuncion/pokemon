@@ -53,8 +53,10 @@ final class FinalizarExploracionHandler implements CommandHandler
         $eventos = $exploracion->eventos ?? [];
         $idsDerrotados = $this->idsDerrotados($eventos);
         $pokemons = $this->cargarPokemonsDerrotados($idsDerrotados);
+        $miembrosPorCadena = $this->cargarMiembrosDeCadenas($pokemons);
         $derrotados = NormalizadorPokemonDerrotado::normalizar(
             $this->expandirDerrotados($pokemons, $idsDerrotados),
+            $miembrosPorCadena,
         );
 
         $usuario = User::first();
@@ -66,7 +68,7 @@ final class FinalizarExploracionHandler implements CommandHandler
 
         $this->persistir->persistir($recompensas, $exploracion->team, $usuario);
         $this->despacharAvistados($pokemons->pluck('id'));
-        $this->registrarResultado($exploracion, $recompensas, $pokemons, $idsDerrotados);
+        $this->registrarResultado($exploracion, $recompensas, $pokemons, $miembrosPorCadena, $idsDerrotados);
         $exploracion->update(['regreso' => now(), 'eventos' => $exploracion->eventos]);
 
         return null;
@@ -93,7 +95,7 @@ final class FinalizarExploracionHandler implements CommandHandler
 
     /**
      * @param  list<int>  $idsDerrotados
-     * @return Collection<int, Pokemon> keyBy id, con evolutionChain.pokemon, stats y types.
+     * @return Collection<int, Pokemon> keyBy id, con stats y types.
      */
     private function cargarPokemonsDerrotados(array $idsDerrotados): Collection
     {
@@ -103,10 +105,38 @@ final class FinalizarExploracionHandler implements CommandHandler
             return new Collection();
         }
 
-        $query = Pokemon::query()->with('evolutionChain.pokemon', 'stats', 'types');
+        $query = Pokemon::query()->with('stats', 'types');
         $query->getQuery()->whereIn('id', $ids);
 
         return $query->get()->keyBy('id');
+    }
+
+    /**
+     * Mapa de TODOS los miembros de las cadenas implicadas, keyed por
+     * evolution_chain_id (columna). Sustituye a la antigua relación de la tabla
+     * evolution_chains (eliminada): incluye también los miembros NO derrotados
+     * para preservar fase y base de familia.
+     *
+     * @param  Collection<int, Pokemon>  $derrotados  keyBy id
+     * @return array<int, Collection<int, Pokemon>>  keyed por evolution_chain_id
+     */
+    private function cargarMiembrosDeCadenas(Collection $derrotados): array
+    {
+        $chainIds = $derrotados
+            ->pluck('evolution_chain_id')
+            ->filter()
+            ->map(fn (mixed $id): int => (int) $id)
+            ->unique()
+            ->values();
+
+        if ($chainIds->isEmpty()) {
+            return [];
+        }
+
+        $query = Pokemon::query();
+        $query->getQuery()->whereIn('evolution_chain_id', $chainIds);
+
+        return $query->get(['id', 'name', 'species_id', 'evolution_chain_id'])->groupBy('evolution_chain_id')->all();
     }
 
     /**
@@ -154,17 +184,19 @@ final class FinalizarExploracionHandler implements CommandHandler
      * en el modelo para persistirlos junto con el regreso.
      *
      * @param  Collection<int, Pokemon>  $pokemons
+     * @param  array<int, Collection<int, Pokemon>>  $miembrosPorCadena
      * @param  list<int>  $idsDerrotados
      */
     private function registrarResultado(
         ExploracionActiva $exploracion,
         ResultadoRecompensas $recompensas,
         Collection $pokemons,
+        array $miembrosPorCadena,
         array $idsDerrotados,
     ): void {
         $eventos = $exploracion->eventos ?? [];
         $eventos['derrotados'] = $idsDerrotados;
-        $eventos['resultado'] = $this->transformador->desde($recompensas, $pokemons);
+        $eventos['resultado'] = $this->transformador->desde($recompensas, $pokemons, $miembrosPorCadena);
 
         $exploracion->eventos = $eventos;
     }

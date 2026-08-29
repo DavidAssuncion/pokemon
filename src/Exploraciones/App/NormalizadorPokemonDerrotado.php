@@ -11,18 +11,23 @@ use Illuminate\Support\Collection;
 use Src\Exploraciones\Domain\Recompensas\PokemonDerrotado;
 
 /**
- * Normaliza pokémon Eloquent (con evolutionChain.pokemon, stats y types cargados)
- * a la forma pura que consume CalculadorRecompensas, calculando la fase evolutiva.
- * El handler expande una entrada por derrota (misma especie puede aparecer N veces).
+ * Normaliza pokémon Eloquent (con stats y types cargados) a la forma pura que
+ * consume CalculadorRecompensas, calculando la fase evolutiva con el mapa de
+ * miembros por familia (columna evolution_chain_id; la tabla evolution_chains
+ * ya no existe). El handler expande una entrada por derrota (misma especie
+ * puede aparecer N veces).
  */
 final class NormalizadorPokemonDerrotado
 {
     /**
-     * @param  Collection<int, Pokemon>  $pokemons  Colección (eloquent o base)
-     *                                              con evolutionChain.pokemon, stats y types cargados.
+     * @param  Collection<int, Pokemon>  $pokemons  Colección (eloquent o base) con stats y types cargados.
+     * @param  array<int, Collection<int, Pokemon>>|null  $miembrosPorCadena  Mapa de TODOS los
+     *                                              miembros de cada familia, keyed por
+     *                                              evolution_chain_id (columna). Sin mapa (o sin
+     *                                              la cadena), la fase no se puede calcular → 1.
      * @return Collection<int, PokemonDerrotado>
      */
-    public static function normalizar(Collection $pokemons): Collection
+    public static function normalizar(Collection $pokemons, ?array $miembrosPorCadena = null): Collection
     {
         return $pokemons->map(
             fn (Pokemon $pokemon): PokemonDerrotado => new PokemonDerrotado(
@@ -33,7 +38,7 @@ final class NormalizadorPokemonDerrotado
                 captureRate: $pokemon->capture_rate,
                 tipos: self::tipos($pokemon),
                 stats: self::esfuerzos($pokemon),
-                fase: self::fase($pokemon),
+                fase: self::fase($pokemon, $miembrosPorCadena),
             )
         );
     }
@@ -59,15 +64,21 @@ final class NormalizadorPokemonDerrotado
     }
 
     /**
-     * Fase evolutiva: nº de pokémon de la cadena con species_id <= al actual.
+     * Fase evolutiva: nº de miembros de la familia (por columna
+     * evolution_chain_id) con species_id <= al actual. Sin familia en el mapa
+     * → fase 1 (equivalente al caso antiguo de relación null).
+     *
+     * @param  array<int, Collection<int, Pokemon>>|null  $miembrosPorCadena
      */
-    private static function fase(Pokemon $pokemon): int
+    private static function fase(Pokemon $pokemon, ?array $miembrosPorCadena): int
     {
-        $cadena = $pokemon->evolutionChain;
+        if ($pokemon->evolution_chain_id === null || $miembrosPorCadena === null) {
+            return 1;
+        }
 
-        return $cadena !== null
-            ? $cadena->pokemon->where('species_id', '<=', $pokemon->species_id)->count()
-            : 1;
+        $miembros = $miembrosPorCadena[$pokemon->evolution_chain_id] ?? null;
+
+        return $miembros?->where('species_id', '<=', $pokemon->species_id)->count() ?? 1;
     }
 
     /**

@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Tests\Feature;
 
 use App\Models\CarameloEv;
-use App\Models\EvolutionChain;
 use App\Models\ExploracionActiva;
 use App\Models\Habitat;
 use App\Models\Pokemon;
@@ -33,14 +32,14 @@ class ExploracionesTest extends TestCase
 
     /**
      * @param  array<string, mixed>  $opciones
-     * @return array{exploracion: ExploracionActiva, chain: EvolutionChain, user: User, reclutado1: Reclutado, reclutado2: Reclutado}
+     * @return array{exploracion: ExploracionActiva, chainId: int, user: User, reclutado1: Reclutado, reclutado2: Reclutado}
      */
     private function crearContexto(array $opciones = []): array
     {
         $province = Province::create(['id' => 1, 'name' => 'Kanto']);
         $habitat = Habitat::create(['id' => 1, 'name' => 'Bosque', 'province_id' => 1]);
 
-        $chain = EvolutionChain::create(['data' => '{"stages": 3}']);
+        $chainId = 51;
 
         $pokemon1 = Pokemon::create([
             'id' => 1,
@@ -51,7 +50,7 @@ class ExploracionesTest extends TestCase
             'height' => 7,
             'weight' => 69,
             'hatch' => 10,
-            'evolution_chain_id' => $chain->id,
+            'evolution_chain_id' => $chainId,
         ]);
 
         $pokemon2 = Pokemon::create([
@@ -63,7 +62,7 @@ class ExploracionesTest extends TestCase
             'height' => 6,
             'weight' => 85,
             'hatch' => 10,
-            'evolution_chain_id' => $chain->id,
+            'evolution_chain_id' => $chainId,
         ]);
 
         DB::table('pokemon_habitat')->insert([
@@ -107,7 +106,7 @@ class ExploracionesTest extends TestCase
 
         return [
             'exploracion' => $exploracion,
-            'chain' => $chain,
+            'chainId' => $chainId,
             'user' => $user,
             'reclutado1' => $reclutado1,
             'reclutado2' => $reclutado2,
@@ -209,7 +208,7 @@ class ExploracionesTest extends TestCase
         // Caramelos de familia: phase × count (bulbasaur phase 1, charmander phase 2)
         $familiaEsperada = ($conteos[1] ?? 0) * 1 + ($conteos[2] ?? 0) * 2;
         $this->assertDatabaseHas('caramelos', [
-            'evolution_chain_id' => $ctx['chain']->id,
+            'evolution_chain_id' => $ctx['chainId'],
             'cantidad' => $familiaEsperada,
         ]);
 
@@ -401,7 +400,7 @@ class ExploracionesTest extends TestCase
         // El pokemon_id del caramelo es el miembro de menor species_id (bulbasaur, species 1 < 4).
         $this->assertCount(1, $resultado['caramelos_familia']);
         $familia = $resultado['caramelos_familia'][0];
-        $this->assertSame($ctx['chain']->id, $familia['evolution_chain_id']);
+        $this->assertSame($ctx['chainId'], $familia['evolution_chain_id']);
         $this->assertSame('bulbasaur', $familia['nombre']);
         $this->assertSame(1, $familia['pokemon_id']);
         $this->assertSame(
@@ -558,7 +557,7 @@ class ExploracionesTest extends TestCase
 
         // Caramelos de familia: fase 1 × 1 derrotado, UNA sola vez (no duplicado)
         $this->assertDatabaseHas('caramelos', [
-            'evolution_chain_id' => $ctx['chain']->id,
+            'evolution_chain_id' => $ctx['chainId'],
             'cantidad' => 1,
         ]);
         $this->assertDatabaseCount('caramelos', 1);
@@ -627,5 +626,48 @@ class ExploracionesTest extends TestCase
         // QUEUE_CONNECTION=sync + afterCommit: el job corre DESPUÉS del commit
         $this->assertDatabaseHas('pokedex', ['pokemon_id' => 1, 'visto' => true]);
         $this->assertNotNull($ctx['exploracion']->fresh()->regreso);
+    }
+
+    public function test_finalizacion_con_chain_id_sin_tabla_evolution_chains_finaliza_ok(): void
+    {
+        // Regresión bug 23503: pokémon con evolution_chain_id 51 SIN fila en la tabla
+        // evolution_chains (eliminada). La exploración debe finalizar correctamente:
+        // caramelos_familia con evolution_chain_id = 51, pokemon_id = base (min species_id)
+        // e inserto en caramelos SIN error de FK.
+        $ctx = $this->crearContexto(['indefinido' => true]);
+        // bulbasaur (species 1) y charmander (species 4) pasan a la cadena huérfana 51
+        // (la cadena del contexto, 51, coincide: la fila de evolution_chains nunca existió).
+        Pokemon::whereIn('id', [1, 2])->update(['evolution_chain_id' => 51]);
+
+        $ctx['exploracion']->update([
+            'eventos' => [
+                'bitacora' => [
+                    ['tipo' => 'pokemon', 'pokemon_id' => 1],
+                    ['tipo' => 'pokemon', 'pokemon_id' => 1],
+                ],
+                'ultimo_procesado' => now()->toIso8601String(),
+            ],
+        ]);
+
+        app(CommandBus::class)->dispatch(new FinalizarExploracionCommand($ctx['exploracion']));
+
+        $this->assertNotNull($ctx['exploracion']->fresh()->regreso);
+
+        // Caramelos de familia: fase 1 (bulbasaur, min species_id 1) × 2 derrotas = 2
+        $this->assertDatabaseHas('caramelos', [
+            'evolution_chain_id' => 51,
+            'cantidad' => 2,
+        ]);
+
+        // Resultado: base = menor species_id de TODA la familia (bulbasaur, id 1)
+        $resultado = $ctx['exploracion']->fresh()->eventos['resultado'];
+        $this->assertSame([
+            [
+                'evolution_chain_id' => 51,
+                'nombre' => 'bulbasaur',
+                'pokemon_id' => 1,
+                'cantidad' => 2,
+            ],
+        ], $resultado['caramelos_familia']);
     }
 }

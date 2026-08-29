@@ -162,3 +162,109 @@ interfaz, vistas/Blade.
 
 - SÍ ejecutar `vendor/bin/pint --dirty --format agent` y `php -l` de cada archivo tocado.
 - NO ejecutar `php artisan test`.
+
+---
+
+## Nota de cierre (Bibliotecario)
+
+El refactor `3d4e940` unificó `STAT_NOMBRES` + `STAT_SLUGS` en la const `STATS` de
+`ExploracionActivaController` (`[1=>PS/hp, 2=>Ataque/atk, 3=>Defensa/def, 4=>Ataque Especial/atksp,
+5=>Defensa Especial/defsp, 6=>Velocidad/spd]`). La tabla "Qué voy a tocar" de la sección anterior
+refleja el estado pre-refactor; el resultado final usa `self::STATS[$stat]`. Implementación y
+tests commiteados en `3f9c869` + `3d4e940`.
+
+---
+
+# Análisis Backend — Eliminar la tabla `evolution_chains` (bug 23503) [2026-08-29]
+
+## Decisión aprobada
+
+Eliminar la tabla `evolution_chains` y toda su infraestructura (modelo, relación, FK), preservando
+EXACTAMENTE el comportamiento observable: fase evolutiva en exploraciones, base de familia (menor
+species_id), caramelos de familia y flujo completo de exploración.
+
+## Contexto verificado (grep)
+
+- `evolution_chains` solo tiene `id` + `data` (json NUNCA leído). Única dependencia dura: FK
+  `caramelos.evolution_chain_id → evolution_chains.id` (`caramelos_evolution_chain_id_foreign`),
+  causa del bug 23503 (cadenas 51 etc. sin fila → error de FK al insertar caramelos).
+- La agrupación de familias se hace por la COLUMNA `pokemon.evolution_chain_id` (sin FK):
+  `src/Habitats/Infra/HabitatRepository.php` (líneas 132-170, 290, 368-370), `CalculadorRecompensas`,
+  `PersistirRecompensas`, `ExploracionActivaController:246` (campo del JSON), `HabitatsController`
+  (validación `exists:pokemon,evolution_chain_id`), `PokemonSeeder` (columna). NO se tocan.
+- `EvolutionChain::pokemon()` era `hasMany(Pokemon::class)` → FK por convención `evolution_chain_id`
+  → MISMA columna. El mapa por columna reproduce exactamente los miembros de cada familia.
+- **DESVÍO respecto al brief (riesgo documentado)**: el brief decía "ReclutamientoController solo
+  usa la columna → NO lo toques", pero el grep muestra que usa la RELACIÓN en 3 sitios:
+  `discard()`/`discardAll()` eager-load `pokemon.evolutionChain.pokemon` (líneas 52, 70) y
+  `otorgarCaramelos()` calcula la fase con `$pokemon->evolutionChain->pokemon->where(...)->count()`
+  (líneas 93-96). Sin adaptación: fatal `Call to undefined method` + grep final de
+  `EvolutionChain` en app/ distinto de 0. SE TOCA con el cambio MÍNIMO (fase por columna + mapa),
+  preservando el contrato de los endpoints (tests existentes cubren el comportamiento). BONUS:
+  el código actual hace `$chain?->pokemon->where(...)` → Error fatal si la fila no existe
+  (relación null); el nuevo código devuelve fase 1 (mismo criterio que el normalizador).
+
+## Qué voy a tocar
+
+| Archivo | Cambio |
+|---|---|
+| `database/migrations/2026_08_29_000001_drop_foreign_evolution_chain_from_caramelos.php` | NUEVA: up() drop FK; down() recrea FK |
+| `database/migrations/2026_08_29_000002_drop_evolution_chains_table.php` | NUEVA: up() drop tabla; down() recrea (id + data json nullable) |
+| `app/Models/EvolutionChain.php` | BORRAR (git rm) |
+| `app/Models/Pokemon.php` | Quitar `evolutionChain()` + imports EvolutionChain y BelongsTo (queda sin uso) |
+| `app/Models/Caramelo.php` | Quitar `evolutionChain()` + import BelongsTo |
+| `src/Exploraciones/App/FinalizarExploracionHandler.php` | `cargarPokemonsDerrotados()` sin `evolutionChain.pokemon`; nuevo `cargarMiembrosDeCadenas()` → `array<int, Collection<int, Pokemon>>`; pasar mapa a `normalizar()` y `desde()` |
+| `src/Exploraciones/App/NormalizadorPokemonDerrotado.php` | Firma `normalizar(Collection $pokemons, ?array $miembrosPorCadena = null)`; fase por mapa |
+| `src/Exploraciones/Presentation/TransformadorResultadoExploracion.php` | Firma `desde(..., ?array $miembrosPorCadena = null)`; `pokemonBaseDeCadena` con mapa + fallback |
+| `app/Http/Controllers/ReclutamientoController.php` | DESVÍO documentado: `with('pokemon')`, fase por mapa de columna |
+| `tests/Unit/CarameloTest.php` | Ints literales; quitar test de relación |
+| `tests/Unit/Exploraciones/NormalizadorPokemonDerrotadoTest.php` | Ints; `with('stats','types')`; mapa en tests de fase; + test cadena sin mapa → fase 1 |
+| `tests/Feature/ReclutamientoControllerTest.php` | Ints literales |
+| `tests/Feature/ExploracionesPageTest.php` | Ints literales |
+| `tests/Feature/ExploracionesTest.php` | Ints; + TEST REGRESIÓN bug 23503 (chain 51 sin tabla) |
+| `tests/Feature/ExploracionesTransformadorTest.php` | Adaptar firma (mapa) |
+| `tests/Feature/HabitatsControllerTest.php` | Ints literales |
+| `tests/Feature/Habitats/FamiliesTest.php` | Ints literales (51/52/53 setUp; 54-58 tests locales) |
+| `tests/Feature/MigrationStatusTest.php` | + assert evolution_chains NO existe (test rojo de la migración) |
+| `active/ANALISIS_BACKEND.md` | Esta sección |
+
+## Tests a escribir/adaptar
+
+- Unit: `CarameloTest` (sin relación), `NormalizadorPokemonDerrotadoTest` (mapa, fase 1 sin mapa).
+- Feature: `ExploracionesTest` → **`test_finalizacion_con_chain_id_sin_tabla_evolution_chains`**
+  (regresión bug 23503: chain 51 sin fila → finaliza OK, `caramelos_familia` con chain 51,
+  `pokemon_id` = base min species_id, insert en `caramelos` sin error de FK).
+- Feature: `ExploracionesTransformadorTest`, `ReclutamientoControllerTest`, `ExploracionesPageTest`,
+  `HabitatsControllerTest`, `FamiliesTest` → ids numéricos directos en la columna.
+- `MigrationStatusTest` + `test_evolution_chains_table_does_not_exist`.
+
+## Estructura del mapa de miembros (elegida y documentada)
+
+`array<int, Collection<int, Pokemon>>` — keyed por `evolution_chain_id` (int), valor = Collection de
+modelos Pokemon ligeros (`id`, `name`, `species_id`, `evolution_chain_id`) con TODOS los miembros de
+la cadena (no solo los derrotados). Se construye con
+`Pokemon::whereIn('evolution_chain_id', $ids)->get([...])->groupBy('evolution_chain_id')->all()`.
+Fase = `$miembros->where('species_id', '<=', $pokemon->species_id)->count()`; sin cadena en el mapa
+→ fase 1. Base = min species_id del mapa (fallback: derrotados con ese chainId). Mismo resultado
+que la relación `evolutionChain->pokemon` (misma columna, mismo conteo).
+
+## Riesgos para QA
+
+1. **ReclutamientoController tocado** (desvío del brief): comportamiento preservado (fase por
+   columna, idéntico al `hasMany` anterior); caso fila inexistente antes = Error fatal, ahora fase 1.
+2. Bug latente del transformador: `$deLaCadena?->evolutionChain?->pokemon->sortBy()` con
+   `$deLaCadena` null → Error fatal (no null). El nuevo código devuelve `null` (comportamiento
+   INTENCIONAL documentado por `test_caramelos_familia_sin_pokemon_de_la_cadena_devuelve_pokemon_id_null`).
+3. El `down()` de la migración 000001 recrea la FK asumiendo filas válidas; con el bug 23503
+   (caramelos con chain 51 huérfana) el rollback fallaría → documentado, el down es best-effort.
+4. Tests NO ejecutables en local (sin BD): van a CI (RefreshDatabase + SQLite :memory:).
+5. `evolution_chain_id` de `caramelos` se conserva (columna + unique) — contrato intacto.
+
+## Validación
+
+- `vendor/bin/pint --dirty --format agent` + `php -l` en todo lo tocado.
+- `vendor/bin/phpstan analyse` (nivel 6+, sin BD).
+- `vendor/bin/phpmd src/ text phpmd.xml`.
+- NO ejecutar `php artisan test` (sin BD desde host); tests a CI.
+- Grep final: `EvolutionChain` SOLO en docs/ y active/ (0 en src/, app/, tests/);
+  `evolutionChain` en código → 0.

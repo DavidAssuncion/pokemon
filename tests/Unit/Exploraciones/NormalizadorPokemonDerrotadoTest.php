@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Exploraciones;
 
-use App\Models\EvolutionChain;
 use App\Models\Pokemon;
 use App\Models\PokemonStat;
 use App\Models\PokemonType;
@@ -19,15 +18,15 @@ class NormalizadorPokemonDerrotadoTest extends TestCase
     use RefreshDatabase;
 
     /**
-     * Carga los pokémon con las mismas relaciones que el handler (evolutionChain.pokemon,
-     * stats, types) y los devuelve keyBy id.
+     * Carga los pokémon con las mismas relaciones que el handler (stats, types)
+     * y los devuelve keyBy id.
      *
      * @return EloquentCollection<int, Pokemon>
      */
     private function cargarConRelaciones(): EloquentCollection
     {
         return Pokemon::query()
-            ->with('evolutionChain.pokemon', 'stats', 'types')
+            ->with('stats', 'types')
             ->get()
             ->keyBy('id');
     }
@@ -47,15 +46,29 @@ class NormalizadorPokemonDerrotadoTest extends TestCase
             ->values();
     }
 
+    /**
+     * Mapa de miembros por cadena (misma expansión que el handler: TODOS los
+     * miembros de cada cadena implicada, keyed por evolution_chain_id).
+     *
+     * @return array<int, Collection<int, Pokemon>>
+     */
+    private function miembrosPorCadena(): array
+    {
+        return Pokemon::query()
+            ->whereNotNull('evolution_chain_id')
+            ->get(['id', 'name', 'species_id', 'evolution_chain_id'])
+            ->groupBy('evolution_chain_id')
+            ->all();
+    }
+
     public function test_calcula_la_fase_segun_la_posicion_en_la_cadena(): void
     {
-        $chain = EvolutionChain::create(['data' => '{"stages": 2}']);
-
-        Pokemon::create(['id' => 1, 'name' => 'bulbasaur', 'species_id' => 1, 'capture_rate' => 255, 'base_experience' => 64, 'height' => 7, 'weight' => 69, 'hatch' => 10, 'evolution_chain_id' => $chain->id]);
-        Pokemon::create(['id' => 2, 'name' => 'ivysaur', 'species_id' => 2, 'capture_rate' => 45, 'base_experience' => 142, 'height' => 10, 'weight' => 130, 'hatch' => 10, 'evolution_chain_id' => $chain->id]);
+        Pokemon::create(['id' => 1, 'name' => 'bulbasaur', 'species_id' => 1, 'capture_rate' => 255, 'base_experience' => 64, 'height' => 7, 'weight' => 69, 'hatch' => 10, 'evolution_chain_id' => 51]);
+        Pokemon::create(['id' => 2, 'name' => 'ivysaur', 'species_id' => 2, 'capture_rate' => 45, 'base_experience' => 142, 'height' => 10, 'weight' => 130, 'hatch' => 10, 'evolution_chain_id' => 51]);
 
         $derrotados = NormalizadorPokemonDerrotado::normalizar(
             $this->expandirDerrotados($this->cargarConRelaciones(), [1, 2]),
+            $this->miembrosPorCadena(),
         );
 
         $this->assertSame(1, $derrotados->get(0)->fase); // solo bulbasaur con species_id <= 1
@@ -64,13 +77,13 @@ class NormalizadorPokemonDerrotadoTest extends TestCase
 
     public function test_expande_una_entrada_por_derrota_de_la_bitacora(): void
     {
-        $chain = EvolutionChain::create(['data' => '{"stages": 1}']);
-        Pokemon::create(['id' => 1, 'name' => 'bulbasaur', 'species_id' => 1, 'capture_rate' => 255, 'base_experience' => 64, 'height' => 7, 'weight' => 69, 'hatch' => 10, 'evolution_chain_id' => $chain->id]);
-        Pokemon::create(['id' => 2, 'name' => 'charmander', 'species_id' => 4, 'capture_rate' => 255, 'base_experience' => 62, 'height' => 6, 'weight' => 85, 'hatch' => 10, 'evolution_chain_id' => $chain->id]);
+        Pokemon::create(['id' => 1, 'name' => 'bulbasaur', 'species_id' => 1, 'capture_rate' => 255, 'base_experience' => 64, 'height' => 7, 'weight' => 69, 'hatch' => 10, 'evolution_chain_id' => 51]);
+        Pokemon::create(['id' => 2, 'name' => 'charmander', 'species_id' => 4, 'capture_rate' => 255, 'base_experience' => 62, 'height' => 6, 'weight' => 85, 'hatch' => 10, 'evolution_chain_id' => 51]);
 
         // bulbasaur derrotado 2 veces, charmander 1 → 3 entradas normalizadas
         $derrotados = NormalizadorPokemonDerrotado::normalizar(
             $this->expandirDerrotados($this->cargarConRelaciones(), [1, 1, 2]),
+            $this->miembrosPorCadena(),
         );
 
         $this->assertCount(3, $derrotados);
@@ -81,9 +94,7 @@ class NormalizadorPokemonDerrotadoTest extends TestCase
 
     public function test_normaliza_datos_basicos_tipos_y_stats(): void
     {
-        $chain = EvolutionChain::create(['data' => '{"stages": 1}']);
-
-        Pokemon::create(['id' => 1, 'name' => 'bulbasaur', 'species_id' => 1, 'capture_rate' => 255, 'base_experience' => 64, 'height' => 7, 'weight' => 69, 'hatch' => 10, 'evolution_chain_id' => $chain->id]);
+        Pokemon::create(['id' => 1, 'name' => 'bulbasaur', 'species_id' => 1, 'capture_rate' => 255, 'base_experience' => 64, 'height' => 7, 'weight' => 69, 'hatch' => 10, 'evolution_chain_id' => 51]);
 
         PokemonType::create(['pokemon_id' => 1, 'type' => 13, 'slot' => 1]); // Eléctrico
         PokemonType::create(['pokemon_id' => 1, 'type' => 10, 'slot' => 2]); // Fuego
@@ -92,12 +103,13 @@ class NormalizadorPokemonDerrotadoTest extends TestCase
 
         $derrotados = NormalizadorPokemonDerrotado::normalizar(
             $this->expandirDerrotados($this->cargarConRelaciones(), [1]),
+            $this->miembrosPorCadena(),
         );
         $pokemon = $derrotados->get(0);
 
         $this->assertSame(1, $pokemon->id);
         $this->assertSame(64, $pokemon->baseExperience);
-        $this->assertSame($chain->id, $pokemon->evolutionChainId);
+        $this->assertSame(51, $pokemon->evolutionChainId);
         $this->assertSame(1, $pokemon->speciesId);
         $this->assertSame(255, $pokemon->captureRate);
         $this->assertSame(['Eléctrico', 'Fuego'], $pokemon->tipos);
@@ -113,6 +125,7 @@ class NormalizadorPokemonDerrotadoTest extends TestCase
 
         $derrotados = NormalizadorPokemonDerrotado::normalizar(
             $this->expandirDerrotados($this->cargarConRelaciones(), [1]),
+            $this->miembrosPorCadena(),
         );
 
         $this->assertNull($derrotados->get(0)->evolutionChainId);
@@ -120,13 +133,27 @@ class NormalizadorPokemonDerrotadoTest extends TestCase
         $this->assertSame(1, $derrotados->get(0)->fase);
     }
 
-    public function test_pokemon_sin_tipos_ni_stats_se_normaliza_con_listas_vacias(): void
+    public function test_pokemon_con_cadena_sin_mapa_de_miembros_normaliza_con_fase_uno(): void
     {
-        $chain = EvolutionChain::create(['data' => '{"stages": 1}']);
-        Pokemon::create(['id' => 1, 'name' => 'bulbasaur', 'species_id' => 1, 'capture_rate' => 255, 'base_experience' => 64, 'height' => 7, 'weight' => 69, 'hatch' => 10, 'evolution_chain_id' => $chain->id]);
+        // Equivalente al caso actual de relación null (fila de evolution_chains inexistente):
+        // sin miembros en el mapa, la fase no se puede calcular → 1.
+        Pokemon::create(['id' => 1, 'name' => 'bulbasaur', 'species_id' => 1, 'capture_rate' => 255, 'base_experience' => 64, 'height' => 7, 'weight' => 69, 'hatch' => 10, 'evolution_chain_id' => 51]);
 
         $derrotados = NormalizadorPokemonDerrotado::normalizar(
             $this->expandirDerrotados($this->cargarConRelaciones(), [1]),
+        );
+
+        $this->assertSame(51, $derrotados->get(0)->evolutionChainId);
+        $this->assertSame(1, $derrotados->get(0)->fase);
+    }
+
+    public function test_pokemon_sin_tipos_ni_stats_se_normaliza_con_listas_vacias(): void
+    {
+        Pokemon::create(['id' => 1, 'name' => 'bulbasaur', 'species_id' => 1, 'capture_rate' => 255, 'base_experience' => 64, 'height' => 7, 'weight' => 69, 'hatch' => 10, 'evolution_chain_id' => 51]);
+
+        $derrotados = NormalizadorPokemonDerrotado::normalizar(
+            $this->expandirDerrotados($this->cargarConRelaciones(), [1]),
+            $this->miembrosPorCadena(),
         );
 
         $this->assertSame([], $derrotados->get(0)->tipos);
@@ -139,6 +166,7 @@ class NormalizadorPokemonDerrotadoTest extends TestCase
 
         $derrotados = NormalizadorPokemonDerrotado::normalizar(
             $this->expandirDerrotados($this->cargarConRelaciones(), [1, 999]),
+            $this->miembrosPorCadena(),
         );
 
         $this->assertCount(1, $derrotados);

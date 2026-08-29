@@ -80,6 +80,13 @@ class MigrationStatusTest extends TestCase
         $this->assertTrue($uniqueOnPokemon, 'pokedex table should have a unique index on pokemon_id');
     }
 
+    public function test_evolution_chains_table_no_existe(): void
+    {
+        // La tabla evolution_chains se eliminó (bug 23503): la agrupación de familias
+        // vive en pokemon.evolution_chain_id (columna, sin FK).
+        $this->assertFalse(Schema::hasTable('evolution_chains'));
+    }
+
     public function test_caramelos_table_has_unique_constraint_on_evolution_chain_id(): void
     {
         $indexes = Schema::getIndexes('caramelos');

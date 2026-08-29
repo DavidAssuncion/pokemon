@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Tests\Unit;
 
 use App\Models\Caramelo;
-use App\Models\EvolutionChain;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -15,26 +14,22 @@ class CarameloTest extends TestCase
 
     public function test_can_create_caramelo(): void
     {
-        $chain = EvolutionChain::create(['data' => '{"stages": 3}']);
-
         $caramelo = Caramelo::create([
-            'evolution_chain_id' => $chain->id,
+            'evolution_chain_id' => 51,
             'cantidad' => 10,
         ]);
 
         $this->assertDatabaseHas('caramelos', [
-            'evolution_chain_id' => $chain->id,
+            'evolution_chain_id' => 51,
             'cantidad' => 10,
         ]);
-        $this->assertEquals($chain->id, $caramelo->evolution_chain_id);
+        $this->assertEquals(51, $caramelo->evolution_chain_id);
     }
 
     public function test_default_cantidad_is_zero(): void
     {
-        $chain = EvolutionChain::create(['data' => '{"stages": 3}']);
-
         $caramelo = Caramelo::create([
-            'evolution_chain_id' => $chain->id,
+            'evolution_chain_id' => 51,
         ]);
         $caramelo->refresh();
 
@@ -45,22 +40,24 @@ class CarameloTest extends TestCase
     {
         $this->expectException(\Illuminate\Database\QueryException::class);
 
-        $chain = EvolutionChain::create(['data' => '{"stages": 3}']);
-
-        Caramelo::create(['evolution_chain_id' => $chain->id]);
-        Caramelo::create(['evolution_chain_id' => $chain->id]);
+        Caramelo::create(['evolution_chain_id' => 51]);
+        Caramelo::create(['evolution_chain_id' => 51]);
     }
 
-    public function test_belongs_to_evolution_chain_relationship(): void
+    public function test_caramelo_se_puede_crear_sin_fila_en_evolution_chains(): void
     {
-        $chain = EvolutionChain::create(['data' => '{"stages": 3}']);
-
+        // Regresión bug 23503: la columna evolution_chain_id ya no tiene FK,
+        // por lo que una cadena sin fila en la (eliminada) tabla evolution_chains
+        // debe insertarse sin error.
         $caramelo = Caramelo::create([
-            'evolution_chain_id' => $chain->id,
-            'cantidad' => 5,
+            'evolution_chain_id' => 51,
+            'cantidad' => 3,
         ]);
 
-        $this->assertInstanceOf(EvolutionChain::class, $caramelo->evolutionChain);
-        $this->assertEquals($chain->id, $caramelo->evolutionChain->id);
+        $this->assertDatabaseHas('caramelos', [
+            'evolution_chain_id' => 51,
+            'cantidad' => 3,
+        ]);
+        $this->assertSame(51, $caramelo->evolution_chain_id);
     }
 }

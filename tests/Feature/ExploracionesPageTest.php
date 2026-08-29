@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Tests\Feature;
 
-use App\Models\EvolutionChain;
 use App\Models\ExploracionActiva;
 use App\Models\Habitat;
 use App\Models\Pokemon;
@@ -42,11 +41,11 @@ class ExploracionesPageTest extends TestCase
     }
 
     /**
-     * @return array{chain: EvolutionChain, bulbasaur: Pokemon, charmander: Pokemon}
+     * @return array{chainId: int, bulbasaur: Pokemon, charmander: Pokemon}
      */
     private function crearPokemons(): array
     {
-        $chain = EvolutionChain::create(['data' => '{"stages": 1}']);
+        $chainId = 51;
 
         $bulbasaur = Pokemon::create([
             'name' => 'bulbasaur',
@@ -56,7 +55,7 @@ class ExploracionesPageTest extends TestCase
             'height' => 7,
             'weight' => 69,
             'hatch' => 10,
-            'evolution_chain_id' => $chain->id,
+            'evolution_chain_id' => $chainId,
         ]);
 
         $charmander = Pokemon::create([
@@ -67,11 +66,11 @@ class ExploracionesPageTest extends TestCase
             'height' => 6,
             'weight' => 85,
             'hatch' => 10,
-            'evolution_chain_id' => $chain->id,
+            'evolution_chain_id' => $chainId,
         ]);
 
         return [
-            'chain' => $chain,
+            'chainId' => $chainId,
             'bulbasaur' => $bulbasaur,
             'charmander' => $charmander,
         ];
@@ -189,7 +188,7 @@ class ExploracionesPageTest extends TestCase
                         ['pokemon_id' => $pokemons['bulbasaur']->id, 'nombre' => 'bulbasaur', 'cantidad' => 2],
                     ],
                     'caramelos_familia' => [
-                        ['evolution_chain_id' => $pokemons['chain']->id, 'nombre' => 'bulbasaur', 'pokemon_id' => $pokemons['bulbasaur']->id, 'cantidad' => 3],
+                        ['evolution_chain_id' => $pokemons['chainId'], 'nombre' => 'bulbasaur', 'pokemon_id' => $pokemons['bulbasaur']->id, 'cantidad' => 3],
                     ],
                     'caramelos_ev' => [
                         ['stat' => 2, 'cantidad' => 4],
@@ -216,7 +215,7 @@ class ExploracionesPageTest extends TestCase
             $resultado['capturados'],
         );
         $this->assertSame(
-            [['evolution_chain_id' => $pokemons['chain']->id, 'nombre' => 'bulbasaur', 'pokemon_id' => $pokemons['bulbasaur']->id, 'cantidad' => 3]],
+            [['evolution_chain_id' => $pokemons['chainId'], 'nombre' => 'bulbasaur', 'pokemon_id' => $pokemons['bulbasaur']->id, 'cantidad' => 3]],
             $resultado['caramelos_familia'],
         );
         $this->assertSame(

@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Tests\Feature;
 
-use App\Models\EvolutionChain;
 use App\Models\Habitat;
 use App\Models\Pokemon;
 use App\Models\Province;
@@ -105,7 +104,6 @@ class HabitatsControllerTest extends TestCase
 
     public function test_api_pokemon_returns_json(): void
     {
-        $chain = EvolutionChain::create(['data' => '{"stages": 1}']);
         $pokemon = Pokemon::create([
             'id' => 1,
             'name' => 'bulbasaur',
@@ -114,7 +112,7 @@ class HabitatsControllerTest extends TestCase
             'base_experience' => 64,
             'height' => 7,
             'weight' => 69,
-            'evolution_chain_id' => $chain->id,
+            'evolution_chain_id' => 51,
         ]);
         DB::table('pokemon_habitat')->insert([
             'pokemon_id' => $pokemon->id,
