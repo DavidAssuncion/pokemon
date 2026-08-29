@@ -61,8 +61,8 @@ if [[ "$ROLE" == "app" && "${RUN_MIGRATIONS:-false}" == "true" ]]; then
             \$users = (int) \$pdo->query('SELECT count(*) FROM users')->fetchColumn();
             exit(\$users === 0 ? 0 : 1);
         " >/dev/null 2>&1; then
-            echo "[entrypoint] Instalación limpia, ejecutando datos de jugador..."
-            php artisan db:seed --class=ReclutadosSeeder --force --no-interaction
+            echo "[entrypoint] Instalación limpia, ejecutando DatabaseSeeder (jugador + Test User)..."
+            php artisan db:seed --class=DatabaseSeeder --force --no-interaction
         else
             echo "[entrypoint] Datos de jugador ya presentes (omitidos)."
         fi
