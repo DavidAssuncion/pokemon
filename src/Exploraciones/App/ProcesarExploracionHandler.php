@@ -24,7 +24,7 @@ use Src\Shared\Bus\CommandHandler;
  */
 final class ProcesarExploracionHandler implements CommandHandler
 {
-    private const MINUTOS_POR_ENCUENTRO = 5;
+    private const MINUTOS_POR_ENCUENTRO = 3;
 
     public function __construct(
         private readonly CommandBus $bus,

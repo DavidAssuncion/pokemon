@@ -5,19 +5,19 @@ declare(strict_types=1);
 namespace Src\Shared\Domain;
 
 /**
- * Regla unificada de probabilidad de captura (cap-45), compartida entre
+ * Regla unificada de probabilidad de captura (cap-25), compartida entre
  * Reclutamiento (ServicioCaptura) y Exploraciones (FinalizarExploracionHandler).
  *
- * chance = min(tasa, 45) / 255  con  tasa = captureRate > 0 ? captureRate : 45
- * → máximo 17.6% (45/255) por derrota, independientemente del capture_rate.
+ * chance = min(tasa, 25) / 255  con  tasa = captureRate > 0 ? captureRate : 25
+ * → máximo 9.8% (25/255) por derrota, independientemente del capture_rate.
  */
 final class ProbabilidadCaptura
 {
-    public const TASA_BASE = 45;
-    public const CAP = 45;
+    public const TASA_BASE = 25;
+    public const CAP = 25;
     public const MAXIMO = 255;
 
-    /** Probabilidad [0, 45/255] de captura según capture_rate (regla cap-45). */
+    /** Probabilidad [0, 25/255] de captura según capture_rate (regla cap-25). */
     public static function probabilidad(int $captureRate): float
     {
         $tasa = $captureRate > 0 ? $captureRate : self::TASA_BASE;

@@ -625,3 +625,78 @@ el `IconoController` busca en `resources/iconos/` (no existe) y el contrato del 
 ### Riesgos / compatibilidad
 
 - Sesiones de combate previas (versión 4) → `speciesId=0` → icono placeholder `0.webp`; aceptable.
+
+---
+
+# Análisis Backend — Ajustes numéricos del juego: cap de captura 25 + minutos por encuentro 3
+
+## Fecha
+2026-08-30
+
+## Cambios solicitados (brief)
+
+1. `src/Shared/Domain/ProbabilidadCaptura.php`:
+   - `CAP = 25` (era 45) y `TASA_BASE = 25` (era 45). Coherencia: el default no debe superar el cap.
+   - PHPDoc de clase y método: "máximo 9.8% (25/255)".
+   - Lógica NO cambia: `chance = min(tasa, CAP) / MAXIMO` con `tasa = captureRate > 0 ? captureRate : TASA_BASE`.
+2. `src/Exploraciones/App/ProcesarExploracionHandler.php`:
+   - `MINUTOS_POR_ENCUENTRO = 3` (era 5). Nada más de ese archivo.
+3. NO tocar: `SimuladorEncuentros`, `ServicioCaptura`, `FinalizarExploracionHandler`, `resources/views/`, documentación.
+
+## Semántica resultante (verifica en tests)
+
+- 255/300/190/45 → 25/255 (9.8%)
+- 30 → 25/255 (¡antes 30/255! Ahora 30 > cap 25 → se recorta)
+- 3 → 3/255 (1.2%, intacto)
+- 0/neg/null → 25/255 (tasa base 25, igual al cap → 9.8%)
+
+## Archivos a tocar
+
+| Archivo | Acción | Propósito |
+|---------|--------|-----------|
+| `src/Shared/Domain/ProbabilidadCaptura.php` | 2 constantes + PHPDoc | CAP 45→25, TASA_BASE 45→25, doc "9.8% (25/255)" |
+| `src/Exploraciones/App/ProcesarExploracionHandler.php` | 1 constante | MINUTOS_POR_ENCUENTRO 5→3 |
+| `tests/Unit/Reclutamiento/ProbabilidadCapturaTest.php` | Reescribir | 45/255→25/255, renames, borde 30 recorta, bordes intentar |
+| `tests/Feature/ServicioCapturaTest.php` | 2 valores + comentario | L69/L74 45/255→25/255, comentario L65 cap-25 |
+| `tests/Feature/ExploracionesTest.php` | SOLO comentarios | L214/L607/L647 a los nuevos valores (no tocar aserciones de conteo) |
+| `tests/Feature/ExploracionesTest.php` | NUEVO test (opcional) | Tick con ultimo_procesado hace 10 min → intdiv(10, 3) = 3 encuentros |
+
+## Tests TDD (rojo → verde)
+
+### 1. `tests/Unit/Reclutamiento/ProbabilidadCapturaTest.php`
+- Sustituir todos los `45 / 255` por `25 / 255`.
+- Renombres: `cap_45`→`cap_25`, `17_por_ciento`→`9_8`, `tasa_base_cap_45`→`tasa_base_cap_25`.
+- `test_probabilidad_30_es_30_entre_255` → `test_probabilidad_30_se_recorta_al_cap_25` con `25 / 255`.
+- `test_probabilidad_3_es_3_entre_255` → sigue `3 / 255`.
+- Bordes `intentar`: (45, 0.09) true, (45, 25/255) true, (45, 0.1) false; (255, 0.0) true, (255, 0.99) false; (0, 0.09) true, (0, 0.1) false; (3, 0.02) false.
+
+### 2. `tests/Feature/ServicioCapturaTest.php`
+- L69 y L74 `45 / 255` → `25 / 255`.
+- Comentario L65: "cap-45 rule (min(rate,45)/255)" → "cap-25 rule (min(rate,25)/255)".
+
+### 3. `tests/Feature/ExploracionesTest.php` (solo comentarios)
+- L214 "máximo 17.6%" → "máximo 9.8%".
+- L607 "tasa base 45 → 17.6%" → "tasa base 25 → 9.8%".
+- L647 "el tick GENERARÁ encuentros (2)" → "(3)" (10 min ÷ 3 = 3).
+- NO cambiar aserciones de conteo (derivadas de la bitácora).
+
+### 4. NUEVO test de tick (opcional/recomendado)
+- Con `ultimo_procesado` hace 10 min y el tick actual → `intdiv(10, 3) = 3` encuentros (antes 2).
+- No existe test unitario de `ProcesarExploracionHandler` que fije el divisor → añadir uno mínimo en `tests/Feature/ExploracionesTest.php` o confirmar cobertura vía la suite. Se añadirá como test feature (necesita DB + contexto de exploración).
+
+## Riesgos
+
+1. **Cambios de conteo en ExploracionesTest**: Los tests existentes derivan los conteos de la bitácora (no de un valor fijo de encuentros), por lo que el cambio de 5→3 minutos no altera sus aserciones numéricas. Verificado por revisión: los asserts usan `conteoPorEspecie($bitacora)` y comparan cantidades relativas.
+2. **`test_servicio_reparte_todas_las_recompensas`** inyecta `aleatorio 0.0` (captura forzada): con cap-25 sigue siendo válido (0.0 ≤ 25/255).
+3. **`test_reintento_tras_fallo_no_duplica_recompensas`** inyecta `aleatorio 1.0` (no captura): con tasa base 25 → 9.8% sigue sin capturar (1.0 > 25/255). Válido.
+4. **PHPStan**: cambios solo de constantes y PHPDoc → sin nuevos errores esperables.
+5. **Infection**: `ProbabilidadCaptura` ya tiene MSI ≥ 80% (cobertura de tests); al actualizar tests mantiene la cobertura de ramas (`captureRate > 0` y `min`). No debe bajar.
+
+## Verificación
+
+- `php artisan test --compact tests/Unit/Reclutamiento/ProbabilidadCapturaTest.php tests/Feature/ServicioCapturaTest.php tests/Feature/ExploracionesTest.php`
+- `php artisan test --compact` (suite completa)
+- `vendor/bin/pint --dirty --format agent`
+- `vendor/bin/phpstan analyse` (0 errores NUEVOS sobre línea base)
+- `vendor/bin/infection --filter=ProbabilidadCaptura` (si viable; MSI ≥ 80% no puede bajar)
+- `vendor/bin/phpmd src/ text phpmd.xml`

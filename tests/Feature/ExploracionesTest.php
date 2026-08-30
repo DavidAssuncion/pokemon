@@ -211,7 +211,7 @@ class ExploracionesTest extends TestCase
     public function test_servicio_reparte_todas_las_recompensas(): void
     {
         // Fuerza captura (aleatorio 0.0) para no depender del RNG: con la regla
-        // cap-45 el capture_rate 255 ya no garantiza captura (máximo 17.6%).
+        // cap-25 el capture_rate 255 ya no garantiza captura (máximo 9.8%).
         $this->bindHandlerConAleatorio(fn (): float => 0.0);
 
         $ctx = $this->crearContexto(['duracion_horas' => 1, 'inicio' => now()->subHours(2)]);
@@ -312,6 +312,25 @@ class ExploracionesTest extends TestCase
         $segundaPasada = count($ctx['exploracion']->refresh()->eventos['bitacora']);
 
         $this->assertSame($primeraPasada, $segundaPasada);
+    }
+
+    public function test_tick_con_ultimo_procesado_hace_10_min_genera_tres_encuentros(): void
+    {
+        // Tras 10 min sin procesar, el tick divide 10 ÷ MINUTOS_POR_ENCUENTRO (3) = 3 encuentros.
+        $ctx = $this->crearContexto(['indefinido' => true, 'inicio' => now()->subMinutes(30)]);
+        $ctx['exploracion']->update([
+            'eventos' => [
+                'bitacora' => [],
+                'ultimo_procesado' => now()->subMinutes(10)->toIso8601String(),
+            ],
+        ]);
+
+        $this->artisan('exploraciones:procesar')->assertSuccessful();
+
+        $ctx['exploracion']->refresh();
+        $bitacora = $ctx['exploracion']->eventos['bitacora'] ?? [];
+
+        $this->assertCount(3, $bitacora);
     }
 
     public function test_exploracion_ya_completada_no_se_retoca(): void
@@ -430,7 +449,7 @@ class ExploracionesTest extends TestCase
 
     public function test_servicio_guarda_resumen_de_resultado_en_eventos(): void
     {
-        // Fuerza captura (aleatorio 0.0) para no depender del RNG (regla cap-45).
+        // Fuerza captura (aleatorio 0.0) para no depender del RNG (regla cap-25).
         $this->bindHandlerConAleatorio(fn (): float => 0.0);
 
         $ctx = $this->crearContexto(['duracion_horas' => 1, 'inicio' => now()->subHours(2)]);
@@ -603,8 +622,8 @@ class ExploracionesTest extends TestCase
 
     public function test_reintento_tras_fallo_no_duplica_recompensas(): void
     {
-        // Fuerza NO captura (aleatorio 1.0): con la regla cap-45 el capture_rate 0
-        // ya no garantiza ausencia de captura (usa la tasa base 45 → 17.6%).
+        // Fuerza NO captura (aleatorio 1.0): con la regla cap-25 el capture_rate 0
+        // ya no garantiza ausencia de captura (usa la tasa base 25 → 9.8%).
         $this->bindHandlerConAleatorio(fn (): float => 1.0);
 
         $ctx = $this->crearExploracionParaFinalizar(captureRate: 0);
@@ -644,7 +663,7 @@ class ExploracionesTest extends TestCase
     public function test_procesar_con_forzar_regreso_y_finalizar_fallando_hace_rollback_total(): void
     {
         // Bitacora vacía con ultimo_procesado hace 10 min: el tick GENERARÁ
-        // encuentros (2) que deberán revertirse junto con las recompensas.
+        // encuentros (3) que deberán revertirse junto con las recompensas.
         $ctx = $this->crearContexto(['indefinido' => true, 'inicio' => now()->subMinutes(30)]);
         $ctx['exploracion']->update([
             'eventos' => [

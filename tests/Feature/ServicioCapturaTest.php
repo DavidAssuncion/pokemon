@@ -62,16 +62,16 @@ class ServicioCapturaTest extends TestCase
         Bus::assertDispatched(ActualizarPokedexJob::class, 2);
         Bus::assertDispatched(CapturarPokemonJob::class, 2);
 
-        // Verify the capture chances are based on the cap-45 rule (min(rate,45)/255)
+        // Verify the capture chances are based on the cap-25 rule (min(rate,25)/255)
         Bus::assertDispatched(CapturarPokemonJob::class, function ($job) {
             return $job->userId === $this->userId
                 && $job->pokemonId === 1
-                && abs($job->captureChance - 45 / 255) < 0.001;
+                && abs($job->captureChance - 25 / 255) < 0.001;
         });
         Bus::assertDispatched(CapturarPokemonJob::class, function ($job) {
             return $job->userId === $this->userId
                 && $job->pokemonId === 2
-                && abs($job->captureChance - 45 / 255) < 0.001;
+                && abs($job->captureChance - 25 / 255) < 0.001;
         });
     }
 
