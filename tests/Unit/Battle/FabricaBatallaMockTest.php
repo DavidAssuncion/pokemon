@@ -213,4 +213,54 @@ class FabricaBatallaMockTest extends TestCase
         $this->assertSame('Gengar', $gengar->nombre());
         $this->assertSame('life_orb', $gengar->item());
     }
+
+    public function test_potencias_de_movimientos_de_team1(): void
+    {
+        $gengar = $this->fabrica->generateTeam1()[0];
+        $this->assertSame(90, $gengar->moves[1]->potencia); // Bomba Lodo
+        $this->assertSame(90, $gengar->moves[2]->potencia); // Rayo
+        $this->assertSame(80, $gengar->moves[3]->potencia); // Pulso Umbrío
+        $this->assertSame(TipoPokemon::VENENO, $gengar->moves[1]->tipo);
+        $this->assertSame(TipoPokemon::ELECTRICO, $gengar->moves[2]->tipo);
+        $this->assertSame(TipoPokemon::SINIESTRO, $gengar->moves[3]->tipo);
+
+        $giratina = $this->fabrica->generateTeam1()[1];
+        $this->assertSame(80, $giratina->moves[0]->potencia); // Garra Umbría
+        $this->assertSame(130, $giratina->moves[1]->potencia); // Cometa Draco
+        $this->assertSame(90, $giratina->moves[3]->potencia); // Tierra Viva
+        $this->assertSame(CategoriaMovimiento::FISICO, $giratina->moves[0]->categoria);
+        $this->assertSame(TipoPokemon::DRAGON, $giratina->moves[1]->tipo);
+
+        $tyranitar = $this->fabrica->generateTeam1()[2];
+        $this->assertSame(100, $tyranitar->moves[0]->potencia); // Roca Afilada
+        $this->assertSame(80, $tyranitar->moves[1]->potencia); // Triturar
+        $this->assertSame(100, $tyranitar->moves[2]->potencia); // Terremoto
+        $this->assertSame(TipoPokemon::SINIESTRO, $tyranitar->moves[1]->tipo);
+        $this->assertSame(TipoPokemon::TIERRA, $tyranitar->moves[2]->tipo);
+    }
+
+    public function test_potencias_de_movimientos_de_team2(): void
+    {
+        $aggron = $this->fabrica->generateTeam2()[0];
+        $this->assertSame(80, $aggron->moves[0]->potencia); // Cabeza de Hierro
+        $this->assertSame(100, $aggron->moves[1]->potencia); // Roca Afilada
+        $this->assertSame(100, $aggron->moves[2]->potencia); // Terremoto
+        $this->assertSame(TipoPokemon::ACERO, $aggron->moves[0]->tipo);
+        $this->assertSame(CategoriaMovimiento::FISICO, $aggron->moves[0]->categoria);
+
+        $deoxys = $this->fabrica->generateTeam2()[1];
+        $this->assertSame(90, $deoxys->moves[0]->potencia); // Psíquico
+        $this->assertSame(90, $deoxys->moves[1]->potencia); // Rayo
+        $this->assertSame(65, $deoxys->moves[2]->potencia); // Psicorrayo
+        $this->assertSame(80, $deoxys->moves[3]->potencia); // Pulso Umbrío
+        $this->assertSame(TipoPokemon::ELECTRICO, $deoxys->moves[1]->tipo);
+        $this->assertSame(CategoriaMovimiento::ESPECIAL, $deoxys->moves[2]->categoria);
+
+        $mewtwo = $this->fabrica->generateTeam2()[2];
+        $this->assertSame(90, $mewtwo->moves[0]->potencia); // Psíquico
+        $this->assertSame(80, $mewtwo->moves[1]->potencia); // Esfera Aural
+        $this->assertSame(110, $mewtwo->moves[2]->potencia); // Llamarada
+        $this->assertSame(TipoPokemon::LUCHA, $mewtwo->moves[1]->tipo);
+        $this->assertSame(TipoPokemon::FUEGO, $mewtwo->moves[2]->tipo);
+    }
 }
