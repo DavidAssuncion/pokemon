@@ -65,12 +65,6 @@ class Combate extends Component
 
     // ─── Lifecycle ───────────────────────────────────────────
 
-    public function __construct()
-    {
-        parent::__construct();
-        $this->fabricaBatalla = app(FabricaBatallaInterface::class);
-    }
-
     public function nuevaBatalla(): void
     {
         $this->battleId = 'battle_'.uniqid();
@@ -79,6 +73,7 @@ class Combate extends Component
 
     public function mount(): void
     {
+        $this->fabricaBatalla = app(FabricaBatallaInterface::class);
         $this->nuevaBatalla();
     }
 

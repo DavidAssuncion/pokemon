@@ -409,3 +409,44 @@ de `PlayerControllerTest` que asumían el listado completo:
 - `php artisan test --compact --filter=PokedexViewTest`
 - `vendor/bin/pint --dirty --format agent`
 - `vendor/bin/phpstan analyse` y `vendor/bin/phpmd src/ text phpmd.xml` (sin nuevos errores)
+
+---
+
+## Análisis previo — Fix constructor `Combate.php` (PHPStan: Cannot call constructor)
+
+### Contexto
+
+PHPStan (level 6 + phpstan-strict-rules) reportaba error `Cannot call constructor` en
+`app/Livewire/Combate.php:70`: `parent::__construct()` llama al constructor de
+`Livewire\Component` que NO existe en Livewire 4 (`livewire/livewire ^4.4`). El componente
+fallaba en runtime al montarse (`Error: Cannot call constructor`), confirmado por TDD.
+
+### Fix principal
+
+- `app/Livewire/Combate.php` — eliminar `__construct()` (líneas 68-72) y resolver
+  `$fabricaBatalla` en `mount()` (solo se usa en `initMockBattle()` → `nuevaBatalla()` →
+  `mount()`; las propiedades privadas de Livewire no se serializan entre requests).
+
+### Fix secundario (bloqueado por el montaje)
+
+Al montar, el flujo llega a `nextActor()` → `currentMoves` que usa
+`DTOMovimientoBatalla::desdeDominio()`: `TipoPokemon` es enum backed `int` (`->value` =
+int) pero `$tipo` se declaró `string` → TypeError. Corregido de forma mínima:
+`(string) $move->tipo->value` en `desdeDominio()` y `TipoPokemon::from((int) $this->tipo)`
+en `toDomain()`. Coherente con la vista `moves-panel` que ya hace `TipoPokemon::from($move['tipo'])`.
+
+### Test (TDD)
+
+- `tests/Feature/CombateLivewireTest.php` (NUEVO, 3 tests):
+  1. `test_combate_mounts_without_constructor_error` — monta sin error, `assertSee('CAMPO DE COMBATE')`.
+  2. `test_combate_shows_battle_log_on_mount` — `assertSee('¡Comienza la batalla!')`.
+  3. `test_combate_creates_battle_on_mount` — `battleId` con prefijo `battle_`, team1/team2 con 3.
+  Feature test (app levantada): usa sesión + contenedor; NO requiere BD/RefreshDatabase
+  (el layout usa `@auth` con fallbacks y el componente no toca BD).
+
+### Verificación
+
+- `php artisan test --compact --filter=Combate` → 6 passed (9 assertions).
+- `php artisan test --compact tests/Feature/PokemonBattleTest.php` → 2 passed.
+- PHPStan: 185 errores ANTES → 183 DESPUÉS (`Cannot call constructor` eliminado; -2 por el fix del DTO).
+- Suite completa: 559 passed / 1 failed pre-existente (`ServicioCapturaTest`, ajeno).

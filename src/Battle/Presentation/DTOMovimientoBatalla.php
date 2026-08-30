@@ -35,7 +35,7 @@ class DTOMovimientoBatalla implements Wireable
         return new self(
             nombre: $move->nombre,
             potencia: $move->potencia,
-            tipo: $move->tipo->value,
+            tipo: (string) $move->tipo->value,
             categoria: $move->categoria->value,
             statusEffect: $move->statusEffect->value,
             priority: $move->priority,
@@ -77,7 +77,7 @@ class DTOMovimientoBatalla implements Wireable
         return new MovimientoBatalla(
             nombre: $this->nombre,
             potencia: $this->potencia,
-            tipo: TipoPokemon::from($this->tipo),
+            tipo: TipoPokemon::from((int) $this->tipo),
             categoria: CategoriaMovimiento::from($this->categoria),
             statusEffect: $this->statusEffect !== '' ? EstadoPokemon::from($this->statusEffect) : EstadoPokemon::NONE,
             priority: $this->priority,
