@@ -1,3 +1,11 @@
 @import "tailwindcss";
 
 @custom-variant dark (&:where(.dark, .dark *));
+
+/* Weather banner — colores por clima (ver Src\Battle\Domain\Enums\TipoClima) */
+.weather-sequia { background: #78350f; color: #fcd34d; border-color: #92400e; }
+.weather-diluvio { background: #1e3a5f; color: #93c5fd; border-color: #1d4ed8; }
+.weather-niebla { background: #475569; color: #e2e8f0; border-color: #64748b; }
+.weather-granizo { background: #1e293b; color: #93c5fd; border-color: #475569; }
+.weather-tormenta_arena { background: #78350f; color: #fcd34d; border-color: #92400e; }
+.weather-turbulencias { background: #4c1d95; color: #d8b4fe; border-color: #6d28d9; }

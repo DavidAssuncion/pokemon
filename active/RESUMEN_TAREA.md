@@ -323,4 +323,43 @@ módulo quedó inaccesible hasta arreglar los bugs.
 - Ejecutar suite en CI (el `ServicioCapturaTest` falla por cambio de `a3f4ad7`).
 - Ampliar cobertura Infection de `src/Battle` al resto de clases (GestorTurnos,
   ServicioEjecucionBatalla, BattleAggregate, etc.).
-- Restaurar la ruta `/combate` y vistas Blade (Frontend).
+
+---
+
+## Iteración actual — Corrección UI del módulo de combate + reactivación de `/combate` (FRONTEND)
+
+### Estado: COMPLETADA (pendiente QA visual)
+
+El backend corrigió los 6 bugs de runtime (`5bda03f`); el frontend reactivó el acceso y
+corrigió la UI. Detalle completo en `active/ANALISIS_FRONTEND.md` (sección 2026-08-30).
+
+### Cambios
+
+1. **Weather banner** (`resources/views/livewire/partials/battle-field.blade.php`):
+   el `@switch` comparaba valores ingleses (`'sandstorm'`, `'sun'`...) pero el enum
+   `TipoClima` produce valores españoles (`'sequia'`, `'diluvio'`, `'niebla'`,
+   `'granizo'`, `'tormenta_arena'`, `'turbulencias'`) → el banner NUNCA se mostraba.
+   Ahora usa `TipoClima::tryFrom($weather)?->label()` para el texto en español,
+   `match` con los valores reales para el icono y mantiene `weather-{{ $weather }}`.
+2. **Ruta `/combate`** (`routes/web.php`): descomentada dentro del grupo
+   `middleware('auth')` → `Route::get('/combate', \App\Livewire\Combate::class);`.
+3. **Navegación** (`resources/views/layouts/app.blade.php`): enlace "Combate" en el nav
+   (entre Equipos y Reclutamiento), mismo estilo que el resto.
+4. **CSS** (`resources/css/app.css`, Tailwind 4 + Vite): 6 clases `weather-*` nuevas con
+   los colores del banner legacy. `public/css/app.css` NO se carga (el layout usa solo
+   Vite); se revirtió el cambio legacy y se añadió al CSS real.
+   ⚠️ Requiere `npm run build` o `npm run dev` para regenerar el manifest/estilos.
+5. `resources/views/combate_page.blade.php`: verificado correcto (extiende `layouts.app`
+   + `@livewire('combate')`); sin cambios.
+
+### Observación (documentada, NO modificada)
+
+- `$weather` se asigna en `Combate::syncViewData()` (línea 628) desde
+  `$battle->weather()->value` → llega en español. El partial `battle-field` recibe
+  `$weather` vía `@include` desde `combate.blade.php` (las propiedades Livewire están
+  disponibles en los partials). Si un estado concreto no entregara clima, NO se toca
+  (dominio).
+
+### Nota build
+
+- Tras tocar `resources/css/app.css` hay que ejecutar `npm run build` (o `npm run dev`).

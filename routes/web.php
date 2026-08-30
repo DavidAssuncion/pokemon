@@ -26,8 +26,8 @@ Route::middleware('auth')->group(function (): void {
 
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
-    // Combate archivado — ver src/Battle/
-    //Route::get('/combate', \App\Livewire\Combate::class);
+    // Combate — ver src/Battle/
+    Route::get('/combate', \App\Livewire\Combate::class);
 
     // Reclutados merged into Equipos — old /reclutados redirects to /equipos (see player.php)
     require __DIR__.'/habitats.php';

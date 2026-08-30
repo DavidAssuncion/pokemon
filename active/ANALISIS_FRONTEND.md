@@ -358,3 +358,103 @@ $requisitos[]: {tipo, slug, necesario, actual, caramelosDisponibles} — backend
 - `php artisan view:cache` (compila todas las vistas).
 - `php artisan test --compact --filter='HeaderNivel|AuthViews|ExploracionesPage|PokedexView'`.
 - NO `npm run build` (no toco assets ni manifest; Alpine ya se carga vía Vite).
+
+---
+
+# Análisis Frontend — Corrección UI del módulo de Combate (2026-08-30)
+
+## Contexto
+
+El módulo de combate está archivado: ruta `/combate` comentada en `routes/web.php` y bug en el
+weather banner. Se reactiva el acceso y se corrige la UI. NO toco lógica de dominio (`src/Battle/`)
+ni `app/Livewire/Combate.php` (el backend corrige en paralelo; evito conflictos de merge).
+
+## 1. Bug del weather banner
+
+### Archivo
+
+`resources/views/livewire/partials/battle-field.blade.php`
+
+### Causa raíz
+
+El bloque `@switch($weather)` comparaba con valores ingleses (`'sandstorm'`, `'sun'`, `'rain'`,
+`'hail'`), pero `$weather` se asigna en `Combate::syncFromBattle()` como
+`$battle->weather()->value`, que devuelve el valor del enum `Src\Battle\Domain\Enums\TipoClima`
+en español: `'sequia'`, `'diluvio'`, `'niebla'`, `'granizo'`, `'tormenta_arena'`, `'turbulencias'`
+(o `'none'`). El banner NUNCA se mostraba porque ningún case coincidía.
+
+### Solución
+
+- Uso `TipoClima::tryFrom($weather)?->label()` para el texto en español (sequía, diluvio, niebla,
+  granizo, tormenta de arena, turbulencias) con fallback al valor crudo.
+- Mantengo la clase `weather-{{ $weather }}` para estilizado (banner + CSS legacy).
+- Icono por clima vía `match` en español (☀️🌧🌫❄️🌪💨).
+- Nota de potencia para `tormenta_arena` (+500 potencia a movimientos Roca), preservando el
+  texto original del banner.
+
+### CSS
+
+- `resources/css/app.css` (Tailwind 4 + Vite, compilado por el layout vía `@vite`): añadidas
+  las 6 clases nuevas `weather-sequia`, `weather-diluvio`, `weather-niebla`, `weather-granizo`,
+  `weather-tormenta_arena`, `weather-turbulencias` con los mismos esquemas de color que las
+  clases inglesas del CSS legacy.
+- `public/css/app.css` (CSS legacy que SÍ referencia `.weather-banner`, `.weather-sandstorm`,
+  `.weather-sun`, `.weather-rain`, `.weather-hail`) **NO se carga en el layout** (solo se usa
+  Vite) → se descartó tocar ese archivo; el banner usa Tailwind utilities inline
+  (`mb-2 rounded-lg border px-3 py-1.5 ...`) + las clases `weather-*` nuevas de
+  `resources/css/app.css`.
+- ⚠️ Requiere `npm run build` o `npm run dev` (el CSS se compila vía Vite).
+
+## 2. Reactivar ruta /combate
+
+### Archivo
+
+`routes/web.php` — descomentada la línea 30 dentro del grupo `middleware('auth')`:
+`Route::get('/combate', \App\Livewire\Combate::class);`
+
+## 3. Navegación
+
+### Archivo
+
+`resources/views/layouts/app.blade.php` — añadido al array `$navItems`
+`['route' => '/combate', 'label' => 'Combate']` entre Equipos y Reclutamiento. Mismo estilo que
+los demás enlaces (href directo + clases condicionales por ruta activa).
+
+## 4. combate_page.blade.php
+
+### Archivo
+
+`resources/views/combate_page.blade.php` — correcto: `@extends('layouts.app')` +
+`@livewire('combate')` + título "Combate". No necesita cambios.
+
+## 5. Observación del componente Combate (NO modificado)
+
+- `public string $weather = 'none'` (default) y se actualiza desde `$battle->weather()->value`
+  (línea 628 de `app/Livewire/Combate.php`) → `$weather` llega con los valores del enum español.
+- `$phase`, `$animAttackerNombre`, `$animDefenderNombre`, `$animMoveNombre`, `$team1`, `$team2`
+  son las variables que consume el partial `battle-field`; verificadas en `combate.blade.php`.
+- El banner se renderizará cuando el backend entregue un clima activo (distinto de `'none'`).
+  Si el componente no llegara a entregar `$weather` en algún estado, NO se cambia (dominio).
+
+## 6. Archivos modificados
+
+1. `resources/views/livewire/partials/battle-field.blade.php` — banner corregido (español).
+2. `resources/css/app.css` — 6 clases `weather-*` nuevas (Tailwind 4 + Vite).
+3. `routes/web.php` — ruta `/combate` descomentada (dentro de auth).
+4. `resources/views/layouts/app.blade.php` — enlace "Combate" en el nav.
+5. `active/ANALISIS_FRONTEND.md` — esta sección (documentación, no código).
+
+## 7. Estados UI / verificación
+
+- Banner: visible cuando `$weather` es un clima activo; oculto cuando `'none'`/null.
+- Nav: enlace activo resaltado en `/combate` (patrón `request()->is('combate*')` del layout).
+- Ruta: registro verificado con `php -l routes/web.php` (sintaxis OK) y
+  `php artisan view:cache` (vistas compiladas sin errores).
+- CSS: requiere `npm run build` o `npm run dev` para regenerar
+  `public/build/manifest.json` con las nuevas clases `weather-*`.
+
+## 8. Nota de build para el usuario
+
+- `resources/css/app.css` se compila con Vite → **obligatorio** ejecutar
+  `npm run build` o `npm run dev` para que las clases `weather-*` estén disponibles.
+- `public/css/app.css` (legacy, NO se carga en el layout) no requiere build.

@@ -2,21 +2,23 @@
     <h3 class="section-title">CAMPO DE COMBATE</h3>
 
     @if($weather && $weather !== 'none')
-        <div class="weather-banner weather-{{ $weather }}">
-            @switch($weather)
-                @case('sandstorm')
-                    🌪 Tormenta de arena <span class="weather-power">(+500 potencia a movimientos Roca)</span>
-                    @break
-                @case('sun')
-                    ☀️ Día soleado
-                    @break
-                @case('rain')
-                    🌧 Lluvia
-                    @break
-                @case('hail')
-                    ❄️ Granizo
-                    @break
-            @endswitch
+        @php
+            $clima = \Src\Battle\Domain\Enums\TipoClima::tryFrom($weather);
+            $climaIcono = match ($weather) {
+                'sequia' => '☀️',
+                'diluvio' => '🌧',
+                'niebla' => '🌫',
+                'granizo' => '❄️',
+                'tormenta_arena' => '🌪',
+                'turbulencias' => '💨',
+                default => '🌤',
+            };
+        @endphp
+        <div class="weather-banner weather-{{ $weather }} mb-2 rounded-lg border px-3 py-1.5 text-center text-sm font-semibold">
+            <span class="weather-label">{{ $climaIcono }} {{ $clima?->label() ?? $weather }}</span>
+            @if($weather === 'tormenta_arena')
+                <span class="weather-power">(+500 potencia a movimientos Roca)</span>
+            @endif
         </div>
     @endif
 
