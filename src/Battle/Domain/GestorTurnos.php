@@ -16,6 +16,7 @@ class GestorTurnos
     /** @var Combatiente[] */
     private array $teamA;
 
+    /** @var Combatiente[] */
     private array $teamB;
 
     public function __construct(

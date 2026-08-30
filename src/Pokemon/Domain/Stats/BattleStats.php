@@ -42,12 +42,12 @@ class BattleStats
         $this->speed = $this->calcularStat($stats->speed, $evs->speed, $nivel);
     }
 
-    private function calcularHp(float $base, float $evs, $nivel): float
+    private function calcularHp(float $base, float $evs, int $nivel): float
     {
         return floor(((2 * $base + floor($evs / 4)) * $nivel / 100) + $nivel + 10);
     }
 
-    private function calcularStat(float $base, float $evs, $nivel): float
+    private function calcularStat(float $base, float $evs, int $nivel): float
     {
         return floor(((2 * $base + floor($evs / 4)) * $nivel / 100) + 5);
     }
