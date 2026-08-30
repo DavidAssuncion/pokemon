@@ -18,14 +18,14 @@ class CadenaDanio
         $crit = new ManejadorCritico();
         $position = new ManejadorPosicion();
         $weather = new ManejadorClima();
-        $lifeOrb = new ManejadorOrbeVida();
+        $objetos = new ManejadorObjetosEquipados();
 
         $base->setNext($type);
         $type->setNext($stab);
         $stab->setNext($crit);
         $crit->setNext($position);
         $position->setNext($weather);
-        $weather->setNext($lifeOrb);
+        $weather->setNext($objetos);
 
         $this->first = $base;
     }

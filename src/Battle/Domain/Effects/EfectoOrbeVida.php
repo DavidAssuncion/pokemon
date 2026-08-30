@@ -10,7 +10,7 @@ use Src\Battle\Domain\Combatiente;
 /**
  * Orbe Vida: el portador pierde 10% de su HP máximo cada vez que
  * inflige daño con un movimiento. El bonus de daño ×1.3 se aplica
- * en el ManejadorOrbeVida de la cadena de daño.
+ * El bonus de daño ×1.3 se aplica en ManejadorObjetosEquipados de la cadena de daño.
  */
 class EfectoOrbeVida implements InterfazEfecto
 {

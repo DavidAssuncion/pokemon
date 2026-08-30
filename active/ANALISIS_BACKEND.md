@@ -134,3 +134,186 @@ Para efectos (Orbe Vida, Restos, Invocador Clima), se construyen las instancias 
 - PHPStan nivel 6 limpio sobre los archivos tocados.
 - PHPMD y Pint aplicados.
 - Commits atómicos: fix de bugs + tests TDD + migración del test deprecado.
+
+---
+
+## Endurecimiento del módulo Battle — 2 fixes de tipo + tests anti-mutantes (2026-08-30)
+
+### Estado: COMPLETADO (MSI Battle 80%)
+
+### Tarea 1 — 2 fixes de tipo (comportamiento neutro, aprobados por Arquitecto)
+
+| Archivo | Fix | Línea |
+|---------|-----|-------|
+| `src/Pokemon/Domain/Stats/BattleStats.php` | `calcularHp(float $base, float $evs, $nivel)` → `int $nivel` | 45 |
+| `src/Pokemon/Domain/Stats/BattleStats.php` | `calcularStat(float $base, float $evs, $nivel)` → `int $nivel` | 50 |
+| `src/Battle/Domain/GestorTurnos.php` | Añadir `/** @var Combatiente[] */` a `$teamB` (línea 19, hermana de `$teamA` con docblock) | 19 |
+
+### Tarea 2 — Tests anti-mutantes (MSI ≥80%)
+
+**Archivos NUEVOS:**
+
+1. `tests/Unit/Battle/GestorTurnosTest.php` — 8 tests: startNewRound incrementa round; acumula velocidad y resetea vecesActuado; getNextActor devuelve el de mayor velocidad; empate devuelve el primero (T1); consumeAction reduce velocidad e incrementa veces; bothTeamsAlive true/false; hayAlgunoConAccionPendiente false sin vivos; combatientesVivos excluye muertos.
+2. `tests/Unit/Battle/CombatienteRecibirDanoTest.php` — 6 tests: daño absorbido por barrera; daño excede barrera; directPct penetra; directPct 1.0 todo a HP; especial usa barrera especial; HP nunca negativo.
+3. `tests/Unit/Battle/ServicioEjecucionBatallaTest.php` — 4 tests: calcularYAplicarDano retorna DTOResultadoDanio con daño>0; aplicarEstado con BURN / sin estado no cambia; aplicarStatChanges aplica self+target; generarLogMovimiento formato correcto.
+4. `tests/Unit/Battle/FabricaEfectosTest.php` — 5 tests: crearEfecto devuelve instancia con clave; desconocido → null; crearItem devuelve instancia; desconocido → null; clavesEfectos/clavesItems listan registrados.
+
+**Archivos EXISTENTES a ampliar:**
+
+5. `tests/Unit/Battle/ManejadorClimaTest.php` — +7 tests: DILUVIO agua×1.25/fuego×0.75; NIEBLA siniestro/fantasma/psíquico×1.25; TURBULENCIAS dragón/volador×1.25; GRANIZO especial HIELO×0.80; TORMENTA_ARENA físico ROCA×0.80.
+6. `tests/Unit/Battle/EfectoOrbeVidaTest.php` — +2 tests: recoil NO si atacante muerto; NO si daño=0.
+7. `tests/Unit/Battle/EfectoRestosTest.php` — +1 test: no cura si portador muerto.
+8. `tests/Unit/Battle/EstadoPokemonTest.php` — +3 tests: POISON 12.5%; BAD_POISON creciente (contador/16); sin estado no causa daño.
+9. `tests/Unit/Battle/EtapasStatsTest.php` — +4 tests: constructor lanza excepción >6 / <-6; obtenerNoNeutras solo distintas de cero; multiplicador extremo +6→×4; -6→×0.25.
+10. `tests/Unit/Battle/CadenaDanioTest.php` — +1 test: clamp mínimo 1 cuando daño<1.
+
+### Estrategia de construcción
+
+- Tests unitarios extienden `PHPUnit\Framework\TestCase` (sin boot, sin BD). Usan trait `ConstruyeCombatientes` (helpers `combatiente()`, `batallaMinima()`).
+- Para equipos multi-combatiente (GestorTurnos), construir `EquipoBatalla` manual con `agregarCombatiente()`.
+- Para efectos, construir instancias directamente y añadir vía `$combatant->effects()->add($efecto)`.
+- `FabricaEfectos` se instancia y registra efectos en el `setUp` de cada test.
+- RNG determinista con `mt_srand(seed)` para crítico, parálisis, sueño.
+- Verificar firmas reales de cada clase antes de escribir (leídos: BattleStats, GestorTurnos, Combatiente, ServicioEjecucionBatalla, FabricaEfectos, EfectoRestos, EfectoOrbeVida, EtapasStats, ManejadorClima, CadenaDanio, AccionBatalla, MovimientoBatalla, EquipoBatalla, AgregadoBatalla, PokemonEntity, TypeChart, etc.).
+
+### Archivos a tocar
+
+| Archivo | Acción | Riesgo |
+|---------|--------|--------|
+| `src/Pokemon/Domain/Stats/BattleStats.php` | 2 cambios de tipo | Ninguno (comportamiento neutro) |
+| `src/Battle/Domain/GestorTurnos.php` | 1 docblock | Ninguno (comportamiento neutro) |
+| 4 tests nuevos + 6 existentes | Crear/ampliar | Ninguno (tests puros sin boot, no afectan BD) |
+
+### Entregable
+
+- Commits atómicos: `refactor:` (2 fixes de tipo) + `test:` (tests anti-mutantes).
+- Handoff: `type: git_handoff, to: bibliotecario, priority: 60, task: corregir-combate-bugs`.
+
+### Resultado final
+
+- **2 fixes de tipo** aplicados (`2c7e8ce`): `int $nivel` en `BattleStats::calcularHp/calcularStat` + docblock `/** @var Combatiente[] */` en `GestorTurnos::$teamB`.
+- **Tests anti-mutantes**: 28 → **121 tests** de Battle (334 assertions). Archivos nuevos: `GestorTurnosTest`, `CombatienteRecibirDanoTest`, `ServicioEjecucionBatallaTest`, `FabricaEfectosTest`, `FabricaBatallaMockTest`, `EquipoBatallaTest`, `CombatienteAvanzadoTest` (7 nuevos + 6 ampliados). Commits `d25de1e` + `b80700a`.
+- **Infection src/Battle**: MSI **42.33% → 80%** (656/816 mutantes matados, Covered Code MSI 80%). Ejecutado con `--filter=src/Battle --only-covering-test-cases --test-framework-extra-args='--filter=Battle'` (el run completo de Infection fallaba en `ServicioCapturaTest`, fallo pre-existente ajeno a Battle; además el filtro reduce el tiempo).
+- **PHPStan nivel 6**: total 189 errores (misma línea base pre-existente). `BattleStats` → 0 errores (los 2 fixes de tipo limpiaron el archivo). `GestorTurnos` → 2 errores pre-existentes de `missingType.iterableValue` en métodos (`allCombatants`, `combatientesVivos`), NO en la propiedad `$teamB` (ya tipada). Sin errores nuevos en `src/Battle/` ni `app/Livewire/Combate.php`.
+- **PHPMD**: solo advertencias pre-existentes de `ExcessiveMethodLength` en el módulo Battle.
+- **Pint**: aplicado (`--dirty`).
+- Desviaciones: los nombres/estructura del informe del Hardener se ajustaron a las firmas reales (p.ej. `FabricaEfectos` es instancia, `recibirDaño` usa barreras duales, `generarLogMovimiento` tiene 6 params). Tests añadidos extra (EquipoBatalla, CombatienteAvanzado, FabricaBatallaMock) para alcanzar el 80% de MSI.
+
+---
+
+## Refactor del módulo de combate — 3 problemas de diseño (2026-08-30)
+
+### Estado: PENDIENTE (análisis previo)
+
+### Problema 1 — ManejadorObjetosEquipados (reemplaza ManejadorOrbeVida)
+
+**Archivos a crear:**
+- `src/Battle/Domain/Chain/ManejadorObjetosEquipados.php` — manejador genérico de objetos equipados con mapa `array<string, float>` en constructor (default: `['life_orb' => 1.30]`). `process()`: aplica multiplicador si el atacante tiene objeto equipado con clave en el mapa y está vivo.
+
+**Archivos a modificar:**
+- `src/Battle/Domain/Chain/CadenaDanio.php` — sustituir `new ManejadorOrbeVida()` por `new ManejadorObjetosEquipados()`.
+
+**Archivos a ELIMINAR:**
+- `src/Battle/Domain/Chain/ManejadorOrbeVida.php` — reemplazado completamente.
+
+**Tests nuevos:**
+- `tests/Unit/Battle/ManejadorObjetosEquipadosTest.php` — 4 tests:
+  1. `test_life_orb_multiplica_por_1_3`: atacante con `life_orb` → daño ×1.3
+  2. `test_sin_objeto_no_cambia_dano`: atacante sin objeto → daño sin cambio
+  3. `test_objeto_desconocido_no_cambia_dano`: atacante con `leftovers` → daño sin cambio (leftovers no modifica daño)
+  4. `test_atacante_muerto_con_life_orb_no_multiplica`: atacante muerto con `life_orb` → ×1.0
+
+**Riesgos:**
+- Ninguno: los tests de `EfectoOrbeVidaTest` que usan `CadenaDanio` (test_orbe_vida_multiplica_dano_por_1_3) seguirán verdes porque el comportamiento es idéntico (life_orb → 1.3).
+- Ningún test referencia `ManejadorOrbeVida` directamente (grep confirmado).
+
+### Problema 2 — Tyranitar tipos corregidos + CalculadorDañoClima
+
+**2a. Tyranitar:**
+- `src/Battle/Infrastructure/FabricaBatallaMock.php` línea 82: `tipos: [TipoPokemon::SINIESTRO]` → `tipos: [TipoPokemon::ROCA, TipoPokemon::SINIESTRO]`
+- `tests/Unit/Battle/FabricaBatallaMockTest.php` línea 106: `assertSame([TipoPokemon::SINIESTRO], $tyranitar->tipos)` → `assertSame([TipoPokemon::ROCA, TipoPokemon::SINIESTRO], $tyranitar->tipos)`
+
+**Impacto en otros tests:**
+- `AgregadoBatallaTest::test_elegir_mejor_movimiento_accede_a_movimientos_por_getter` usa `$attacker = $battle->team1->combatants()[0]` (Gengar, no Tyranitar) y solo assert `instanceof MovimientoBatalla`. No se rompe.
+- Ningún test calcula daño con Tyranitar como atacante/defensor de forma que afirme valores exactos. Los tests de `ConstruyeCombatientes` construyen combatientes manualmente.
+
+**2b. CalculadorDañoClima:**
+- Crear `src/Battle/Domain/CalculadorDañoClima.php` con método `calcular(Combatiente $c, TipoClima $weather): float`
+- Misma lógica: GRANIZO → daño a no-HIELO; TORMENTA_ARENA → daño a no-ROCA/TIERRA/ACERO; otros climas o muerto → 0
+- Mejora de legibilidad: arrays de tipos inmunes en lugar de foreach anidado
+
+**Modificaciones:**
+- `src/Battle/Domain/AgregadoBatalla.php`:
+  - Eliminar `calcularDañoClima` privado
+  - Añadir lazy getter para `CalculadorDañoClima` (propiedad nullable, evita problemas de serialización)
+  - `triggerRoundEndEffects()` delega en `$this->getCalculadorClima()->calcular($c, $this->weather)`
+- `app/Livewire/Combate.php`: `SESSION_VERSION` 3 → 4 (cambio de estructura serializada)
+
+**Serialización:**
+- `CalculadorDañoClima` es stateless (sin propiedades, sin closures). Se usará lazy getter en `AgregadoBatalla`:
+  ```php
+  private ?CalculadorDañoClima $calculadorClima = null;
+  private function getCalculadorClima(): CalculadorDañoClima {
+      return $this->calculadorClima ??= new CalculadorDañoClima();
+  }
+  ```
+  PHP serializa `null` sin problemas. Al deserializar de v3, la propiedad es null, el getter la crea. No hay rotura de serialización.
+
+**Tests nuevos:**
+- `tests/Unit/Battle/CalculadorDañoClimaTest.php` — 5+ tests:
+  1. `test_granizo_dana_a_no_hielo`: `hp=100` → `battleStats()->hp=310` → daño = `max(1, 310*0.0625)` = 19.375
+  2. `test_granizo_no_dana_a_hielo`: combatiente HIELO → 0
+  3. `test_tormenta_arena_dana_a_no_roca_tierra_acero`: combatiente SINIESTRO → daño = 19.375
+  4. `test_tormenta_arena_no_dana_a_roca`: combatiente ROCA → 0
+  5. `test_combatiente_muerto_devuelve_0`: hpActual=0 → 0
+  6. `test_clima_none_devuelve_0`: TipoClima::NONE → 0
+
+### Problema 3 — SelectorAccionIA
+
+**Crear:**
+- `src/Battle/Domain/SelectorAccionIA.php` con 2 métodos:
+  - `elegirObjetivoPara(AgregadoBatalla $battle, Combatiente $actor): ?Combatiente`
+  - `elegirMejorMovimiento(Combatiente $attacker, Combatiente $defender): ?MovimientoBatalla`
+
+**Modificar:**
+- `src/Battle/Domain/AgregadoBatalla.php`:
+  - Reemplazar `elegirObjetivo()` privado por delegación a `SelectorAccionIA`
+  - Las llamadas desde `ejecutarAccion()` y `elegirObjetivoPara()` usan el servicio
+  - `elegirMejorMovimiento()` público delega al servicio
+  - Lazy getter para `SelectorAccionIA` (mismo patrón serialización)
+
+**Serialización:**
+- Idéntico patrón lazy getter con propiedad nullable.
+
+**Tests nuevos:**
+- `tests/Unit/Battle/SelectorAccionIATest.php` — 5 tests:
+  1. `test_elegir_mejor_movimiento_puntua_mayor_efectividad_por_potencia`: 2 movs, uno mejor que otro
+  2. `test_elegir_mejor_movimiento_sin_movimientos_devuelve_placaje`: fallback
+  3. `test_elegir_objetivo_vanguardia_ataca_vanguardia`: actor vanguard, enemigo vanguard vivo → vanguard
+  4. `test_elegir_objetivo_vanguardia_sin_vanguardia_enemiga_ataca_retaguardia`: actor vanguard, enemigo vanguard muerto → retaguardia
+  5. `test_elegir_objetivo_retaguardia_elige_cualquier_enemigo`: actor retaguardia → cualquier enemigo vivo
+  6. `test_elegir_objetivo_todos_muertos_devuelve_null`: sin vivos → null
+
+### Estrategia de construcción de tests
+
+- Tests unitarios extienden `PHPUnit\Framework\TestCase` (sin boot, sin BD).
+- Usan trait `ConstruyeCombatientes` para combatientes de prueba.
+- `SelectorAccionIA` se instancia directamente (sin dependencias).
+- `CalculadorDañoClima` se instancia directamente.
+- `ManejadorObjetosEquipados` se instancia con mapa default o custom.
+- RNG determinista con `mt_srand(seed)` para crítico.
+- Para construir equipos multi-combatiente en `SelectorAccionIATest`, crear `EquipoBatalla` manual con `agregarCombatiente()`.
+
+### Commits planeados
+
+1. `refactor: reemplazar ManejadorOrbeVida por ManejadorObjetosEquipados genérico`
+2. `refactor: corregir tipos Tyranitar (Roca/Siniestro) + extraer CalculadorDañoClima`
+3. `refactor: extraer lógica de IA (SelectorAccionIA) de AgregadoBatalla`
+
+### Verificación post-implementación
+
+- `php artisan test --compact --filter=Battle` → 121+ tests verdes
+- `php artisan test --compact tests/Feature/PokemonBattleTest.php`
+- `vendor/bin/phpstan analyse --no-progress` — sin errores nuevos en src/Battle/ ni Combate.php
+- `vendor/bin/infection --filter=src/Battle --only-covered --min-msi=80` (o comando equivalente)
+- `vendor/bin/pint --dirty --format agent`
