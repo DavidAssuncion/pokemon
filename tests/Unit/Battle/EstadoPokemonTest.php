@@ -80,4 +80,60 @@ class EstadoPokemonTest extends TestCase
 
         $this->assertTrue($result['canAct']);
     }
+
+    public function test_poison_causa_dano_por_ronda_12_5(): void
+    {
+        $combatiente = $this->combatiente(
+            stats: ['hp' => 160, 'atk' => 100, 'def' => 100],
+            tipos: [TipoPokemon::VENENO],
+            id: 'c1',
+            nombre: 'Envenenado',
+        );
+        $combatiente->setEstado(EstadoPokemon::POISON);
+
+        $maxHp = $combatiente->pokemon()->battleStats()->hp;
+        $daño = $combatiente->aplicarDañoStatus();
+
+        $this->assertSame(max(1.0, $maxHp * 0.125), $daño);
+        $this->assertSame($maxHp - $daño, $combatiente->hpActual());
+    }
+
+    public function test_bad_poison_dano_creciente_por_contador(): void
+    {
+        $combatiente = $this->combatiente(
+            stats: ['hp' => 160, 'atk' => 100, 'def' => 100],
+            tipos: [TipoPokemon::VENENO],
+            id: 'c1',
+            nombre: 'Gravemente Envenenado',
+        );
+        $combatiente->setEstado(EstadoPokemon::BAD_POISON);
+        $combatiente->setContadorVenenoGrave(1);
+
+        $maxHp = $combatiente->pokemon()->battleStats()->hp;
+
+        // Primera ronda: contador 1 → maxHp * 1/16
+        $primerDaño = $combatiente->aplicarDañoStatus();
+        $this->assertSame(max(1.0, $maxHp * 1 / 16), $primerDaño);
+
+        // Segunda ronda: contador ya incrementado → maxHp * 2/16
+        $segundoDaño = $combatiente->aplicarDañoStatus();
+        $this->assertSame(max(1.0, $maxHp * 2 / 16), $segundoDaño);
+        $this->assertSame(3, $combatiente->contadorVenenoGrave());
+    }
+
+    public function test_sin_estado_no_causa_dano(): void
+    {
+        $combatiente = $this->combatiente(
+            stats: ['hp' => 160, 'atk' => 100, 'def' => 100],
+            tipos: [TipoPokemon::NORMAL],
+            id: 'c1',
+            nombre: 'Sano',
+        );
+
+        $maxHp = $combatiente->hpActual();
+        $daño = $combatiente->aplicarDañoStatus();
+
+        $this->assertSame(0.0, $daño);
+        $this->assertSame($maxHp, $combatiente->hpActual());
+    }
 }

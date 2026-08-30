@@ -75,4 +75,31 @@ class EfectoRestosTest extends TestCase
 
         $this->assertSame($maxHp, $portador->hpActual());
     }
+
+    public function test_restos_no_curan_si_portador_muerto(): void
+    {
+        $portador = $this->combatiente(
+            stats: ['hp' => 160, 'atk' => 100, 'def' => 100],
+            tipos: [TipoPokemon::VENENO],
+            id: 'p1',
+            nombre: 'Portador',
+            item: 'leftovers',
+        );
+        $portador->effects()->add(new EfectoRestos('leftovers'));
+        $portador->setHpActual(0);
+
+        $enemigo = $this->combatiente(
+            stats: ['hp' => 100, 'atk' => 80, 'def' => 100],
+            tipos: [TipoPokemon::AGUA],
+            id: 'e1',
+            nombre: 'Enemigo',
+        );
+
+        $battle = $this->batallaMinima($portador, $enemigo);
+
+        $portador->effects()->triggerRoundEnd($portador, $battle);
+
+        $this->assertSame(0.0, $portador->hpActual());
+        $this->assertEmpty($battle->log());
+    }
 }

@@ -146,4 +146,38 @@ class CadenaDanioTest extends TestCase
         $this->assertSame(36.0, $dañoStab);  // 24 * 1.5
         $this->assertSame(24.0, $dañoNoStab);
     }
+
+    public function test_clamp_minimo_1_cuando_dano_seria_menor_que_1(): void
+    {
+        // Atacante muy débil (atk=1 → stat 7) vs defensor muy resistente (def=200 → stat 405)
+        // + efectividad 0.5 (NORMAL vs ROCA) + posición -50% (retaguardia) → daño < 1
+        $atacante = $this->combatiente(
+            stats: ['atk' => 1, 'def' => 100],
+            moves: [new MovimientoBatalla('Golpecito', 1, TipoPokemon::NORMAL, CategoriaMovimiento::FISICO)],
+            tipos: [TipoPokemon::VENENO], // sin STAB con NORMAL
+            id: 'a1',
+            nombre: 'Débil',
+        );
+        $defensor = $this->combatiente(
+            stats: ['hp' => 100, 'atk' => 80, 'def' => 200],
+            tipos: [TipoPokemon::ROCA],
+            id: 'd1',
+            nombre: 'Resistente',
+            posicion: Posicion::RETAGUARDIA,
+        );
+
+        $accion = new AccionBatalla(
+            attacker: $atacante,
+            defender: $defensor,
+            move: new MovimientoBatalla('Golpecito', 1, TipoPokemon::NORMAL, CategoriaMovimiento::FISICO),
+            fromPosition: Posicion::VANGUARDIA,
+            defenderTeamHasVanguard: true,
+            weather: TipoClima::NONE,
+        );
+
+        mt_srand(1); // sin crítico
+        $daño = $this->chain->calculate($accion);
+
+        $this->assertSame(1.0, $daño); // max(1, floor(<1)) = 1
+    }
 }

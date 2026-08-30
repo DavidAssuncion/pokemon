@@ -90,4 +90,61 @@ class EfectoOrbeVidaTest extends TestCase
         $this->assertNotEmpty($battle->log());
         $this->assertStringContainsString('Orbe Vida', implode(' ', $battle->log()));
     }
+
+    public function test_orbe_vida_no_activa_recoil_si_atacante_muerto(): void
+    {
+        $atacante = $this->combatiente(
+            stats: ['hp' => 100, 'atk' => 100, 'def' => 100],
+            tipos: [TipoPokemon::VENENO],
+            id: 'a1',
+            nombre: 'Atacante',
+            item: 'life_orb',
+        );
+        $atacante->effects()->add(new EfectoOrbeVida('life_orb'));
+        $atacante->setHpActual(0);
+
+        $defensor = $this->combatiente(
+            stats: ['hp' => 200, 'atk' => 80, 'def' => 100],
+            tipos: [TipoPokemon::AGUA],
+            id: 'd1',
+            nombre: 'Defensor',
+        );
+
+        $battle = $this->batallaMinima($atacante, $defensor);
+
+        $atacante->dispararDanioInfligido($defensor, 50.0, $battle);
+
+        $this->assertSame(0.0, $atacante->hpActual());
+        $this->assertEmpty($battle->log());
+    }
+
+    public function test_orbe_vida_no_activa_recoil_si_dano_cero(): void
+    {
+        $atacante = $this->combatiente(
+            stats: ['hp' => 100, 'atk' => 100, 'def' => 100],
+            tipos: [TipoPokemon::VENENO],
+            id: 'a1',
+            nombre: 'Atacante',
+            item: 'life_orb',
+        );
+        $atacante->effects()->add(new EfectoOrbeVida('life_orb'));
+
+        $defensor = $this->combatiente(
+            stats: ['hp' => 200, 'atk' => 80, 'def' => 100],
+            tipos: [TipoPokemon::AGUA],
+            id: 'd1',
+            nombre: 'Defensor',
+        );
+
+        $battle = $this->batallaMinima($atacante, $defensor);
+
+        $maxHp = $atacante->pokemon()->battleStats()->hp;
+        $hpInicial = $atacante->hpActual();
+
+        $atacante->dispararDanioInfligido($defensor, 0.0, $battle);
+
+        $this->assertSame($hpInicial, $atacante->hpActual());
+        $this->assertSame($maxHp, $atacante->hpActual());
+        $this->assertEmpty($battle->log());
+    }
 }
