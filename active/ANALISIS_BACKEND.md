@@ -203,7 +203,30 @@ Para efectos (Orbe Vida, Restos, Invocador Clima), se construyen las instancias 
 
 ## Refactor del módulo de combate — 3 problemas de diseño (2026-08-30)
 
-### Estado: PENDIENTE (análisis previo)
+### Estado: COMPLETADO (QA pendiente)
+
+### Resultado final
+
+- **Problema 1** (`f9f2b19`): `ManejadorOrbeVida` → `ManejadorObjetosEquipados` genérico con mapa `array<string, float>` (default `['life_orb' => 1.30]`). `CadenaDanio` usa el nuevo manejador en el mismo orden (último eslabón). `ManejadorOrbeVida.php` eliminado. `EfectoOrbeVida` NO se tocó (recoil sigue en Effects/).
+- **Problema 2** (`8ae08ed`): Tyranitar `[SINIESTRO]` → `[ROCA, SINIESTRO]` en `FabricaBatallaMock` (inmune a su propia tormenta arena). `CalculadorDañoClima` extraído de `AgregadoBatalla` con misma lógica y valores. `SESSION_VERSION` 3 → 4.
+- **Problema 3** (`105bed9`): `SelectorAccionIA` extraído de `AgregadoBatalla` (objetivo + mejor movimiento). API pública `elegirObjetivoPara`/`elegirMejorMovimiento` conservada para `Combate::prepareAiAnimation`.
+
+### Verificación
+
+- **Tests de Battle**: 121 → **140** (362 assertions) verdes. Nuevos: `ManejadorObjetosEquipadosTest` (5), `CalculadorDañoClimaTest` (8), `SelectorAccionIATest` (6).
+- **Feature**: `PokemonBattleTest` 2 verdes.
+- **PHPStan nivel 6**: total **189 errores** (idéntico a la línea base pre-existente; sin errores NUEVOS). Durante el desarrollo se detectó y corrigió un `method.notFound` de `elegirObjetivo` que quedó tras la extracción (corregido, sin llegar a commit roto).
+- **Infection src/Battle**: Covered Code MSI **80%** (exit 0 con `--min-covered-msi=80`). Mutantes escapados de `SelectorAccionIA` son equivalentes/neutros (rama retaguardia coincide con fallback; score inicial -1 no altera resultado con movimientos).
+- **PHPMD**: solo `ExcessiveMethodLength` pre-existentes (misma lógica que estaba en `AgregadoBatalla`).
+- **Pint**: aplicado.
+- **Serialización**: servicios como propiedades nullable + lazy getter (`??=`) — PHP serializa null sin problemas, no se rompe la sesión. Verificado con tinker (serialize/unserialize round-trip tras usar los getters).
+
+### Desviaciones / asserts actualizados
+
+- `FabricaBatallaMockTest::test_generate_team1_contiene_tyranitar`: assert de tipos actualizado a `[ROCA, SINIESTRO]`.
+- Ningún otro test dependía de los tipos de Tyranitar para efectividad/STAB (los tests de daño usan `ConstruyeCombatientes`, no el mock).
+
+---
 
 ### Problema 1 — ManejadorObjetosEquipados (reemplaza ManejadorOrbeVida)
 
