@@ -2,17 +2,40 @@
 
 ## Visión general
 
-Arquitectura híbrida: Laravel estándar (`app/`) + DDD/Hexagonal (`src/`). El código de dominio vive en `src/` sin dependencias del framework. La infraestructura (Livewire, Eloquent, HTTP) vive en `app/`.
+Arquitectura híbrida: Laravel estándar (`app/`) + módulos DDD en `src/`.
+
+**Convención canónica de módulos: `docs/ddd.md`** (adoptada 2026-08-30). El acoplamiento a Laravel
+está aceptado y ordenado por capas dentro de cada módulo `src/{{Modulo}}/`: `Domain/` **pura** (sin
+Eloquent, sin HTTP, sin facades, sin `Request`) y `App/` + `Infra/` **usando Laravel libremente**
+(Eloquent, FormRequests, controllers, rutas, jobs, container). Sustituye a la antigua regla "los
+módulos `src/` no dependen de Laravel": la infraestructura del módulo (controllers, modelos
+Eloquent, FormRequests, rutas, repos Eloquent, factories) vive en `src/{{Modulo}}/Infra/`. Los
+DTOs de presentación viven en `Domain/DataTransferObjects` — la capa `Presentation/`
+desaparece como destino y migra a DTOs en Domain.
+
+> **Estado actual vs destino**: los módulos existentes siguen con su estructura actual (algunos con
+> `Presentation/`, controllers en `app/Http/Controllers`, rutas en `routes/`, repos sin contrato
+> unificado). La migración es **gradual, por módulo, al tocarlo** (estrategia strangler); nada está
+> migrado todavía. Este documento describe tanto el destino (convención) como el estado actual
+> (secciones de módulos abajo).
 
 ```
 ┌─────────────────────────────────────────────┐
 │                  app/                        │
-│  Livewire · Controllers · Models · Providers │
-│  Datagrid · Support · Console (comandos)     │
+│  Infraestructura TRANSVERSAL compartida     │
+│  Datagrid · Support · Console · Providers   │
+│  base Controller — permanece en app/        │
 ├─────────────────────────────────────────────┤
 │                  src/                        │
+│  {{Modulo}}/  Domain · App · Infra  (destino)│
+│  Infra/ = Controllers · Models · Livewire    │
+│  Repos · Factories · Requests · routes.php  │
+│  (destino: NADA de esto vive en app/)       │
 │  Battle · Pokemon · Habitats · Equipos      │
 │  Reclutamiento · Crud · Shared              │
+├─────────────────────────────────────────────┤
+│  Estado actual: Controllers/Models/Livewire │
+│  aún en app/; migran por módulo (strangler)│
 └─────────────────────────────────────────────┘
 ```
 
@@ -20,17 +43,29 @@ Arquitectura híbrida: Laravel estándar (`app/`) + DDD/Hexagonal (`src/`). El c
 
 ### Battle (`src/Battle/`)
 
-Núcleo del sistema. Organizado en 5 subcarpetas:
+Núcleo del sistema. Organizado en 3 subcarpetas (tras el refactor Cleaner de 2026-08-30 se eliminaron `App/`, `BattleAggregate` y `BattleSrv`):
 
 | Carpeta | Propósito | Archivos clave |
 |---|---|---|
-| `Domain/` | Lógica de dominio pura | `AgregadoBatalla`, `Combatiente`, `EquipoBatalla`, `GestorTurnos`, `MovimientoBatalla`, `AccionBatalla`, `ServicioEjecucionBatalla`, `Posicion`, `DatosPokemonBatalla`, `BattleAggregate`, `BattleSrv` |
-| `Domain/Chain/` | Chain of Responsibility para daño | `CadenaDanio`, `ManejadorDanioBase`, `ManejadorEfectividadTipo`, `ManejadorSTAB`, `ManejadorCritico`, `ManejadorPosicion`, `ManejadorClima`, `ManejadorOrbeVida` |
-| `Domain/Effects/` | Strategy pattern para efectos | `InterfazEfecto`, `FabricaEfectos`, `EfectoPerforacionArmadura`, `EfectoRegeneracionDefensa`, `EfectoInvocadorClima`, `EfectoRestos`, `EfectoOrbeVida` |
+| `Domain/` | Lógica de dominio pura | `AgregadoBatalla`, `Combatiente`, `EquipoBatalla`, `GestorTurnos`, `ServicioEjecucionBatalla`, `MovimientoBatalla`, `AccionBatalla`, `DatosPokemonBatalla`, `Posicion`, `FabricaBatallaInterface` |
+| `Domain/Chain/` | Chain of Responsibility para daño | `CadenaDanio` (7 manejadores en orden: base, efectividad tipo, STAB, crítico, posición, clima, orbe vida) + `ManejadorDanio` (interface) + `ManejadorDanioAbstracto` |
+| `Domain/Effects/` | Strategy pattern para efectos | `InterfazEfecto`, `ComportamientosPorDefecto` (trait), `ColeccionEfectos`, `FabricaEfectos` (instancia inyectable), `EfectoPerforacionArmadura`, `EfectoRegeneracionDefensa`, `EfectoInvocadorClima` (parametrizado, sustituye a `EfectoInvocadorTormentaArena`), `EfectoRestos`, `EfectoOrbeVida` |
+| `Domain/Enums/` | Enums de dominio | `TipoClima` (7 valores con `label()` en español), `EstadoPokemon` (8 valores, `causaDanoPorRonda()`), `CategoriaMovimiento` |
 | `Domain/Observer/` | Observer pattern para eventos | `SujetoBatalla`, `ObservadorBatalla` |
-| `App/` | Casos de uso | `IniciarBatalla` |
-| `Infrastructure/` | Persistencia/servicios externos | `FabricaBatallaMock` |
-| `Presentation/` | DTOs para la vista | `DTOMovimientoBatalla` |
+| `Domain/ValueObjects/` | Value Objects | `EtapasStats` (clamp -6..+6), `ColeccionMovimientos` (sin dependencia de Illuminate) |
+| `Infrastructure/` | Persistencia/servicios externos | `FabricaBatallaMock` (6 pokémon mock, recibe `FabricaEfectos` inyectable) |
+| `Presentation/` | DTOs para la vista (Livewire Wireable) | `DTOMovimientoBatalla`, `DTOAccionBatalla` (con `move: DTOMovimientoBatalla` tipado), `DTOResultadoDanio`. `DTOEquipoBatalla` NO se usa (deuda: eliminar) |
+
+Documentación exhaustiva del módulo (clases, mecánicas, contrato de vista, flujos, deuda): `src/Battle/context.md`.
+
+#### Deuda de arquitectura Battle (Arquitecto APROBADO, 2026-08-30)
+
+- Ciclo de dependencia Pokemon↔Battle: `MovimientoBatalla` debería moverse a `src/Pokemon/Domain/Movement/` (y `PokemonEntity` importa `MovimientoBatalla`/`ColeccionMovimientos` de Battle).
+- `AgregadoBatalla` importa `DTOAccionBatalla` de Presentation (inversión Domain→Presentation).
+- `DTOEquipoBatalla` muerto (eliminar).
+- 26 strings mágicos de stats sin enum tipado.
+- `max(1, floor(...))` en `CadenaDanio::calculate()` anula inmunidad de tipos.
+- God-classes: `Combate.php` (653 líneas), `Combatiente` (606), `AgregadoBatalla` (327).
 
 ### Pokemon (`src/Pokemon/`)
 
@@ -201,11 +236,11 @@ Reglas del contrato (ver `tests/Feature/DatagridTest.php`):
 | **Chain of Responsibility** | Cálculo de daño | `src/Battle/Domain/Chain/` |
 | **Observer** | Eventos de batalla (daño, debilitamiento, fin turno) | `src/Battle/Domain/Observer/` |
 | **Strategy** | Efectos de habilidad y objetos | `src/Battle/Domain/Effects/` |
-| **Aggregate** | Entidades raíz de batalla y equipos | `AgregadoBatalla`, `TeamAggregate`, `BattleAggregate` |
-| **DTO** | Transferencia dominio → vista | `DTOMovimientoBatalla` |
-| **Service (Domain)** | Lógica de dominio orquestada | `ServicioEjecucionBatalla`, `ReclutamientoSrv`, `TeamSrv`, `BattleSrv` |
+| **Aggregate** | Entidades raíz de batalla y equipos | `AgregadoBatalla`, `TeamAggregate` |
+| **DTO** | Transferencia dominio → vista | `DTOMovimientoBatalla`, `DTOAccionBatalla`, `DTOResultadoDanio` — estado actual: viven en `Presentation/`; la convención destino los ubica en `Domain/DataTransferObjects` (ver `docs/ddd.md`) |
+| **Service (Domain)** | Lógica de dominio orquestada | `ServicioEjecucionBatalla`, `ReclutamientoSrv`, `TeamSrv` |
 | **Repository** | Acceso a datos de hábitats | `HabitatRepository` |
-| **Factory** | Creación de efectos y datos mock | `FabricaEfectos`, `FabricaBatallaMock` |
+| **Factory** | Creación de efectos y datos mock | `FabricaEfectos` (instancia inyectable), `FabricaBatallaMock` |
 | **Registry** | Registro explícito de modelos expuestos | `DatagridRegistry` |
 | **Whitelist declarativa** | Campos consultables por modelo (anti inyección) | `DatagridDefinition` |
 | **Composition Root** | Registro de definiciones del datagrid | `DatagridServiceProvider` |
@@ -215,31 +250,37 @@ Reglas del contrato (ver `tests/Feature/DatagridTest.php`):
 ## Flujo de datos — Batalla manual (Livewire)
 
 ```
-Usuario click → Combate (Livewire)
-  → nextActor() → turnManager.getNextActor()
-    → Si es jugador: muestra movimientos, espera selección
-      → previewTarget() → previewMove() → selectMove()
-        → commitAction()
-          → ServicioEjecucionBatalla.calcularYAplicarDaño()
-            → CadenaDanio.calculate() (7 manejadores)
-          → aplicarEstado() / aplicarStatChanges()
-          → observer.notifyDamaged() / notifyFainted()
-          → turnManager.consumeAction()
-          → nextActor()
-    → Si es IA: prepara animación → Alpine.js timeout 700ms → commitAction()
+Usuario click → Combate (Livewire) → mount() → FabricaBatallaMock::createBattle()
+  → triggerBattleStartEffects() → syncViewData() → saveBattle() → nextActor()
+
+nextActor() → getBattle() → turnManager.getNextActor()
+  → Si es jugador: phase='player_target', espera selección
+      → previewTarget(team, idx) → calcula daño preview → phase='player_move'
+      → selectMove(index) → setPendingAction(DTOAccionBatalla) → setAnimState()
+        → Alpine.js timeout 700ms → commitAction()
+  → Si es IA: prepareAiAnimation() → setPendingAction() → setAnimState()
+    → Alpine.js timeout 700ms → commitAction()
+
+commitAction() → pendingAction.toDomain() → AccionBatalla
+  → ServicioEjecucionBatalla.calcularYAplicarDaño()
+    → CadenaDanio.calculate() (7 manejadores) → Combatiente.recibirDaño()
+  → aplicarEstado() / aplicarStatChanges()
+  → observer.notifyDamaged() / notifyFainted()
+  → turnManager.consumeAction()
+  → syncViewData() → saveBattle() → nextActor()
 ```
 
 ## Flujo de datos — Batalla automática
 
 ```
-BattleAggregate.ejecutarBatalla()
-  → loop rondas → turnManager.startNewRound()
+AgregadoBatalla.ejecutarBatalla()
+  → loop rondas → turnManager.startNewRound() (acumula velocidad)
     → loop turnos → elegirObjetivo() → elegirMejorMovimiento()
       → ServicioEjecucionBatalla.calcularYAplicarDaño()
       → aplicarEstado() / aplicarStatChanges()
-      → observer.notifyDamaged()
+      → observer.notifyDamaged() / notifyFainted()
       → turnManager.consumeAction()
-    → triggerRoundEndEffects() (daño estado, daño clima)
+    → triggerRoundEndEffects() (efectos de fin de ronda + daño por estado + daño por clima)
 ```
 
 ## Flujo de datos — Pokédex asíncrona
@@ -260,18 +301,33 @@ Blade → Alpine pokedexApp()
   → iconos: img :src=icon (webp) → @error onIconError → png → ocultar (solo aquí hay red)
 ```
 
-## Capas de `app/`
+## Infraestructura transversal compartida (permanece en `app/`)
+
+Infraestructura Laravel **transversal** que no pertenece a ningún módulo y permanece en `app/`:
 
 | Capa | Archivos | Responsabilidad |
 |---|---|---|
 | **Datagrid** | `Datagrid/{DatagridService,DatagridRegistry,DatagridDefinition,RelationFilter}.php` | Consulta JSON de solo lectura con whitelist por modelo |
-| **Livewire** | `Combate.php` | Componente interactivo de batalla. Los hábitats migraron de Livewire a Alpine + fetch API (modal "Gestión", ver sección Habitats) |
-| **Controllers** | 9 controladores + base `Controller` | HTTP: Hábitats, Reclutados, Teams, Player (pokédex/reclutamiento/equipos), Datagrid, Exploraciones, Iconos, Dashboard |
-| **Models** | 17 modelos | Eloquent ORM (tablas del sistema) |
 | **Providers** | 4 providers | Registro de servicios: App, BattleEffect, Datagrid |
 | **Support** | `WebpConverterInterface.php`, `WebpConverter.php` | Conversión PNG→WebP (GD/Imagick/CLI cwebp) |
 | **Console** | `Commands/OptimizeIconsToWebp.php` | `iconos:optimize-webp` (`--dir`, `--out`, idempotente) |
 | **Enums** | 2 enums | `TipoEnum` (tipos pokémon), `StatEnum` |
+| **base Controller** | `Http/Controllers/Controller.php` | Base de controladores HTTP; los controladores del módulo lo extienden |
+
+### Pendiente de migrar al módulo (estado actual)
+
+En el **destino** (ver `docs/ddd.md`), Controllers, Models Eloquent y Livewire viven en
+`src/{{Modulo}}/Infra/` (`Controllers/`, `Models/`, `Livewire/`). Hoy están en `app/` y migran
+**por módulo** al tocarlos (estrategia strangler); todavía nada migrado.
+
+| Componente | Estado actual | Destino |
+|---|---|---|
+| **Controllers** | 10 controladores en `app/Http/Controllers` (hasta migrar cada módulo) | `src/{{Modulo}}/Infra/Controllers/` |
+| **Livewire** | `Combate.php` en `app/Livewire` (módulo Battle, hasta migrar) | `src/Battle/Infra/Livewire/` |
+| **Models** | 14 modelos en `app/Models` (hasta migrar cada módulo) | `src/{{Modulo}}/Infra/Models/` |
+
+> Nota: los hábitats migraron de Livewire a Alpine + fetch API (modal "Gestión", ver sección
+> Habitats); no quedan componentes Livewire fuera de `Combate.php`.
 
 ## Base de datos
 
