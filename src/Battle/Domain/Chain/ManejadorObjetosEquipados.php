@@ -14,7 +14,7 @@ use Src\Battle\Domain\AccionBatalla;
 class ManejadorObjetosEquipados extends ManejadorDanioAbstracto
 {
     /** @var array<string, float> */
-    private array $multiplicadores;
+    private readonly array $multiplicadores;
 
     /**
      * @param  array<string, float>  $multiplicadores
