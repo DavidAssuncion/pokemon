@@ -13,7 +13,7 @@ class CombateLivewireTest extends TestCase
     public function test_combate_mounts_without_constructor_error(): void
     {
         Livewire::test(Combate::class)
-            ->assertSee('CAMPO DE COMBATE');
+            ->assertSee('Campo de Combate');
     }
 
     public function test_combate_shows_battle_log_on_mount(): void

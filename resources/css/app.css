@@ -1,6 +1,23 @@
+@import "bootstrap/dist/css/bootstrap.min.css";
 @import "tailwindcss";
 
 @custom-variant dark (&:where(.dark, .dark *));
+
+/* ─── Combate (Bootstrap) — estilos que Bootstrap no cubre ─── */
+
+/* Bordes para pokémon seleccionado/targeted */
+.border-primary { border: 2px solid #0d6efd !important; }
+.cursor-pointer { cursor: pointer; }
+.cursor-not-allowed { cursor: not-allowed; }
+
+/* HP bars colores según % */
+.bg-hp-low { background-color: #dc3545; }
+.bg-hp-mid { background-color: #ffc107; }
+.bg-hp-high { background-color: #198754; }
+
+/* Badges de stage */
+.stage-up { background-color: #d1e7dd; color: #0f5132; }
+.stage-down { background-color: #f8d7da; color: #842029; }
 
 /* Weather banner — colores por clima (ver Src\Battle\Domain\Enums\TipoClima) */
 .weather-sequia { background: #78350f; color: #fcd34d; border-color: #92400e; }

@@ -1,5 +1,5 @@
 <div class="battle-field">
-    <h3 class="section-title">CAMPO DE COMBATE</h3>
+    <h3 class="h5 mb-3">Campo de Combate</h3>
 
     @if($weather && $weather !== 'none')
         @php
@@ -13,40 +13,39 @@
                 'turbulencias' => '💨',
                 default => '🌤',
             };
+            $climaVariant = in_array($weather, ['sequia', 'tormenta_arena'], true) ? 'alert-warning' : 'alert-info';
         @endphp
-        <div class="weather-banner weather-{{ $weather }} mb-2 rounded-lg border px-3 py-1.5 text-center text-sm font-semibold">
-            <span class="weather-label">{{ $climaIcono }} {{ $clima?->label() ?? $weather }}</span>
+        <div class="alert {{ $climaVariant }} weather-{{ $weather }} py-1 px-3 mb-2" role="status">
+            <span class="weather-label fw-semibold">{{ $climaIcono }} {{ $clima?->label() ?? $weather }}</span>
             @if($weather === 'tormenta_arena')
-                <span class="weather-power">(+500 potencia a movimientos Roca)</span>
+                <span class="weather-power d-block small">(+500 potencia a movimientos Roca)</span>
             @endif
         </div>
     @endif
 
     @if($phase === 'animating' && $animAttackerNombre && $animDefenderNombre)
-        <div class="anim-banner">
-            <span class="anim-attacker">{{ $animAttackerNombre }}</span>
+        <div class="alert alert-info py-1 px-3 mb-2 d-flex align-items-center gap-2 flex-wrap" role="status">
+            <span class="anim-attacker fw-bold">{{ $animAttackerNombre }}</span>
             <span class="anim-arrow">→</span>
-            <span class="anim-move">{{ $animMoveNombre }}</span>
+            <span class="anim-move fst-italic">{{ $animMoveNombre !== '' ? $animMoveNombre : 'ataca' }}</span>
             <span class="anim-arrow">→</span>
-            <span class="anim-defender">{{ $animDefenderNombre }}</span>
+            <span class="anim-defender fw-bold">{{ $animDefenderNombre }}</span>
         </div>
     @endif
 
-    <div class="field-grid">
+    <div class="row g-3">
         {{-- TEAM 1 (PLAYER) --}}
-        <div class="team-column">
-            <div class="team-header">Tú</div>
-            <div class="position-row">
-                <div class="position-column">
-                    <div class="position-label">RETAGUARDIA</div>
+        <div class="col-md-6 team-column">
+            <div class="card h-100">
+                <div class="card-header bg-body-tertiary fw-semibold">Tú</div>
+                <div class="card-body">
+                    <div class="position-label text-uppercase small text-muted fw-semibold mb-1">Retaguardia</div>
                     @foreach($team1 as $idx => $p)
                         @if($p['posicion'] === 'retaguardia')
                             @include('livewire._pokemon-card', ['p' => $p, 'idx' => $idx, 'team' => 0])
                         @endif
                     @endforeach
-                </div>
-                <div class="position-column">
-                    <div class="position-label">VANGUARDIA</div>
+                    <div class="position-label text-uppercase small text-muted fw-semibold mt-3 mb-1">Vanguardia</div>
                     @foreach($team1 as $idx => $p)
                         @if($p['posicion'] === 'vanguardia')
                             @include('livewire._pokemon-card', ['p' => $p, 'idx' => $idx, 'team' => 0])
@@ -56,24 +55,20 @@
             </div>
         </div>
 
-        <div class="vs-divider">VS</div>
-
         {{-- TEAM 2 (ENEMY) --}}
-        <div class="team-column">
-            <div class="team-header">Rival</div>
-            <div class="position-row">
-                <div class="position-column">
-                    <div class="position-label">VANGUARDIA</div>
+        <div class="col-md-6 team-column">
+            <div class="card h-100">
+                <div class="card-header bg-body-tertiary fw-semibold">Rival</div>
+                <div class="card-body">
+                    <div class="position-label text-uppercase small text-muted fw-semibold mb-1">Retaguardia</div>
                     @foreach($team2 as $idx => $p)
-                        @if($p['posicion'] === 'vanguardia')
+                        @if($p['posicion'] === 'retaguardia')
                             @include('livewire._pokemon-card', ['p' => $p, 'idx' => $idx, 'team' => 1])
                         @endif
                     @endforeach
-                </div>
-                <div class="position-column">
-                    <div class="position-label">RETAGUARDIA</div>
+                    <div class="position-label text-uppercase small text-muted fw-semibold mt-3 mb-1">Vanguardia</div>
                     @foreach($team2 as $idx => $p)
-                        @if($p['posicion'] === 'retaguardia')
+                        @if($p['posicion'] === 'vanguardia')
                             @include('livewire._pokemon-card', ['p' => $p, 'idx' => $idx, 'team' => 1])
                         @endif
                     @endforeach

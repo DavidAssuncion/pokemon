@@ -548,3 +548,337 @@ filtrada se pida al servidor. `resetAndFetch()` no re-entra en `init()` → sin 
 - `npm run build` regenera el bundle Vite (quita `alpinejs` de node_modules del bundle; incluye el ESM de Livewire).
 - `php artisan view:cache` compila las vistas (directivas `@livewireStyles`/`@livewireScriptConfig`).
 - Chequear en consola del navegador: sin warning "Detected multiple instances of Alpine/Livewire" y `$wire` definido en `x-init` del combate.
+
+---
+
+# Análisis Frontend — Rediseño "Resultados por revisar" (2 columnas + caramelos compactos)
+
+## Fecha
+2026-08-30
+
+## Contexto
+Rediseño del bloque "Resultados por revisar" de `resources/views/exploraciones/index.blade.php`
+(§ "Terminadas", líneas ~188-369). NO toco backend (controlador/transformador) ni
+`ExploracionesPageTest`/`ExploracionesTest`. Único test de vista en alcance:
+`tests/Feature/ExploracionesViewTest.php`.
+
+## Vistas/componentes a tocar
+1. `resources/views/exploraciones/index.blade.php` — § "Terminadas" (única).
+   - Eliminar bloque "Avistados" del cuerpo.
+   - Mover EXP al header como badge `+N EXP`.
+   - Unificar caramelos (familia/EV/tipo) al formato compacto "caramelo de tipo".
+   - Layout 2 columnas (Capturados 1/3 + Recompensas 2/3).
+   - Casos sin capturados / sin recompensas.
+2. `tests/Feature/ExploracionesViewTest.php` — actualizar el test principal + defensivo.
+
+## DTOs/contrato consumido (resultado de terminada)
+```
+'resultado' => [
+   'avistados' => [['pokemon_id'=>int,'nombre'=>string]],      // SE IGNORA (nunca renderizar)
+   'capturados' => [['pokemon_id'=>int,'nombre'=>string,'cantidad'=>int]],
+   'caramelos_familia' => [['pokemon_id'=>?int,'nombre'=>?string,'cantidad'=>int]],
+   'caramelos_ev' => [['stat'=>int,'stat_slug'=>?string,'stat_nombre'=>?string,'cantidad'=>int]],
+   'caramelos_tipo' => [['slug'=>string,'tipo'=>string,'cantidad'=>int]],  // cuidado: existe? ver abajo
+   'exp' => int,
+]
+```
+- Nota: el contrato documentado en `docs/architecture.md` menciona `caramelos_familia[].pokemon_id`
+  y `caramelos_ev[].stat_slug`. El test actual usa `caramelos_familia[].evolution_chain_id` y
+  `caramelos_ev[].stat`+`stat_nombre`. La vista debe ser defensiva a ambos.
+- Reviso el transformador para confirmar `caramelos_tipo` shape (slug/tipo) y `caramelos_familia`
+  (`nombre`, `pokemon_id`). (Solo lectura; no lo toco.)
+
+## Estados UI a cubrir
+- Con capturados + recompensas completas (layout 2 col).
+- Sin capturados → solo Recompensas (ocupa lg:col-span-3).
+- Sin recompensas → solo Capturados.
+- Sin ambos → "Sin resultados" (`resultado` vacío/[]).
+- Caramelo familia sin `pokemon_id`/`nombre` → `$candyFallback` en img + sin nombre.
+- Caramelo EV sin `slug`/`stat_nombre` → fallback de slug a `$candyFallback` + `statName(stat)` para nombre.
+- `avistados` presente → se ignora (NUNCA renderizar), sin error.
+- EXP `0` → `+0 EXP`.
+
+## Tests (TDD: primero rojo)
+Actualizar `tests/Feature/ExploracionesViewTest.php`:
+1. `test_exploraciones_view_renders_active_and_finished_explorations`:
+   - Quitar asserts de 'Avistados', 'Caramelos de familia', 'Caramelos EV'.
+   - `assertDontSee('Avistados')`.
+   - Verificar 'Rattata', 'Ataque', `×12`, `×8`, valor tipo, '+250 EXP' (header), 'Capturados', `×3`.
+2. `test_exploraciones_view_is_defensive_with_partial_contract`:
+   - Mantener '+0 EXP', 'Sin resultados'. Verificar que `avistados` no rompe.
+   - Mantener fallback `statName(2)` (bitácora), 'Evento registrado'.
+3. Añadir caso: caramelo familia sin `pokemon_id`/`nombre` → no pinta nombre (placeholder);
+   caramelo EV sin `stat_nombre` → `statName`.
+4. Añadir caso: terminada con capturados vacíos y recompensas presentes → Recompensas legible;
+   terminada con solo recompensas vacías.
+5. Badge compacto de familia/EV: imagen + badge `×N` + nombre debajo.
+
+## Riesgos accesibilidad/UX
+- Badges `aria-label` descriptivo en EXP.
+- Imágenes con `alt`/`title` descriptivos + `loading="lazy" decoding="async"`.
+- `onerror` → `$candyFallback` (placeholder `candy_pokemon/0.webp` + `onerror=null` evita loop).
+- `text-center`, `truncate w-12` para nombres largos.
+- Sin etiquetas de sección en "Recompensas" (familia/EV/tipo), separación con `<hr>` entre grupos no vacíos.
+
+## Verificación
+- `php artisan test --compact tests/Feature/ExploracionesViewTest.php`
+- `php artisan test --compact --filter=Exploraciones`
+- `vendor/bin/pint --dirty --format agent`
+- `vendor/bin/phpstan analyse` (solo mis archivos)
+- `php artisan view:cache`
+- NO `npm run build` (no toco assets/JS).
+
+---
+
+## Iteración 2026-08-30 — Evolución de Exploraciones a "expediciones con riesgo" (UI)
+
+### Contexto
+
+El BACKEND implementa en paralelo (mismo contrato definido en el brief): `GET /exploraciones/preview`,
+nuevos tipos de evento en la bitácora activa, y resultado terminado aditivo. `docs/spec_evolucion_exploraciones.md`
+NO existe aún → construyo contra el contrato del brief. NO toco controladores (`ExploracionActivaController`),
+rutas, enums ni lógica backend. Verificado: `routes/exploraciones.php` NO tiene `/preview` todavía → dependencia
+documentada; la vista es defensiva si el endpoint devuelve 404 (estado de error visible sin romper el modal).
+
+### Vistas a tocar
+
+1. `resources/views/habitats/show.blade.php` — Modal de exploración: panel de PREVIEW de expedición
+   (fetch `/exploraciones/preview` al abrir el modal con equipo+nivel), botón "Enviar expedición"
+   habilitado SOLO tras cargar preview; confirmación reforzada si riesgo "Extremo".
+2. `resources/views/exploraciones/index.blade.php` — Bitácora activa con los NUEVOS tipos de evento
+   (huida/emboscada/contratiempo/retirada/grupo/hallazgo) y resultados terminados con badge de
+   categoría + incidentes + línea de tiempo. Extraigo el render de cada evento a un partial
+   `_evento.blade.php` (crecimiento del `@if/@elseif`).
+3. `resources/views/reclutados/index.blade.php` — Select de behavior: quitar SOPORTE, añadir RASTREADOR.
+4. `resources/views/equipos/index.blade.php` — SOLO revisar (sin cambios): el behavior está hardcodeado
+   `'VANGUARDIA'` por defecto en el JS (se MANTIENE, instrucción del brief).
+
+### Contrato asumido (JSON fetch / shape de toActiva·toTerminada)
+
+```
+GET /exploraciones/preview?team_id=&habitat_id=&level=
+→ { peligro_estrellas: int(1..5), afinidad: string,
+    advertencias: string[], roles: string[],
+    riesgo: "Bajo"|"Medio"|"Alto"|"Extremo",
+    recompensa_esperada: "Baja"|"Media"|"Alta" }
+```
+
+Bitácora activa (eventos con `tipo`, `timestamp` ISO):
+- `huida` { pokemon_id, resolucion: "sin_combate" } → "Un {nombre} salvaje huye antes de que comience el combate."
+- `emboscada` { pokemon_id|pokemon_ids[], duration_loss?, resolucion? } → "¡Emboscada!" + subtítulo según
+  resolucion ("El equipo repele el ataque (-10 min)" / "El equipo escapa perdiendo tiempo") + mini-iconos si pokemon_ids.
+- `contratiempo` { subtype: desorientacion|terreno|clima|bloqueo, duration_loss? } → texto por subtype + "-X min".
+- `retirada` { reason } → "El equipo se retira: {reason}".
+- `grupo` { pokemon_ids[] } → mini-iconos de cada miembro.
+- `hallazgo` { subtype: caramelo_familia|caramelo_ev|caramelo_tipo, pokemon_id|stat|tipo/slug, cantidad } →
+  mismo render de caramelos existente.
+
+Resultado terminado (aditivo, campos ausentes → defaults):
+- `resultado` ∈ exito_excepcional|exito|exito_parcial|fracaso|retirada
+- `duration_real` (min), `tiempo_perdido` (min) → "X min efectivos · Y min perdidos" (efectivos = duration_real − tiempo_perdido)
+- `incidentes` { encuentros, victorias, huidas, emboscadas, contratiempos }
+
+### Estados UI cubiertos
+
+- Preview modal: loading (spinner/skeleton), error (mensaje + sin botón de envío), success (panel completo),
+  riesgo Extremo (confirm nativo antes de enviar), preview sin advertencias (feedback verde "bien preparado").
+- Bitácora: cada tipo nuevo renderiza; tipos legacy intactos; evento desconocido → "Evento registrado".
+- Resultados: con/sin badge (legacy), con/sin incidentes, con/sin duración (efectivos = max(0, real−perdido)).
+- Roles: select con RASTREADOR y sin SOPORTE.
+
+### Riesgos accesibilidad/UX
+
+- `x-html` para estrellas solo con string generado por el propio método (sin input del usuario).
+- Botones con `aria-label`, imágenes con `alt`/`title` + `loading="lazy"` + `onerror` (ocultar/fallback).
+- Confirm de riesgo Extremo es `window.confirm` nativo (accesible, no inventa UI nueva).
+- Botón deshabilitado con `:disabled` + clases `disabled:` (cursor-not-allowed) → estado visible.
+- El preview se re-fetcha en cada apertura del modal (datos frescos si cambia equipo/nivel).
+- Defensivo ante contrato incompleto: si `preview` no llega (backend en paralelo), el botón queda
+  deshabilitado y se muestra el error; la exploración legacy (sin preview) nunca rompe la vista.
+
+### Tests (Dusk NO instalado → view render tests con `$this->view()`, patrón de ExploracionesViewTest)
+
+- `tests/Feature/ExploracionesViewTest.php` +3:
+  1. `test_exploraciones_view_renders_risk_bitacora_event_types` — huida/emboscada/contratiempo/retirada/grupo/hallazgo.
+  2. `test_exploraciones_view_renders_result_category_incidents_and_timeline` — badge + incidentes + línea de tiempo.
+  3. `test_exploraciones_view_defensive_without_risk_fields` — datos legacy sin nuevos campos → sin badge/incidentes/timeline.
+- `tests/Feature/HabitatsViewTest.php` (NUEVO) — render de `habitats.show` con el modal: verifica marcadores
+  del preview (`/exploraciones/preview`, `previewLoading`, `Enviar expedición`) y que el botón legacy "Explorar" ya no existe.
+
+### Verificación
+
+- `php artisan test --compact --filter=ExploracionesViewTest`
+- `php artisan test --compact --filter=HabitatsViewTest`
+- `php artisan view:cache`
+- `npm run build` (NO toco assets CSS/JS → no necesario; solo vistas Blade)
+
+---
+
+# Análisis Frontend — Reconstrucción del combate con Bootstrap 5 + Livewire (2026-08-30)
+
+## Contexto
+
+El usuario está frustrado con la UI del combate actual (Tailwind sin estilos, fondo oscuro con texto negro, imágenes apiladas, sin indicación de dónde pulsar). Quiere reconstruir el frontend del combate con Bootstrap 5 + Livewire, manteniendo el backend intacto.
+
+## Archivos a modificar
+
+### Instalación/configuración
+1. `package.json` — añadir `bootstrap` y `@popperjs/core` como dependencias
+2. `resources/js/app.js` — importar Bootstrap JS
+3. `resources/css/app.css` — importar Bootstrap CSS + CSS adicional de combate
+
+### Vistas a reconstruir (6 archivos)
+1. `resources/views/livewire/combate.blade.php` — contenedor principal (Bootstrap grid)
+2. `resources/views/livewire/partials/turn-bar.blade.php` — barra de turnos (badges)
+3. `resources/views/livewire/partials/battle-field.blade.php` — campo de combate (2 columnas)
+4. `resources/views/livewire/partials/moves-panel.blade.php` — panel de movimientos (botones Bootstrap)
+5. `resources/views/livewire/partials/battle-log.blade.php` — registro de batalla (list-group)
+6. `resources/views/livewire/_pokemon-card.blade.php` — tarjeta de pokémon (card Bootstrap)
+
+### Tests
+7. `tests/Feature/CombateLivewireTest.php` — ACTUALIZAR assertions de texto para reflejar nuevos textos Bootstrap (assertSee 'CAMPO DE COMBATE' → 'Campo de Combate')
+
+## DTOs/contrato consumido (NO modificar)
+
+### `$team1`/`$team2` (de `aArrayVista()`):
+```php
+[
+    'refId' => string,          // ej: 'player_1'
+    'nombre' => string,         // ej: 'Gengar'
+    'icon' => string,           // ej: '/images/iconos_webp/94.webp'
+    'hp' => float, 'maxHp' => float,
+    'defHp' => float, 'maxDefHp' => float,
+    'spDefHp' => float, 'maxSpDefHp' => float,
+    'posicion' => 'vanguardia'|'retaguardia',
+    'alive' => bool,
+    'speed' => float,
+    'accumulatedSpeed' => float,
+    'status' => string,          // 'none'|'burn'|'poison'|'bad_poison'|'paralysis'|'sleep'|'freeze'|'confusion'
+    'statusTurns' => int,
+    'stages' => array<string, int>,  // ['attack' => 0, 'defense' => 0, ...]
+    'team' => 0|1,
+    'item' => string,           // '' o 'leftovers'|'life_orb'|'focus_sash'
+    'canTarget' => bool         // SOLO en team2 durante player_target (añadido por syncViewData)
+]
+```
+
+### `$currentMoves` (de `previewTarget()`):
+```php
+[
+    'nombre' => string,          // ej: 'Bola Sombra'
+    'tipo' => string,            // valor de TipoPokemon como string: '1', '2', ... '18'
+    'potencia' => int,           // 0 para movimientos de estado
+    'categoria' => string,       // 'fisico'|'especial'|'estado'
+    'daño' => float,             // daño calculado (0 para estado)
+    'efectividad' => float,      // 2.0|1.0|0.5|0.0
+    'stab' => bool,
+    'directo' => bool,           // si el atacante tiene perforación de armadura
+    'statusEffect' => string,    // 'none'|'burn'|'poison'|'bad_poison'|'paralysis'|'sleep'|'freeze'|'confusion'
+    'selfStatChanges' => array,  // [{stat: string, stages: int}]
+    'targetStatChanges' => array,// [{stat: string, stages: int}]
+]
+```
+
+### `$turnQueue`:
+```php
+[{team: 0|1, index: int}, ...]  // ordenado por velocidad acumulada descendente
+```
+
+### Otras variables:
+- `$phase` — 'init'|'player_target'|'player_move'|'animating'|'battle_over'
+- `$round` — int
+- `$log` — array de strings
+- `$weather` — string ('none'|'sequia'|'diluvio'|'niebla'|'granizo'|'tormenta_arena'|'turbulencias')
+- `$actingRefId` — string (refId del actor actual)
+- `$animAttackerId`, `$animDefenderId` — string
+- `$animAttackerNombre`, `$animDefenderNombre` — string
+- `$animMoveNombre` — string (NUNCA se setea en el backend; siempre vacío)
+- `$animTick` — int
+- `$selectedTargetRefId` — string
+
+## Observación importante: `$animMoveNombre` siempre vacío
+
+El backend (`Combate::setAnimState()`) nunca asigna `$this->animMoveNombre`; solo lo resetea en `resetAnimState()`. Por tanto, `$animMoveNombre` siempre es `''`. En el banner de animación, mostraremos "Atacante → ataca → Defensor" (reemplazando el movimiento con un texto genérico ya que no llega del backend).
+
+## Estados UI a cubrir
+
+### `combate.blade.php`:
+- Carga inicial (phase='init' — aunque el backend pasa directo a player_target tras mount)
+- Ronda normal (Bootstrap grid 2 columnas + turn bar + log)
+- Animación (phase='animating' — banner info + spinner)
+- Batalla terminada (phase='battle_over' — alert success)
+
+### `turn-bar.blade.php`:
+- Normal: badges de próximos turnos, primero destacado
+- Vacío: "Esperando..."
+- Sincronización: `$actingRefId` para destacar actor actual
+
+### `battle-field.blade.php`:
+- Normal: 2 columnas jugador/rival, pokémon en tarjetas
+- Clima activo: banner alert-info/alert-warning
+- Animación: banner "Atacante → ataca → Defensor"
+- Selección de objetivo (player_target): tarjetas rivales clickeables con border-primary
+- Pokémon debilitado: opacity-50, text-muted
+- Pokémon seleccionado: border-primary
+
+### `_pokemon-card.blade.php`:
+- Normal: icono, nombre, HP bar, barreras, stats
+- Debilitado (!alive): opacity-50, text-muted
+- Con estado (status !== 'none'): badge emoji + tooltip
+- Con stages: badges pequeños (+1, -2, etc.)
+- Con item: badge emoji
+- Targeteable: cursor-pointer, wire:click, border-primary al seleccionar
+- Bloqueado (!canTarget): opacity-50, cursor-not-allowed
+
+### `moves-panel.blade.php`:
+- player_move: botones de movimientos con preview de daño, tipo, efectividad
+- player_target: "Selecciona un objetivo" + nota de retaguardia
+- animating: spinner + "Ejecutando turno..."
+- battle_over: alert "¡Batalla terminada!"
+- Siempre: badge de ronda
+
+### `battle-log.blade.php`:
+- Normal: últimos 10 entradas en list-group
+- Vacío: "Sin eventos en el registro"
+
+## Riesgos y consideraciones
+
+### Bootstrap global vs Tailwind en el resto del sitio
+- Importar Bootstrap en `app.css` globalmente afecta a todas las páginas (no solo combate).
+- `@import "bootstrap/dist/css/bootstrap.min.css"` va ANTES de `@import "tailwindcss"` → Tailwind preflight sobreescribe Bootstrap reboot.
+- Bootstrap clases de componentes (`.card`, `.btn`, `.badge`, `.progress`, `.list-group`) funcionan por especificidad de clase, no se ven afectadas por Tailwind preflight.
+- Utilidades Bootstrap con `!important` (`.d-flex`, `.text-center`) ganan a Tailwind sin `!important`.
+- **Riesgo menor**: el resto del sitio (pokedex, habitats, exploraciones) puede verse afectado ligeramente por Bootstrap Reboot (tipografía base, márgenes de headings). Como Tailwind preflight viene después, anula la mayoría.
+- **Mitigación**: si el Arquitecto reporta problemas, se puede mover Bootstrap a un archivo scoped `resources/css/combate.css` y solo cargarlo en `combate_page.blade.php`.
+
+### Tests de Combate
+- `tests/Feature/CombateLivewireTest.php` usa `assertSee('CAMPO DE COMBATE')` — el texto estaba en mayúsculas. Con Bootstrap pongo título legible "Campo de Combate". Actualizo el assert.
+- `assertSee('¡Comienza la batalla!')` — se mantiene (es del log, no cambia).
+- `assertCount('team1', 3)` y `assertCount('team2', 3)` — lógica, no toca.
+
+### `animMoveNombre` nunca se setea
+- Debido a que el backend no setea `$this->animMoveNombre`, en el banner de animación uso texto genérico "ataca" en lugar del nombre del movimiento.
+
+## Tests a modificar
+
+1. `tests/Feature/CombateLivewireTest.php` — actualizar `assertSee('CAMPO DE COMBATE')` a 'Campo de Combate'.
+
+## Tests de Battle (150) — NO deben romperse
+Los tests de Battle (`php artisan test --filter=Battle`) prueban la lógica de dominio, no las vistas. No deben verse afectados.
+
+## Plan de implementación
+
+1. **Análisis previo** (este documento) ✅
+2. **Instalar Bootstrap**: `npm install bootstrap @popperjs/core`
+3. **Configurar Vite**: `resources/js/app.js` + `resources/css/app.css`
+4. **Reconstruir vistas** (6 archivos):
+   - `_pokemon-card.blade.php` primero (es el partial más usado)
+   - `turn-bar.blade.php`
+   - `battle-field.blade.php`
+   - `moves-panel.blade.php`
+   - `battle-log.blade.php`
+   - `combate.blade.php` (contenedor, incluye los 4 partials)
+5. **Actualizar test** `CombateLivewireTest.php`
+6. **Build**: `npm run build`
+7. **Verificar tests**: `php artisan test --filter=Battle` y `--filter=CombateLivewire`
+8. **Commit** atómico
