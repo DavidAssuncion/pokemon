@@ -458,3 +458,93 @@ los demás enlaces (href directo + clases condicionales por ruta activa).
 - `resources/css/app.css` se compila con Vite → **obligatorio** ejecutar
   `npm run build` o `npm run dev` para que las clases `weather-*` estén disponibles.
 - `public/css/app.css` (legacy, NO se carga en el layout) no requiere build.
+
+---
+
+# Análisis Frontend — Robustez Pokédex (bootstrap guard) + Hábitat show (1/5–4/5, título overlay, volver visual)
+
+## Fecha
+2026-08-30
+
+## Contexto
+El BACKEND cambia en paralelo el seed de la Pokédex para que venga YA filtrado por
+`filter[visto]=1` y con `per_page=120`. Mi código debe seguir funcionando durante la
+transición (seed filtrado O sin filtrar). En paralelo, el cliente pide ajustes visuales en
+el detalle de hábitat. NO toco controladores ni rutas; solo las 2 vistas.
+
+## Tarea 1 — `resources/views/pokedex/index.blade.php`
+
+### Cambio
+En `init()`, tras seedear (`this.items = seed.filter(p => p && p.visto)` — guard defensivo
+intacto), añado un **bootstrap guard**: si la pestaña activa es `'vistos'` y
+`this.items.length === 0` pero hay avistamientos (`(this.counts?.vistos ?? 0) > 0` o
+`initial?.meta?.total > 0`), llamo UNA vez `this.resetAndFetch()` para forzar que la página 1
+filtrada se pida al servidor. `resetAndFetch()` no re-entra en `init()` → sin bucles.
+`buildParams` y `per_page: '120'` intactos (no tocar; R4 ya cubierto).
+
+### Estados cubiertos
+- Seed sin filtrar + usuario con avistamientos → guard manda fetch de página 1 filtrada.
+- Seed filtrado (nuevo contrato) → `items` ya poblados → guard no actúa.
+- Usuario sin avistamientos → `counts.vistos === 0` y `total === 0` → guard no actúa
+  (empty state correcto, sin fetch innecesario).
+
+## Tarea 2 — `resources/views/habitats/show.blade.php`
+
+### Cambios
+1. **R5 proporción**: `grid lg:grid-cols-4` → `lg:grid-cols-5`; columna izquierda conserva
+   `lg:col-span-1`, derecha `lg:col-span-3` → `lg:col-span-4` (1/5 vs 4/5). Apilado móvil intacto.
+2. **R6 título en imagen**: moví el `<h1>` DENTRO de la card de la imagen como overlay
+   inferior absoluto (`absolute bottom-0 inset-x-0`, gradiente `bg-gradient-to-t from-black/70 to-transparent`,
+   texto blanco `truncate`, `title`). La card pasa a `relative` y `min-h-[6rem]`.
+   Caso límite imagen ausente: `@if(!empty($habitat['image']))` → si no hay image se renderiza
+   un placeholder (`w-48 h-32`, emoji 🏔️); si la imagen existe pero falla al cargar, el
+   `onerror="this.style.display='none'"` la oculta pero la card conserva `min-h-[6rem]` +
+   padding → el título overlay (y el fondo) siguen legibles.
+3. **R7 volver visual**: el enlace plano `<a>` se sustituye por una TARJETA visual con el
+   lenguaje del archivo (`$cardPanelClass`), icono de flecha en slot `w-8 shrink-0`, texto
+   "Volver a hábitats", hover con sombra + borde azul y dark-mode, `aria-label` + `title`.
+
+### NO tocados
+- Panel de botones de construcción, modal "Admin - Gestión", modal de exploración, lógica
+  Alpine `habitatShow()`, nombres/claves de datos. Solo cambió CSS/estructura de la columna izquierda.
+
+### Observaciones UX / edge cases (overlay)
+- El overlay usa `text-sm font-bold` en lugar del `text-2xl` original por caber en la card de
+  imagen `w-fit` (no ancha); es legible y `truncate` + `title` cubren nombres largos.
+- Si un `$habitat['image']` es un 404, el navegador dispara `onerror` y oculta el `<img>`;
+  `min-h-[6rem]` + `p-3` garantizan que el overlay no quede en una card colapsada. El resto de
+  la card (fondo blanco/gris) queda visible bajo el gradiente.
+- Accesibilidad: la card sigue siendo un `<a href="/habitats">` real con `aria-label`/`title`;
+  el `h1` del nombre se conserva (semántica de título de página dentro de la región de imagen).
+- El placeholder 🏔️ es un emoji (patrón del proyecto en headers); si el Arquitecto prefiere un
+  SVG genérico, es un cambio de 1 línea.
+
+## Verificación
+- `php artisan view:cache` (compila todas las vistas).
+- `php artisan test --compact --filter=PokedexViewTest` (no romper).
+- `php artisan test --compact --filter=HabitatsControllerTest` (no romper; `assertSee('Bosque')`).
+- `git diff` para confirmar que solo cambiaron las 2 vistas (+ este análisis).
+- NO `npm run build` (no toco assets ni manifest).
+
+---
+
+## Fix: `$wire is not defined` en Combate (Livewire 4 + Vite + Alpine)
+
+### Causa raíz (confirmada)
+1. `resources/js/bootstrap.js` importaba `alpinejs` de node_modules e iniciaba `Alpine.start()`.
+2. En `/combate` (full-page Livewire), Livewire auto-inyectaba `livewire.js` (clásico) con SU Alpine bundled → **dos instancias de Alpine**.
+3. La instancia de Alpine del bundle Vite (sin magic `$wire`) procesaba el DOM y `x-init` de `combate.blade.php` (`$wire.$watch(...)`, `$wire.get(...)`) → `ReferenceError: $wire is not defined`.
+
+### Solución aplicada — Opción A (manual bundling oficial Livewire 4)
+- `resources/js/bootstrap.js`: se elimina `import Alpine from 'alpinejs'` y `Alpine.start()`. Ahora importa `{ Livewire, Alpine }` desde `../../vendor/livewire/livewire/dist/livewire.esm`, expone `window.Alpine` / `window.Livewire` y llama `Livewire.start()` (arranca Livewire + su Alpine bundled → **una sola instancia**, registra `$wire`).
+- `resources/views/layouts/app.blade.php`: `@livewireStyles` en `<head>` (tras `@vite`) y `@livewireScriptConfig` antes de `</body>` (tras `@stack('scripts')`). La directiva `@livewireScriptConfig` setea `window.livewireScriptConfig` y marca `hasRenderedScripts=true`, lo que **suprime la auto-inyección** del `livewire.js` clásico (evita doble Livewire) y evita el auto-start del ESM en DOMContentLoaded (por eso `Livewire.start()` manual es necesario).
+
+### Por qué no se rompen las otras vistas
+- Los componentes Alpine inline (`pokedexApp()`, `equiposApp()`, `habitatShow()`, etc.) son funciones globales en `@push('scripts')`; Alpine (el de Livewire, `window.Alpine`) las resuelve igual.
+- `Livewire.start()` llama `Alpine.start()` incondicionalmente → Alpine disponible también en páginas SIN componente Livewire (Pokédex, Hábitats, etc.).
+- Dark mode del layout y dropdowns `x-data` siguen funcionando con la instancia única.
+
+### Verificación
+- `npm run build` regenera el bundle Vite (quita `alpinejs` de node_modules del bundle; incluye el ESM de Livewire).
+- `php artisan view:cache` compila las vistas (directivas `@livewireStyles`/`@livewireScriptConfig`).
+- Chequear en consola del navegador: sin warning "Detected multiple instances of Alpine/Livewire" y `$wire` definido en `x-init` del combate.
