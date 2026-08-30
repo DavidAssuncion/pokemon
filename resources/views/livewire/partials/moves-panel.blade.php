@@ -1,5 +1,8 @@
 <div class="moves-panel">
-    <h3 class="h5 mb-3">Ataques</h3>
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h3 class="h5 mb-0">Ataques</h3>
+        <span class="badge bg-primary round-info">Ronda {{ $round }}</span>
+    </div>
 
     @php
         $statLabels = ['attack' => 'Ataque', 'defense' => 'Defensa', 'spAtk' => 'At.Esp', 'spDef' => 'Def.Esp', 'speed' => 'Vel', 'accuracy' => 'Precisión', 'evasion' => 'Evasión'];
@@ -40,8 +43,9 @@
         // Calcular máximo daño entre todos los movimientos
         $maxDmg = 0;
         foreach ($currentMoves as $m) {
-            if ((float) $m['daño'] > $maxDmg) {
-                $maxDmg = (float) $m['daño'];
+            $dmg = (float) ($m['daño'] ?? 0);
+            if ($dmg > $maxDmg) {
+                $maxDmg = $dmg;
             }
         }
     @endphp
@@ -159,8 +163,4 @@
             <span>Ejecutando turno...</span>
         </div>
     @endif
-
-    <div class="mt-3">
-        <span class="badge bg-primary round-info">Ronda {{ $round }}</span>
-    </div>
 </div>

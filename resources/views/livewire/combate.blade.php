@@ -17,20 +17,15 @@
 
     {{-- MAIN: CAMPO + ATAQUES --}}
     <div class="row g-3">
-        <div class="col-lg-8">
+        <div class="col-lg-8 d-flex flex-column gap-3">
             {{-- LEFT: CAMPO DE COMBATE --}}
             @include('livewire.partials.battle-field')
+            {{-- BATTLE LOG (debajo del campo, misma columna) --}}
+            @include('livewire.partials.battle-log')
         </div>
         <div class="col-lg-4">
             {{-- RIGHT: ATAQUES --}}
             @include('livewire.partials.moves-panel')
-        </div>
-    </div>
-
-    {{-- BATTLE LOG (50% del ancho, debajo del combate) --}}
-    <div class="row g-3 mt-0">
-        <div class="col-lg-6">
-            @include('livewire.partials.battle-log')
         </div>
     </div>
 </div>

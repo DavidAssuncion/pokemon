@@ -1,3 +1,109 @@
+# Análisis Frontend — 4 cambios UI del combate: ronda arriba, log azul, imágenes inline a 60px, log en columna izquierda (2026-08-30)
+
+## Contexto
+
+El usuario reporta 4 cambios en `/combate` (Laravel 12, Livewire 4, Bootstrap 5 vía
+`resources/css/combate.css` cargado solo en combate + Tailwind 4 global via `app.css`):
+
+1. **Ronda arriba**: badge de ronda en moves-panel pasa del final al inicio (junto al título "Ataques").
+2. **Registro azul**: card-header del battle-log cambia de `bg-body-tertiary` a `bg-primary text-white`.
+3. **Imágenes inline a 60px**: las imágenes de pokémon en el log van integradas EN el texto (no antes), con la imagen del atacante justo después del prefijo y la del defensor al final del daño. Tamaño 60×60px.
+4. **Log columna izquierda**: battle-log se mueve DENTRO de la columna `col-lg-8` (campo), debajo de battle-field, apiladas con `d-flex flex-column gap-3`.
+
+## Vistas/componentes a tocar
+
+| Archivo | Cambio |
+|---------|--------|
+| `resources/views/livewire/partials/moves-panel.blade.php` | Mover badge ronda al header (T1) |
+| `resources/views/livewire/partials/battle-log.blade.php` | Card-header azul (T2); imágenes inline 60px (T3); quitar `mt-3` (T4) |
+| `resources/views/livewire/combate.blade.php` | Log dentro de col-lg-8, quitar fila separada (T4) |
+| `active/ANALISIS_FRONTEND.md` | Esta sección |
+
+## DTOs/contratos consumidos
+
+Ninguno nuevo. `$round`, `$log`, `$team1`, `$team2`, `$phase` ya se pasan a los partials.
+
+## Tarea 1 — Ronda arriba de los ataques
+
+### Archivo
+`resources/views/livewire/partials/moves-panel.blade.php`
+
+### Cambio
+- Reemplazar `<h3 class="h5 mb-3">Ataques</h3>` (línea 2) por un `d-flex justify-content-between align-items-center mb-3` con `h3` + badge.
+- Eliminar el bloque `<div class="mt-3"><span class="badge bg-primary round-info">Ronda {{ $round }}</span></div>` del final (líneas 164-166).
+
+### Estados UI
+- Ronda visible en la cabecera; badge azul consistente con el resto de la UI.
+
+## Tarea 2 — Registro de batalla en azul
+
+### Archivo
+`resources/views/livewire/partials/battle-log.blade.php`
+
+### Cambio
+- `class="card-header bg-body-tertiary fw-semibold"` → `class="card-header bg-primary text-white fw-semibold"`.
+
+### Estados UI
+- Header azul con texto blanco, consistente con el badge de ronda.
+
+## Tarea 3 — Imágenes de pokémon inline a 60px
+
+### Archivo
+`resources/views/livewire/partials/battle-log.blade.php`
+
+### Implementación
+- Se mantiene el mapa `$iconsPorNombre` (nombre → icon) recorriendo `$team1 + $team2`.
+- Se ordena por longitud descendente (`uksort` con `strlen`) para evitar que un nombre subcadena (ej. "Gengar" dentro de "Mega Gengar") se reemplace antes.
+- Para cada entrada del log:
+  1. `$entryConImagenes = e($entry)` — escapa el texto plano (XSS defensivo).
+  2. Para cada nombre pokémon, `str_replace` de `e($nombre)` → `"<img src='{icon}' alt='{nombre}' style='width:60px;height:60px;object-fit:contain;vertical-align:middle' class='mx-1' loading='lazy'> {nombre}"`.
+  3. Se renderiza con `{!! $entryConImagenes !!}`.
+- El `li` usa `d-flex align-items-center gap-1 flex-wrap` para que la imagen de 60px quede centrada verticalmente con el texto y no se vea rota.
+- La imagen del atacante queda justo después del prefijo "RIVAL:" (o al inicio del texto si es el jugador) porque el nombre del atacante aparece inmediatamente después del prefijo.
+- La imagen del defensor queda al final (después del daño) porque el nombre del defensor suele aparecer al final del mensaje.
+
+### Formato de log real (verificado en `Combate.php` + `ServicioEjecucionBatalla.php`)
+- `"RIVAL: {actor} usa {movimiento} → {daño} de daño a {objetivo}"` (AI) o sin prefijo (jugador).
+- `"{objetivo} sufre {label}!"` (estado, sin prefijo).
+- `"¡{objetivo} se ha debilitado!"`, `"¡{actor} se ha debilitado!"`.
+- `"[{c->nombre()}] sufre {daño} de daño por {label}"` (daño por estado/clima, con corchetes del dominio).
+- `"--- Ronda X ---"`, `"¡Comienza la batalla!"`, `"¡{winner} gana la batalla!"`.
+
+### Estados UI
+- Log con 0, 1 o 2 pokémon mencionados → imágenes inline.
+- Log sin pokémon mencionados (separadores, inicio, fin) → texto normal sin imágenes.
+- Dark mode: `--bs-list-group-*` del combate.css cubren el fondo oscuro; el texto escapado y las imágenes se ven correctamente.
+
+## Tarea 4 — Battle-log en la misma columna que battle-field
+
+### Archivo
+`resources/views/livewire/combate.blade.php`
+
+### Cambio
+- La fila del log (`<div class="row g-3 mt-0">...</div>`) se elimina.
+- La columna `col-lg-8` pasa a `d-flex flex-column gap-3` e incluye `@include('livewire.partials.battle-log')` debajo de `battle-field`.
+- El `mt-3` del battle-log se elimina (ya no es una fila independiente; el espaciado lo provee `gap-3`).
+
+### Estados UI
+- Desktop: log apilado debajo del campo en la columna izquierda (8/12).
+- Móvil: apilado al 100% (Bootstrap grid).
+
+## Tests
+
+- `php artisan test --compact --filter=Combate` → 8 tests (CombateLivewireTest + otros).
+  - `test_combate_mounts_without_constructor_error` → `assertSee('Campo de Combate')` (no cambia).
+  - `test_combate_shows_battle_log_on_mount` → `assertSee('¡Comienza la batalla!')` (el log sigue mostrando el texto, ahora con imágenes inline).
+  - `test_combate_creates_battle_on_mount` → asserts de battleId, team1, team2, round (no cambian).
+- `php artisan test --compact --filter=Battle` → 150 tests (lógica de dominio; las vistas no intervienen).
+- `php artisan view:cache` → compila las vistas.
+
+## Verificación
+
+- `npm run build` NO es necesario (no toco CSS ni JS; solo vistas Blade).
+- `git diff` para confirmar que solo cambiaron los 3 archivos de vista + este análisis.
+
+---
+
 # Análisis Frontend — Pokédex asíncrona (datagrid server-side) + lazy loading de iconos
 
 ## Contexto
