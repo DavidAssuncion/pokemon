@@ -154,4 +154,56 @@ class MigrationStatusTest extends TestCase
         $columns = collect(Schema::getColumns('reclutados'))->keyBy('name');
         $this->assertContains($columns['exp']['type'], ['jsonb', 'text'], 'reclutados.exp debe ser jsonb (text en SQLite)');
     }
+
+    public function test_habitats_tiene_peligro_con_default_uno(): void
+    {
+        $columns = collect(Schema::getColumns('habitats'))->keyBy('name');
+        $this->assertArrayHasKey('peligro', $columns);
+        // pgsql devuelve `'1'::smallint`; sqlite `1`. Se verifica el literal numérico.
+        $this->assertMatchesRegularExpression('/\b1\b/', (string) $columns['peligro']['default'], 'habitats.peligro debe tener default 1');
+    }
+
+    public function test_exploraciones_activas_eventos_es_jsonb_en_postgres(): void
+    {
+        $columns = collect(Schema::getColumns('exploraciones_activas'))->keyBy('name');
+        $this->assertContains($columns['eventos']['type'], ['jsonb', 'text', 'json'], 'eventos debe ser jsonb (json/text en SQLite)');
+    }
+
+    public function test_behavior_acepta_rastreador_y_rechaza_soporte(): void
+    {
+        $user = \App\Models\User::factory()->create();
+        $team = \App\Models\Team::create(['name' => 'Equipo Behavior', 'user_id' => $user->id]);
+        $pokemon = \App\Models\Pokemon::create([
+            'id' => 9999,
+            'name' => 'behavior-test',
+            'species_id' => 9999,
+            'capture_rate' => 45,
+            'base_experience' => 64,
+            'height' => 7,
+            'weight' => 69,
+        ]);
+        $reclutado = \App\Models\Reclutado::create([
+            'user_id' => $user->id,
+            'pokemon_id' => $pokemon->id,
+            'nombre' => 'Behavior',
+            'exp' => ['total' => 0],
+        ]);
+
+        // RASTREADOR (nuevo rol) es válido tras la migración.
+        \App\Models\TeamMember::create([
+            'team_id' => $team->id,
+            'pokemon_id' => $reclutado->id,
+            'slot' => 1,
+            'behavior' => 'RASTREADOR',
+        ]);
+
+        // SOPORTE ya no es un valor válido del enum (check constraint / sqlite).
+        $this->expectException(\Illuminate\Database\QueryException::class);
+        \App\Models\TeamMember::create([
+            'team_id' => $team->id,
+            'pokemon_id' => $reclutado->id,
+            'slot' => 2,
+            'behavior' => 'SOPORTE',
+        ]);
+    }
 }

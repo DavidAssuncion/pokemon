@@ -24,18 +24,27 @@ final class TransformadorResultadoExploracion
      * @param  array<int, Collection<int, Pokemon>>|null  $miembrosPorCadena  Mapa de TODOS los
      *                                              miembros de cada familia, keyed por
      *                                              evolution_chain_id (columna).
+     * @param  array{encuentros: int, victorias: int, huidas: int, emboscadas: int, contratiempos: int}  $incidentes
      * @return array{
      *     capturados: list<array{pokemon_id: int, nombre: string, cantidad: int}>,
      *     caramelos_familia: list<array{evolution_chain_id: int, nombre: string|null, pokemon_id: int|null, cantidad: int}>,
      *     caramelos_ev: list<array{stat: int, cantidad: int}>,
      *     caramelos_tipo: list<array{tipo: string, slug: string, cantidad: int}>,
      *     exp: int,
+     *     resultado: string,
+     *     duration_real: int,
+     *     tiempo_perdido: int,
+     *     incidentes: array{encuentros: int, victorias: int, huidas: int, emboscadas: int, contratiempos: int},
      * }
      */
     public function desde(
         ResultadoRecompensas $recompensas,
         Collection $pokemons,
         ?array $miembrosPorCadena = null,
+        string $categoria = 'exito',
+        int $durationReal = 0,
+        int $tiempoPerdido = 0,
+        array $incidentes = ['encuentros' => 0, 'victorias' => 0, 'huidas' => 0, 'emboscadas' => 0, 'contratiempos' => 0],
     ): array {
         return [
             'capturados' => $this->capturados($recompensas->capturas, $pokemons),
@@ -43,6 +52,10 @@ final class TransformadorResultadoExploracion
             'caramelos_ev' => $this->caramelosEv($recompensas->caramelosEv),
             'caramelos_tipo' => $this->caramelosTipo($recompensas->caramelosTipo),
             'exp' => $recompensas->expTotal,
+            'resultado' => $categoria,
+            'duration_real' => $durationReal,
+            'tiempo_perdido' => $tiempoPerdido,
+            'incidentes' => $incidentes,
         ];
     }
 

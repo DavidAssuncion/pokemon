@@ -32,6 +32,31 @@ enum TipoPokemon: int
         return TypeChart::getEffectiveness($this, $defensor);
     }
 
+    /** Nombre en español del tipo (para mensajes de dominio, p. ej. preview). */
+    public function label(): string
+    {
+        return match ($this) {
+            self::NORMAL => 'Normal',
+            self::LUCHA => 'Lucha',
+            self::VOLADOR => 'Volador',
+            self::VENENO => 'Veneno',
+            self::TIERRA => 'Tierra',
+            self::ROCA => 'Roca',
+            self::BICHO => 'Bicho',
+            self::FANTASMA => 'Fantasma',
+            self::ACERO => 'Acero',
+            self::FUEGO => 'Fuego',
+            self::AGUA => 'Agua',
+            self::PLANTA => 'Planta',
+            self::ELECTRICO => 'Eléctrico',
+            self::PSIQUICO => 'Psíquico',
+            self::HIELO => 'Hielo',
+            self::DRAGON => 'Dragón',
+            self::SINIESTRO => 'Siniestro',
+            self::HADA => 'Hada',
+        };
+    }
+
     public function effectiveness(PokemonEntity $pokemon): float
     {
         $multiplicador = 1.0;

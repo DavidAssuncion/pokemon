@@ -227,7 +227,7 @@ class EquiposControllerTest extends TestCase
             'team_id' => $team2->id,
             'reclutado_id' => $reclutado->id,
             'slot' => 2,
-            'behavior' => 'SOPORTE',
+            'behavior' => 'RASTREADOR',
         ]);
 
         $response->assertStatus(422)->assertJson(['error' => 'Pokémon ya está en un equipo']);

@@ -251,6 +251,16 @@ class ExploracionesPageTest extends TestCase
             'caramelos_ev' => [],
             'caramelos_tipo' => [],
             'exp' => 0,
+            'resultado' => 'exito',
+            'duration_real' => 0,
+            'tiempo_perdido' => 0,
+            'incidentes' => [
+                'encuentros' => 0,
+                'victorias' => 0,
+                'huidas' => 0,
+                'emboscadas' => 0,
+                'contratiempos' => 0,
+            ],
         ], $terminadas[0]['resultado']);
     }
 

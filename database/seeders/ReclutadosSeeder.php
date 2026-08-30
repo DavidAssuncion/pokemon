@@ -96,7 +96,7 @@ class ReclutadosSeeder extends Seeder
             $this->insertTeamMemberIfExists($reclutadosMap, 'Eevee', $team2Id, 1, 'COMBATIENTE');
             // Zigzagoon may be stored as Zigzagoon-Galar or similar; try Zigzagoon key
             $this->insertTeamMemberIfExists($reclutadosMap, 'Zigzagoon', $team2Id, 2, 'RECOLECTOR');
-            $this->insertTeamMemberIfExists($reclutadosMap, 'Starly', $team2Id, 3, 'SOPORTE');
+            $this->insertTeamMemberIfExists($reclutadosMap, 'Starly', $team2Id, 3, 'RASTREADOR');
         });
     }
 

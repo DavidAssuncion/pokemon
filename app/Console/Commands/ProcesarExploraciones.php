@@ -31,7 +31,11 @@ class ProcesarExploraciones extends Command
         // pero se explicita para no depender del estado de auth).
         $exploraciones = ExploracionActiva::withoutUserScope()
             ->whereNull('regreso')
-            ->with('team.members', 'habitat')
+            ->with([
+                'team.members.reclutado.pokemon.stats',
+                'team.members.reclutado.pokemon.types',
+                'habitat',
+            ])
             ->get();
 
         foreach ($exploraciones as $exploracion) {

@@ -700,3 +700,168 @@ el `IconoController` busca en `resources/iconos/` (no existe) y el contrato del 
 - `vendor/bin/phpstan analyse` (0 errores NUEVOS sobre línea base)
 - `vendor/bin/infection --filter=ProbabilidadCaptura` (si viable; MSI ≥ 80% no puede bajar)
 - `vendor/bin/phpmd src/ text phpmd.xml`
+
+---
+
+# Análisis Backend — Evolución de Exploraciones a Expediciones (iteración 1)
+
+## Fecha
+2026-08-30
+
+## Contexto
+El PO aprobó la SPEC en `docs/spec_evolucion_exploraciones.md` (iteración 1 de "expediciones con
+riesgo"). Este backend implementa con TDD: migraciones, Domain puro (CalculadorPeligro,
+CalculadorCapacidadEquipo, SinergiaEquipo, EvaluadorExploracion, SimuladorEncuentros rework,
+CalculadorRecompensas D3), App (ticks D2, finalización con evaluador, EXP 100/80/20),
+controller (preview + Collection) y tests.
+
+## Archivos a tocar
+
+| Archivo | Acción |
+|---------|--------|
+| `docs/spec_evolucion_exploraciones.md` | NUEVO (spec aprobada, fuente para Frontend) |
+| `database/migrations/2026_08_30_000001_add_peligro_to_habitats_table.php` | NUEVO — `habitats.peligro` unsignedSmallInteger nullable default 1 |
+| `database/migrations/2026_08_30_000002_update_behavior_enum_in_team_members_table.php` | NUEVO — enum behavior: quitar SOPORTE, añadir RASTREADOR; UPDATE SOPORTE→RASTREADOR (driver-conditional) |
+| `database/migrations/2026_08_30_000003_change_eventos_to_jsonb_in_exploraciones_activas_table.php` | NUEVO — eventos json→jsonb (pgsql); no-op en sqlite |
+| `app/Models/ExploracionActiva.php` | cast `eventos` array→collection |
+| `app/Models/Habitat.php` | fillable+cast `peligro` |
+| `app/Models/TeamMember.php` | (sin cambio funcional; behavior ya es string) |
+| `database/seeders/ReclutadosSeeder.php` | SOPORTE → RASTREADOR |
+| `database/seeders/HabitatSeeder.php` | peligro orientativo 1–5 por id de hábitat |
+| `src/Exploraciones/Domain/RolExploracion.php` | NUEVO — enum roles + modificadores |
+| `src/Exploraciones/Domain/CalculadorPeligro.php` | NUEVO — RF-01 |
+| `src/Exploraciones/Domain/CalculadorCapacidadEquipo.php` | NUEVO — RF-02/RF-03 |
+| `src/Exploraciones/Domain/SinergiaEquipo.php` | NUEVO — RF-13 tabla config-driven |
+| `src/Exploraciones/Domain/EvaluadorExploracion.php` | NUEVO — RF-06/RF-08 resolución + categoría |
+| `src/Exploraciones/Domain/CalculadorRiesgo.php` | NUEVO — RF-11 preview (riesgo/advertencias) |
+| `src/Exploraciones/Domain/SimuladorEncuentros.php` | MODIFICADO — RF-04 nuevas probabilidades/subtipos |
+| `src/Exploraciones/Domain/CalculadorRecompensas.php` | MODIFICADO — D3/RF-14 caramelos tipo + multiplicador RF-08 + expMiembro |
+| `src/Exploraciones/Domain/Recompensas/ResultadoRecompensas.php` | MODIFICADO — + expTipo/expPorMiembro/multiplicador aplicado |
+| `src/Exploraciones/App/ProcesarExploracionHandler.php` | MODIFICADO — D2/RF-05 tick resuelve eventos, tiempo_perdido, retirada |
+| `src/Exploraciones/App/FinalizarExploracionHandler.php` | MODIFICADO — RF-07/08/09, Collection, derrotados por resolucion victoria, avistados ampliados |
+| `src/Exploraciones/App/PersistirRecompensas.php` | MODIFICADO — reparto EXP 100/80/20 |
+| `src/Exploraciones/Presentation/TransformadorResultadoExploracion.php` | MODIFICADO — RF-10 contrato aditivo |
+| `app/Http/Controllers/ExploracionActivaController.php` | MODIFICADO — Collection + preview + nuevos campos |
+| `app/Http/Controllers/TeamController.php` | MODIFICADO — RF-12 validación behavior |
+| `routes/exploraciones.php` | MODIFICADO — GET /exploraciones/preview |
+
+## Decisiones de diseño (interpretaciones documentadas)
+
+1. **Capacidad de equipo = PROMEDIO de capacidades por miembro** (no suma): con dificultades
+   RF-06 en rango ~35–90 (base subtipo 30–55 + peligro×5 con peligro 1–5), sumar 3 miembros
+   (cada uno ~60–130) dejaría sin riesgo real. `baseDeStats` normaliza el promedio de los
+   `pokemon_stats.base_stat` a 0–100 (clamp). `capacidadMiembro = base + afinidad + rol + sinergia`.
+2. **Afinidad (RF-03)**: `+10` si la especie está en el pool del nivel; alineación de tipos con
+   TypeChart (súper-eficaz +2, resistido −1, inmune −2 por par atacante/defensor); clamp [−20, +30].
+3. **Rol → bonusCapacidad**: VANGUARDIA +5, COMBATIENTE +15 (resolución combate), RECOLECTOR 0,
+   RASTREADOR +5. Modificadores de encuentros/exp/caramelos/huidas en `RolExploracion`.
+4. **Sinergias**: tabla config-driven ordenada (negativas 3-mismo-rol > tríos > pares); cada
+   entrada aporta bonusCapacidad/bonusResolucion y flags (reducción huida, +caramelos, etc.).
+5. **Eventos**: 45% encuentro (subtipos normal/grupo/emboscada/excepcional; emboscada dentro de
+   encuentro → tipo `emboscada` con pokemon_ids 2–3), 20% hallazgo (subtype caramelo_*), 15%
+   encuentro especial → también `emboscada` (spec literal: "15% encuentro especial" + subtipo
+   "7% emboscada"; ambas vías producen emboscadas), 10% contratiempo, 10% neutral.
+6. **Avistados (RF-07)**: eventos de tipo encuentro/emboscada/huida (y legacy `pokemon`) con
+   pokemon_id(s). Un `hallazgo` con pokemon_id NO es avistamiento (es item de caramelo).
+7. **Retrocompat**: evento de bitácora sin `resolucion` (legacy `tipo=pokemon`) = victoria;
+   `idsDerrotados` acepta `tipo=pokemon` y `tipo=encuentro`.
+8. **categoriaFinal (RF-08)**: retirada > sin combates=exito > ratio victorias/combates
+   (≥0.85 con excepcional vencido = exito_excepcional, ≥0.6 = exito, ≥0.3 = exito_parcial,
+   resto = fracaso). Exito_excepcional exige vencer un evento excepcional/emboscada para no
+   romper la semántica de los tests preexistentes (solo-victorias → exito 1.0).
+9. **Multiplicador**: aplicado (floor) a caramelos familia/EV/tipo y a expTotal/expPorMiembro;
+   capturas NO (son tiradas por victoria).
+10. **D3/RF-14**: por derrota T=expDerrota; exp_tipo por tipo (100% 1 tipo, 50/50 2 tipos);
+    `cuenta += T` (user.experiencia); `cada integrante += floor((T×0.8)/3)` (exp total del
+    reclutado); `caramelos_tipo = floor(exp_tipo_acum × 0.2 / 100)` → player_inventory tipo:{slug}.
+11. **Tick D2/RF-05**: por slot → evento → resolver con EvaluadorExploracion (seam aleatorio) →
+    `duration_loss` acumulado; `ultimo_procesado = max(hasta, hasta + perdido_tick)`;
+    `eventos['tiempo_perdido']` acumulado; si retirada → despacha FinalizarExploracionCommand.
+12. **Preview RF-11**: dominio `CalculadorRiesgo` puro (peligro_estrellas, afinidad media,
+    advertencias, roles, riesgo, recompensa_esperada); controller hace anti-IDOR del equipo y
+    arma pool del hábitat a ese nivel. Sin probabilidades numéricas.
+
+## Tests TDD (rojo → verde)
+
+### Unit (nuevos)
+- `tests/Unit/Exploraciones/CalculadorPeligroTest.php` — escala ×5/×10, clamp.
+- `tests/Unit/Exploraciones/CalculadorCapacidadEquipoTest.php` — baseDeStats 0–100, afinidad
+  (pool + tipos TypeChart + topes), capacidadMiembro/Equipo (promedio).
+- `tests/Unit/Exploraciones/SinergiaEquipoTest.php` — pares/tríos/negativas, prioridad, sin rol → null.
+- `tests/Unit/Exploraciones/EvaluadorExploracionTest.php` — dificultad, éxito, éxito con coste,
+  desventaja (huida 15%, derrota, retirada probable < −30), emboscada (vanguardia evita/−50%,
+  vence −10, pierde −15+retirada), contratiempos mitigados por rol, categoriaFinal y multiplicadores.
+- `tests/Unit/Exploraciones/CalculadorRiesgoTest.php` — riesgo y advertencias (tipo débil,
+  débiles para nivel, bien preparado), recompensa_esperada.
+- `tests/Unit/SimuladorEncuentrosTest.php` — ADAPTADO: nuevas probabilidades y subtipos,
+  hallazgos con subtype, emboscada con pokemon_ids, contratiempo, neutral.
+
+### Unit (adaptados)
+- `tests/Unit/Exploraciones/CalculadorRecompensasTest.php` — ADAPTADO: caramelos_tipo D3,
+  expPorMiembro, multiplicador.
+- `tests/Unit/Exploraciones/PokemonDerrotadoTest.php` — verificar (probablemente sin cambios).
+
+### Feature (nuevos)
+- `tests/Feature/ExploracionesPreviewTest.php` — GET /exploraciones/preview: 200 JSON contrato,
+  anti-IDOR equipo ajeno → 404/403, advertencias.
+- Ampliación `tests/Feature/ExploracionesTest.php` — retirada (eventos['retirada'], finaliza,
+  conserva recompensas), tiempo_perdido/duration_real, retrocompat bitácora sin resolucion,
+  cada tipo de evento resuelto, idempotencia reintento.
+
+### Feature (adaptados)
+- `tests/Feature/ExploracionesTest.php` — helpers y asserts a nuevos tipos de evento;
+  `test_finalizacion_otorga_caramelos_de_tipo_por_derrotado` (D3); exp por miembro (80/3);
+  conteos desde `encuentro`/`emboscada`.
+- `tests/Feature/EquiposControllerTest.php` — SOPORTE → RASTREADOR (L230).
+- `tests/Unit/SimuladorEncuentrosTest.php` — probabilidades 45/20/15/10/10 y subtipos.
+
+## Riesgos
+1. `change()` de enum en pgsql con check constraint: se hace UPDATE previo y se prueba localmente;
+   si Laravel no gestiona la constraint, se usa DB::statement condicional por driver.
+2. Tests existentes con aserciones exactas de exp/caramelos: se adaptan a la nueva semántica
+   (multiplicador exito=1.0, exp 100/80/20, caramelos tipo D3) SIN eliminarlos.
+3. El tick ahora consume capacidad/peligro: en el contexto de tests la capacidad (~77) siempre
+   vence a dificultades (35–60) → victorias deterministas; el seam aleatorio del tick se añade.
+4. Infection: nuevas clases de dominio deben quedar cubiertas; MSI del módulo no debe bajar.
+5. jsonb en pgsql + cast collection: verificar que `$exploracion->eventos ?? collect()` y
+   `put/get` funcionan con el cast en todo el flujo (handlers + controller).
+
+## Verificación
+- `vendor/bin/pint --dirty`
+- `php artisan test --compact --filter=Exploraciones` y suite completa.
+- `vendor/bin/phpstan analyse` (0 errores nuevos).
+- `vendor/bin/phpmd src/ text phpmd.xml`.
+- `vendor/bin/infection` (MSI ≥ 80% en el código cubierto del módulo).
+
+## Verificación final (ejecutada en local, PostgreSQL 16)
+
+- `php artisan test --compact --filter=Exploraciones` → 171 passed (586 assertions).
+- `php artisan test --compact` → **669 passed (2209 assertions)** — incluye tests preexistentes
+  adaptados (ExploracionesTest D3/exp 80-3/encuentro, EquiposControllerTest RASTREADOR,
+  MigracionDatosTest --step=7, ExploracionActivaTest cast collection) y los del agente
+  Frontend en paralelo.
+- `vendor/bin/pint --dirty --format agent` → pass (sin cambios pendientes).
+- `vendor/bin/phpstan analyse` → **181 errores (línea base HEAD: 188)**; neto −7, sin
+  errores nuevos salvo el patrón tolerado `Request::validate` (staticMethod.dynamicCall,
+  categoría documentada en docs/context.md).
+- `vendor/bin/phpmd src/ text phpmd.xml` → solo advertencias `ExcessiveMethodLength`
+  (umbral 20; deuda aceptada en iteraciones previas, p. ej. HabitatRepository/TypeChart).
+- `vendor/bin/infection --filter=src/Exploraciones` → **Covered Code MSI 97 %** (requisito
+  ≥ 80 %). 23 mutantes escapados neutros (OneZeroFloat 1.0→0.0, >=/> bordes, ReturnRemoval
+  de null implícito, CalculadorTiempos preexistente sin tocar).
+- Migraciones verificadas en pgsql: `habitats.peligro` (smallint default 1), constraint
+  `team_members_behavior_check` con RASTREADOR (sin SOPORTE), `eventos` jsonb. La migración
+  del enum usa drop-constraint→UPDATE→add en pgsql y PRAGMA ignore_check_constraints +
+  `change()` (rebuild) en sqlite.
+
+### Contrato resultado aditivo (RF-10) — verificado por tests
+`capturados, caramelos_familia, caramelos_ev, caramelos_tipo, exp` + `resultado`
+(exito_excepcional|exito|exito_parcial|fracaso|retirada), `duration_real`, `tiempo_perdido`,
+`incidentes{encuentros,victorias,huidas,emboscadas,contratiempos}`.
+
+### Notas de interpretación documentadas
+- jsonb reordena claves de objetos (por longitud): los tests que comparan JSON leído de DB
+  usan assertEquals (el orden de claves no es parte del contrato).
+- Huida = evento `encuentro` con `resolucion: huida` (el contrato muestra el shape suelto
+  `{"tipo":"huida"}`; funcionalmente equivalente y avistado sí).
+- `duration_real = 0` para expediciones indefinidas (sin fin nominal).

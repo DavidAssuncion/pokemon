@@ -87,7 +87,7 @@ class TeamController extends Controller
             // El reclutado debe ser del usuario autenticado (anti-IDOR).
             'reclutado_id' => ['required', Rule::exists('reclutados', 'id')->where('user_id', Auth::id())],
             'slot' => 'required|integer|min:1|max:3',
-            'behavior' => 'required|in:VANGUARDIA,COMBATIENTE,RECOLECTOR,SOPORTE',
+            'behavior' => 'required|in:VANGUARDIA,COMBATIENTE,RECOLECTOR,RASTREADOR',
         ]);
 
         // El global scope de Team hace que un equipo ajeno resuelva a null:

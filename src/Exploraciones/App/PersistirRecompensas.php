@@ -32,7 +32,7 @@ class PersistirRecompensas
         $this->guardarCaramelosEv($recompensas->caramelosEv, $usuario);
         $this->guardarCaramelosTipo($recompensas->caramelosTipo, $usuario);
         $this->aplicarCapturas($recompensas->capturas, $usuario);
-        $this->aplicarExperiencia($recompensas->expTotal, $equipo, $usuario);
+        $this->aplicarExperiencia($recompensas->expTotal, $recompensas->expPorMiembro, $equipo, $usuario);
     }
 
     /**
@@ -103,19 +103,24 @@ class PersistirRecompensas
         }
     }
 
-    private function aplicarExperiencia(int $expTotal, ?Team $equipo, ?User $usuario): void
+    /**
+     * Reparto de EXP (D3/RF-14): el jugador recibe el 100 % del total; cada
+     * miembro del equipo recibe la parte del 80 % repartida entre 3
+     * (expPorMiembro ya calculado por el dominio).
+     */
+    private function aplicarExperiencia(int $expTotal, int $expPorMiembro, ?Team $equipo, ?User $usuario): void
     {
         if ($usuario !== null && $expTotal > 0) {
             $usuario->increment('experiencia', $expTotal);
         }
 
-        if ($equipo === null) {
+        if ($equipo === null || $expPorMiembro <= 0) {
             return;
         }
 
         foreach ($equipo->members as $miembro) {
             if ($miembro->reclutado !== null) {
-                $this->sumarExpTotal($miembro->reclutado, $expTotal);
+                $this->sumarExpTotal($miembro->reclutado, $expPorMiembro);
             }
         }
     }

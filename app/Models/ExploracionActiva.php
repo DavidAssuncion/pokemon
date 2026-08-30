@@ -29,7 +29,7 @@ class ExploracionActiva extends Model
     ];
 
     protected $casts = [
-        'eventos' => 'array',
+        'eventos' => 'collection',
         'inicio_exploracion' => 'datetime',
         'llegada_destino' => 'datetime',
         'regreso' => 'datetime',

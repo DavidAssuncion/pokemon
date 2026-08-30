@@ -7,6 +7,8 @@ namespace App\Http\Controllers;
 use App\Models\ExploracionActiva;
 use App\Models\Habitat;
 use App\Models\Pokemon;
+use App\Models\PokemonType;
+use App\Models\Team;
 use App\Models\User;
 use Carbon\Carbon;
 use Carbon\CarbonInterface;
@@ -15,11 +17,17 @@ use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection as BaseCollection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
 use Src\Exploraciones\App\ProcesarExploracionCommand;
+use Src\Exploraciones\Domain\CalculadorCapacidadEquipo;
+use Src\Exploraciones\Domain\CalculadorRiesgo;
+use Src\Exploraciones\Domain\RolExploracion;
+use Src\Exploraciones\Domain\SinergiaEquipo;
 use Src\Habitats\App\ValidadorExploracion;
 use Src\Shared\Bus\CommandBus;
+use Src\Shared\Tipos\TipoPokemon;
 
 class ExploracionActivaController extends Controller
 {
@@ -66,6 +74,79 @@ class ExploracionActivaController extends Controller
                 ->map(fn (ExploracionActiva $exp) => $this->toTerminada($exp, $nombres))
                 ->all(),
         ]);
+    }
+
+    /**
+     * RF-11: preview de riesgo antes de enviar el equipo (D12). Anti-IDOR: el
+     * equipo debe pertenecer al usuario autenticado (regla exists con user_id).
+     */
+    public function preview(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'team_id' => ['required', 'integer', Rule::exists('teams', 'id')->where('user_id', Auth::id())],
+            'habitat_id' => 'required|integer|exists:habitats,id',
+            'level' => 'required|integer|min:1|max:3',
+        ]);
+
+        $habitat = Habitat::find((int) $data['habitat_id']);
+        $nivel = (int) $data['level'];
+
+        $pool = $habitat !== null
+            ? $habitat->pokemon()->wherePivot('level', $nivel)->get()->loadMissing('types')
+            : new Collection();
+        $tiposPool = $this->tiposDelPool($pool);
+
+        $equipo = Team::with('members.reclutado.pokemon.stats', 'members.reclutado.pokemon.types')
+            ->findOrFail((int) $data['team_id']);
+
+        $miembros = [];
+        $roles = [];
+        $capacidades = [];
+
+        foreach ($equipo->members as $miembro) {
+            $pokemon = $miembro->reclutado?->pokemon;
+            if ($pokemon === null) {
+                continue;
+            }
+
+            $rol = RolExploracion::tryFrom($miembro->behavior ?? '') ?? RolExploracion::COMBATIENTE;
+            $roles[] = $rol;
+
+            $tipos = $this->tiposDe($pokemon);
+            $enPool = $pool->contains('id', $pokemon->id);
+            $base = CalculadorCapacidadEquipo::baseDeStats($pokemon->stats->pluck('base_stat')->all());
+            $afinidad = CalculadorCapacidadEquipo::afinidadDeMiembro($tipos, $tiposPool, $enPool);
+
+            $capacidades[] = CalculadorCapacidadEquipo::capacidadMiembro(
+                base: $base,
+                afinidad: $afinidad,
+                bonusRol: $rol->bonusCapacidad(),
+                bonusSinergia: 0,
+            );
+
+            $miembros[] = [
+                'tipos' => $tipos,
+                'enPool' => $enPool,
+                'rol' => $rol,
+                'base' => $base,
+            ];
+        }
+
+        $capacidad = CalculadorCapacidadEquipo::capacidadEquipo($capacidades);
+        $sinergia = SinergiaEquipo::sinergiaPara($roles);
+        if ($sinergia !== null) {
+            $capacidad = max(0, $capacidad + $sinergia['bonusCapacidad']);
+        }
+
+        $resultado = CalculadorRiesgo::evaluar(
+            peligro: $habitat->peligro ?? 1,
+            nivel: $nivel,
+            capacidad: $capacidad,
+            tiposPool: $tiposPool,
+            miembros: $miembros,
+        );
+
+        return response()->json($resultado);
     }
 
     public function store(Request $request): RedirectResponse|JsonResponse
@@ -166,15 +247,15 @@ class ExploracionActivaController extends Controller
     {
         $ids = [];
         foreach ($activas as $exp) {
-            foreach ($exp->eventos['bitacora'] ?? [] as $evento) {
-                if (isset($evento['pokemon_id'])) {
-                    $ids[] = (int) $evento['pokemon_id'];
+            foreach ($this->eventosDe($exp)->get('bitacora', []) as $evento) {
+                foreach ($this->idsDeEvento($evento) as $id) {
+                    $ids[] = $id;
                 }
             }
         }
 
         foreach ($terminadas as $exp) {
-            $resultado = $exp->eventos['resultado'] ?? [];
+            $resultado = $this->eventosDe($exp)->get('resultado', []);
             foreach ($resultado['capturados'] ?? [] as $capturado) {
                 $ids[] = (int) $capturado['pokemon_id'];
             }
@@ -185,6 +266,34 @@ class ExploracionActivaController extends Controller
         return $ids === []
             ? []
             : Pokemon::whereIn('id', $ids)->pluck('name', 'id')->all();
+    }
+
+    /**
+     * Eventos de la expedición como Collection (D11: cast 'collection').
+     * null → colección vacía (exploración recién creada sin eventos).
+     *
+     * @return BaseCollection<array-key, mixed>
+     */
+    private function eventosDe(ExploracionActiva $exp): BaseCollection
+    {
+        return $exp->eventos ?? collect();
+    }
+
+    /**
+     * @param  array<string, mixed>  $evento
+     * @return list<int>
+     */
+    private function idsDeEvento(array $evento): array
+    {
+        if (isset($evento['pokemon_ids']) && is_array($evento['pokemon_ids'])) {
+            return array_values(array_map('intval', $evento['pokemon_ids']));
+        }
+
+        if (isset($evento['pokemon_id'])) {
+            return [(int) $evento['pokemon_id']];
+        }
+
+        return [];
     }
 
     /**
@@ -210,7 +319,7 @@ class ExploracionActivaController extends Controller
         }
 
         $bitacora = [];
-        foreach ($exp->eventos['bitacora'] ?? [] as $evento) {
+        foreach ($this->eventosDe($exp)->get('bitacora', []) as $evento) {
             $bitacora[] = $this->transformarEvento($evento, $nombres);
         }
 
@@ -231,6 +340,7 @@ class ExploracionActivaController extends Controller
             'fin' => $fin?->toIso8601String(),
             'estado' => $estado,
             'progreso' => $progreso,
+            'tiempo_perdido' => (int) $this->eventosDe($exp)->get('tiempo_perdido', 0),
             'bitacora' => $bitacora,
         ];
     }
@@ -241,7 +351,8 @@ class ExploracionActivaController extends Controller
      */
     private function toTerminada(ExploracionActiva $exp, array $nombres): array
     {
-        $resultado = $exp->eventos['resultado'] ?? [];
+        /** @var array<string, mixed> $resultado */
+        $resultado = $this->eventosDe($exp)->get('resultado', []);
 
         $capturados = [];
         foreach ($resultado['capturados'] ?? [] as $capturado) {
@@ -299,6 +410,16 @@ class ExploracionActivaController extends Controller
                 'caramelos_ev' => $caramelosEv,
                 'caramelos_tipo' => $caramelosTipo,
                 'exp' => (int) ($resultado['exp'] ?? 0),
+                'resultado' => (string) ($resultado['resultado'] ?? 'exito'),
+                'duration_real' => (int) ($resultado['duration_real'] ?? 0),
+                'tiempo_perdido' => (int) ($resultado['tiempo_perdido'] ?? 0),
+                'incidentes' => $resultado['incidentes'] ?? [
+                    'encuentros' => 0,
+                    'victorias' => 0,
+                    'huidas' => 0,
+                    'emboscadas' => 0,
+                    'contratiempos' => 0,
+                ],
             ],
         ];
     }
@@ -318,6 +439,12 @@ class ExploracionActivaController extends Controller
             $evento['stat_slug'] = $statInfo['slug'] ?? null;
         } elseif (isset($evento['pokemon_id'])) {
             $evento['nombre'] = $nombres[(int) $evento['pokemon_id']] ?? null;
+        } elseif (isset($evento['pokemon_ids'])) {
+            $ids = array_values(array_filter(
+                array_map('intval', (array) $evento['pokemon_ids']),
+                static fn (int $id): bool => $id > 0
+            ));
+            $evento['nombre'] = $ids === [] ? null : ($nombres[$ids[0]] ?? null);
         }
 
         return $evento;
@@ -355,5 +482,32 @@ class ExploracionActivaController extends Controller
         }
 
         return $fin->copy()->subMinutes(intdiv((int) abs($fin->diffInMinutes($inicio)), 4));
+    }
+
+    /**
+     * @param  Collection<int, Pokemon>  $pool
+     * @return list<TipoPokemon>
+     */
+    private function tiposDelPool(Collection $pool): array
+    {
+        $tipos = [];
+        foreach ($pool as $pokemon) {
+            foreach ($this->tiposDe($pokemon) as $tipo) {
+                if (! in_array($tipo, $tipos, true)) {
+                    $tipos[] = $tipo;
+                }
+            }
+        }
+
+        return $tipos;
+    }
+
+    /** @return list<TipoPokemon> */
+    private function tiposDe(Pokemon $pokemon): array
+    {
+        return $pokemon->types
+            ->map(fn (PokemonType $tipo): TipoPokemon => TipoPokemon::from($tipo->type->value))
+            ->values()
+            ->all();
     }
 }

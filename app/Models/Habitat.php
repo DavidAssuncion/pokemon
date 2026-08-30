@@ -21,10 +21,12 @@ class Habitat extends Model
         'province_id',
         'name',
         'pokemons',
+        'peligro',
     ];
 
     protected $casts = [
         'pokemons' => 'array',
+        'peligro' => 'integer',
     ];
 
     /**

@@ -86,7 +86,9 @@ class ExploracionActivaTest extends TestCase
 
         $this->assertEquals(4, $exploracion->duracion_horas);
         $this->assertTrue($exploracion->indefinido);
-        $this->assertEquals(['encounter' => 'bulbasaur'], $exploracion->eventos);
+        // D11: eventos con cast 'collection'.
+        $this->assertInstanceOf(\Illuminate\Support\Collection::class, $exploracion->eventos);
+        $this->assertSame('bulbasaur', $exploracion->eventos->get('encounter'));
         $this->assertNotNull($exploracion->inicio_exploracion);
         $this->assertNotNull($exploracion->llegada_destino);
     }
@@ -137,8 +139,10 @@ class ExploracionActivaTest extends TestCase
         ]);
         $exploracion->refresh();
 
-        $this->assertIsArray($exploracion->eventos);
-        $this->assertEquals('wild', $exploracion->eventos['battle']);
+        // D11: eventos con cast 'collection'.
+        $this->assertInstanceOf(\Illuminate\Support\Collection::class, $exploracion->eventos);
+        $this->assertSame('wild', $exploracion->eventos->get('battle'));
+        $this->assertSame('captured', $exploracion->eventos->get('result'));
     }
 
     public function test_has_exploraciones_has_many_relationship_on_habitat(): void

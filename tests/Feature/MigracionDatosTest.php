@@ -18,9 +18,11 @@ class MigracionDatosTest extends TestCase
 
     public function test_vuelca_caramelos_a_player_inventory_y_exp_tipo_a_exp_tipos(): void
     {
-        // Reversa las 4 últimas migraciones (índices, min_lvl, reclutados_exp_tipo y caramelos)
-        // para poder insertar los datos "viejos" antes de volver a migrar.
-        Artisan::call('migrate:rollback', ['--step' => 4]);
+        // Reversa las migraciones posteriores a las de volcado de caramelos/exp_tipo
+        // (000008/000009): las 3 de la iteración expediciones (2026_08_30_*) + las 4
+        // originales posteriores (000010/000011/000009/000008) = 7 pasos, para poder
+        // insertar los datos "viejos" antes de volver a migrar.
+        Artisan::call('migrate:rollback', ['--step' => 7]);
 
         $usuario = User::factory()->create();
         $pokemon = $this->createPokemon();
@@ -88,7 +90,9 @@ class MigracionDatosTest extends TestCase
 
     public function test_down_restaura_caramelos_y_reclutados_exp_tipo_best_effort(): void
     {
-        Artisan::call('migrate:rollback', ['--step' => 4]);
+        // 7 pasos: las 3 migraciones de la iteración expediciones + las 4 de
+        // índices/min_lvl/volcado que recrean las tablas legacy.
+        Artisan::call('migrate:rollback', ['--step' => 7]);
 
         $usuario = User::factory()->create();
         $pokemon = $this->createPokemon();
@@ -108,7 +112,7 @@ class MigracionDatosTest extends TestCase
         DB::table('reclutados_exp_tipo')->insert(['reclutado_id' => $reclutadoId, 'tipo' => 'Eléctrico', 'cantidad' => 300, 'created_at' => now(), 'updated_at' => now()]);
 
         Artisan::call('migrate');
-        Artisan::call('migrate:rollback', ['--step' => 4]);
+        Artisan::call('migrate:rollback', ['--step' => 7]);
 
         $this->assertTrue(Schema::hasTable('caramelos'));
         $this->assertTrue(Schema::hasTable('reclutados_exp_tipo'));

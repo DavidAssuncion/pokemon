@@ -22,9 +22,26 @@ class HabitatSeeder extends Seeder
                 [
                     'name' => $row['name'],
                     'province_id' => (int) $row['province_id'],
+                    // D0: peligro orientativo 1–5 (bosque tranquilo = 1, cueva de
+                    // dragones = 5). Determinista por id: los hábitats con nombre
+                    // de cueva/zona hostil reciben peligro alto, el resto reparto.
+                    'peligro' => $this->peligroOrientativo((int) $row['id'], $row['name']),
                 ]
             );
         }
+    }
+
+    private function peligroOrientativo(int $id, string $nombre): int
+    {
+        if (str_contains(mb_strtolower($nombre), 'cueva') || str_contains(mb_strtolower($nombre), 'abismo')) {
+            return 5;
+        }
+
+        if (str_contains(mb_strtolower($nombre), 'bosque')) {
+            return 1;
+        }
+
+        return 1 + (($id * 7) % 5);
     }
 
     private function loadCsv(string $path): array

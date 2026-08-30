@@ -24,6 +24,7 @@ use Src\Exploraciones\App\FinalizarExploracionCommand;
 use Src\Exploraciones\App\FinalizarExploracionHandler;
 use Src\Exploraciones\App\PersistirRecompensas;
 use Src\Exploraciones\App\ProcesarExploracionCommand;
+use Src\Exploraciones\App\ProcesarExploracionHandler;
 use Src\Exploraciones\Domain\CalculadorRecompensas;
 use Src\Exploraciones\Presentation\TransformadorResultadoExploracion;
 use Src\Shared\Bus\CommandBus;
@@ -141,6 +142,19 @@ class ExploracionesTest extends TestCase
     }
 
     /**
+     * Vincula el handler del tick con un proveedor determinista (seam de test).
+     * 0.3 → solo eventos "encuentro normal" → todas victorias → categoría exito
+     * (multiplicador 1.0), para aserciones exactas sin depender del RNG.
+     */
+    private function bindProcesarConAleatorio(callable $aleatorio): void
+    {
+        $this->app->instance(
+            ProcesarExploracionHandler::class,
+            new ProcesarExploracionHandler(app(CommandBus::class), $aleatorio),
+        );
+    }
+
+    /**
      * @param  array<int, array<string, mixed>>  $bitacora
      * @return array<int, int>
      */
@@ -148,7 +162,9 @@ class ExploracionesTest extends TestCase
     {
         $conteos = [];
         foreach ($bitacora as $evento) {
-            if (($evento['tipo'] ?? null) === 'pokemon') {
+            // Los encuentros resueltos (victoria) son los derrotados; los eventos
+            // legacy 'pokemon' (sin resolucion) cuentan por retrocompat.
+            if (in_array(($evento['tipo'] ?? null), ['encuentro', 'pokemon'], true)) {
                 $id = (int) $evento['pokemon_id'];
                 $conteos[$id] = ($conteos[$id] ?? 0) + 1;
             }
@@ -213,6 +229,8 @@ class ExploracionesTest extends TestCase
         // Fuerza captura (aleatorio 0.0) para no depender del RNG: con la regla
         // cap-25 el capture_rate 255 ya no garantiza captura (máximo 9.8%).
         $this->bindHandlerConAleatorio(fn (): float => 0.0);
+        // Tick determinista: solo encuentros normales (categoría exito, ×1.0).
+        $this->bindProcesarConAleatorio(fn (): float => 0.3);
 
         $ctx = $this->crearContexto(['duracion_horas' => 1, 'inicio' => now()->subHours(2)]);
 
@@ -224,7 +242,7 @@ class ExploracionesTest extends TestCase
         $conteos = $this->conteoPorEspecie($bitacora);
 
         $this->assertNotEmpty($derrotados);
-        $this->assertCount(count($derrotados), array_filter($bitacora, fn (array $e) => ($e['tipo'] ?? '') === 'pokemon'));
+        $this->assertCount(count($derrotados), array_filter($bitacora, fn (array $e) => ($e['tipo'] ?? '') === 'encuentro'));
 
         // Pokedex: AVISTADO por cada especie derrotada
         foreach (array_keys($conteos) as $pokemonId) {
@@ -263,12 +281,14 @@ class ExploracionesTest extends TestCase
             }
         }
 
-        // EXP: user (nivel 5) + cada miembro del equipo con el total completo
+        // EXP: user (nivel 5) recibe el 100 %; cada miembro floor((T×0.8)/3) por derrota.
         $expEsperado = ($conteos[1] ?? 0) * NivelHelper::expDerrota(64, 5)
             + ($conteos[2] ?? 0) * NivelHelper::expDerrota(62, 5);
+        $expMiembroEsperado = ($conteos[1] ?? 0) * (int) floor(NivelHelper::expDerrota(64, 5) * 0.8 / 3)
+            + ($conteos[2] ?? 0) * (int) floor(NivelHelper::expDerrota(62, 5) * 0.8 / 3);
         $this->assertSame(1_250 + $expEsperado, $ctx['user']->refresh()->experiencia);
-        $this->assertSame($expEsperado, $ctx['reclutado1']->refresh()->exp->total());
-        $this->assertSame($expEsperado, $ctx['reclutado2']->refresh()->exp->total());
+        $this->assertSame($expMiembroEsperado, $ctx['reclutado1']->refresh()->exp->total());
+        $this->assertSame($expMiembroEsperado, $ctx['reclutado2']->refresh()->exp->total());
     }
 
     public function test_indefinido_no_completa_hasta_recoger(): void
@@ -391,9 +411,10 @@ class ExploracionesTest extends TestCase
 
         $this->assertNotNull($ctx['exploracion']->refresh()->regreso);
 
-        // Nivel salvaje 1: exp de derrota del bulbasaur (base_experience 64) con nivel 1
-        $expEsperado = NivelHelper::expDerrota(64, 1);
-        $this->assertSame($expEsperado, $ctx['reclutado1']->refresh()->exp->total());
+        // Nivel salvaje 1: exp de derrota del bulbasaur (base_experience 64) con nivel 1.
+        // D3: cada integrante recibe floor((T×0.8)/3) = floor(12×0.8/3) = 3.
+        $expPorMiembro = (int) floor(NivelHelper::expDerrota(64, 1) * 0.8 / 3);
+        $this->assertSame($expPorMiembro, $ctx['reclutado1']->refresh()->exp->total());
 
         // El usuario no recibe exp ni caramelos (no hay dueño resuelto).
         $this->assertSame(1_250, $ctx['user']->refresh()->experiencia);
@@ -451,6 +472,8 @@ class ExploracionesTest extends TestCase
     {
         // Fuerza captura (aleatorio 0.0) para no depender del RNG (regla cap-25).
         $this->bindHandlerConAleatorio(fn (): float => 0.0);
+        // Tick determinista: solo encuentros normales (categoría exito, ×1.0).
+        $this->bindProcesarConAleatorio(fn (): float => 0.3);
 
         $ctx = $this->crearContexto(['duracion_horas' => 1, 'inicio' => now()->subHours(2)]);
 
@@ -474,6 +497,7 @@ class ExploracionesTest extends TestCase
 
         // Caramelos de familia: una sola cadena, nombre base = bulbasaur, fase × conteo.
         // El pokemon_id del caramelo es el miembro de menor species_id (bulbasaur, species 1 < 4).
+        // assertEquals: el orden de claves JSON de jsonb no es parte del contrato.
         $this->assertCount(1, $resultado['caramelos_familia']);
         $familia = $resultado['caramelos_familia'][0];
         $this->assertSame($ctx['chainId'], $familia['evolution_chain_id']);
@@ -505,9 +529,13 @@ class ExploracionesTest extends TestCase
         $this->assertSame($expEsperado, $resultado['exp']);
     }
 
-    public function test_finalizacion_otorga_caramelos_de_tipo_por_derrotado(): void
+    public function test_finalizacion_otorga_caramelos_de_tipo_desde_exp_tipada_d3(): void
     {
+        // D3/RF-14: caramelos_tipo = floor((exp_tipo × 0.2)/100), con exp_tipo por
+        // victoria (2 tipos → 50/50). Se sube la base_experience del charmander
+        // para que la fórmula produzca caramelos no nulos.
         $ctx = $this->crearContexto(['duracion_horas' => 1, 'inicio' => now()->subHours(2)]);
+        Pokemon::where('id', 2)->update(['base_experience' => 5000]);
 
         // Pool determinista: solo charmander (2 tipos) en el hábitat para que el
         // test no dependa del RNG de selección de especie.
@@ -515,6 +543,9 @@ class ExploracionesTest extends TestCase
 
         PokemonType::create(['pokemon_id' => 2, 'type' => 13, 'slot' => 1]); // Eléctrico
         PokemonType::create(['pokemon_id' => 2, 'type' => 10, 'slot' => 2]); // Fuego
+
+        // Tick determinista: solo encuentros normales (categoría exito, ×1.0).
+        $this->bindProcesarConAleatorio(fn (): float => 0.3);
 
         $this->artisan('exploraciones:procesar')->assertSuccessful();
 
@@ -525,16 +556,21 @@ class ExploracionesTest extends TestCase
         $this->assertNotEmpty($derrotados);
         $this->assertSame(0, $conteos[1] ?? 0);
 
-        // 1 caramelo por cada tipo del pokemon derrotado, por derrota, en el inventario del dueño
+        // T por derrota (nivel salvaje 5); 2 tipos → 50/50; caramelos = floor((T/2 × N × 0.2)/100).
+        $T = NivelHelper::expDerrota(5000, 5);
+        $expTipoPorDerrota = intdiv($T, 2);
+        $caramelosEsperados = (int) floor($expTipoPorDerrota * ($conteos[2] ?? 0) * 0.2 / 100);
+
+        $this->assertGreaterThan(0, $caramelosEsperados);
         $this->assertDatabaseHas('player_inventory', [
             'user_id' => $ctx['user']->id,
             'item_key' => 'tipo:electrico',
-            'cantidad' => $conteos[2],
+            'cantidad' => $caramelosEsperados,
         ]);
         $this->assertDatabaseHas('player_inventory', [
             'user_id' => $ctx['user']->id,
             'item_key' => 'tipo:fuego',
-            'cantidad' => $conteos[2],
+            'cantidad' => $caramelosEsperados,
         ]);
         // Solo 2 filas de caramelos de TIPO (el inventario también tiene familia/EV
         // de la misma exploración: se filtra por item_key).
@@ -545,7 +581,7 @@ class ExploracionesTest extends TestCase
         $this->assertSame(['Eléctrico', 'Fuego'], array_column($caramelosTipo, 'tipo'));
         $this->assertSame(['electrico', 'fuego'], array_column($caramelosTipo, 'slug'));
         foreach ($caramelosTipo as $caramelo) {
-            $this->assertSame($conteos[2], $caramelo['cantidad']);
+            $this->assertSame($caramelosEsperados, $caramelo['cantidad']);
         }
     }
 
@@ -749,9 +785,10 @@ class ExploracionesTest extends TestCase
             'cantidad' => 2,
         ]);
 
-        // Resultado: base = menor species_id de TODA la familia (bulbasaur, id 1)
+        // Resultado: base = menor species_id de TODA la familia (bulbasaur, id 1).
+        // assertEquals: el orden de claves JSON de jsonb no es parte del contrato.
         $resultado = $ctx['exploracion']->fresh()->eventos['resultado'];
-        $this->assertSame([
+        $this->assertEquals([
             [
                 'evolution_chain_id' => 51,
                 'nombre' => 'bulbasaur',
@@ -794,9 +831,10 @@ class ExploracionesTest extends TestCase
         ]);
         $this->assertSame(1, PlayerInventory::where('item_key', 'familia:51')->count());
 
-        // Resultado: base = menor species_id de TODA la familia (bulbasaur, id 1)
+        // Resultado: base = menor species_id de TODA la familia (bulbasaur, id 1).
+        // assertEquals: el orden de claves JSON de jsonb no es parte del contrato.
         $resultado = $ctx['exploracion']->fresh()->eventos['resultado'];
-        $this->assertSame([
+        $this->assertEquals([
             [
                 'evolution_chain_id' => 51,
                 'nombre' => 'bulbasaur',
@@ -804,5 +842,235 @@ class ExploracionesTest extends TestCase
                 'cantidad' => 4,
             ],
         ], $resultado['caramelos_familia']);
+    }
+
+    // ==========================================
+    // Iteración expediciones con riesgo (RF-05 a RF-14)
+    // ==========================================
+
+    public function test_retirada_por_desventaja_finaliza_y_conserva_recompensas(): void
+    {
+        // RF-09: retirada marca eventos['retirada'], finaliza anticipado y
+        // conserva las recompensas ya obtenidas (multiplicador retirada = 1.0).
+        $ctx = $this->crearContexto(['indefinido' => true]);
+        $ctx['exploracion']->update([
+            'eventos' => [
+                'bitacora' => [
+                    ['tipo' => 'pokemon', 'pokemon_id' => 1], // victoria (retrocompat)
+                    ['tipo' => 'retirada', 'resolucion' => 'retirada', 'reason' => 'grupo_enemigo', 'timestamp' => now()->toIso8601String()],
+                ],
+                'ultimo_procesado' => now()->toIso8601String(),
+            ],
+        ]);
+
+        app(CommandBus::class)->dispatch(new FinalizarExploracionCommand($ctx['exploracion']));
+
+        $fresh = $ctx['exploracion']->fresh();
+        $this->assertNotNull($fresh->regreso);
+        $this->assertSame('retirada', $fresh->eventos->get('resultado')['resultado']);
+
+        // La victoria previa se conserva: caramelo de familia fase 1 × 1.
+        $this->assertDatabaseHas('player_inventory', [
+            'user_id' => $ctx['user']->id,
+            'item_key' => 'familia:'.$ctx['chainId'],
+            'cantidad' => 1,
+        ]);
+    }
+
+    public function test_tick_con_equipo_debil_genera_retirada(): void
+    {
+        // Tick con aleatorio 0.15 → encuentro grupo; capacidad baja (< dificultad−30)
+        // y roll < 0.5 → retirada → despacha FinalizarExploracionCommand.
+        $ctx = $this->crearContexto(['indefinido' => true]);
+        // Stats base mínimos (capacidad ~11) y rol sin bonus.
+        PokemonStat::where('pokemon_id', 1)->update(['base_stat' => 1]);
+        PokemonStat::where('pokemon_id', 2)->update(['base_stat' => 1]);
+        TeamMember::where('team_id', $ctx['exploracion']->equipo_id)->update(['behavior' => 'RECOLECTOR']);
+
+        $this->bindProcesarConAleatorio(fn (): float => 0.15);
+
+        $this->artisan('exploraciones:procesar')->assertSuccessful();
+
+        $fresh = $ctx['exploracion']->fresh();
+        $this->assertNotNull($fresh->regreso);
+        $this->assertIsArray($fresh->eventos->get('retirada'));
+        $this->assertSame('grupo_enemigo', $fresh->eventos->get('retirada')['reason']);
+    }
+
+    public function test_tick_acumula_tiempo_perdido_y_adelanta_ultimo_procesado(): void
+    {
+        // D2/RF-05: contratiempos (aleatorio 0.85 → bloqueo, sin vanguardia) acumulan
+        // duration_loss y adelantan ultimo_procesado al futuro.
+        $ctx = $this->crearContexto(['indefinido' => true, 'inicio' => now()->subMinutes(30)]);
+        $ctx['exploracion']->update([
+            'eventos' => [
+                'bitacora' => [],
+                'ultimo_procesado' => now()->subMinutes(10)->toIso8601String(),
+            ],
+        ]);
+
+        $this->bindProcesarConAleatorio(fn (): float => 0.85);
+
+        $this->artisan('exploraciones:procesar')->assertSuccessful();
+
+        $fresh = $ctx['exploracion']->fresh();
+        $eventos = $fresh->eventos;
+        $perdido = (int) $eventos->get('tiempo_perdido', 0);
+        $this->assertGreaterThan(0, $perdido);
+
+        // 10 min ÷ 3 = 3 slots; cada bloqueo cuesta 15 min → 45.
+        $this->assertSame(45, $perdido);
+
+        // ultimo_procesado = hasta + tiempo perdido (en el futuro).
+        $ultimo = Carbon::parse($eventos->get('ultimo_procesado'));
+        $this->assertTrue($ultimo->greaterThan(now()));
+
+        // duration_real en el resultado final: nominal (30 min) − tiempo perdido → 0 (mín).
+        app(CommandBus::class)->dispatch(new FinalizarExploracionCommand($fresh));
+        $resultado = $fresh->refresh()->eventos->get('resultado');
+        $this->assertSame(0, $resultado['duration_real']);
+        $this->assertSame(45, $resultado['tiempo_perdido']);
+        $this->assertSame(3, $resultado['incidentes']['contratiempos']);
+    }
+
+    public function test_hallazgos_otorgan_caramelos_de_familia_ev_y_tipo(): void
+    {
+        // D8: los eventos hallazgo entregan caramelos (familia/EV/tipo).
+        $ctx = $this->crearContexto(['indefinido' => true]);
+        $ctx['exploracion']->update([
+            'eventos' => [
+                'bitacora' => [
+                    ['tipo' => 'hallazgo', 'subtype' => 'caramelo_familia', 'pokemon_id' => 1, 'cantidad' => 2, 'timestamp' => now()->toIso8601String()],
+                    ['tipo' => 'hallazgo', 'subtype' => 'caramelo_ev', 'stat' => 2, 'cantidad' => 1, 'timestamp' => now()->toIso8601String()],
+                    ['tipo' => 'hallazgo', 'subtype' => 'caramelo_tipo', 'tipo_id' => 10, 'cantidad' => 1, 'timestamp' => now()->toIso8601String()],
+                ],
+                'ultimo_procesado' => now()->toIso8601String(),
+            ],
+        ]);
+
+        app(CommandBus::class)->dispatch(new FinalizarExploracionCommand($ctx['exploracion']));
+
+        $this->assertDatabaseHas('player_inventory', [
+            'user_id' => $ctx['user']->id,
+            'item_key' => 'familia:'.$ctx['chainId'],
+            'cantidad' => 2,
+        ]);
+        $this->assertDatabaseHas('player_inventory', [
+            'user_id' => $ctx['user']->id,
+            'item_key' => 'ev:2',
+            'cantidad' => 1,
+        ]);
+        $this->assertDatabaseHas('player_inventory', [
+            'user_id' => $ctx['user']->id,
+            'item_key' => 'tipo:fuego',
+            'cantidad' => 1,
+        ]);
+    }
+
+    public function test_emboscada_pokemon_ids_generan_avistados_aunque_no_derrotados(): void
+    {
+        // RF-07: los pokemon_ids de una emboscada son AVISTADOS; solo las
+        // resoluciones victoria (o sin resolución) cuentan como derrotados.
+        $ctx = $this->crearContexto(['indefinido' => true]);
+        $ctx['exploracion']->update([
+            'eventos' => [
+                'bitacora' => [
+                    ['tipo' => 'emboscada', 'pokemon_ids' => [1, 2], 'resolucion' => 'superada', 'duration_loss' => 10, 'timestamp' => now()->toIso8601String()],
+                    ['tipo' => 'pokemon', 'pokemon_id' => 1, 'timestamp' => now()->toIso8601String()],
+                ],
+                'ultimo_procesado' => now()->toIso8601String(),
+            ],
+        ]);
+
+        app(CommandBus::class)->dispatch(new FinalizarExploracionCommand($ctx['exploracion']));
+
+        // Avistados: emboscada (1 y 2) + encuentro (1).
+        $this->assertDatabaseHas('pokedex', ['pokemon_id' => 1, 'visto' => true]);
+        $this->assertDatabaseHas('pokedex', ['pokemon_id' => 2, 'visto' => true]);
+
+        // Derrotados: solo la victoria del encuentro → caramelo familia fase 1 × 1.
+        $fresh = $ctx['exploracion']->fresh();
+        $this->assertSame([1], $fresh->eventos->get('derrotados'));
+        $this->assertDatabaseHas('player_inventory', [
+            'user_id' => $ctx['user']->id,
+            'item_key' => 'familia:'.$ctx['chainId'],
+            'cantidad' => 1,
+        ]);
+    }
+
+    public function test_retrocompat_encuentro_sin_resolucion_es_victoria(): void
+    {
+        // RF-07: evento 'encuentro' sin resolucion (bitácoras antiguas) = victoria.
+        $ctx = $this->crearContexto(['indefinido' => true]);
+        $ctx['exploracion']->update([
+            'eventos' => [
+                'bitacora' => [
+                    ['tipo' => 'encuentro', 'subtype' => 'normal', 'pokemon_id' => 1, 'timestamp' => now()->toIso8601String()],
+                ],
+                'ultimo_procesado' => now()->toIso8601String(),
+            ],
+        ]);
+
+        app(CommandBus::class)->dispatch(new FinalizarExploracionCommand($ctx['exploracion']));
+
+        $fresh = $ctx['exploracion']->fresh();
+        $this->assertSame([1], $fresh->eventos->get('derrotados'));
+        $this->assertDatabaseHas('pokedex', ['pokemon_id' => 1, 'visto' => true]);
+        $this->assertDatabaseHas('player_inventory', [
+            'user_id' => $ctx['user']->id,
+            'item_key' => 'familia:'.$ctx['chainId'],
+            'cantidad' => 1,
+        ]);
+    }
+
+    public function test_resultado_aditivo_incluye_categoria_duracion_e_incidentes(): void
+    {
+        // RF-10: contrato aditivo del resultado.
+        $ctx = $this->crearContexto(['indefinido' => true]);
+        $ctx['exploracion']->update([
+            'eventos' => [
+                'bitacora' => [
+                    ['tipo' => 'encuentro', 'subtype' => 'normal', 'pokemon_id' => 1, 'resolucion' => 'victoria', 'timestamp' => now()->toIso8601String()],
+                    ['tipo' => 'contratiempo', 'subtype' => 'clima', 'resolucion' => 'mitigado', 'duration_loss' => 10, 'timestamp' => now()->toIso8601String()],
+                ],
+                'ultimo_procesado' => now()->toIso8601String(),
+            ],
+        ]);
+
+        app(CommandBus::class)->dispatch(new FinalizarExploracionCommand($ctx['exploracion']));
+
+        $resultado = $ctx['exploracion']->fresh()->eventos->get('resultado');
+        $this->assertSame('exito', $resultado['resultado']);
+        $this->assertArrayHasKey('duration_real', $resultado);
+        $this->assertArrayHasKey('tiempo_perdido', $resultado);
+        // assertEquals: el orden de claves JSON de jsonb no es parte del contrato.
+        $this->assertEquals(['encuentros' => 1, 'victorias' => 1, 'huidas' => 0, 'emboscadas' => 0, 'contratiempos' => 1], $resultado['incidentes']);
+    }
+
+    public function test_categoria_fracaso_aplica_multiplicador_reducido(): void
+    {
+        // RF-08: fracaso (0.25) reduce exp y caramelos (floor).
+        $ctx = $this->crearContexto(['indefinido' => true]);
+        Pokemon::where('id', 1)->update(['base_experience' => 5000]);
+        $ctx['exploracion']->update([
+            'eventos' => [
+                'bitacora' => [
+                    ['tipo' => 'encuentro', 'subtype' => 'normal', 'pokemon_id' => 1, 'resolucion' => 'victoria', 'timestamp' => now()->toIso8601String()],
+                    ['tipo' => 'encuentro', 'subtype' => 'normal', 'pokemon_id' => 1, 'resolucion' => 'derrota', 'duration_loss' => 10, 'timestamp' => now()->toIso8601String()],
+                    ['tipo' => 'encuentro', 'subtype' => 'normal', 'pokemon_id' => 1, 'resolucion' => 'derrota', 'duration_loss' => 10, 'timestamp' => now()->toIso8601String()],
+                    ['tipo' => 'encuentro', 'subtype' => 'normal', 'pokemon_id' => 1, 'resolucion' => 'derrota', 'duration_loss' => 10, 'timestamp' => now()->toIso8601String()],
+                ],
+                'ultimo_procesado' => now()->toIso8601String(),
+            ],
+        ]);
+
+        app(CommandBus::class)->dispatch(new FinalizarExploracionCommand($ctx['exploracion']));
+
+        $resultado = $ctx['exploracion']->fresh()->eventos->get('resultado');
+        $this->assertSame('fracaso', $resultado['resultado']);
+
+        // T = expDerrota(5000, 5) = 5000; 1 derrota × 0.25 = 1250 exp.
+        $this->assertSame(1250, $resultado['exp']);
+        $this->assertSame(1_250 + 1250, $ctx['user']->refresh()->experiencia);
     }
 }
