@@ -1096,3 +1096,67 @@ Ninguno. No se modifican Livewire ni backend.
   se usan `h3.h5` (clase Bootstrap `.h5` gana). En otras páginas, los headings con clases Tailwind
   `text-*` quedarán con estilo Bootstrap (font-weight 500, margin). Este es un riesgo documentado
   pero no se interviene porque el usuario no lo reportó y el alcance es "overrides mínimos".
+
+# Análisis Frontend — Aislar Bootstrap SOLO al combate de forma robusta (2026-08-30)
+
+## Contexto
+
+El commit `a83c40d` volvió Bootstrap a global (`resources/css/app.css`) para arreglar
+el dark mode, pero rompió otras páginas: dark mode en nav / registro de batalla / próximos
+turnos, `/equipos` (estilos, tipografía, búsqueda) y `/habitats` (bordes de niveles perdidos).
+El intento anterior de aislamiento (`ba92d32`, combate.css) falló porque el CSS **no se cargaba**
+(no había `@stack('styles')` en el layout ni inputs dedicados en Vite). Esta iteración aísla
+Bootstrap de forma robusta: archivos propios (combate.css/combate.js), inputs Vite dedicados,
+y stacks en el layout.
+
+## Vistas/componentes a tocar
+
+| Archivo | Acción |
+|---------|--------|
+| `resources/css/app.css` | QUITAR `@import bootstrap.min.css`, QUITAR estilos de combate y el parche `a { ... }`; CONSERVAR `@import "tailwindcss"`, `@custom-variant dark` y los overrides dark del body |
+| `resources/css/combate.css` | CREAR con Bootstrap + estilos de combate (los que Bootstrap no cubre) |
+| `resources/js/combate.js` | CREAR: `import './bootstrap'` PRIMERO (Livewire+Alpine, `$wire`), luego Bootstrap JS |
+| `vite.config.js` | Añadir inputs `combate.css` y `combate.js` |
+| `resources/views/layouts/app.blade.php` | Añadir `@stack('styles')` en `<head>` tras `@vite(app)` y antes de `@livewireStyles` (ya tiene `@stack('scripts')` en línea 88) |
+| `resources/views/combate_page.blade.php` | Añadir `@push('styles')` con combate.css, `@push('scripts')` con combate.js, y reestructurar a `@section('content')` |
+| `resources/views/livewire/partials/moves-panel.blade.php` | Ordenar `$currentMoves` por daño desc + empate alfabético (antes del `@if($phase==='player_move')`, después de `$maxDmg`). ⚠️ Se usa `uasort` y no `usort` para preservar claves originales (index = posición en `moves()`), porque `selectMove($index)` usa `moves()->get($index)` — ver `Combate.php:471`. |
+
+NO se tocan: `app/Livewire/Combate.php`, `src/`.
+
+## DTOs/contratos consumidos
+
+Ninguno nuevo. `$currentMoves`, `$maxDmg`, `$phase` ya se pasan al partial.
+
+## Estados UI cubiertos
+
+- **Otras páginas** (`/equipos`, `/habitats`, resto): SOLO Tailwind. Sin Bootstrap → dark mode,
+  tipografía, bordes y búsqueda correctos.
+- **Combate** (`/combate`): Bootstrap 5.3.8 + estilos de combate + Tailwind base (app.css sigue
+  presente vía layout). Bootstrap JS (tooltips/collapse/alert) solo aquí.
+- **Dark mode**: toggle del header (Alpine) sigue en todas las páginas; overrides `.dark` del
+  body en app.css se conservan y no dependen de Bootstrap.
+
+## Riesgos accesibilidad/UX
+
+- **Orden de carga**: en combate, `@stack('styles')` carga combate.css DESPUÉS de app.css →
+  los estilos de combate (y Bootstrap Reboot) ganan a Tailwind layered solo donde hay conflicto
+  (esperado). El `@custom-variant dark` de Tailwind no se ve afectado.
+- **`$wire`**: combate.js importa `./bootstrap` PRIMERO (arranca Livewire/Alpine) y luego
+  Bootstrap JS, evitando el error "Livewire not started" / "$wire is not defined".
+- **Carga de scripts**: `@push('scripts')` → `@stack('scripts')` (línea 88 del layout) → combate.js
+  al final del body, correcto.
+- **app.js intacto**: `resources/js/app.js` sigue importando `./bootstrap` + Bootstrap JS bundle
+  (solo comportamiento JS, sin CSS global); el aislamiento efectivo del CSS es vía combate.css.
+  No se modifica para minimizar cambios.
+
+## Tests
+
+- `php artisan test --compact --filter=Battle` → 150 passed.
+- `php artisan test --compact --filter=Combate` → 8 passed.
+- `npm run build` → manifest debe incluir `combate.css` y `combate.js`.
+
+## Verificación
+
+- HTML de `/combate`: carga app.css/app.js + combate.css/combate.js.
+- `/equipos` y `/habitats`: NO cargan combate.css (sin Bootstrap).
+- Dark mode OK en resto de páginas (toggle del header).

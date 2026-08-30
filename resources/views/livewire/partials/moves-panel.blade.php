@@ -46,6 +46,23 @@
         }
     @endphp
 
+    @php
+    // Ordenar movimientos: por daño descendente, empate → alfabético
+    // ATENCIÓN: uasort (NO usort) para preservar claves originales que coinciden
+    // con la posición en moves() — selectMove usa ese índice.
+    uasort($currentMoves, function ($a, $b) {
+        $dañoA = (float) ($a['daño'] ?? 0);
+        $dañoB = (float) ($b['daño'] ?? 0);
+        if ($dañoA !== $dañoB) {
+            return $dañoA < $dañoB ? 1 : -1; // descendente
+        }
+        return strcmp(
+            mb_strtolower($a['nombre'] ?? ''),
+            mb_strtolower($b['nombre'] ?? '')
+        ); // ascendente alfabético
+    });
+    @endphp
+
     @if($phase === 'player_move')
         <div class="d-grid gap-2">
             @foreach($currentMoves as $idx => $move)
