@@ -1,3 +1,50 @@
+@import "bootstrap/dist/css/bootstrap.min.css";
 @import "tailwindcss";
 
 @custom-variant dark (&:where(.dark, .dark *));
+
+/* ─── Combate (Bootstrap) — estilos que Bootstrap no cubre ─── */
+
+/* Bordes para pokémon seleccionado/targeted */
+.border-primary { border: 2px solid #0d6efd !important; }
+.cursor-pointer { cursor: pointer; }
+.cursor-not-allowed { cursor: not-allowed; }
+
+/* HP bars colores según % */
+.bg-hp-low { background-color: #dc3545; }
+.bg-hp-mid { background-color: #ffc107; }
+.bg-hp-high { background-color: #198754; }
+
+/* Badges de stage */
+.stage-up { background-color: #d1e7dd; color: #0f5132; }
+.stage-down { background-color: #f8d7da; color: #842029; }
+
+/* Weather banner — colores por clima (ver Src\Battle\Domain\Enums\TipoClima) */
+.weather-sequia { background: #78350f; color: #fcd34d; border-color: #92400e; }
+.weather-diluvio { background: #1e3a5f; color: #93c5fd; border-color: #1d4ed8; }
+.weather-niebla { background: #475569; color: #e2e8f0; border-color: #64748b; }
+.weather-granizo { background: #1e293b; color: #93c5fd; border-color: #475569; }
+.weather-tormenta_arena { background: #78350f; color: #fcd34d; border-color: #92400e; }
+.weather-turbulencias { background: #4c1d95; color: #d8b4fe; border-color: #6d28d9; }
+
+/* ─── Turno activo en la barra de turnos ─── */
+.active-turn { background: #fecc3833 !important; }
+
+/* ─── Objetivo seleccionado ─── */
+.targeted-card {
+    background: #ff000033;
+    border: 2px solid #dc3545 !important;
+}
+
+/* ─── Dark mode: restaurar fondo/texto de Tailwind cuando .dark está en <html> ───
+   Bootstrap Reboot (unlayered) define body { background-color: var(--bs-body-bg) }
+   y :root { color-scheme: light }, que en CSS cascade layers ganan a las utilities
+   de Tailwind 4 (layered). Estos overrides unlayered con !important/orden de carga
+   restablecen el dark mode del layout. */
+.dark { color-scheme: dark; }
+.dark body { background-color: #111827 !important; color: #f9fafb; }
+.dark header, .dark main { color: inherit; }
+
+/* Enlaces: restaurar preflight de Tailwind (color/text-decoration heredados) frente
+   al a { color: var(--bs-link-color); text-decoration: underline } de Bootstrap Reboot. */
+a { color: inherit; text-decoration: inherit; }

@@ -1006,3 +1006,93 @@ El combate usa `x-init` con `$wire.$watch` en `combate.blade.php`. `bootstrap.js
   compactar (título en la barra sigue dando el valor accesible).
 - Icono tipo con `alt` = label español.
 - Botones de ataque con `aria` implícita (button real) y `wire:click` intacto.
+
+---
+
+# Análisis Frontend — Volver a Bootstrap global + corregir dark mode (2026-08-30)
+
+## Contexto
+
+El usuario reporta: "Bootstrap ya esta instalado, pero por algun motivo en combate no lo usas,
+estaba bien antes, solo hacia falta corregir algunas cosas". El proyecto pasó por 2 iteraciones:
+
+1. **Primera** (commit `3140940`): Bootstrap global en `resources/css/app.css` + `resources/js/app.js`.
+   El combate se veía bien con Bootstrap. **PERO** rompió el dark mode de las otras páginas
+   (Pokédex, Hábitats) por la interacción de CSS cascade layers: Tailwind 4 coloca utilities en
+   `@layer utilities`, mientras que Bootstrap importado sin `@layer` queda **unlayered** — en CSS
+   cascade layers los estilos unlayered tienen prioridad sobre los layered, por lo que Bootstrap
+   Reboot (`body { background-color: var(--bs-body-bg) }`) ganaba a Tailwind `dark:bg-gray-900`
+   (layered) independientemente de especificidad.
+
+2. **Segunda / actual** (commit `ba92d32`): Se aisló Bootstrap a `combate.css` + `combate.js`,
+   cargados solo en `/combate` vía `@push('styles')`. El dark mode de otras páginas funcionaba,
+   pero el combate dejó de usar Bootstrap porque el aislamiento requería entradas Vite separadas
+   y el usuario notó la regresión.
+
+## Decisión
+
+Volver al enfoque global (iteración 1) y corregir el dark mode de las demás páginas con overrides
+mínimos de CSS, en lugar de depender de cascade layers.
+
+## Vistas/componentes a tocar
+
+| Archivo | Acción |
+|---------|--------|
+| `resources/css/app.css` | Restaurar `@import "bootstrap/dist/css/bootstrap.min.css";` antes de `@import "tailwindcss"`. Añadir todos los estilos de combate (desde `combate.css`). Añadir overrides dark mode. |
+| `resources/js/app.js` | Restaurar `import 'bootstrap/dist/js/bootstrap.bundle.min.js';` después de `import './bootstrap';` |
+| `vite.config.js` | Volver a `input: ['resources/css/app.css', 'resources/js/app.js']` (quitar combate.css/js) |
+| `resources/views/combate_page.blade.php` | Quitar `@push('styles')` con `@vite([...combate...])` |
+| `resources/views/layouts/app.blade.php` | Quitar `@stack('styles')` (solo lo usaba combate_page) |
+| `resources/css/combate.css` | **ELIMINAR** (ya no es necesario) |
+| `resources/js/combate.js` | **ELIMINAR** (ya no es necesario) |
+| `active/ANALISIS_FRONTEND.md` | Añadir esta sección |
+
+## DTOs/contratos consumidos
+
+Ninguno. No se modifican Livewire ni backend.
+
+## Estados UI cubiertos
+
+- **Light mode**: body hereda de Bootstrap Reboot (#fff, ligeramente distinto de `bg-gray-50` #f9fafb,
+  aceptable). El header y nav mantienen su color Tailwind porque Bootstrap Reboot no estiliza
+  `<header>` ni clases de texto con especificidad de elemento.
+- **Dark mode** (`.dark` en `<html>`): 
+  - `body` → `background-color: #111827 !important; color: #f9fafb;` (override unlayered con `!important`
+    gana a Bootstrap Reboot unlayered).
+  - `color-scheme: dark` en `.dark` (gana a Bootstrap `:root { color-scheme: light }` porque
+    ambos son unlayered y el nuestro va después en orden de carga).
+  - Los enlaces (`<a>`) del nav y resto del sitio recuperan `color: inherit; text-decoration: inherit`
+    (override unlayered restaura el preflight de Tailwind, ganando a Bootstrap Reboot `a { color: ... }`).
+- **Combate**: Bootstrap global disponible. El combate en dark mode tendrá body oscuro con cards
+  Bootstrap blancas (contraste aceptable). No hay `<a>` en las vistas de combate, por lo que el
+  override de enlaces no le afecta.
+- **Transiciones**: toggle `.dark` en html → body cambia instantáneamente (CSS puro, sin JS).
+- **Error**: no aplica (cambios son CSS estático, no hay fetching).
+
+## Tests
+
+- `php artisan test --compact --filter=Battle` → 150 passed (baseline confirmado).
+- `php artisan test --compact --filter=Combate` → 8 passed (3 de CombateLivewireTest + 5 de otros).
+- `npm run build` → debe regenerar manifest SIN entradas combate.css/js.
+- `php artisan view:cache` → compila todas las vistas sin errores.
+
+## Verificación build
+
+- `npm run build` regenera `public/build/manifest.json` con solo `resources/css/app.css` y
+  `resources/js/app.js`.
+- Tras build, `npm run dev` o `composer run dev` recarga Vite en modo dev.
+
+## Riesgos accesibilidad/UX
+
+- **Body light mode**: pierde `bg-gray-50` (#f9fafb) → blanco puro (#fff). Diferencia sutil.
+  No se considera regresión (user aceptó la iteración 1 así).
+- **Combate en dark mode**: fondo oscuro (#111827) en lugar de blanco (#fff) como en la iteración
+  de aislamiento. Las cards Bootstrap blancas contrastan bien. El cambio es aceptable y no afecta
+  la jugabilidad.
+- **Enlaces**: el override `a { color: inherit; text-decoration: inherit }` asegura que los links
+  del nav y otras páginas mantengan el estilo Tailwind previsto, en lugar de azul+subrayado de
+  Bootstrap Reboot.
+- **Headings**: Bootstrap Reboot `h1-h6` (unlayered) gana a Tailwind `text-*` (layered). En combate
+  se usan `h3.h5` (clase Bootstrap `.h5` gana). En otras páginas, los headings con clases Tailwind
+  `text-*` quedarán con estilo Bootstrap (font-weight 500, margin). Este es un riesgo documentado
+  pero no se interviene porque el usuario no lo reportó y el alcance es "overrides mínimos".
