@@ -56,3 +56,26 @@
 
 /* Restaurar comportamiento de enlaces del layout (Tailwind) frente a Reboot de Bootstrap */
 a { color: inherit; text-decoration: inherit; }
+
+/* ─── Fix nav del layout en dark mode ───
+   Bootstrap define `.bg-white { background-color: rgba(var(--bs-white-rgb),1) !important }`
+   UNLAYERED con `!important` → en CSS cascade layers, unlayered+important gana a la utilidad
+   Tailwind `dark:bg-gray-900` (layered) del header. Override explícito unlayered+important
+   que va después del import Bootstrap → gana. */
+.dark header {
+    background-color: #111827 !important;
+}
+
+/* Enlaces del nav en dark: restaurar los colores previstos (gray-400 normal, azul activo,
+   blanco en hover). Bootstrap Reboot/`a { color: inherit }` (unlayered) pisan a las
+   utilidades Tailwind (layered), así que los replicamos aquí. */
+.dark nav a {
+    color: #9ca3af;
+}
+.dark nav a:hover {
+    color: #ffffff;
+    background-color: #1f2937;
+}
+.dark nav a.text-blue-600 {
+    color: #60a5fa;
+}

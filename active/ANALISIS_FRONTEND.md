@@ -1244,3 +1244,117 @@ Ninguno. Cambio 100% CSS.
 3. Tests verdes.
 4. HTML de `/combate` con `class="dark"`: nav gris oscuro sin azul/subrayado; registro de
    batalla (`.card`, `.card-header.bg-body-tertiary`, `.list-group-item`) con fondo `#1f2937`.
+
+---
+
+# Análisis Frontend — 3 correcciones: nav dark mode, iconos en log, log al 50% (2026-08-30)
+
+## Fecha
+2026-08-30
+
+## Tarea 1 — Nav en combate: header background blanco en dark mode
+
+### Causa raíz (confirmada experimentalmente)
+
+Tras compilar y analizar el CSS real:
+
+1. **Header class**: `<header class="bg-white dark:bg-gray-900 ...">`.
+2. **app.css (Tailwind)**: genera `.bg-white { background-color: var(--color-white) }` y
+   `.dark\:bg-gray-900:where(.dark,.dark *) { background-color: var(--color-gray-900) }` ambos
+   en `@layer utilities`. El dark variant viene DESPUÉS de bg-white en el mismo layer → en dark mode,
+   dark:bg-gray-900 gana (misma especificidad, mismo layer, orden de código). Funciona en otras páginas.
+3. **combate.css (Bootstrap)**: Bootstrap 5.3.8 tiene `.bg-white { --bs-bg-opacity: 1; background-color: rgba(var(--bs-white-rgb), var(--bs-bg-opacity)) !important; }`
+   — es una utilidad Bootstrap **unlayered** con **`!important`**.
+4. **Cascade layers**: en CSS, los estilos unlayered tienen prioridad sobre los layered. Además,
+   Bootstrap `.bg-white` usa `!important`. Por tanto, en `/combate`, Bootstrap `.bg-white`
+   (unlayered + `!important`) **gana sobre** Tailwind `.dark\:bg-gray-900` (layered). El header
+   permanece blanco en dark mode.
+5. **Nav links**: `a { color: inherit; text-decoration: inherit; }` en combate.css (unlayered)
+   gana a las utilidades Tailwind `text-gray-600 dark:text-gray-400` (layered). Los links heredan
+   color del body → en dark mode body es #f9fafb (claro). Combinado con header blanco → el nav
+   entero se ve "blanco". La combinación de fondo blanco y texto claro produce la sensación de
+   "nav blanca".
+
+### Solución
+
+Añadir en `resources/css/combate.css` (al final, después del import Bootstrap):
+```css
+.dark header {
+    background-color: #111827 !important;
+}
+```
+Esto es unlayered + `!important`, mismo nivel de prioridad que Bootstrap `.bg-white` (unlayered +
+`!important`), pero viene después en el CSS → gana. También se añaden overrides para el nav
+link text en dark mode para restaurar el diseño gris-oscuro.
+
+### Archivos tocados
+- `resources/css/combate.css` — overrides `.dark header` y `.dark nav a`
+
+## Tarea 2 — Imágenes de pokémon en el registro de batalla
+
+### Vista
+`resources/views/livewire/partials/battle-log.blade.php`
+
+### Implementación
+- Antes de `@forelse`, construir `$iconsPorNombre = []` recorriendo `$team1` + `$team2`
+  (disponibles en la vista porque Combate.php las pasa al partial) → `['nombre' => 'icon']`.
+- En cada `$entry`, buscar qué nombres aparecen con `str_contains()` y mostrar `<img>`
+  con `style="width:20px;height:20px;object-fit:contain" class="me-1"`.
+- Si una entrada menciona pokémon de ambos equipos (ej. daño recibido), muestra ambos iconos.
+- Mantener `list-group-item` de Bootstrap y dark mode.
+
+### Estados UI
+- Entrada sin pokémon mencionados → texto sin icono (normal).
+- Entrada con 1 pokémon → 1 icono.
+- Entrada con 2+ pokémon → todos los iconos que coincidan.
+- Sin icono en el array (fallback) → no mostrar nada (sin imagen rota).
+
+## Tarea 3 — Registro de batalla debajo del combate, columna al 50%
+
+### Vista
+`resources/views/livewire/combate.blade.php`
+
+### Layout actual
+```blade
+<div class="row g-3">
+    <div class="col-lg-7">campo</div>
+    <div class="col-lg-5">movimientos</div>
+</div>
+@include('livewire.partials.battle-log')
+```
+
+### Cambio
+Envolver el `@include` en una fila con columna al 50%:
+```blade
+<div class="row g-3 mt-0">
+    <div class="col-lg-6">
+        @include('livewire.partials.battle-log')
+    </div>
+</div>
+```
+
+### Estados UI
+- Log al 50% en desktop, 100% en móvil (Bootstrap col-lg-6).
+- `mt-0` en la fila para no duplicar margin del `mt-3` del battle-log.
+
+## Archivos modificados
+
+| Archivo | Cambio |
+|---------|--------|
+| `resources/css/combate.css` | Overrides header/nav dark mode |
+| `resources/views/livewire/partials/battle-log.blade.php` | Iconos de pokémon en cada entrada |
+| `resources/views/livewire/combate.blade.php` | Log envuelto en col-lg-6 |
+| `active/ANALISIS_FRONTEND.md` | Esta sección |
+
+## Tests
+
+- `php artisan test --compact --filter=CombateLivewireTest` → debe seguir pasando.
+- `php artisan test --compact --filter=Battle` → 150 tests, deben seguir pasando.
+
+## Verificación
+
+- `npm run build` regenera combate.css con los overrides.
+- `php artisan view:cache` compila vistas.
+- Dark mode en /combate: header gris oscuro (no blanco), nav links legibles.
+- Battle log: iconos de pokémon junto a entradas que mencionan el nombre.
+- Battle log: al 50% de ancho en desktop.

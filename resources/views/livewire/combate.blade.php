@@ -27,6 +27,10 @@
         </div>
     </div>
 
-    {{-- BATTLE LOG --}}
-    @include('livewire.partials.battle-log')
+    {{-- BATTLE LOG (50% del ancho, debajo del combate) --}}
+    <div class="row g-3 mt-0">
+        <div class="col-lg-6">
+            @include('livewire.partials.battle-log')
+        </div>
+    </div>
 </div>
