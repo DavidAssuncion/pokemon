@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Feature;
 
-use Src\Battle\Infrastructure\FabricaBatallaMock;
+use Src\Battle\Domain\FabricaBatallaInterface;
 use Tests\TestCase;
 
 /**
@@ -15,7 +15,7 @@ class PokemonBattleTest extends TestCase
 {
     public function test_battle_with_fabrica_mock_creates_2_teams_3_combatants(): void
     {
-        $battle = (new FabricaBatallaMock())->createBattle();
+        $battle = $this->app->make(FabricaBatallaInterface::class)->createBattle();
 
         $this->assertCount(3, $battle->team1->combatants());
         $this->assertCount(3, $battle->team2->combatants());
@@ -25,7 +25,7 @@ class PokemonBattleTest extends TestCase
 
     public function test_combatants_have_moves_accessible_via_getter(): void
     {
-        $battle = (new FabricaBatallaMock())->createBattle();
+        $battle = $this->app->make(FabricaBatallaInterface::class)->createBattle();
 
         $first = $battle->team1->combatants()[0];
         $this->assertNotEmpty($first->pokemon()->moves()->all());

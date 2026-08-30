@@ -10,6 +10,7 @@ use Src\Battle\Domain\Enums\CategoriaMovimiento;
 use Src\Battle\Domain\Enums\EstadoPokemon;
 use Src\Battle\Domain\EquipoBatalla;
 use Src\Battle\Domain\FabricaBatallaInterface;
+use Src\Battle\Domain\Effects\FabricaEfectos;
 use Src\Battle\Domain\MovimientoBatalla;
 use Src\Battle\Domain\Posicion;
 use Src\Shared\Tipos\TipoPokemon;
@@ -20,6 +21,10 @@ use Src\Shared\Tipos\TipoPokemon;
  */
 class FabricaBatallaMock implements FabricaBatallaInterface
 {
+    public function __construct(
+        private readonly ?FabricaEfectos $fabricaEfectos = null,
+    ) {
+    }
     /** @return DatosPokemonBatalla[] */
     public function generateTeam1(): array
     {
@@ -159,8 +164,8 @@ class FabricaBatallaMock implements FabricaBatallaInterface
      */
     public function createBattle(): AgregadoBatalla
     {
-        $team1 = EquipoBatalla::fromData($this->generateTeam1(), 'Tú');
-        $team2 = EquipoBatalla::fromData($this->generateTeam2(), 'Rival');
+        $team1 = EquipoBatalla::fromData($this->generateTeam1(), 'Tú', $this->fabricaEfectos);
+        $team2 = EquipoBatalla::fromData($this->generateTeam2(), 'Rival', $this->fabricaEfectos);
 
         $battle = new AgregadoBatalla($team1, $team2);
         $battle->triggerBattleStartEffects();
@@ -170,6 +175,6 @@ class FabricaBatallaMock implements FabricaBatallaInterface
 
     public function crearEquiposMock(): EquipoBatalla
     {
-        return EquipoBatalla::fromData($this->generateTeam1(), 'Mock');
+        return EquipoBatalla::fromData($this->generateTeam1(), 'Mock', $this->fabricaEfectos);
     }
 }

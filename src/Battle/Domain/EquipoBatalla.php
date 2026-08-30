@@ -77,9 +77,12 @@ class EquipoBatalla
         ));
     }
 
-    /** @param DatosPokemonBatalla[] $members */
-    public static function fromData(array $members, string $name): self
+    /**
+     * @param  DatosPokemonBatalla[]  $members
+     */
+    public static function fromData(array $members, string $name, ?FabricaEfectos $fabricaEfectos = null): self
     {
+        $fabricaEfectos ??= new FabricaEfectos();
         $team = new self($name);
 
         foreach ($members as $member) {
@@ -110,7 +113,7 @@ class EquipoBatalla
 
             // Procesar efectos/habilidades via Factory
             foreach ($member->effectKeys as $key) {
-                $effect = FabricaEfectos::crearEfecto($key);
+                $effect = $fabricaEfectos->crearEfecto($key);
                 if ($effect !== null) {
                     $combatant->effects()->add($effect);
                 }
@@ -119,7 +122,7 @@ class EquipoBatalla
             // Procesar objeto equipado via Factory
             if ($member->item !== null) {
                 $combatant->setItem($member->item);
-                $itemEffect = FabricaEfectos::crearItem($member->item);
+                $itemEffect = $fabricaEfectos->crearItem($member->item);
                 if ($itemEffect !== null) {
                     $combatant->effects()->add($itemEffect);
                 }
