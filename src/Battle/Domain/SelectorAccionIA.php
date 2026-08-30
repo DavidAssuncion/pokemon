@@ -21,19 +21,19 @@ class SelectorAccionIA
 
         if ($actor->estaEnVanguardia()) {
             $vanguardiaEnemiga = $enemigo->vanguardiaAlive();
-            if (! empty($vanguardiaEnemiga)) {
+            if ($vanguardiaEnemiga !== []) {
                 return $vanguardiaEnemiga[array_rand($vanguardiaEnemiga)];
             }
 
             $retaguardiaEnemiga = $enemigo->retaguardiaAlive();
-            if (! empty($retaguardiaEnemiga)) {
+            if ($retaguardiaEnemiga !== []) {
                 return $retaguardiaEnemiga[array_rand($retaguardiaEnemiga)];
             }
         }
 
         if ($actor->estaEnRetaguardia()) {
             $todosEnemigos = $enemigo->combatientesVivos();
-            if (! empty($todosEnemigos)) {
+            if ($todosEnemigos !== []) {
                 return $todosEnemigos[array_rand($todosEnemigos)];
             }
         }
@@ -41,7 +41,7 @@ class SelectorAccionIA
         // Fallback: cualquier enemigo vivo
         $todosEnemigos = $enemigo->combatientesVivos();
 
-        return ! empty($todosEnemigos) ? $todosEnemigos[array_rand($todosEnemigos)] : null;
+        return $todosEnemigos !== [] ? $todosEnemigos[array_rand($todosEnemigos)] : null;
     }
 
     public function elegirMejorMovimiento(Combatiente $attacker, Combatiente $defender): ?MovimientoBatalla
