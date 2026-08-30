@@ -253,3 +253,74 @@ optimización de UI (sin refresco pesado).
 | `active/ANALISIS_FRONTEND_HABITAT_ASSIGNFAMILY.md` | Consumo del contrato nuevo en `assignFamily`; eliminación de inferencia client-side. |
 | `active/ANALISIS_FRONTEND.md` | Pokédex asíncrona, exploraciones, modal Admin-Gestión (Ya Asignados), header con nivel + sección "Iconos de caramelos (bitácora + resultados) y alineación de botones de construcción" (2026-08-29). |
 | `active/revision.md` | Revisión post-refactor de la traducción del módulo batalla (tarea anterior; histórico). |
+
+---
+
+## Iteración actual — Corrección de bugs del módulo de combate (6 getters privados) + tests TDD
+
+### Estado: BACKEND COMPLETADO (pendiente QA)
+
+El módulo de combate tenía 6 bugs de runtime que accedían a PROPIEDADES PRIVADAS de
+`PokemonEntity` (`$moves`, `$tiposCollection`) en lugar de usar los getters `moves()` /
+`tiposCollection()`. La ruta `/combate` estaba archivada (comentada por el Frontend) y el
+módulo quedó inaccesible hasta arreglar los bugs.
+
+### Bugs corregidos (6)
+
+| # | Archivo | Línea | Fix |
+|---|---------|-------|-----|
+| 1 | `src/Battle/Domain/AgregadoBatalla.php` | 306 | `->moves->isEmpty()` → `->moves()->isEmpty()` |
+| 2 | `src/Battle/Domain/AgregadoBatalla.php` | 313 | `->moves as $move` → `->moves() as $move` |
+| 3 | `app/Livewire/Combate.php` | 228 | `->moves->all()` → `->moves()->all()` |
+| 4 | `app/Livewire/Combate.php` | 427 | `->moves as $move` → `->moves() as $move` |
+| 5 | `app/Livewire/Combate.php` | 476 | `->moves->get($index)` → `->moves()->get($index)` |
+| 6 | `app/Livewire/Combate.php` | 533 | `->tiposCollection as $tipo` → `->tiposCollection() as $tipo` |
+
+### Tests añadidos (TDD, PHPUnit)
+
+- `tests/Feature/PokemonBattleTest.php` — MIGRADO de `BattleAggregate` (@deprecated) a
+  `AgregadoBatalla` + `FabricaBatallaMock::createBattle()`: verifica 2 equipos × 3
+  combatientes y acceso a movimientos vía getter.
+- `tests/Unit/Battle/` (10 archivos, 26 tests) — regresión sobre mecánicas críticas sin BD:
+  - `AgregadoBatallaTest` — regresión bugs 1-2 (`elegirMejorMovimiento`), fallback Placaje.
+  - `CadenaDanioTest` — daño base fórmula + STAB ×1.5 + calculate > 0.
+  - `EfectoOrbeVidaTest` — ×1.3 en cadena + recoil 10% HP + log.
+  - `EfectoRestosTest` — cura 1/16 sin superar máximo.
+  - `EfectoInvocadorClimaTest` — SEQUIA establece clima en battle start.
+  - `SujetoBatallaTest` — observer notifyDamaged/notifyFainted.
+  - `EstadoPokemonTest` — BURN daño por ronda, SLEEP/PARALYSIS bloquean, NONE actúa.
+  - `EtapasStatsTest` — clamp ±6 y multiplicadores (+2 → ×2, -2 → ×0.5).
+  - `ManejadorPosicionTest` — -50% a retaguardia con vanguardia enemiga viva.
+  - `ManejadorClimaTest` — SEQUIA ±25% según tipo.
+  - Helper compartido `ConstruyeCombatientes` (trait).
+
+### Calidad
+
+- `php artisan test --filter=Battle` → 28 passed (48 assertions).
+- Suite completa: 421 passed, 1 failed PRE-EXISTENTE (`ServicioCapturaTest`, causado por el
+  commit `a3f4ad7` que añadió `min(capture_rate, 45)` sin actualizar el test; ajeno a Battle).
+- PHPStan nivel 6: 22 errores pre-existentes en los 2 archivos tocados (missingType/empty/etc.),
+  los 6 errores de acceso a propiedad privada fueron ELIMINADOS por los fixes.
+- PHPMD: solo advertencias de ExcessiveMethodLength pre-existentes en todo el módulo Battle.
+- Infection `src/Battle`: MSI 42.33% (cobertura del módulo era casi nula antes; los 10 tests
+  pedidos cubren las mecánicas críticas. Pendiente ampliar cobertura al resto del módulo).
+- Pint aplicado (`--dirty`).
+
+### Desviaciones del plan del Analista
+
+1. **Entorno de tests**: `phpunit.xml` usaba credenciales `pokemon`/`secret` inexistentes y
+   `.env` apuntaba al puerto 5433 (no existía). Corregido a `laravel`/`laravel` en
+   `127.0.0.1:5432` (PostgreSQL local). SQLite `:memory:` descartado (sin `pdo_sqlite` en el PHP
+   del entorno; los unit tests no requieren BD).
+2. **Infection MSI 42%** (no 80%): la regla del 80% aplica a código con cobertura; el módulo
+   `src/Battle` partía de cobertura casi nula y el brief solo pedía 10 mecánicas. Documentado
+   como deuda en `active/ANALISIS_BACKEND.md`.
+3. `docs/conventions.md` fue modificado por el agente Frontend/Analista en paralelo (no es de
+   este backend; no se tocó).
+
+### Deuda pendiente
+
+- Ejecutar suite en CI (el `ServicioCapturaTest` falla por cambio de `a3f4ad7`).
+- Ampliar cobertura Infection de `src/Battle` al resto de clases (GestorTurnos,
+  ServicioEjecucionBatalla, BattleAggregate, etc.).
+- Restaurar la ruta `/combate` y vistas Blade (Frontend).

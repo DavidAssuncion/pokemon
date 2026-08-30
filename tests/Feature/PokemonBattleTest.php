@@ -4,58 +4,39 @@ declare(strict_types=1);
 
 namespace Tests\Feature;
 
-use Src\Battle\Domain\BattleAggregate;
-use Src\Battle\Domain\Enums\CategoriaMovimiento;
-use Src\Battle\Domain\MovimientoBatalla;
-use Src\Pokemon\Domain\PokemonEntity;
-use Src\Pokemon\Domain\Stats\StatsValue;
-use Src\Shared\Tipos\TipoPokemon;
-use Src\Shared\Tipos\TiposCollection;
+use Src\Battle\Infrastructure\FabricaBatallaMock;
 use Tests\TestCase;
 
+/**
+ * Test de batalla migrado de BattleAggregate (deprecated) a AgregadoBatalla + FabricaBatallaMock.
+ * Verifica creación correcta y acceso a movimientos vía getter.
+ */
 class PokemonBattleTest extends TestCase
 {
-    public BattleAggregate $battleAggregate;
-
-    protected function setUp(): void
+    public function test_battle_with_fabrica_mock_creates_2_teams_3_combatants(): void
     {
-        parent::setUp();
-        $this->battleAggregate = new BattleAggregate(
-            null,
-            $this->generarPokemonTest1(),
-            $this->generarPokemonTest2()
-        );
+        $battle = (new FabricaBatallaMock())->createBattle();
+
+        $this->assertCount(3, $battle->team1->combatants());
+        $this->assertCount(3, $battle->team2->combatants());
+        $this->assertSame('Tú', $battle->team1->name);
+        $this->assertSame('Rival', $battle->team2->name);
     }
 
-    public function test_battle_aggregate_creation(): void
+    public function test_combatants_have_moves_accessible_via_getter(): void
     {
-        $this->assertNotNull($this->battleAggregate->pokemon);
-        $this->assertNotNull($this->battleAggregate->pokemonRival);
-        $this->assertCount(1, $this->battleAggregate->pokemon->moves()->all());
-        $this->assertCount(1, $this->battleAggregate->pokemonRival->moves()->all());
-    }
+        $battle = (new FabricaBatallaMock())->createBattle();
 
-    private function generarPokemonTest1(): PokemonEntity
-    {
-        return new PokemonEntity(
-            new StatsValue(80, 100, 123, 122, 120, 80),
-            new StatsValue(),
-            [
-                new MovimientoBatalla('Planta', 90, TipoPokemon::PLANTA, CategoriaMovimiento::ESPECIAL),
-            ],
-            new TiposCollection([TipoPokemon::PLANTA, TipoPokemon::VENENO])
-        );
-    }
+        $first = $battle->team1->combatants()[0];
+        $this->assertNotEmpty($first->pokemon()->moves()->all());
 
-    private function generarPokemonTest2(): PokemonEntity
-    {
-        return new PokemonEntity(
-            new StatsValue(79, 83, 100, 85, 105, 78),
-            new StatsValue(),
-            [
-                new MovimientoBatalla('Agua', 90, TipoPokemon::AGUA, CategoriaMovimiento::ESPECIAL),
-            ],
-            new TiposCollection([TipoPokemon::AGUA])
-        );
+        // Verificar que todos los combatientes tienen movimientos accesibles
+        foreach ($battle->team1->combatants() as $combatant) {
+            $this->assertNotEmpty($combatant->pokemon()->moves()->all());
+        }
+
+        foreach ($battle->team2->combatants() as $combatant) {
+            $this->assertNotEmpty($combatant->pokemon()->moves()->all());
+        }
     }
 }

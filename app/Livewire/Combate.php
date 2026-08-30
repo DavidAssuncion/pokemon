@@ -225,7 +225,7 @@ class Combate extends Component
         if ($isPlayer) {
             $this->currentMoves = array_map(
                 fn (MovimientoBatalla $m) => DTOMovimientoBatalla::desdeDominio($m)->toLivewire(),
-                $actor->pokemon()->moves->all()
+                $actor->pokemon()->moves()->all()
             );
             $this->phase = 'player_target';
             $this->processing = false;
@@ -424,7 +424,7 @@ class Combate extends Component
         $this->selectedTargetRefId = $target->id();
 
         $previews = [];
-        foreach ($actor->pokemon()->moves as $move) {
+        foreach ($actor->pokemon()->moves() as $move) {
             $defenderTeam = $this->defenderTeam($battle, $target);
 
             $action = new AccionBatalla(
@@ -473,7 +473,7 @@ class Combate extends Component
             return;
         }
 
-        $move = $actor->pokemon()->moves->get($index);
+        $move = $actor->pokemon()->moves()->get($index);
         if (! $move instanceof MovimientoBatalla) {
             return;
         }
@@ -530,7 +530,7 @@ class Combate extends Component
 
     private function tieneStab(Combatiente $actor, MovimientoBatalla $move): bool
     {
-        foreach ($actor->pokemon()->tiposCollection as $tipo) {
+        foreach ($actor->pokemon()->tiposCollection() as $tipo) {
             if ($tipo === $move->tipo) {
                 return true;
             }

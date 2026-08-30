@@ -303,14 +303,14 @@ class AgregadoBatalla
 
     public function elegirMejorMovimiento(Combatiente $attacker, Combatiente $defender): ?MovimientoBatalla
     {
-        if ($attacker->pokemon()->moves->isEmpty()) {
+        if ($attacker->pokemon()->moves()->isEmpty()) {
             return new MovimientoBatalla('Placaje', 40, \Src\Shared\Tipos\TipoPokemon::NORMAL, \Src\Battle\Domain\Enums\CategoriaMovimiento::FISICO);
         }
 
         $best = null;
         $bestScore = -1;
 
-        foreach ($attacker->pokemon()->moves as $move) {
+        foreach ($attacker->pokemon()->moves() as $move) {
             if ($move instanceof MovimientoBatalla) {
                 $efectividad = $move->tipo->effectiveness($defender->pokemon());
                 $score = $efectividad * $move->potencia;
