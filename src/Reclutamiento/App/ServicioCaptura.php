@@ -7,6 +7,7 @@ namespace Src\Reclutamiento\App;
 use App\Jobs\ActualizarPokedexJob;
 use App\Jobs\CapturarPokemonJob;
 use App\Models\Pokemon;
+use Src\Shared\Domain\ProbabilidadCaptura;
 
 class ServicioCaptura
 {
@@ -26,8 +27,8 @@ class ServicioCaptura
             // Mark as sighted in pokedex
             ActualizarPokedexJob::dispatch($userId, $pokemonId, 'AVISTADO');
 
-            // Attempt capture based on capture_rate
-            $captureChance = min($pokemon->capture_rate ?? 45, 45) / 255;
+            // Attempt capture based on capture_rate (regla cap-45 unificada)
+            $captureChance = ProbabilidadCaptura::probabilidad($pokemon->capture_rate ?? 45);
             CapturarPokemonJob::dispatch($userId, $pokemonId, $captureChance);
         }
     }

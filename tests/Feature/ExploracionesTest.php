@@ -21,8 +21,13 @@ use Illuminate\Support\Facades\DB;
 use Mockery;
 use RuntimeException;
 use Src\Exploraciones\App\FinalizarExploracionCommand;
+use Src\Exploraciones\App\FinalizarExploracionHandler;
+use Src\Exploraciones\App\PersistirRecompensas;
 use Src\Exploraciones\App\ProcesarExploracionCommand;
+use Src\Exploraciones\Domain\CalculadorRecompensas;
+use Src\Exploraciones\Presentation\TransformadorResultadoExploracion;
 use Src\Shared\Bus\CommandBus;
+use Src\Shared\Bus\UnitOfWork;
 use Src\Shared\Domain\NivelHelper;
 use Tests\TestCase;
 
@@ -117,6 +122,25 @@ class ExploracionesTest extends TestCase
     }
 
     /**
+     * Vincula el handler de finalización con un proveedor de tirada de captura
+     * determinista (seam de test). El bus resuelve el handler del container,
+     * por lo que artisan('exploraciones:procesar') usará este aleatorio.
+     */
+    private function bindHandlerConAleatorio(callable $aleatorio): void
+    {
+        $this->app->instance(
+            FinalizarExploracionHandler::class,
+            new FinalizarExploracionHandler(
+                app(UnitOfWork::class),
+                app(CalculadorRecompensas::class),
+                app(PersistirRecompensas::class),
+                app(TransformadorResultadoExploracion::class),
+                $aleatorio,
+            ),
+        );
+    }
+
+    /**
      * @param  array<int, array<string, mixed>>  $bitacora
      * @return array<int, int>
      */
@@ -186,6 +210,10 @@ class ExploracionesTest extends TestCase
 
     public function test_servicio_reparte_todas_las_recompensas(): void
     {
+        // Fuerza captura (aleatorio 0.0) para no depender del RNG: con la regla
+        // cap-45 el capture_rate 255 ya no garantiza captura (máximo 17.6%).
+        $this->bindHandlerConAleatorio(fn (): float => 0.0);
+
         $ctx = $this->crearContexto(['duracion_horas' => 1, 'inicio' => now()->subHours(2)]);
 
         $this->artisan('exploraciones:procesar')->assertSuccessful();
@@ -402,6 +430,9 @@ class ExploracionesTest extends TestCase
 
     public function test_servicio_guarda_resumen_de_resultado_en_eventos(): void
     {
+        // Fuerza captura (aleatorio 0.0) para no depender del RNG (regla cap-45).
+        $this->bindHandlerConAleatorio(fn (): float => 0.0);
+
         $ctx = $this->crearContexto(['duracion_horas' => 1, 'inicio' => now()->subHours(2)]);
 
         $this->artisan('exploraciones:procesar')->assertSuccessful();
@@ -572,6 +603,10 @@ class ExploracionesTest extends TestCase
 
     public function test_reintento_tras_fallo_no_duplica_recompensas(): void
     {
+        // Fuerza NO captura (aleatorio 1.0): con la regla cap-45 el capture_rate 0
+        // ya no garantiza ausencia de captura (usa la tasa base 45 → 17.6%).
+        $this->bindHandlerConAleatorio(fn (): float => 1.0);
+
         $ctx = $this->crearExploracionParaFinalizar(captureRate: 0);
         $bus = app(CommandBus::class);
         $exploracion = $this->mockExploracionQueFallaAlMarcarRegreso($ctx['exploracion']);

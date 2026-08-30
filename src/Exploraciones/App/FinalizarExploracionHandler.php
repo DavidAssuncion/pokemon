@@ -7,6 +7,7 @@ namespace Src\Exploraciones\App;
 use App\Jobs\ActualizarPokedexJob;
 use App\Models\ExploracionActiva;
 use App\Models\Pokemon;
+use Closure;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Collection as BaseCollection;
 use LogicException;
@@ -17,6 +18,7 @@ use Src\Exploraciones\Presentation\TransformadorResultadoExploracion;
 use Src\Shared\Bus\Command;
 use Src\Shared\Bus\CommandHandler;
 use Src\Shared\Bus\UnitOfWork;
+use Src\Shared\Domain\ProbabilidadCaptura;
 
 /**
  * Reparte todas las recompensas de una exploración (pokedex, capturas,
@@ -28,12 +30,21 @@ use Src\Shared\Bus\UnitOfWork;
  */
 final class FinalizarExploracionHandler implements CommandHandler
 {
+    private readonly ?Closure $aleatorio;
+
+    /**
+     * @param  callable():float|null  $aleatorio  Proveedor determinista de la
+     *                                            tirada [0,1) para TEST (seam).
+     *                                            null → mt_rand(1,100)/100.
+     */
     public function __construct(
         private readonly UnitOfWork $unitOfWork,
         private readonly CalculadorRecompensas $calculador,
         private readonly PersistirRecompensas $persistir,
         private readonly TransformadorResultadoExploracion $transformador,
+        ?callable $aleatorio = null,
     ) {
+        $this->aleatorio = $aleatorio !== null ? Closure::fromCallable($aleatorio) : null;
     }
 
     public function handle(Command $command): mixed
@@ -58,7 +69,7 @@ final class FinalizarExploracionHandler implements CommandHandler
             $miembrosPorCadena,
         );
 
-        $this->repartirRecompensas($exploracion, $derrotados, $pokemons, $miembrosPorCadena, $idsDerrotados);
+        $this->repartirRecompensas($exploracion, $derrotados, $pokemons, $miembrosPorCadena, $idsDerrotados, $this->aleatorio);
 
         return null;
     }
@@ -73,6 +84,7 @@ final class FinalizarExploracionHandler implements CommandHandler
      * @param  Collection<int, Pokemon>  $pokemons
      * @param  array<int, Collection<int, Pokemon>>  $miembrosPorCadena
      * @param  list<int>  $idsDerrotados
+     * @param  callable():float|null  $aleatorio  Seam de test para la tirada [0,1).
      */
     private function repartirRecompensas(
         ExploracionActiva $exploracion,
@@ -80,11 +92,12 @@ final class FinalizarExploracionHandler implements CommandHandler
         Collection $pokemons,
         array $miembrosPorCadena,
         array $idsDerrotados,
+        ?callable $aleatorio = null,
     ): void {
         $usuario = $exploracion->user;
         $recompensas = $this->calculador->calcular(
             $derrotados,
-            $this->rollAleatorio(),
+            $this->rollAleatorio($aleatorio),
             $usuario !== null ? $usuario->nivel() : 1,
         );
 
@@ -192,11 +205,18 @@ final class FinalizarExploracionHandler implements CommandHandler
     }
 
     /**
-     * Tirada de captura: chance = min(1, capture_rate / 255).
+     * Tirada de captura (regla cap-45, dominio ProbabilidadCaptura):
+     * chance = min(tasa, 45) / 255 con tasa = captureRate > 0 ? captureRate : 45
+     * (máximo 17.6% por derrota). Seam de test: permite inyectar un proveedor
+     * de aleatorio [0,1) determinista; por defecto mt_rand(1, 100) / 100.
+     *
+     * @param  callable():float|null  $aleatorio
      */
-    private function rollAleatorio(): callable
+    private function rollAleatorio(?callable $aleatorio = null): callable
     {
-        return fn (PokemonDerrotado $pokemon): bool => mt_rand(1, 100) / 100 <= min(1.0, $pokemon->captureRate / 255);
+        $aleatorio = $aleatorio ?? fn (): float => mt_rand(1, 100) / 100;
+
+        return fn (PokemonDerrotado $pokemon): bool => ProbabilidadCaptura::intentar($pokemon->captureRate, $aleatorio);
     }
 
     /**

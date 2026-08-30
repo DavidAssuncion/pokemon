@@ -519,3 +519,56 @@ migración).
 - **Pint**: pass.
 - **Infection** sobre el transformador: Covered Code MSI 100% (33 mutantes generados, 33 matados).
 - **Archivos del otro agente NO tocados**: `resources/views/exploraciones/index.blade.php` y `tests/Feature/ExploracionesViewTest.php` no aparecen en `git status`.
+
+---
+
+# Análisis Backend — Cap de captura en exploraciones (cap-captura-exploraciones, priority 60)
+
+## Fecha
+2026-08-30
+
+## Decisión de centralización
+
+**SÍ se centraliza.** La regla cap-45 (`chance = min(tasa, 45) / 255`, `tasa = rate>0 ? rate : 45`,
+máx. 17.6%) está confirmada por el cliente y ya vive inline en `ServicioCaptura` (línea 30). El
+handler de Exploraciones usa una regla DIVERGENTE (`min(1.0, rate/255)`, sin cap → 100%) y
+`ProbabilidadCaptura` (Reclutamiento) también (`min(1.0, rate/255)`), aunque esta última NO tiene
+consumidores en producción (solo su test).
+
+Para eliminar la divergencia que el brief exige, se crea `src/Shared/Domain/ProbabilidadCaptura.php`
+(regla unificada cap-45) y lo usan los 3 sitios:
+- `FinalizarExploracionHandler::rollAleatorio()` (Exploraciones).
+- `ServicioCaptura::procesarCapturas()` (Reclutamiento) — reemplaza el inline.
+- `Src\Reclutamiento\Domain\ProbabilidadCaptura` → se elimina (sin uso en producción) y su test
+  pasa a cubrir la clase Shared. Al tocar Reclutamiento activo la "centralización" que lo permite.
+
+## Archivos a tocar
+
+| Archivo | Acción |
+|---------|--------|
+| `src/Shared/Domain/ProbabilidadCaptura.php` | NUEVO: regla cap-45 unificada (`probabilidad`, `intentar`). |
+| `src/Exploraciones/App/FinalizarExploracionHandler.php` | Cap-45 en `rollAleatorio()` + seam inyectable `?callable $aleatorio` (constructor + `rollAleatorio(?callable)` + propagación por `repartirRecompensas`). |
+| `src/Reclutamiento/App/ServicioCaptura.php` | Usar `ProbabilidadCaptura::probabilidad()` en vez del inline. |
+| `src/Reclutamiento/Domain/ProbabilidadCaptura.php` | ELIMINAR (sin uso en producción; regla ahora en Shared). |
+
+## Tests
+
+- `tests/Unit/Reclutamiento/ProbabilidadCapturaTest.php` → redirigido a la clase Shared, con la
+  nueva semántica cap-45 (255 ya no es 1.0 → 17.6%). Se añaden bordes solicitados:
+  255/190/45→17.6%, 30→11.8%, 3→1.2%, 0/negativo→17.6%, éxito/fallo con aleatorio 0.17/0.18.
+- `tests/Unit/Exploraciones/CalculadorRecompensasTest.php` → NO cambia (inyecta su propio callable).
+- `tests/Feature/ExploracionesTest.php`:
+  - `test_servicio_reparte_todas_las_recompensas` y `test_servicio_guarda_resumen_de_resultado_en_eventos`
+    → inyectan el seam con `fn () => 0.0` vía `app()->instance(FinalizarExploracionHandler::class, ...)`.
+  - `test_reintento_tras_fallo_no_duplica_recompensas` → inyecta `fn () => 1.0` (forzar NO captura)
+    porque con cap-45 el captureRate 0 ya no es garantía de no captura.
+- `tests/Feature/ServicioCapturaTest.php` → `190/255` → `45/255` (cap), fija el failure
+  pre-existente (`a3f4ad7`).
+
+## Riesgos
+1. CaptureRate 0 ya NO garantiza no-captura (con cap-45 → 17.6%): tests que lo asumían deben
+   inyectar callable determinista.
+2. `FinalizarExploracionHandler` es `final`: no se puede mockear con Mockery; el seam se
+   introduce por constructor (injectable en vez de mock) y se conecta por `app()->instance()`.
+3. Dependencias del handler son resolubles por el container (UnitOfWork bound en
+   AppServiceProvider; calculador/persistir/transformador auto-resolubles).
