@@ -26,6 +26,8 @@ class AgregadoBatalla
 
     private ?CalculadorDañoClima $calculadorClima = null;
 
+    private ?SelectorAccionIA $selectorAccion = null;
+
     public function __construct(
         public readonly EquipoBatalla $team1,
         public readonly EquipoBatalla $team2,
@@ -83,6 +85,11 @@ class AgregadoBatalla
     private function getCalculadorClima(): CalculadorDañoClima
     {
         return $this->calculadorClima ??= new CalculadorDañoClima();
+    }
+
+    private function getSelectorAccion(): SelectorAccionIA
+    {
+        return $this->selectorAccion ??= new SelectorAccionIA();
     }
 
     // ─── Log ──────────────────────────────────────────────────
@@ -188,7 +195,7 @@ class AgregadoBatalla
 
     private function ejecutarAccion(Combatiente $actor): void
     {
-        $objetivo = $this->elegirObjetivo($actor);
+        $objetivo = $this->getSelectorAccion()->elegirObjetivoPara($this, $actor);
         if ($objetivo === null) {
             return;
         }
@@ -238,62 +245,11 @@ class AgregadoBatalla
      */
     public function elegirObjetivoPara(Combatiente $actor): ?Combatiente
     {
-        return $this->elegirObjetivo($actor);
-    }
-
-    private function elegirObjetivo(Combatiente $actor): ?Combatiente
-    {
-        // Determinar equipo enemigo según a qué equipo pertenece el actor
-        $enemigo = $this->team1->findCombatant($actor) !== null
-            ? $this->team2
-            : $this->team1;
-
-        if ($actor->estaEnVanguardia()) {
-            $vanguardiaEnemiga = $enemigo->vanguardiaAlive();
-            if (! empty($vanguardiaEnemiga)) {
-                return $vanguardiaEnemiga[array_rand($vanguardiaEnemiga)];
-            }
-
-            $retaguardiaEnemiga = $enemigo->retaguardiaAlive();
-            if (! empty($retaguardiaEnemiga)) {
-                return $retaguardiaEnemiga[array_rand($retaguardiaEnemiga)];
-            }
-        }
-
-        if ($actor->estaEnRetaguardia()) {
-            $todosEnemigos = $enemigo->combatientesVivos();
-            if (! empty($todosEnemigos)) {
-                return $todosEnemigos[array_rand($todosEnemigos)];
-            }
-        }
-
-        // Fallback: cualquier enemigo vivo
-        $todosEnemigos = $enemigo->combatientesVivos();
-
-        return ! empty($todosEnemigos) ? $todosEnemigos[array_rand($todosEnemigos)] : null;
+        return $this->getSelectorAccion()->elegirObjetivoPara($this, $actor);
     }
 
     public function elegirMejorMovimiento(Combatiente $attacker, Combatiente $defender): ?MovimientoBatalla
     {
-        if ($attacker->pokemon()->moves()->isEmpty()) {
-            return new MovimientoBatalla('Placaje', 40, \Src\Shared\Tipos\TipoPokemon::NORMAL, \Src\Battle\Domain\Enums\CategoriaMovimiento::FISICO);
-        }
-
-        $best = null;
-        $bestScore = -1;
-
-        foreach ($attacker->pokemon()->moves() as $move) {
-            if ($move instanceof MovimientoBatalla) {
-                $efectividad = $move->tipo->effectiveness($defender->pokemon());
-                $score = $efectividad * $move->potencia;
-
-                if ($score > $bestScore) {
-                    $bestScore = $score;
-                    $best = $move;
-                }
-            }
-        }
-
-        return $best;
+        return $this->getSelectorAccion()->elegirMejorMovimiento($attacker, $defender);
     }
 }
