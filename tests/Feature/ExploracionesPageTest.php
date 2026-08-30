@@ -223,10 +223,6 @@ class ExploracionesPageTest extends TestCase
 
         $resultado = $terminadas[0]['resultado'];
         $this->assertSame(
-            [['pokemon_id' => $pokemons['bulbasaur']->id, 'nombre' => 'bulbasaur']],
-            $resultado['avistados'],
-        );
-        $this->assertSame(
             [['pokemon_id' => $pokemons['bulbasaur']->id, 'nombre' => 'bulbasaur', 'cantidad' => 2]],
             $resultado['capturados'],
         );
@@ -250,7 +246,6 @@ class ExploracionesPageTest extends TestCase
         $terminadas = $this->get('/exploraciones')->viewData('terminadas');
         $this->assertCount(1, $terminadas);
         $this->assertSame([
-            'avistados' => [],
             'capturados' => [],
             'caramelos_familia' => [],
             'caramelos_ev' => [],

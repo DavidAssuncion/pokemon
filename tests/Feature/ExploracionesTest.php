@@ -412,20 +412,9 @@ class ExploracionesTest extends TestCase
 
         $this->assertIsArray($resultado);
 
-        // Avistados: todas las especies derrotadas, ordenadas por pokemon_id
-        $idsAvistados = array_column($resultado['avistados'], 'pokemon_id');
-        $idsEsperados = array_keys($conteos);
-        sort($idsAvistados);
-        sort($idsEsperados);
-        $this->assertSame($idsEsperados, $idsAvistados);
-        foreach ($resultado['avistados'] as $avistado) {
-            $this->assertSame(
-                Pokemon::findOrFail($avistado['pokemon_id'])->name,
-                $avistado['nombre'],
-            );
-        }
-
         // Capturados: capture_rate 255 → chance 1 → todos los derrotados capturados
+        $idsEsperados = array_keys($conteos);
+        sort($idsEsperados);
         $idsCapturados = array_column($resultado['capturados'], 'pokemon_id');
         sort($idsCapturados);
         $this->assertSame($idsEsperados, $idsCapturados);

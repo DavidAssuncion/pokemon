@@ -175,9 +175,6 @@ class ExploracionActivaController extends Controller
 
         foreach ($terminadas as $exp) {
             $resultado = $exp->eventos['resultado'] ?? [];
-            foreach ($resultado['avistados'] ?? [] as $avistado) {
-                $ids[] = (int) $avistado['pokemon_id'];
-            }
             foreach ($resultado['capturados'] ?? [] as $capturado) {
                 $ids[] = (int) $capturado['pokemon_id'];
             }
@@ -246,15 +243,6 @@ class ExploracionActivaController extends Controller
     {
         $resultado = $exp->eventos['resultado'] ?? [];
 
-        $avistados = [];
-        foreach ($resultado['avistados'] ?? [] as $avistado) {
-            $id = (int) $avistado['pokemon_id'];
-            $avistados[] = [
-                'pokemon_id' => $id,
-                'nombre' => $avistado['nombre'] ?? $nombres[$id] ?? null,
-            ];
-        }
-
         $capturados = [];
         foreach ($resultado['capturados'] ?? [] as $capturado) {
             $id = (int) $capturado['pokemon_id'];
@@ -306,7 +294,6 @@ class ExploracionActivaController extends Controller
             'nivel' => $exp->nivel,
             'min_lvl' => $this->minLvlDelHabitat($habitat, $exp->nivel),
             'resultado' => [
-                'avistados' => $avistados,
                 'capturados' => $capturados,
                 'caramelos_familia' => $caramelosFamilia,
                 'caramelos_ev' => $caramelosEv,

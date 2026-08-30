@@ -450,3 +450,72 @@ en `toDomain()`. Coherente con la vista `moves-panel` que ya hace `TipoPokemon::
 - `php artisan test --compact tests/Feature/PokemonBattleTest.php` → 2 passed.
 - PHPStan: 185 errores ANTES → 183 DESPUÉS (`Cannot call constructor` eliminado; -2 por el fix del DTO).
 - Suite completa: 559 passed / 1 failed pre-existente (`ServicioCapturaTest`, ajeno).
+
+---
+
+# Análisis Backend — Eliminar `avistados` del contrato de resultados de exploración
+
+## Fecha
+2026-08-30
+
+## Contexto
+
+La clave `avistados` (lista de especies derrotadas) se genera en el transformador y se consume
+en el controller y tests, pero la vista la ignora. Se elimina del contrato de resultados de
+futuras finalizaciones (JSONs ya persistidos conservan la clave por compatibilidad; no hay
+migración).
+
+## Archivos a tocar
+
+| Archivo | Acción | Propósito |
+|---------|--------|-----------|
+| `src/Exploraciones/Presentation/TransformadorResultadoExploracion.php` | 3 cambios | Eliminar `'avistados'` del array de `desde()`, método `avistados()`, línea del PHPDoc shape |
+| `app/Http/Controllers/ExploracionActivaController.php` | 3 cambios | Eliminar `foreach ($resultado['avistados'] ?? [])` en `nombresPokemon()`, construcción de `$avistados` y clave `'avistados'` en `toTerminada()` |
+| `tests/Feature/ExploracionesPageTest.php` | 2 cambios | Eliminar aserciones de `avistados` en `test_terminadas_incluyen_resumen_de_resultado` y `'avistados' => []` en `test_terminada_sin_resultado_devuelve_resumen_vacio` |
+| `tests/Feature/ExploracionesTest.php` | 1 cambio | Eliminar sección que valida `avistados` (ids + nombres) en `test_servicio_guarda_resumen_de_resultado_en_eventos` |
+
+## Archivos que NO se tocan
+
+| Archivo | Razón |
+|---------|-------|
+| `tests/Feature/ExploracionesTransformadorTest.php` | No referencia avistados (confirmado: solo caramelos_familia) |
+| `tests/Feature/ExploracionesViewTest.php` | Asignado a otro agente en paralelo |
+| `resources/views/exploraciones/index.blade.php` | Asignado a otro agente en paralelo |
+
+## Tests TDD (rojo → verde)
+
+### 1. `tests/Feature/ExploracionesPageTest.php`
+- `test_terminadas_incluyen_resumen_de_resultado`: eliminar el bloque que aserta `$resultado['avistados']`
+- `test_terminada_sin_resultado_devuelve_resumen_vacio`: eliminar `'avistados' => []` del array esperado
+
+### 2. `tests/Feature/ExploracionesTest.php`
+- `test_servicio_guarda_resumen_de_resultado_en_eventos`: eliminar la sección de avistados (ids + nombres)
+
+### 3. `tests/Feature/ExploracionesTransformadorTest.php`
+- Ejecutar para confirmar que sigue verde (no referencia avistados)
+
+## Riesgos
+
+1. **JSONs ya persistidos**: Los `eventos['resultado']` guardados en BD conservan la clave
+   `avistados`. No hay migración. El controller leía con `?? []` (fallback seguro) y la vista
+   la ignora. Al eliminar la lectura del controller, el fallback se elimina pero no se rompe
+   nada porque la vista no la consume.
+2. **Paralelismo con otro agente**: Se verifica que NO se toca `ExploracionesViewTest.php`
+   ni la vista Blade.
+
+## Verificación
+
+- `php artisan test --compact tests/Feature/ExploracionesPageTest.php tests/Feature/ExploracionesTransformadorTest.php tests/Feature/ExploracionesTest.php`
+- `php artisan test --compact --filter=Exploraciones`
+- `vendor/bin/pint --dirty --format agent`
+- `vendor/bin/phpstan analyse`
+
+## Resultado
+
+- **TDD**: rojo confirmado (`test_terminada_sin_resultado_devuelve_resumen_vacio` fallaba con la clave `avistados` aún emitida) → verde tras los cambios.
+- **Tests**: 40 passed (174 assertions) en los 3 archivos; 88 passed (331 assertions) con `--filter=Exploraciones`.
+- **PHPStan nivel 6**: total 183 errores (línea base pre-existente documentada; sin errores nuevos).
+- **PHPMD**: solo `ExcessiveMethodLength` pre-existentes en otros archivos del módulo Exploraciones.
+- **Pint**: pass.
+- **Infection** sobre el transformador: Covered Code MSI 100% (33 mutantes generados, 33 matados).
+- **Archivos del otro agente NO tocados**: `resources/views/exploraciones/index.blade.php` y `tests/Feature/ExploracionesViewTest.php` no aparecen en `git status`.

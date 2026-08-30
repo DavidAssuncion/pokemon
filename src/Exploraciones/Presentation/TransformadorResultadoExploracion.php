@@ -25,7 +25,6 @@ final class TransformadorResultadoExploracion
      *                                              miembros de cada familia, keyed por
      *                                              evolution_chain_id (columna).
      * @return array{
-     *     avistados: list<array{pokemon_id: int, nombre: string}>,
      *     capturados: list<array{pokemon_id: int, nombre: string, cantidad: int}>,
      *     caramelos_familia: list<array{evolution_chain_id: int, nombre: string|null, pokemon_id: int|null, cantidad: int}>,
      *     caramelos_ev: list<array{stat: int, cantidad: int}>,
@@ -39,29 +38,12 @@ final class TransformadorResultadoExploracion
         ?array $miembrosPorCadena = null,
     ): array {
         return [
-            'avistados' => $this->avistados($pokemons),
             'capturados' => $this->capturados($recompensas->capturas, $pokemons),
             'caramelos_familia' => $this->caramelosFamilia($recompensas->caramelosFamilia, $pokemons, $miembrosPorCadena),
             'caramelos_ev' => $this->caramelosEv($recompensas->caramelosEv),
             'caramelos_tipo' => $this->caramelosTipo($recompensas->caramelosTipo),
             'exp' => $recompensas->expTotal,
         ];
-    }
-
-    /**
-     * @param  Collection<int, Pokemon>  $pokemons
-     * @return list<array{pokemon_id: int, nombre: string}>
-     */
-    private function avistados(Collection $pokemons): array
-    {
-        return $pokemons
-            ->sortBy('id')
-            ->map(fn (Pokemon $pokemon): array => [
-                'pokemon_id' => $pokemon->id,
-                'nombre' => $pokemon->name,
-            ])
-            ->values()
-            ->all();
     }
 
     /**
