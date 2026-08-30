@@ -6,11 +6,11 @@ namespace Src\Battle\Infrastructure;
 
 use Src\Battle\Domain\AgregadoBatalla;
 use Src\Battle\Domain\DatosPokemonBatalla;
+use Src\Battle\Domain\Effects\FabricaEfectos;
 use Src\Battle\Domain\Enums\CategoriaMovimiento;
 use Src\Battle\Domain\Enums\EstadoPokemon;
 use Src\Battle\Domain\EquipoBatalla;
 use Src\Battle\Domain\FabricaBatallaInterface;
-use Src\Battle\Domain\Effects\FabricaEfectos;
 use Src\Battle\Domain\MovimientoBatalla;
 use Src\Battle\Domain\Posicion;
 use Src\Shared\Tipos\TipoPokemon;
@@ -79,7 +79,7 @@ class FabricaBatallaMock implements FabricaBatallaInterface
                 spAtk: 95,
                 spDef: 100,
                 speed: 61,
-                tipos: [TipoPokemon::SINIESTRO],
+                tipos: [TipoPokemon::ROCA, TipoPokemon::SINIESTRO],
                 posicion: Posicion::VANGUARDIA,
                 moves: [
                     new MovimientoBatalla('Roca Afilada', 100, TipoPokemon::ROCA, CategoriaMovimiento::FISICO),

@@ -8,7 +8,6 @@ use Src\Battle\Domain\Chain\CadenaDanio;
 use Src\Battle\Domain\Enums\TipoClima;
 use Src\Battle\Domain\Observer\SujetoBatalla;
 use Src\Battle\Presentation\DTOAccionBatalla;
-use Src\Shared\Tipos\TipoPokemon;
 
 class AgregadoBatalla
 {
@@ -24,6 +23,8 @@ class AgregadoBatalla
     private ?DTOAccionBatalla $pendingAction = null;
 
     private TipoClima $weather = TipoClima::NONE;
+
+    private ?CalculadorDañoClima $calculadorClima = null;
 
     public function __construct(
         public readonly EquipoBatalla $team1,
@@ -79,6 +80,11 @@ class AgregadoBatalla
         $this->weather = $weather;
     }
 
+    private function getCalculadorClima(): CalculadorDañoClima
+    {
+        return $this->calculadorClima ??= new CalculadorDañoClima();
+    }
+
     // ─── Log ──────────────────────────────────────────────────
 
     public function agregarLog(string $entry): void
@@ -131,7 +137,7 @@ class AgregadoBatalla
             }
 
             // Daño por clima (granizo / tormenta arena)
-            $dañoClima = $this->calcularDañoClima($c);
+            $dañoClima = $this->getCalculadorClima()->calcular($c, $this->weather);
             if ($dañoClima > 0) {
                 $c->setHpActual(max(0, $c->hpActual() - $dañoClima));
                 $climaLabel = match ($this->weather) {
@@ -145,40 +151,6 @@ class AgregadoBatalla
                 }
             }
         }
-    }
-
-    /**
-     * Calcula el daño por clima para un combatiente.
-     * Granizo: daño 6.25% a los que no son HIELO.
-     * Tormenta arena: daño 6.25% a los que no son ROCA/TIERRA/ACERO.
-     */
-    private function calcularDañoClima(Combatiente $c): float
-    {
-        if (! $c->estaVivo()) {
-            return 0;
-        }
-
-        if ($this->weather === TipoClima::GRANIZO) {
-            foreach ($c->pokemon()->tiposCollection() as $tipo) {
-                if ($tipo === TipoPokemon::HIELO) {
-                    return 0;
-                }
-            }
-
-            return max(1, $c->pokemon()->battleStats()->hp * 0.0625);
-        }
-
-        if ($this->weather === TipoClima::TORMENTA_ARENA) {
-            foreach ($c->pokemon()->tiposCollection() as $tipo) {
-                if (in_array($tipo, [TipoPokemon::ROCA, TipoPokemon::TIERRA, TipoPokemon::ACERO], true)) {
-                    return 0;
-                }
-            }
-
-            return max(1, $c->pokemon()->battleStats()->hp * 0.0625);
-        }
-
-        return 0;
     }
 
     public function ejecutarBatalla(): array

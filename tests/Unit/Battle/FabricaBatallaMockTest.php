@@ -103,7 +103,7 @@ class FabricaBatallaMockTest extends TestCase
         $this->assertSame(95, $tyranitar->spAtk);
         $this->assertSame(100, $tyranitar->spDef);
         $this->assertSame(61, $tyranitar->speed);
-        $this->assertSame([TipoPokemon::SINIESTRO], $tyranitar->tipos);
+        $this->assertSame([TipoPokemon::ROCA, TipoPokemon::SINIESTRO], $tyranitar->tipos);
         $this->assertSame(['sandstorm_summoner'], $tyranitar->effectKeys);
         $this->assertSame('leftovers', $tyranitar->item);
     }
