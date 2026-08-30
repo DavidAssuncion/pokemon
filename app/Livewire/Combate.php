@@ -91,7 +91,7 @@ class Combate extends Component
 
     // ─── Persistencia (sesión) ───────────────────────────────
 
-    private const SESSION_VERSION = 2;
+    private const SESSION_VERSION = 3;
 
     private function getBattle(): ?AgregadoBatalla
     {
@@ -293,7 +293,7 @@ class Combate extends Component
             actorId: $actor->id(),
             defenderId: $defenderId,
             attackerNombre: $actor->nombre(),
-            move: DTOMovimientoBatalla::desdeDominio($movimiento)->toLivewire(),
+            move: DTOMovimientoBatalla::desdeDominio($movimiento),
         ));
 
         $this->setAnimState($actor, $targetForAnim, $movimiento);
@@ -329,7 +329,7 @@ class Combate extends Component
             return;
         }
 
-        $movimiento = DTOMovimientoBatalla::fromLivewire($pending->move)->toDomain();
+        $movimiento = $pending->move->toDomain();
 
         // Movimientos autodirigidos (ej: Danza Espada) siempre apuntan al actor
         if ($movimiento->tieneSelfStatChanges() && ! $movimiento->tieneTargetStatChanges()) {
@@ -486,7 +486,7 @@ class Combate extends Component
             actorId: $actor->id(),
             defenderId: $defender->id(),
             attackerNombre: $actor->nombre(),
-            move: DTOMovimientoBatalla::desdeDominio($move)->toLivewire(),
+            move: DTOMovimientoBatalla::desdeDominio($move),
         ));
 
         $this->selectedMoveIdx = null;

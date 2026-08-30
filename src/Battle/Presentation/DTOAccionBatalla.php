@@ -18,7 +18,7 @@ class DTOAccionBatalla implements Wireable
         public readonly string $actorId,
         public readonly string $defenderId,
         public readonly string $attackerNombre,
-        public readonly array $move,
+        public readonly DTOMovimientoBatalla $move,
     ) {
     }
 
@@ -29,7 +29,7 @@ class DTOAccionBatalla implements Wireable
             'actorId' => $this->actorId,
             'defenderId' => $this->defenderId,
             'attackerNombre' => $this->attackerNombre,
-            'move' => $this->move,
+            'move' => $this->move->toLivewire(),
         ];
     }
 
@@ -40,7 +40,7 @@ class DTOAccionBatalla implements Wireable
             actorId: $value['actorId'],
             defenderId: $value['defenderId'],
             attackerNombre: $value['attackerNombre'] ?? '',
-            move: $value['move'],
+            move: DTOMovimientoBatalla::fromLivewire($value['move']),
         );
     }
 }
