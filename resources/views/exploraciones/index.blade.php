@@ -217,6 +217,11 @@
                                 Requiere Nv {{ $terminada['min_lvl'] }}
                             </span>
                         @endif
+                        @php $exp = $resultado['exp'] ?? 0; @endphp
+                        <span class="px-2 py-0.5 bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 text-[10px] font-bold rounded-full"
+                              aria-label="Experiencia ganada: {{ $exp }} puntos">
+                            +{{ $exp }} EXP
+                        </span>
                     </div>
                     <button
                         @click="cerrarResultados({{ $terminada['id'] }})"
@@ -228,33 +233,19 @@
 
                 <div class="p-4">
                     @if(!empty($resultado))
-                        <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                            @if(!empty($resultado['avistados']))
-                                <div class="bg-gray-50 dark:bg-gray-900/50 rounded-lg p-3">
-                                    <p class="text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wide mb-2">Avistados</p>
-                                    <div class="flex flex-wrap gap-3">
-                                        @foreach($resultado['avistados'] as $avistado)
-                                            <div class="text-center" title="{{ $avistado['nombre'] }}">
-                                                <img
-                                                    src="/images/iconos_webp/{{ $avistado['pokemon_id'] }}.webp"
-                                                    loading="lazy"
-                                                    decoding="async"
-                                                    alt="{{ $avistado['nombre'] }}"
-                                                    class="w-16 h-16 object-contain"
-                                                    onerror="this.style.display='none'"
-                                                >
-                                                <p class="text-[10px] text-gray-500 dark:text-gray-400 truncate w-16">{{ $avistado['nombre'] }}</p>
-                                            </div>
-                                        @endforeach
-                                    </div>
-                                </div>
-                            @endif
+                        @php
+                            $capturados = $resultado['capturados'] ?? [];
+                            $caramelosFamilia = $resultado['caramelos_familia'] ?? [];
+                            $caramelosEv = $resultado['caramelos_ev'] ?? [];
+                            $caramelosTipo = $resultado['caramelos_tipo'] ?? [];
+                        @endphp
 
-                            @if(!empty($resultado['capturados']))
+                        <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                            @if(!empty($capturados))
                                 <div class="bg-gray-50 dark:bg-gray-900/50 rounded-lg p-3">
                                     <p class="text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wide mb-2">Capturados</p>
                                     <div class="flex flex-wrap gap-3">
-                                        @foreach($resultado['capturados'] as $capturado)
+                                        @foreach($capturados as $capturado)
                                             <div class="text-center" title="{{ $capturado['nombre'] }}">
                                                 <div class="relative inline-block">
                                                     <img
@@ -276,85 +267,65 @@
                                 </div>
                             @endif
 
-                            @if(!empty($resultado['caramelos_familia']))
-                                <div class="bg-gray-50 dark:bg-gray-900/50 rounded-lg p-3">
-                                    <p class="text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wide mb-2">Caramelos de familia</p>
-                                    <ul class="space-y-1.5">
-                                        @foreach($resultado['caramelos_familia'] as $caramelo)
-                                            <li class="flex items-center justify-between gap-2 text-sm">
-                                                <span class="flex items-center gap-2 text-gray-700 dark:text-gray-300 min-w-0">
-                                                    <img
-                                                        src="/images/candy_pokemon/{{ $caramelo['pokemon_id'] ?? 0 }}.webp"
-                                                        loading="lazy"
-                                                        decoding="async"
-                                                        alt="Caramelo de {{ $caramelo['nombre'] }}"
-                                                        title="Caramelo de {{ $caramelo['nombre'] }}"
-                                                        class="w-8 h-8 object-contain shrink-0"
-                                                        onerror="{{ $candyFallback }}"
-                                                    >
-                                                    <span class="truncate">Caramelos de {{ $caramelo['nombre'] }}</span>
-                                                </span>
-                                                <span class="font-semibold text-gray-900 dark:text-white shrink-0">×{{ $caramelo['cantidad'] }}</span>
-                                            </li>
-                                        @endforeach
-                                    </ul>
+                            @php
+                                $tieneRecompensas = !empty($caramelosFamilia) || !empty($caramelosEv) || !empty($caramelosTipo);
+                            @endphp
+                            @if($tieneRecompensas)
+                                <div class="lg:{{ empty($capturados) ? 'col-span-3' : 'col-span-2' }} bg-gray-50 dark:bg-gray-900/50 rounded-lg p-3">
+                                    @if(!empty($caramelosFamilia))
+                                        <div class="flex flex-wrap gap-3">
+                                            @foreach($caramelosFamilia as $candy)
+                                                @php
+                                                    $hasPoke = !empty($candy['pokemon_id']);
+                                                    $candy['src'] = $hasPoke
+                                                        ? "/images/candy_pokemon/{$candy['pokemon_id']}.webp"
+                                                        : '/images/candy_pokemon/0.webp';
+                                                    $candy['alt'] = 'Caramelo de ' . ($candy['nombre'] ?? 'Pokémon');
+                                                @endphp
+                                                @include('exploraciones._caramelo', ['caramelo' => $candy])
+                                            @endforeach
+                                        </div>
+                                        @if(!empty($caramelosEv) || !empty($caramelosTipo))
+                                            <hr class="my-3 border-gray-200 dark:border-gray-700">
+                                        @endif
+                                    @endif
+
+                                    @if(!empty($caramelosEv))
+                                        <div class="flex flex-wrap gap-3">
+                                            @foreach($caramelosEv as $candy)
+                                                @php
+                                                    $slug = $candy['stat_slug'] ?? null;
+                                                    $candy['src'] = !empty($slug)
+                                                        ? "/images/candy_ev/{$slug}.webp"
+                                                        : '/images/candy_ev/.webp';
+                                                    $candy['alt'] = 'Caramelo EV ' . ($candy['stat_nombre'] ?? '');
+                                                    $candy['nombre'] = $candy['stat_nombre'] ?? null;
+                                                    $candy['nombre_js'] = !empty($candy['stat_nombre'])
+                                                        ? null
+                                                        : 'statName(' . ($candy['stat'] ?? 0) . ')';
+                                                @endphp
+                                                @include('exploraciones._caramelo', ['caramelo' => $candy])
+                                            @endforeach
+                                        </div>
+                                        @if(!empty($caramelosTipo))
+                                            <hr class="my-3 border-gray-200 dark:border-gray-700">
+                                        @endif
+                                    @endif
+
+                                    @if(!empty($caramelosTipo))
+                                        <div class="flex flex-wrap gap-3">
+                                            @foreach($caramelosTipo as $candy)
+                                                @php
+                                                    $candy['src'] = '/images/candy_type/' . ($candy['slug'] ?? '') . '.webp';
+                                                    $candy['alt'] = $candy['tipo'] ?? 'Caramelo de tipo';
+                                                    $candy['nombre'] = $candy['tipo'] ?? null;
+                                                @endphp
+                                                @include('exploraciones._caramelo', ['caramelo' => $candy])
+                                            @endforeach
+                                        </div>
+                                    @endif
                                 </div>
                             @endif
-
-                            @if(!empty($resultado['caramelos_ev']))
-                                <div class="bg-gray-50 dark:bg-gray-900/50 rounded-lg p-3">
-                                    <p class="text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wide mb-2">Caramelos EV</p>
-                                    <ul class="space-y-1.5">
-                                        @foreach($resultado['caramelos_ev'] as $caramelo)
-                                            <li class="flex items-center justify-between gap-2 text-sm">
-                                                <span class="flex items-center gap-2 text-gray-700 dark:text-gray-300 min-w-0">
-                                                    <img
-                                                        src="/images/candy_ev/{{ $caramelo['stat_slug'] ?? '' }}.webp"
-                                                        loading="lazy"
-                                                        decoding="async"
-                                                        alt="Caramelo EV {{ $caramelo['stat_nombre'] }}"
-                                                        title="Caramelo EV {{ $caramelo['stat_nombre'] }}"
-                                                        class="w-8 h-8 object-contain shrink-0"
-                                                        onerror="{{ $candyFallback }}"
-                                                    >
-                                                    <span class="truncate">Caramelo EV {{ $caramelo['stat_nombre'] }}</span>
-                                                </span>
-                                                <span class="font-semibold text-gray-900 dark:text-white shrink-0">×{{ $caramelo['cantidad'] }}</span>
-                                            </li>
-                                        @endforeach
-                                    </ul>
-                                </div>
-                            @endif
-
-                            @if(!empty($resultado['caramelos_tipo']))
-                                <div class="bg-gray-50 dark:bg-gray-900/50 rounded-lg p-3">
-                                    <p class="text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wide mb-2">Caramelos de tipo</p>
-                                    <div class="flex flex-wrap gap-3">
-                                        @foreach($resultado['caramelos_tipo'] as $caramelo)
-                                            <div class="text-center" title="{{ $caramelo['tipo'] }}">
-                                                <div class="relative inline-block">
-                                                    <img
-                                                        src="/images/candy_type/{{ $caramelo['slug'] }}.webp"
-                                                        loading="lazy"
-                                                        decoding="async"
-                                                        alt="{{ $caramelo['tipo'] }}"
-                                                        class="w-12 h-12 object-contain"
-                                                        onerror="{{ $candyFallback }}"
-                                                    >
-                                                    <span class="absolute -top-1.5 -right-1.5 px-1.5 py-0.5 bg-amber-600 text-white text-[10px] font-bold rounded-full">
-                                                        ×{{ $caramelo['cantidad'] }}
-                                                    </span>
-                                                </div>
-                                                <p class="text-[10px] text-gray-500 dark:text-gray-400 truncate w-12">{{ $caramelo['tipo'] }}</p>
-                                            </div>
-                                        @endforeach
-                                    </div>
-                                </div>
-                            @endif
-
-                            <div class="bg-indigo-50 dark:bg-indigo-900/20 rounded-lg p-3 flex items-center justify-center">
-                                <p class="text-sm font-bold text-indigo-700 dark:text-indigo-300">+{{ $resultado['exp'] ?? 0 }} EXP</p>
-                            </div>
                         </div>
                     @else
                         <p class="text-sm text-gray-400 dark:text-gray-500 text-center py-4">Sin resultados</p>

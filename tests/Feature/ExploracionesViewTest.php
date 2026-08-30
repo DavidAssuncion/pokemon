@@ -69,7 +69,10 @@ class ExploracionesViewTest extends TestCase
                             ['evolution_chain_id' => 1, 'nombre' => 'Rattata', 'cantidad' => 12],
                         ],
                         'caramelos_ev' => [
-                            ['stat' => 2, 'stat_nombre' => 'Ataque', 'cantidad' => 8],
+                            ['stat' => 2, 'stat_nombre' => 'Ataque', 'stat_slug' => 'atk', 'cantidad' => 8],
+                        ],
+                        'caramelos_tipo' => [
+                            ['tipo' => 'Fuego', 'slug' => 'fuego', 'cantidad' => 5],
                         ],
                         'exp' => 250,
                     ],
@@ -104,13 +107,19 @@ class ExploracionesViewTest extends TestCase
         $view->assertSee('Equipo B', false);
         $view->assertSee('Cerrar resultados', false);
         $view->assertSee('/exploraciones/${id}/cerrar', false);
-        $view->assertSee('Avistados', false);
+        // "Avistados" ya NO se renderiza (bloque eliminado)
+        $view->assertDontSee('Avistados');
+        // Capturados: bloque col 1 intacto (icono + badge verde ×N + nombre)
         $view->assertSee('Capturados', false);
         $view->assertSee('×3', false);
-        $view->assertSee('Caramelos de familia', false);
+        // Recompensas: caramelos familia/EV/tipo en formato compacto
+        $view->assertSee('Rattata', false);
         $view->assertSee('×12', false);
-        $view->assertSee('Caramelos EV', false);
         $view->assertSee('Ataque', false);
+        $view->assertSee('×8', false);
+        $view->assertSee('Fuego', false);
+        $view->assertSee('×5', false);
+        // EXP movida al header
         $view->assertSee('+250 EXP', false);
     }
 
@@ -243,5 +252,128 @@ class ExploracionesViewTest extends TestCase
         // Bloques vacíos omitidos y EXP 0 visible
         $view->assertSee('+0 EXP', false);
         $view->assertSee('Sin resultados', false);
+    }
+
+    /**
+     * Los caramelos de familia/EV/tipo usan el formato compacto unificado:
+     * imagen w-12 + badge circular ámbar ×N + nombre debajo. Con fallback al
+     * placeholder si falta pokemon_id/stat_slug y al nombre vía statName si falta.
+     */
+    public function test_exploraciones_view_unifies_candy_compact_format(): void
+    {
+        $view = $this->view('exploraciones.index', [
+            'activas' => [],
+            'terminadas' => [
+                [
+                    'id' => 33,
+                    'equipo' => 'Equipo B',
+                    'habitat' => 'Lago Místico',
+                    'nivel' => 2,
+                    'resultado' => [
+                        // avistados presentes → debe IGNORARSE sin error
+                        'avistados' => [
+                            ['pokemon_id' => 19, 'nombre' => 'Rattata'],
+                        ],
+                        'capturados' => [],
+                        'caramelos_familia' => [
+                            // sin pokemon_id ni nombre → placeholder + sin nombre
+                            ['evolution_chain_id' => 5, 'nombre' => null, 'pokemon_id' => null, 'cantidad' => 7],
+                            ['evolution_chain_id' => 1, 'nombre' => 'Rattata', 'pokemon_id' => 19, 'cantidad' => 12],
+                        ],
+                        'caramelos_ev' => [
+                            // sin stat_slug ni stat_nombre → fallback statName + placeholder
+                            ['stat' => 3, 'stat_nombre' => null, 'stat_slug' => null, 'cantidad' => 4],
+                        ],
+                        'caramelos_tipo' => [
+                            ['tipo' => 'Agua', 'slug' => 'agua', 'cantidad' => 2],
+                        ],
+                        'exp' => 100,
+                    ],
+                ],
+            ],
+        ]);
+
+        // No se renderiza Avistados (defensivo)
+        $view->assertDontSee('Avistados');
+
+        // Caramelo familia con datos → imagen + badge amber + nombre
+        $view->assertSee('/images/candy_pokemon/19.webp', false);
+        $view->assertSee('Rattata', false);
+        $view->assertSee('×12', false);
+        // Caramelo familia sin pokemon_id → placeholder y badge
+        $view->assertSee('/images/candy_pokemon/0.webp', false);
+        $view->assertSee('×7', false);
+        // Caramelo EV sin slug → placeholder + badge ámbar; nombre fallback statName(3)
+        $view->assertSee('/images/candy_ev/.webp', false);
+        $view->assertSee('statName(3)', false);
+        $view->assertSee('×4', false);
+        // Caramelo tipo → ruta candy_type + nombre
+        $view->assertSee('/images/candy_type/agua.webp', false);
+        $view->assertSee('Agua', false);
+        $view->assertSee('×2', false);
+
+        // No se muestran etiquetas de sección de caramelos
+        $view->assertDontSee('Caramelos de familia');
+        $view->assertDontSee('Caramelos EV');
+        $view->assertDontSee('Caramelos de tipo');
+    }
+
+    /**
+     * Sin capturados, las recompensas ocupan toda la anchura; sin recompensas,
+     * solo se muestra el bloque de capturados; sin ambos, "Sin resultados".
+     */
+    public function test_exploraciones_view_layout_handles_empty_candy_sides(): void
+    {
+        // Solo capturados (recompensas vacías → no se renderizan)
+        $soloCapturados = $this->view('exploraciones.index', [
+            'activas' => [],
+            'terminadas' => [
+                [
+                    'id' => 31,
+                    'equipo' => 'Equipo X',
+                    'habitat' => 'Bosque',
+                    'nivel' => 1,
+                    'resultado' => [
+                        'capturados' => [
+                            ['pokemon_id' => 19, 'nombre' => 'Rattata', 'cantidad' => 2],
+                        ],
+                        'caramelos_familia' => [],
+                        'caramelos_ev' => [],
+                        'caramelos_tipo' => [],
+                        'exp' => 30,
+                    ],
+                ],
+            ],
+        ]);
+        $soloCapturados->assertSee('Capturados', false);
+        $soloCapturados->assertSee('Rattata', false);
+        $soloCapturados->assertSee('×2', false);
+        $soloCapturados->assertDontSee('lg:col-span-3', false);
+        $soloCapturados->assertDontSee('Agua', false);
+
+        // Solo recompensas (sin capturados) → recompensas a col-span-3
+        $soloRecompensas = $this->view('exploraciones.index', [
+            'activas' => [],
+            'terminadas' => [
+                [
+                    'id' => 30,
+                    'equipo' => 'Equipo Y',
+                    'habitat' => 'Caverna',
+                    'nivel' => 1,
+                    'resultado' => [
+                        'capturados' => [],
+                        'caramelos_familia' => [
+                            ['evolution_chain_id' => 1, 'nombre' => 'Rattata', 'pokemon_id' => 19, 'cantidad' => 3],
+                        ],
+                        'caramelos_ev' => [],
+                        'caramelos_tipo' => [],
+                        'exp' => 10,
+                    ],
+                ],
+            ],
+        ]);
+        $soloRecompensas->assertSee('Rattata', false);
+        $soloRecompensas->assertSee('lg:col-span-3', false);
+        $soloRecompensas->assertDontSee('Capturados');
     }
 }
