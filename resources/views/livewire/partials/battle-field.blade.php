@@ -38,7 +38,7 @@
         {{-- COL 1: Tú — Retaguardia --}}
         <div class="col-6 col-md-3">
             <div class="position-label text-uppercase small text-muted fw-semibold mb-1">Tú · Retaguardia</div>
-            <div class="d-flex flex-column align-items-center">
+            <div class="d-flex flex-column align-items-stretch">
                 @foreach($team1 as $idx => $p)
                     @if($p['posicion'] === 'retaguardia')
                         @include('livewire._pokemon-card', ['p' => $p, 'idx' => $idx, 'team' => 0])
@@ -50,7 +50,7 @@
         {{-- COL 2: Tú — Vanguardia --}}
         <div class="col-6 col-md-3">
             <div class="position-label text-uppercase small text-muted fw-semibold mb-1">Tú · Vanguardia</div>
-            <div class="d-flex flex-column align-items-center">
+            <div class="d-flex flex-column align-items-stretch">
                 @foreach($team1 as $idx => $p)
                     @if($p['posicion'] === 'vanguardia')
                         @include('livewire._pokemon-card', ['p' => $p, 'idx' => $idx, 'team' => 0])
@@ -62,7 +62,7 @@
         {{-- COL 3: Rival — Vanguardia --}}
         <div class="col-6 col-md-3">
             <div class="position-label text-uppercase small text-muted fw-semibold mb-1">Rival · Vanguardia</div>
-            <div class="d-flex flex-column align-items-center">
+            <div class="d-flex flex-column align-items-stretch">
                 @foreach($team2 as $idx => $p)
                     @if($p['posicion'] === 'vanguardia')
                         @include('livewire._pokemon-card', ['p' => $p, 'idx' => $idx, 'team' => 1])
@@ -74,7 +74,7 @@
         {{-- COL 4: Rival — Retaguardia --}}
         <div class="col-6 col-md-3">
             <div class="position-label text-uppercase small text-muted fw-semibold mb-1">Rival · Retaguardia</div>
-            <div class="d-flex flex-column align-items-center">
+            <div class="d-flex flex-column align-items-stretch">
                 @foreach($team2 as $idx => $p)
                     @if($p['posicion'] === 'retaguardia')
                         @include('livewire._pokemon-card', ['p' => $p, 'idx' => $idx, 'team' => 1])

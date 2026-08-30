@@ -1358,3 +1358,86 @@ Envolver el `@include` en una fila con columna al 50%:
 - Dark mode en /combate: header gris oscuro (no blanco), nav links legibles.
 - Battle log: iconos de pokémon junto a entradas que mencionan el nombre.
 - Battle log: al 50% de ancho en desktop.
+---
+
+# Análisis Frontend — 3 correcciones del combate: HP bars overflow, columnas 8-4, tarjetas con fondo y mismo tamaño (2026-08-30)
+
+## Contexto
+
+El usuario reporta 3 cambios en `/combate` (Laravel 12, Livewire 4, Bootstrap 5 vía
+`resources/css/combate.css` cargado solo en combate + Tailwind 4 global via `app.css`):
+1. "Las hp bars estan fuera de la hp bar" → overflow del `card-body p-2` de `_pokemon-card.blade.php`.
+2. "vamos a cambiar a 8 - 4 los tamaños, que quitamos a ataques y le ubimos al combate" → columnas `col-lg-7/col-lg-5` → `col-lg-8/col-lg-4`.
+3. "Los card deben tener fondo, y deben ser del mismo tamaño" → fondo explícito + ancho uniforme.
+
+NO toco `app/Livewire/Combate.php`, `src/`, `resources/js/`. Solo vistas Blade + combate.css.
+
+## Vistas/componentes a tocar
+
+| Archivo | Cambio |
+|---------|--------|
+| `resources/views/livewire/_pokemon-card.blade.php` | p-3, w-100, min-w-0 en barreras, flex-shrink-0/text-truncate en labels/números |
+| `resources/views/livewire/combate.blade.php` | `col-lg-7`→`col-lg-8`, `col-lg-5`→`col-lg-4` |
+| `resources/views/livewire/partials/battle-field.blade.php` | 4× `align-items-center` → `align-items-stretch` |
+| `resources/css/combate.css` | `.pokemon-card { overflow:hidden; background:#fff; min-height:96px }`, `.dark .pokemon-card`, `.pokemon-card .progress { max-width:100% }` |
+| `active/ANALISIS_FRONTEND.md` | Esta sección |
+
+## Tarea 1 — Overflow de las HP bars
+
+### Causa raíz
+El `card-body p-2` (8px) era muy justo para el contenido (icono 64px + nombre + 2 barreras con
+labels/números + vida). El contenedor medio `flex-grow-1 min-w-0` permitía encoger, pero las
+barreras (`w-50` ×2 + `gap-1`) y los números podían desbordar horizontalmente; sin
+`overflow:hidden` en la tarjeta el contenido se salía visualmente.
+
+### Corrección (elegida: p-3 + overflow hidden, la más contenedora)
+1. `card-body p-2` → `card-body p-3` (16px de padding; más aire para labels/barras/números).
+2. `.pokemon-card { overflow: hidden }` en combate.css → si algo desborda se recorta dentro de la tarjeta (nunca se sale).
+3. Contenedor de barreras `d-flex gap-1 mt-1` → `+ min-w-0` (permite encoger dentro del flex padre).
+4. `.pokemon-card .progress { max-width: 100% }` en combate.css → ninguna barra (10px/8px) supera el ancho del contenedor.
+5. Labels `barrier-label` → `+ text-truncate`; números `barrier-num` → `+ flex-shrink-0` (no se comprimen ni empujan); `hp-num` ya tenía `flex-shrink-0`.
+
+## Tarea 2 — Columnas 8-4
+
+`combate.blade.php`: el campo pasa a `col-lg-8` y los ataques a `col-lg-4`. El moves-panel usa
+`d-grid gap-2` con botones `w-100` → se adapta al 25% (las badges de la 2ª línea hacen
+`flex-wrap`). En móvil se mantiene apilado al 100%.
+
+## Tarea 3 — Fondo + mismo tamaño
+
+### Fondo explícito
+- Light: `.pokemon-card { background-color: #fff }` (Bootstrap ya lo daba vía `--bs-card-bg`, se hace explícito).
+- Dark: `.dark .pokemon-card { background-color: #1f2937 }` (refuerza el override existente de `--bs-card-bg` en `.dark`).
+
+### Mismo tamaño
+- `battle-field.blade.php`: los 4 contenedores de columna `d-flex flex-column align-items-center`
+  → `d-flex flex-column align-items-stretch`: las tarjetas se estiran a todo el ancho de su columna.
+- `_pokemon-card.blade.php`: la card gana `w-100` (ancho completo de la columna).
+- `min-height: 96px` en `.pokemon-card`: floor uniforme de altura; como Bootstrap `.card-body`
+  tiene `flex: 1 1 auto`, el body se estira y el contenido (con `align-items-center`) queda
+  centrado verticalmente. Todas las tarjetas del campo quedan del mismo ancho (columnas iguales
+  `col-6 col-md-3`) y misma altura al descanso (icono 64px + padding p-3 ≈ 96px; con badges
+  extras durante la batalla crecen por contenido, aceptado).
+
+## Estados UI cubiertos
+- Pokemon card: light (fondo blanco) / dark (fondo #1f2937); sin overflow de barreras/vida en
+  ambos; ancho completo; debilitado (opacity-50), target seleccionado (targeted-card), selectable,
+  bloqued, acting — intactos (clases condicionales conservadas).
+- Battle field: 4 columnas iguales con tarjetas estiradas (1 o 2 tarjetas por columna).
+- Columnas main: 8-4 desktop, apiladas en móvil.
+
+## Tests (verificación; no se modifican)
+- `php artisan test --compact --filter=Combate` → 8 (CombateLivewireTest + otros).
+- `php artisan test --compact --filter=Battle` → 150 (dominio; las vistas no intervienen).
+- `php artisan view:cache` (compila vistas).
+- `npm run build` (regenera combate.css en `public/build`).
+
+## Riesgos accesibilidad/UX
+- `overflow:hidden` en la card: no afecta a `title` (tooltip nativo del navegador) ni al borde
+  `targeted-card`/`border-warning` (borde del propio elemento). El contenido desbordado se recorta
+  (solución, no regresión).
+- `text-truncate` en labels: labels cortos ("DEF"/"DEF.ESP") sin cambio visible; solo truncan si el
+  ancho es insuficiente. Los números (fuente accesible) quedan siempre visibles con `flex-shrink-0`.
+- `min-height:96px`: a lo sumo ~2px de aire extra al descanso (altura natural ≈ 96px); no añade
+  espacio vacío perceptible.
+- Moves a `col-lg-4` (25%): botones `w-100` con `flex-wrap` en la 2ª línea → sin overflow horizontal.

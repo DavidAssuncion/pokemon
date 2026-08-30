@@ -10,10 +10,10 @@
     $itemName = $itemNames[$p['item']] ?? $p['item'];
     $itemIcon = $itemIcons[$p['item']] ?? '📦';
 @endphp
-<div class="card mb-2 shadow-sm pokemon-card {{ $p['alive'] ? '' : 'opacity-50' }} {{ $p['refId'] === $actingRefId ? 'border border-warning' : '' }} {{ $p['refId'] === $selectedTargetRefId ? 'targeted-card' : '' }} {{ $selectable ? 'cursor-pointer border-primary' : '' }} {{ $blocked ? 'opacity-50 cursor-not-allowed' : '' }}"
+<div class="card w-100 mb-2 shadow-sm pokemon-card {{ $p['alive'] ? '' : 'opacity-50' }} {{ $p['refId'] === $actingRefId ? 'border border-warning' : '' }} {{ $p['refId'] === $selectedTargetRefId ? 'targeted-card' : '' }} {{ $selectable ? 'cursor-pointer border-primary' : '' }} {{ $blocked ? 'opacity-50 cursor-not-allowed' : '' }}"
      @if($selectable) wire:click="previewTarget({{ $team }}, {{ $idx }})" role="button" tabindex="0" @endif
      @if($p['refId'] === $animDefenderId) x-ref="defender-{{ $idx }}" @endif>
-    <div class="card-body p-2 d-flex align-items-center gap-2">
+    <div class="card-body p-3 d-flex align-items-center gap-2">
         <img src="{{ $p['icon'] }}" alt="{{ $p['nombre'] }}" class="img-fluid rounded flex-shrink-0" style="width:64px; height:64px; object-fit:contain" loading="lazy">
         <div class="flex-grow-1 min-w-0">
             <div class="d-flex justify-content-between align-items-center gap-1">
@@ -21,11 +21,11 @@
             </div>
 
             {{-- Barreras (def física y especial) — 50% ancho c/u, arriba de la vida --}}
-            <div class="d-flex gap-1 mt-1">
+            <div class="d-flex gap-1 mt-1 min-w-0">
                 <div class="w-50" title="Defensa: {{ ceil($p['defHp']) }}/{{ ceil($p['maxDefHp']) }}">
                     <div class="d-flex justify-content-between align-items-center gap-1">
-                        <span class="barrier-label small text-muted" style="font-size:.6rem; line-height:1">DEF</span>
-                        <span class="barrier-num small text-muted" style="font-size:.6rem; line-height:1">{{ ceil($p['defHp']) }}/{{ ceil($p['maxDefHp']) }}</span>
+                        <span class="barrier-label small text-muted text-truncate" style="font-size:.6rem; line-height:1">DEF</span>
+                        <span class="barrier-num small text-muted flex-shrink-0" style="font-size:.6rem; line-height:1">{{ ceil($p['defHp']) }}/{{ ceil($p['maxDefHp']) }}</span>
                     </div>
                     <div class="progress mt-1" style="height:10px">
                         <div class="progress-bar bg-info" style="width: {{ $defPct }}%" role="progressbar" aria-valuenow="{{ $defPct }}" aria-valuemin="0" aria-valuemax="100"></div>
@@ -33,8 +33,8 @@
                 </div>
                 <div class="w-50" title="Def. Especial: {{ ceil($p['spDefHp']) }}/{{ ceil($p['maxSpDefHp']) }}">
                     <div class="d-flex justify-content-between align-items-center gap-1">
-                        <span class="barrier-label small text-muted" style="font-size:.6rem; line-height:1">DEF.ESP</span>
-                        <span class="barrier-num small text-muted" style="font-size:.6rem; line-height:1">{{ ceil($p['spDefHp']) }}/{{ ceil($p['maxSpDefHp']) }}</span>
+                        <span class="barrier-label small text-muted text-truncate" style="font-size:.6rem; line-height:1">DEF.ESP</span>
+                        <span class="barrier-num small text-muted flex-shrink-0" style="font-size:.6rem; line-height:1">{{ ceil($p['spDefHp']) }}/{{ ceil($p['maxSpDefHp']) }}</span>
                     </div>
                     <div class="progress mt-1" style="height:10px">
                         <div class="progress-bar bg-primary" style="width: {{ $spDefPct }}%" role="progressbar" aria-valuenow="{{ $spDefPct }}" aria-valuemin="0" aria-valuemax="100"></div>

@@ -21,6 +21,19 @@
     border: 2px solid #dc3545 !important;
 }
 
+/* ─── Pokemon cards: fondo explícito, contenido contenido, tamaño uniforme ─── */
+.pokemon-card {
+    background-color: #fff;
+    overflow: hidden;
+    min-height: 96px;
+}
+.dark .pokemon-card {
+    background-color: #1f2937;
+}
+.pokemon-card .progress {
+    max-width: 100%;
+}
+
 /* ─── Dark mode: Bootstrap no es consciente de .dark en <html> ─── */
 .dark {
     color-scheme: dark;

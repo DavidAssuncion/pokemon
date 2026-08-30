@@ -17,11 +17,11 @@
 
     {{-- MAIN: CAMPO + ATAQUES --}}
     <div class="row g-3">
-        <div class="col-lg-7">
+        <div class="col-lg-8">
             {{-- LEFT: CAMPO DE COMBATE --}}
             @include('livewire.partials.battle-field')
         </div>
-        <div class="col-lg-5">
+        <div class="col-lg-4">
             {{-- RIGHT: ATAQUES --}}
             @include('livewire.partials.moves-panel')
         </div>
