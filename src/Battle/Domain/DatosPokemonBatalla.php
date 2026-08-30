@@ -31,6 +31,8 @@ class DatosPokemonBatalla
         /** @var string[] */
         public readonly array $effectKeys = [],
         public readonly ?string $item = null,
+        public readonly int $speciesId = 0,
+        public readonly string $formSuffix = '',
     ) {
         foreach ($moves as $m) {
             if (! $m instanceof MovimientoBatalla) {

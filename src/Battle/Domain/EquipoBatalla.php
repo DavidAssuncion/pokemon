@@ -109,6 +109,8 @@ class EquipoBatalla
             $combatant->setId($member->id);
             $combatant->setNombre($member->nombre);
             $combatant->setIconName($member->iconName);
+            $combatant->setSpeciesId($member->speciesId);
+            $combatant->setFormSuffix($member->formSuffix);
             $combatant->setShiny($member->shiny);
 
             // Procesar efectos/habilidades via Factory

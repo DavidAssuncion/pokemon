@@ -35,6 +35,10 @@ class Combatiente
 
     private string $iconName = '';
 
+    private int $speciesId = 0;
+
+    private string $formSuffix = '';
+
     private bool $shiny = false;
 
     private string $item = '';
@@ -83,6 +87,8 @@ class Combatiente
             'id' => $this->id,
             'nombre' => $this->nombre,
             'iconName' => $this->iconName,
+            'speciesId' => $this->speciesId,
+            'formSuffix' => $this->formSuffix,
             'shiny' => $this->shiny,
             'item' => $this->item,
             'effects' => serialize($this->effects),
@@ -105,6 +111,8 @@ class Combatiente
         $this->id = (string) ($data['id'] ?? '');
         $this->nombre = (string) ($data['nombre'] ?? '');
         $this->iconName = (string) ($data['iconName'] ?? '');
+        $this->speciesId = (int) ($data['speciesId'] ?? 0);
+        $this->formSuffix = (string) ($data['formSuffix'] ?? '');
         $this->shiny = (bool) ($data['shiny'] ?? false);
         $this->item = (string) ($data['item'] ?? '');
         $this->effects = isset($data['effects']) ? unserialize($data['effects']) : new ColeccionEfectos();
@@ -172,6 +180,16 @@ class Combatiente
     public function iconName(): string
     {
         return $this->iconName;
+    }
+
+    public function speciesId(): int
+    {
+        return $this->speciesId;
+    }
+
+    public function formSuffix(): string
+    {
+        return $this->formSuffix;
     }
 
     public function shiny(): bool
@@ -261,6 +279,16 @@ class Combatiente
         $this->iconName = $iconName;
     }
 
+    public function setSpeciesId(int $speciesId): void
+    {
+        $this->speciesId = $speciesId;
+    }
+
+    public function setFormSuffix(string $formSuffix): void
+    {
+        $this->formSuffix = $formSuffix;
+    }
+
     public function setShiny(bool $shiny): void
     {
         $this->shiny = $shiny;
@@ -280,8 +308,11 @@ class Combatiente
 
     public function aArrayVista(int $teamIdx): array
     {
-        $iconName = $this->iconName ?: strtolower($this->nombre);
-        $icon = $this->shiny ? "/iconos/shiny/{$iconName}.png" : "/iconos/{$iconName}.png";
+        $icon = $this->speciesId === 0
+            ? '/images/iconos_webp/0.webp'
+            : ($this->formSuffix !== ''
+                ? "/images/iconos_webp/{$this->speciesId}_{$this->formSuffix}.webp"
+                : "/images/iconos_webp/{$this->speciesId}.webp");
 
         return [
             'refId' => $this->id,

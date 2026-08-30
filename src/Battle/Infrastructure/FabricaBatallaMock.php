@@ -50,6 +50,7 @@ class FabricaBatallaMock implements FabricaBatallaInterface
                 ],
                 effectKeys: ['armor_pierce'],
                 item: 'life_orb',
+                speciesId: 94,
             ),
             new DatosPokemonBatalla(
                 id: 'player_2',
@@ -69,6 +70,7 @@ class FabricaBatallaMock implements FabricaBatallaInterface
                     new MovimientoBatalla('Tierra Viva', 90, TipoPokemon::TIERRA, CategoriaMovimiento::ESPECIAL),
                 ],
                 shiny: true,
+                speciesId: 487,
             ),
             new DatosPokemonBatalla(
                 id: 'player_3',
@@ -90,6 +92,7 @@ class FabricaBatallaMock implements FabricaBatallaInterface
                 shiny: true,
                 effectKeys: ['sandstorm_summoner'],
                 item: 'leftovers',
+                speciesId: 248,
             ),
         ];
     }
@@ -116,6 +119,7 @@ class FabricaBatallaMock implements FabricaBatallaInterface
                     new MovimientoBatalla('Defensa Férrea', 0, TipoPokemon::ACERO, CategoriaMovimiento::ESTADO, selfStatChanges: [['stat' => 'defense', 'stages' => 2]]),
                 ],
                 effectKeys: ['regen_def'],
+                speciesId: 306,
             ),
             new DatosPokemonBatalla(
                 id: 'enemy_2',
@@ -136,6 +140,8 @@ class FabricaBatallaMock implements FabricaBatallaInterface
                 ],
                 iconName: 'deoxys-defense',
                 effectKeys: ['niebla_summoner'],
+                speciesId: 386,
+                formSuffix: 'f35',
             ),
             new DatosPokemonBatalla(
                 id: 'enemy_3',
@@ -155,6 +161,7 @@ class FabricaBatallaMock implements FabricaBatallaInterface
                     new MovimientoBatalla('Paz Mental', 0, TipoPokemon::PSIQUICO, CategoriaMovimiento::ESTADO, selfStatChanges: [['stat' => 'spAtk', 'stages' => 1], ['stat' => 'spDef', 'stages' => 1]]),
                 ],
                 item: 'life_orb',
+                speciesId: 150,
             ),
         ];
     }

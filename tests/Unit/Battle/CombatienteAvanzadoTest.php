@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Unit\Battle;
 
 use PHPUnit\Framework\TestCase;
+use Src\Battle\Domain\Combatiente;
 use Src\Battle\Domain\Effects\EfectoPerforacionArmadura;
 use Src\Battle\Domain\Enums\EstadoPokemon;
 use Src\Shared\Tipos\TipoPokemon;
@@ -224,5 +225,69 @@ class CombatienteAvanzadoTest extends TestCase
         $this->assertArrayHasKey('defHp', $vista);
         $this->assertArrayHasKey('spDefHp', $vista);
         $this->assertArrayHasKey('accumulatedSpeed', $vista);
+    }
+
+    public function test_aarray_vista_icono_con_species_id_y_form_suffix(): void
+    {
+        $c = $this->combatiente(
+            stats: ['hp' => 100, 'atk' => 100, 'def' => 100],
+            tipos: [TipoPokemon::NORMAL],
+            id: 'c1',
+            nombre: 'Deoxys',
+        );
+        $c->setSpeciesId(386);
+        $c->setFormSuffix('f35');
+
+        $vista = $c->aArrayVista(0);
+
+        $this->assertSame('/images/iconos_webp/386_f35.webp', $vista['icon']);
+    }
+
+    public function test_aarray_vista_icono_sin_form_suffix(): void
+    {
+        $c = $this->combatiente(
+            stats: ['hp' => 100, 'atk' => 100, 'def' => 100],
+            tipos: [TipoPokemon::NORMAL],
+            id: 'c1',
+            nombre: 'Gengar',
+        );
+        $c->setSpeciesId(94);
+
+        $vista = $c->aArrayVista(0);
+
+        $this->assertSame('/images/iconos_webp/94.webp', $vista['icon']);
+    }
+
+    public function test_aarray_vista_icono_species_id_cero_usa_placeholder(): void
+    {
+        $c = $this->combatiente(
+            stats: ['hp' => 100, 'atk' => 100, 'def' => 100],
+            tipos: [TipoPokemon::NORMAL],
+            id: 'c1',
+            nombre: 'Desconocido',
+        );
+
+        $vista = $c->aArrayVista(0);
+
+        $this->assertSame('/images/iconos_webp/0.webp', $vista['icon']);
+    }
+
+    public function test_serializacion_round_trip_conserva_species_id_y_form_suffix(): void
+    {
+        $c = $this->combatiente(
+            stats: ['hp' => 100, 'atk' => 100, 'def' => 100],
+            tipos: [TipoPokemon::NORMAL],
+            id: 'c1',
+            nombre: 'Deoxys',
+        );
+        $c->setSpeciesId(386);
+        $c->setFormSuffix('f35');
+
+        $unserialized = unserialize(serialize($c));
+
+        $this->assertInstanceOf(Combatiente::class, $unserialized);
+        $this->assertSame(386, $unserialized->speciesId());
+        $this->assertSame('f35', $unserialized->formSuffix());
+        $this->assertSame('Deoxys', $unserialized->nombre());
     }
 }

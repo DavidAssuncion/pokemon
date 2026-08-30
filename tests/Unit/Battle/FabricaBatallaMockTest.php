@@ -41,6 +41,8 @@ class FabricaBatallaMockTest extends TestCase
         $this->assertSame(Posicion::RETAGUARDIA, $gengar->posicion);
         $this->assertSame(['armor_pierce'], $gengar->effectKeys);
         $this->assertSame('life_orb', $gengar->item);
+        $this->assertSame(94, $gengar->speciesId);
+        $this->assertSame('', $gengar->formSuffix);
     }
 
     public function test_gengar_movimientos(): void
@@ -79,6 +81,8 @@ class FabricaBatallaMockTest extends TestCase
         $this->assertSame(Posicion::VANGUARDIA, $giratina->posicion);
         $this->assertTrue($giratina->shiny);
         $this->assertNull($giratina->item);
+        $this->assertSame(487, $giratina->speciesId);
+        $this->assertSame('', $giratina->formSuffix);
     }
 
     public function test_giratina_danza_espada_cambia_attack(): void
@@ -106,6 +110,8 @@ class FabricaBatallaMockTest extends TestCase
         $this->assertSame([TipoPokemon::ROCA, TipoPokemon::SINIESTRO], $tyranitar->tipos);
         $this->assertSame(['sandstorm_summoner'], $tyranitar->effectKeys);
         $this->assertSame('leftovers', $tyranitar->item);
+        $this->assertSame(248, $tyranitar->speciesId);
+        $this->assertSame('', $tyranitar->formSuffix);
     }
 
     public function test_tyranitar_onda_trueno_paraliza(): void
@@ -133,6 +139,8 @@ class FabricaBatallaMockTest extends TestCase
         $this->assertSame([TipoPokemon::ACERO, TipoPokemon::ROCA], $aggron->tipos);
         $this->assertSame(['regen_def'], $aggron->effectKeys);
         $this->assertNull($aggron->item);
+        $this->assertSame(306, $aggron->speciesId);
+        $this->assertSame('', $aggron->formSuffix);
     }
 
     public function test_aggron_defensa_ferrea_cambia_defense(): void
@@ -159,6 +167,8 @@ class FabricaBatallaMockTest extends TestCase
         $this->assertSame(90, $deoxys->speed);
         $this->assertSame([TipoPokemon::PSIQUICO], $deoxys->tipos);
         $this->assertSame('deoxys-defense', $deoxys->iconName);
+        $this->assertSame(386, $deoxys->speciesId);
+        $this->assertSame('f35', $deoxys->formSuffix);
         $this->assertSame(['niebla_summoner'], $deoxys->effectKeys);
     }
 
@@ -185,6 +195,8 @@ class FabricaBatallaMockTest extends TestCase
         $this->assertSame(130, $mewtwo->speed);
         $this->assertSame(Posicion::RETAGUARDIA, $mewtwo->posicion);
         $this->assertSame('life_orb', $mewtwo->item);
+        $this->assertSame(150, $mewtwo->speciesId);
+        $this->assertSame('', $mewtwo->formSuffix);
     }
 
     public function test_mewtwo_paz_mental_sube_spatk_y_spdef(): void
@@ -212,6 +224,13 @@ class FabricaBatallaMockTest extends TestCase
         $gengar = $battle->team1->combatants()[0];
         $this->assertSame('Gengar', $gengar->nombre());
         $this->assertSame('life_orb', $gengar->item());
+        $this->assertSame(94, $gengar->speciesId());
+        $this->assertSame('', $gengar->formSuffix());
+
+        $deoxys = $battle->team2->combatants()[1];
+        $this->assertSame(386, $deoxys->speciesId());
+        $this->assertSame('f35', $deoxys->formSuffix());
+        $this->assertSame('/images/iconos_webp/386_f35.webp', $deoxys->aArrayVista(1)['icon']);
     }
 
     public function test_potencias_de_movimientos_de_team1(): void

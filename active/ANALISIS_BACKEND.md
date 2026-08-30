@@ -572,3 +572,56 @@ Para eliminar la divergencia que el brief exige, se crea `src/Shared/Domain/Prob
    introduce por constructor (injectable en vez de mock) y se conecta por `app()->instance()`.
 3. Dependencias del handler son resolubles por el container (UnitOfWork bound en
    AppServiceProvider; calculador/persistir/transformador auto-resolubles).
+
+---
+
+## Sección — Corrección de iconos del módulo de combate (URLs WebP por species_id)
+
+### Fecha
+2026-08-30
+
+### Contexto
+
+`Combatiente::aArrayVista()` generaba URLs `/iconos/{nombre}.png` (y `/iconos/shiny/...`) que no existen:
+el `IconoController` busca en `resources/iconos/` (no existe) y el contrato del proyecto es
+`/images/iconos_webp/{species_id}.webp` (ver `docs/conventions.md`, sección "Iconos de pokémon (WebP)").
+
+### Solución
+
+1. `src/Battle/Domain/DatosPokemonBatalla.php` — nuevos campos readonly `speciesId` (int, default 0)
+   y `formSuffix` (string, default '') en el constructor. `iconName` se mantiene por compatibilidad
+   (ya no se usa para el icono).
+2. `src/Battle/Domain/Combatiente.php` — propiedades privadas `speciesId`/`formSuffix`, getters,
+   setters, incluidos en `__serialize()`/`__unserialize()` (defaults 0/'' para sesiones viejas).
+   `aArrayVista()` construye:
+   - `speciesId === 0` → `/images/iconos_webp/0.webp` (placeholder)
+   - `formSuffix !== ''` → `/images/iconos_webp/{speciesId}_{formSuffix}.webp`
+   - resto → `/images/iconos_webp/{speciesId}.webp`
+3. `src/Battle/Domain/EquipoBatalla.php` — `fromData()` propaga `setSpeciesId`/`setFormSuffix`.
+4. `src/Battle/Infrastructure/FabricaBatallaMock.php` — speciesId reales: Gengar 94, Giratina 487,
+   Tyranitar 248, Aggron 306, Deoxys 386 (`formSuffix: 'f35'`, forma Defensa), Mewtwo 150.
+5. `app/Livewire/Combate.php` — `SESSION_VERSION` 4 → 5 (cambio de serialización de Combatiente).
+
+### Tests (TDD)
+
+- `tests/Unit/Battle/CombatienteAvanzadoTest.php` — icono con species_id + forma (`386_f35.webp`),
+  sin forma (`94.webp`), species_id 0 → placeholder (`0.webp`), round-trip serialización conserva
+  speciesId/formSuffix.
+- `tests/Unit/Battle/FabricaBatallaMockTest.php` — asserts de speciesId/formSuffix por pokémon y
+  en `createBattle` (`combatants()` → `speciesId()`/`formSuffix()`/icono de `aArrayVista()`).
+
+### Calidad
+
+- `php artisan test --filter=Battle` → 150 passed (395 assertions).
+- `php artisan test --filter=Combate` → 6 passed.
+- Suite completa → 576 passed (1905 assertions), sin fallos (incluye el pre-existente
+  `ServicioCapturaTest`, que ya pasaba tras el cap-45 de `a3f4ad7`).
+- PHPStan nivel 6: sin errores nuevos en los archivos tocados (solo `missingType.iterableValue`,
+  `instanceof.alwaysTrue`, `empty.notAllowed` pre-existentes).
+- Infection (4 archivos Battle tocados): 541 mutantes, 400 matados, Covered Code MSI 73%
+  (el módulo partía de ~42%, deuda documentada).
+- Pint `--dirty` OK.
+
+### Riesgos / compatibilidad
+
+- Sesiones de combate previas (versión 4) → `speciesId=0` → icono placeholder `0.webp`; aceptable.
