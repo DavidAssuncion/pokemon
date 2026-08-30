@@ -24,7 +24,12 @@ class PlayerController extends Controller
 
     public function pokedex(): View
     {
-        $page = $this->datagrid->list('pokemon', ['per_page' => 100, 'sort' => 'id', 'order' => 'asc']);
+        $page = $this->datagrid->list('pokemon', [
+            'per_page' => 120,
+            'sort' => 'id',
+            'order' => 'asc',
+            'filter' => ['visto' => '1'],
+        ]);
 
         return view('pokedex.index', [
             'pokemons' => $page,

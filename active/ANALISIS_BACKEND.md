@@ -340,3 +340,72 @@ Para efectos (Orbe Vida, Restos, Invocador Clima), se construyen las instancias 
 - `vendor/bin/phpstan analyse --no-progress` — sin errores nuevos en src/Battle/ ni Combate.php
 - `vendor/bin/infection --filter=src/Battle --only-covered --min-msi=80` (o comando equivalente)
 - `vendor/bin/pint --dirty --format agent`
+---
+
+# Análisis Backend — Seed de la Pokédex filtrado a la pestaña "Vistos" (R1)
+
+## Fecha
+2026-08-30
+
+## Contexto / causa raíz
+
+La Pokédex asíncrona no carga en la pestaña "Vistos" al primer render. El seed que pasa
+`PlayerController::pokedex()` (`DatagridService::list('pokemon', per_page=100, sort=id, order=asc)`)
+se pide al Datagrid SIN filtrar por la pestaña por defecto (`filter[visto]=1`), y con
+`per_page=100` mientras el frontend hace fetches con `per_page=120`.
+
+## R1 (requisito, SIN tocar la vista)
+
+Cambiar la llamada `$this->datagrid->list('pokemon', ...)` para que pida:
+`per_page => 120`, `sort => 'id'`, `order => 'asc'`, `'filter' => ['visto' => '1']`.
+El resto del método (counts, tipos, stats) se conserva. Resultado esperado: el seed de la vista
+ya es la página 1 de los pokémon vistos del usuario autenticado, con `meta.last_page` coherente
+con esa pestaña.
+
+## Verificación de soporte de `filter[visto]=1`
+
+Revisados `app/Datagrid/DatagridService.php` y `app/Providers/DatagridServiceProvider.php`:
+
+- `DatagridDefinition('pokemon').filterable['visto'] => 'pokedex.visto'` (columna SQL).
+- `boolFields: ['visto', 'atrapado']` → en `applyFilters`, `filter[visto]='1'` pasa por `toBool('1')`
+  → `true`; `in_array(false, [true])` es falso → `whereIn('pokedex.visto', [true])`. ✓ Soportado.
+- Confirmado además por el test existente `DatagridTest::test_pokemon_list_filter_visto_1_returns_seen`.
+
+## Archivos a tocar
+
+| Archivo | Acción |
+|---------|--------|
+| `app/Http/Controllers/PlayerController.php` | Cambiar params del seed: `per_page=120`, `sort=id`, `order=asc`, `filter[visto]=1` |
+| `tests/Feature/PlayerControllerTest.php` | Ajustar los 3 tests existentes (codificaban el seed SIN filtrar) + añadir test que compruebe el seed filtrado a "vistos" |
+
+## Tests que escribo / ajusto (TDD)
+
+El seed pasa de "todos los pokémon" a "solo vistos". Eso rompe la semántica de 3 tests existentes
+de `PlayerControllerTest` que asumían el listado completo:
+
+1. `test_pokedex_orders_pokemon_by_id` — crea pokémon SIN fila en `pokedex` → con `filter[visto]=1`
+   el seed quedaría vacío → debe marcar los pokémon como vistos para seguir afirmando el orden [1,2].
+2. `test_pokedex_passes_counts_and_types` — afirmaba `meta.total == 3`; con el filtro el seed son
+   solo los vistos (2) → ajustar a `meta.total == 2` (los counts SÍ siguen siendo globales = 3).
+3. `test_pokedex_de_usuario_a_no_muestra_atrapados_de_b` — esperaba ambas filas (1 vista y 2 no vista);
+   con el filtro solo aparece la fila vista → ajustar a filtrar solo vistos.
+4. NUEVO: `test_pokedex_seed_es_pagina_1_de_vistos_con_last_page_coherente` — crear >120 pokémon
+   vistos para comprobar `per_page=120`, `page=1`, `last_page` coherente con la pestaña "vistos"
+   (solo vistos), y que todos los `data` son vistos.
+
+`PokedexViewTest` (render, usa `view()` directo) NO se toca ni se rompe.
+
+## Riesgos
+
+- Los tests existentes de `PlayerControllerTest` son de comportamiento previo (seed sin filtrar);
+  deben actualizarse, no romperse silenciosamente. No es una vista: es el estado deseado por R1.
+- Que `meta.total` deje de ser el total global dentro del seed (ahora es el total de la pestaña).
+  Los counts globales del header siguen en `meta.counts`.
+- No tocar la vista (`resources/views/pokedex/index.blade.php`) ni la arquitectura del Datagrid.
+
+## Verificación
+
+- `php artisan test --compact --filter=PlayerControllerTest`
+- `php artisan test --compact --filter=PokedexViewTest`
+- `vendor/bin/pint --dirty --format agent`
+- `vendor/bin/phpstan analyse` y `vendor/bin/phpmd src/ text phpmd.xml` (sin nuevos errores)
