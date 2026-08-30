@@ -7,6 +7,7 @@ namespace Tests\Unit\Battle;
 use PHPUnit\Framework\TestCase;
 use Src\Battle\Domain\AgregadoBatalla;
 use Src\Battle\Domain\Combatiente;
+use Src\Battle\Domain\Enums\CategoriaMovimiento;
 use Src\Battle\Domain\EquipoBatalla;
 use Src\Battle\Domain\MovimientoBatalla;
 use Src\Battle\Domain\Posicion;
@@ -197,6 +198,31 @@ class SelectorAccionIATest extends TestCase
         $objetivo = $this->selector->elegirObjetivoPara($battle, $actor);
 
         $this->assertNull($objetivo);
+    }
+
+    public function test_elegir_mejor_movimiento_empate_elige_el_primero(): void
+    {
+        // Ambos movimientos puntúan igual (PLANTA→NORMAL = 1.0 × 80 = 80).
+        // El código usa `>` estricto → gana el primero (determinista).
+        $atacante = $this->combatiente(
+            stats: ['atk' => 100, 'def' => 100],
+            moves: [
+                new MovimientoBatalla('Hoja Afilada', 80, TipoPokemon::PLANTA, CategoriaMovimiento::FISICO),
+                new MovimientoBatalla('Follaje', 80, TipoPokemon::PLANTA, CategoriaMovimiento::FISICO),
+            ],
+            tipos: [TipoPokemon::PLANTA],
+            id: 'a1',
+            nombre: 'Atacante',
+        );
+        $defensor = $this->combatiente(
+            tipos: [TipoPokemon::NORMAL],
+            id: 'd1',
+            nombre: 'Defensor',
+        );
+
+        $mejor = $this->selector->elegirMejorMovimiento($atacante, $defensor);
+
+        $this->assertSame('Hoja Afilada', $mejor->nombre);
     }
 
     private function batallaCon(Combatiente $actor, Combatiente $enemigo1, Combatiente $enemigo2): AgregadoBatalla

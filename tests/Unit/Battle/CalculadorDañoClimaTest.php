@@ -137,4 +137,46 @@ class CalculadorDañoClimaTest extends TestCase
 
         $this->assertSame(0.0, $daño);
     }
+
+    public function test_tormenta_arena_no_dana_a_dual_tipo_roca_planta(): void
+    {
+        $combatiente = $this->combatiente(
+            stats: ['hp' => 100],
+            tipos: [TipoPokemon::ROCA, TipoPokemon::PLANTA],
+            id: 'c1',
+            nombre: 'RocaPlanta',
+        );
+
+        $daño = $this->calculador->calcular($combatiente, TipoClima::TORMENTA_ARENA);
+
+        $this->assertSame(0.0, $daño);
+    }
+
+    public function test_tormenta_arena_no_dana_a_dual_tipo_planta_roca(): void
+    {
+        $combatiente = $this->combatiente(
+            stats: ['hp' => 100],
+            tipos: [TipoPokemon::PLANTA, TipoPokemon::ROCA],
+            id: 'c1',
+            nombre: 'PlantaRoca',
+        );
+
+        $daño = $this->calculador->calcular($combatiente, TipoClima::TORMENTA_ARENA);
+
+        $this->assertSame(0.0, $daño);
+    }
+
+    public function test_granizo_no_dana_a_dual_tipo_planta_hielo(): void
+    {
+        $combatiente = $this->combatiente(
+            stats: ['hp' => 100],
+            tipos: [TipoPokemon::PLANTA, TipoPokemon::HIELO],
+            id: 'c1',
+            nombre: 'PlantaHielo',
+        );
+
+        $daño = $this->calculador->calcular($combatiente, TipoClima::GRANIZO);
+
+        $this->assertSame(0.0, $daño);
+    }
 }
