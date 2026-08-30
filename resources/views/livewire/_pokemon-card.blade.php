@@ -10,7 +10,7 @@
     $itemName = $itemNames[$p['item']] ?? $p['item'];
     $itemIcon = $itemIcons[$p['item']] ?? '📦';
 @endphp
-<div class="card mb-2 shadow-sm pokemon-card {{ $p['alive'] ? '' : 'opacity-50' }} {{ $p['refId'] === $actingRefId ? 'border border-warning' : '' }} {{ $p['refId'] === $selectedTargetRefId ? 'border border-primary' : '' }} {{ $selectable ? 'cursor-pointer border-primary' : '' }} {{ $blocked ? 'opacity-50 cursor-not-allowed' : '' }}"
+<div class="card mb-2 shadow-sm pokemon-card {{ $p['alive'] ? '' : 'opacity-50' }} {{ $p['refId'] === $actingRefId ? 'border border-warning' : '' }} {{ $p['refId'] === $selectedTargetRefId ? 'targeted-card' : '' }} {{ $selectable ? 'cursor-pointer border-primary' : '' }} {{ $blocked ? 'opacity-50 cursor-not-allowed' : '' }}"
      @if($selectable) wire:click="previewTarget({{ $team }}, {{ $idx }})" role="button" tabindex="0" @endif
      @if($p['refId'] === $animDefenderId) x-ref="defender-{{ $idx }}" @endif>
     <div class="card-body p-2 d-flex align-items-center gap-2">
@@ -18,16 +18,36 @@
         <div class="flex-grow-1 min-w-0">
             <div class="d-flex justify-content-between align-items-center gap-1">
                 <span class="fw-bold small text-truncate {{ $p['alive'] ? '' : 'text-muted' }}">{{ $p['nombre'] }}</span>
-                <span class="small text-muted flex-shrink-0">{{ ceil($p['hp']) }}/{{ $p['maxHp'] }}</span>
             </div>
-            <div class="progress mt-1" style="height:8px" title="PS: {{ ceil($p['hp']) }}/{{ $p['maxHp'] }}">
-                <div class="progress-bar {{ $hpClass }}" style="width: {{ $hpPct }}%" role="progressbar" aria-valuenow="{{ $hpPct }}" aria-valuemin="0" aria-valuemax="100"></div>
+
+            {{-- Barreras (def física y especial) — 50% ancho c/u, arriba de la vida --}}
+            <div class="d-flex gap-1 mt-1">
+                <div class="w-50" title="Defensa: {{ ceil($p['defHp']) }}/{{ ceil($p['maxDefHp']) }}">
+                    <div class="d-flex justify-content-between align-items-center gap-1">
+                        <span class="barrier-label small text-muted" style="font-size:.6rem; line-height:1">DEF</span>
+                        <span class="barrier-num small text-muted" style="font-size:.6rem; line-height:1">{{ ceil($p['defHp']) }}/{{ ceil($p['maxDefHp']) }}</span>
+                    </div>
+                    <div class="progress mt-1" style="height:10px">
+                        <div class="progress-bar bg-info" style="width: {{ $defPct }}%" role="progressbar" aria-valuenow="{{ $defPct }}" aria-valuemin="0" aria-valuemax="100"></div>
+                    </div>
+                </div>
+                <div class="w-50" title="Def. Especial: {{ ceil($p['spDefHp']) }}/{{ ceil($p['maxSpDefHp']) }}">
+                    <div class="d-flex justify-content-between align-items-center gap-1">
+                        <span class="barrier-label small text-muted" style="font-size:.6rem; line-height:1">DEF.ESP</span>
+                        <span class="barrier-num small text-muted" style="font-size:.6rem; line-height:1">{{ ceil($p['spDefHp']) }}/{{ ceil($p['maxSpDefHp']) }}</span>
+                    </div>
+                    <div class="progress mt-1" style="height:10px">
+                        <div class="progress-bar bg-primary" style="width: {{ $spDefPct }}%" role="progressbar" aria-valuenow="{{ $spDefPct }}" aria-valuemin="0" aria-valuemax="100"></div>
+                    </div>
+                </div>
             </div>
-            <div class="progress mt-1" style="height:4px" title="Defensa: {{ ceil($p['defHp']) }}/{{ $p['maxDefHp'] }}">
-                <div class="progress-bar bg-info" style="width: {{ $defPct }}%" role="progressbar" aria-valuenow="{{ $defPct }}" aria-valuemin="0" aria-valuemax="100"></div>
-            </div>
-            <div class="progress mt-1" style="height:4px" title="Def. Especial: {{ ceil($p['spDefHp']) }}/{{ $p['maxSpDefHp'] }}">
-                <div class="progress-bar bg-primary" style="width: {{ $spDefPct }}%" role="progressbar" aria-valuenow="{{ $spDefPct }}" aria-valuemin="0" aria-valuemax="100"></div>
+
+            {{-- Vida — debajo de las barreras, con número restante --}}
+            <div class="d-flex align-items-center gap-1 mt-1">
+                <div class="progress flex-grow-1" style="height:8px" title="PS: {{ ceil($p['hp']) }}/{{ ceil($p['maxHp']) }}">
+                    <div class="progress-bar {{ $hpClass }}" style="width: {{ $hpPct }}%" role="progressbar" aria-valuenow="{{ $hpPct }}" aria-valuemin="0" aria-valuemax="100"></div>
+                </div>
+                <span class="hp-num small text-muted flex-shrink-0" style="font-size:.65rem; line-height:1">{{ ceil($p['hp']) }}/{{ ceil($p['maxHp']) }}</span>
             </div>
         </div>
         <div class="flex-shrink-0 d-flex flex-column align-items-end gap-1">

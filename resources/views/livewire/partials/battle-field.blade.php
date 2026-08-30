@@ -33,46 +33,53 @@
         </div>
     @endif
 
-    <div class="row g-3">
-        {{-- TEAM 1 (PLAYER) --}}
-        <div class="col-md-6 team-column">
-            <div class="card h-100">
-                <div class="card-header bg-body-tertiary fw-semibold">Tú</div>
-                <div class="card-body">
-                    <div class="position-label text-uppercase small text-muted fw-semibold mb-1">Retaguardia</div>
-                    @foreach($team1 as $idx => $p)
-                        @if($p['posicion'] === 'retaguardia')
-                            @include('livewire._pokemon-card', ['p' => $p, 'idx' => $idx, 'team' => 0])
-                        @endif
-                    @endforeach
-                    <div class="position-label text-uppercase small text-muted fw-semibold mt-3 mb-1">Vanguardia</div>
-                    @foreach($team1 as $idx => $p)
-                        @if($p['posicion'] === 'vanguardia')
-                            @include('livewire._pokemon-card', ['p' => $p, 'idx' => $idx, 'team' => 0])
-                        @endif
-                    @endforeach
-                </div>
+    {{-- 4 columnas: Tú Retaguardia | Tú Vanguardia | Rival Vanguardia | Rival Retaguardia --}}
+    <div class="row g-2">
+        {{-- COL 1: Tú — Retaguardia --}}
+        <div class="col-6 col-md-3">
+            <div class="position-label text-uppercase small text-muted fw-semibold mb-1">Tú · Retaguardia</div>
+            <div class="d-flex flex-column align-items-center">
+                @foreach($team1 as $idx => $p)
+                    @if($p['posicion'] === 'retaguardia')
+                        @include('livewire._pokemon-card', ['p' => $p, 'idx' => $idx, 'team' => 0])
+                    @endif
+                @endforeach
             </div>
         </div>
 
-        {{-- TEAM 2 (ENEMY) --}}
-        <div class="col-md-6 team-column">
-            <div class="card h-100">
-                <div class="card-header bg-body-tertiary fw-semibold">Rival</div>
-                <div class="card-body">
-                    <div class="position-label text-uppercase small text-muted fw-semibold mb-1">Retaguardia</div>
-                    @foreach($team2 as $idx => $p)
-                        @if($p['posicion'] === 'retaguardia')
-                            @include('livewire._pokemon-card', ['p' => $p, 'idx' => $idx, 'team' => 1])
-                        @endif
-                    @endforeach
-                    <div class="position-label text-uppercase small text-muted fw-semibold mt-3 mb-1">Vanguardia</div>
-                    @foreach($team2 as $idx => $p)
-                        @if($p['posicion'] === 'vanguardia')
-                            @include('livewire._pokemon-card', ['p' => $p, 'idx' => $idx, 'team' => 1])
-                        @endif
-                    @endforeach
-                </div>
+        {{-- COL 2: Tú — Vanguardia --}}
+        <div class="col-6 col-md-3">
+            <div class="position-label text-uppercase small text-muted fw-semibold mb-1">Tú · Vanguardia</div>
+            <div class="d-flex flex-column align-items-center">
+                @foreach($team1 as $idx => $p)
+                    @if($p['posicion'] === 'vanguardia')
+                        @include('livewire._pokemon-card', ['p' => $p, 'idx' => $idx, 'team' => 0])
+                    @endif
+                @endforeach
+            </div>
+        </div>
+
+        {{-- COL 3: Rival — Vanguardia --}}
+        <div class="col-6 col-md-3">
+            <div class="position-label text-uppercase small text-muted fw-semibold mb-1">Rival · Vanguardia</div>
+            <div class="d-flex flex-column align-items-center">
+                @foreach($team2 as $idx => $p)
+                    @if($p['posicion'] === 'vanguardia')
+                        @include('livewire._pokemon-card', ['p' => $p, 'idx' => $idx, 'team' => 1])
+                    @endif
+                @endforeach
+            </div>
+        </div>
+
+        {{-- COL 4: Rival — Retaguardia --}}
+        <div class="col-6 col-md-3">
+            <div class="position-label text-uppercase small text-muted fw-semibold mb-1">Rival · Retaguardia</div>
+            <div class="d-flex flex-column align-items-center">
+                @foreach($team2 as $idx => $p)
+                    @if($p['posicion'] === 'retaguardia')
+                        @include('livewire._pokemon-card', ['p' => $p, 'idx' => $idx, 'team' => 1])
+                    @endif
+                @endforeach
             </div>
         </div>
     </div>

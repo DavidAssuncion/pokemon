@@ -882,3 +882,127 @@ Los tests de Battle (`php artisan test --filter=Battle`) prueban la lógica de d
 6. **Build**: `npm run build`
 7. **Verificar tests**: `php artisan test --filter=Battle` y `--filter=CombateLivewire`
 8. **Commit** atómico
+
+---
+
+# Análisis Frontend — 6 correcciones UI del combate + aislamiento de Bootstrap (2026-08-30)
+
+## Contexto
+
+El usuario reportó 6 problemas en la UI del combate (Laravel 12, Livewire 4, Bootstrap 5 +
+Tailwind 4, Vite). El más crítico: el import global de Bootstrap en `resources/css/app.css`
+rompe el dark mode de Tailwind en el resto del sitio. NO toco `app/Livewire/Combate.php` ni
+`src/` (backend/dominio). NO romper `$wire` (combate.js importa `./bootstrap`).
+
+## Tarea 1 — Aislar Bootstrap SOLO al combate (dark mode global)
+
+### Archivos
+1. `resources/css/app.css` — quitar `@import "bootstrap/dist/css/bootstrap.min.css";` y TODOS
+   los estilos de combate (pasan a combate.css). Queda solo Tailwind + `@custom-variant dark`.
+2. `resources/css/combate.css` (NUEVO) — `@import "bootstrap/dist/css/bootstrap.min.css";` +
+   todos los estilos de combate de app.css (border-primary, cursor-pointer/not-allowed,
+   bg-hp-*, stage-up/down, weather-*) + nuevas clases (`.active-turn`, `.targeted-card`).
+3. `vite.config.js` — añadir `resources/css/combate.css` como tercer input.
+4. `resources/views/layouts/app.blade.php` — añadir `@stack('styles')` en `<head>` tras `@vite`.
+5. `resources/views/combate_page.blade.php` — `@push('styles')` con
+   `@vite(['resources/css/combate.css', 'resources/js/combate.js'])`.
+6. `resources/js/app.js` — dejar solo `import './bootstrap';` (resto del sitio).
+7. `resources/js/combate.js` (NUEVO) — `import './bootstrap';`
+   + `import 'bootstrap/dist/js/bootstrap.bundle.min.js';` (el `$wire` lo inyecta bootstrap.js:
+   Livewire ESM + `Livewire.start()`; al importarlo ANTES que Bootstrap JS, el magic `$wire`
+   sigue disponible en el combate).
+
+### Riesgo `$wire is not defined`
+El combate usa `x-init` con `$wire.$watch` en `combate.blade.php`. `bootstrap.js` importa
+`livewire.esm` y llama `Livewire.start()` (registra `$wire`). Si `combate.js` no importara
+`./bootstrap`, el `$wire` fallaría. Verificación: orden de imports en combate.js.
+
+## Tarea 2 — HP bars y barreras (`_pokemon-card.blade.php`)
+
+- Barreras (defHp física, spDefHp especial): **50% del ancho máximo** cada una, `height: 10px`
+  (antes 4px), con número restante `ceil(...)/ceil(...)` como texto pequeño (label DEF / DEF.ESP
+  + número junto a cada barra), **ARRIBA** de la barra de vida.
+- Barra de vida (hp): debajo de las barreras, `height: 8px`, con número restante
+  `ceil($p['hp'])/ceil($p['maxHp'])`.
+- Colores conservados: barrera física `bg-info`, especial `bg-primary`, vida `bg-hp-low/mid/high`
+  según %.
+- Disposición: las dos barreras en `d-flex gap-1` con cada `w-50`; HP bar debajo a ancho completo.
+- Quito el número de HP del header (nombre) porque ahora vive en la barra de vida (evita duplicado).
+
+## Tarea 3 — Layout 4 columnas (`battle-field.blade.php`)
+
+- `row g-2` con 4 `col-6 col-md-3`:
+  1. Tú · Retaguardia (team1 retaguardia)
+  2. Tú · Vanguardia (team1 vanguardia)
+  3. Rival · Vanguardia (team2 vanguardia)
+  4. Rival · Retaguardia (team2 retaguardia)
+- Cada columna con título `text-uppercase small text-muted fw-semibold` ("Tú · Retaguardia",
+  "Tú · Vanguardia", "Rival · Vanguardia", "Rival · Retaguardia") — elimino los encabezados
+  "Tú"/"Rival" de card-header (los títulos de columna ya lo indican).
+- Centrado con 1 solo integrante: `d-flex flex-column align-items-center` dentro de cada columna
+  (las cards se centran al ser flex column centrada).
+
+## Tarea 4 — Turno activo y objetivo seleccionado
+
+1. `turn-bar.blade.php`: badge del turno activo (el que tiene `acting` o el primero de la cola)
+   → clase `active-turn` con `background: #fecc3833` (translúcido amarillento) en combate.css.
+2. `_pokemon-card.blade.php`: card con `$p['refId'] === $selectedTargetRefId` → clase
+   `targeted-card` (`background: #ff000033; border: 2px solid #dc3545 !important;`) en combate.css.
+   Reemplaza al `border border-primary` anterior para el target seleccionado.
+
+## Tarea 5 — Icono del tipo en ataques (`moves-panel.blade.php`)
+
+- Map `$tipoSlugs` (value int 1-18 → slug español minúscula):
+  `[1=>'normal',2=>'lucha',3=>'volador',4=>'veneno',5=>'tierra',6=>'roca',7=>'bicho',8=>'fantasma',
+   9=>'acero',10=>'fuego',11=>'agua',12=>'planta',13=>'electrico',14=>'psiquico',15=>'hielo',
+   16=>'dragon',17=>'siniestro',18=>'hada']`.
+- `<img src="/images/type/{{ $tipoSlug }}.webp" alt="{{ $tipoLabel }}" style="width:24px;height:24px" class="me-1">`
+  en la primera línea del botón (junto al nombre).
+- Assets verificados: `public/images/type/` tiene los 18 `.webp`.
+
+## Tarea 6 — Rediseño botones de ataque (`moves-panel.blade.php`, estado `player_move`)
+
+1. **Primera línea**: icono de tipo + nombre + (al final de la línea) badge de categoría y
+   potencia. Ya no van en el bloque de badges inferior.
+2. **Segunda línea**: daño destacado (`fs-5 fw-bold`, `{{ ceil($move['daño']) }} daño`) +
+   efectividad + STAB + DIRECTO + estados + stat changes (en `small`).
+3. **Movimiento más efectivo**: `$maxDmg = max(daños)`; si `$move['daño'] > 0 && daño === max`
+   → clase destacada `border-primary border-2 shadow-sm` (mantiene `btn-outline-primary` de base;
+   el fondo por tipo se aplica con `style`).
+4. **Fondo por tipo**: map `$tipoBg` de colores suaves por value (Agua `#e3f2fd`, Fuego `#ffebee`,
+   Planta `#e8f5e9`, Eléctrico `#fff8e1`, Psíquico `#fce4ec`, Normal `#fafafa`, resto con tonos
+   claros coherentes; default `#fafafa`). Se aplica con `style="background-color: ..."` en el botón.
+5. Mantengo `wire:click="selectMove({{ $idx }})"`.
+
+## Tests (no se modifican; se verifican)
+
+- `php artisan test --compact --filter=Battle` → 150 (lógica de dominio; las vistas no intervienen).
+- `php artisan test --compact --filter=Combate` → 6+ (CombateLivewireTest; asserts sobre texto
+  'Campo de Combate' y '¡Comienza la batalla!' se conservan intactos).
+- `php artisan view:cache` (compila todas las vistas).
+
+## Verificación build
+
+- `npm run build` regenera el manifest con `combate.css` + `combate.js` como nuevos inputs.
+- Dark mode del layout (toggle `document.documentElement.classList.toggle('dark')`) vuelve a
+  funcionar en Pokédex/Hábitats/etc. al quitar Bootstrap del CSS global (Tailwind `dark:*`).
+- Combate carga Bootstrap solo en `/combate` sin romper `$wire` (combate.js importa `./bootstrap`).
+
+## Estados UI cubiertos
+
+- Dark mode: otras páginas OK (sin Bootstrap global); combate con Bootstrap + Tailwind.
+- Pokemon card: barreras al 50% (def/spdef con números), HP debajo con número, debilitado
+  (opacity-50), target seleccionado (targeted-card rojo translúcido), selectable (border-primary),
+  bloqued (opacity-50 + cursor-not-allowed), acting (border-warning), statuses/stages/items.
+- Battle field: 4 columnas centradas, clima (weather-*), animación, targeteable.
+- Turn bar: activo destacado (active-turn), esperando (empty).
+- Moves: primera línea icono+nombre+cat+pot; daño destacado; máximo destacado; fondo por tipo;
+  efectividad/STAB/estados/stat changes.
+
+## Riesgos accesibilidad/UX
+
+- Las barras conservan `role="progressbar"` + `aria-*` + `title` con valores exactos.
+- Números en `<span class="small text-muted">` legibles; `style="font-size:.6rem"` solo para
+  compactar (título en la barra sigue dando el valor accesible).
+- Icono tipo con `alt` = label español.
+- Botones de ataque con `aria` implícita (button real) y `wire:click` intacto.
