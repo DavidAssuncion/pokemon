@@ -20,3 +20,39 @@
     background: #ff000033;
     border: 2px solid #dc3545 !important;
 }
+
+/* ─── Dark mode: Bootstrap no es consciente de .dark en <html> ─── */
+.dark {
+    color-scheme: dark;
+
+    /* Body y texto base (consistentes con Tailwind gray-900/gray-100) */
+    --bs-body-bg: #111827;
+    --bs-body-color: #f9fafb;
+    --bs-body-color-rgb: 249, 250, 251;
+
+    /* Fondos secundarios/terciarios (progress track, header del registro) */
+    --bs-secondary-bg: #1f2937;
+    --bs-secondary-bg-rgb: 31, 41, 55;
+    --bs-tertiary-bg: #1f2937;
+    --bs-tertiary-bg-rgb: 31, 41, 55;
+
+    /* Texto muted (labels, "Sin eventos", "Próximos turnos") */
+    --bs-secondary-color: #9ca3af;
+
+    /* Cards (pokemon, turnos, registro) */
+    --bs-card-bg: #1f2937;
+    --bs-card-color: #f9fafb;
+    --bs-card-border-color: #374151;
+
+    /* List group del registro de batalla */
+    --bs-list-group-bg: #1f2937;
+    --bs-list-group-color: #f9fafb;
+    --bs-list-group-border-color: #374151;
+
+    /* Enlaces (si algún componente Bootstrap los usa) */
+    --bs-link-color: #93c5fd;
+    --bs-link-hover-color: #60a5fa;
+}
+
+/* Restaurar comportamiento de enlaces del layout (Tailwind) frente a Reboot de Bootstrap */
+a { color: inherit; text-decoration: inherit; }

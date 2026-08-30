@@ -1160,3 +1160,87 @@ Ninguno nuevo. `$currentMoves`, `$maxDmg`, `$phase` ya se pasan al partial.
 - HTML de `/combate`: carga app.css/app.js + combate.css/combate.js.
 - `/equipos` y `/habitats`: NO cargan combate.css (sin Bootstrap).
 - Dark mode OK en resto de páginas (toggle del header).
+
+---
+
+# Análisis Frontend — Dark mode de componentes Bootstrap en /combate (2026-08-30)
+
+## Contexto
+
+Tras aislar Bootstrap a `resources/css/combate.css` (commit `126d175`), en `/combate` el dark
+mode está roto en dos zonas concretas reportadas por el usuario:
+
+1. **Nav del layout**: enlaces azules + subrayado en vez de `text-gray-600 dark:text-gray-400`.
+2. **Registro de batalla**: card + header (`bg-body-tertiary`) + list-group con fondo blanco.
+
+**Causa raíz** (confirmada contra el CSS compilado real de Bootstrap 5.3.8 en
+`node_modules/bootstrap/dist/css/bootstrap.min.css`):
+
+- `combate.css` (Bootstrap) se carga DESPUÉS de `app.css` (Tailwind) vía `@stack('styles')`.
+- Bootstrap Reboot es **unlayered** → `a { color: var(--bs-link-color); text-decoration: underline }`
+  gana a las utilidades Tailwind (layered) del nav.
+- `:root { color-scheme: light }` y las variables `--bs-*` (fondos blancos) de Bootstrap no
+  cambian con `.dark` en `<html>`: `.card` → `--bs-card-bg: var(--bs-body-bg)` (#fff),
+  `.list-group-item` → `--bs-list-group-bg: var(--bs-body-bg)` (#fff),
+  `.bg-body-tertiary` → `rgba(var(--bs-tertiary-bg-rgb), var(--bs-bg-opacity))` (#f8f9fa).
+
+## Vistas/componentes a tocar
+
+| Archivo | Acción |
+|---------|--------|
+| `resources/css/combate.css` | Añadir al final overrides `.dark { color-scheme: dark; --bs-* }` + `a { color: inherit; text-decoration: inherit; }` |
+
+NO se tocan: `app/Livewire/Combate.php`, `src/`, `resources/js/`, `resources/css/app.css`
+(por regla del brief: los overrides van en combate.css, que es el que se carga en /combate),
+`resources/views/layouts/app.blade.php` ni los partials.
+
+## Componentes Bootstrap usados en combate y variables que los cubren
+
+| Componente (vista) | Variable Bootstrap | ¿Cubierta por override? |
+|---|---|---|
+| `.card` (turn-bar, battle-log, _pokemon-card) | `--bs-card-bg`, `--bs-card-color`, `--bs-card-border-color` | Sí |
+| `.card-header.bg-body-tertiary` (battle-log) | `--bs-tertiary-bg-rgb` (**NO** el hex `--bs-tertiary-bg`: `.bg-body-tertiary` usa `rgba(var(--bs-tertiary-bg-rgb),…)`) | Sí (variante RGB) |
+| `.list-group` / `.list-group-item` (battle-log) | `--bs-list-group-bg`, `--bs-list-group-color`, `--bs-list-group-border-color` | Sí |
+| `.text-muted` (turn-bar, battle-field, _pokemon-card, moves-panel) | `--bs-secondary-color` | Sí (adicional: el Analista no la listó, pero sin ella el texto muted queda ilegible en dark) |
+| `.progress` (track de HP/barreras en _pokemon-card) | `--bs-progress-bg: var(--bs-secondary-bg)` | Sí vía `--bs-secondary-bg` |
+| `.badge text-bg-*` (moves-panel, turn-bar) | `--bs-*-rgb` (colores vivos, p.ej. `RGBA(var(--bs-primary-rgb),…)`) | No necesario: usan colores RGB fijos de Bootstrap, legibles sobre fondo oscuro |
+| `.badge bg-light border text-dark` (item en _pokemon-card) | `--bs-light-bg` (blanco) | No necesario: badge claro intencional para el icono de item |
+| `.stage-up` / `.stage-down` (badges de etapas) | clases propias en combate.css con bg claro (#d1e7dd/#f8d7da) | No necesario por el reporte (bg claro legible); sin cambio para mantener alcance mínimo |
+| `.alert alert-info/warning` (weather banner, animación, target-hint) | `.weather-*` ya fija bg/color oscuros propios; alert-info restante con `--bs-info-bg-subtle` claro | No necesario por el reporte (estados transitorios); se documenta como deuda visual menor |
+| Nav del layout (`a`) | Bootstrap Reboot `a { color: var(--bs-link-color) }` | Sí: `a { color: inherit; text-decoration: inherit }` |
+
+## DTOs/contratos consumidos
+
+Ninguno. Cambio 100% CSS.
+
+## Estados UI cubiertos
+
+- **Dark mode ON** (`<html class="dark">`): card/list-group/header del registro oscuros
+  (`#1f2937`), texto claro (`#f9fafb`), texto muted gris (`#9ca3af`), enlaces heredan color
+  (nav Tailwind correcto), `color-scheme: dark` (scrollbars/form nativos oscuros).
+- **Light mode**: sin cambios (los overrides viven bajo `.dark`).
+- **Badges**: colores Bootstrap intactos en ambos temas.
+
+## Riesgos accesibilidad/UX
+
+- **`a { color: inherit }` global en combate.css**: restaura el preflight de Tailwind en
+  `/combate` (mismo enfoque ya validado en `a83c40d`). Afecta a cualquier `a` de la página,
+  pero el nav usa utilidades Tailwind explícitas con especificidad de clase (ganan).
+- **Contraste**: `--bs-secondary-color: #9ca3af` (gray-400) sobre `#1f2937` → ratio ~7:1, OK.
+- **Solo /combate**: el override no filtra a otras páginas (combate.css solo se carga aquí).
+
+## Tests
+
+- `php artisan test --compact --filter=Combate` → 8 passed (CombateLivewireTest + otros).
+- `php artisan test --compact --filter=Battle` → 150 passed.
+- `npm run build` → regenera combate.css en `public/build`.
+
+## Verificación
+
+1. Grep de variables reales en `node_modules/bootstrap/dist/css/bootstrap.min.css`:
+   - `.bg-body-tertiary` usa `rgba(var(--bs-tertiary-bg-rgb),…)` → obliga a la variante `-rgb`.
+   - `.card`/`.list-group-item` usan `var(--bs-card-bg)`/`var(--bs-list-group-bg)` (hex).
+2. `npm run build` exitoso.
+3. Tests verdes.
+4. HTML de `/combate` con `class="dark"`: nav gris oscuro sin azul/subrayado; registro de
+   batalla (`.card`, `.card-header.bg-body-tertiary`, `.list-group-item`) con fondo `#1f2937`.
