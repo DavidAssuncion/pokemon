@@ -60,7 +60,7 @@
                         <span class="flex-1 text-sm text-left font-medium text-gray-700 dark:text-gray-300">Granjas</span>
                     </button>
                     <button
-                        @click="{{ $bloqueadoConstruccion ? '' : "alert('Función próximamente')" }}"
+                        @click="{{ $bloqueadoConstruccion ? '' : "toggleEntrenadores()" }}"
                         {{ $bloqueadoConstruccion ? 'disabled' : '' }}
                         @if($bloqueadoConstruccion) title="No disponible durante exploraciones activas" @endif
                         class="{{ $constructionButtonClass }} {{ $bloqueadoConstruccion ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-50 dark:hover:bg-gray-700' }}"
@@ -232,59 +232,107 @@
                         <h3 class="text-sm font-semibold text-gray-900 dark:text-white">Niveles</h3>
                     </div>
                     <div class="p-4 space-y-3">
-                        <p x-show="avisoNivel" x-cloak x-text="avisoNivel" role="status"
-                           class="text-xs text-orange-700 dark:text-orange-300 bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg px-3 py-2"></p>
-                        @foreach([1,2,3] as $level)
-                        @php
-                            $minLvl = $habitat['min_lvl_' . $level] ?? null;
-                            $bloqueadoNivel = $minLvl !== null && ($nivelJugador ?? 1) < $minLvl;
-                        @endphp
-                        <button
-                            @click="selectLevel({{ $level }})"
-                            {{ $bloqueadoNivel ? 'disabled' : '' }}
-                            @if($bloqueadoNivel) title="Requiere Nv {{ $minLvl }}" aria-disabled="true" @endif
-                            :class="selectedLevel === {{ $level }}
-                                ? 'border-blue-500 dark:border-blue-400 bg-blue-50 dark:bg-blue-900/20'
-                                : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'"
-                            class="w-full p-4 rounded-xl border-2 text-left transition-all {{ $bloqueadoNivel ? 'opacity-60 cursor-not-allowed border-dashed' : '' }}"
-                            aria-label="Nivel {{ $level }}"
-                        >
-                            <div class="flex items-center justify-between mb-2">
-                                <span class="text-sm font-semibold text-gray-900 dark:text-white flex items-center gap-1.5">
-                                    @if($bloqueadoNivel)
-                                        <svg class="w-3.5 h-3.5 text-orange-500" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
-                                            <path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd"/>
-                                        </svg>
-                                    @endif
-                                    Nivel {{ $level }}
-                                </span>
-                                <span class="flex items-center gap-2">
-                                    @if($bloqueadoNivel)
-                                        <span class="px-2 py-0.5 bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400 text-[10px] font-bold rounded-full">
-                                            Requiere Nv {{ $minLvl }}
-                                        </span>
-                                    @endif
-                                    <span class="text-xs text-gray-500 dark:text-gray-400">{{ count($habitat['levels'][$level] ?? []) }} pokémon</span>
-                                </span>
-                            </div>
-                            <div class="flex flex-wrap gap-2">
-                                @forelse($habitat['levels'][$level] ?? [] as $pokemon)
-                                <template x-if="!isSighted({{ $pokemon['id'] ?? $pokemon['species_id'] ?? 0 }})">
-                                    <div class="relative w-24 h-24">
-                                        <img src="/images/misc/unknown.webp" alt="?" class="w-full h-full object-contain">
+                        <!-- MODO POKÉMON -->
+                        <div x-show="modo === 'pokemon'">
+                            <p x-show="avisoNivel" x-cloak x-text="avisoNivel" role="status"
+                               class="text-xs text-orange-700 dark:text-orange-300 bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg px-3 py-2"></p>
+                            @foreach([1,2,3] as $level)
+                            @php
+                                $minLvl = $habitat['min_lvl_' . $level] ?? null;
+                                $bloqueadoNivel = $minLvl !== null && ($nivelJugador ?? 1) < $minLvl;
+                            @endphp
+                            <button
+                                @click="selectLevel({{ $level }})"
+                                {{ $bloqueadoNivel ? 'disabled' : '' }}
+                                @if($bloqueadoNivel) title="Requiere Nv {{ $minLvl }}" aria-disabled="true" @endif
+                                :class="selectedLevel === {{ $level }}
+                                    ? 'border-blue-500 dark:border-blue-400 bg-blue-50 dark:bg-blue-900/20'
+                                    : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'"
+                                class="w-full p-4 rounded-xl border-2 text-left transition-all {{ $bloqueadoNivel ? 'opacity-60 cursor-not-allowed border-dashed' : '' }}"
+                                aria-label="Nivel {{ $level }}"
+                            >
+                                <div class="flex items-center justify-between mb-2">
+                                    <span class="text-sm font-semibold text-gray-900 dark:text-white flex items-center gap-1.5">
+                                        @if($bloqueadoNivel)
+                                            <svg class="w-3.5 h-3.5 text-orange-500" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                                                <path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd"/>
+                                            </svg>
+                                        @endif
+                                        Nivel {{ $level }}
+                                    </span>
+                                    <span class="flex items-center gap-2">
+                                        @if($bloqueadoNivel)
+                                            <span class="px-2 py-0.5 bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400 text-[10px] font-bold rounded-full">
+                                                Requiere Nv {{ $minLvl }}
+                                            </span>
+                                        @endif
+                                        <span class="text-xs text-gray-500 dark:text-gray-400">{{ count($habitat['levels'][$level] ?? []) }} pokémon</span>
+                                    </span>
+                                </div>
+                                <div class="flex flex-wrap gap-2">
+                                    @forelse($habitat['levels'][$level] ?? [] as $pokemon)
+                                    <template x-if="!isSighted({{ $pokemon['id'] ?? $pokemon['species_id'] ?? 0 }})">
+                                        <div class="relative w-24 h-24">
+                                            <img src="/images/misc/unknown.webp" alt="?" class="w-full h-full object-contain">
+                                        </div>
+                                    </template>
+                                    <template x-if="isSighted({{ $pokemon['id'] ?? $pokemon['species_id'] ?? 0 }})">
+                                        <div class="relative w-24 h-24">
+                                            <img src="{{ $pokemon['icon'] }}" loading="lazy" decoding="async" alt="{{ $pokemon['name'] }}" title="{{ $pokemon['name'] }}" class="w-full h-full object-contain" onerror="this.style.display='none'">
+                                        </div>
+                                    </template>
+                                    @empty
+                                    <span class="text-xs text-gray-400 dark:text-gray-500">Sin Pokémon en este nivel</span>
+                                    @endforelse
+                                </div>
+                            </button>
+                            @endforeach
+                        </div>
+
+                        <!-- MODO ENTRENADORES -->
+                        <div x-show="modo === 'entrenadores'" x-cloak>
+                            <template x-if="!trainers && !trainersLoading">
+                                <p class="text-xs text-gray-500 dark:text-gray-400">No hay entrenadores disponibles</p>
+                            </template>
+                            <template x-if="trainersLoading">
+                                <p class="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-2">
+                                    <svg class="w-4 h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                                    Cargando entrenadores...
+                                </p>
+                            </template>
+                            <template x-for="(levelData, levelIdx) in (trainers || [])" :key="'level-' + levelIdx">
+                                <div class="mb-4">
+                                    <h4 class="text-sm font-semibold text-gray-900 dark:text-white mb-2" x-text="'Nivel ' + levelIdx"></h4>
+                                    <div class="grid grid-cols-3 gap-2">
+                                        <template x-for="(entrenador, eIdx) in levelData" :key="eIdx">
+                                            <button
+                                                @click="selectTrainer(levelIdx, entrenador.indice)"
+                                                :disabled="!entrenador.desbloqueado || !selectedTeamId"
+                                                :class="{
+                                                    'border-green-500 dark:border-green-400 bg-green-50 dark:bg-green-900/20': entrenador.desbloqueado && selectedTeamId,
+                                                    'border-gray-200 dark:border-gray-700 opacity-50 cursor-not-allowed': !entrenador.desbloqueado || !selectedTeamId,
+                                                    'hover:border-green-300 dark:hover:border-green-600': entrenador.desbloqueado && selectedTeamId
+                                                }"
+                                                class="w-full p-2 rounded-xl border-2 text-left transition-all"
+                                            >
+                                                <div class="flex items-center gap-2 mb-1">
+                                                    <span class="text-xs font-semibold text-gray-900 dark:text-white" x-text="'Entrenador ' + entrenador.indice"></span>
+                                                    <span x-show="!entrenador.desbloqueado" class="px-1.5 py-0.5 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 text-[10px] font-bold rounded-full">Derrotado</span>
+                                                </div>
+                                                <div class="flex gap-1">
+                                                    <template x-for="(poke, pIdx) in entrenador.pokemon" :key="pIdx">
+                                                        <div class="flex-1 text-center">
+                                                            <img :src="poke.icon" loading="lazy" decoding="async" :alt="poke.nombre" :title="poke.nombre + ' (' + poke.posicion + ')'" class="w-12 h-12 object-contain mx-auto" onerror="this.style.display='none'">
+                                                            <span class="text-[8px] text-gray-500 dark:text-gray-400 block" x-text="poke.posicion === 'vanguardia' ? '🛡️' : '⚔️'"></span>
+                                                        </div>
+                                                    </template>
+                                                </div>
+                                            </button>
+                                        </template>
                                     </div>
-                                </template>
-                                <template x-if="isSighted({{ $pokemon['id'] ?? $pokemon['species_id'] ?? 0 }})">
-                                    <div class="relative w-24 h-24">
-                                        <img src="{{ $pokemon['icon'] }}" loading="lazy" decoding="async" alt="{{ $pokemon['name'] }}" title="{{ $pokemon['name'] }}" class="w-full h-full object-contain" onerror="this.style.display='none'">
-                                    </div>
-                                </template>
-                                @empty
-                                <span class="text-xs text-gray-400 dark:text-gray-500">Sin Pokémon en este nivel</span>
-                                @endforelse
-                            </div>
-                        </button>
-                        @endforeach
+                                </div>
+                            </template>
+                        </div>
                     </div>
                 </div>
 
@@ -295,6 +343,14 @@
                     class="w-full px-4 py-3 bg-green-600 text-white rounded-xl text-sm font-bold transition-all hover:bg-green-700 disabled:bg-gray-300 dark:disabled:bg-gray-700 disabled:text-gray-500 dark:disabled:text-gray-500 disabled:cursor-not-allowed uppercase tracking-wide"
                 >
                     Iniciar Exploración
+                </button>
+                <button
+                    x-show="modo === 'entrenadores'"
+                    @click="openFormacionPopup()"
+                    :disabled="!selectedTeamId || !selectedTrainer"
+                    class="w-full px-4 py-3 bg-red-600 text-white rounded-xl text-sm font-bold transition-all hover:bg-red-700 disabled:bg-gray-300 dark:disabled:bg-gray-700 disabled:text-gray-500 dark:disabled:text-gray-500 disabled:cursor-not-allowed uppercase tracking-wide"
+                >
+                    Iniciar Combate contra Entrenador
                 </button>
             </div>
         </div>
@@ -440,6 +496,62 @@
                         class="flex-1 px-4 py-2.5 bg-green-600 text-white rounded-lg text-sm font-bold hover:bg-green-700 transition-colors disabled:bg-gray-300 dark:disabled:bg-gray-700 disabled:text-gray-500 dark:disabled:text-gray-500 disabled:cursor-not-allowed"
                     >
                         Enviar expedición
+                    </button>
+                </div>
+            </div>
+        </div>
+    </template>
+
+    <!-- Formacion Modal (Entrenadores) -->
+    <template x-if="showFormacionPopup">
+        <div class="fixed inset-0 z-50 flex items-center justify-center p-4" @keydown.escape.window="closeFormacionPopup()">
+            <div class="absolute inset-0 bg-black/60" @click="closeFormacionPopup()"></div>
+            <div class="relative bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-md p-6">
+                <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-4">Configurar Formación</h3>
+                <p class="text-sm text-gray-600 dark:text-gray-300 mb-4">
+                    Ajusta la posición de cada pokémon antes del combate.
+                </p>
+
+                <!-- Miembros del equipo con toggle -->
+                <div class="space-y-3 mb-6">
+                    <template x-for="miembro in (selectedTeamMembers || [])" :key="miembro.id">
+                        <div class="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700 rounded-lg">
+                            <div class="flex items-center gap-3">
+                                <img :src="'/images/iconos_webp/' + miembro.reclutado.pokemon_id + '.webp'" loading="lazy" decoding="async" :alt="miembro.reclutado.nombre" class="w-16 h-16 object-contain" onerror="this.style.display='none'">
+                                <div>
+                                    <p class="text-sm font-medium text-gray-900 dark:text-white" x-text="miembro.reclutado.nombre || miembro.reclutado?.pokemon?.name"></p>
+                                    <p class="text-xs text-gray-500 dark:text-gray-400" x-text="'Posición ' + miembro.slot"></p>
+                                </div>
+                            </div>
+                            <button
+                                @click="toggleFormacionSlot(miembro.slot)"
+                                :class="formacion[miembro.slot] === 'vanguardia'
+                                    ? 'bg-blue-600 text-white border-blue-600'
+                                    : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600'"
+                                class="px-3 py-1.5 rounded-lg text-xs font-bold border transition-colors"
+                                x-text="(formacion[miembro.slot] === 'vanguardia' ? '🛡️ Vanguardia' : '⚔️ Retaguardia')"
+                            ></button>
+                        </div>
+                    </template>
+                    <template x-if="!selectedTeamMembers || selectedTeamMembers.length === 0">
+                        <p class="text-sm text-gray-400 dark:text-gray-500 text-center py-4">Selecciona un equipo primero</p>
+                    </template>
+                </div>
+
+                <!-- Buttons -->
+                <div class="flex gap-3">
+                    <button
+                        @click="closeFormacionPopup()"
+                        class="flex-1 px-4 py-2.5 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg text-sm font-medium hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                    >
+                        Cancelar
+                    </button>
+                    <button
+                        @click="confirmarCombate()"
+                        :disabled="!selectedTeamId || !selectedTrainer"
+                        class="flex-1 px-4 py-2.5 bg-red-600 text-white rounded-lg text-sm font-bold hover:bg-red-700 transition-colors disabled:bg-gray-300 dark:disabled:bg-gray-700 disabled:text-gray-500 dark:disabled:text-gray-500 disabled:cursor-not-allowed"
+                    >
+                        ¡Combatir!
                     </button>
                 </div>
             </div>
@@ -655,6 +767,122 @@ function habitatShow() {
         },
         nivelJugador: {{ $nivelJugador ?? 1 }},
         avisoNivel: '',
+
+        // ─── Entrenadores mode ────────────────────────────
+        modo: 'pokemon',
+        trainers: null,
+        trainersLoading: false,
+        selectedTrainer: null,
+        showFormacionPopup: false,
+        formacion: {},
+
+        get selectedTeamMembers() {
+            if (!this.selectedTeamId || !this.teams) return [];
+            const team = this.teams.find(t => t.id === this.selectedTeamId);
+            if (!team || !team.members) return [];
+            return team.members.sort((a, b) => a.slot - b.slot).filter(m => m.reclutado && m.reclutado.pokemon);
+        },
+
+        async toggleEntrenadores() {
+            if (this.modo === 'entrenadores') {
+                this.modo = 'pokemon';
+                this.selectedTrainer = null;
+                this.selectedLevel = null;
+                return;
+            }
+            this.modo = 'entrenadores';
+            this.selectedLevel = null;
+            this.selectedTrainer = null;
+            await this.loadTrainers();
+        },
+
+        async loadTrainers() {
+            this.trainersLoading = true;
+            this.trainers = null;
+            try {
+                const response = await fetch('/api/habitats/{{ $habitat['id'] }}/entrenadores', {
+                    headers: { 'Accept': 'application/json' },
+                });
+                if (!response.ok) throw new Error('Error al cargar entrenadores');
+                this.trainers = await response.json();
+            } catch (e) {
+                console.error('Error loading trainers:', e);
+                this.trainers = null;
+            } finally {
+                this.trainersLoading = false;
+            }
+        },
+
+        selectTrainer(level, trainerIndex) {
+            if (!this.selectedTeamId) return;
+            const trainer = this.trainers?.[level]?.[trainerIndex - 1];
+            if (!trainer || !trainer.desbloqueado) return;
+            this.selectedLevel = level;
+            this.selectedTrainer = trainer;
+            // Inicializar toggles (todos vanguardia por defecto)
+            this.formacion = {};
+            const team = this.teams.find(t => t.id === this.selectedTeamId);
+            if (team && team.members) {
+                team.members.forEach(m => {
+                    this.formacion[m.slot] = 'vanguardia';
+                });
+            }
+            this.showFormacionPopup = true;
+        },
+
+        openFormacionPopup() {
+            if (!this.selectedTeamId || !this.selectedTrainer) {
+                return;
+            }
+            if (Object.keys(this.formacion).length === 0) {
+                this.formacion = {};
+                const team = this.teams.find(t => t.id === this.selectedTeamId);
+                if (team && team.members) {
+                    team.members.forEach(m => {
+                        this.formacion[m.slot] = 'vanguardia';
+                    });
+                }
+            }
+            this.showFormacionPopup = true;
+        },
+
+        toggleFormacionSlot(slot) {
+            this.formacion[slot] = this.formacion[slot] === 'vanguardia' ? 'retaguardia' : 'vanguardia';
+        },
+
+        closeFormacionPopup() {
+            this.showFormacionPopup = false;
+            this.selectedTrainer = null;
+        },
+
+        async confirmarCombate() {
+            if (!this.selectedTeamId || !this.selectedLevel || !this.selectedTrainer) return;
+            try {
+                const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || '';
+                const response = await fetch('/api/habitats/{{ $habitat['id'] }}/entrenadores/' + this.selectedLevel + '/' + this.selectedTrainer.indice + '/combatir', {
+                    method: 'POST',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': csrfToken,
+                    },
+                    body: JSON.stringify({
+                        team_id: this.selectedTeamId,
+                        formacion: this.formacion,
+                    }),
+                });
+                if (!response.ok) {
+                    const err = await response.json().catch(() => ({}));
+                    alert(err.message || 'Error al iniciar combate');
+                    return;
+                }
+                const data = await response.json();
+                this.showFormacionPopup = false;
+                window.location.href = data.redirect || '/combate?battle_id=' + data.battle_id;
+            } catch (e) {
+                alert('Error al iniciar combate: ' + e.message);
+            }
+        },
 
         // Admin Gestion state
         showGestionModal: false,

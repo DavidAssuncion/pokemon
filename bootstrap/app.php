@@ -16,5 +16,10 @@ return Application::configure(basePath: dirname(__DIR__))
         //
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        //
+        $exceptions->renderable(function (\Src\Shared\Domain\Exceptions\ViolacionReglaNegocio $e, \Illuminate\Http\Request $request) {
+            return response()->json(['message' => $e->getMessage()], 422);
+        });
+        $exceptions->renderable(function (\Src\Shared\Domain\Exceptions\DominioExcepcion $e, \Illuminate\Http\Request $request) {
+            return response()->json(['message' => $e->getMessage()], 400);
+        });
     })->create();

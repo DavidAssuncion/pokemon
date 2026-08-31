@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Providers;
 
+use Src\CombateEntrenadores\Domain\Repositories\EntrenadorLogRepositoryInterface;
+use Src\CombateEntrenadores\Infra\EloquentEntrenadorLogRepository;
 use App\Bus\DatabaseUnitOfWork;
 use App\Bus\LaravelCommandBus;
 use App\Support\WebpConverter;
@@ -35,6 +37,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(WebpConverterInterface::class, WebpConverter::class);
         $this->app->bind(CommandBus::class, LaravelCommandBus::class);
         $this->app->bind(UnitOfWork::class, DatabaseUnitOfWork::class);
+        $this->app->bind(EntrenadorLogRepositoryInterface::class, EloquentEntrenadorLogRepository::class);
     }
 
     /**

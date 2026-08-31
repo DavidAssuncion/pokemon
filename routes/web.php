@@ -36,5 +36,6 @@ Route::middleware('auth')->group(function (): void {
     require __DIR__.'/player.php';
     require __DIR__.'/exploraciones.php';
     require __DIR__.'/datagrid.php';
+    require __DIR__.'/entrenadores.php';
     // require __DIR__ . '/../src/Crud/routes.php';
 });

@@ -14,6 +14,7 @@ use Src\Battle\Domain\MovimientoBatalla;
 use Src\Battle\Domain\ServicioEjecucionBatalla;
 use Src\Battle\Presentation\DTOAccionBatalla;
 use Src\Battle\Presentation\DTOMovimientoBatalla;
+use Src\CombateEntrenadores\App\RegistrarResultadoEntrenador;
 
 class Combate extends Component
 {
@@ -74,6 +75,22 @@ class Combate extends Component
     public function mount(): void
     {
         $this->fabricaBatalla = app(FabricaBatallaInterface::class);
+
+        $battleId = request()->query('battle_id');
+        if (is_string($battleId) && $battleId !== '' && session()->has($battleId)) {
+            $this->battleId = $battleId;
+            $battle = $this->getBattle();
+            if ($battle !== null) {
+                $this->servicioEjecucion = new ServicioEjecucionBatalla($battle->damageChain());
+                $this->syncViewData($battle);
+                $this->log[] = '¡Comienza la batalla!';
+                $this->saveBattle($battle);
+                $this->nextActor();
+
+                return;
+            }
+        }
+
         $this->nuevaBatalla();
     }
 
@@ -259,6 +276,28 @@ class Combate extends Component
         $this->syncViewData($battle);
         $this->saveBattle($battle);
         $this->processing = false;
+        $this->registrarResultadoEntrenador($battle);
+    }
+
+    private function registrarResultadoEntrenador(AgregadoBatalla $battle): void
+    {
+        $meta = session($this->battleId.'_meta');
+        if (! is_array($meta)) {
+            return;
+        }
+
+        $won = ! $battle->team1->todosDebilitados();
+
+        app(RegistrarResultadoEntrenador::class)->registrar(
+            habitatId: (int) ($meta['habitat_id'] ?? 0),
+            nivel: (int) ($meta['nivel'] ?? 0),
+            trainerIndex: (int) ($meta['trainer_index'] ?? 0),
+            userId: (int) ($meta['user_id'] ?? 0),
+            fecha: (string) ($meta['fecha'] ?? today()->toDateString()),
+            won: $won,
+        );
+
+        session()->forget($this->battleId.'_meta');
     }
 
     // ─── AI ──────────────────────────────────────────────────
