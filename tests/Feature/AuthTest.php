@@ -30,7 +30,7 @@ class AuthTest extends TestCase
             'password_confirmation' => 'secret123',
         ]);
 
-        $response->assertRedirect('/');
+        $response->assertRedirect(route('onboarding.equipo-inicial'));
         $this->assertDatabaseHas('users', [
             'name' => 'ash',
             'experiencia' => 0,

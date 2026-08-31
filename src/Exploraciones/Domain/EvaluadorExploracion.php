@@ -34,7 +34,7 @@ final class EvaluadorExploracion
     public const COSTE_EXITO_CON_COSTE_MIN = 5;
     public const COSTE_EXITO_CON_COSTE_MAX = 10;
     public const COSTE_DERROTA = 10;
-    public const COSTE_EMBOSCADA_VICTORIA = 10;
+    public const COSTE_EMBOSCADA_VICTORIA = 0;
     public const COSTE_EMBOSCADA_DERROTA = 15;
 
     public const CATEGORIA_EXITO_EXCEPCIONAL = 'exito_excepcional';

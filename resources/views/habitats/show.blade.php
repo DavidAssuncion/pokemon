@@ -10,25 +10,37 @@
     $familyCardClass = 'bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-3 text-center';
 @endphp
 <div x-data="habitatShow()" x-init="init()">
-        <!-- Main: Left 1/4 (back/title/image/construction) + Right 3/4 (explorations/teams/levels) -->
-        <div class="grid lg:grid-cols-4 gap-6">
-            <!-- Left 1/4: Back, Title, Image (auto size), stacked construction buttons -->
+        <!-- Main: Left 1/5 (back/image/construction) + Right 4/5 (explorations/teams/levels) -->
+        <div class="grid lg:grid-cols-5 gap-6">
+            <!-- Left 1/5: Back, Image (auto size) with title overlay, stacked construction buttons -->
             <div class="lg:col-span-1 space-y-4">
-                <a href="/habitats" class="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 text-sm font-medium transition-colors inline-flex items-center gap-1">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
-                    </svg>
-                    Volver a hábitats
+                <!-- Back card (visual) -->
+                <a href="/habitats" aria-label="Volver a hábitats" title="Volver a hábitats"
+                   class="{{ $cardPanelClass }} p-3 flex items-center gap-3 cursor-pointer transition-all hover:shadow-md hover:border-blue-300 dark:hover:border-blue-600 group">
+                    <span class="w-8 shrink-0 flex justify-center">
+                        <svg class="w-5 h-5 text-gray-500 dark:text-gray-400 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                        </svg>
+                    </span>
+                    <span class="flex-1 text-sm font-medium text-gray-700 dark:text-gray-300 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">Volver a hábitats</span>
                 </a>
-                <h1 class="text-2xl font-bold text-gray-900 dark:text-white">{{ $habitat['name'] }}</h1>
-                <!-- Image: auto size (natural), NOT full width -->
-                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-3 overflow-hidden w-fit">
+
+                <!-- Image card with title overlay -->
+                <div class="{{ $cardPanelClass }} relative p-3 overflow-hidden w-fit min-h-[6rem] flex items-center justify-center">
+                    @if(!empty($habitat['image']))
                     <img
-                        src="{{ $habitat['image'] ?? '' }}"
+                        src="{{ $habitat['image'] }}"
                         alt="{{ $habitat['name'] }}"
                         class="w-auto h-auto max-w-full rounded-lg"
                         onerror="this.style.display='none'"
                     >
+                    @else
+                    <div class="w-48 h-32 rounded-lg bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
+                        <span class="text-4xl">🏔️</span>
+                    </div>
+                    @endif
+                    <h1 class="absolute bottom-0 inset-x-0 px-3 py-2 bg-gradient-to-t from-black/70 to-transparent text-white text-sm font-bold truncate rounded-b-lg"
+                        title="{{ $habitat['name'] }}">{{ $habitat['name'] }}</h1>
                 </div>
 
                 <!-- Construction buttons (stacked, full width) -->
@@ -89,8 +101,8 @@
                 @endif
             </div>
 
-            <!-- Right 3/4: Explorations, Teams, Levels -->
-            <div class="lg:col-span-3 space-y-6">
+            <!-- Right 4/5: Explorations, Teams, Levels -->
+            <div class="lg:col-span-4 space-y-6">
                 <!-- Active Explorations List -->
                 @if($exploracionesActivas && $exploracionesActivas->count() > 0)
                 <div class="{{ $cardPanelClass }}">
@@ -297,6 +309,82 @@
                     ¿Quieres mandar a explorar <strong class="text-gray-900 dark:text-white" x-text="selectedTeamName"></strong> a la zona <strong class="text-gray-900 dark:text-white">{{ $habitat['name'] }}</strong>?
                 </p>
 
+                <!-- Preparación de la expedición (preview) -->
+                <div class="mb-4">
+                    <div x-show="previewLoading" x-cloak role="status" class="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2">
+                        <svg class="w-4 h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                        </svg>
+                        Calculando la preparación de la expedición...
+                    </div>
+                    <div x-show="previewError" x-cloak role="alert" class="text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg px-3 py-2">
+                        <span x-text="previewError"></span>
+                    </div>
+                    <template x-if="previewLoaded && preview">
+                        <div class="space-y-3 bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700 rounded-lg p-3">
+                            <div class="flex items-center justify-between">
+                                <span class="text-xs font-medium text-gray-600 dark:text-gray-300">Peligro de la zona</span>
+                                <span class="text-sm text-amber-500 tracking-tight" x-html="starRating(preview.peligro_estrellas)"
+                                      :title="'Peligro ' + preview.peligro_estrellas + ' de 5 estrellas'" aria-hidden="true"></span>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <span class="text-xs font-medium text-gray-600 dark:text-gray-300">Afinidad del equipo</span>
+                                <span class="text-sm font-medium text-gray-900 dark:text-white" x-text="preview.afinidad"></span>
+                            </div>
+                            <template x-if="preview.advertencias && preview.advertencias.length">
+                                <div class="space-y-1">
+                                    <template x-for="adv in preview.advertencias" :key="adv">
+                                        <p class="text-xs" :class="adv.includes('Fracaso') ? 'text-red-600 dark:text-red-400' : 'text-amber-700 dark:text-amber-400'" x-text="adv"></p>
+                                    </template>
+                                </div>
+                            </template>
+                            <template x-if="preview.matchups && preview.matchups.length">
+                                <div>
+                                    <p class="text-xs font-medium text-gray-600 dark:text-gray-300 mb-1.5">Tipos frente a la zona</p>
+                                    <div class="space-y-1">
+                                        <template x-for="mu in preview.matchups" :key="mu.miembro_tipos.join('-') + '-' + mu.pool_tipo">
+                                            <p class="text-xs"
+                                               :class="mu.clasificacion === 'severo'
+                                                   ? 'text-red-600 dark:text-red-400 font-bold'
+                                                   : mu.clasificacion === 'negativo'
+                                                       ? 'text-red-600 dark:text-red-400'
+                                                       : 'text-green-600 dark:text-green-400'">
+                                                <template x-if="mu.clasificacion === 'severo'">
+                                                    <span aria-hidden="true">⚠ Inmune: </span>
+                                                </template>
+                                                <span x-text="'Pokémon de tipo ' + mu.miembro_tipos.join('/') + ' en zona con Pokémon ' + mu.pool_tipo"></span>
+                                            </p>
+                                        </template>
+                                    </div>
+                                </div>
+                            </template>
+                            <template x-if="preview.roles && preview.roles.length">
+                                <div>
+                                    <p class="text-xs font-medium text-gray-600 dark:text-gray-300 mb-1.5">Roles del equipo</p>
+                                    <div class="flex flex-wrap gap-1.5">
+                                        <template x-for="rol in preview.roles" :key="rol">
+                                            <span class="px-2 py-0.5 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 text-[10px] font-bold rounded-full uppercase" x-text="rol"></span>
+                                        </template>
+                                    </div>
+                                </div>
+                            </template>
+                            <div class="flex items-center justify-between gap-2 pt-1 border-t border-gray-200 dark:border-gray-700">
+                                <span class="px-2 py-0.5 text-[10px] font-bold rounded-full uppercase" :class="riesgoClass(preview.riesgo)" x-text="'Riesgo ' + preview.riesgo"></span>
+                                <span class="text-xs text-gray-600 dark:text-gray-300">
+                                    Recompensa esperada:
+                                    <strong class="text-gray-900 dark:text-white" x-text="preview.recompensa_esperada"></strong>
+                                </span>
+                            </div>
+                            <p x-show="teamWellPrepared" x-cloak class="text-xs font-medium text-green-600 dark:text-green-400 flex items-center gap-1">
+                                <svg class="w-4 h-4 shrink-0" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                                </svg>
+                                Equipo bien preparado para esta zona
+                            </p>
+                        </div>
+                    </template>
+                </div>
+
                 <!-- Duration options -->
                 <div class="space-y-3 mb-6">
                     <label class="flex items-center gap-3 p-3 rounded-lg border border-gray-200 dark:border-gray-700 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
@@ -348,9 +436,10 @@
                     </button>
                     <button
                         @click="confirmExploration()"
-                        class="flex-1 px-4 py-2.5 bg-green-600 text-white rounded-lg text-sm font-bold hover:bg-green-700 transition-colors"
+                        :disabled="!previewLoaded"
+                        class="flex-1 px-4 py-2.5 bg-green-600 text-white rounded-lg text-sm font-bold hover:bg-green-700 transition-colors disabled:bg-gray-300 dark:disabled:bg-gray-700 disabled:text-gray-500 dark:disabled:text-gray-500 disabled:cursor-not-allowed"
                     >
-                        Explorar
+                        Enviar expedición
                     </button>
                 </div>
             </div>
@@ -551,6 +640,11 @@ function habitatShow() {
         durationMode: 'hours',
         durationHours: 4,
         returnTime: '18:00',
+        // Preview de la expedición (riesgo)
+        preview: null,
+        previewLoading: false,
+        previewLoaded: false,
+        previewError: '',
         sightedPokemonIds: @json($sightedPokemonIds ?? []),
         equiposEnExploracion: @json($equiposEnExploracion->pluck('equipo_id')->toArray()),
         teams: @json($teams),
@@ -576,6 +670,15 @@ function habitatShow() {
             return this.selectedTeamId !== null
                 && this.selectedLevel !== null
                 && !this.levelBlocked(this.selectedLevel);
+        },
+
+        get teamWellPrepared() {
+            if (!this.previewLoaded || !this.preview) {
+                return false;
+            }
+            const riesgoBajo = this.preview.riesgo === 'Bajo' || this.preview.riesgo === 'Medio';
+            const sinAdvertencias = !(this.preview.advertencias && this.preview.advertencias.length > 0);
+            return riesgoBajo && sinAdvertencias;
         },
 
         get availableTeams() {
@@ -627,6 +730,56 @@ function habitatShow() {
 
         openExplorationModal() {
             this.showExplorationModal = true;
+            this.loadPreview();
+        },
+
+        async loadPreview() {
+            if (!this.selectedTeamId || !this.selectedLevel) {
+                return;
+            }
+            this.previewLoading = true;
+            this.previewLoaded = false;
+            this.previewError = '';
+            this.preview = null;
+            try {
+                const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || '';
+                const params = new URLSearchParams({
+                    team_id: this.selectedTeamId,
+                    habitat_id: {{ $habitat['id'] }},
+                    level: this.selectedLevel,
+                });
+                const response = await fetch('/exploraciones/preview?' + params.toString(), {
+                    headers: {
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': csrfToken,
+                    },
+                });
+                if (!response.ok) {
+                    const err = await response.json().catch(() => ({}));
+                    throw new Error(err.message || 'No se pudo calcular la preparación de la expedición.');
+                }
+                this.preview = await response.json();
+                this.previewLoaded = true;
+            } catch (e) {
+                this.previewError = e.message || 'Error al calcular la preparación de la expedición.';
+            } finally {
+                this.previewLoading = false;
+            }
+        },
+
+        starRating(n) {
+            const valor = Math.max(0, Math.min(5, Number(n) || 0));
+            return '★'.repeat(valor) + '☆'.repeat(5 - valor);
+        },
+
+        riesgoClass(riesgo) {
+            const clases = {
+                'Bajo': 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400',
+                'Medio': 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400',
+                'Alto': 'bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400',
+                'Extremo': 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400',
+            };
+            return clases[riesgo] || 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400';
         },
 
         closeExplorationModal() {
@@ -639,6 +792,21 @@ function habitatShow() {
                 alert('Este equipo ya está en una exploración activa.');
                 this.closeExplorationModal();
                 return;
+            }
+
+            if (!this.previewLoaded || !this.preview) {
+                alert('Espera a que se calcule la preparación de la expedición.');
+                return;
+            }
+
+            // Riesgo extremo: confirmación reforzada antes de enviar.
+            if (this.preview.riesgo === 'Extremo') {
+                const confirmacion = window.confirm(
+                    '¡Riesgo EXTREMO! ¿Seguro que quieres enviar esta expedición?'
+                );
+                if (!confirmacion) {
+                    return;
+                }
             }
 
             const data = {

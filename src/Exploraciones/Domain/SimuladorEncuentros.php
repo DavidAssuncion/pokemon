@@ -40,8 +40,9 @@ final class SimuladorEncuentros
     /**
      * Pool ponderado: peso = capture_rate / hatch (a mayor capture_rate más probable,
      * a mayor hatch menos probable). Los hatch nulos o cero se tratan como 1.
+     * Solo consume id/capture_rate/hatch del pool (tipos y stats se ignoran aquí).
      *
-     * @param  array<int, array{id: int, capture_rate: int, hatch: int|null}>  $pokemonHabitat
+     * @param  array<int, array{id: int, capture_rate: int, hatch: int|null, tipos?: list<TipoPokemon>, stats?: list<array{stat: int, effort: int}>}>  $pokemonHabitat
      * @return list<array{id: int, peso: float}>
      */
     public static function poolPonderado(array $pokemonHabitat): array
@@ -89,8 +90,10 @@ final class SimuladorEncuentros
     /**
      * Genera N eventos con timestamps repartidos dentro de [inicio, fin]:
      * un slot por evento y jitter aleatorio dentro de cada slot.
+     * El pool completo (id/capture_rate/hatch/tipos/stats) permite a los
+     * hallazgos restringir caramelos EV y de tipo al pool del hábitat.
      *
-     * @param  list<array{id: int, peso: float}>  $pool
+     * @param  list<array{id: int, capture_rate: int, hatch: int|null, tipos: list<TipoPokemon>, stats: list<array{stat: int, effort: int}>}>  $pool
      * @return list<array<string, mixed>>
      */
     public static function generarEventos(
@@ -106,6 +109,11 @@ final class SimuladorEncuentros
 
         $aleatorio ??= static fn (): float => mt_rand(0, 999) / 1000;
 
+        $poolPonderado = self::poolPonderado($pool);
+        if ($poolPonderado === []) {
+            return [];
+        }
+
         $eventos = [];
         $intervaloSegundos = (int) abs($fin->diffInSeconds($inicio));
         $slotSegundos = max(1, intdiv($intervaloSegundos, $numEncuentros));
@@ -117,31 +125,37 @@ final class SimuladorEncuentros
                 $timestamp = $fin->copy();
             }
 
-            $eventos[] = self::generarEvento($pool, $aleatorio(), $aleatorio, $timestamp);
+            $eventos[] = self::generarEvento($pool, $poolPonderado, $aleatorio(), $aleatorio, $timestamp);
         }
 
         return $eventos;
     }
 
     /**
-     * @param  list<array{id: int, peso: float}>  $pool
+     * @param  list<array{id: int, capture_rate: int, hatch: int|null, tipos: list<TipoPokemon>, stats: list<array{stat: int, effort: int}>}>  $pool
+     * @param  list<array{id: int, peso: float}>  $poolPonderado
      * @return array<string, mixed>
      */
-    private static function generarEvento(array $pool, float $tiradaTipo, callable $aleatorio, CarbonInterface $timestamp): array
-    {
+    private static function generarEvento(
+        array $pool,
+        array $poolPonderado,
+        float $tiradaTipo,
+        callable $aleatorio,
+        CarbonInterface $timestamp,
+    ): array {
         $base = ['timestamp' => $timestamp->toIso8601String()];
         $porcentaje = $tiradaTipo * 100;
 
         if ($porcentaje < self::PROBABILIDAD_ENCUENTRO) {
-            return self::eventoEncuentro($pool, $aleatorio) + $base;
+            return self::eventoEncuentro($poolPonderado, $aleatorio) + $base;
         }
 
         if ($porcentaje < self::PROBABILIDAD_ENCUENTRO + self::PROBABILIDAD_HALLAZGO) {
-            return self::eventoHallazgo($pool, $aleatorio) + $base;
+            return self::eventoHallazgo($pool, $poolPonderado, $aleatorio) + $base;
         }
 
         if ($porcentaje < self::PROBABILIDAD_ENCUENTRO + self::PROBABILIDAD_HALLAZGO + self::PROBABILIDAD_ENCUENTRO_ESPECIAL) {
-            return self::eventoEmboscada($pool, $aleatorio) + $base;
+            return self::eventoEmboscada($poolPonderado, $aleatorio) + $base;
         }
 
         if ($porcentaje < self::PROBABILIDAD_ENCUENTRO + self::PROBABILIDAD_HALLAZGO + self::PROBABILIDAD_ENCUENTRO_ESPECIAL + self::PROBABILIDAD_CONTRATIEMPO) {
@@ -184,16 +198,20 @@ final class SimuladorEncuentros
 
     /**
      * Hallazgo → caramelos (D8): familia (pokemon_id), EV (stat) o tipo (tipo_id).
+     * El EV y el tipo se restringen al pool del hábitat: se elige un pokémon del
+     * pool (ponderado) y de él un stat con effort>0 o uno de sus tipos.
+     * Fallback a valores aleatorios globales si el pool no aporta stats/tipos.
      *
-     * @param  list<array{id: int, peso: float}>  $pool
+     * @param  list<array{id: int, capture_rate: int, hatch: int|null, tipos: list<TipoPokemon>, stats: list<array{stat: int, effort: int}>}>  $pool
+     * @param  list<array{id: int, peso: float}>  $poolPonderado
      * @return array<string, mixed>
      */
-    private static function eventoHallazgo(array $pool, callable $aleatorio): array
+    private static function eventoHallazgo(array $pool, array $poolPonderado, callable $aleatorio): array
     {
         $roll = $aleatorio() * 100;
 
         if ($roll < self::HALLAZGO_FAMILIA) {
-            $elegido = self::elegirPonderado($pool, $aleatorio);
+            $elegido = self::elegirPonderado($poolPonderado, $aleatorio);
             if ($elegido === null) {
                 throw new LogicException('El pool ponderado está vacío');
             }
@@ -202,15 +220,107 @@ final class SimuladorEncuentros
         }
 
         if ($roll < self::HALLAZGO_EV) {
-            $stat = min(self::STATS_POSIBLES, 1 + (int) floor($aleatorio() * self::STATS_POSIBLES));
+            $stat = self::elegirStatDelPool($pool, $aleatorio);
 
             return ['tipo' => 'hallazgo', 'subtype' => 'caramelo_ev', 'stat' => $stat, 'cantidad' => 1];
         }
 
-        $tipos = TipoPokemon::cases();
-        $tipo = $tipos[min(count($tipos) - 1, (int) floor($aleatorio() * count($tipos)))];
+        $tipo = self::elegirTipoDelPool($pool, $aleatorio);
 
         return ['tipo' => 'hallazgo', 'subtype' => 'caramelo_tipo', 'tipo_id' => $tipo->value, 'cantidad' => 1];
+    }
+
+    /**
+     * Elige un stat con effort>0 de un pokémon del pool (ponderado). Un solo
+     * caramelo EV por hallazgo: se elige el pokémon y después UNO de sus stats
+     * con effort>0; en sucesivos hallazgos se repartirán los demás. Fallback a
+     * stat aleatorio 1-6 si ningún pokémon del pool tiene stats con effort.
+     *
+     * @param  list<array{id: int, capture_rate: int, hatch: int|null, tipos: list<TipoPokemon>, stats: list<array{stat: int, effort: int}>}>  $pool
+     */
+    private static function elegirStatDelPool(array $pool, callable $aleatorio): int
+    {
+        $candidatos = array_values(array_filter(
+            $pool,
+            static fn (array $pokemon): bool => $pokemon['stats'] !== [],
+        ));
+
+        if ($candidatos === []) {
+            return self::statAleatorio($aleatorio);
+        }
+
+        $elegido = self::elegirPonderado(self::poolPonderado($candidatos), $aleatorio);
+        if ($elegido === null) {
+            return self::statAleatorio($aleatorio);
+        }
+
+        $pokemon = null;
+        foreach ($candidatos as $candidato) {
+            if ($candidato['id'] === $elegido['id']) {
+                $pokemon = $candidato;
+                break;
+            }
+        }
+
+        if ($pokemon === null) {
+            return self::statAleatorio($aleatorio);
+        }
+
+        $stats = $pokemon['stats'];
+        $elegidoStat = $stats[min(count($stats) - 1, (int) floor($aleatorio() * count($stats)))];
+
+        return $elegidoStat['stat'];
+    }
+
+    /**
+     * Elige un tipo de un pokémon del pool (ponderado). Fallback a tipo
+     * aleatorio global si ningún pokémon del pool tiene tipos.
+     *
+     * @param  list<array{id: int, capture_rate: int, hatch: int|null, tipos: list<TipoPokemon>, stats: list<array{stat: int, effort: int}>}>  $pool
+     */
+    private static function elegirTipoDelPool(array $pool, callable $aleatorio): TipoPokemon
+    {
+        $candidatos = array_values(array_filter(
+            $pool,
+            static fn (array $pokemon): bool => $pokemon['tipos'] !== [],
+        ));
+
+        if ($candidatos === []) {
+            return self::tipoAleatorio($aleatorio);
+        }
+
+        $elegido = self::elegirPonderado(self::poolPonderado($candidatos), $aleatorio);
+        if ($elegido === null) {
+            return self::tipoAleatorio($aleatorio);
+        }
+
+        $pokemon = null;
+        foreach ($candidatos as $candidato) {
+            if ($candidato['id'] === $elegido['id']) {
+                $pokemon = $candidato;
+                break;
+            }
+        }
+
+        if ($pokemon === null) {
+            return self::tipoAleatorio($aleatorio);
+        }
+
+        $tipos = $pokemon['tipos'];
+
+        return $tipos[min(count($tipos) - 1, (int) floor($aleatorio() * count($tipos)))];
+    }
+
+    private static function statAleatorio(callable $aleatorio): int
+    {
+        return min(self::STATS_POSIBLES, 1 + (int) floor($aleatorio() * self::STATS_POSIBLES));
+    }
+
+    private static function tipoAleatorio(callable $aleatorio): TipoPokemon
+    {
+        $tipos = TipoPokemon::cases();
+
+        return $tipos[min(count($tipos) - 1, (int) floor($aleatorio() * count($tipos)))];
     }
 
     /**

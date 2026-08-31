@@ -446,6 +446,18 @@ function pokedexApp() {
             };
             this.counts = @json($counts ?? null) || initial?.meta?.counts || fallbackCounts;
 
+            // Bootstrap guard: si el seed viene SIN filtrar (contrato viejo) y la pestaña
+            // activa es 'vistos' pero no hay items locales, fuerza un fetch al servidor para
+            // cubrir el caso de transición. Solo se ejecuta una vez en init(); resetAndFetch()
+            // no re-invoca init(), por lo que no hay riesgo de bucle.
+            if (this.activeFilter === 'vistos' && this.items.length === 0) {
+                const hasSightings = (this.counts?.vistos ?? 0) > 0
+                    || Number(initial?.meta?.total ?? 0) > 0;
+                if (hasSightings) {
+                    this.resetAndFetch();
+                }
+            }
+
             // Close filter dropdowns on outside click
             this.clickHandler = (e) => {
                 if (!e.target.closest('[x-data]')?.contains(e.target)) {

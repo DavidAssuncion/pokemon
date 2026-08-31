@@ -62,8 +62,8 @@
                                 : 'border-gray-200 dark:border-gray-700'"
                         >
                             <!-- Team header -->
-                            <div class="flex items-center justify-between p-3 border-b border-gray-100 dark:border-gray-700">
-                                <div class="flex items-center gap-2">
+                            <div class="flex items-center justify-between p-3 border-b border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50">
+                                <div class="flex items-center gap-2 flex-wrap">
                                     <template x-if="team.is_locked || isInExploration(team.id)">
                                         <svg class="w-4 h-4 text-yellow-500" fill="currentColor" viewBox="0 0 24 24">
                                             <path d="M12 2C9.243 2 7 4.243 7 7v3H6a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2v-8a2 2 0 00-2-2h-1V7c0-2.757-2.243-5-5-5zm0 2c1.654 0 3 1.346 3 3v3H9V7c0-1.654 1.346-3 3-3zm-6 8h12v8H6v-8z"/>
@@ -85,6 +85,13 @@
                                         <span class="px-1.5 py-0.5 bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400 text-[10px] font-bold rounded uppercase">
                                             En exploración
                                         </span>
+                                    </template>
+                                    <template x-if="composicionBadge(team)">
+                                        <span
+                                            class="px-1.5 py-0.5 text-[10px] font-bold rounded uppercase"
+                                            :class="composicionBadge(team).clase"
+                                            x-text="composicionBadge(team).texto"
+                                        ></span>
                                     </template>
                                 </div>
                                 <button
@@ -123,6 +130,19 @@
                                                         ✕
                                                     </button>
                                                     <p class="text-[10px] text-gray-500 dark:text-gray-400 truncate mt-0.5" x-text="getMember(team, slot).nombre"></p>
+                                                    <!-- Role selector -->
+                                                    <select
+                                                        :value="getTeamMember(team, slot)?.behavior || 'VANGUARDIA'"
+                                                        @change="updateMemberRole(team, getTeamMember(team, slot), $event.target.value)"
+                                                        :disabled="team.is_locked || isInExploration(team.id)"
+                                                        class="mt-1 w-full max-w-[6.5rem] mx-auto block px-1 py-0.5 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded text-[10px] text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:opacity-40 disabled:cursor-not-allowed"
+                                                        :aria-label="'Rol de ' + getMember(team, slot).nombre"
+                                                    >
+                                                        <option value="VANGUARDIA">Vanguardia</option>
+                                                        <option value="COMBATIENTE">Combatiente</option>
+                                                        <option value="RECOLECTOR">Recolector</option>
+                                                        <option value="RASTREADOR">Rastreador</option>
+                                                    </select>
                                                 </div>
                                             </template>
                                             <template x-if="!getMember(team, slot)">
@@ -205,11 +225,13 @@
 
                 <!-- Available Pokemon Section -->
                 <div>
-                    <h2 class="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">Reclutados Disponibles</h2>
+                    <div class="flex items-center justify-between bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-2 mb-4">
+                        <h2 class="text-sm font-bold uppercase tracking-wide text-gray-700 dark:text-gray-300">Reclutados Disponibles</h2>
+                    </div>
                     <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-2">
                         <template x-for="pokemon in availablePokemons" :key="pokemon.id">
                             <div
-                                class="relative bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden text-center group"
+                                class="relative bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 text-center group"
                                 x-data="{ showTeamDropdown: false }"
                             >
                                 <div class="w-24 h-24 mx-auto">
@@ -225,7 +247,7 @@
                                 </div>
                                 <p class="text-[10px] text-gray-600 dark:text-gray-400 truncate px-1 pb-1" x-text="pokemon.nombre"></p>
                                 <!-- Add button -->
-                                <div class="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                <div class="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center rounded-lg">
                                     <div class="relative">
                                         <button
                                             @click="showTeamDropdown = !showTeamDropdown"
@@ -262,7 +284,9 @@
 
                 <!-- Assigned Pokemon Section -->
                 <div>
-                    <h2 class="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">Asignados</h2>
+                    <div class="flex items-center justify-between bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-2 mb-4">
+                        <h2 class="text-sm font-bold uppercase tracking-wide text-gray-700 dark:text-gray-300">Asignados</h2>
+                    </div>
                     <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-2">
                         <template x-for="pokemon in assignedPokemons" :key="pokemon.id">
                             <div class="relative bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden text-center group opacity-60">
@@ -441,6 +465,60 @@ function equiposApp() {
         getMember(team, slot) {
             const member = team.members.find(m => m.slot === slot);
             return member ? member.reclutado : null;
+        },
+
+        getTeamMember(team, slot) {
+            return team.members.find(m => m.slot === slot) || null;
+        },
+
+        composicionBadge(team) {
+            if (!team.members || team.members.length !== 3) return null;
+
+            const nombre = team.sinergia_nombre;
+            if (typeof nombre === 'string' && nombre.trim()) {
+                return {
+                    texto: 'Composición: ' + nombre,
+                    clase: 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400',
+                };
+            }
+
+            return {
+                texto: 'Composición neutra',
+                clase: 'bg-gray-200 dark:bg-gray-600 text-gray-600 dark:text-gray-300',
+            };
+        },
+
+        async updateMemberRole(team, member, behavior) {
+            if (!member || !member.id || !behavior) return;
+
+            // DECISIÓN endpoint: no existe PATCH /teams/member/{member}/role en el backend;
+            // el contrato documentado es POST /teams/update-member-role con member_id.
+            try {
+                const response = await fetch('/teams/update-member-role', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '',
+                        'Accept': 'application/json',
+                    },
+                    body: JSON.stringify({ member_id: member.id, behavior }),
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.member) {
+                        member.behavior = data.member.behavior || behavior;
+                    }
+                    // DECISIÓN sinergia: el PATCH no devuelve sinergia_nombre recalculado; el
+                    // payload inicial de equipos sí la expone. Para que el badge de composición
+                    // quede coherente con el nuevo rol, recargamos la página (simple y correcto).
+                    location.reload();
+                } else {
+                    await this.handleError(response);
+                }
+            } catch (err) {
+                console.error('Error updating member role:', err);
+            }
         },
 
         getTeamName(teamId) {

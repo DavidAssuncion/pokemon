@@ -43,12 +43,12 @@ desaparece como destino y migra a DTOs en Domain.
 
 ### Battle (`src/Battle/`)
 
-Núcleo del sistema. Organizado en 3 subcarpetas (tras el refactor Cleaner de 2026-08-30 se eliminaron `App/`, `BattleAggregate` y `BattleSrv`):
+Núcleo del sistema. Organizado en 3 subcarpetas (tras el refactor Cleaner de 2026-08-30 se eliminaron `App/`, `BattleAggregate` y `BattleSrv`; el refactor de diseño posterior extrajo `CalculadorDañoClima` y `SelectorAccionIA` como servicios y sustituyó `ManejadorOrbeVida` por `ManejadorObjetosEquipados`):
 
 | Carpeta | Propósito | Archivos clave |
 |---|---|---|
-| `Domain/` | Lógica de dominio pura | `AgregadoBatalla`, `Combatiente`, `EquipoBatalla`, `GestorTurnos`, `ServicioEjecucionBatalla`, `MovimientoBatalla`, `AccionBatalla`, `DatosPokemonBatalla`, `Posicion`, `FabricaBatallaInterface` |
-| `Domain/Chain/` | Chain of Responsibility para daño | `CadenaDanio` (7 manejadores en orden: base, efectividad tipo, STAB, crítico, posición, clima, orbe vida) + `ManejadorDanio` (interface) + `ManejadorDanioAbstracto` |
+| `Domain/` | Lógica de dominio pura | `AgregadoBatalla`, `Combatiente`, `EquipoBatalla`, `GestorTurnos`, `ServicioEjecucionBatalla`, `CalculadorDañoClima` (daño por clima fin de ronda), `SelectorAccionIA` (objetivo/movimiento IA), `MovimientoBatalla`, `AccionBatalla`, `DatosPokemonBatalla`, `Posicion`, `FabricaBatallaInterface` |
+| `Domain/Chain/` | Chain of Responsibility para daño | `CadenaDanio` (7 manejadores en orden: base, efectividad tipo, STAB, crítico, posición, clima, objetos equipados — `ManejadorObjetosEquipados` con mapa `['life_orb' => 1.30]`, reemplaza a `ManejadorOrbeVida`) + `ManejadorDanio` (interface) + `ManejadorDanioAbstracto` |
 | `Domain/Effects/` | Strategy pattern para efectos | `InterfazEfecto`, `ComportamientosPorDefecto` (trait), `ColeccionEfectos`, `FabricaEfectos` (instancia inyectable), `EfectoPerforacionArmadura`, `EfectoRegeneracionDefensa`, `EfectoInvocadorClima` (parametrizado, sustituye a `EfectoInvocadorTormentaArena`), `EfectoRestos`, `EfectoOrbeVida` |
 | `Domain/Enums/` | Enums de dominio | `TipoClima` (7 valores con `label()` en español), `EstadoPokemon` (8 valores, `causaDanoPorRonda()`), `CategoriaMovimiento` |
 | `Domain/Observer/` | Observer pattern para eventos | `SujetoBatalla`, `ObservadorBatalla` |
@@ -65,7 +65,7 @@ Documentación exhaustiva del módulo (clases, mecánicas, contrato de vista, fl
 - `DTOEquipoBatalla` muerto (eliminar).
 - 26 strings mágicos de stats sin enum tipado.
 - `max(1, floor(...))` en `CadenaDanio::calculate()` anula inmunidad de tipos.
-- God-classes: `Combate.php` (653 líneas), `Combatiente` (606), `AgregadoBatalla` (327).
+- God-classes: `Combate.php` (653 líneas), `Combatiente` (606), `AgregadoBatalla` (~255 tras extraer `CalculadorDañoClima`/`SelectorAccionIA`).
 
 ### Pokemon (`src/Pokemon/`)
 
@@ -238,7 +238,7 @@ Reglas del contrato (ver `tests/Feature/DatagridTest.php`):
 | **Strategy** | Efectos de habilidad y objetos | `src/Battle/Domain/Effects/` |
 | **Aggregate** | Entidades raíz de batalla y equipos | `AgregadoBatalla`, `TeamAggregate` |
 | **DTO** | Transferencia dominio → vista | `DTOMovimientoBatalla`, `DTOAccionBatalla`, `DTOResultadoDanio` — estado actual: viven en `Presentation/`; la convención destino los ubica en `Domain/DataTransferObjects` (ver `docs/ddd.md`) |
-| **Service (Domain)** | Lógica de dominio orquestada | `ServicioEjecucionBatalla`, `ReclutamientoSrv`, `TeamSrv` |
+| **Service (Domain)** | Lógica de dominio orquestada | `ServicioEjecucionBatalla`, `CalculadorDañoClima`, `SelectorAccionIA`, `ReclutamientoSrv`, `TeamSrv` |
 | **Repository** | Acceso a datos de hábitats | `HabitatRepository` |
 | **Factory** | Creación de efectos y datos mock | `FabricaEfectos` (instancia inyectable), `FabricaBatallaMock` |
 | **Registry** | Registro explícito de modelos expuestos | `DatagridRegistry` |
@@ -275,12 +275,12 @@ commitAction() → pendingAction.toDomain() → AccionBatalla
 ```
 AgregadoBatalla.ejecutarBatalla()
   → loop rondas → turnManager.startNewRound() (acumula velocidad)
-    → loop turnos → elegirObjetivo() → elegirMejorMovimiento()
+    → loop turnos → SelectorAccionIA.elegirObjetivoPara() → SelectorAccionIA.elegirMejorMovimiento()
       → ServicioEjecucionBatalla.calcularYAplicarDaño()
       → aplicarEstado() / aplicarStatChanges()
       → observer.notifyDamaged() / notifyFainted()
       → turnManager.consumeAction()
-    → triggerRoundEndEffects() (efectos de fin de ronda + daño por estado + daño por clima)
+    → triggerRoundEndEffects() (efectos de fin de ronda + daño por estado + daño por clima vía CalculadorDañoClima)
 ```
 
 ## Flujo de datos — Pokédex asíncrona

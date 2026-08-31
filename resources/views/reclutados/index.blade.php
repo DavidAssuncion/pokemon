@@ -65,7 +65,7 @@
                             <option value="VANGUARDIA">Vanguardia</option>
                             <option value="COMBATIENTE">Combatiente</option>
                             <option value="RECOLECTOR">Recolector</option>
-                            <option value="SOPORTE">Soporte</option>
+                            <option value="RASTREADOR">Rastreador</option>
                         </select>
                         <button type="submit">Añadir</button>
                     </form>

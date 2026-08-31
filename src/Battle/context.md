@@ -11,6 +11,7 @@ src/Battle/
 ├── Domain/              (lógica de dominio pura — sin dependencias de Laravel)
 │   ├── AccionBatalla.php
 │   ├── AgregadoBatalla.php
+│   ├── CalculadorDañoClima.php
 │   ├── Combatiente.php
 │   ├── DatosPokemonBatalla.php
 │   ├── EquipoBatalla.php
@@ -18,6 +19,7 @@ src/Battle/
 │   ├── GestorTurnos.php
 │   ├── MovimientoBatalla.php
 │   ├── Posicion.php
+│   ├── SelectorAccionIA.php
 │   ├── ServicioEjecucionBatalla.php
 │   ├── Chain/             (Chain of Responsibility para cálculo de daño)
 │   │   ├── CadenaDanio.php
@@ -29,7 +31,7 @@ src/Battle/
 │   │   ├── ManejadorCritico.php
 │   │   ├── ManejadorPosicion.php
 │   │   ├── ManejadorClima.php
-│   │   └── ManejadorOrbeVida.php
+│   │   └── ManejadorObjetosEquipados.php
 │   ├── Effects/           (Strategy Pattern para efectos de habilidad/objeto)
 │   │   ├── InterfazEfecto.php
 │   │   ├── ComportamientosPorDefecto.php     (trait con defaults vacíos)
@@ -67,23 +69,49 @@ src/Battle/
 
 #### `AgregadoBatalla` (`src/Battle/Domain/AgregadoBatalla.php`)
 
-**Responsabilidad:** Agregado raíz que orquesta una batalla 3v3. Contiene los dos equipos, el gestor de turnos, la cadena de daño, el clima, el log y el pendingAction. Expone métodos para ciclo de vida completo (batalla automática) y para integración con Livewire (batalla manual).
+**Responsabilidad:** Agregado raíz que orquesta una batalla 3v3. Contiene los dos equipos, el gestor de turnos, la cadena de daño, el clima, el log y el pendingAction. Expone métodos para ciclo de vida completo (batalla automática) y para integración con Livewire (batalla manual). **~255 líneas** (refactor 2026: la lógica de clima y de IA se extrajo a servicios).
 
 **Mecánica principal:**
 - `ejecutarBatalla(): array` — Bucle completo de batalla automática (IA vs IA). Itera rondas, turnos, aplica daño, estados, efectos de fin de ronda y determina ganador.
 - `triggerBattleStartEffects()` — Dispara `onBattleStart` en todos los efectos de todos los combatientes (usado por invocadores de clima).
 - `triggerRoundStartEffects()` — Dispara `onRoundStart` en combatientes vivos.
-- `triggerRoundEndEffects()` — Dispara `onRoundEnd` + daño por estado (quemadura/veneno) + daño por clima (granizo/tormenta arena).
-- `elegirObjetivoPara(Combatiente $actor): ?Combatiente` — Público para IA desde Livewire. Si el actor está en vanguardia, ataca a vanguardia enemiga viva (aleatorio); si no hay, a retaguardia. Si está en retaguardia, a cualquier enemigo vivo. Fallback: cualquier enemigo vivo.
-- `elegirMejorMovimiento(Combatiente $attacker, Combatiente $defender): ?MovimientoBatalla` — Selecciona el movimiento con mayor `efectividad × potencia`. Si no hay movimientos, fallback a Placaje (40, NORMAL, FÍSICO).
-- `calcularDañoClima(Combatiente $c): float` — Granizo: 6.25% a no-HIELO. Tormenta arena: 6.25% a no-ROCA/TIERRA/ACERO.
+- `triggerRoundEndEffects()` — Dispara `onRoundEnd` + daño por estado (quemadura/veneno) + daño por clima (granizo/tormenta arena). El daño por clima **delega en `CalculadorDañoClima`** (servicio extraído).
+- `elegirObjetivoPara(Combatiente $actor): ?Combatiente` — Público para IA desde Livewire. **Delega en `SelectorAccionIA`**. Si el actor está en vanguardia, ataca a vanguardia enemiga viva (aleatorio); si no hay, a retaguardia. Si está en retaguardia, a cualquier enemigo vivo. Fallback: cualquier enemigo vivo.
+- `elegirMejorMovimiento(Combatiente $attacker, Combatiente $defender): ?MovimientoBatalla` — Público. **Delega en `SelectorAccionIA`**. Selecciona el movimiento con mayor `efectividad × potencia`. Si no hay movimientos, fallback a Placaje (40, NORMAL, FÍSICO).
 - `setPendingAction(?DTOAccionBatalla)` — Almacena la acción pendiente para el ciclo manual (Livewire).
 - `agregarLog(string)` / `limpiarLog()` / `log(): array` — Gestión del log de batalla.
 - `setWeather(TipoClima)` / `weather(): TipoClima` — Clima actual (default NONE).
 
 **Propiedades clave:** `team1`, `team2` (públicas readonly), `turnManager`, `damageChain`, `subject` (SujetoBatalla), `weather`, `pendingAction`, `log`.
 
+**Lazy getters nullable (patrón `??=`):** los servicios `CalculadorDañoClima` y `SelectorAccionIA` se guardan como propiedades privadas **nullable** (`private ?CalculadorDañoClima $calculadorClima = null;`) y se crean bajo demanda con `$this->calculadorClima ??= new CalculadorDañoClima();`. Motivo: PHP serializa `null` sin problemas, por lo que las batallas guardadas en sesión (v3) se deserializan sin rotura y el getter reconstruye el servicio al usarlo. Verificado con round-trip serialize/unserialize.
+
 **Relaciones:** Inyecta `GestorTurnos`, `CadenaDanio`, `SujetoBatalla`. Usa `ServicioEjecucionBatalla` internamente en `ejecutarAccion`. Importa `DTOAccionBatalla` de Presentation (inversión de dependencia Domain→Presentation, deuda documentada).
+
+---
+
+#### `CalculadorDañoClima` (`src/Battle/Domain/CalculadorDañoClima.php`)
+
+**Responsabilidad:** Servicio extraído del método privado `AgregadoBatalla::calcularDañoClima` (eliminado en el refactor 2026). Calcula el daño por clima de fin de ronda para un combatiente. Stateless (sin propiedades).
+
+**Método:** `calcular(Combatiente $c, TipoClima $weather): float` —
+- `GRANIZO`: 6.25% HP a los que NO son tipo HIELO (`max(1, hp * 0.0625)`).
+- `TORMENTA_ARENA`: 6.25% HP a los que NO son ROCA/TIERRA/ACERO.
+- Muerto u otros climas (`default`): 0.
+
+Inmunes declarados como constantes privadas (`INMUNES_GRANIZO`, `INMUNES_TORMENTA_ARENA`). Usado por `AgregadoBatalla::triggerRoundEndEffects()` vía lazy getter (patrón `??=`, ver AgregadoBatalla).
+
+---
+
+#### `SelectorAccionIA` (`src/Battle/Domain/SelectorAccionIA.php`)
+
+**Responsabilidad:** Servicio con la lógica de IA para batalla (objetivo + mejor movimiento), extraída de `AgregadoBatalla` en el refactor 2026 para mantener el agregado orquestando solo el ciclo. Stateless.
+
+**Métodos:**
+- `elegirObjetivoPara(AgregadoBatalla $battle, Combatiente $actor): ?Combatiente` — Vanguardia → vanguardia enemiga viva (aleatorio); si no hay, retaguardia. Retaguardia → cualquier enemigo vivo. Fallback: cualquier enemigo vivo; `null` si no hay vivos.
+- `elegirMejorMovimiento(Combatiente $attacker, Combatiente $defender): ?MovimientoBatalla` — Mayor `efectividad × potencia`; fallback Placaje (40, NORMAL, FÍSICO) si no hay movimientos.
+
+`AgregadoBatalla` conserva la API pública `elegirObjetivoPara`/`elegirMejorMovimiento` como **delegación** a este servicio (para `Combate::prepareAiAnimation`). Se instancia vía lazy getter en el agregado (patrón `??=`).
 
 ---
 
@@ -218,7 +246,7 @@ src/Battle/
 4. `ManejadorCritico` — ×1.5 si 6.25%
 5. `ManejadorPosicion` — ×0.5 si retaguardia con vanguardia enemiga viva
 6. `ManejadorClima` — ×0.75–1.25 según clima
-7. `ManejadorOrbeVida` — ×1.3 si item=life_orb
+7. `ManejadorObjetosEquipados` — mapa multiplicadores (life_orb → 1.30)
 
 **Método:** `calculate(AccionBatalla $action): float` — Retorna `max(1, floor(daño))`. Nota: `max(1,...)` anula inmunidad de tipos (×0 → mínimo 1). Deuda documentada.
 
@@ -278,9 +306,11 @@ src/Battle/
 
 ---
 
-#### `ManejadorOrbeVida`
+#### `ManejadorObjetosEquipados`
 
-**Multiplicador:** `×1.3` si el atacante tiene `item === 'life_orb'` y está vivo.
+**Responsabilidad:** Aplica el multiplicador de daño del objeto equipado por el atacante. Manejador **genérico** (reemplaza a `ManejadorOrbeVida`, eliminado en el refactor 2026): consulta un mapa centralizado `objeto → multiplicador` en el constructor. Si el atacante no lleva objeto (o uno sin multiplicador de daño) devuelve ×1.0. Extensible: añadir claves al mapa.
+
+**Multiplicador:** `['life_orb' => 1.30]` (default) si el atacante tiene `item()` con clave en el mapa y está vivo. El recoil del Orbe Vida (10% HP máx) NO está aquí: sigue en `EfectoOrbeVida` (`onDamageDealt`, ver Effects).
 
 ---
 
@@ -360,7 +390,7 @@ src/Battle/
 
 #### `EfectoOrbeVida` (`EfectoOrbeVida.php`)
 
-**Comportamiento:** `onDamageDealt()` inflige recoil de 10% del HP máximo al portador (mínimo 1). El bonus de daño ×1.3 se aplica en `ManejadorOrbeVida` de la cadena.
+**Comportamiento:** `onDamageDealt()` inflige recoil de 10% del HP máximo al portador (mínimo 1). El bonus de daño ×1.3 se aplica en `ManejadorObjetosEquipados` de la cadena (mapa `['life_orb' => 1.30]`).
 
 ---
 
@@ -443,6 +473,8 @@ src/Battle/
 | player_2 | Giratina | Mixto | VANGUARDIA | sí | — | — |
 | player_3 | Tyranitar | Físico | VANGUARDIA | sí | sandstorm_summoner | leftovers |
 
+> **Tyranitar es ROCA/SINIESTRO** (corregido en el refactor 2026; antes solo SINIESTRO). Al ser tipo ROCA es inmune a su propia tormenta arena (`sandstorm_summoner`): el `CalculadorDañoClima` no le aplica el 6.25% al cierre de ronda.
+
 **Pokémon del equipo 2 ('Rival'):**
 | id | nombre | rol | posicion | shiny | efectos | item |
 |----|--------|-----|----------|-------|---------|------|
@@ -519,7 +551,7 @@ src/Battle/
 5. Consume acción, notifica debilitamiento, limpia pending, avanza al siguiente actor.
 
 **Persistencia en sesión:**
-- `SESSION_VERSION = 3` (prefijo `v{version}|{serialized}`).
+- `SESSION_VERSION = 4` (prefijo `v{version}|{serialized}`).
 - `getBattle()`: deserializa con control de versiones (tolera cambios de estructura).
 - `saveBattle()`: serializa con versión.
 
@@ -551,7 +583,8 @@ src/Battle/
 | **Crítico** | 6.25% ×1.5 | `mt_rand() / mt_getrandmax() < 0.0625` |
 | **Posición** | -50% retaguardia | Si vanguardia enemiga viva |
 | **Clima** | ±25% | 6 climas, efectos específicos por tipo |
-| **Orbe Vida** | ×1.3 + recoil 10% | Bonus en cadena, recoil en efecto onDamageDealt |
+| **Daño por clima (fin de ronda)** | 6.25% HP | Granizo a no-HIELO; tormenta arena a no-ROCA/TIERRA/ACERO (`CalculadorDañoClima`) |
+| **Objetos equipados** | Mapa multiplicadores | `ManejadorObjetosEquipados`: life_orb → ×1.3 (recoil 10% en `EfectoOrbeVida`) |
 | **Restos** | 1/16 HP/ronda | `onRoundEnd`, mínimo 1 |
 | **Barreras duales** | Defensa Física / Especial | Daño descuenta de barrera antes de HP |
 | **Perforación armadura** | 10% directo | Ignora barreras, va directo a HP |
@@ -649,13 +682,13 @@ AgregadoBatalla::ejecutarBatalla()
   → loop while bothTeamsAlive():
     → startNewRound() (acumular velocidad)
     → loop while hayAlgunoConAccionPendiente():
-      → getNextActor() → elegirObjetivo() → elegirMejorMovimiento()
+      → getNextActor() → SelectorAccionIA.elegirObjetivoPara() → SelectorAccionIA.elegirMejorMovimiento()
       → ServicioEjecucionBatalla::calcularYAplicarDano()
       → aplicarEstado() / aplicarStatChanges()
       → SujetoBatalla.notifyDamaged() / notifyFainted()
       → Efectos onDamageDealt / onDamageReceived
       → consumeAction()
-    → triggerRoundEndEffects() (efectos + daño estado + daño clima)
+    → triggerRoundEndEffects() (efectos + daño estado + daño clima vía CalculadorDañoClima)
     → SujetoBatalla.notifyEndTurn()
   → determina ganador → retorna log[]
 ```
@@ -673,6 +706,8 @@ Accesos a propiedades privadas de `PokemonEntity` (`$moves`, `$tiposCollection`)
 5. `Combate.php:476` — `->moves->get($index)` → `->moves()->get($index)`
 6. `Combate.php:533` — `->tiposCollection as $tipo` → `->tiposCollection() as $tipo`
 
+> Nota: las líneas de `AgregadoBatalla` (306/313) corresponden al estado **pre-refactor**; tras extraer los servicios, el archivo quedó en ~255 líneas (la referencia histórica se conserva como registro del fix).
+
 ### Weather banner corregido
 El `@switch($weather)` en `battle-field.blade.php` comparaba con valores ingleses ('sandstorm', 'sun', ...) pero `TipoClima` produce valores españoles. Corregido usando `TipoClima::tryFrom()?->label()` para texto y `match` con valores reales del enum para iconos.
 
@@ -687,9 +722,21 @@ El `@switch($weather)` en `battle-field.blade.php` comparaba con valores inglese
 - `src/Battle/App/` eliminado (contenía `IniciarBatalla` y `BattleSrv` — ambos deprecados).
 
 ### Tests
-- 28 tests de Battle verdes (10 unit files + 1 feature file = 28 tests, 48 assertions).
-- Suite completa: 421 passed, 1 failed pre-existente (`ServicioCapturaTest` ajeno a Battle).
+- **140 tests de Battle** verdes (20 unit files + 1 trait helper + 1 feature file = 140 tests, 362 assertions).
+- Suite completa: **533 passed**, 1 failed pre-existente (`ServicioCapturaTest` ajeno a Battle).
 - QA PASS. Arquitecto APROBADO con deuda documentada.
+
+---
+
+## Iteración refactor (2026-08-30)
+
+Refactor de diseño del módulo que resolvió 3 problemas (commits `f9f2b19`, `8ae08ed`, `105bed9` + cleaner `81dd62d`, `60d486d`, `1af0dd8` + docs `c33f785`/`d4e4d6a`):
+
+1. **`ManejadorOrbeVida` → `ManejadorObjetosEquipados`** (`f9f2b19`): manejador genérico en la cadena de daño que consulta el objeto del atacante y aplica un multiplicador de un mapa centralizado `['life_orb' => 1.30]` (extensible). `CadenaDanio` usa el nuevo manejador como último eslabón (misma posición). `ManejadorOrbeVida.php` eliminado; `EfectoOrbeVida` NO se tocó (el recoil 10% sigue en `onDamageDealt`).
+2. **Tyranitar corregido a ROCA/SINIESTRO + `CalculadorDañoClima` extraído** (`8ae08ed`): Tyranitar ya no sufre su propia tormenta arena (inmune por tipo ROCA). El método privado `AgregadoBatalla::calcularDañoClima` se extrajo al servicio `CalculadorDañoClima` (`calcular(Combatiente, TipoClima): float`, granizo 6.25% a no-HIELO, tormenta arena 6.25% a no-ROCA/TIERRA/ACERO, muerto/otros → 0). `SESSION_VERSION` 3 → 4.
+3. **`SelectorAccionIA` extraído** (`105bed9`): la lógica de elegir objetivo + mejor movimiento salió de `AgregadoBatalla` al servicio `SelectorAccionIA`. `AgregadoBatalla` conserva la API pública `elegirObjetivoPara`/`elegirMejorMovimiento` como delegación (usada por `Combate::prepareAiAnimation`).
+
+**Impacto:** `AgregadoBatalla` pasó de 327 → ~255 líneas. MSI de Infection en `src/Battle` subió al **~80%** de código cubierto (Covered Code MSI 80%, ver Testing). Los 3 servicios se instancian en el agregado con lazy getters nullable (`??=`) para no romper la serialización de sesión (PHP serializa `null`).
 
 ### Pendientes / Deuda (del Arquitecto)
 1. **Ciclo Pokemon↔Battle**: `MovimientoBatalla` debería moverse a `src/Pokemon/Domain/Movement/` (dependencia cruzada).
@@ -699,8 +746,8 @@ El `@switch($weather)` en `battle-field.blade.php` comparaba con valores inglese
 5. **`max(1,...)` en CadenaDanio**: anula inmunidad de tipos (×0 → mínimo 1).
 6. **StatsValue nullable**: `?float` en propiedades (deuda por diseño).
 7. **Combate.php god-component**: 653 líneas, responsabilidades mezcladas (ciclo de turno, IA, persistencia, animación, sincronización de vista).
-8. **Combatiente/AgregadoBatalla god-classes**: 606 y 327 líneas respectivamente.
-9. **Infection MSI 42%**: cobertura del módulo aún baja.
+8. **Combatiente/AgregadoBatalla god-classes**: 606 y ~255 líneas respectivamente.
+9. **Infection MSI ~80%**: cobertura del módulo en Covered Code MSI 80% (mutantes escapados de `SelectorAccionIA` son equivalentes/neutros); pendiente cerrar la cobertura del 20% restante (código muerto/no cubierto).
 
 ### Integración futura
 - **Datos reales**: reemplazar `FabricaBatallaMock` con datos de reclutamiento (equipos reales del jugador).
@@ -730,7 +777,7 @@ app/Providers/BattleEffectServiceProvider.php → src/Battle/Domain/Effects/ (Fa
 3. **Chain of Responsibility**: 7 manejadores en orden fijo. Fácil de extender añadiendo nuevos manejadores al final de la cadena en `CadenaDanio::__construct()`.
 4. **Efectos como Strategy**: `InterfazEfecto` con 11 hooks de ciclo de vida. Los efectos se registran por clave en `FabricaEfectos`. Para añadir un nuevo efecto, solo se necesita la clase + registro en `BattleEffectServiceProvider`.
 5. **Observer para eventos**: `SujetoBatalla` notifica daño, debilitamiento y fin de turno. Los efectos se suscriben indirectamente a través de `ColeccionEfectos`.
-6. **Serialización en sesión con versionado**: `v{version}|{serialized}`. `SESSION_VERSION=3` en `Combate.php`. Permite migrar datos entre cambios estructurales.
+6. **Serialización en sesión con versionado**: `v{version}|{serialized}`. `SESSION_VERSION=4` en `Combate.php`. Permite migrar datos entre cambios estructurales. Los servicios del agregado se guardan como propiedades nullable + lazy getter (`??=`) para que la deserialización de versiones antiguas no falle.
 7. **FabricaEfectos inyectable**: no es estática. Se pasa como dependencia a `EquipoBatalla::fromData()` y `FabricaBatallaMock`. Registrada como singleton en Laravel.
 8. **Dominio sin dependencias de Laravel**: `src/Battle/Domain/` no importa nada de `app/` ni de Illuminate. Las colecciones usan implementaciones nativas (`ArrayIterator`), no `Illuminate\Support\Collection`.
 
@@ -738,14 +785,14 @@ app/Providers/BattleEffectServiceProvider.php → src/Battle/Domain/Effects/ (Fa
 
 ## Testing
 
-- **Ubicación**: `tests/Unit/Battle/` (11 archivos: 10 tests + trait `ConstruyeCombatientes`) + `tests/Feature/PokemonBattleTest.php`. Total: 28 tests (48 assertions).
+- **Ubicación**: `tests/Unit/Battle/` (21 archivos: 20 tests + trait `ConstruyeCombatientes`) + `tests/Feature/PokemonBattleTest.php`. Total: **140 tests** (362 assertions).
 - **Estrategia de construcción de combatientes (unit tests, sin boot de Laravel ni BD)**: dos enfoques:
   1. **Build directo**: `new Combatiente(new PokemonEntity(...), Posicion::VANGUARDIA)` con setters para id/nombre/item/effects.
   2. **EquipoBatalla::fromData()**: `EquipoBatalla::fromData([$dato], 'Equipo')` con `DatosPokemonBatalla` mínimo.
   Para efectos (Orbe Vida, Restos, Invocador Clima) se construyen las instancias directamente y se añaden vía `$combatant->effects()->add($efecto)`, evitando dependencia de `FabricaEfectos` (requiere app boot). Helper compartido: trait `ConstruyeCombatientes` (`combatiente()`, `batallaMinima()`).
 - **RNG determinista**: `ManejadorCritico` y `procesarParalysis` usan `mt_rand`. Semillas verificadas: `mt_srand(1)` → no crit (0.417 > 0.0625) y parálisis permite actuar (40 > 25); `mt_srand(100)` → parálisis bloquea (13 ≤ 25).
 - **Feature test**: `PokemonBattleTest` migrado de `BattleAggregate` (@deprecated) a `AgregadoBatalla` + `FabricaBatallaMock::createBattle()` (requiere boot de Laravel + BD).
-- **Cobertura**: Infection MSI 42.33% (partía de cobertura casi nula; los 10 tests cubren mecánicas críticas). Pendiente ampliar a GestorTurnos, ServicioEjecucionBatalla y resto del módulo.
+- **Cobertura**: Infection `src/Battle` con **Covered Code MSI 80%** (656/816 mutantes matados; el MSI bruto incluye código sin cobertura). Se ejecuta con `--filter=src/Battle --only-covering-test-cases --test-framework-extra-args='--filter=Battle'`. Los mutantes escapados de `SelectorAccionIA` son equivalentes/neutros (rama retaguardia coincide con fallback; score inicial -1 no altera resultado con movimientos). Pendiente cerrar el 20% restante.
 
 ---
 
@@ -753,17 +800,24 @@ app/Providers/BattleEffectServiceProvider.php → src/Battle/Domain/Effects/ (Fa
 
 | Archivo | Propósito |
 |---------|-----------|
-| `src/Battle/Domain/AgregadoBatalla.php` | Agregado raíz, ciclo de batalla |
+| `docs/analysis/pokemon-showdown/02-formulas-constantes.md` | Fórmulas oficiales de daño, stats, STAB, crítico, efectividad — referencia para `CadenaDanio` |
+| `docs/analysis/pokemon-showdown/03-mecanicas-batalla.md` | Flujo de turnos, cola de acciones, targeting, estados — referencia para `GestorTurnos` y estados |
+| `docs/analysis/pokemon-showdown/06-recomendaciones-migracion.md` | Recomendaciones concretas para evolución del motor de batalla |
+| `docs/analysis/pokemon-showdown/07-indice-cruzado.md` | Índice cruzado PS↔proyecto: navegación rápida por concepto, guía "quiero X", tabla de tipos, mapeo de archivos y glosario |
+| `src/Battle/Domain/AgregadoBatalla.php` | Agregado raíz, ciclo de batalla (~255 líneas) |
+| `src/Battle/Domain/CalculadorDañoClima.php` | Daño por clima (granizo/tormenta arena) |
 | `src/Battle/Domain/Combatiente.php` | Entidad de combatiente |
 | `src/Battle/Domain/EquipoBatalla.php` | Colección de combatientes |
 | `src/Battle/Domain/GestorTurnos.php` | Gestión de rondas y turnos |
+| `src/Battle/Domain/SelectorAccionIA.php` | IA de selección de objetivo/movimiento |
 | `src/Battle/Domain/ServicioEjecucionBatalla.php` | Servicio de ejecución de movimientos |
-| `src/Battle/Domain/Chain/CadenaDanio.php` | Cadena de daño (7 manejadores) |
+| `src/Battle/Domain/Chain/CadenaDanio.php` | Cadena de daño (7 manejadores, último `ManejadorObjetosEquipados`) |
+| `src/Battle/Domain/Chain/ManejadorObjetosEquipados.php` | Multiplicador de objeto equipado (life_orb → 1.30) |
 | `src/Battle/Domain/Effects/FabricaEfectos.php` | Fábrica de efectos |
 | `src/Battle/Infrastructure/FabricaBatallaMock.php` | Datos mock de batalla |
 | `src/Battle/Presentation/DTOAccionBatalla.php` | DTO de acción pendiente |
 | `src/Battle/Presentation/DTOMovimientoBatalla.php` | DTO de movimiento (Wireable) |
-| `app/Livewire/Combate.php` | Componente Livewire de batalla manual |
+| `app/Livewire/Combate.php` | Componente Livewire de batalla manual (SESSION_VERSION=4) |
 | `app/Providers/BattleEffectServiceProvider.php` | Registro de efectos e items |
 | `app/Providers/AppServiceProvider.php` | Binding FabricaBatallaInterface |
 | `resources/views/livewire/combate.blade.php` | Vista principal de combate |
@@ -771,5 +825,5 @@ app/Providers/BattleEffectServiceProvider.php → src/Battle/Domain/Effects/ (Fa
 | `resources/views/livewire/partials/moves-panel.blade.php` | Panel de movimientos |
 | `resources/views/livewire/partials/turn-bar.blade.php` | Barra de turnos |
 | `resources/views/livewire/_pokemon-card.blade.php` | Card de pokémon en batalla |
-| `tests/Unit/Battle/` (11 archivos) | Tests unitarios de mecánicas |
+| `tests/Unit/Battle/` (21 archivos: 20 tests + trait) | Tests unitarios de mecánicas |
 | `tests/Feature/PokemonBattleTest.php` | Test de integración de batalla |

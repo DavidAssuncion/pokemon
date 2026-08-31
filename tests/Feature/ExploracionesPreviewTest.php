@@ -103,6 +103,15 @@ class ExploracionesPreviewTest extends TestCase
                 'afinidad',
                 'advertencias',
                 'roles',
+                'matchups' => [
+                    [
+                        'miembro_tipos',
+                        'pool_tipo',
+                        'defensa',
+                        'ataque',
+                        'clasificacion',
+                    ],
+                ],
                 'riesgo',
                 'recompensa_esperada',
             ])
@@ -115,6 +124,11 @@ class ExploracionesPreviewTest extends TestCase
         $this->assertContains($riesgo, ['Bajo', 'Medio', 'Alto', 'Extremo']);
         // Fuego vs Planta: súper-eficaz y capacidad suficiente → bien preparado.
         $this->assertContains('Equipo bien preparado para esta zona', $response->json('advertencias'));
+        // Semáforo de tipos: Fuego (miembro) contra Planta (pool) → positivo.
+        $this->assertCount(1, $response->json('matchups'));
+        $this->assertSame('Fuego', $response->json('matchups.0.miembro_tipos.0'));
+        $this->assertSame('Planta', $response->json('matchups.0.pool_tipo'));
+        $this->assertSame('positivo', $response->json('matchups.0.clasificacion'));
     }
 
     public function test_preview_rechaza_equipo_ajeno_anti_idor(): void
@@ -134,22 +148,31 @@ class ExploracionesPreviewTest extends TestCase
     {
         $ctx = $this->crearContexto();
 
-        // Miembro de tipo Planta contra pool Planta: resistido → Fracaso asegurado.
+        // Miembro de tipo Veneno contra pool Planta: Veneno→Planta = 2.0 (súper-eficaz
+        // en ataque) pero defensa = Planta→Veneno = 1.0 → desempate ofensivo con
+        // ataque > 1.0 → POSITIVO. Cambiamos a un miembro que SÍ genera matchup crítico:
+        // Agua contra pool Planta: defensa = Planta→Agua = 2.0 → NEGATIVO.
         $pokemon = Pokemon::create([
-            'name' => 'bulbasaur',
-            'species_id' => 1,
+            'name' => 'squirtle',
+            'species_id' => 7,
             'capture_rate' => 45,
-            'base_experience' => 64,
-            'height' => 7,
-            'weight' => 69,
+            'base_experience' => 63,
+            'height' => 5,
+            'weight' => 90,
             'hatch' => 10,
             'evolution_chain_id' => 51,
         ]);
-        PokemonType::create(['pokemon_id' => $pokemon->id, 'type' => 12, 'slot' => 1]); // Planta
+        PokemonStat::create(['pokemon_id' => $pokemon->id, 'stat' => 1, 'base_stat' => 44, 'effort' => 0]);
+        PokemonStat::create(['pokemon_id' => $pokemon->id, 'stat' => 2, 'base_stat' => 48, 'effort' => 0]);
+        PokemonStat::create(['pokemon_id' => $pokemon->id, 'stat' => 3, 'base_stat' => 65, 'effort' => 0]);
+        PokemonStat::create(['pokemon_id' => $pokemon->id, 'stat' => 4, 'base_stat' => 50, 'effort' => 0]);
+        PokemonStat::create(['pokemon_id' => $pokemon->id, 'stat' => 5, 'base_stat' => 64, 'effort' => 0]);
+        PokemonStat::create(['pokemon_id' => $pokemon->id, 'stat' => 6, 'base_stat' => 43, 'effort' => 0]);
+        PokemonType::create(['pokemon_id' => $pokemon->id, 'type' => 11, 'slot' => 1]); // Agua
         $reclutado = Reclutado::create([
             'user_id' => $this->usuario->id,
             'pokemon_id' => $pokemon->id,
-            'nombre' => 'Bulbi',
+            'nombre' => 'Squi',
             'exp' => ['total' => 0],
         ]);
         TeamMember::create([
@@ -166,7 +189,14 @@ class ExploracionesPreviewTest extends TestCase
         ]));
 
         $response->assertOk()->assertJson(['riesgo' => 'Extremo']);
-        $this->assertStringContainsString('Pokémon de tipo', $response->json('advertencias')[0]);
+        // El semáforo vive en matchups: el matchup Agua (miembro) vs Planta (pool)
+        // es negativo; los textos de tipo ya NO van en advertencias.
+        $matchups = collect($response->json('matchups'))
+            ->firstWhere('miembro_tipos', ['Agua']);
+        $this->assertSame('negativo', $matchups['clasificacion']);
+        foreach ($response->json('advertencias') as $advertencia) {
+            $this->assertStringNotContainsString('Pokémon de tipo', $advertencia);
+        }
     }
 
     public function test_preview_valida_parametros(): void

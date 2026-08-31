@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Unit\Exploraciones;
 
 use PHPUnit\Framework\TestCase;
+use Src\Exploraciones\Domain\CalculadorMatchups;
 use Src\Exploraciones\Domain\CalculadorRiesgo;
 use Src\Exploraciones\Domain\RolExploracion;
 use Src\Shared\Tipos\TipoPokemon;
@@ -53,7 +54,8 @@ class CalculadorRiesgoTest extends TestCase
 
     public function test_tipo_sin_ventaja_genera_fracaso_asegurado(): void
     {
-        // Planta contra pool Fuego/Volador: resistido/inefectivo → advertencia y riesgo extremo.
+        // Planta contra pool Fuego/Volador: ambos matchups negativos (defensa 2.0) →
+        // matchups críticos → Fracaso asegurado aunque la capacidad sea alta.
         $resultado = CalculadorRiesgo::evaluar(
             peligro: 1,
             nivel: 1,
@@ -62,9 +64,19 @@ class CalculadorRiesgoTest extends TestCase
             miembros: $this->miembros([[TipoPokemon::PLANTA]]),
         );
 
-        $this->assertNotEmpty($resultado['advertencias']);
-        $this->assertStringContainsString('Pokémon de tipo', $resultado['advertencias'][0]);
         $this->assertSame('Extremo', $resultado['riesgo']);
+        $this->assertNotEmpty($resultado['advertencias']);
+        // Los textos de tipo ya NO van en advertencias (viven en matchups).
+        foreach ($resultado['advertencias'] as $advertencia) {
+            $this->assertStringNotContainsString('Pokémon de tipo', $advertencia);
+        }
+        $this->assertCount(2, $resultado['matchups']);
+        $this->assertSame(['Planta'], $resultado['matchups'][0]['miembro_tipos']);
+        $this->assertSame('Fuego', $resultado['matchups'][0]['pool_tipo']);
+        $this->assertSame(2.0, $resultado['matchups'][0]['defensa']);
+        $this->assertSame(CalculadorMatchups::NEGATIVO, $resultado['matchups'][0]['clasificacion']);
+        $this->assertSame('Volador', $resultado['matchups'][1]['pool_tipo']);
+        $this->assertSame(CalculadorMatchups::NEGATIVO, $resultado['matchups'][1]['clasificacion']);
     }
 
     public function test_pokemon_debiles_para_el_nivel_es_fracaso_absoluto(): void
@@ -99,5 +111,102 @@ class CalculadorRiesgoTest extends TestCase
 
         $this->assertSame('alta', $bajo['recompensa_esperada']);
         $this->assertSame('mínima', $extremo['recompensa_esperada']);
+    }
+
+    public function test_evaluar_incluye_matchups_en_el_json(): void
+    {
+        $resultado = CalculadorRiesgo::evaluar(
+            peligro: 1,
+            nivel: 1,
+            capacidad: 50,
+            tiposPool: [TipoPokemon::AGUA, TipoPokemon::PLANTA],
+            miembros: $this->miembros([[TipoPokemon::FUEGO], [TipoPokemon::AGUA]]),
+        );
+
+        $this->assertArrayHasKey('matchups', $resultado);
+        // 2 miembros × 2 tipos pool = 4 matchups total; neutrales filtrados.
+        // Fuego vs Agua: negativo; Fuego vs Planta: positivo; Agua vs Agua: positivo; Agua vs Planta: negativo.
+        $this->assertCount(4, $resultado['matchups']);
+        // Orden: por miembro y por tipo del pool.
+        $this->assertSame('Fuego', $resultado['matchups'][0]['miembro_tipos'][0]);
+        $this->assertSame('Agua', $resultado['matchups'][0]['pool_tipo']);
+        $this->assertSame('Fuego', $resultado['matchups'][1]['miembro_tipos'][0]);
+        $this->assertSame('Planta', $resultado['matchups'][1]['pool_tipo']);
+        $this->assertSame('Agua', $resultado['matchups'][2]['miembro_tipos'][0]);
+        $this->assertSame('Agua', $resultado['matchups'][2]['pool_tipo']);
+        $this->assertSame('Agua', $resultado['matchups'][3]['miembro_tipos'][0]);
+        $this->assertSame('Planta', $resultado['matchups'][3]['pool_tipo']);
+    }
+
+    public function test_matchups_omite_los_neutrales(): void
+    {
+        // Veneno vs Agua → neutral (defensa 1.0, ataque 1.0) → se omite.
+        $resultado = CalculadorRiesgo::evaluar(
+            peligro: 1,
+            nivel: 1,
+            capacidad: 50,
+            tiposPool: [TipoPokemon::AGUA, TipoPokemon::LUCHA],
+            miembros: $this->miembros([[TipoPokemon::VENENO]]),
+        );
+
+        // Veneno vs Agua = neutral (omitido); Veneno vs Lucha = neutro (defensa 1.0, ataque 1.0) → omitido. Matchups vacío.
+        // Pero Veneno vs Lucha: defensa = Lucha→Veneno = 0.5 → positivo (no neutral).
+        // Lucha row: VENENO 0.5. So defensa = 0.5 → positivo.
+        // Veneno vs Agua: defensa = Agua→Veneno = 1.0, ataque = Veneno→Agua = 1.0 → neutral → omitido.
+        $this->assertCount(1, $resultado['matchups']);
+        $this->assertSame('Veneno', $resultado['matchups'][0]['miembro_tipos'][0]);
+        $this->assertSame('Lucha', $resultado['matchups'][0]['pool_tipo']);
+        $this->assertSame(CalculadorMatchups::POSITIVO, $resultado['matchups'][0]['clasificacion']);
+    }
+
+    public function test_miembro_con_matchup_severo_advertencias_no_vacias_y_riesgo_extremo(): void
+    {
+        // Veneno vs Acero → severo (ataque 0.0). Capacidad suficiente para no ser débiles.
+        $resultado = CalculadorRiesgo::evaluar(
+            peligro: 1,
+            nivel: 1,
+            capacidad: 80,
+            tiposPool: [TipoPokemon::ACERO],
+            miembros: $this->miembros([[TipoPokemon::VENENO]]),
+        );
+
+        $this->assertNotEmpty($resultado['advertencias']);
+        $this->assertSame('Extremo', $resultado['riesgo']);
+        $this->assertCount(1, $resultado['matchups']);
+        $this->assertSame(CalculadorMatchups::SEVERO, $resultado['matchups'][0]['clasificacion']);
+    }
+
+    public function test_equipo_con_solo_matchups_positivos_riesgo_por_capacidad_normal(): void
+    {
+        // Fuego contra Planta → positivo. Capacidad suficiente para riesgo Bajo.
+        $resultado = CalculadorRiesgo::evaluar(
+            peligro: 1,
+            nivel: 1,
+            capacidad: 80,
+            tiposPool: [TipoPokemon::PLANTA],
+            miembros: $this->miembros([[TipoPokemon::FUEGO]]),
+        );
+
+        $this->assertSame('Bajo', $resultado['riesgo']);
+        $this->assertSame(['Equipo bien preparado para esta zona'], $resultado['advertencias']);
+        $this->assertCount(1, $resultado['matchups']);
+        $this->assertSame(CalculadorMatchups::POSITIVO, $resultado['matchups'][0]['clasificacion']);
+    }
+
+    public function test_matchup_negativo_con_capacidad_alta_sigue_siendo_extremo(): void
+    {
+        // Fuego contra Agua → negativo. Capacidad alta pero riesgo Extremo por matchup.
+        $resultado = CalculadorRiesgo::evaluar(
+            peligro: 1,
+            nivel: 1,
+            capacidad: 100,
+            tiposPool: [TipoPokemon::AGUA],
+            miembros: $this->miembros([[TipoPokemon::FUEGO]]),
+        );
+
+        $this->assertSame('Extremo', $resultado['riesgo']);
+        $this->assertSame(['Equipo bien preparado para esta zona'], $resultado['advertencias']);
+        $this->assertCount(1, $resultado['matchups']);
+        $this->assertSame(CalculadorMatchups::NEGATIVO, $resultado['matchups'][0]['clasificacion']);
     }
 }

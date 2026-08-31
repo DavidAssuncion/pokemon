@@ -11,8 +11,11 @@ use App\Models\ExploracionActiva;
 use App\Models\Reclutable;
 use App\Models\Reclutado;
 use App\Models\Team;
+use App\Models\TeamMember;
 use Illuminate\View\View;
 use Src\Equipos\App\ObtenerEquipos;
+use Src\Exploraciones\Domain\RolExploracion;
+use Src\Exploraciones\Domain\SinergiaEquipo;
 
 class PlayerController extends Controller
 {
@@ -58,7 +61,37 @@ class PlayerController extends Controller
 
     public function equipos(): View
     {
-        $teams = Team::with('members.reclutado.pokemon')->get();
+        $teams = Team::with('members.reclutado.pokemon')->get()->sortBy('id')->values();
+
+        $teams = $teams->map(function (Team $team): array {
+            $members = $team->members->sortBy('slot')->values();
+
+            $sinergia = null;
+            if ($members->count() === 3) {
+                $roles = $members->map(
+                    fn (TeamMember $m): RolExploracion =>
+                    RolExploracion::tryFrom($m->behavior) ?? RolExploracion::COMBATIENTE
+                )->all();
+                $sinergia = SinergiaEquipo::sinergiaPara($roles);
+            }
+
+            return [
+                'id' => $team->id,
+                'name' => $team->name,
+                'members' => $members->map(function (TeamMember $m): array {
+                    return [
+                        'id' => $m->id,
+                        'team_id' => $m->team_id,
+                        'pokemon_id' => $m->pokemon_id,
+                        'slot' => $m->slot,
+                        'behavior' => $m->behavior,
+                        'reclutado' => $m->reclutado,
+                    ];
+                })->all(),
+                'sinergia' => $sinergia,
+                'sinergia_nombre' => $sinergia['nombre'] ?? null,
+            ];
+        })->all();
 
         $reclutados = Reclutado::with('pokemon.types')->get();
 

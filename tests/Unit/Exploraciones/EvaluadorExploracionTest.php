@@ -87,10 +87,10 @@ class EvaluadorExploracionTest extends TestCase
 
     public function test_emboscada_sin_vanguardia_superada_al_vencer(): void
     {
-        // capacidad 77 >= dificultad emboscada 55 → victoria → superada con coste −10.
+        // capacidad 77 >= dificultad emboscada 55 → victoria → superada sin coste de tiempo.
         $resultado = EvaluadorExploracion::resolverEmboscada(false, 77, 1, fn (): float => 0.5);
         $this->assertSame('superada', $resultado['resolucion']);
-        $this->assertSame(10, $resultado['duration_loss']);
+        $this->assertSame(0, $resultado['duration_loss']);
         $this->assertSame(55, $resultado['dificultad']);
     }
 

@@ -137,9 +137,9 @@ class AgregadoBatalla
             $dañoStatus = $c->aplicarDañoStatus();
             if ($dañoStatus > 0) {
                 $label = $c->estado()->label();
-                $this->agregarLog("[{$c->nombre()}] sufre {$dañoStatus} de daño por {$label}");
+                $this->agregarLog("{$c->nombre()} sufre {$dañoStatus} de daño por {$label}");
                 if (! $c->estaVivo()) {
-                    $this->agregarLog("¡[{$c->nombre()}] se ha debilitado por {$label}!");
+                    $this->agregarLog("¡{$c->nombre()} se ha debilitado por {$label}!");
                 }
             }
 
@@ -152,9 +152,9 @@ class AgregadoBatalla
                     TipoClima::TORMENTA_ARENA => 'tormenta de arena',
                     default => 'clima',
                 };
-                $this->agregarLog("[{$c->nombre()}] sufre {$dañoClima} de daño por {$climaLabel}");
+                $this->agregarLog("{$c->nombre()} sufre {$dañoClima} de daño por {$climaLabel}");
                 if (! $c->estaVivo()) {
-                    $this->agregarLog("¡[{$c->nombre()}] se ha debilitado por {$climaLabel}!");
+                    $this->agregarLog("¡{$c->nombre()} se ha debilitado por {$climaLabel}!");
                 }
             }
         }
@@ -225,8 +225,8 @@ class AgregadoBatalla
         $servicio->aplicarStatChanges($actor, $objetivo, $movimiento);
 
         $this->agregarLog(
-            "{$actor->velocidadAcumulada()}vel [{$actor->hpActual()}hp] "
-            ."ataca a [{$objetivo->hpActual()}hp] "
+            "{$actor->velocidadAcumulada()}vel {$actor->hpActual()}hp] "
+            ."ataca a {$objetivo->hpActual()}hp] "
             ."con {$movimiento->nombre} -> {$daño} de daño"
         );
 
@@ -235,7 +235,7 @@ class AgregadoBatalla
         $actor->dispararDanioInfligido($objetivo, $daño, $this);
 
         if (! $objetivo->estaVivo()) {
-            $this->agregarLog("¡[{$objetivo->nombre()}] se ha debilitado!");
+            $this->agregarLog("¡{$objetivo->nombre()} se ha debilitado!");
             $this->subject->notifyFainted($objetivo);
         }
     }

@@ -463,18 +463,20 @@ class Combate extends Component
             return;
         }
 
-        $target = $this->getTargetFromSelection($battle, $this->selectedTargetTeam, $this->selectedTargetIdx);
-        if ($target === null) {
-            return;
-        }
-
         $move = $actor->pokemon()->moves()->get($index);
         if (! $move instanceof MovimientoBatalla) {
             return;
         }
 
-        // Movimientos autodirigidos (ej: Danza Espada) apuntan al actor
-        $defender = $move->tieneSelfStatChanges() && ! $move->tieneTargetStatChanges() ? $actor : $target;
+        // Movimientos autodirigidos (ej: Danza Espada) apuntan al actor y no requieren objetivo enemigo
+        $selfTargeting = $move->tieneSelfStatChanges() && ! $move->tieneTargetStatChanges();
+        $defender = $selfTargeting
+            ? $actor
+            : $this->getTargetFromSelection($battle, $this->selectedTargetTeam, $this->selectedTargetIdx);
+
+        if ($defender === null) {
+            return;
+        }
 
         $battle->setPendingAction(new DTOAccionBatalla(
             type: 'attack',
@@ -509,8 +511,12 @@ class Combate extends Component
             ?? $battle->team2->findCombatantById($this->actingRefId);
     }
 
-    private function getTargetFromSelection(AgregadoBatalla $battle, int $teamIdx, int $pokemonIdx): ?Combatiente
+    private function getTargetFromSelection(AgregadoBatalla $battle, ?int $teamIdx, ?int $pokemonIdx): ?Combatiente
     {
+        if ($teamIdx === null || $pokemonIdx === null) {
+            return null;
+        }
+
         $team = $teamIdx === 0 ? $battle->team1 : $battle->team2;
 
         return $team->combatants()[$pokemonIdx] ?? null;

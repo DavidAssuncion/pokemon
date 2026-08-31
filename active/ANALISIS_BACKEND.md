@@ -1,867 +1,138 @@
-# Análisis Backend — Corrección de bugs en módulo de combate + tests TDD
+# ANÁLISIS PREVIO — Bugs A y B del módulo Exploraciones
 
-## Fecha
-2026-08-30
+## Bug A: Hallazgos EV/tipo restringidos al pool del hábitat
 
-## Contexto
-
-El módulo de combate tiene 6 bugs de runtime que acceden a propiedades privadas de `PokemonEntity` en lugar de usar sus getters. `PokemonEntity` tiene `private $moves` (ColeccionMovimientos) con getter `moves()` y `private $tiposCollection` (TiposCollection) con getter `tiposCollection()`.
-
-Además, `tests/Feature/PokemonBattleTest.php` usa `BattleAggregate` marcado `@deprecated` (duplicado de `AgregadoBatalla`). Se migra a `AgregadoBatalla` + `FabricaBatallaMock::createBattle()`.
-
-Se crean tests unitarios en `tests/Unit/Battle/` cubriendo 10 mecánicas críticas.
-
-## Bugs confirmados (grep + lectura)
-
-| # | Archivo | Línea | Código bug | Corrección |
-|---|---------|-------|------------|------------|
-| 1 | `src/Battle/Domain/AgregadoBatalla.php` | 306 | `->moves->isEmpty()` | `->moves()->isEmpty()` |
-| 2 | `src/Battle/Domain/AgregadoBatalla.php` | 313 | `->moves as $move` | `->moves() as $move` |
-| 3 | `app/Livewire/Combate.php` | 228 | `->moves->all()` | `->moves()->all()` |
-| 4 | `app/Livewire/Combate.php` | 427 | `->moves as $move` | `->moves() as $move` |
-| 5 | `app/Livewire/Combate.php` | 476 | `->moves->get($index)` | `->moves()->get($index)` |
-| 6 | `app/Livewire/Combate.php` | 533 | `->tiposCollection as $tipo` | `->tiposCollection() as $tipo` |
-
-## Archivos a tocar
-
-| Archivo | Acción | Propósito |
-|---------|--------|-----------|
-| `src/Battle/Domain/AgregadoBatalla.php` | 2 cambios | `->moves` → `->moves()` en líneas 306 y 313 |
-| `app/Livewire/Combate.php` | 4 cambios | `->moves` → `->moves()` (3 veces) y `->tiposCollection` → `->tiposCollection()` (1 vez) |
-| `tests/Feature/PokemonBattleTest.php` | Reescribir | Migrar de `BattleAggregate` a `AgregadoBatalla` + `FabricaBatallaMock::createBattle()` |
-| `tests/Unit/Battle/CadenaDanioTest.php` | NUEVO | Tests de daño base + STAB |
-| `tests/Unit/Battle/EfectoOrbeVidaTest.php` | NUEVO | Test orbe vida ×1.3 + recoil |
-| `tests/Unit/Battle/EfectoRestosTest.php` | NUEVO | Test restos cura 1/16 |
-| `tests/Unit/Battle/EfectoInvocadorClimaTest.php` | NUEVO | Test invocador clima SEQUIA |
-| `tests/Unit/Battle/SujetoBatallaTest.php` | NUEVO | Test observer notifyDamaged/notifyFainted |
-| `tests/Unit/Battle/EstadoPokemonTest.php` | NUEVO | Test BURN daño + SLEEP/PARALYSIS puedeActuar |
-| `tests/Unit/Battle/EtapasStatsTest.php` | NUEVO | Test clamp -6..+6 + multiplicadores |
-| `tests/Unit/Battle/ManejadorPosicionTest.php` | NUEVO | Test -50% retaguardia |
-| `tests/Unit/Battle/ManejadorClimaTest.php` | NUEVO | Test ±25% clima |
-
-## Tests TDD (rojo → verde)
-
-### 1. `tests/Feature/PokemonBattleTest.php` migrado
-- `test_battle_with_fabrica_mock_creates_2_teams_3_combatants`: CreateBattle() → 2 equipos, 3 combatientes cada uno, movimientos accesibles via `->moves()`
-- `test_combatants_have_moves_accessible_via_getter`: `$combatant->pokemon()->moves()->all()` no lanza error
-
-### 2. `tests/Unit/Battle/CadenaDanioTest.php`
-- `test_calcula_dano_mayor_que_cero`: CadenaDanio::calculate() > 0 con AccionBatalla válida
-- `test_dano_base_sigue_formula`: atk=100, def=100, power=50 → base=24 (semilla mt_srand para no crit)
-- `test_stab_multiplica_por_1_5`: atacante con tipo = tipo movimiento → daño ×1.5
-
-### 3. `tests/Unit/Battle/EfectoOrbeVidaTest.php`
-- `test_orbe_vida_multiplica_dano_por_1_3`: atacante con life_orb → daño ×1.3
-- `test_orbe_vida_recoil_10_por_ciento`: dispararDanioInfligido → HP -10% máx, log con "Orbe Vida"
-
-### 4. `tests/Unit/Battle/EfectoRestosTest.php`
-- `test_restos_cura_1_16_cada_ronda`: triggerRoundEndEffects → HP +1/16 máx, sin superar máx
-
-### 5. `tests/Unit/Battle/EfectoInvocadorClimaTest.php`
-- `test_sequia_establece_clima_en_battle_start`: triggerBattleStartEffects → weather = SEQUIA
-
-### 6. `tests/Unit/Battle/SujetoBatallaTest.php`
-- `test_notify_damaged_notifica_observador`: notifyDamaged → observer registra
-- `test_notify_fainted_notifica_observador`: notifyFainted → observer registra
-
-### 7. `tests/Unit/Battle/EstadoPokemonTest.php`
-- `test_burn_causa_dano_por_ronda`: aplicarDañoStatus → HP -6.25% máx, daño > 0
-- `test_sleep_impide_actuar`: puedeActuar con SLEEP → canAct false
-- `test_paralysis_puede_impedir_actuar`: puedeActuar con PARALYSIS → a veces bloquea (seed determinista)
-- `test_sin_estado_puede_actuar`: puedeActuar con NONE → canAct true
-
-### 8. `tests/Unit/Battle/EtapasStatsTest.php`
-- `test_aplicar_cambio_clampea_a_6`: desde 5 +5 → 6; desde -5 -5 → -6
-- `test_multiplicador_positivo`: +2 → (2+2)/2 = 2.0
-- `test_multiplicador_negativo`: -2 → 2/(2-(-2)) = 0.5
-
-### 9. `tests/Unit/Battle/ManejadorPosicionTest.php`
-- `test_retaguardia_con_vanguardia_enemiga_viva_50_por_ciento`: defender en retaguardia + defenderTeamHasVanguard=true → ×0.5
-- `test_vanguardia_sin_penalizacion`: defender en vanguardia → ×1.0
-
-### 10. `tests/Unit/Battle/ManejadorClimaTest.php`
-- `test_sequia_fuego_125`: SEQUIA + FUEGO → ×1.25
-- `test_sequia_agua_075`: SEQUIA + AGUA → ×0.75
-- `test_sin_clima_1`: NONE → ×1.0
-
-## Estrategia de construcción de combatientes (unit tests)
-
-Los tests unitarios extienden `PHPUnit\Framework\TestCase` (sin boot de Laravel, sin BD).
-Para construir combatientes de prueba se usan dos enfoques:
-
-1. **Build directo**: `new Combatiente(new PokemonEntity(...), Posicion::VANGUARDIA)` con setters para id, nombre, item, effects.
-2. **EquipoBatalla::fromData()**: `EquipoBatalla::fromData([$dato], 'Equipo')` con `DatosPokemonBatalla` mínimo.
-
-Para efectos (Orbe Vida, Restos, Invocador Clima), se construyen las instancias directamente y se añaden via `$combatant->effects()->add($efecto)`, evitando dependencia de `FabricaEfectos` (que requiere app boot).
-
-## Riesgos
-
-1. **RNG no determinista**: `ManejadorCritico` y `procesarParalysis` usan `mt_rand`. Se soluciona con `mt_srand(seed)` antes de llamar. Verificado: seed=1 → no crit (0.417 > 0.0625), para permite actuar (40 > 25); seed=100 → para bloquea (13 ≤ 25).
-2. **Efectos no registrados sin app boot**: Los tests unitarios extienden `PHPUnit\Framework\TestCase`, no bootean Laravel. `FabricaEfectos` está vacío. Solución: construir efectos directamente y añadirlos manualmente a `ColeccionEfectos`.
-3. **PokemonBattleTest (Feature) necesita DB**: Extiende `Tests\TestCase` que bootea la app. `AppServiceProvider::boot()` ejecuta `Schema::hasTable('users')` requiriendo conexión a BD. Localmente se ejecuta con `APP_ENV=testing DB_USERNAME=laravel DB_PASSWORD=laravel php artisan test --filter=PokemonBattleTest`.
-4. **Combate Livewire no testeable sin sesión**: Los 4 bugs de `Combate.php` se corrigen directamente (cambio de getter). No se añade test de regresión por la complejidad de montar el componente Livewire completo. La corrección es trivial (sintaxis de getter) y verificable por PHPStan.
-5. **PHPStan nivel 6**: Tras las correcciones, debe pasar sin errores en `src/Battle/Domain/AgregadoBatalla.php` y `app/Livewire/Combate.php`.
-
-## Entorno
-
-- Tests ejecutados localmente con `APP_ENV=testing DB_USERNAME=laravel DB_PASSWORD=laravel php artisan test --compact --filter=Battle`
-- `vendor/bin/pint --dirty --format agent` al final
-- `vendor/bin/phpstan analyse` nivel 6
-- `vendor/bin/phpmd src/ text phpmd.xml`
-
----
-
-## Estado de ejecución (backend, 2026-08-30)
-
-### Desviaciones del plan del Analista
-
-1. **Entorno de tests arreglado (necesario para correr la suite)**:
-   - `phpunit.xml` apuntaba a `pgsql` con credenciales `pokemon`/`secret` (no existían) y puerto heredado.
-   - `.env` apuntaba al puerto `5433` (inexistente en este entorno).
-   - PostgreSQL local está en `127.0.0.1:5432` con usuario `laravel`/`laravel` y BDs `laravel` + `laravel_test` ya creadas.
-   - Fix: `.env` → `DB_PORT=5432` + credenciales `laravel`; `phpunit.xml` → `DB_USERNAME=laravel`, `DB_PASSWORD=laravel` (puerto 5432 ya correcto).
-   - **Nota**: se descartó SQLite `:memory:` (sin driver `pdo_sqlite` en el PHP del entorno; los unit tests usan `PHPUnit\Framework\TestCase` y no requieren BD).
-
-2. **Tests unitarios**: se crean con `php artisan make:test --unit --phpunit` (extienden `PHPUnit\Framework\TestCase`, sin boot de Laravel ni BD), en subcarpeta `tests/Unit/Battle/`.
-
-3. **Bug extra detectado en la batalla automática**: `AgregadoBatalla::elegirMejorMovimiento()` (bugs 1 y 2) solo se ejecuta en `ejecutarBatalla()`. Se añade un test de regresión unitario que llama a `elegirMejorMovimiento()` directamente para cubrir los 2 bugs de `AgregadoBatalla` (además de la migración del Feature test).
-
-4. **`docs/conventions.md` modificado por el agente Frontend/Analista** (no es de este backend; no se toca).
-
-### Resultado
-
-- Tests: `tests/Feature/PokemonBattleTest.php` migrado + `tests/Unit/Battle/*` (10 mecánicas) verdes.
-- PHPStan nivel 6 limpio sobre los archivos tocados.
-- PHPMD y Pint aplicados.
-- Commits atómicos: fix de bugs + tests TDD + migración del test deprecado.
-
----
-
-## Endurecimiento del módulo Battle — 2 fixes de tipo + tests anti-mutantes (2026-08-30)
-
-### Estado: COMPLETADO (MSI Battle 80%)
-
-### Tarea 1 — 2 fixes de tipo (comportamiento neutro, aprobados por Arquitecto)
-
-| Archivo | Fix | Línea |
-|---------|-----|-------|
-| `src/Pokemon/Domain/Stats/BattleStats.php` | `calcularHp(float $base, float $evs, $nivel)` → `int $nivel` | 45 |
-| `src/Pokemon/Domain/Stats/BattleStats.php` | `calcularStat(float $base, float $evs, $nivel)` → `int $nivel` | 50 |
-| `src/Battle/Domain/GestorTurnos.php` | Añadir `/** @var Combatiente[] */` a `$teamB` (línea 19, hermana de `$teamA` con docblock) | 19 |
-
-### Tarea 2 — Tests anti-mutantes (MSI ≥80%)
-
-**Archivos NUEVOS:**
-
-1. `tests/Unit/Battle/GestorTurnosTest.php` — 8 tests: startNewRound incrementa round; acumula velocidad y resetea vecesActuado; getNextActor devuelve el de mayor velocidad; empate devuelve el primero (T1); consumeAction reduce velocidad e incrementa veces; bothTeamsAlive true/false; hayAlgunoConAccionPendiente false sin vivos; combatientesVivos excluye muertos.
-2. `tests/Unit/Battle/CombatienteRecibirDanoTest.php` — 6 tests: daño absorbido por barrera; daño excede barrera; directPct penetra; directPct 1.0 todo a HP; especial usa barrera especial; HP nunca negativo.
-3. `tests/Unit/Battle/ServicioEjecucionBatallaTest.php` — 4 tests: calcularYAplicarDano retorna DTOResultadoDanio con daño>0; aplicarEstado con BURN / sin estado no cambia; aplicarStatChanges aplica self+target; generarLogMovimiento formato correcto.
-4. `tests/Unit/Battle/FabricaEfectosTest.php` — 5 tests: crearEfecto devuelve instancia con clave; desconocido → null; crearItem devuelve instancia; desconocido → null; clavesEfectos/clavesItems listan registrados.
-
-**Archivos EXISTENTES a ampliar:**
-
-5. `tests/Unit/Battle/ManejadorClimaTest.php` — +7 tests: DILUVIO agua×1.25/fuego×0.75; NIEBLA siniestro/fantasma/psíquico×1.25; TURBULENCIAS dragón/volador×1.25; GRANIZO especial HIELO×0.80; TORMENTA_ARENA físico ROCA×0.80.
-6. `tests/Unit/Battle/EfectoOrbeVidaTest.php` — +2 tests: recoil NO si atacante muerto; NO si daño=0.
-7. `tests/Unit/Battle/EfectoRestosTest.php` — +1 test: no cura si portador muerto.
-8. `tests/Unit/Battle/EstadoPokemonTest.php` — +3 tests: POISON 12.5%; BAD_POISON creciente (contador/16); sin estado no causa daño.
-9. `tests/Unit/Battle/EtapasStatsTest.php` — +4 tests: constructor lanza excepción >6 / <-6; obtenerNoNeutras solo distintas de cero; multiplicador extremo +6→×4; -6→×0.25.
-10. `tests/Unit/Battle/CadenaDanioTest.php` — +1 test: clamp mínimo 1 cuando daño<1.
-
-### Estrategia de construcción
-
-- Tests unitarios extienden `PHPUnit\Framework\TestCase` (sin boot, sin BD). Usan trait `ConstruyeCombatientes` (helpers `combatiente()`, `batallaMinima()`).
-- Para equipos multi-combatiente (GestorTurnos), construir `EquipoBatalla` manual con `agregarCombatiente()`.
-- Para efectos, construir instancias directamente y añadir vía `$combatant->effects()->add($efecto)`.
-- `FabricaEfectos` se instancia y registra efectos en el `setUp` de cada test.
-- RNG determinista con `mt_srand(seed)` para crítico, parálisis, sueño.
-- Verificar firmas reales de cada clase antes de escribir (leídos: BattleStats, GestorTurnos, Combatiente, ServicioEjecucionBatalla, FabricaEfectos, EfectoRestos, EfectoOrbeVida, EtapasStats, ManejadorClima, CadenaDanio, AccionBatalla, MovimientoBatalla, EquipoBatalla, AgregadoBatalla, PokemonEntity, TypeChart, etc.).
+### Diagnóstico
+`SimuladorEncuentros::eventoHallazgo()` genera `caramelo_ev` eligiendo un stat aleatorio 1-6
+y `caramelo_tipo` eligiendo un tipo aleatorio de los 18 `TipoPokemon::cases()`. Esto es incorrecto:
+deben estar restringidos al pool del hábitat (pokémon del hábitat en ese nivel).
 
 ### Archivos a tocar
 
-| Archivo | Acción | Riesgo |
-|---------|--------|--------|
-| `src/Pokemon/Domain/Stats/BattleStats.php` | 2 cambios de tipo | Ninguno (comportamiento neutro) |
-| `src/Battle/Domain/GestorTurnos.php` | 1 docblock | Ninguno (comportamiento neutro) |
-| 4 tests nuevos + 6 existentes | Crear/ampliar | Ninguno (tests puros sin boot, no afectan BD) |
+1. **`src/Exploraciones/App/ProcesarExploracionHandler.php`**
+   - `poolHabitat()`: añadir `->loadMissing('stats')` y mapear `stats` con `effort>0` en el array de retorno.
 
-### Entregable
+2. **`src/Exploraciones/Domain/SimuladorEncuentros.php`**
+   - `generarEventos()`: el pool ahora es `list<array{id, capture_rate, hatch, tipos, stats}>`. 
+     `poolPonderado()` y `elegirPonderado()` siguen funcionando con solo `id`/`capture_rate`/`hatch`.
+   - `generarEvento()`: pasar el pool completo a `eventoHallazgo()`.
+   - `eventoHallazgo()`:
+     - `caramelo_familia`: mantener (elige pokemon del pool, usa pokemon_id).
+     - `caramelo_ev`: elegir pokemon del pool (ponderado). De ese pokemon, elegir UNO de sus stats
+       con effort>0 (aleatorio entre los disponibles). Fallback: si ningún pokemon del pool tiene
+       stats con effort, usar stat aleatorio 1-6.
+     - `caramelo_tipo`: elegir pokemon del pool, luego uno de sus tipos. Fallback: tipo aleatorio.
 
-- Commits atómicos: `refactor:` (2 fixes de tipo) + `test:` (tests anti-mutantes).
-- Handoff: `type: git_handoff, to: bibliotecario, priority: 60, task: corregir-combate-bugs`.
+### Tests a escribir/actualizar
 
-### Resultado final
+- **`tests/Unit/SimuladorEncuentrosTest.php`**:
+  - `test_hallazgo_caramelo_ev_desde_pool_con_stats`: verificar que stat se elige del pool.
+  - `test_hallazgo_caramelo_ev_fallback_sin_stats`: verificar fallback a 1-6.
+  - `test_hallazgo_caramelo_tipo_desde_pool_con_tipos`: verificar tipo del pool.
+  - `test_hallazgo_caramelo_tipo_fallback_sin_tipos`: verificar fallback.
+  - Actualizar tests existentes que usan `poolBase()` — ahora necesitan `tipos` y `stats` en el pool.
 
-- **2 fixes de tipo** aplicados (`2c7e8ce`): `int $nivel` en `BattleStats::calcularHp/calcularStat` + docblock `/** @var Combatiente[] */` en `GestorTurnos::$teamB`.
-- **Tests anti-mutantes**: 28 → **121 tests** de Battle (334 assertions). Archivos nuevos: `GestorTurnosTest`, `CombatienteRecibirDanoTest`, `ServicioEjecucionBatallaTest`, `FabricaEfectosTest`, `FabricaBatallaMockTest`, `EquipoBatallaTest`, `CombatienteAvanzadoTest` (7 nuevos + 6 ampliados). Commits `d25de1e` + `b80700a`.
-- **Infection src/Battle**: MSI **42.33% → 80%** (656/816 mutantes matados, Covered Code MSI 80%). Ejecutado con `--filter=src/Battle --only-covering-test-cases --test-framework-extra-args='--filter=Battle'` (el run completo de Infection fallaba en `ServicioCapturaTest`, fallo pre-existente ajeno a Battle; además el filtro reduce el tiempo).
-- **PHPStan nivel 6**: total 189 errores (misma línea base pre-existente). `BattleStats` → 0 errores (los 2 fixes de tipo limpiaron el archivo). `GestorTurnos` → 2 errores pre-existentes de `missingType.iterableValue` en métodos (`allCombatants`, `combatientesVivos`), NO en la propiedad `$teamB` (ya tipada). Sin errores nuevos en `src/Battle/` ni `app/Livewire/Combate.php`.
-- **PHPMD**: solo advertencias pre-existentes de `ExcessiveMethodLength` en el módulo Battle.
-- **Pint**: aplicado (`--dirty`).
-- Desviaciones: los nombres/estructura del informe del Hardener se ajustaron a las firmas reales (p.ej. `FabricaEfectos` es instancia, `recibirDaño` usa barreras duales, `generarLogMovimiento` tiene 6 params). Tests añadidos extra (EquipoBatalla, CombatienteAvanzado, FabricaBatallaMock) para alcanzar el 80% de MSI.
+- **Tests de ProcesarExploracionHandler** (feature tests, si existen):
+  - Verificar que `poolHabitat()` incluye `stats`.
 
+## Bug B: Emboscada victoriosa no debe generar tiempo perdido
+
+### Diagnóstico
+`EvaluadorExploracion::resolverEmboscada()` línea 136-141: cuando la resolución del encuentro
+es 'victoria' o 'victoria_con_coste', se mapea a 'superada' con `duration_loss = COSTE_EMBOSCADA_VICTORIA`
+(10). El usuario dice: "si he superado una emboscada y gané, no debería generar tiempo perdido".
+
+### Cambio
+En `resolverEmboscada()`, cambiar `duration_loss` a 0 cuando la emboscada se supera (victoria).
+La constante `COSTE_EMBOSCADA_VICTORIA` se reasigna a 0 (o se usa 0 directamente). Se elige
+usar la constante con valor 0 para mantener la semántica del nombre.
+
+### Tests a actualizar
+
+- **`tests/Unit/Exploraciones/EvaluadorExploracionTest.php`**:
+  - `test_emboscada_sin_vanguardia_superada_al_vencer`: espera `duration_loss` 0 (antes 10).
+  - `test_emboscada_con_vanguardia_detecta_y_evita`: ya espera 0, sin cambios.
+
+## Riesgos identificados
+
+1. Los tests existentes de `SimuladorEncuentrosTest` usan un pool sin `tipos`/`stats` →
+   hay que actualizar el pool base para incluir `tipos` y `stats` en los tests de hallazgo.
+2. Los tests que no ejercitan `eventoHallazgo` (encuentros, emboscadas, contratiempos) no
+   necesitan cambiar porque `poolPonderado` solo consume `id`/`capture_rate`/`hatch`.
+3. El cambio en `EvaluadorExploracion` rompe tests existentes que esperan `duration_loss=10`
+   → actualizar assertions.
 ---
 
-## Refactor del módulo de combate — 3 problemas de diseño (2026-08-30)
-
-### Estado: COMPLETADO (QA pendiente)
-
-### Resultado final
-
-- **Problema 1** (`f9f2b19`): `ManejadorOrbeVida` → `ManejadorObjetosEquipados` genérico con mapa `array<string, float>` (default `['life_orb' => 1.30]`). `CadenaDanio` usa el nuevo manejador en el mismo orden (último eslabón). `ManejadorOrbeVida.php` eliminado. `EfectoOrbeVida` NO se tocó (recoil sigue en Effects/).
-- **Problema 2** (`8ae08ed`): Tyranitar `[SINIESTRO]` → `[ROCA, SINIESTRO]` en `FabricaBatallaMock` (inmune a su propia tormenta arena). `CalculadorDañoClima` extraído de `AgregadoBatalla` con misma lógica y valores. `SESSION_VERSION` 3 → 4.
-- **Problema 3** (`105bed9`): `SelectorAccionIA` extraído de `AgregadoBatalla` (objetivo + mejor movimiento). API pública `elegirObjetivoPara`/`elegirMejorMovimiento` conservada para `Combate::prepareAiAnimation`.
-
-### Verificación
-
-- **Tests de Battle**: 121 → **140** (362 assertions) verdes. Nuevos: `ManejadorObjetosEquipadosTest` (5), `CalculadorDañoClimaTest` (8), `SelectorAccionIATest` (6).
-- **Feature**: `PokemonBattleTest` 2 verdes.
-- **PHPStan nivel 6**: total **189 errores** (idéntico a la línea base pre-existente; sin errores NUEVOS). Durante el desarrollo se detectó y corrigió un `method.notFound` de `elegirObjetivo` que quedó tras la extracción (corregido, sin llegar a commit roto).
-- **Infection src/Battle**: Covered Code MSI **80%** (exit 0 con `--min-covered-msi=80`). Mutantes escapados de `SelectorAccionIA` son equivalentes/neutros (rama retaguardia coincide con fallback; score inicial -1 no altera resultado con movimientos).
-- **PHPMD**: solo `ExcessiveMethodLength` pre-existentes (misma lógica que estaba en `AgregadoBatalla`).
-- **Pint**: aplicado.
-- **Serialización**: servicios como propiedades nullable + lazy getter (`??=`) — PHP serializa null sin problemas, no se rompe la sesión. Verificado con tinker (serialize/unserialize round-trip tras usar los getters).
-
-### Desviaciones / asserts actualizados
-
-- `FabricaBatallaMockTest::test_generate_team1_contiene_tyranitar`: assert de tipos actualizado a `[ROCA, SINIESTRO]`.
-- Ningún otro test dependía de los tipos de Tyranitar para efectividad/STAB (los tests de daño usan `ConstruyeCombatientes`, no el mock).
-
----
-
-### Problema 1 — ManejadorObjetosEquipados (reemplaza ManejadorOrbeVida)
-
-**Archivos a crear:**
-- `src/Battle/Domain/Chain/ManejadorObjetosEquipados.php` — manejador genérico de objetos equipados con mapa `array<string, float>` en constructor (default: `['life_orb' => 1.30]`). `process()`: aplica multiplicador si el atacante tiene objeto equipado con clave en el mapa y está vivo.
-
-**Archivos a modificar:**
-- `src/Battle/Domain/Chain/CadenaDanio.php` — sustituir `new ManejadorOrbeVida()` por `new ManejadorObjetosEquipados()`.
-
-**Archivos a ELIMINAR:**
-- `src/Battle/Domain/Chain/ManejadorOrbeVida.php` — reemplazado completamente.
-
-**Tests nuevos:**
-- `tests/Unit/Battle/ManejadorObjetosEquipadosTest.php` — 4 tests:
-  1. `test_life_orb_multiplica_por_1_3`: atacante con `life_orb` → daño ×1.3
-  2. `test_sin_objeto_no_cambia_dano`: atacante sin objeto → daño sin cambio
-  3. `test_objeto_desconocido_no_cambia_dano`: atacante con `leftovers` → daño sin cambio (leftovers no modifica daño)
-  4. `test_atacante_muerto_con_life_orb_no_multiplica`: atacante muerto con `life_orb` → ×1.0
-
-**Riesgos:**
-- Ninguno: los tests de `EfectoOrbeVidaTest` que usan `CadenaDanio` (test_orbe_vida_multiplica_dano_por_1_3) seguirán verdes porque el comportamiento es idéntico (life_orb → 1.3).
-- Ningún test referencia `ManejadorOrbeVida` directamente (grep confirmado).
-
-### Problema 2 — Tyranitar tipos corregidos + CalculadorDañoClima
-
-**2a. Tyranitar:**
-- `src/Battle/Infrastructure/FabricaBatallaMock.php` línea 82: `tipos: [TipoPokemon::SINIESTRO]` → `tipos: [TipoPokemon::ROCA, TipoPokemon::SINIESTRO]`
-- `tests/Unit/Battle/FabricaBatallaMockTest.php` línea 106: `assertSame([TipoPokemon::SINIESTRO], $tyranitar->tipos)` → `assertSame([TipoPokemon::ROCA, TipoPokemon::SINIESTRO], $tyranitar->tipos)`
-
-**Impacto en otros tests:**
-- `AgregadoBatallaTest::test_elegir_mejor_movimiento_accede_a_movimientos_por_getter` usa `$attacker = $battle->team1->combatants()[0]` (Gengar, no Tyranitar) y solo assert `instanceof MovimientoBatalla`. No se rompe.
-- Ningún test calcula daño con Tyranitar como atacante/defensor de forma que afirme valores exactos. Los tests de `ConstruyeCombatientes` construyen combatientes manualmente.
-
-**2b. CalculadorDañoClima:**
-- Crear `src/Battle/Domain/CalculadorDañoClima.php` con método `calcular(Combatiente $c, TipoClima $weather): float`
-- Misma lógica: GRANIZO → daño a no-HIELO; TORMENTA_ARENA → daño a no-ROCA/TIERRA/ACERO; otros climas o muerto → 0
-- Mejora de legibilidad: arrays de tipos inmunes en lugar de foreach anidado
-
-**Modificaciones:**
-- `src/Battle/Domain/AgregadoBatalla.php`:
-  - Eliminar `calcularDañoClima` privado
-  - Añadir lazy getter para `CalculadorDañoClima` (propiedad nullable, evita problemas de serialización)
-  - `triggerRoundEndEffects()` delega en `$this->getCalculadorClima()->calcular($c, $this->weather)`
-- `app/Livewire/Combate.php`: `SESSION_VERSION` 3 → 4 (cambio de estructura serializada)
-
-**Serialización:**
-- `CalculadorDañoClima` es stateless (sin propiedades, sin closures). Se usará lazy getter en `AgregadoBatalla`:
-  ```php
-  private ?CalculadorDañoClima $calculadorClima = null;
-  private function getCalculadorClima(): CalculadorDañoClima {
-      return $this->calculadorClima ??= new CalculadorDañoClima();
-  }
-  ```
-  PHP serializa `null` sin problemas. Al deserializar de v3, la propiedad es null, el getter la crea. No hay rotura de serialización.
-
-**Tests nuevos:**
-- `tests/Unit/Battle/CalculadorDañoClimaTest.php` — 5+ tests:
-  1. `test_granizo_dana_a_no_hielo`: `hp=100` → `battleStats()->hp=310` → daño = `max(1, 310*0.0625)` = 19.375
-  2. `test_granizo_no_dana_a_hielo`: combatiente HIELO → 0
-  3. `test_tormenta_arena_dana_a_no_roca_tierra_acero`: combatiente SINIESTRO → daño = 19.375
-  4. `test_tormenta_arena_no_dana_a_roca`: combatiente ROCA → 0
-  5. `test_combatiente_muerto_devuelve_0`: hpActual=0 → 0
-  6. `test_clima_none_devuelve_0`: TipoClima::NONE → 0
-
-### Problema 3 — SelectorAccionIA
-
-**Crear:**
-- `src/Battle/Domain/SelectorAccionIA.php` con 2 métodos:
-  - `elegirObjetivoPara(AgregadoBatalla $battle, Combatiente $actor): ?Combatiente`
-  - `elegirMejorMovimiento(Combatiente $attacker, Combatiente $defender): ?MovimientoBatalla`
-
-**Modificar:**
-- `src/Battle/Domain/AgregadoBatalla.php`:
-  - Reemplazar `elegirObjetivo()` privado por delegación a `SelectorAccionIA`
-  - Las llamadas desde `ejecutarAccion()` y `elegirObjetivoPara()` usan el servicio
-  - `elegirMejorMovimiento()` público delega al servicio
-  - Lazy getter para `SelectorAccionIA` (mismo patrón serialización)
-
-**Serialización:**
-- Idéntico patrón lazy getter con propiedad nullable.
-
-**Tests nuevos:**
-- `tests/Unit/Battle/SelectorAccionIATest.php` — 5 tests:
-  1. `test_elegir_mejor_movimiento_puntua_mayor_efectividad_por_potencia`: 2 movs, uno mejor que otro
-  2. `test_elegir_mejor_movimiento_sin_movimientos_devuelve_placaje`: fallback
-  3. `test_elegir_objetivo_vanguardia_ataca_vanguardia`: actor vanguard, enemigo vanguard vivo → vanguard
-  4. `test_elegir_objetivo_vanguardia_sin_vanguardia_enemiga_ataca_retaguardia`: actor vanguard, enemigo vanguard muerto → retaguardia
-  5. `test_elegir_objetivo_retaguardia_elige_cualquier_enemigo`: actor retaguardia → cualquier enemigo vivo
-  6. `test_elegir_objetivo_todos_muertos_devuelve_null`: sin vivos → null
-
-### Estrategia de construcción de tests
-
-- Tests unitarios extienden `PHPUnit\Framework\TestCase` (sin boot, sin BD).
-- Usan trait `ConstruyeCombatientes` para combatientes de prueba.
-- `SelectorAccionIA` se instancia directamente (sin dependencias).
-- `CalculadorDañoClima` se instancia directamente.
-- `ManejadorObjetosEquipados` se instancia con mapa default o custom.
-- RNG determinista con `mt_srand(seed)` para crítico.
-- Para construir equipos multi-combatiente en `SelectorAccionIATest`, crear `EquipoBatalla` manual con `agregarCombatiente()`.
-
-### Commits planeados
-
-1. `refactor: reemplazar ManejadorOrbeVida por ManejadorObjetosEquipados genérico`
-2. `refactor: corregir tipos Tyranitar (Roca/Siniestro) + extraer CalculadorDañoClima`
-3. `refactor: extraer lógica de IA (SelectorAccionIA) de AgregadoBatalla`
-
-### Verificación post-implementación
-
-- `php artisan test --compact --filter=Battle` → 121+ tests verdes
-- `php artisan test --compact tests/Feature/PokemonBattleTest.php`
-- `vendor/bin/phpstan analyse --no-progress` — sin errores nuevos en src/Battle/ ni Combate.php
-- `vendor/bin/infection --filter=src/Battle --only-covered --min-msi=80` (o comando equivalente)
-- `vendor/bin/pint --dirty --format agent`
----
-
-# Análisis Backend — Seed de la Pokédex filtrado a la pestaña "Vistos" (R1)
-
-## Fecha
-2026-08-30
-
-## Contexto / causa raíz
-
-La Pokédex asíncrona no carga en la pestaña "Vistos" al primer render. El seed que pasa
-`PlayerController::pokedex()` (`DatagridService::list('pokemon', per_page=100, sort=id, order=asc)`)
-se pide al Datagrid SIN filtrar por la pestaña por defecto (`filter[visto]=1`), y con
-`per_page=100` mientras el frontend hace fetches con `per_page=120`.
-
-## R1 (requisito, SIN tocar la vista)
-
-Cambiar la llamada `$this->datagrid->list('pokemon', ...)` para que pida:
-`per_page => 120`, `sort => 'id'`, `order => 'asc'`, `'filter' => ['visto' => '1']`.
-El resto del método (counts, tipos, stats) se conserva. Resultado esperado: el seed de la vista
-ya es la página 1 de los pokémon vistos del usuario autenticado, con `meta.last_page` coherente
-con esa pestaña.
-
-## Verificación de soporte de `filter[visto]=1`
-
-Revisados `app/Datagrid/DatagridService.php` y `app/Providers/DatagridServiceProvider.php`:
-
-- `DatagridDefinition('pokemon').filterable['visto'] => 'pokedex.visto'` (columna SQL).
-- `boolFields: ['visto', 'atrapado']` → en `applyFilters`, `filter[visto]='1'` pasa por `toBool('1')`
-  → `true`; `in_array(false, [true])` es falso → `whereIn('pokedex.visto', [true])`. ✓ Soportado.
-- Confirmado además por el test existente `DatagridTest::test_pokemon_list_filter_visto_1_returns_seen`.
-
-## Archivos a tocar
-
-| Archivo | Acción |
-|---------|--------|
-| `app/Http/Controllers/PlayerController.php` | Cambiar params del seed: `per_page=120`, `sort=id`, `order=asc`, `filter[visto]=1` |
-| `tests/Feature/PlayerControllerTest.php` | Ajustar los 3 tests existentes (codificaban el seed SIN filtrar) + añadir test que compruebe el seed filtrado a "vistos" |
-
-## Tests que escribo / ajusto (TDD)
-
-El seed pasa de "todos los pokémon" a "solo vistos". Eso rompe la semántica de 3 tests existentes
-de `PlayerControllerTest` que asumían el listado completo:
-
-1. `test_pokedex_orders_pokemon_by_id` — crea pokémon SIN fila en `pokedex` → con `filter[visto]=1`
-   el seed quedaría vacío → debe marcar los pokémon como vistos para seguir afirmando el orden [1,2].
-2. `test_pokedex_passes_counts_and_types` — afirmaba `meta.total == 3`; con el filtro el seed son
-   solo los vistos (2) → ajustar a `meta.total == 2` (los counts SÍ siguen siendo globales = 3).
-3. `test_pokedex_de_usuario_a_no_muestra_atrapados_de_b` — esperaba ambas filas (1 vista y 2 no vista);
-   con el filtro solo aparece la fila vista → ajustar a filtrar solo vistos.
-4. NUEVO: `test_pokedex_seed_es_pagina_1_de_vistos_con_last_page_coherente` — crear >120 pokémon
-   vistos para comprobar `per_page=120`, `page=1`, `last_page` coherente con la pestaña "vistos"
-   (solo vistos), y que todos los `data` son vistos.
-
-`PokedexViewTest` (render, usa `view()` directo) NO se toca ni se rompe.
-
-## Riesgos
-
-- Los tests existentes de `PlayerControllerTest` son de comportamiento previo (seed sin filtrar);
-  deben actualizarse, no romperse silenciosamente. No es una vista: es el estado deseado por R1.
-- Que `meta.total` deje de ser el total global dentro del seed (ahora es el total de la pestaña).
-  Los counts globales del header siguen en `meta.counts`.
-- No tocar la vista (`resources/views/pokedex/index.blade.php`) ni la arquitectura del Datagrid.
-
-## Verificación
-
-- `php artisan test --compact --filter=PlayerControllerTest`
-- `php artisan test --compact --filter=PokedexViewTest`
-- `vendor/bin/pint --dirty --format agent`
-- `vendor/bin/phpstan analyse` y `vendor/bin/phpmd src/ text phpmd.xml` (sin nuevos errores)
-
----
-
-## Análisis previo — Fix constructor `Combate.php` (PHPStan: Cannot call constructor)
-
-### Contexto
-
-PHPStan (level 6 + phpstan-strict-rules) reportaba error `Cannot call constructor` en
-`app/Livewire/Combate.php:70`: `parent::__construct()` llama al constructor de
-`Livewire\Component` que NO existe en Livewire 4 (`livewire/livewire ^4.4`). El componente
-fallaba en runtime al montarse (`Error: Cannot call constructor`), confirmado por TDD.
-
-### Fix principal
-
-- `app/Livewire/Combate.php` — eliminar `__construct()` (líneas 68-72) y resolver
-  `$fabricaBatalla` en `mount()` (solo se usa en `initMockBattle()` → `nuevaBatalla()` →
-  `mount()`; las propiedades privadas de Livewire no se serializan entre requests).
-
-### Fix secundario (bloqueado por el montaje)
-
-Al montar, el flujo llega a `nextActor()` → `currentMoves` que usa
-`DTOMovimientoBatalla::desdeDominio()`: `TipoPokemon` es enum backed `int` (`->value` =
-int) pero `$tipo` se declaró `string` → TypeError. Corregido de forma mínima:
-`(string) $move->tipo->value` en `desdeDominio()` y `TipoPokemon::from((int) $this->tipo)`
-en `toDomain()`. Coherente con la vista `moves-panel` que ya hace `TipoPokemon::from($move['tipo'])`.
-
-### Test (TDD)
-
-- `tests/Feature/CombateLivewireTest.php` (NUEVO, 3 tests):
-  1. `test_combate_mounts_without_constructor_error` — monta sin error, `assertSee('CAMPO DE COMBATE')`.
-  2. `test_combate_shows_battle_log_on_mount` — `assertSee('¡Comienza la batalla!')`.
-  3. `test_combate_creates_battle_on_mount` — `battleId` con prefijo `battle_`, team1/team2 con 3.
-  Feature test (app levantada): usa sesión + contenedor; NO requiere BD/RefreshDatabase
-  (el layout usa `@auth` con fallbacks y el componente no toca BD).
-
-### Verificación
-
-- `php artisan test --compact --filter=Combate` → 6 passed (9 assertions).
-- `php artisan test --compact tests/Feature/PokemonBattleTest.php` → 2 passed.
-- PHPStan: 185 errores ANTES → 183 DESPUÉS (`Cannot call constructor` eliminado; -2 por el fix del DTO).
-- Suite completa: 559 passed / 1 failed pre-existente (`ServicioCapturaTest`, ajeno).
-
----
-
-# Análisis Backend — Eliminar `avistados` del contrato de resultados de exploración
-
-## Fecha
-2026-08-30
+# ANÁLISIS PREVIO — Comando `caramelos:sync-regionales`
 
 ## Contexto
 
-La clave `avistados` (lista de especies derrotadas) se genera en el transformador y se consume
-en el controller y tests, pero la vista la ignora. Se elimina del contrato de resultados de
-futuras finalizaciones (JSONs ya persistidos conservan la clave por compatibilidad; no hay
-migración).
+- Los caramelos de familia se muestran como imágenes en `public/images/candy_pokemon/{pokemon_id}.webp`
+  (vistas `resources/views/exploraciones/_evento.blade.php` y `_caramelo.blade.php`).
+- Los pokémon regionales (Alola/Galar/Hisui/Paldea) tienen ids distintos (p.ej. 10091) pero pertenecen
+  a la misma familia evolutiva que el normal (p.ej. 19 Rattata). Su caramelo debe mostrar la MISMA imagen.
+- Solo existen imágenes para los ids base (generadas manualmente); los regionales no tienen → fallback a `0.webp`.
+- Regla "base de familia = menor species_id" ya existe en
+  `src/Exploraciones/Presentation/TransformadorResultadoExploracion::pokemonBaseDeCadena()`.
+- Requisito del usuario: "identifica por bbdd los id y copia las imagenes, no hace falta nada mas".
+
+## Investigación previa (confirmada en la BD dev real)
+
+- `storage/data/pokemon.csv`: nombres de variantes regionales con sufijo `-alola`, `-galar`, `-hisui`,
+  `-paldea` (58 variantes). Sufijos compuestos: `tauros-paldea-aqua-breed`, `darmanitan-galar-standard`,
+  `darmanitan-galar-zen`. El prefijo antes del primer sufijo regional = nombre base (ej. `rattata`).
+- `storage/data/pokemon_species.csv`: nombres con guion que NO son regionales (nidoran-f, mr-mime, ho-oh,
+  porygon-z, type-null, tapu-*, iron-*, etc.) — se ignoran porque no contienen los sufijos regionales.
+- BD dev (`php artisan tinker`, 1083 pokémon con `evolution_chain_id`): 58 regionales, todos mapean a un
+  base por prefijo de nombre (0 huérfanos). 29 bases tienen imagen `candy_pokemon/{base}.webp`; 0 variantes
+  tienen imagen aún. → 29 copias, 29 `sin_origen` (falta la imagen del base, p.ej. darmanitan-standard 555).
+
+## Por qué NO vale agrupar por `evolution_chain_id` (decisión)
+
+- El seeder (`database/seeders/PokemonSeeder.php`, `REGION_CODES`) asigna a CADA variante regional una cadena
+  PROPIA (`10000 + regionCode*1000 + chainNormal`): meowth-alola → 11022, meowth-galar → 12022; el normal
+  meowth → chain normal. Por tanto `evolution_chain_id` NO agrupa la variante con su base normal.
+- Criterio correcto (y pedido por el usuario: "identifica por bbdd los id"): **matching por NOMBRE base**.
+  Variante cuyo nombre contiene un sufijo regional → prefijo antes del guion → base = pokémon NO regional de
+  menor `species_id` cuyo nombre empiece por ese prefijo (p.ej. `rattata-alola` → prefijo `rattata` → base 19).
+
+## Qué voy a tocar
+
+- CREAR `app/Console/Commands/SyncCandyRegionales.php` (firma `caramelos:sync-regionales`):
+  - `handle()`: consulta `Pokemon` (`id, name, species_id, evolution_chain_id`) con `evolution_chain_id`
+    no nulo; delega en `sincronizar()`; imprime copiadas/ya existían/sin origen.
+  - `sincronizar(array $pokemons, string $directorio)`: pública, para poder testear sin BD; devuelve
+    `{copiadas, ya_existian, sin_origen}`. Idempotente (no sobrescribe si el destino existe); si falta el
+    origen → `sin_origen`.
+  - `mapearVariantes(array $pokemons)`: pública, pura — variante_id => base_id por prefijo de nombre.
+- NINGÚN otro archivo (sin vistas, sin docs, sin migraciones).
+
+## Tests a escribir (TDD, unit de la lógica del comando)
+
+- `tests/Unit/SyncCandyRegionalesTest.php`:
+  - `test_mapeo_variantes_regionales_por_prefijo_de_nombre`: rattata-alola → 19, meowth-alola → 52,
+    meowth-galar → 52 (misma familia normal), sandshrew-alola → 27, sandslash-alola → 28 (distinta base
+    por prefijo), tauros-paldea-*-breed → 128, darmanitan-galar-standard → 555 (prefijo `darmanitan` →
+    `darmanitan-standard`).
+  - `test_mapeo_ignora_no_regionales_y_nombres_con_guion_no_regional`: nidoran-f/mr-mime/ho-oh no generan
+    entradas.
+  - `test_mapeo_sin_base_omite_variante`: variante sin base → no aparece en el mapa.
+  - `test_sincronizar_copia_imagen_del_base_a_la_variante`: crea fichero destino con el contenido del origen.
+  - `test_sincronizar_no_sobrescribe_si_el_destino_existe`: ya_existian++, el destino se conserva.
+  - `test_sincronizar_sin_origen_cuenta_sin_origen`: base sin imagen → sin_origen++.
+  - `test_sincronizar_devuelve_conteos_acumulados`: escenario mixto copiadas/ya/sin.
+- Test feature del comando (`php artisan caramelos:sync-regionales`) contra la BD dev: verificación manual
+  de ejecución (no test automático; requiere Postgres + assets).
+
+## Riesgos identificados
+
+1. Falsos positivos de prefijo por `str_starts_with`: verificar en tests (p.ej. `sandshrew-alola` →
+   `sandshrew` 27, NO `sandslash` 28). La regla "menor species_id + empiece por prefijo" lo controla.
+2. `darmanitan` normal se llama `darmanitan-standard` (is_default) → el prefijo `darmanitan` matchea con
+   `str_starts_with`. Cubierto por test.
+3. La BD dev puede no estar arrancada → el comando debe al menos no fallar (handle con try? No: si no hay
+   BD, tinker falla igual; el comando no debe romper por assets faltantes). Si la BD no está, se documenta.
+4. El comando escribe en `public/images/candy_pokemon/` → ejecución en local SÍ crea ficheros reales
+   (comportamiento deseado; idempotente en ejecuciones siguientes).
+5. PHPStan nivel 6 + Pint + PHPMD: el archivo nuevo debe pasar (tipado estricto, PHPDoc con array-shapes).
 
-## Archivos a tocar
-
-| Archivo | Acción | Propósito |
-|---------|--------|-----------|
-| `src/Exploraciones/Presentation/TransformadorResultadoExploracion.php` | 3 cambios | Eliminar `'avistados'` del array de `desde()`, método `avistados()`, línea del PHPDoc shape |
-| `app/Http/Controllers/ExploracionActivaController.php` | 3 cambios | Eliminar `foreach ($resultado['avistados'] ?? [])` en `nombresPokemon()`, construcción de `$avistados` y clave `'avistados'` en `toTerminada()` |
-| `tests/Feature/ExploracionesPageTest.php` | 2 cambios | Eliminar aserciones de `avistados` en `test_terminadas_incluyen_resumen_de_resultado` y `'avistados' => []` en `test_terminada_sin_resultado_devuelve_resumen_vacio` |
-| `tests/Feature/ExploracionesTest.php` | 1 cambio | Eliminar sección que valida `avistados` (ids + nombres) en `test_servicio_guarda_resumen_de_resultado_en_eventos` |
-
-## Archivos que NO se tocan
-
-| Archivo | Razón |
-|---------|-------|
-| `tests/Feature/ExploracionesTransformadorTest.php` | No referencia avistados (confirmado: solo caramelos_familia) |
-| `tests/Feature/ExploracionesViewTest.php` | Asignado a otro agente en paralelo |
-| `resources/views/exploraciones/index.blade.php` | Asignado a otro agente en paralelo |
-
-## Tests TDD (rojo → verde)
-
-### 1. `tests/Feature/ExploracionesPageTest.php`
-- `test_terminadas_incluyen_resumen_de_resultado`: eliminar el bloque que aserta `$resultado['avistados']`
-- `test_terminada_sin_resultado_devuelve_resumen_vacio`: eliminar `'avistados' => []` del array esperado
-
-### 2. `tests/Feature/ExploracionesTest.php`
-- `test_servicio_guarda_resumen_de_resultado_en_eventos`: eliminar la sección de avistados (ids + nombres)
-
-### 3. `tests/Feature/ExploracionesTransformadorTest.php`
-- Ejecutar para confirmar que sigue verde (no referencia avistados)
-
-## Riesgos
-
-1. **JSONs ya persistidos**: Los `eventos['resultado']` guardados en BD conservan la clave
-   `avistados`. No hay migración. El controller leía con `?? []` (fallback seguro) y la vista
-   la ignora. Al eliminar la lectura del controller, el fallback se elimina pero no se rompe
-   nada porque la vista no la consume.
-2. **Paralelismo con otro agente**: Se verifica que NO se toca `ExploracionesViewTest.php`
-   ni la vista Blade.
-
-## Verificación
-
-- `php artisan test --compact tests/Feature/ExploracionesPageTest.php tests/Feature/ExploracionesTransformadorTest.php tests/Feature/ExploracionesTest.php`
-- `php artisan test --compact --filter=Exploraciones`
-- `vendor/bin/pint --dirty --format agent`
-- `vendor/bin/phpstan analyse`
-
-## Resultado
-
-- **TDD**: rojo confirmado (`test_terminada_sin_resultado_devuelve_resumen_vacio` fallaba con la clave `avistados` aún emitida) → verde tras los cambios.
-- **Tests**: 40 passed (174 assertions) en los 3 archivos; 88 passed (331 assertions) con `--filter=Exploraciones`.
-- **PHPStan nivel 6**: total 183 errores (línea base pre-existente documentada; sin errores nuevos).
-- **PHPMD**: solo `ExcessiveMethodLength` pre-existentes en otros archivos del módulo Exploraciones.
-- **Pint**: pass.
-- **Infection** sobre el transformador: Covered Code MSI 100% (33 mutantes generados, 33 matados).
-- **Archivos del otro agente NO tocados**: `resources/views/exploraciones/index.blade.php` y `tests/Feature/ExploracionesViewTest.php` no aparecen en `git status`.
-
----
-
-# Análisis Backend — Cap de captura en exploraciones (cap-captura-exploraciones, priority 60)
-
-## Fecha
-2026-08-30
-
-## Decisión de centralización
-
-**SÍ se centraliza.** La regla cap-45 (`chance = min(tasa, 45) / 255`, `tasa = rate>0 ? rate : 45`,
-máx. 17.6%) está confirmada por el cliente y ya vive inline en `ServicioCaptura` (línea 30). El
-handler de Exploraciones usa una regla DIVERGENTE (`min(1.0, rate/255)`, sin cap → 100%) y
-`ProbabilidadCaptura` (Reclutamiento) también (`min(1.0, rate/255)`), aunque esta última NO tiene
-consumidores en producción (solo su test).
-
-Para eliminar la divergencia que el brief exige, se crea `src/Shared/Domain/ProbabilidadCaptura.php`
-(regla unificada cap-45) y lo usan los 3 sitios:
-- `FinalizarExploracionHandler::rollAleatorio()` (Exploraciones).
-- `ServicioCaptura::procesarCapturas()` (Reclutamiento) — reemplaza el inline.
-- `Src\Reclutamiento\Domain\ProbabilidadCaptura` → se elimina (sin uso en producción) y su test
-  pasa a cubrir la clase Shared. Al tocar Reclutamiento activo la "centralización" que lo permite.
-
-## Archivos a tocar
-
-| Archivo | Acción |
-|---------|--------|
-| `src/Shared/Domain/ProbabilidadCaptura.php` | NUEVO: regla cap-45 unificada (`probabilidad`, `intentar`). |
-| `src/Exploraciones/App/FinalizarExploracionHandler.php` | Cap-45 en `rollAleatorio()` + seam inyectable `?callable $aleatorio` (constructor + `rollAleatorio(?callable)` + propagación por `repartirRecompensas`). |
-| `src/Reclutamiento/App/ServicioCaptura.php` | Usar `ProbabilidadCaptura::probabilidad()` en vez del inline. |
-| `src/Reclutamiento/Domain/ProbabilidadCaptura.php` | ELIMINAR (sin uso en producción; regla ahora en Shared). |
-
-## Tests
-
-- `tests/Unit/Reclutamiento/ProbabilidadCapturaTest.php` → redirigido a la clase Shared, con la
-  nueva semántica cap-45 (255 ya no es 1.0 → 17.6%). Se añaden bordes solicitados:
-  255/190/45→17.6%, 30→11.8%, 3→1.2%, 0/negativo→17.6%, éxito/fallo con aleatorio 0.17/0.18.
-- `tests/Unit/Exploraciones/CalculadorRecompensasTest.php` → NO cambia (inyecta su propio callable).
-- `tests/Feature/ExploracionesTest.php`:
-  - `test_servicio_reparte_todas_las_recompensas` y `test_servicio_guarda_resumen_de_resultado_en_eventos`
-    → inyectan el seam con `fn () => 0.0` vía `app()->instance(FinalizarExploracionHandler::class, ...)`.
-  - `test_reintento_tras_fallo_no_duplica_recompensas` → inyecta `fn () => 1.0` (forzar NO captura)
-    porque con cap-45 el captureRate 0 ya no es garantía de no captura.
-- `tests/Feature/ServicioCapturaTest.php` → `190/255` → `45/255` (cap), fija el failure
-  pre-existente (`a3f4ad7`).
-
-## Riesgos
-1. CaptureRate 0 ya NO garantiza no-captura (con cap-45 → 17.6%): tests que lo asumían deben
-   inyectar callable determinista.
-2. `FinalizarExploracionHandler` es `final`: no se puede mockear con Mockery; el seam se
-   introduce por constructor (injectable en vez de mock) y se conecta por `app()->instance()`.
-3. Dependencias del handler son resolubles por el container (UnitOfWork bound en
-   AppServiceProvider; calculador/persistir/transformador auto-resolubles).
-
----
-
-## Sección — Corrección de iconos del módulo de combate (URLs WebP por species_id)
-
-### Fecha
-2026-08-30
-
-### Contexto
-
-`Combatiente::aArrayVista()` generaba URLs `/iconos/{nombre}.png` (y `/iconos/shiny/...`) que no existen:
-el `IconoController` busca en `resources/iconos/` (no existe) y el contrato del proyecto es
-`/images/iconos_webp/{species_id}.webp` (ver `docs/conventions.md`, sección "Iconos de pokémon (WebP)").
-
-### Solución
-
-1. `src/Battle/Domain/DatosPokemonBatalla.php` — nuevos campos readonly `speciesId` (int, default 0)
-   y `formSuffix` (string, default '') en el constructor. `iconName` se mantiene por compatibilidad
-   (ya no se usa para el icono).
-2. `src/Battle/Domain/Combatiente.php` — propiedades privadas `speciesId`/`formSuffix`, getters,
-   setters, incluidos en `__serialize()`/`__unserialize()` (defaults 0/'' para sesiones viejas).
-   `aArrayVista()` construye:
-   - `speciesId === 0` → `/images/iconos_webp/0.webp` (placeholder)
-   - `formSuffix !== ''` → `/images/iconos_webp/{speciesId}_{formSuffix}.webp`
-   - resto → `/images/iconos_webp/{speciesId}.webp`
-3. `src/Battle/Domain/EquipoBatalla.php` — `fromData()` propaga `setSpeciesId`/`setFormSuffix`.
-4. `src/Battle/Infrastructure/FabricaBatallaMock.php` — speciesId reales: Gengar 94, Giratina 487,
-   Tyranitar 248, Aggron 306, Deoxys 386 (`formSuffix: 'f35'`, forma Defensa), Mewtwo 150.
-5. `app/Livewire/Combate.php` — `SESSION_VERSION` 4 → 5 (cambio de serialización de Combatiente).
-
-### Tests (TDD)
-
-- `tests/Unit/Battle/CombatienteAvanzadoTest.php` — icono con species_id + forma (`386_f35.webp`),
-  sin forma (`94.webp`), species_id 0 → placeholder (`0.webp`), round-trip serialización conserva
-  speciesId/formSuffix.
-- `tests/Unit/Battle/FabricaBatallaMockTest.php` — asserts de speciesId/formSuffix por pokémon y
-  en `createBattle` (`combatants()` → `speciesId()`/`formSuffix()`/icono de `aArrayVista()`).
-
-### Calidad
-
-- `php artisan test --filter=Battle` → 150 passed (395 assertions).
-- `php artisan test --filter=Combate` → 6 passed.
-- Suite completa → 576 passed (1905 assertions), sin fallos (incluye el pre-existente
-  `ServicioCapturaTest`, que ya pasaba tras el cap-45 de `a3f4ad7`).
-- PHPStan nivel 6: sin errores nuevos en los archivos tocados (solo `missingType.iterableValue`,
-  `instanceof.alwaysTrue`, `empty.notAllowed` pre-existentes).
-- Infection (4 archivos Battle tocados): 541 mutantes, 400 matados, Covered Code MSI 73%
-  (el módulo partía de ~42%, deuda documentada).
-- Pint `--dirty` OK.
-
-### Riesgos / compatibilidad
-
-- Sesiones de combate previas (versión 4) → `speciesId=0` → icono placeholder `0.webp`; aceptable.
-
----
-
-# Análisis Backend — Ajustes numéricos del juego: cap de captura 25 + minutos por encuentro 3
-
-## Fecha
-2026-08-30
-
-## Cambios solicitados (brief)
-
-1. `src/Shared/Domain/ProbabilidadCaptura.php`:
-   - `CAP = 25` (era 45) y `TASA_BASE = 25` (era 45). Coherencia: el default no debe superar el cap.
-   - PHPDoc de clase y método: "máximo 9.8% (25/255)".
-   - Lógica NO cambia: `chance = min(tasa, CAP) / MAXIMO` con `tasa = captureRate > 0 ? captureRate : TASA_BASE`.
-2. `src/Exploraciones/App/ProcesarExploracionHandler.php`:
-   - `MINUTOS_POR_ENCUENTRO = 3` (era 5). Nada más de ese archivo.
-3. NO tocar: `SimuladorEncuentros`, `ServicioCaptura`, `FinalizarExploracionHandler`, `resources/views/`, documentación.
-
-## Semántica resultante (verifica en tests)
-
-- 255/300/190/45 → 25/255 (9.8%)
-- 30 → 25/255 (¡antes 30/255! Ahora 30 > cap 25 → se recorta)
-- 3 → 3/255 (1.2%, intacto)
-- 0/neg/null → 25/255 (tasa base 25, igual al cap → 9.8%)
-
-## Archivos a tocar
-
-| Archivo | Acción | Propósito |
-|---------|--------|-----------|
-| `src/Shared/Domain/ProbabilidadCaptura.php` | 2 constantes + PHPDoc | CAP 45→25, TASA_BASE 45→25, doc "9.8% (25/255)" |
-| `src/Exploraciones/App/ProcesarExploracionHandler.php` | 1 constante | MINUTOS_POR_ENCUENTRO 5→3 |
-| `tests/Unit/Reclutamiento/ProbabilidadCapturaTest.php` | Reescribir | 45/255→25/255, renames, borde 30 recorta, bordes intentar |
-| `tests/Feature/ServicioCapturaTest.php` | 2 valores + comentario | L69/L74 45/255→25/255, comentario L65 cap-25 |
-| `tests/Feature/ExploracionesTest.php` | SOLO comentarios | L214/L607/L647 a los nuevos valores (no tocar aserciones de conteo) |
-| `tests/Feature/ExploracionesTest.php` | NUEVO test (opcional) | Tick con ultimo_procesado hace 10 min → intdiv(10, 3) = 3 encuentros |
-
-## Tests TDD (rojo → verde)
-
-### 1. `tests/Unit/Reclutamiento/ProbabilidadCapturaTest.php`
-- Sustituir todos los `45 / 255` por `25 / 255`.
-- Renombres: `cap_45`→`cap_25`, `17_por_ciento`→`9_8`, `tasa_base_cap_45`→`tasa_base_cap_25`.
-- `test_probabilidad_30_es_30_entre_255` → `test_probabilidad_30_se_recorta_al_cap_25` con `25 / 255`.
-- `test_probabilidad_3_es_3_entre_255` → sigue `3 / 255`.
-- Bordes `intentar`: (45, 0.09) true, (45, 25/255) true, (45, 0.1) false; (255, 0.0) true, (255, 0.99) false; (0, 0.09) true, (0, 0.1) false; (3, 0.02) false.
-
-### 2. `tests/Feature/ServicioCapturaTest.php`
-- L69 y L74 `45 / 255` → `25 / 255`.
-- Comentario L65: "cap-45 rule (min(rate,45)/255)" → "cap-25 rule (min(rate,25)/255)".
-
-### 3. `tests/Feature/ExploracionesTest.php` (solo comentarios)
-- L214 "máximo 17.6%" → "máximo 9.8%".
-- L607 "tasa base 45 → 17.6%" → "tasa base 25 → 9.8%".
-- L647 "el tick GENERARÁ encuentros (2)" → "(3)" (10 min ÷ 3 = 3).
-- NO cambiar aserciones de conteo (derivadas de la bitácora).
-
-### 4. NUEVO test de tick (opcional/recomendado)
-- Con `ultimo_procesado` hace 10 min y el tick actual → `intdiv(10, 3) = 3` encuentros (antes 2).
-- No existe test unitario de `ProcesarExploracionHandler` que fije el divisor → añadir uno mínimo en `tests/Feature/ExploracionesTest.php` o confirmar cobertura vía la suite. Se añadirá como test feature (necesita DB + contexto de exploración).
-
-## Riesgos
-
-1. **Cambios de conteo en ExploracionesTest**: Los tests existentes derivan los conteos de la bitácora (no de un valor fijo de encuentros), por lo que el cambio de 5→3 minutos no altera sus aserciones numéricas. Verificado por revisión: los asserts usan `conteoPorEspecie($bitacora)` y comparan cantidades relativas.
-2. **`test_servicio_reparte_todas_las_recompensas`** inyecta `aleatorio 0.0` (captura forzada): con cap-25 sigue siendo válido (0.0 ≤ 25/255).
-3. **`test_reintento_tras_fallo_no_duplica_recompensas`** inyecta `aleatorio 1.0` (no captura): con tasa base 25 → 9.8% sigue sin capturar (1.0 > 25/255). Válido.
-4. **PHPStan**: cambios solo de constantes y PHPDoc → sin nuevos errores esperables.
-5. **Infection**: `ProbabilidadCaptura` ya tiene MSI ≥ 80% (cobertura de tests); al actualizar tests mantiene la cobertura de ramas (`captureRate > 0` y `min`). No debe bajar.
-
-## Verificación
-
-- `php artisan test --compact tests/Unit/Reclutamiento/ProbabilidadCapturaTest.php tests/Feature/ServicioCapturaTest.php tests/Feature/ExploracionesTest.php`
-- `php artisan test --compact` (suite completa)
-- `vendor/bin/pint --dirty --format agent`
-- `vendor/bin/phpstan analyse` (0 errores NUEVOS sobre línea base)
-- `vendor/bin/infection --filter=ProbabilidadCaptura` (si viable; MSI ≥ 80% no puede bajar)
-- `vendor/bin/phpmd src/ text phpmd.xml`
-
----
-
-# Análisis Backend — Evolución de Exploraciones a Expediciones (iteración 1)
-
-## Fecha
-2026-08-30
-
-## Contexto
-El PO aprobó la SPEC en `docs/spec_evolucion_exploraciones.md` (iteración 1 de "expediciones con
-riesgo"). Este backend implementa con TDD: migraciones, Domain puro (CalculadorPeligro,
-CalculadorCapacidadEquipo, SinergiaEquipo, EvaluadorExploracion, SimuladorEncuentros rework,
-CalculadorRecompensas D3), App (ticks D2, finalización con evaluador, EXP 100/80/20),
-controller (preview + Collection) y tests.
-
-## Archivos a tocar
-
-| Archivo | Acción |
-|---------|--------|
-| `docs/spec_evolucion_exploraciones.md` | NUEVO (spec aprobada, fuente para Frontend) |
-| `database/migrations/2026_08_30_000001_add_peligro_to_habitats_table.php` | NUEVO — `habitats.peligro` unsignedSmallInteger nullable default 1 |
-| `database/migrations/2026_08_30_000002_update_behavior_enum_in_team_members_table.php` | NUEVO — enum behavior: quitar SOPORTE, añadir RASTREADOR; UPDATE SOPORTE→RASTREADOR (driver-conditional) |
-| `database/migrations/2026_08_30_000003_change_eventos_to_jsonb_in_exploraciones_activas_table.php` | NUEVO — eventos json→jsonb (pgsql); no-op en sqlite |
-| `app/Models/ExploracionActiva.php` | cast `eventos` array→collection |
-| `app/Models/Habitat.php` | fillable+cast `peligro` |
-| `app/Models/TeamMember.php` | (sin cambio funcional; behavior ya es string) |
-| `database/seeders/ReclutadosSeeder.php` | SOPORTE → RASTREADOR |
-| `database/seeders/HabitatSeeder.php` | peligro orientativo 1–5 por id de hábitat |
-| `src/Exploraciones/Domain/RolExploracion.php` | NUEVO — enum roles + modificadores |
-| `src/Exploraciones/Domain/CalculadorPeligro.php` | NUEVO — RF-01 |
-| `src/Exploraciones/Domain/CalculadorCapacidadEquipo.php` | NUEVO — RF-02/RF-03 |
-| `src/Exploraciones/Domain/SinergiaEquipo.php` | NUEVO — RF-13 tabla config-driven |
-| `src/Exploraciones/Domain/EvaluadorExploracion.php` | NUEVO — RF-06/RF-08 resolución + categoría |
-| `src/Exploraciones/Domain/CalculadorRiesgo.php` | NUEVO — RF-11 preview (riesgo/advertencias) |
-| `src/Exploraciones/Domain/SimuladorEncuentros.php` | MODIFICADO — RF-04 nuevas probabilidades/subtipos |
-| `src/Exploraciones/Domain/CalculadorRecompensas.php` | MODIFICADO — D3/RF-14 caramelos tipo + multiplicador RF-08 + expMiembro |
-| `src/Exploraciones/Domain/Recompensas/ResultadoRecompensas.php` | MODIFICADO — + expTipo/expPorMiembro/multiplicador aplicado |
-| `src/Exploraciones/App/ProcesarExploracionHandler.php` | MODIFICADO — D2/RF-05 tick resuelve eventos, tiempo_perdido, retirada |
-| `src/Exploraciones/App/FinalizarExploracionHandler.php` | MODIFICADO — RF-07/08/09, Collection, derrotados por resolucion victoria, avistados ampliados |
-| `src/Exploraciones/App/PersistirRecompensas.php` | MODIFICADO — reparto EXP 100/80/20 |
-| `src/Exploraciones/Presentation/TransformadorResultadoExploracion.php` | MODIFICADO — RF-10 contrato aditivo |
-| `app/Http/Controllers/ExploracionActivaController.php` | MODIFICADO — Collection + preview + nuevos campos |
-| `app/Http/Controllers/TeamController.php` | MODIFICADO — RF-12 validación behavior |
-| `routes/exploraciones.php` | MODIFICADO — GET /exploraciones/preview |
-
-## Decisiones de diseño (interpretaciones documentadas)
-
-1. **Capacidad de equipo = PROMEDIO de capacidades por miembro** (no suma): con dificultades
-   RF-06 en rango ~35–90 (base subtipo 30–55 + peligro×5 con peligro 1–5), sumar 3 miembros
-   (cada uno ~60–130) dejaría sin riesgo real. `baseDeStats` normaliza el promedio de los
-   `pokemon_stats.base_stat` a 0–100 (clamp). `capacidadMiembro = base + afinidad + rol + sinergia`.
-2. **Afinidad (RF-03)**: `+10` si la especie está en el pool del nivel; alineación de tipos con
-   TypeChart (súper-eficaz +2, resistido −1, inmune −2 por par atacante/defensor); clamp [−20, +30].
-3. **Rol → bonusCapacidad**: VANGUARDIA +5, COMBATIENTE +15 (resolución combate), RECOLECTOR 0,
-   RASTREADOR +5. Modificadores de encuentros/exp/caramelos/huidas en `RolExploracion`.
-4. **Sinergias**: tabla config-driven ordenada (negativas 3-mismo-rol > tríos > pares); cada
-   entrada aporta bonusCapacidad/bonusResolucion y flags (reducción huida, +caramelos, etc.).
-5. **Eventos**: 45% encuentro (subtipos normal/grupo/emboscada/excepcional; emboscada dentro de
-   encuentro → tipo `emboscada` con pokemon_ids 2–3), 20% hallazgo (subtype caramelo_*), 15%
-   encuentro especial → también `emboscada` (spec literal: "15% encuentro especial" + subtipo
-   "7% emboscada"; ambas vías producen emboscadas), 10% contratiempo, 10% neutral.
-6. **Avistados (RF-07)**: eventos de tipo encuentro/emboscada/huida (y legacy `pokemon`) con
-   pokemon_id(s). Un `hallazgo` con pokemon_id NO es avistamiento (es item de caramelo).
-7. **Retrocompat**: evento de bitácora sin `resolucion` (legacy `tipo=pokemon`) = victoria;
-   `idsDerrotados` acepta `tipo=pokemon` y `tipo=encuentro`.
-8. **categoriaFinal (RF-08)**: retirada > sin combates=exito > ratio victorias/combates
-   (≥0.85 con excepcional vencido = exito_excepcional, ≥0.6 = exito, ≥0.3 = exito_parcial,
-   resto = fracaso). Exito_excepcional exige vencer un evento excepcional/emboscada para no
-   romper la semántica de los tests preexistentes (solo-victorias → exito 1.0).
-9. **Multiplicador**: aplicado (floor) a caramelos familia/EV/tipo y a expTotal/expPorMiembro;
-   capturas NO (son tiradas por victoria).
-10. **D3/RF-14**: por derrota T=expDerrota; exp_tipo por tipo (100% 1 tipo, 50/50 2 tipos);
-    `cuenta += T` (user.experiencia); `cada integrante += floor((T×0.8)/3)` (exp total del
-    reclutado); `caramelos_tipo = floor(exp_tipo_acum × 0.2 / 100)` → player_inventory tipo:{slug}.
-11. **Tick D2/RF-05**: por slot → evento → resolver con EvaluadorExploracion (seam aleatorio) →
-    `duration_loss` acumulado; `ultimo_procesado = max(hasta, hasta + perdido_tick)`;
-    `eventos['tiempo_perdido']` acumulado; si retirada → despacha FinalizarExploracionCommand.
-12. **Preview RF-11**: dominio `CalculadorRiesgo` puro (peligro_estrellas, afinidad media,
-    advertencias, roles, riesgo, recompensa_esperada); controller hace anti-IDOR del equipo y
-    arma pool del hábitat a ese nivel. Sin probabilidades numéricas.
-
-## Tests TDD (rojo → verde)
-
-### Unit (nuevos)
-- `tests/Unit/Exploraciones/CalculadorPeligroTest.php` — escala ×5/×10, clamp.
-- `tests/Unit/Exploraciones/CalculadorCapacidadEquipoTest.php` — baseDeStats 0–100, afinidad
-  (pool + tipos TypeChart + topes), capacidadMiembro/Equipo (promedio).
-- `tests/Unit/Exploraciones/SinergiaEquipoTest.php` — pares/tríos/negativas, prioridad, sin rol → null.
-- `tests/Unit/Exploraciones/EvaluadorExploracionTest.php` — dificultad, éxito, éxito con coste,
-  desventaja (huida 15%, derrota, retirada probable < −30), emboscada (vanguardia evita/−50%,
-  vence −10, pierde −15+retirada), contratiempos mitigados por rol, categoriaFinal y multiplicadores.
-- `tests/Unit/Exploraciones/CalculadorRiesgoTest.php` — riesgo y advertencias (tipo débil,
-  débiles para nivel, bien preparado), recompensa_esperada.
-- `tests/Unit/SimuladorEncuentrosTest.php` — ADAPTADO: nuevas probabilidades y subtipos,
-  hallazgos con subtype, emboscada con pokemon_ids, contratiempo, neutral.
-
-### Unit (adaptados)
-- `tests/Unit/Exploraciones/CalculadorRecompensasTest.php` — ADAPTADO: caramelos_tipo D3,
-  expPorMiembro, multiplicador.
-- `tests/Unit/Exploraciones/PokemonDerrotadoTest.php` — verificar (probablemente sin cambios).
-
-### Feature (nuevos)
-- `tests/Feature/ExploracionesPreviewTest.php` — GET /exploraciones/preview: 200 JSON contrato,
-  anti-IDOR equipo ajeno → 404/403, advertencias.
-- Ampliación `tests/Feature/ExploracionesTest.php` — retirada (eventos['retirada'], finaliza,
-  conserva recompensas), tiempo_perdido/duration_real, retrocompat bitácora sin resolucion,
-  cada tipo de evento resuelto, idempotencia reintento.
-
-### Feature (adaptados)
-- `tests/Feature/ExploracionesTest.php` — helpers y asserts a nuevos tipos de evento;
-  `test_finalizacion_otorga_caramelos_de_tipo_por_derrotado` (D3); exp por miembro (80/3);
-  conteos desde `encuentro`/`emboscada`.
-- `tests/Feature/EquiposControllerTest.php` — SOPORTE → RASTREADOR (L230).
-- `tests/Unit/SimuladorEncuentrosTest.php` — probabilidades 45/20/15/10/10 y subtipos.
-
-## Riesgos
-1. `change()` de enum en pgsql con check constraint: se hace UPDATE previo y se prueba localmente;
-   si Laravel no gestiona la constraint, se usa DB::statement condicional por driver.
-2. Tests existentes con aserciones exactas de exp/caramelos: se adaptan a la nueva semántica
-   (multiplicador exito=1.0, exp 100/80/20, caramelos tipo D3) SIN eliminarlos.
-3. El tick ahora consume capacidad/peligro: en el contexto de tests la capacidad (~77) siempre
-   vence a dificultades (35–60) → victorias deterministas; el seam aleatorio del tick se añade.
-4. Infection: nuevas clases de dominio deben quedar cubiertas; MSI del módulo no debe bajar.
-5. jsonb en pgsql + cast collection: verificar que `$exploracion->eventos ?? collect()` y
-   `put/get` funcionan con el cast en todo el flujo (handlers + controller).
-
-## Verificación
-- `vendor/bin/pint --dirty`
-- `php artisan test --compact --filter=Exploraciones` y suite completa.
-- `vendor/bin/phpstan analyse` (0 errores nuevos).
-- `vendor/bin/phpmd src/ text phpmd.xml`.
-- `vendor/bin/infection` (MSI ≥ 80% en el código cubierto del módulo).
-
-## Verificación final (ejecutada en local, PostgreSQL 16)
-
-- `php artisan test --compact --filter=Exploraciones` → 171 passed (586 assertions).
-- `php artisan test --compact` → **669 passed (2209 assertions)** — incluye tests preexistentes
-  adaptados (ExploracionesTest D3/exp 80-3/encuentro, EquiposControllerTest RASTREADOR,
-  MigracionDatosTest --step=7, ExploracionActivaTest cast collection) y los del agente
-  Frontend en paralelo.
-- `vendor/bin/pint --dirty --format agent` → pass (sin cambios pendientes).
-- `vendor/bin/phpstan analyse` → **181 errores (línea base HEAD: 188)**; neto −7, sin
-  errores nuevos salvo el patrón tolerado `Request::validate` (staticMethod.dynamicCall,
-  categoría documentada en docs/context.md).
-- `vendor/bin/phpmd src/ text phpmd.xml` → solo advertencias `ExcessiveMethodLength`
-  (umbral 20; deuda aceptada en iteraciones previas, p. ej. HabitatRepository/TypeChart).
-- `vendor/bin/infection --filter=src/Exploraciones` → **Covered Code MSI 97 %** (requisito
-  ≥ 80 %). 23 mutantes escapados neutros (OneZeroFloat 1.0→0.0, >=/> bordes, ReturnRemoval
-  de null implícito, CalculadorTiempos preexistente sin tocar).
-- Migraciones verificadas en pgsql: `habitats.peligro` (smallint default 1), constraint
-  `team_members_behavior_check` con RASTREADOR (sin SOPORTE), `eventos` jsonb. La migración
-  del enum usa drop-constraint→UPDATE→add en pgsql y PRAGMA ignore_check_constraints +
-  `change()` (rebuild) en sqlite.
-
-### Contrato resultado aditivo (RF-10) — verificado por tests
-`capturados, caramelos_familia, caramelos_ev, caramelos_tipo, exp` + `resultado`
-(exito_excepcional|exito|exito_parcial|fracaso|retirada), `duration_real`, `tiempo_perdido`,
-`incidentes{encuentros,victorias,huidas,emboscadas,contratiempos}`.
-
-### Notas de interpretación documentadas
-- jsonb reordena claves de objetos (por longitud): los tests que comparan JSON leído de DB
-  usan assertEquals (el orden de claves no es parte del contrato).
-- Huida = evento `encuentro` con `resolucion: huida` (el contrato muestra el shape suelto
-  `{"tipo":"huida"}`; funcionalmente equivalente y avistado sí).
-- `duration_real = 0` para expediciones indefinidas (sin fin nominal).

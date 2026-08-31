@@ -373,4 +373,310 @@ class EquiposControllerTest extends TestCase
         $this->post('/teams/remove-member', ['member_id' => $member->id])->assertNotFound();
         $this->assertDatabaseHas('team_members', ['id' => $member->id]);
     }
+
+    // ──── updateMemberRole (Task B) ────────────────────────────────────────
+
+    public function test_update_member_role_valido_actualiza_behavior(): void
+    {
+        $user = $this->actingAsUser();
+        $team = Team::create(['name' => 'Test', 'user_id' => $user->id]);
+        $pokemon = $this->createPokemon(1);
+        $reclutado = $this->createReclutado($user->id, $pokemon->id, 'Bulbi');
+        $member = TeamMember::create([
+            'team_id' => $team->id,
+            'pokemon_id' => $reclutado->id,
+            'slot' => 1,
+            'behavior' => 'VANGUARDIA',
+        ]);
+
+        $response = $this->patchJson("/teams/member/{$member->id}/role", [
+            'behavior' => 'COMBATIENTE',
+        ]);
+
+        $response->assertOk()
+            ->assertJson(['member' => ['id' => $member->id, 'behavior' => 'COMBATIENTE']]);
+        $this->assertDatabaseHas('team_members', [
+            'id' => $member->id,
+            'behavior' => 'COMBATIENTE',
+        ]);
+    }
+
+    public function test_update_member_role_behavior_invalido_devuelve_422(): void
+    {
+        $user = $this->actingAsUser();
+        $team = Team::create(['name' => 'Test', 'user_id' => $user->id]);
+        $pokemon = $this->createPokemon(1);
+        $reclutado = $this->createReclutado($user->id, $pokemon->id, 'Bulbi');
+        $member = TeamMember::create([
+            'team_id' => $team->id,
+            'pokemon_id' => $reclutado->id,
+            'slot' => 1,
+            'behavior' => 'VANGUARDIA',
+        ]);
+
+        $response = $this->patchJson("/teams/member/{$member->id}/role", [
+            'behavior' => 'INVALIDO',
+        ]);
+
+        $response->assertStatus(422);
+        $this->assertDatabaseHas('team_members', ['id' => $member->id, 'behavior' => 'VANGUARDIA']);
+    }
+
+    public function test_update_member_role_miembro_de_otro_usuario_devuelve_404(): void
+    {
+        $usuarioA = User::factory()->create();
+        $usuarioB = User::factory()->create();
+        $pokemon = $this->createPokemon(1);
+        $teamB = Team::create(['name' => 'B', 'user_id' => $usuarioB->id]);
+        $reclutadoB = $this->createReclutado($usuarioB->id, $pokemon->id, 'B1');
+        $member = TeamMember::create([
+            'team_id' => $teamB->id,
+            'pokemon_id' => $reclutadoB->id,
+            'slot' => 1,
+            'behavior' => 'VANGUARDIA',
+        ]);
+
+        $this->actingAs($usuarioA);
+
+        $response = $this->patchJson("/teams/member/{$member->id}/role", [
+            'behavior' => 'COMBATIENTE',
+        ]);
+
+        $response->assertNotFound();
+        $this->assertDatabaseHas('team_members', ['id' => $member->id, 'behavior' => 'VANGUARDIA']);
+    }
+
+    // ──── updateMemberRole vía POST /teams/update-member-role (contrato frontend) ──
+
+    public function test_update_member_role_via_post_valido_actualiza_behavior(): void
+    {
+        $user = $this->actingAsUser();
+        $team = Team::create(['name' => 'Test', 'user_id' => $user->id]);
+        $pokemon = $this->createPokemon(1);
+        $reclutado = $this->createReclutado($user->id, $pokemon->id, 'Bulbi');
+        $member = TeamMember::create([
+            'team_id' => $team->id,
+            'pokemon_id' => $reclutado->id,
+            'slot' => 1,
+            'behavior' => 'VANGUARDIA',
+        ]);
+
+        $response = $this->postJson('/teams/update-member-role', [
+            'member_id' => $member->id,
+            'behavior' => 'RASTREADOR',
+        ]);
+
+        $response->assertOk()
+            ->assertJson(['member' => ['id' => $member->id, 'behavior' => 'RASTREADOR']]);
+        $this->assertDatabaseHas('team_members', [
+            'id' => $member->id,
+            'behavior' => 'RASTREADOR',
+        ]);
+    }
+
+    public function test_update_member_role_via_post_behavior_invalido_devuelve_422(): void
+    {
+        $user = $this->actingAsUser();
+        $team = Team::create(['name' => 'Test', 'user_id' => $user->id]);
+        $pokemon = $this->createPokemon(1);
+        $reclutado = $this->createReclutado($user->id, $pokemon->id, 'Bulbi');
+        $member = TeamMember::create([
+            'team_id' => $team->id,
+            'pokemon_id' => $reclutado->id,
+            'slot' => 1,
+            'behavior' => 'VANGUARDIA',
+        ]);
+
+        $response = $this->postJson('/teams/update-member-role', [
+            'member_id' => $member->id,
+            'behavior' => 'INVALIDO',
+        ]);
+
+        $response->assertStatus(422);
+        $this->assertDatabaseHas('team_members', ['id' => $member->id, 'behavior' => 'VANGUARDIA']);
+    }
+
+    public function test_update_member_role_via_post_miembro_ajeno_devuelve_404(): void
+    {
+        $usuarioA = User::factory()->create();
+        $usuarioB = User::factory()->create();
+        $pokemon = $this->createPokemon(1);
+        $teamB = Team::create(['name' => 'B', 'user_id' => $usuarioB->id]);
+        $reclutadoB = $this->createReclutado($usuarioB->id, $pokemon->id, 'B1');
+        $member = TeamMember::create([
+            'team_id' => $teamB->id,
+            'pokemon_id' => $reclutadoB->id,
+            'slot' => 1,
+            'behavior' => 'VANGUARDIA',
+        ]);
+
+        $this->actingAs($usuarioA);
+
+        $response = $this->postJson('/teams/update-member-role', [
+            'member_id' => $member->id,
+            'behavior' => 'COMBATIENTE',
+        ]);
+
+        $response->assertNotFound();
+        $this->assertDatabaseHas('team_members', ['id' => $member->id, 'behavior' => 'VANGUARDIA']);
+    }
+
+    public function test_update_member_role_via_post_equipo_en_exploracion_devuelve_422(): void
+    {
+        $user = $this->actingAsUser();
+        $team = Team::create(['name' => 'Explorador', 'user_id' => $user->id]);
+        $pokemon = $this->createPokemon(1);
+        $reclutado = $this->createReclutado($user->id, $pokemon->id, 'Bulbi');
+        $member = TeamMember::create([
+            'team_id' => $team->id,
+            'pokemon_id' => $reclutado->id,
+            'slot' => 1,
+            'behavior' => 'VANGUARDIA',
+        ]);
+        $province = Province::create(['id' => 1, 'name' => 'Kanto']);
+        $habitat = Habitat::create(['id' => 1, 'name' => 'Bosque', 'province_id' => $province->id]);
+        ExploracionActiva::create([
+            'user_id' => $user->id,
+            'equipo_id' => $team->id,
+            'habitat_id' => $habitat->id,
+            'nivel' => 1,
+            'duracion_horas' => 2,
+            'inicio_exploracion' => now(),
+            'llegada_destino' => now()->addHour(),
+            'regreso' => null,
+        ]);
+
+        $response = $this->postJson('/teams/update-member-role', [
+            'member_id' => $member->id,
+            'behavior' => 'RASTREADOR',
+        ]);
+
+        $response->assertStatus(422)
+            ->assertJson(['error' => 'No se puede modificar un equipo con exploraciones activas']);
+        $this->assertDatabaseHas('team_members', ['id' => $member->id, 'behavior' => 'VANGUARDIA']);
+    }
+
+    public function test_update_member_role_equipo_en_exploracion_devuelve_422(): void
+    {
+        $user = $this->actingAsUser();
+        $team = Team::create(['name' => 'Explorador', 'user_id' => $user->id]);
+        $pokemon = $this->createPokemon(1);
+        $reclutado = $this->createReclutado($user->id, $pokemon->id, 'Bulbi');
+        $member = TeamMember::create([
+            'team_id' => $team->id,
+            'pokemon_id' => $reclutado->id,
+            'slot' => 1,
+            'behavior' => 'VANGUARDIA',
+        ]);
+        $province = Province::create(['id' => 1, 'name' => 'Kanto']);
+        $habitat = Habitat::create(['id' => 1, 'name' => 'Bosque', 'province_id' => $province->id]);
+        ExploracionActiva::create([
+            'user_id' => $user->id,
+            'equipo_id' => $team->id,
+            'habitat_id' => $habitat->id,
+            'nivel' => 1,
+            'duracion_horas' => 2,
+            'inicio_exploracion' => now(),
+            'llegada_destino' => now()->addHour(),
+            'regreso' => null,
+        ]);
+
+        $response = $this->patchJson("/teams/member/{$member->id}/role", [
+            'behavior' => 'RASTREADOR',
+        ]);
+
+        $response->assertStatus(422)
+            ->assertJson(['error' => 'No se puede modificar un equipo con exploraciones activas']);
+        $this->assertDatabaseHas('team_members', ['id' => $member->id, 'behavior' => 'VANGUARDIA']);
+    }
+
+    // ──── equipos payload con behavior y sinergia (Task C) ──────────────────
+
+    public function test_equipos_payload_incluye_behavior_y_sinergia(): void
+    {
+        $user = $this->actingAsUser();
+        $team = Team::create(['name' => 'Sinergia Test', 'user_id' => $user->id]);
+        $this->createPokemon(1);
+        $this->createPokemon(2);
+        $this->createPokemon(3);
+        $r1 = $this->createReclutado($user->id, 1, 'A');
+        $r2 = $this->createReclutado($user->id, 2, 'B');
+        $r3 = $this->createReclutado($user->id, 3, 'C');
+        TeamMember::create(['team_id' => $team->id, 'pokemon_id' => $r1->id, 'slot' => 1, 'behavior' => 'VANGUARDIA']);
+        TeamMember::create(['team_id' => $team->id, 'pokemon_id' => $r2->id, 'slot' => 2, 'behavior' => 'COMBATIENTE']);
+        TeamMember::create(['team_id' => $team->id, 'pokemon_id' => $r3->id, 'slot' => 3, 'behavior' => 'RECOLECTOR']);
+
+        $response = $this->get('/equipos');
+
+        $response->assertOk();
+        $teams = $response->viewData('teams');
+        $this->assertCount(1, $teams);
+        $teamData = $teams[0];
+        $this->assertArrayHasKey('sinergia', $teamData);
+        $this->assertArrayHasKey('sinergia_nombre', $teamData);
+        // VANGUARDIA(V)+COMBATIENTE(C)+RECOLECTOR(R) = CRV = 'expedicion_equilibrada'
+        $this->assertSame('expedicion_equilibrada', $teamData['sinergia_nombre']);
+        $this->assertNotNull($teamData['sinergia']);
+        $this->assertSame('expedicion_equilibrada', $teamData['sinergia']['nombre']);
+
+        $this->assertCount(3, $teamData['members']);
+        foreach ($teamData['members'] as $member) {
+            $this->assertArrayHasKey('behavior', $member);
+        }
+        $this->assertSame('COMBATIENTE', $teamData['members'][1]['behavior']);
+    }
+
+    public function test_equipos_sin_3_miembros_tiene_sinergia_null(): void
+    {
+        $user = $this->actingAsUser();
+        $team = Team::create(['name' => 'Incompleto', 'user_id' => $user->id]);
+        $this->createPokemon(1);
+        $r1 = $this->createReclutado($user->id, 1, 'A');
+        TeamMember::create(['team_id' => $team->id, 'pokemon_id' => $r1->id, 'slot' => 1, 'behavior' => 'VANGUARDIA']);
+
+        $response = $this->get('/equipos');
+        $teams = $response->viewData('teams');
+
+        $this->assertCount(1, $teams);
+        $this->assertNull($teams[0]['sinergia']);
+        $this->assertNull($teams[0]['sinergia_nombre']);
+    }
+
+    public function test_equipos_miembros_de_varios_equipos_con_sinergia_distinta(): void
+    {
+        $user = $this->actingAsUser();
+        $this->createPokemon(1);
+        $this->createPokemon(2);
+        $this->createPokemon(3);
+        $this->createPokemon(4);
+        $this->createPokemon(5);
+        $this->createPokemon(6);
+
+        $team1 = Team::create(['name' => 'Alpha', 'user_id' => $user->id]);
+        $team2 = Team::create(['name' => 'Beta', 'user_id' => $user->id]);
+
+        $r1 = $this->createReclutado($user->id, 1, 'A');
+        $r2 = $this->createReclutado($user->id, 2, 'B');
+        $r3 = $this->createReclutado($user->id, 3, 'C');
+        $r4 = $this->createReclutado($user->id, 4, 'D');
+        $r5 = $this->createReclutado($user->id, 5, 'E');
+        $r6 = $this->createReclutado($user->id, 6, 'F');
+
+        TeamMember::create(['team_id' => $team1->id, 'pokemon_id' => $r1->id, 'slot' => 1, 'behavior' => 'VANGUARDIA']);
+        TeamMember::create(['team_id' => $team1->id, 'pokemon_id' => $r2->id, 'slot' => 2, 'behavior' => 'COMBATIENTE']);
+        TeamMember::create(['team_id' => $team1->id, 'pokemon_id' => $r3->id, 'slot' => 3, 'behavior' => 'RASTREADOR']);
+
+        TeamMember::create(['team_id' => $team2->id, 'pokemon_id' => $r4->id, 'slot' => 1, 'behavior' => 'VANGUARDIA']);
+        TeamMember::create(['team_id' => $team2->id, 'pokemon_id' => $r5->id, 'slot' => 2, 'behavior' => 'VANGUARDIA']);
+        TeamMember::create(['team_id' => $team2->id, 'pokemon_id' => $r6->id, 'slot' => 3, 'behavior' => 'VANGUARDIA']);
+
+        $response = $this->get('/equipos');
+        $teams = $response->viewData('teams');
+
+        $this->assertCount(2, $teams);
+        // Alpha: V+C+T = CTV = 'caceria'
+        $this->assertSame('caceria', $teams[0]['sinergia_nombre']);
+        // Beta: V+V+V = VVV = 'exploracion_agresiva'
+        $this->assertSame('exploracion_agresiva', $teams[1]['sinergia_nombre']);
+    }
 }

@@ -6,6 +6,7 @@ namespace Src\Exploraciones\App;
 
 use App\Models\ExploracionActiva;
 use App\Models\Pokemon;
+use App\Models\PokemonStat;
 use App\Models\PokemonType;
 use Carbon\Carbon;
 use Carbon\CarbonInterface;
@@ -107,7 +108,7 @@ final class ProcesarExploracionHandler implements CommandHandler
         }
 
         $nuevos = SimuladorEncuentros::generarEventos(
-            SimuladorEncuentros::poolPonderado($this->poolHabitat($exploracion)),
+            $this->poolHabitat($exploracion),
             intdiv((int) abs($hasta->diffInMinutes($desde)), self::MINUTOS_POR_ENCUENTRO),
             $desde,
             $hasta,
@@ -353,9 +354,10 @@ final class ProcesarExploracionHandler implements CommandHandler
 
     /**
      * Pool de encuentros: pokémon del hábitat asignados al nivel de la
-     * exploración, con sus tipos (para afinidad).
+     * exploración, con sus tipos (para afinidad) y stats con effort>0
+     * (para caramelos EV restringidos al pool).
      *
-     * @return array<int, array{id: int, capture_rate: int, hatch: int|null, tipos: list<TipoPokemon>}>
+     * @return array<int, array{id: int, capture_rate: int, hatch: int|null, tipos: list<TipoPokemon>, stats: list<array{stat: int, effort: int}>}>
      */
     private function poolHabitat(ExploracionActiva $exploracion): array
     {
@@ -367,12 +369,20 @@ final class ProcesarExploracionHandler implements CommandHandler
         return $habitat->pokemon()
             ->wherePivot('level', $exploracion->nivel)
             ->get()
-            ->loadMissing('types')
+            ->loadMissing('types', 'stats')
             ->map(fn (Pokemon $pokemon) => [
                 'id' => $pokemon->id,
                 'capture_rate' => $pokemon->capture_rate,
                 'hatch' => $pokemon->hatch,
                 'tipos' => $this->tiposDe($pokemon),
+                'stats' => $pokemon->stats
+                    ->filter(fn (PokemonStat $stat) => $stat->effort > 0)
+                    ->map(fn (PokemonStat $stat) => [
+                        'stat' => $stat->stat->value,
+                        'effort' => $stat->effort,
+                    ])
+                    ->values()
+                    ->all(),
             ])
             ->values()
             ->all();

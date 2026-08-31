@@ -7,17 +7,36 @@ namespace Tests\Unit;
 use Carbon\Carbon;
 use PHPUnit\Framework\TestCase;
 use Src\Exploraciones\Domain\SimuladorEncuentros;
+use Src\Shared\Tipos\TipoPokemon;
 
 class SimuladorEncuentrosTest extends TestCase
 {
     /**
-     * @return array<int, array{id: int, capture_rate: int, hatch: int|null}>
+     * @return list<array{
+     *     id: int,
+     *     capture_rate: int,
+     *     hatch: int|null,
+     *     tipos: list<TipoPokemon>,
+     *     stats: list<array{stat: int, effort: int}>,
+     * }>
      */
     private function poolBase(): array
     {
         return [
-            ['id' => 1, 'capture_rate' => 60, 'hatch' => 10],
-            ['id' => 2, 'capture_rate' => 30, 'hatch' => 10],
+            [
+                'id' => 1,
+                'capture_rate' => 60,
+                'hatch' => 10,
+                'tipos' => [TipoPokemon::NORMAL, TipoPokemon::FUEGO],
+                'stats' => [['stat' => 2, 'effort' => 2], ['stat' => 3, 'effort' => 1]],
+            ],
+            [
+                'id' => 2,
+                'capture_rate' => 30,
+                'hatch' => 10,
+                'tipos' => [TipoPokemon::AGUA],
+                'stats' => [['stat' => 4, 'effort' => 2]],
+            ],
         ];
     }
 
@@ -103,7 +122,7 @@ class SimuladorEncuentrosTest extends TestCase
         $fin = $inicio->copy()->addMinutes(25);
 
         $eventos = SimuladorEncuentros::generarEventos(
-            SimuladorEncuentros::poolPonderado($this->poolBase()),
+            $this->poolBase(),
             5,
             $inicio,
             $fin,
@@ -119,7 +138,7 @@ class SimuladorEncuentrosTest extends TestCase
         $fin = $inicio->copy()->addMinutes(25);
 
         $eventos = SimuladorEncuentros::generarEventos(
-            SimuladorEncuentros::poolPonderado($this->poolBase()),
+            $this->poolBase(),
             5,
             $inicio,
             $fin,
@@ -143,7 +162,7 @@ class SimuladorEncuentrosTest extends TestCase
 
         // aleatorio fijo 0.5 → jitter de 150s dentro de cada slot de 300s
         $eventos = SimuladorEncuentros::generarEventos(
-            SimuladorEncuentros::poolPonderado($this->poolBase()),
+            $this->poolBase(),
             5,
             $inicio,
             $fin,
@@ -159,7 +178,7 @@ class SimuladorEncuentrosTest extends TestCase
     {
         // 0.3 → 30 < 45 → encuentro; subtipo 30 → normal; pick 0.3 → id 1.
         $eventos = SimuladorEncuentros::generarEventos(
-            SimuladorEncuentros::poolPonderado($this->poolBase()),
+            $this->poolBase(),
             1,
             Carbon::parse('2026-08-28 10:00:00'),
             Carbon::parse('2026-08-28 10:05:00'),
@@ -175,7 +194,7 @@ class SimuladorEncuentrosTest extends TestCase
     {
         // 0.15 → 15 < 45 → encuentro; subtipo 15 → grupo (10–20).
         $eventos = SimuladorEncuentros::generarEventos(
-            SimuladorEncuentros::poolPonderado($this->poolBase()),
+            $this->poolBase(),
             1,
             Carbon::parse('2026-08-28 10:00:00'),
             Carbon::parse('2026-08-28 10:05:00'),
@@ -191,7 +210,7 @@ class SimuladorEncuentrosTest extends TestCase
     {
         // 0.08 → 8 < 45 → encuentro; subtipo 8 → excepcional (7–10).
         $eventos = SimuladorEncuentros::generarEventos(
-            SimuladorEncuentros::poolPonderado($this->poolBase()),
+            $this->poolBase(),
             1,
             Carbon::parse('2026-08-28 10:00:00'),
             Carbon::parse('2026-08-28 10:05:00'),
@@ -206,7 +225,7 @@ class SimuladorEncuentrosTest extends TestCase
     {
         // 0.05 → 5 < 45 → encuentro; subtipo 5 → emboscada (< 7) con pokemon_ids.
         $eventos = SimuladorEncuentros::generarEventos(
-            SimuladorEncuentros::poolPonderado($this->poolBase()),
+            $this->poolBase(),
             1,
             Carbon::parse('2026-08-28 10:00:00'),
             Carbon::parse('2026-08-28 10:05:00'),
@@ -222,7 +241,7 @@ class SimuladorEncuentrosTest extends TestCase
     {
         // 0.7 → 70 → encuentro especial (65–80) → emboscada con pokemon_ids (2–3).
         $eventos = SimuladorEncuentros::generarEventos(
-            SimuladorEncuentros::poolPonderado($this->poolBase()),
+            $this->poolBase(),
             1,
             Carbon::parse('2026-08-28 10:00:00'),
             Carbon::parse('2026-08-28 10:05:00'),
@@ -242,7 +261,7 @@ class SimuladorEncuentrosTest extends TestCase
         // Secuencia: jitter timestamp (0.5), tipo (0.48 → hallazgo), roll subtipo (0.1 → familia), pick (0.5).
         $secuencia = [0.5, 0.48, 0.1, 0.5];
         $eventos = SimuladorEncuentros::generarEventos(
-            SimuladorEncuentros::poolPonderado($this->poolBase()),
+            $this->poolBase(),
             1,
             Carbon::parse('2026-08-28 10:00:00'),
             Carbon::parse('2026-08-28 10:05:00'),
@@ -261,7 +280,7 @@ class SimuladorEncuentrosTest extends TestCase
     {
         // 0.6 → 60 → hallazgo; roll 60 → caramelo_ev (33–66).
         $eventos = SimuladorEncuentros::generarEventos(
-            SimuladorEncuentros::poolPonderado($this->poolBase()),
+            $this->poolBase(),
             1,
             Carbon::parse('2026-08-28 10:00:00'),
             Carbon::parse('2026-08-28 10:05:00'),
@@ -280,7 +299,7 @@ class SimuladorEncuentrosTest extends TestCase
         // Secuencia: jitter (0.5), tipo (0.55 → hallazgo), roll subtipo (0.9 → caramelo_tipo), pick tipo (0.5).
         $secuencia = [0.5, 0.55, 0.9, 0.5];
         $eventos = SimuladorEncuentros::generarEventos(
-            SimuladorEncuentros::poolPonderado($this->poolBase()),
+            $this->poolBase(),
             1,
             Carbon::parse('2026-08-28 10:00:00'),
             Carbon::parse('2026-08-28 10:05:00'),
@@ -299,7 +318,7 @@ class SimuladorEncuentrosTest extends TestCase
     public function test_tipo_contratiempo_tiene_subtipo_conocido(): void
     {
         $eventos = SimuladorEncuentros::generarEventos(
-            SimuladorEncuentros::poolPonderado($this->poolBase()),
+            $this->poolBase(),
             1,
             Carbon::parse('2026-08-28 10:00:00'),
             Carbon::parse('2026-08-28 10:05:00'),
@@ -314,7 +333,7 @@ class SimuladorEncuentrosTest extends TestCase
     {
         // 0.95 → 95 ≥ 90 → evento neutral.
         $eventos = SimuladorEncuentros::generarEventos(
-            SimuladorEncuentros::poolPonderado($this->poolBase()),
+            $this->poolBase(),
             1,
             Carbon::parse('2026-08-28 10:00:00'),
             Carbon::parse('2026-08-28 10:05:00'),
@@ -329,7 +348,7 @@ class SimuladorEncuentrosTest extends TestCase
         $inicio = Carbon::parse('2026-08-28 10:00:00');
 
         $eventos = SimuladorEncuentros::generarEventos(
-            SimuladorEncuentros::poolPonderado($this->poolBase()),
+            $this->poolBase(),
             0,
             $inicio,
             $inicio->copy()->addMinutes(5),
@@ -350,6 +369,132 @@ class SimuladorEncuentrosTest extends TestCase
         );
 
         $this->assertSame([], $eventos);
+    }
+
+    public function test_hallazgo_caramelo_ev_elige_stat_del_pool(): void
+    {
+        // Pool con un pokemon que tiene stats [stat 5, effort 2].
+        // Secuencia: jitter(0.5), tipo(0.48→hallazgo), roll(0.5→EV), pick(0.0→id1), elegirStat(0.5→indice0→stat5).
+        $secuencia = [0.5, 0.48, 0.5, 0.0, 0.5];
+        $pool = [
+            [
+                'id' => 1,
+                'capture_rate' => 60,
+                'hatch' => 10,
+                'tipos' => [TipoPokemon::FUEGO],
+                'stats' => [['stat' => 5, 'effort' => 2]],
+            ],
+        ];
+
+        $eventos = SimuladorEncuentros::generarEventos(
+            $pool,
+            1,
+            Carbon::parse('2026-08-28 10:00:00'),
+            Carbon::parse('2026-08-28 10:05:00'),
+            function () use (&$secuencia): float {
+                return $secuencia === [] ? 0.5 : array_shift($secuencia);
+            },
+        );
+
+        $this->assertSame('hallazgo', $eventos[0]['tipo']);
+        $this->assertSame('caramelo_ev', $eventos[0]['subtype']);
+        $this->assertSame(5, $eventos[0]['stat']);
+        $this->assertSame(1, $eventos[0]['cantidad']);
+    }
+
+    public function test_hallazgo_caramelo_ev_fallback_si_pool_sin_stats(): void
+    {
+        // Pool sin stats → fallback a stat aleatorio 1-6.
+        // Secuencia: jitter(0.5), tipo(0.48→hallazgo), roll(0.5→EV), fallback(0.5).
+        // 0.5 → 1+floor(0.5*6)=1+3=4.
+        $secuencia = [0.5, 0.48, 0.5, 0.5];
+        $pool = [
+            [
+                'id' => 1,
+                'capture_rate' => 60,
+                'hatch' => 10,
+                'tipos' => [TipoPokemon::FUEGO],
+                'stats' => [],
+            ],
+        ];
+
+        $eventos = SimuladorEncuentros::generarEventos(
+            $pool,
+            1,
+            Carbon::parse('2026-08-28 10:00:00'),
+            Carbon::parse('2026-08-28 10:05:00'),
+            function () use (&$secuencia): float {
+                return $secuencia === [] ? 0.5 : array_shift($secuencia);
+            },
+        );
+
+        $this->assertSame('hallazgo', $eventos[0]['tipo']);
+        $this->assertSame('caramelo_ev', $eventos[0]['subtype']);
+        $this->assertSame(4, $eventos[0]['stat']);
+        $this->assertSame(1, $eventos[0]['cantidad']);
+    }
+
+    public function test_hallazgo_caramelo_tipo_elige_tipo_del_pool(): void
+    {
+        // Pool con un pokemon que tiene tipo FUEGO(10).
+        // Secuencia: jitter(0.5), tipo(0.55→hallazgo), roll(0.9→tipo), pick(0.0→id1), elegirTipo(0.5→indice0→FUEGO).
+        $secuencia = [0.5, 0.55, 0.9, 0.0, 0.5];
+        $pool = [
+            [
+                'id' => 1,
+                'capture_rate' => 60,
+                'hatch' => 10,
+                'tipos' => [TipoPokemon::FUEGO],
+                'stats' => [['stat' => 2, 'effort' => 1]],
+            ],
+        ];
+
+        $eventos = SimuladorEncuentros::generarEventos(
+            $pool,
+            1,
+            Carbon::parse('2026-08-28 10:00:00'),
+            Carbon::parse('2026-08-28 10:05:00'),
+            function () use (&$secuencia): float {
+                return $secuencia === [] ? 0.5 : array_shift($secuencia);
+            },
+        );
+
+        $this->assertSame('hallazgo', $eventos[0]['tipo']);
+        $this->assertSame('caramelo_tipo', $eventos[0]['subtype']);
+        $this->assertSame(10, $eventos[0]['tipo_id']);
+        $this->assertSame(1, $eventos[0]['cantidad']);
+    }
+
+    public function test_hallazgo_caramelo_tipo_fallback_si_pool_sin_tipos(): void
+    {
+        // Pool sin tipos → fallback a tipo aleatorio.
+        // Secuencia: jitter(0.5), tipo(0.55→hallazgo), roll(0.9→tipo), fallback(0.5).
+        // 0.5 → casos[floor(0.5*18)] = casos[9] = FUEGO(10).
+        $secuencia = [0.5, 0.55, 0.9, 0.5];
+        $pool = [
+            [
+                'id' => 1,
+                'capture_rate' => 60,
+                'hatch' => 10,
+                'tipos' => [],
+                'stats' => [['stat' => 2, 'effort' => 1]],
+            ],
+        ];
+
+        $eventos = SimuladorEncuentros::generarEventos(
+            $pool,
+            1,
+            Carbon::parse('2026-08-28 10:00:00'),
+            Carbon::parse('2026-08-28 10:05:00'),
+            function () use (&$secuencia): float {
+                return $secuencia === [] ? 0.5 : array_shift($secuencia);
+            },
+        );
+
+        $this->assertSame('hallazgo', $eventos[0]['tipo']);
+        $this->assertSame('caramelo_tipo', $eventos[0]['subtype']);
+        $this->assertSame(10, $eventos[0]['tipo_id']);
+        $this->assertSame(1, $eventos[0]['cantidad']);
     }
 
     public function test_probabilidades_son_configurables(): void

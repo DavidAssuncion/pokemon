@@ -35,6 +35,6 @@ class EfectoOrbeVida implements InterfazEfecto
         $maxHp = $portador->pokemon()->battleStats()->hp;
         $recoil = max(1, $maxHp * 0.10);
         $portador->setHpActual(max(0, $portador->hpActual() - $recoil));
-        $battle->agregarLog("[{$portador->nombre()}] pierde {$recoil} PS por la Orbe Vida");
+        $battle->agregarLog("{$portador->nombre()} pierde {$recoil} PS por la Orbe Vida");
     }
 }

@@ -33,6 +33,6 @@ class EfectoRestos implements InterfazEfecto
         $maxHp = $portador->pokemon()->battleStats()->hp;
         $cura = max(1, $maxHp * 0.0625);
         $portador->setHpActual(min($maxHp, $portador->hpActual() + $cura));
-        $battle->agregarLog("[{$portador->nombre()}] Restos recuperan {$cura} PS");
+        $battle->agregarLog("{$portador->nombre()} Restos recuperan {$cura} PS");
     }
 }

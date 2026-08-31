@@ -179,4 +179,67 @@ class TeamController extends Controller
 
         return redirect()->back();
     }
+
+    /**
+     * Actualiza el behavior de un miembro (PATCH /teams/member/{member}/role).
+     *
+     * Usa route-model binding (TeamMember). Anti-IDOR y exploración activa.
+     */
+    public function updateMemberRole(Request $request, TeamMember $member): RedirectResponse|JsonResponse
+    {
+        return $this->ejecutarCambioBehavior($request, $member);
+    }
+
+    /**
+     * Actualiza el behavior de un miembro vía POST /teams/update-member-role.
+     *
+     * Contrato del frontend: body { member_id, behavior }.
+     */
+    public function updateMemberRoleViaPost(Request $request): RedirectResponse|JsonResponse
+    {
+        $data = $request->validate([
+            'member_id' => 'required|exists:team_members,id',
+        ]);
+
+        $member = TeamMember::findOrFail($data['member_id']);
+
+        return $this->ejecutarCambioBehavior($request, $member);
+    }
+
+    /**
+     * Lógica compartida de cambio de behavior: anti-IDOR, isExploring, update.
+     */
+    private function ejecutarCambioBehavior(Request $request, TeamMember $member): RedirectResponse|JsonResponse
+    {
+        // Anti-IDOR: el belongsTo Team hereda el global scope; para un miembro de un equipo ajeno
+        // la relación resuelve null y abort(404) (mismo patrón que removeMember).
+        abort_unless($member->team?->user_id === Auth::id(), 404);
+
+        if ($member->team?->isExploring()) {
+            $error = 'No se puede modificar un equipo con exploraciones activas';
+
+            if ($request->wantsJson()) {
+                return response()->json(['error' => $error], 422);
+            }
+
+            return redirect()->back()->with('error', $error);
+        }
+
+        $data = $request->validate([
+            'behavior' => 'required|in:VANGUARDIA,COMBATIENTE,RECOLECTOR,RASTREADOR',
+        ]);
+
+        $member->update(['behavior' => $data['behavior']]);
+
+        if ($request->wantsJson()) {
+            return response()->json([
+                'member' => [
+                    'id' => $member->id,
+                    'behavior' => $member->behavior,
+                ],
+            ]);
+        }
+
+        return redirect()->back();
+    }
 }
