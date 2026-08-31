@@ -10,6 +10,10 @@ class ManejadorCritico extends ManejadorDanioAbstracto
 {
     protected function process(AccionBatalla $action, float $daño): float
     {
+        if ($action->isPreview) {
+            return $daño;
+        }
+
         $critChance = 0.0625;
         $critBonus = 1.5;
 

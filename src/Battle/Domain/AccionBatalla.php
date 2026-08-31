@@ -15,6 +15,7 @@ class AccionBatalla
         public readonly Posicion $fromPosition,
         public readonly bool $defenderTeamHasVanguard = false,
         public readonly TipoClima $weather = TipoClima::NONE,
+        public readonly bool $isPreview = false,
     ) {
     }
 }

@@ -39,6 +39,7 @@ COPY vite.config.js ./
 COPY resources/ resources/
 COPY public/ public/
 COPY bootstrap/ bootstrap/
+COPY --from=composer /app/vendor /app/vendor
 
 RUN npm run build
 

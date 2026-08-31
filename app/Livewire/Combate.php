@@ -429,6 +429,7 @@ class Combate extends Component
                 fromPosition: $actor->posicion(),
                 defenderTeamHasVanguard: $defenderTeam->tieneVanguardiaViva(),
                 weather: $battle->weather(),
+                isPreview: true,
             );
 
             $previews[] = [
