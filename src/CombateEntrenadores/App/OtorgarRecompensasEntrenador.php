@@ -8,11 +8,13 @@ use App\Jobs\ActualizarPokedexJob;
 use App\Models\Pokemon;
 use App\Models\Team;
 use App\Models\User;
+use App\Support\ItemCatalogo;
 use Illuminate\Support\Collection;
 use Src\Exploraciones\App\NormalizadorPokemonDerrotado;
 use Src\Exploraciones\App\PersistirRecompensas;
 use Src\Exploraciones\Domain\CalculadorRecompensas;
 use Src\Exploraciones\Domain\Recompensas\PokemonDerrotado;
+use Src\Exploraciones\Domain\Recompensas\ResultadoRecompensas;
 
 /**
  * Otorga las recompensas de un combate contra entrenador ganado: DOBLE de lo
@@ -33,13 +35,13 @@ final class OtorgarRecompensasEntrenador
     /**
      * @param  list<int>  $speciesIdsRival  ids de las especies derrotadas (team2)
      */
-    public function otorgar(int $userId, int $teamId, array $speciesIdsRival, int $nivelEntrenador): void
+    public function otorgar(int $userId, int $teamId, array $speciesIdsRival, int $nivelEntrenador): array
     {
         $usuario = User::find($userId);
         $equipo = Team::with('members.reclutado')->find($teamId);
 
         if ($usuario === null) {
-            return;
+            return [];
         }
 
         $ids = array_values(array_unique(array_filter(
@@ -48,7 +50,7 @@ final class OtorgarRecompensasEntrenador
         )));
 
         if ($ids === []) {
-            return;
+            return [];
         }
 
         $pokemons = Pokemon::query()->with('stats', 'types');
@@ -56,7 +58,7 @@ final class OtorgarRecompensasEntrenador
         $pokemons = $pokemons->get()->keyBy('id');
 
         if ($pokemons->isEmpty()) {
-            return;
+            return [];
         }
 
         $miembrosPorCadena = $this->cargarMiembrosDeCadenas($pokemons);
@@ -78,6 +80,8 @@ final class OtorgarRecompensasEntrenador
         $this->persistir->persistir($recompensas, $equipo, $usuario);
 
         $this->despacharAvistados($ids, $userId);
+
+        return $this->aDatosModal($recompensas);
     }
 
     /**
@@ -114,5 +118,51 @@ final class OtorgarRecompensasEntrenador
         foreach ($pokemonIds as $pokemonId) {
             ActualizarPokedexJob::dispatch($userId, $pokemonId, 'AVISTADO');
         }
+    }
+
+    /**
+     * Datos de presentación para el modal de victoria.
+     *
+     * @return array{
+     *     exp_total: int,
+     *     exp_miembro: int,
+     *     caramelos: list<array{nombre: string, imagen: string, cantidad: int}>
+     * }
+     */
+    private function aDatosModal(ResultadoRecompensas $recompensas): array
+    {
+        $caramelos = [];
+
+        foreach ($recompensas->caramelosFamilia as $recompensa) {
+            $resuelto = ItemCatalogo::resolve(ItemCatalogo::keyFamilia($recompensa->evolutionChainId));
+            $caramelos[] = [
+                'nombre' => $resuelto['nombre'],
+                'imagen' => $resuelto['imagen'],
+                'cantidad' => $recompensa->cantidad,
+            ];
+        }
+
+        foreach ($recompensas->caramelosEv as $recompensa) {
+            $resuelto = ItemCatalogo::resolve(ItemCatalogo::keyEv($recompensa->stat));
+            $caramelos[] = [
+                'nombre' => $resuelto['nombre'],
+                'imagen' => $resuelto['imagen'],
+                'cantidad' => $recompensa->cantidad,
+            ];
+        }
+
+        foreach ($recompensas->caramelosTipo as $recompensa) {
+            $caramelos[] = [
+                'nombre' => $recompensa->tipo,
+                'imagen' => '/images/candy_type/'.$recompensa->slug().'.webp',
+                'cantidad' => $recompensa->cantidad,
+            ];
+        }
+
+        return [
+            'exp_total' => $recompensas->expTotal,
+            'exp_miembro' => $recompensas->expPorMiembro,
+            'caramelos' => $caramelos,
+        ];
     }
 }

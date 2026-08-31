@@ -55,6 +55,10 @@ class Combate extends Component
 
     public string $weather = 'none';
 
+    public array $rewards = [];
+
+    public int $habitatId = 0;
+
     public ?int $selectedTargetTeam = null;
 
     public ?int $selectedTargetIdx = null;
@@ -287,10 +291,12 @@ class Combate extends Component
             return;
         }
 
+        $this->habitatId = (int) ($meta['habitat_id'] ?? 0);
+
         $won = ! $battle->team1->todosDebilitados();
 
         app(RegistrarResultadoEntrenador::class)->registrar(
-            habitatId: (int) ($meta['habitat_id'] ?? 0),
+            habitatId: $this->habitatId,
             nivel: (int) ($meta['nivel'] ?? 0),
             trainerIndex: (int) ($meta['trainer_index'] ?? 0),
             userId: (int) ($meta['user_id'] ?? 0),
@@ -304,7 +310,7 @@ class Combate extends Component
                 $battle->team2->combatants()
             );
 
-            app(OtorgarRecompensasEntrenador::class)->otorgar(
+            $this->rewards = app(OtorgarRecompensasEntrenador::class)->otorgar(
                 userId: (int) ($meta['user_id'] ?? 0),
                 teamId: (int) ($meta['team_id'] ?? 0),
                 speciesIdsRival: $speciesRival,
