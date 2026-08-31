@@ -20,7 +20,7 @@ class DatabaseSeeder extends Seeder
     {
         $this->call([
             CatalogoSeeder::class,
-            \Database\Seeders\ReclutadosSeeder::class,
+            //\Database\Seeders\ReclutadosSeeder::class,
         ]);
 
         // Usuario demo multi-jugador: identificado por name (único desde la Fase 1).
