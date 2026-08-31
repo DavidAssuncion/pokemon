@@ -1547,3 +1547,234 @@ barreras (`w-50` ×2 + `gap-1`) y los números podían desbordar horizontalmente
 - `min-height:96px`: a lo sumo ~2px de aire extra al descanso (altura natural ≈ 96px); no añade
   espacio vacío perceptible.
 - Moves a `col-lg-4` (25%): botones `w-100` con `flex-wrap` en la 2ª línea → sin overflow horizontal.
+
+---
+
+# Análisis Frontend — Popup de ayuda, overflow dropdown equipos, contraste cards/secciones, selector de rol + badge composición (2026-08-31)
+
+## Contexto
+
+Tarea aprobada por el analista. Backend en paralelo (contrato estable documentado). Solo vistas +
+JS inline + CSS: NO se crean endpoints/controllers.
+
+## Vistas/componentes a tocar
+
+- `resources/views/layouts/app.blade.php` — Tarea 1: botón '?' + popup de ayuda en el nav (primer
+  elemento, x-data Alpine local, cierre click-fuera/Escape, z-50, ~24rem, max-h-[70vh], dark ok,
+  sin desborde en móvil). Contenido desde `config('ayuda.secciones')`.
+- `config/ayuda.php` — NUEVO (placeholder claro; solo crea si no existe).
+- `resources/views/equipos/index.blade.php` — Tarea 2 (quitar overflow-hidden de la card de
+  "Reclutados Disponibles" para que el dropdown de equipos no se corte; rounded-lg en overlay),
+  Tarea 3 (header de team card con fondo diferenciado + secciones reforzadas) y Tarea 4 (select de
+  rol por slot ocupado + badge de composición en el título del equipo).
+- `resources/views/exploraciones/index.blade.php` — Tarea 3 (headers de card con fondo + títulos de
+  sección 'Activas' y 'Resultados por revisar' en contenedor con fondo/borde/padding).
+- `resources/views/components/card.blade.php` — Tarea 3 (header con `bg-gray-50 dark:bg-gray-900/50`,
+  igual que el footer).
+
+## DTOs/contratos consumidos (fetch)
+
+- Tarea 4: `POST /teams/update-member-role` body `{ member_id, behavior }`, headers
+  `X-CSRF-TOKEN` (meta), `Accept: application/json`, `Content-Type: application/json`.
+  Respuesta 200 `{ member: { id, behavior } }`; 422 `{ error }` → `alert(error)`.
+  **Decisión endpoint**: no existe `PATCH /teams/member/{member}/role` en el backend actual y el
+  backend se implementa en paralelo con el contrato documentado; se usa
+  `POST /teams/update-member-role` con `member_id` (como indica la tarea si no hay certeza).
+  **Decisión sinergia**: el payload inicial de equipos expone `sinergia_nombre` (string|null) por
+  equipo; el PATCH NO devuelve sinergia recalculada → tras éxito se actualiza `member.behavior`
+  localmente y se hace `location.reload()` (simple y correcto; decisión documentada en el código).
+- `team.members[].behavior` ya existe en el payload inicial (`TeamMember::behavior`).
+
+## Estados UI cubiertos
+
+- Popup ayuda: abierto/cerrado; click fuera; Escape; móvil (no desborde); dark mode.
+- Dropdown añadir a equipo: con overflow resuelto, se ve completo en la última fila de la grid.
+- Contraste: headers de card y títulos de sección con fondo diferenciado (light y dark).
+- Select de rol: habilitado / deshabilitado (equipo bloqueado o en exploración); cambio exitoso
+  (200) y validación (422 → alert); select pequeño en móvil (`text-[10px]`).
+- Badge composición: <3 miembros → INVÁLIDO (existente); 3 miembros + sinergia → verde
+  'Composición: X'; 3 miembros sin sinergia → gris 'Composición neutra'.
+
+## Riesgos accesibilidad/UX
+
+- Botón '?' con `aria-label="Ayuda"`, `aria-expanded`, `aria-controls`; popup con `role="dialog"` /
+  `aria-labelledby`; cierre con Escape (keyboard).
+- El popup usa z-50 y `max-w`/`max-h` para no desbordar móvil; `overflow-y-auto` interior.
+- Select de rol pequeño (`text-[10px]`, `px-1 py-0.5`, `w-full`) para no romper el slot en móvil.
+- El badge de composición no debe romper el título en móvil (flex-wrap en el header del team).
+
+## Tests
+
+- No existe infraestructura Dusk en el repo. Verificación: `php artisan view:cache` (compila las
+  vistas tocadas, detecta errores Blade) + revisión manual de la sintaxis JS inline (los cambios son
+  aditivos en el mismo patrón Alpine ya usado). Los tests de vistas existentes
+  (`EquiposControllerTest`, `ExploracionesViewTest`) cubren el render; no se modifican.
+
+## Verificación
+
+- `php artisan view:cache` (sintaxis Blade de las 4 vistas + componente).
+- Revisar que no se rompió el layout del nav en móvil (overflow) y que el select/badge caben.
+
+---
+
+# Análisis Frontend — Semáforo de tipos (matchups) en preview de expedición (2026-08-31)
+
+## Contexto
+El backend añade en paralelo `GET /exploraciones/preview` → clave `matchups: [{miembro_tipos, pool_tipo, defensa, ataque, clasificacion}]`.
+El frontend renderiza esta información en el modal de exploración (`habitats/show.blade.php`).
+NO tocar PHP de dominio ni controladores. Solo vista Blade + Alpine JS.
+
+## Vistas/componentes a tocar
+1. **`resources/views/habitats/show.blade.php`** — único archivo:
+   - Bloque preview: añadir sección "Tipos frente a la zona" entre las advertencias y los roles.
+   - Componente Alpine `habitatShow()`: NO necesita cambios (consume `preview.matchups` que ya llega en el JSON).
+
+## DTOs/contrato consumido (aditivo, backend en paralelo)
+```
+GET /exploraciones/preview?team_id=&habitat_id=&level=
+→ { ..., matchups: [{ miembro_tipos: string[], pool_tipo: string, defensa: float, ataque: float, clasificacion: "positivo"|"negativo"|"severo" }] }
+```
+- `matchups` es opcional (puede no llegar o ser `[]`).
+- `advertencias` ya NO contendrá textos "Pokémon de tipo X en zona con Pokémon Y" (se mudan a matchups).
+- `teamWellPrepared` sigue intacto (mira `advertencias.length` + `riesgo`).
+
+## Estados UI cubiertos
+- `matchups` presente y no vacío: sección renderizada con líneas coloreadas.
+- `matchups` ausente o `[]`: sección oculta (no rompe, no renderiza).
+- `clasificacion` = `severo`: rojo + negrita + prefijo "⚠ Inmune: ".
+- `clasificacion` = `negativo`: rojo.
+- `clasificacion` = `positivo`: verde.
+- Dark mode: `dark:text-red-400` / `dark:text-green-400`.
+- `advertencias` con matchups positivos y sin advertencias → banner verde "Equipo bien preparado" sigue saliendo.
+
+## Riesgos accesibilidad/UX
+- `x-if` para toda la sección (no renderiza nada si vacío/ausente).
+- Texto descriptivo: "Pokémon de tipo Fuego/Volador en zona con Pokémon Agua".
+- Prefijo "⚠ Inmune: " solo para `severo` (refuerza visualmente la gravedad); `aria-hidden` para no duplicar la lectura.
+- `@key` estable con `mu.miembro_tipos.join('-') + '-' + mu.pool_tipo` (clave única por matchup).
+- Sin duplicación de componentes: mismo patrón que `advertencias` (`template x-for`, `p.text-xs`).
+
+## Tests
+- No existen tests Dusk (`tests/Browser` no existe). `tests/Feature/HabitatsViewTest.php` (render del modal) actualizado con asserts aditivos del nuevo contrato; no se borran asserts existentes.
+
+## Verificación
+- `php artisan view:cache` (compila la vista).
+- `npm run build` (no toco assets JS/CSS, pero verifico que no rompe).
+- `php artisan test --compact tests/Feature/HabitatsViewTest.php` → verde.
+
+## Checklist
+- [x] Análisis previo escrito ✅
+- [x] Sección matchups añadida entre advertencias y roles
+- [x] `x-if="preview.matchups && preview.matchups.length"` defensivo
+- [x] Clases por clasificación: severo (rojo+negrita+⚠), negativo (rojo), positivo (verde)
+- [x] Dark mode con `dark:text-*-400`
+- [x] `teamWellPrepared` intacto (no mira matchups)
+- [x] `npm run build` exitoso
+- [x] `php artisan view:cache` exitoso
+
+---
+
+# Análisis Frontend — Bitácora: SVGs a imágenes + "Derrotados" en exploraciones completadas (2026-08-31)
+
+## Contexto
+
+Dos cambios en `/exploraciones`:
+1. **Bitácora (`_evento.blade.php`)**: los eventos `tipo === 'encuentro'` (generados por
+   `SimuladorEncuentros` con `pokemon_id` + `subtype`) caen al default "Evento registrado".
+   Los `tipo === 'neutral'` también. El default no da información útil.
+2. **Tarjetas terminadas (`index.blade.php`)**: no se muestran los pokémon derrotados
+   (existen en `eventos['derrotados']` desde `FinalizarExploracionHandler::registrarResultado`
+   línea 457, pero `toTerminada()` no los expone). Nuevo layout de resultados con grid de 4
+   columnas (derrotados · capturados · recompensas).
+
+## Backend (cambio pequeño)
+
+`app/Http/Controllers/ExploracionActivaController.php` → `toTerminada()`: añadir al array de
+retorno (nivel raíz, NO dentro de `resultado`):
+```php
+'derrotados' => $this->eventosDe($exp)->get('derrotados', []),
+```
+Contrato: `derrotados` = `list<int>` (ids de pokémon derrotados, expandidos por derrota —
+puede repetir el mismo id N veces).
+
+## Vistas/componentes a tocar
+
+1. `resources/views/exploraciones/_evento.blade.php`
+   - `@elseif($tipo === 'encuentro')` antes del `@else` final:
+     - Imagen `/images/iconos_webp/{{ $evento['pokemon_id'] ?? 0 }}.webp` (w-10 h-10,
+       patrón de los bloques hermanos).
+     - Título por subtipo: `normal → 'Encuentro'`, `grupo → 'Grupo salvaje'`,
+       `excepcional → '¡Encuentro excepcional!'`.
+     - Resolución si existe: `victoria → 'Victoria'`, `victoria_con_coste → 'Victoria con coste'`,
+       `derrota → 'Derrota'`, `huida → 'El salvaje huye'`, `retirada → 'Retirada'` (la
+       retirada también la produce `EvaluadorExploracion::resolverEncuentro`).
+     - `duration_loss > 0` → sufijo `(-N min)`.
+   - `@elseif($tipo === 'neutral')` → SVG informativo (icono info de heroicons, ya usado en
+     la vista) + "Evento neutral". Sin imagen (no hay pokémon).
+   - `@else` final → `Evento: {{ $tipo }} ({{ $evento['subtype'] }})` (solo si subtype).
+   - Bloque `grupo` (líneas 90-111): SIN cambios (SVG conceptual + mini-iconos ya existen).
+   - Bloque `hallazgo caramelo_ev`: SIN cambios — el fallback JS `statName()` ya existe
+     (líneas 150/212) y el SVG es apropiado para stat desconocido.
+
+2. `resources/views/exploraciones/index.blade.php` (sección terminadas)
+   - Grid `lg:grid-cols-3` → `lg:grid-cols-4`.
+   - **Col 1 — Derrotados**: `$derrotadosIds = $terminada['derrotados'] ?? []` →
+     `collect()->countBy()` → imágenes grises (`opacity-50 grayscale`, w-16 h-16) con badge
+     `×N` gris (`bg-gray-600`). Título "Derrotados" con SVG X (tachado) — decisión: el brief
+     ofrecía "calavera o texto tachado"; se usa SVG X por coherencia con heroicons del
+     proyecto (sin emoji).
+   - **Col 2 — Capturados**: igual que hoy (imagen + badge verde ×N).
+   - **Col 3-4 — Recompensas**: mismo contenido (caramelos), col-span dinámico.
+   - Reparto de columnas (literales `lg:col-span-*` para que Tailwind JIT los genere):
+     - D+C+R → derrotados 1, capturados 1, recompensas 2.
+     - D+R → derrotados 1, recompensas 3. / C+R → capturados 1, recompensas 3.
+     - R solo → recompensas 4. / D solo → derrotados 4. / C solo → capturados 4.
+     - D+C (sin recompensas) → 2+2 (caso no cubierto por el brief; decisión razonable).
+
+## Estados UI cubiertos
+
+- Eventos bitácora: encuentro (normal/grupo/excepcional), con/sin resolución, con/sin
+  duration_loss; neutral; desconocido (default con tipo/subtipo); resto de tipos intactos.
+- Derrotados: presente (imagen gris + badge ×N), ausente (bloque oculto), ids repetidos
+  (agrupados por countBy), sin recompensas/capturados (col-span full).
+- Dark mode: `dark:bg-gray-900/50`, `dark:text-gray-300` consistentes con la vista.
+- Accesibilidad: `alt`/`title` descriptivos en imágenes, `aria-hidden` en SVGs decorativos.
+
+## Tests
+
+`tests/Feature/ExploracionesViewTest.php`:
+- `test_exploraciones_view_layout_handles_empty_candy_sides`: `soloRecompensas` ahora usa
+  `lg:col-span-4` (antes col-span-3) → actualizar assert. `soloCapturados` sigue sin
+  `lg:col-span-3`.
+- `test_exploraciones_view_renders_risk_bitacora_event_types`: añadir eventos `encuentro`
+  (normal+victoria, excepcional+derrota con duration_loss) y `neutral` + asserts aditivos.
+- Test con default desconocido (línea ~251): `assertSee('Evento registrado')` → ahora
+  `Evento: otro` (con subtype). Actualizar.
+
+`tests/Feature/ExploracionesPageTest.php`:
+- `test_terminadas_incluyen_resumen_de_resultado`: assert `derrotados` expuesto.
+- `test_terminada_sin_resultado_devuelve_resumen_vacio`: assert `derrotados === []`.
+
+## Verificación
+
+- `php -l` en el controlador.
+- `php artisan view:cache`.
+- Tests feature de exploraciones con `--filter=ExploracionesViewTest|ExploracionesPageTest`.
+- NO ejecutar `npm run build` (solo clases ya existentes; dímelo al usuario si hace falta).
+
+## Checklist
+
+- [x] Análisis previo escrito ✅
+- [x] Bloque `encuentro` con imagen + subtipo + resolución + duration_loss
+- [x] Bloque `neutral` con SVG informativo
+- [x] Default muestra `Evento: tipo (subtype)`
+- [x] `toTerminada()` expone `derrotados`
+- [x] Grid 4 columnas con derrotados/capturados/recompensas y col-spans dinámicos
+- [x] Tests actualizados y verdes (`ExploracionesViewTest` 10 ✓, `ExploracionesPageTest` 12 ✓)
+- [x] `php artisan view:cache` OK
+- [x] `php -l` OK en controlador y vistas
+- [x] Suite `--filter=Exploraciones`: 200 passed, 1 failed PREEXISTENTE
+      (`ExploracionesAutoResolucionTest::test_index_procesa_exploraciones_activas_al_cargar`,
+      ajeno a este cambio — falla también sin mis cambios, `git stash` verificado; es un test de
+      otra iteración en paralelo que espera auto-resolución al cargar `/exploraciones`,
+      comportamiento no presente en este estado del código).

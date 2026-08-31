@@ -421,6 +421,7 @@ class ExploracionActivaController extends Controller
                     'contratiempos' => 0,
                 ],
             ],
+            'derrotados' => $this->eventosDe($exp)->get('derrotados', []),
         ];
     }
 

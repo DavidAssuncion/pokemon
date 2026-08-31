@@ -235,6 +235,11 @@ class ExploracionesPageTest extends TestCase
             $resultado['caramelos_ev'],
         );
         $this->assertSame(250, $resultado['exp']);
+        // derrotados expuesto en el array raíz de la terminada
+        $this->assertSame(
+            [$pokemons['bulbasaur']->id, $pokemons['bulbasaur']->id],
+            $terminadas[0]['derrotados'],
+        );
     }
 
     public function test_terminada_sin_resultado_devuelve_resumen_vacio(): void
@@ -262,6 +267,7 @@ class ExploracionesPageTest extends TestCase
                 'contratiempos' => 0,
             ],
         ], $terminadas[0]['resultado']);
+        $this->assertSame([], $terminadas[0]['derrotados']);
     }
 
     public function test_activas_no_incluyen_las_completadas(): void

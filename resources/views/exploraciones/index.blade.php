@@ -15,8 +15,8 @@
 
     <!-- Section 1: Activas -->
     <section class="mb-8" aria-labelledby="activas-title">
-        <div class="flex items-center justify-between mb-4">
-            <h2 id="activas-title" class="text-lg font-semibold text-gray-900 dark:text-white">Activas</h2>
+        <div class="flex items-center justify-between bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-2 mb-4">
+            <h2 id="activas-title" class="text-sm font-bold uppercase tracking-wide text-gray-700 dark:text-gray-300">Activas</h2>
             @if(count($activas ?? []) > 0)
                 <span class="px-2 py-0.5 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 text-xs font-bold rounded-full">
                     {{ count($activas) }}
@@ -27,7 +27,7 @@
         @forelse(($activas ?? []) as $exp)
             <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden mb-4">
                 <!-- Card header: team / habitat / level + status -->
-                <div class="px-4 py-3 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between flex-wrap gap-2">
+                <div class="px-4 py-3 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 flex items-center justify-between flex-wrap gap-2">
                     <div class="flex items-center gap-2 flex-wrap">
                         <span class="text-sm font-semibold text-gray-900 dark:text-white">{{ $exp['equipo'] }}</span>
                         <svg class="w-4 h-4 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -107,63 +107,7 @@
 
                         <ul id="bitacora-{{ $exp['id'] }}" x-show="open" x-cloak class="mt-3 space-y-2">
                             @forelse(($exp['bitacora'] ?? []) as $evento)
-                                @php $tipo = $evento['tipo'] ?? 'desconocido'; @endphp
-                                <li class="flex items-center gap-3 py-1.5">
-                                    @if($tipo === 'pokemon')
-                                        <img
-                                            src="/images/iconos_webp/{{ $evento['pokemon_id'] ?? 0 }}.webp"
-                                            loading="lazy"
-                                            decoding="async"
-                                            alt="{{ $evento['nombre'] ?? 'Pokémon' }}"
-                                            class="w-10 h-10 object-contain"
-                                            onerror="this.style.display='none'"
-                                        >
-                                        <span class="text-sm text-gray-700 dark:text-gray-300">
-                                            Encontraste un <strong>{{ $evento['nombre'] ?? 'Pokémon' }}</strong>
-                                        </span>
-                                    @elseif($tipo === 'caramelo_familia')
-                                        @if(!empty($evento['pokemon_id']))
-                                            <img src="/images/candy_pokemon/{{ $evento['pokemon_id'] }}.webp" loading="lazy" decoding="async"
-                                                 alt="Caramelo de {{ $evento['nombre'] ?? 'Pokémon' }}"
-                                                 title="Caramelo de {{ $evento['nombre'] ?? 'Pokémon' }}"
-                                                 class="w-10 h-10 object-contain shrink-0"
-                                                 onerror="{{ $candyFallback }}">
-                                        @else
-                                            <svg class="w-5 h-5 text-amber-500 shrink-0" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                                                <path d="M10 1.5a3 3 0 013 3v.75h1.25a3 3 0 013 3v3.1a5 5 0 110 4.3v3.1a3 3 0 01-3 3H13v.75a3 3 0 01-6 0v-.75H5.75a3 3 0 01-3-3v-3.1a5 5 0 110-4.3v-3.1a3 3 0 013-3H7v-.75a3 3 0 013-3z"/>
-                                            </svg>
-                                        @endif
-                                        <span class="text-sm text-gray-700 dark:text-gray-300">
-                                            Caramelos de <strong>{{ $evento['nombre'] ?? 'Pokémon' }}</strong>
-                                            <span class="font-semibold text-gray-900 dark:text-white">×{{ $evento['cantidad'] ?? 1 }}</span>
-                                        </span>
-                                    @elseif($tipo === 'caramelo_ev')
-                                        @if(!empty($evento['stat_slug']))
-                                            <img src="/images/candy_ev/{{ $evento['stat_slug'] }}.webp" loading="lazy" decoding="async"
-                                                 alt="Caramelo EV {{ $evento['stat_nombre'] ?? '' }}"
-                                                 title="Caramelo EV {{ $evento['stat_nombre'] ?? '' }}"
-                                                 class="w-10 h-10 object-contain shrink-0"
-                                                 onerror="{{ $candyFallback }}">
-                                        @else
-                                            <svg class="w-5 h-5 text-cyan-500 shrink-0" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                                                <path d="M10 1.5a3 3 0 013 3v.75h1.25a3 3 0 013 3v3.1a5 5 0 110 4.3v3.1a3 3 0 01-3 3H13v.75a3 3 0 01-6 0v-.75H5.75a3 3 0 01-3-3v-3.1a5 5 0 110-4.3v-3.1a3 3 0 013-3H7v-.75a3 3 0 013-3z"/>
-                                            </svg>
-                                        @endif
-                                        <span class="text-sm text-gray-700 dark:text-gray-300">
-                                            Caramelo EV
-                                            @if(!empty($evento['stat_nombre']))
-                                                <strong>{{ $evento['stat_nombre'] }}</strong>
-                                            @else
-                                                <strong x-text="statName({{ $evento['stat'] ?? 0 }})"></strong>
-                                            @endif
-                                            <span class="font-semibold text-gray-900 dark:text-white">×{{ $evento['cantidad'] ?? 1 }}</span>
-                                        </span>
-                                    @else
-                                        <span class="text-sm text-gray-500 dark:text-gray-400">Evento registrado</span>
-                                    @endif
-                                    <span class="ml-auto text-xs text-gray-400 dark:text-gray-500 shrink-0"
-                                          x-text="fmtTime('{{ $evento['timestamp'] ?? '' }}')"></span>
-                                </li>
+                                @include('exploraciones._evento', ['evento' => $evento])
                             @empty
                                 <li class="text-sm text-gray-400 dark:text-gray-500">Sin eventos en la bitácora</li>
                             @endforelse
@@ -186,8 +130,8 @@
 
     <!-- Section 2: Terminadas (resultados por revisar) -->
     <section aria-labelledby="terminadas-title">
-        <div class="flex items-center justify-between mb-4">
-            <h2 id="terminadas-title" class="text-lg font-semibold text-gray-900 dark:text-white">Resultados por revisar</h2>
+        <div class="flex items-center justify-between bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-2 mb-4">
+            <h2 id="terminadas-title" class="text-sm font-bold uppercase tracking-wide text-gray-700 dark:text-gray-300">Resultados por revisar</h2>
             @if(count($terminadas ?? []) > 0)
                 <span class="px-2 py-0.5 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 text-xs font-bold rounded-full">
                     {{ count($terminadas) }}
@@ -198,7 +142,7 @@
         @forelse(($terminadas ?? []) as $terminada)
             @php $resultado = $terminada['resultado'] ?? []; @endphp
             <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden mb-4">
-                <div class="px-4 py-3 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between flex-wrap gap-2">
+                <div class="px-4 py-3 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 flex items-center justify-between flex-wrap gap-2">
                     <div class="flex items-center gap-2 flex-wrap">
                         <span class="text-sm font-semibold text-gray-900 dark:text-white">{{ $terminada['equipo'] }}</span>
                         <svg class="w-4 h-4 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -232,17 +176,127 @@
                 </div>
 
                 <div class="p-4">
+                    @php
+                        $resultadoCat = $resultado['resultado'] ?? null;
+                        $incidentes = $resultado['incidentes'] ?? [];
+                        $durationReal = (int) ($resultado['duration_real'] ?? 0);
+                        $tiempoPerdido = (int) ($resultado['tiempo_perdido'] ?? 0);
+                        $efectivos = max(0, $durationReal - $tiempoPerdido);
+                        $resultadoLabel = match ($resultadoCat) {
+                            'exito_excepcional' => 'Éxito excepcional',
+                            'exito' => 'Éxito',
+                            'exito_parcial' => 'Éxito parcial',
+                            'fracaso' => 'Fracaso',
+                            'retirada' => 'Retirada',
+                            default => null,
+                        };
+                        $resultadoClass = match ($resultadoCat) {
+                            'exito_excepcional' => 'bg-emerald-400 text-emerald-950 dark:bg-emerald-500 dark:text-emerald-950',
+                            'exito' => 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400',
+                            'exito_parcial' => 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400',
+                            'fracaso' => 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400',
+                            'retirada' => 'bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300',
+                            default => null,
+                        };
+                        $tieneResumen = $resultadoLabel !== null || !empty($incidentes) || $durationReal > 0 || $tiempoPerdido > 0;
+                    @endphp
+
+                    @if($tieneResumen)
+                        <div class="flex flex-wrap items-center gap-x-4 gap-y-2 mb-4">
+                            @if($resultadoLabel !== null)
+                                <span class="px-2.5 py-1 text-[10px] font-bold rounded-full uppercase tracking-wide {{ $resultadoClass }}">
+                                    {{ $resultadoLabel }}
+                                </span>
+                            @endif
+                            @if(!empty($incidentes))
+                                <span class="text-xs text-gray-500 dark:text-gray-400">
+                                    Encuentros {{ (int) ($incidentes['encuentros'] ?? 0) }}
+                                    · Victorias {{ (int) ($incidentes['victorias'] ?? 0) }}
+                                    · Huidas {{ (int) ($incidentes['huidas'] ?? 0) }}
+                                    · Emboscadas {{ (int) ($incidentes['emboscadas'] ?? 0) }}
+                                    · Contratiempos {{ (int) ($incidentes['contratiempos'] ?? 0) }}
+                                </span>
+                            @endif
+                            @if($durationReal > 0 || $tiempoPerdido > 0)
+                                <span class="text-xs text-gray-500 dark:text-gray-400">
+                                    {{ $efectivos }} min efectivos · {{ $tiempoPerdido }} min perdidos
+                                </span>
+                            @endif
+                        </div>
+                    @endif
+
                     @if(!empty($resultado))
                         @php
                             $capturados = $resultado['capturados'] ?? [];
                             $caramelosFamilia = $resultado['caramelos_familia'] ?? [];
                             $caramelosEv = $resultado['caramelos_ev'] ?? [];
                             $caramelosTipo = $resultado['caramelos_tipo'] ?? [];
+
+                            $derrotadosIds = $terminada['derrotados'] ?? [];
+                            $derrotadosAgrupados = collect($derrotadosIds)->countBy()->all();
+                            $tieneDerrotados = !empty($derrotadosAgrupados);
+                            $tieneCapturados = !empty($capturados);
+                            $tieneRecompensas = !empty($caramelosFamilia) || !empty($caramelosEv) || !empty($caramelosTipo);
+
+                            // Reparto de columnas del grid lg:grid-cols-4
+                            if ($tieneRecompensas) {
+                                $spanDerrotados = $tieneDerrotados ? 'lg:col-span-1' : '';
+                                $spanCapturados = $tieneCapturados ? 'lg:col-span-1' : '';
+                                if ($tieneDerrotados && $tieneCapturados) {
+                                    $spanRecompensas = 'lg:col-span-2';
+                                } elseif ($tieneDerrotados || $tieneCapturados) {
+                                    $spanRecompensas = 'lg:col-span-3';
+                                } else {
+                                    $spanRecompensas = 'lg:col-span-4';
+                                }
+                            } elseif ($tieneDerrotados && $tieneCapturados) {
+                                $spanDerrotados = 'lg:col-span-2';
+                                $spanCapturados = 'lg:col-span-2';
+                                $spanRecompensas = '';
+                            } elseif ($tieneDerrotados) {
+                                $spanDerrotados = 'lg:col-span-4';
+                                $spanCapturados = '';
+                                $spanRecompensas = '';
+                            } else {
+                                $spanDerrotados = '';
+                                $spanCapturados = 'lg:col-span-4';
+                                $spanRecompensas = '';
+                            }
                         @endphp
 
-                        <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
-                            @if(!empty($capturados))
-                                <div class="bg-gray-50 dark:bg-gray-900/50 rounded-lg p-3">
+                        <div class="grid grid-cols-1 lg:grid-cols-4 gap-4">
+                            @if($tieneDerrotados)
+                                <div class="bg-gray-50 dark:bg-gray-900/50 rounded-lg p-3 {{ $spanDerrotados }}">
+                                    <p class="text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wide mb-2 flex items-center gap-1.5">
+                                        <svg class="w-4 h-4 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                                        </svg>
+                                        Derrotados
+                                    </p>
+                                    <div class="flex flex-wrap gap-3">
+                                        @foreach($derrotadosAgrupados as $pokeId => $cantidad)
+                                            <div class="text-center" title="Derrotado ×{{ $cantidad }}">
+                                                <div class="relative inline-block">
+                                                    <img
+                                                        src="/images/iconos_webp/{{ $pokeId }}.webp"
+                                                        loading="lazy"
+                                                        decoding="async"
+                                                        alt="Derrotado"
+                                                        class="w-16 h-16 object-contain opacity-50 grayscale"
+                                                        onerror="this.style.display='none'"
+                                                    >
+                                                    <span class="absolute -top-1.5 -right-1.5 px-1.5 py-0.5 bg-gray-600 text-white text-[10px] font-bold rounded-full">
+                                                        ×{{ $cantidad }}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        @endforeach
+                                    </div>
+                                </div>
+                            @endif
+
+                            @if($tieneCapturados)
+                                <div class="bg-gray-50 dark:bg-gray-900/50 rounded-lg p-3 {{ $spanCapturados }}">
                                     <p class="text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wide mb-2">Capturados</p>
                                     <div class="flex flex-wrap gap-3">
                                         @foreach($capturados as $capturado)
@@ -267,11 +321,8 @@
                                 </div>
                             @endif
 
-                            @php
-                                $tieneRecompensas = !empty($caramelosFamilia) || !empty($caramelosEv) || !empty($caramelosTipo);
-                            @endphp
                             @if($tieneRecompensas)
-                                <div class="lg:{{ empty($capturados) ? 'col-span-3' : 'col-span-2' }} bg-gray-50 dark:bg-gray-900/50 rounded-lg p-3">
+                                <div class="bg-gray-50 dark:bg-gray-900/50 rounded-lg p-3 {{ $spanRecompensas }}">
                                     @if(!empty($caramelosFamilia))
                                         <div class="flex flex-wrap gap-3">
                                             @foreach($caramelosFamilia as $candy)

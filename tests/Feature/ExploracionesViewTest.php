@@ -248,7 +248,7 @@ class ExploracionesViewTest extends TestCase
 
         // Fallback de nombre de stat y evento desconocido
         $view->assertSee('statName(2)', false);
-        $view->assertSee('Evento registrado', false);
+        $view->assertSee('Evento: otro', false);
         // Bloques vacíos omitidos y EXP 0 visible
         $view->assertSee('+0 EXP', false);
         $view->assertSee('Sin resultados', false);
@@ -348,10 +348,12 @@ class ExploracionesViewTest extends TestCase
         $soloCapturados->assertSee('Capturados', false);
         $soloCapturados->assertSee('Rattata', false);
         $soloCapturados->assertSee('×2', false);
+        // Solo capturados (sin derrotados ni recompensas) → bloque a col-span-4
+        $soloCapturados->assertSee('lg:col-span-4', false);
         $soloCapturados->assertDontSee('lg:col-span-3', false);
         $soloCapturados->assertDontSee('Agua', false);
 
-        // Solo recompensas (sin capturados) → recompensas a col-span-3
+        // Solo recompensas (sin capturados) → recompensas a col-span-4
         $soloRecompensas = $this->view('exploraciones.index', [
             'activas' => [],
             'terminadas' => [
@@ -373,7 +375,310 @@ class ExploracionesViewTest extends TestCase
             ],
         ]);
         $soloRecompensas->assertSee('Rattata', false);
-        $soloRecompensas->assertSee('lg:col-span-3', false);
+        $soloRecompensas->assertSee('lg:col-span-4', false);
         $soloRecompensas->assertDontSee('Capturados');
+    }
+
+    /**
+     * La tarjeta terminada expone 'derrotados' (ids expandidos por derrota).
+     * Con capturados y recompensas: derrotados=1, capturados=1, recompensas=2.
+     * Sin capturados: derrotados=1, recompensas=3. Solo derrotados: col-span-4.
+     */
+    public function test_exploraciones_view_renders_derrotados_grid(): void
+    {
+        // Derrotados + capturados + recompensas → 1/1/2
+        $completo = $this->view('exploraciones.index', [
+            'activas' => [],
+            'terminadas' => [
+                [
+                    'id' => 71,
+                    'equipo' => 'Equipo Z',
+                    'habitat' => 'Cueva',
+                    'nivel' => 1,
+                    'derrotados' => [19, 19, 129],
+                    'resultado' => [
+                        'capturados' => [
+                            ['pokemon_id' => 25, 'nombre' => 'Pikachu', 'cantidad' => 1],
+                        ],
+                        'caramelos_familia' => [
+                            ['evolution_chain_id' => 1, 'nombre' => 'Rattata', 'pokemon_id' => 19, 'cantidad' => 2],
+                        ],
+                        'caramelos_ev' => [],
+                        'caramelos_tipo' => [],
+                        'exp' => 40,
+                    ],
+                ],
+            ],
+        ]);
+        $completo->assertSee('Derrotados', false);
+        $completo->assertSee('/images/iconos_webp/19.webp', false);
+        $completo->assertSee('/images/iconos_webp/129.webp', false);
+        $completo->assertSee('×2', false);
+        $completo->assertSee('lg:col-span-2', false);
+        $completo->assertSee('Pikachu', false);
+
+        // Derrotados + recompensas (sin capturados) → derrotados=1, recompensas=3
+        $sinCapturas = $this->view('exploraciones.index', [
+            'activas' => [],
+            'terminadas' => [
+                [
+                    'id' => 72,
+                    'equipo' => 'Equipo W',
+                    'habitat' => 'Lago',
+                    'nivel' => 1,
+                    'derrotados' => [25],
+                    'resultado' => [
+                        'capturados' => [],
+                        'caramelos_familia' => [],
+                        'caramelos_ev' => [
+                            ['stat' => 2, 'stat_nombre' => 'Ataque', 'stat_slug' => 'atk', 'cantidad' => 4],
+                        ],
+                        'caramelos_tipo' => [],
+                        'exp' => 10,
+                    ],
+                ],
+            ],
+        ]);
+        $sinCapturas->assertSee('Derrotados', false);
+        $sinCapturas->assertSee('lg:col-span-3', false);
+        $sinCapturas->assertSee('/images/iconos_webp/25.webp', false);
+        $sinCapturas->assertDontSee('Capturados');
+
+        // Solo derrotados → col-span-4
+        $soloDerrotados = $this->view('exploraciones.index', [
+            'activas' => [],
+            'terminadas' => [
+                [
+                    'id' => 73,
+                    'equipo' => 'Equipo V',
+                    'habitat' => 'Bosque',
+                    'nivel' => 1,
+                    'derrotados' => [129],
+                    'resultado' => [
+                        'capturados' => [],
+                        'caramelos_familia' => [],
+                        'caramelos_ev' => [],
+                        'caramelos_tipo' => [],
+                        'exp' => 0,
+                    ],
+                ],
+            ],
+        ]);
+        $soloDerrotados->assertSee('Derrotados', false);
+        $soloDerrotados->assertSee('lg:col-span-4', false);
+        $soloDerrotados->assertDontSee('Capturados');
+
+        // Sin derrotados → no se renderiza el bloque
+        $sinDerrotados = $this->view('exploraciones.index', [
+            'activas' => [],
+            'terminadas' => [
+                [
+                    'id' => 74,
+                    'equipo' => 'Equipo U',
+                    'habitat' => 'Playa',
+                    'nivel' => 1,
+                    'resultado' => [
+                        'capturados' => [],
+                        'caramelos_familia' => [],
+                        'caramelos_ev' => [],
+                        'caramelos_tipo' => [],
+                        'exp' => 5,
+                    ],
+                ],
+            ],
+        ]);
+        $sinDerrotados->assertDontSee('Derrotados');
+    }
+
+    /**
+     * Los nuevos tipos de evento de la bitácora activa (huida, emboscada,
+     * contratiempo, retirada, grupo y hallazgo) se renderizan con textos
+     * narrativos e iconos.
+     */
+    public function test_exploraciones_view_renders_risk_bitacora_event_types(): void
+    {
+        $view = $this->view('exploraciones.index', [
+            'activas' => [
+                [
+                    'id' => 40,
+                    'equipo' => 'Equipo A',
+                    'habitat' => 'Bosque',
+                    'habitat_id' => 1,
+                    'nivel' => 1,
+                    'indefinido' => false,
+                    'duracion_horas' => 4,
+                    'inicio' => '2026-08-30T10:00:00Z',
+                    'inicio_vuelta' => null,
+                    'fin' => null,
+                    'estado' => 'explorando',
+                    'progreso' => 30,
+                    'bitacora' => [
+                        ['tipo' => 'huida', 'pokemon_id' => 19, 'nombre' => 'Rattata', 'timestamp' => '2026-08-30T10:05:00Z'],
+                        ['tipo' => 'emboscada', 'resolucion' => 'combate', 'duration_loss' => 10, 'pokemon_ids' => [19, 129], 'timestamp' => '2026-08-30T10:10:00Z'],
+                        ['tipo' => 'emboscada', 'resolucion' => 'sin_combate', 'timestamp' => '2026-08-30T10:12:00Z'],
+                        ['tipo' => 'contratiempo', 'subtype' => 'desorientacion', 'duration_loss' => 15, 'timestamp' => '2026-08-30T10:15:00Z'],
+                        ['tipo' => 'retirada', 'reason' => 'el equipo sufrió demasiadas bajas', 'timestamp' => '2026-08-30T10:20:00Z'],
+                        ['tipo' => 'grupo', 'pokemon_ids' => [25, 26], 'timestamp' => '2026-08-30T10:25:00Z'],
+                        ['tipo' => 'hallazgo', 'subtype' => 'caramelo_familia', 'pokemon_id' => 19, 'nombre' => 'Rattata', 'cantidad' => 2, 'timestamp' => '2026-08-30T10:30:00Z'],
+                        ['tipo' => 'hallazgo', 'subtype' => 'caramelo_ev', 'stat' => 2, 'cantidad' => 1, 'timestamp' => '2026-08-30T10:35:00Z'],
+                        ['tipo' => 'hallazgo', 'subtype' => 'caramelo_tipo', 'tipo_nombre' => 'Fuego', 'slug' => 'fuego', 'cantidad' => 3, 'timestamp' => '2026-08-30T10:40:00Z'],
+                        ['tipo' => 'hallazgo', 'subtype' => 'caramelo_tipo', 'slug' => 'agua', 'cantidad' => 1, 'timestamp' => '2026-08-30T10:45:00Z'],
+                        ['tipo' => 'encuentro', 'subtype' => 'normal', 'pokemon_id' => 19, 'nombre' => 'Rattata', 'resolucion' => 'victoria', 'duration_loss' => 0, 'timestamp' => '2026-08-30T10:50:00Z'],
+                        ['tipo' => 'encuentro', 'subtype' => 'excepcional', 'pokemon_id' => 129, 'nombre' => 'Magikarp', 'resolucion' => 'victoria_con_coste', 'duration_loss' => 12, 'timestamp' => '2026-08-30T10:55:00Z'],
+                        ['tipo' => 'encuentro', 'subtype' => 'grupo', 'pokemon_id' => 25, 'nombre' => 'Pikachu', 'resolucion' => 'derrota', 'duration_loss' => 10, 'timestamp' => '2026-08-30T11:00:00Z'],
+                        ['tipo' => 'neutral', 'timestamp' => '2026-08-30T11:05:00Z'],
+                    ],
+                ],
+            ],
+            'terminadas' => [],
+        ]);
+
+        // huida
+        $view->assertSee('huye antes de que comience el combate', false);
+        $view->assertSee('Rattata', false);
+        $view->assertSee('/images/iconos_webp/19.webp', false);
+        // emboscada: título + subtítulo según resolución + mini-iconos
+        $view->assertSee('¡Emboscada!', false);
+        $view->assertSee('El equipo repele el ataque (-10 min)', false);
+        $view->assertSee('El equipo escapa perdiendo tiempo', false);
+        $view->assertSee('/images/iconos_webp/129.webp', false);
+        // contratiempo (desorientación)
+        $view->assertSee('El equipo pierde el rastro. -15 min', false);
+        // retirada
+        $view->assertSee('El equipo se retira:', false);
+        $view->assertSee('demasiadas bajas', false);
+        // grupo + mini-iconos
+        $view->assertSee('El equipo se encuentra con un grupo salvaje', false);
+        $view->assertSee('/images/iconos_webp/25.webp', false);
+        $view->assertSee('/images/iconos_webp/26.webp', false);
+        // hallazgo familia
+        $view->assertSee('Caramelos de', false);
+        $view->assertSee('/images/candy_pokemon/19.webp', false);
+        $view->assertSee('×2', false);
+        // hallazgo EV (sin stat_nombre → fallback JS statName)
+        $view->assertSee('Caramelo EV', false);
+        $view->assertSee('statName(2)', false);
+        $view->assertSee('×1', false);
+        // hallazgo tipo (tipo_nombre) + derivado del slug
+        $view->assertSee('Caramelo de tipo', false);
+        $view->assertSee('/images/candy_type/fuego.webp', false);
+        $view->assertSee('×3', false);
+        $view->assertSee('Agua', false);
+        $view->assertSee('/images/candy_type/agua.webp', false);
+        // encuentro normal + victoria
+        $view->assertSee('Encuentro', false);
+        $view->assertSee('· Victoria', false);
+        $view->assertSee('/images/iconos_webp/19.webp', false);
+        // encuentro excepcional + victoria con coste + duration_loss
+        $view->assertSee('¡Encuentro excepcional!', false);
+        $view->assertSee('· Victoria con coste', false);
+        $view->assertSee('(-12 min)', false);
+        $view->assertSee('/images/iconos_webp/129.webp', false);
+        // encuentro grupo + derrota
+        $view->assertSee('Grupo salvaje', false);
+        $view->assertSee('· Derrota', false);
+        $view->assertSee('/images/iconos_webp/25.webp', false);
+        // neutral → texto + SVG informativo (sin imagen de pokémon)
+        $view->assertSee('Evento neutral', false);
+        $view->assertDontSee('Derrotados');
+    }
+
+    /**
+     * Los resultados terminados incluyen badge de categoría con color por grado,
+     * resumen de incidentes y línea de tiempo (efectivos/perdidos).
+     */
+    public function test_exploraciones_view_renders_result_category_incidents_and_timeline(): void
+    {
+        $view = $this->view('exploraciones.index', [
+            'activas' => [],
+            'terminadas' => [
+                [
+                    'id' => 50,
+                    'equipo' => 'Equipo B',
+                    'habitat' => 'Bosque',
+                    'nivel' => 2,
+                    'resultado' => [
+                        'resultado' => 'exito_parcial',
+                        'duration_real' => 105,
+                        'tiempo_perdido' => 20,
+                        'incidentes' => [
+                            'encuentros' => 12,
+                            'victorias' => 8,
+                            'huidas' => 2,
+                            'emboscadas' => 1,
+                            'contratiempos' => 3,
+                        ],
+                        'capturados' => [],
+                        'caramelos_familia' => [],
+                        'caramelos_ev' => [],
+                        'caramelos_tipo' => [],
+                        'exp' => 50,
+                    ],
+                ],
+            ],
+        ]);
+
+        $view->assertSee('Éxito parcial', false);
+        $view->assertSee('Encuentros 12', false);
+        $view->assertSee('Victorias 8', false);
+        $view->assertSee('Huidas 2', false);
+        $view->assertSee('Emboscadas 1', false);
+        $view->assertSee('Contratiempos 3', false);
+        // 105 - 20 = 85 min efectivos
+        $view->assertSee('85 min efectivos · 20 min perdidos', false);
+    }
+
+    /**
+     * Compatibilidad con exploraciones antiguas: sin campos de riesgo (resultado,
+     * incidentes, duration_real, tiempo_perdido) no se renderiza el resumen y la
+     * bitácora legacy sigue intacta.
+     */
+    public function test_exploraciones_view_is_defensive_without_risk_fields(): void
+    {
+        $view = $this->view('exploraciones.index', [
+            'activas' => [
+                [
+                    'id' => 60,
+                    'equipo' => 'Equipo A',
+                    'habitat' => 'Bosque',
+                    'habitat_id' => 1,
+                    'nivel' => 1,
+                    'indefinido' => false,
+                    'duracion_horas' => 4,
+                    'inicio' => '2026-08-30T10:00:00Z',
+                    'inicio_vuelta' => null,
+                    'fin' => null,
+                    'estado' => 'explorando',
+                    'progreso' => 10,
+                    'bitacora' => [
+                        ['tipo' => 'pokemon', 'pokemon_id' => 19, 'nombre' => 'Rattata', 'timestamp' => '2026-08-30T10:05:00Z'],
+                    ],
+                ],
+            ],
+            'terminadas' => [
+                [
+                    'id' => 61,
+                    'equipo' => 'Equipo B',
+                    'habitat' => 'Bosque',
+                    'nivel' => 1,
+                    'resultado' => [
+                        'capturados' => [],
+                        'caramelos_familia' => [],
+                        'caramelos_ev' => [],
+                        'caramelos_tipo' => [],
+                        'exp' => 0,
+                    ],
+                ],
+            ],
+        ]);
+
+        // Bitácora legacy intacta
+        $view->assertSee('Encontraste un', false);
+        $view->assertSee('Rattata', false);
+        // Sin resumen de riesgo: no hay badge, incidentes ni línea de tiempo
+        $view->assertDontSee('Éxito parcial');
+        $view->assertDontSee('min efectivos');
+        $view->assertDontSee('Encuentros');
+        $view->assertSee('+0 EXP', false);
     }
 }
