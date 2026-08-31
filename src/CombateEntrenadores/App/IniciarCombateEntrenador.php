@@ -63,6 +63,7 @@ class IniciarCombateEntrenador
             'nivel' => $nivel,
             'trainer_index' => $trainerIndex,
             'user_id' => $userId,
+            'team_id' => $teamId,
             'fecha' => $fecha,
         ]);
 

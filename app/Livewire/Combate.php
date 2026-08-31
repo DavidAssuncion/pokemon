@@ -14,6 +14,7 @@ use Src\Battle\Domain\MovimientoBatalla;
 use Src\Battle\Domain\ServicioEjecucionBatalla;
 use Src\Battle\Presentation\DTOAccionBatalla;
 use Src\Battle\Presentation\DTOMovimientoBatalla;
+use Src\CombateEntrenadores\App\OtorgarRecompensasEntrenador;
 use Src\CombateEntrenadores\App\RegistrarResultadoEntrenador;
 
 class Combate extends Component
@@ -296,6 +297,20 @@ class Combate extends Component
             fecha: (string) ($meta['fecha'] ?? today()->toDateString()),
             won: $won,
         );
+
+        if ($won) {
+            $speciesRival = array_map(
+                fn (Combatiente $c): int => $c->speciesId(),
+                $battle->team2->combatants()
+            );
+
+            app(OtorgarRecompensasEntrenador::class)->otorgar(
+                userId: (int) ($meta['user_id'] ?? 0),
+                teamId: (int) ($meta['team_id'] ?? 0),
+                speciesIdsRival: $speciesRival,
+                nivelEntrenador: (int) ($meta['nivel'] ?? 0),
+            );
+        }
 
         session()->forget($this->battleId.'_meta');
     }
