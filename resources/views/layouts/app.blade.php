@@ -80,6 +80,7 @@
                             ['route' => '/habitats', 'label' => 'Hábitats'],
                             ['route' => '/exploraciones', 'label' => 'Exploraciones'],
                             ['route' => '/equipos', 'label' => 'Equipos'],
+                            ['route' => '/gimnasios', 'label' => 'Gimnasios'],
                             ['route' => '/combate', 'label' => 'Combate'],
                             ['route' => '/reclutamiento', 'label' => 'Reclutamiento'],
                         ];

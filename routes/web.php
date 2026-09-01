@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\GimnasiosViewController;
 use App\Http\Controllers\HabitatsController;
 use App\Http\Controllers\IconoController;
 use Illuminate\Support\Facades\Route;
@@ -31,11 +32,16 @@ Route::middleware('auth')->group(function (): void {
         return view('combate_page');
     });
 
+    // Gimnasios — vistas (la API vive en routes/gimnasios.php, sin duplicar)
+    Route::get('/gimnasios', [GimnasiosViewController::class, 'index'])->name('gimnasios.index');
+    Route::get('/gimnasios/{slug}', [GimnasiosViewController::class, 'show'])->name('gimnasios.show');
+
     // Reclutados merged into Equipos — old /reclutados redirects to /equipos (see player.php)
     require __DIR__.'/habitats.php';
     require __DIR__.'/player.php';
     require __DIR__.'/exploraciones.php';
     require __DIR__.'/datagrid.php';
     require __DIR__.'/entrenadores.php';
+    require __DIR__.'/gimnasios.php';
     // require __DIR__ . '/../src/Crud/routes.php';
 });

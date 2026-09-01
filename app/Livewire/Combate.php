@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Livewire;
 
+use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
 use Src\Battle\Domain\AccionBatalla;
 use Src\Battle\Domain\AgregadoBatalla;
@@ -16,6 +17,8 @@ use Src\Battle\Presentation\DTOAccionBatalla;
 use Src\Battle\Presentation\DTOMovimientoBatalla;
 use Src\CombateEntrenadores\App\OtorgarRecompensasEntrenador;
 use Src\CombateEntrenadores\App\RegistrarResultadoEntrenador;
+use Src\Gimnasios\App\RegistrarResultadoGimnasio;
+use Src\Gimnasios\Domain\CatalogoGimnasios;
 
 class Combate extends Component
 {
@@ -108,7 +111,7 @@ class Combate extends Component
 
     // ─── Persistencia (sesión) ───────────────────────────────
 
-    private const SESSION_VERSION = 5;
+    private const SESSION_VERSION = 7;
 
     private function getBattle(): ?AgregadoBatalla
     {
@@ -291,6 +294,12 @@ class Combate extends Component
             return;
         }
 
+        if (($meta['tipo'] ?? null) === 'gimnasio') {
+            $this->registrarResultadoGimnasio($battle, $meta);
+
+            return;
+        }
+
         $this->habitatId = (int) ($meta['habitat_id'] ?? 0);
 
         $won = ! $battle->team1->todosDebilitados();
@@ -316,6 +325,57 @@ class Combate extends Component
                 speciesIdsRival: $speciesRival,
                 nivelEntrenador: (int) ($meta['nivel'] ?? 0),
             );
+        }
+
+        session()->forget($this->battleId.'_meta');
+    }
+
+    /**
+     * Finalización de un combate de gimnasio. Persiste el progreso si ganó
+     * (solo si el user_id del meta coincide con el autenticado, anti-IDOR) y
+     * otorga las recompensas dobles + avistados de la Pokédex. Si se derrota
+     * al líder (etapa 4), añade la medalla ganada al modal de victoria.
+     *
+     * @param  array<string, mixed>  $meta
+     */
+    private function registrarResultadoGimnasio(AgregadoBatalla $battle, array $meta): void
+    {
+        $gymId = (string) ($meta['gym_id'] ?? '');
+        $stage = (int) ($meta['stage'] ?? 0);
+        $userId = (int) ($meta['user_id'] ?? 0);
+        $teamId = (int) ($meta['team_id'] ?? 0);
+        $nivelRival = (int) ($meta['nivel_rival'] ?? 0);
+
+        $won = ! $battle->team1->todosDebilitados();
+
+        $gimnasio = app(CatalogoGimnasios::class)->porSlug($gymId);
+
+        $resultado = app(RegistrarResultadoGimnasio::class)->registrar(
+            gymId: $gymId,
+            etapaCompletada: $stage,
+            userId: $userId,
+            won: $won,
+            authUserId: (int) Auth::id(),
+            nombreMedalla: $gimnasio?->medalla,
+        );
+
+        if ($won && $resultado['avance']) {
+            $speciesRival = array_map(
+                fn (Combatiente $c): int => $c->speciesId(),
+                $battle->team2->combatants()
+            );
+
+            $this->rewards = app(OtorgarRecompensasEntrenador::class)->otorgar(
+                userId: $userId,
+                teamId: $teamId,
+                speciesIdsRival: $speciesRival,
+                nivelEntrenador: $nivelRival,
+                multiplicador: 10.0,
+            );
+
+            if ($resultado['medalla'] !== null) {
+                $this->rewards['medalla'] = $resultado['medalla'];
+            }
         }
 
         session()->forget($this->battleId.'_meta');

@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Src\Shared\Domain\Exceptions;
 
-final class ViolacionReglaNegocio extends DominioExcepcion
+class ViolacionReglaNegocio extends DominioExcepcion
 {
     public function __construct(string $message = 'Violación de regla de negocio')
     {

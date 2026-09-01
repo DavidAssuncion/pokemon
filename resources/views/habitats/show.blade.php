@@ -397,19 +397,37 @@
                             <template x-if="preview.matchups && preview.matchups.length">
                                 <div>
                                     <p class="text-xs font-medium text-gray-600 dark:text-gray-300 mb-1.5">Tipos frente a la zona</p>
-                                    <div class="space-y-1">
-                                        <template x-for="mu in preview.matchups" :key="mu.miembro_tipos.join('-') + '-' + mu.pool_tipo">
-                                            <p class="text-xs"
-                                               :class="mu.clasificacion === 'severo'
-                                                   ? 'text-red-600 dark:text-red-400 font-bold'
-                                                   : mu.clasificacion === 'negativo'
-                                                       ? 'text-red-600 dark:text-red-400'
-                                                       : 'text-green-600 dark:text-green-400'">
-                                                <template x-if="mu.clasificacion === 'severo'">
-                                                    <span aria-hidden="true">⚠ Inmune: </span>
-                                                </template>
-                                                <span x-text="'Pokémon de tipo ' + mu.miembro_tipos.join('/') + ' en zona con Pokémon ' + mu.pool_tipo"></span>
-                                            </p>
+                                    <div class="flex flex-wrap gap-2">
+                                        {{-- Desventajas (negativo + severo) --}}
+                                        <template x-if="preview.matchups.filter(mu => mu.clasificacion === 'negativo' || mu.clasificacion === 'severo').length > 0">
+                                            <div class="relative" x-data="{ show: false }" @mouseenter="show = true" @mouseleave="show = false">
+                                                <span class="px-2 py-0.5 bg-red-600 text-white text-[10px] font-bold rounded-full cursor-help select-none"
+                                                      x-text="'⚠️ ' + preview.matchups.filter(mu => mu.clasificacion === 'negativo' || mu.clasificacion === 'severo').length + ' Desventajas'"></span>
+                                                <div x-show="show" x-cloak
+                                                     class="absolute z-50 top-full mt-1 left-0 bg-gray-900 dark:bg-gray-700 text-white text-xs rounded-lg p-2 shadow-lg min-w-[200px] space-y-0.5">
+                                                    <template x-for="mu in preview.matchups.filter(mu => mu.clasificacion === 'negativo' || mu.clasificacion === 'severo')" :key="mu.miembro_tipos.join('-') + '-' + mu.pool_tipo">
+                                                        <p :class="mu.clasificacion === 'severo' ? 'font-bold' : ''">
+                                                            <template x-if="mu.clasificacion === 'severo'"><span>⚠ Inmune: </span></template>
+                                                            <span x-text="'Pokémon de tipo ' + mu.miembro_tipos.join('/') + ' en zona con Pokémon ' + mu.pool_tipo"></span>
+                                                        </p>
+                                                    </template>
+                                                </div>
+                                            </div>
+                                        </template>
+                                        {{-- Ventajas (positivo) --}}
+                                        <template x-if="preview.matchups.filter(mu => mu.clasificacion === 'positivo').length > 0">
+                                            <div class="relative" x-data="{ show: false }" @mouseenter="show = true" @mouseleave="show = false">
+                                                <span class="px-2 py-0.5 bg-green-600 text-white text-[10px] font-bold rounded-full cursor-help select-none"
+                                                      x-text="'✅ ' + preview.matchups.filter(mu => mu.clasificacion === 'positivo').length + ' Ventajas'"></span>
+                                                <div x-show="show" x-cloak
+                                                     class="absolute z-50 top-full mt-1 right-0 bg-gray-900 dark:bg-gray-700 text-white text-xs rounded-lg p-2 shadow-lg min-w-[200px] space-y-0.5">
+                                                    <template x-for="mu in preview.matchups.filter(mu => mu.clasificacion === 'positivo')" :key="mu.miembro_tipos.join('-') + '-' + mu.pool_tipo">
+                                                        <p>
+                                                            <span x-text="'Pokémon de tipo ' + mu.miembro_tipos.join('/') + ' en zona con Pokémon ' + mu.pool_tipo"></span>
+                                                        </p>
+                                                    </template>
+                                                </div>
+                                            </div>
                                         </template>
                                     </div>
                                 </div>

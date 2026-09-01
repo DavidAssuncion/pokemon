@@ -41,6 +41,17 @@
                     </div>
                     <div class="modal-body">
                         <p class="fw-bold text-success mb-3">Has derrotado al entrenador</p>
+
+                        {{-- Medalla (gimnasio) --}}
+                        @if(!empty($rewards['medalla']))
+                        <div class="alert alert-warning text-center py-3 mb-3" role="alert">
+                            <span class="d-block" style="font-size:2rem;">🏅</span>
+                            <strong class="d-block text-warning-emphasis mt-1" style="font-size:1.1rem;">
+                                ¡Has ganado la {{ $rewards['medalla'] }}!
+                            </strong>
+                        </div>
+                        @endif
+
                         <ul class="list-group list-group-flush">
                             <li class="list-group-item d-flex justify-content-between align-items-center">
                                 <span>EXP para tu cuenta</span>
@@ -62,7 +73,11 @@
                         </ul>
                     </div>
                     <div class="modal-footer">
-                        <a href="/habitats/{{ $habitatId }}" class="btn btn-success w-100 fw-bold">Volver al hábitat</a>
+                        @if($habitatId > 0)
+                            <a href="/habitats/{{ $habitatId }}" class="btn btn-success w-100 fw-bold">Volver al hábitat</a>
+                        @else
+                            <a href="{{ route('gimnasios.index') }}" class="btn btn-success w-100 fw-bold">Volver a gimnasios</a>
+                        @endif
                     </div>
                 </div>
             </div>

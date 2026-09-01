@@ -176,6 +176,18 @@ Contrato aditivo de resultados (`TransformadorResultadoExploracion` + `Exploraci
   `down()` de la migración que recrea la FK es best-effort (asume filas válidas; el bug 23503
   dejaba cadenas huérfanas).
 
+### CombateEntrenadores (`src/CombateEntrenadores/`)
+
+Módulo que integra el combate PvE contra entrenadores dentro de los hábitats (2026-09-01). Sigue la convención DDD por módulos (Domain pura; App/Infra con Laravel) y **reutiliza el motor de batalla** (`src/Battle/Domain/`) en lugar de duplicarlo.
+
+| Carpeta | Propósito | Archivos clave |
+|---|---|---|
+| `Domain/` | Lógica pura | `GeneradorMovimientosTipo` (movimientos sintéticos por tipo: no-Normal → físico 60 + especial 80 por tipo; Normal puro → 80/100; Normal mixto → 40/60), `ClasificadorPosicion` (defensivo → vanguardia si `def+spDef >= atk+spAtk`), `GeneradorFormacion` (formación aleatoria 1/2 o 2/1 respetando clasificación), `Repositories/EntrenadorLogRepositoryInterface`, `Exceptions/EntrenadorDerrotadoHoy` (422) |
+| `App/` | Casos de uso | `MapeadorPokemonBatalla` (Eloquent `Pokemon` → `DatosPokemonBatalla`), `GeneradorEquipoEntrenador` (equipo rival determinista por semilla `crc32(habitat\|nivel\|entrenador\|fecha)` desde el pool del hábitat), `ConstruirEquipoJugador` (`Team` + formación), `ObtenerEntrenadoresHabitat`, `IniciarCombateEntrenador` (crea `AgregadoBatalla` y lo guarda en sesión con prefijo `v{version}\|` + metadatos `battleId._meta`), `RegistrarResultadoEntrenador`, `OtorgarRecompensasEntrenador` (recompensas dobles vía `CalculadorRecompensas` ×2.0 + `ActualizarPokedexJob` AVISTADO) |
+| `Infra/` | Persistencia/HTTP | `EloquentEntrenadorLogRepository` (upsert en `trainer_combat_log`), `Controllers/EntrenadorController` (GET listado, POST combatir), `routes.php` (placeholder; rutas reales en `routes/entrenadores.php`) |
+
+Reglas de negocio clave: límite diario 3×3=9 combates por hábitat; `won=true` bloquea al entrenador ese día (upsert con unique `(user_id, habitat_id, level, trainer_index, fought_at)`); perder es repetible; rival determinista por día; sin capturas (no recluta rivales). Documentación exhaustiva: `docs/combate_entrenadores.md` y `src/CombateEntrenadores/context.md`.
+
 ### Crud (`src/Crud/`)
 
 12 submódulos: `Abilities`, `ExploracionesActivas`, `Habitats`, `Pokemon`, `PokemonEvolution`, `PokemonHabitat`, `PokemonStats`, `PokemonTypes`, `Provinces`, `Reclutados`, `TeamMembers`, `Teams`.
@@ -332,7 +344,7 @@ En el **destino** (ver `docs/ddd.md`), Controllers, Models Eloquent y Livewire v
 ## Base de datos
 
 PostgreSQL en el entorno de ejecución (Docker); los tests usan SQLite en memoria (`:memory:`).
-31 migraciones. Esquema relacional:
+32 migraciones. Esquema relacional:
 
 ```
 provinces ──→ habitats ──→ pokemon_habitat ──→ pokemon ──→ pokemon_stats
@@ -343,6 +355,9 @@ provinces ──→ habitats ──→ pokemon_habitat ──→ pokemon ──�
 
 pokemon ──→ reclutados ──→ team_members ──→ teams
                        ──→ exploraciones_activas
+
+users ──→ trainer_combat_log ──→ habitats
+                                  (level, trainer_index, won, fought_at)
 
 Familias evolutivas: grupo de filas de `pokemon` con el MISMO valor en la columna
 `pokemon.evolution_chain_id` (entero, sin FK ni tabla). `caramelos.evolution_chain_id`

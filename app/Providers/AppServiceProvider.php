@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace App\Providers;
 
-use Src\CombateEntrenadores\Domain\Repositories\EntrenadorLogRepositoryInterface;
-use Src\CombateEntrenadores\Infra\EloquentEntrenadorLogRepository;
 use App\Bus\DatabaseUnitOfWork;
 use App\Bus\LaravelCommandBus;
 use App\Support\WebpConverter;
@@ -16,8 +14,12 @@ use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 use Src\Battle\Domain\FabricaBatallaInterface;
 use Src\Battle\Infrastructure\FabricaBatallaMock;
+use Src\CombateEntrenadores\Domain\Repositories\EntrenadorLogRepositoryInterface;
+use Src\CombateEntrenadores\Infra\EloquentEntrenadorLogRepository;
 use Src\Equipos\Domain\TeamRepositoryInterface;
 use Src\Equipos\Infra\EloquentTeamRepository;
+use Src\Gimnasios\Domain\Repositories\GymProgressRepositoryInterface;
+use Src\Gimnasios\Infra\EloquentGymProgressRepository;
 use Src\Habitats\Domain\Repositories\HabitatRepositoryInterface;
 use Src\Habitats\Infra\HabitatRepository;
 use Src\Shared\Bus\CommandBus;
@@ -38,6 +40,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(CommandBus::class, LaravelCommandBus::class);
         $this->app->bind(UnitOfWork::class, DatabaseUnitOfWork::class);
         $this->app->bind(EntrenadorLogRepositoryInterface::class, EloquentEntrenadorLogRepository::class);
+        $this->app->bind(GymProgressRepositoryInterface::class, EloquentGymProgressRepository::class);
     }
 
     /**
