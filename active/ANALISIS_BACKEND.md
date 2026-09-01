@@ -1,138 +1,143 @@
-# ANÁLISIS PREVIO — Bugs A y B del módulo Exploraciones
+# ANÁLISIS_BACKEND — Detalle de reclutados en /equipos + endpoint de liberar
 
-## Bug A: Hallazgos EV/tipo restringidos al pool del hábitat
+## Objetivo
 
-### Diagnóstico
-`SimuladorEncuentros::eventoHallazgo()` genera `caramelo_ev` eligiendo un stat aleatorio 1-6
-y `caramelo_tipo` eligiendo un tipo aleatorio de los 18 `TipoPokemon::cases()`. Esto es incorrecto:
-deben estar restringidos al pool del hábitat (pokémon del hábitat en ese nivel).
+Preparar el backend para que el frontend muestre el detalle de un pokémon reclutado en
+`/equipos` y realice las acciones de "evolucionar" y "liberar":
 
-### Archivos a tocar
+1. Ampliar el payload de `PlayerController::equipos()` para que cada `reclutado` serializado
+   incluya `nivel`, `exp_total`, `base_experience`, `es_shiny` y `stats` (`{name, value}`
+   con label español de `StatEnum` y `base_stat`, ordenadas por stat 1-6), cargando
+   `pokemon.stats` para evitar N+1. Preservar el contrato existente
+   (`pokemon.nombre`, `pokemon.pokemon_id`, `pokemon.types[].tipo_nombre`, `teamIds`,
+   `equiposEnExploracion`).
+2. Nuevo endpoint `DELETE /reclutado/{reclutado}` (`ReclutadoController::destroy`) que
+   elimina un `Reclutado` del usuario: anti-IDOR vía global scope `BelongsToUser` (mismo
+   patrón que `show`), bloqueo 422 si el `TeamMember` está en un equipo en exploración
+   (`Team::isExploring()`), borrado del `TeamMember` primero y luego del `Reclutado` en
+   transacción. Respuesta `{success: true}`.
 
-1. **`src/Exploraciones/App/ProcesarExploracionHandler.php`**
-   - `poolHabitat()`: añadir `->loadMissing('stats')` y mapear `stats` con `effort>0` en el array de retorno.
+## Archivos afectados
 
-2. **`src/Exploraciones/Domain/SimuladorEncuentros.php`**
-   - `generarEventos()`: el pool ahora es `list<array{id, capture_rate, hatch, tipos, stats}>`. 
-     `poolPonderado()` y `elegirPonderado()` siguen funcionando con solo `id`/`capture_rate`/`hatch`.
-   - `generarEvento()`: pasar el pool completo a `eventoHallazgo()`.
-   - `eventoHallazgo()`:
-     - `caramelo_familia`: mantener (elige pokemon del pool, usa pokemon_id).
-     - `caramelo_ev`: elegir pokemon del pool (ponderado). De ese pokemon, elegir UNO de sus stats
-       con effort>0 (aleatorio entre los disponibles). Fallback: si ningún pokemon del pool tiene
-       stats con effort, usar stat aleatorio 1-6.
-     - `caramelo_tipo`: elegir pokemon del pool, luego uno de sus tipos. Fallback: tipo aleatorio.
+### Modificar
+- `app/Http/Controllers/PlayerController.php` — eager load `pokemon.stats`, serialización
+  aditiva de cada reclutado (método privado `serializarReclutado`).
+- `app/Http/Controllers/ReclutadoController.php` — método `destroy(Reclutado): JsonResponse`
+  (anti-IDOR por route-model binding + global scope, 422 en exploración, transacción
+  member→reclutado).
+- `routes/player.php` — `Route::delete('/reclutado/{reclutado}', [ReclutadoController::class, 'destroy']);`
+- `active/ANALISIS_BACKEND.md` — este documento.
 
-### Tests a escribir/actualizar
+### Crear (tests)
+- `tests/Feature/EquiposPayloadTest.php` — payload de `/equipos`.
+- `tests/Feature/ReclutadoLiberarTest.php` — endpoint de liberar.
 
-- **`tests/Unit/SimuladorEncuentrosTest.php`**:
-  - `test_hallazgo_caramelo_ev_desde_pool_con_stats`: verificar que stat se elige del pool.
-  - `test_hallazgo_caramelo_ev_fallback_sin_stats`: verificar fallback a 1-6.
-  - `test_hallazgo_caramelo_tipo_desde_pool_con_tipos`: verificar tipo del pool.
-  - `test_hallazgo_caramelo_tipo_fallback_sin_tipos`: verificar fallback.
-  - Actualizar tests existentes que usan `poolBase()` — ahora necesitan `tipos` y `stats` en el pool.
+### Sin cambios
+- Vistas Blade / JS Alpine (lo hará el agente Frontend).
+- Modelos Eloquent (no se añaden `$appends` globales: la serialización es local al
+  controlador para no alterar Datagrid/otros consumos).
+- `src/Reclutamiento/App/ServicioEvolucion.php` (ya expone `siguienteEvolucion`,
+  `puedeEvolucionar`, `requisitos`, `nivelDe`).
+- Factories: NO se crean. Los tests existentes de los mismos dominios
+  (`EquiposControllerTest`, `ReclutadoEvolucionTest`) crean modelos directamente con
+  `::create()` vía helpers; no hay factories de Reclutado/Team/TeamMember/Pokemon y crear
+  una infraestructura nueva sería deuda (regla "no crear abstracciones preventivas").
 
-- **Tests de ProcesarExploracionHandler** (feature tests, si existen):
-  - Verificar que `poolHabitat()` incluye `stats`.
+## Tests
 
-## Bug B: Emboscada victoriosa no debe generar tiempo perdido
+Todos Feature (controllers + persistencia):
 
-### Diagnóstico
-`EvaluadorExploracion::resolverEmboscada()` línea 136-141: cuando la resolución del encuentro
-es 'victoria' o 'victoria_con_coste', se mapea a 'superada' con `duration_loss = COSTE_EMBOSCADA_VICTORIA`
-(10). El usuario dice: "si he superado una emboscada y gané, no debería generar tiempo perdido".
+### `EquiposPayloadTest`
+- `test_equipos_reclutados_incluyen_nivel_exp_total_base_experience_es_shiny_y_stats`
+  — stats `{name, value}` con labels en español ordenadas por stat 1-6 aunque se inserten
+  desordenadas; `pokemon.types[].tipo_nombre` preservado; contrato base intacto.
+- `test_equipos_sin_stats_devuelve_lista_vacia` — reclutado sin filas de stats → `stats: []`
+  (el tooltip del frontend ya trata listas vacías).
 
-### Cambio
-En `resolverEmboscada()`, cambiar `duration_loss` a 0 cuando la emboscada se supera (victoria).
-La constante `COSTE_EMBOSCADA_VICTORIA` se reasigna a 0 (o se usa 0 directamente). Se elige
-usar la constante con valor 0 para mantener la semántica del nombre.
+### `ReclutadoLiberarTest`
+- `test_liberar_reclutado_sin_equipo_devuelve_success` — 200 `{success:true}`, fila borrada.
+- `test_liberar_reclutado_asignado_a_equipo_inactivo_borra_member_y_reclutado` — 200,
+  `team_members` y `reclutados` borrados.
+- `test_liberar_reclutado_en_equipo_en_exploracion_devuelve_422` — 422, nada se borra.
+- `test_liberar_reclutado_de_otro_usuario_devuelve_404` — anti-IDOR → 404 (global scope),
+  la fila ajena permanece.
 
-### Tests a actualizar
+## Diseño
 
-- **`tests/Unit/Exploraciones/EvaluadorExploracionTest.php`**:
-  - `test_emboscada_sin_vanguardia_superada_al_vencer`: espera `duration_loss` 0 (antes 10).
-  - `test_emboscada_con_vanguardia_detecta_y_evita`: ya espera 0, sin cambios.
+- Serialización local en `PlayerController` (no `$appends` en modelos): cada item =
+  `$reclutado->toArray()` + claves aditivas `nivel`, `exp_total`, `base_experience`,
+  `es_shiny`, `stats`; `pokemon.types` se re-serializa añadiendo `tipo_nombre` (accesor que
+  no se incluye en `toArray()` por defecto y que el frontend ya consume).
+- `destroy`: route-model binding `Reclutado $reclutado`; el global scope `BelongsToUser`
+  hace que un reclutado ajeno resuelva 404 (idéntico a `show`). `$reclutado->teamMember`
+  (HasOne) → si existe y `$member->team?->isExploring()` → 422; si no, `DB::transaction`
+  borra el member y el reclutado. El FK `team_members.pokemon_id → reclutados.id` es
+  `ON DELETE CASCADE`, pero el borrado explícito del member primero documenta la intención
+  y evita depender del cascade.
+- Nombre del método: `destroy` (convención REST Laravel en `app/`, igual que
+  `TeamController::destroy`).
 
-## Riesgos identificados
+## Riesgos
 
-1. Los tests existentes de `SimuladorEncuentrosTest` usan un pool sin `tipos`/`stats` →
-   hay que actualizar el pool base para incluir `tipos` y `stats` en los tests de hallazgo.
-2. Los tests que no ejercitan `eventoHallazgo` (encuentros, emboscadas, contratiempos) no
-   necesitan cambiar porque `poolPonderado` solo consume `id`/`capture_rate`/`hatch`.
-3. El cambio en `EvaluadorExploracion` rompe tests existentes que esperan `duration_loss=10`
-   → actualizar assertions.
+- El contrato previo de `@json($reclutados)` era la serialización directa de los modelos
+  (`exp` como `{total, tipos}` vía cast, `user_id`, timestamps). Mantener `toArray()` como
+  base y añadir claves preserva el contrato; ninguna clave existente se elimina.
+- `base_experience`/`stats` pueden ser `null`/`[]` si el `Pokemon` no existe o no tiene
+  stats (pokemon_id required; casos legacy): el frontend (tooltip) ya tolera listas vacías.
+- `tipo_nombre` en `pokemon.types` es aditivo: donde el frontend ya lo esperaba ahora
+  funciona, y donde antes no estaba (types del payload actual) no rompe nada.
+
 ---
 
-# ANÁLISIS PREVIO — Comando `caramelos:sync-regionales`
+## Iteración anterior — Escalado de stats de combate en entrenadores de ruta + nivel real en la fórmula de daño
 
-## Contexto
+## Objetivo
 
-- Los caramelos de familia se muestran como imágenes en `public/images/candy_pokemon/{pokemon_id}.webp`
-  (vistas `resources/views/exploraciones/_evento.blade.php` y `_caramelo.blade.php`).
-- Los pokémon regionales (Alola/Galar/Hisui/Paldea) tienen ids distintos (p.ej. 10091) pero pertenecen
-  a la misma familia evolutiva que el normal (p.ej. 19 Rattata). Su caramelo debe mostrar la MISMA imagen.
-- Solo existen imágenes para los ids base (generadas manualmente); los regionales no tienen → fallback a `0.webp`.
-- Regla "base de familia = menor species_id" ya existe en
-  `src/Exploraciones/Presentation/TransformadorResultadoExploracion::pokemonBaseDeCadena()`.
-- Requisito del usuario: "identifica por bbdd los id y copia las imagenes, no hace falta nada mas".
+Corregir el desequilibrio de daño en combates de entrenadores de ruta:
 
-## Investigación previa (confirmada en la BD dev real)
+1. `BattleStats` debe conocer su nivel (propiedad `nivel` + getter), para que la fórmula de daño pueda usarlo.
+2. `ManejadorDanioBase` debe usar el nivel real del atacante (`battleStats()->nivel`) en lugar del 50 hardcodeado.
+3. `IniciarCombateEntrenador` debe escalar al jugador (nivel del usuario) y al rival (fórmula de gimnasios con `min_lvl_{1|2|3}` del hábitat).
+4. `GeneradorEquipoEntrenador` debe aceptar `nivelRival` opcional y pasarlo a `MapeadorPokemonBatalla::desdePokemon()`.
+5. `EntrenadorController::combatir()` debe pasar `nivelJugador` a `iniciar()`.
 
-- `storage/data/pokemon.csv`: nombres de variantes regionales con sufijo `-alola`, `-galar`, `-hisui`,
-  `-paldea` (58 variantes). Sufijos compuestos: `tauros-paldea-aqua-breed`, `darmanitan-galar-standard`,
-  `darmanitan-galar-zen`. El prefijo antes del primer sufijo regional = nombre base (ej. `rattata`).
-- `storage/data/pokemon_species.csv`: nombres con guion que NO son regionales (nidoran-f, mr-mime, ho-oh,
-  porygon-z, type-null, tapu-*, iron-*, etc.) — se ignoran porque no contienen los sufijos regionales.
-- BD dev (`php artisan tinker`, 1083 pokémon con `evolution_chain_id`): 58 regionales, todos mapean a un
-  base por prefijo de nombre (0 huérfanos). 29 bases tienen imagen `candy_pokemon/{base}.webp`; 0 variantes
-  tienen imagen aún. → 29 copias, 29 `sin_origen` (falta la imagen del base, p.ej. darmanitan-standard 555).
+## Archivos afectados
 
-## Por qué NO vale agrupar por `evolution_chain_id` (decisión)
+### Modificar (código)
+- `src/Pokemon/Domain/Stats/BattleStats.php` — añadir `public readonly int $nivel`, asignarlo en `calcularStats()`, getter `nivel()`.
+- `src/Battle/Domain/Chain/ManejadorDanioBase.php` — `$nivel = $action->attacker->pokemon()->battleStats()->nivel ?? 50;`.
+- `src/CombateEntrenadores/App/IniciarCombateEntrenador.php` — nuevo parámetro `int $nivelJugador`, escalar jugador, calcular y pasar `$nivelRival`.
+- `src/CombateEntrenadores/App/GeneradorEquipoEntrenador.php` — `?int $nivelRival = null` en `generar()`, pasarlo a `desdePokemon()`.
+- `src/CombateEntrenadores/Infra/Controllers/EntrenadorController.php` — pasar `nivelJugador`.
 
-- El seeder (`database/seeders/PokemonSeeder.php`, `REGION_CODES`) asigna a CADA variante regional una cadena
-  PROPIA (`10000 + regionCode*1000 + chainNormal`): meowth-alola → 11022, meowth-galar → 12022; el normal
-  meowth → chain normal. Por tanto `evolution_chain_id` NO agrupa la variante con su base normal.
-- Criterio correcto (y pedido por el usuario: "identifica por bbdd los id"): **matching por NOMBRE base**.
-  Variante cuyo nombre contiene un sufijo regional → prefijo antes del guion → base = pokémon NO regional de
-  menor `species_id` cuyo nombre empiece por ese prefijo (p.ej. `rattata-alola` → prefijo `rattata` → base 19).
+### Modificar (tests — expects de daño a nivel 100)
+El mock (`ConstruyeCombatientes` / `FabricaBatallaMock`) no pasa nivel → `BattleStats` usa default 100. Los asserts de daño que asumían nivel 50 deben reflejar el nivel 100:
+- `tests/Unit/Battle/CadenaDanioTest.php` (24→44, 36/24→66/44; clamp sin cambio)
+- `tests/Unit/Battle/ManejadorPosicionTest.php` (12→22, 24→44)
+- `tests/Unit/Battle/ManejadorClimaTest.php` (24→44, 30→55, 18→33, 19→35; 44·1.25=55, 44·0.75=33, floor(44·0.8)=35)
+- `tests/Unit/Battle/EfectoOrbeVidaTest.php` (31→57 = floor(44·1.3))
 
-## Qué voy a tocar
+### Sin cambios
+- `src/CombateEntrenadores/App/ObtenerEntrenadoresHabitat.php` — sigue llamando a `generar()` sin `nivelRival` (param opcional null → stats/default actuales; preview sin escalado, ok).
 
-- CREAR `app/Console/Commands/SyncCandyRegionales.php` (firma `caramelos:sync-regionales`):
-  - `handle()`: consulta `Pokemon` (`id, name, species_id, evolution_chain_id`) con `evolution_chain_id`
-    no nulo; delega en `sincronizar()`; imprime copiadas/ya existían/sin origen.
-  - `sincronizar(array $pokemons, string $directorio)`: pública, para poder testear sin BD; devuelve
-    `{copiadas, ya_existian, sin_origen}`. Idempotente (no sobrescribe si el destino existe); si falta el
-    origen → `sin_origen`.
-  - `mapearVariantes(array $pokemons)`: pública, pura — variante_id => base_id por prefijo de nombre.
-- NINGÚN otro archivo (sin vistas, sin docs, sin migraciones).
+## Tests
 
-## Tests a escribir (TDD, unit de la lógica del comando)
+- Unit (Battle): asserts de daño actualizados a nivel 100 en los 4 archivos citados.
+- Feature: `tests/Feature/CombateLivewireTest.php` y suite `--filter=Gimnasio` (sin expects de daño; verificación de que nada se rompe).
 
-- `tests/Unit/SyncCandyRegionalesTest.php`:
-  - `test_mapeo_variantes_regionales_por_prefijo_de_nombre`: rattata-alola → 19, meowth-alola → 52,
-    meowth-galar → 52 (misma familia normal), sandshrew-alola → 27, sandslash-alola → 28 (distinta base
-    por prefijo), tauros-paldea-*-breed → 128, darmanitan-galar-standard → 555 (prefijo `darmanitan` →
-    `darmanitan-standard`).
-  - `test_mapeo_ignora_no_regionales_y_nombres_con_guion_no_regional`: nidoran-f/mr-mime/ho-oh no generan
-    entradas.
-  - `test_mapeo_sin_base_omite_variante`: variante sin base → no aparece en el mapa.
-  - `test_sincronizar_copia_imagen_del_base_a_la_variante`: crea fichero destino con el contenido del origen.
-  - `test_sincronizar_no_sobrescribe_si_el_destino_existe`: ya_existian++, el destino se conserva.
-  - `test_sincronizar_sin_origen_cuenta_sin_origen`: base sin imagen → sin_origen++.
-  - `test_sincronizar_devuelve_conteos_acumulados`: escenario mixto copiadas/ya/sin.
-- Test feature del comando (`php artisan caramelos:sync-regionales`) contra la BD dev: verificación manual
-  de ejecución (no test automático; requiere Postgres + assets).
+Comandos de validación final:
+- `php artisan test --compact --filter=Gimnasio`
+- `php artisan test --compact tests/Feature/CombateLivewireTest.php`
+- `php artisan test --compact tests/Unit/Battle/`
 
-## Riesgos identificados
+## Diseño
 
-1. Falsos positivos de prefijo por `str_starts_with`: verificar en tests (p.ej. `sandshrew-alola` →
-   `sandshrew` 27, NO `sandslash` 28). La regla "menor species_id + empiece por prefijo" lo controla.
-2. `darmanitan` normal se llama `darmanitan-standard` (is_default) → el prefijo `darmanitan` matchea con
-   `str_starts_with`. Cubierto por test.
-3. La BD dev puede no estar arrancada → el comando debe al menos no fallar (handle con try? No: si no hay
-   BD, tinker falla igual; el comando no debe romper por assets faltantes). Si la BD no está, se documenta.
-4. El comando escribe en `public/images/candy_pokemon/` → ejecución en local SÍ crea ficheros reales
-   (comportamiento deseado; idempotente en ejecuciones siguientes).
-5. PHPStan nivel 6 + Pint + PHPMD: el archivo nuevo debe pasar (tipado estricto, PHPDoc con array-shapes).
+- `BattleStats::$nivel` — propiedad pública readonly `int`, asignada una sola vez en `calcularStats()` (llamado desde el constructor). Getter `nivel(): int` por coherencia.
+- Serialización: `BattleStats` no define `__serialize/__unserialize`; la propiedad nueva se serializa con el mecanismo por defecto (PHP ≥ 8.1 soporta readonly en unserialize por defecto). Sesiones antiguas sin la propiedad: el `?? 50` de `ManejadorDanioBase` evita error (null-coalescing no lanza con propiedad no inicializada/inexistente). `SESSION_VERSION` ya está en 6 (bump de la tarea previa).
+- `IniciarCombateEntrenador::iniciar()`: nueva firma `(habitatId, nivel, trainerIndex, teamId, userId, nivelJugador, fecha, formacion = [])`. Rival: `$habitat = Habitat::query()->find($habitatId)`, `$minLvl = $habitat?->getAttribute('min_lvl_'.$nivel) ?? 1`, `$nivelRival = $minLvl + intdiv($nivelJugador - $minLvl, 2)` (fórmula literal del brief).
 
+## Riesgos
+
+- Cambio de valores de daño en tests de Battle: corrección legítima de balance (nivel real vs 50).
+- `Auth::user()` nullable en `EntrenadorController`: se sigue el patrón de `GimnasioController` (`$user = Auth::user(); $user->nivel()`), no `Auth::user()->nivel()` inline, para no romper PHPStan 6.
+- Sin clamp `max(0, ...)` en la fórmula de entrenadores: el brief especifica la fórmula literal; a diferencia de gimnasios no hay bloqueo por nivel mínimo.

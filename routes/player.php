@@ -39,7 +39,8 @@ Route::post('/teams/update-member-role', [TeamController::class, 'updateMemberRo
 // Update member role (PATCH RESTful, compatible hacia atrás)
 Route::patch('/teams/member/{member}/role', [TeamController::class, 'updateMemberRole']);
 
-// Reclutado detail: type candy feeding + evolution
+// Reclutado detail: type candy feeding + evolution + release
 Route::get('/reclutado/{reclutado}', [ReclutadoController::class, 'show']);
 Route::post('/reclutado/{reclutado}/dar-caramelo', [ReclutadoController::class, 'darCaramelo']);
 Route::post('/reclutado/{reclutado}/evolucionar', [ReclutadoController::class, 'evolucionar']);
+Route::delete('/reclutado/{reclutado}', [ReclutadoController::class, 'destroy']);

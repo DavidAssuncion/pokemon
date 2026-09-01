@@ -116,4 +116,29 @@ class ReclutadoController extends Controller
 
         return response()->json(['success' => true, 'pokemon_id' => $siguiente->id]);
     }
+
+    /**
+     * Libera (elimina) un reclutado del usuario.
+     *
+     * Anti-IDOR: el route-model binding + global scope BelongsToUser de Reclutado
+     * devuelven 404 para reclutados ajenos (mismo patrón que show).
+     * Bloqueado con 422 si el reclutado pertenece a un equipo en exploración.
+     */
+    public function destroy(Reclutado $reclutado): JsonResponse
+    {
+        $teamMember = $reclutado->teamMember;
+
+        if ($teamMember?->team?->isExploring()) {
+            return response()->json([
+                'error' => 'No se puede liberar un pokémon de un equipo en exploración',
+            ], 422);
+        }
+
+        DB::transaction(function () use ($reclutado, $teamMember): void {
+            $teamMember?->delete();
+            $reclutado->delete();
+        });
+
+        return response()->json(['success' => true]);
+    }
 }

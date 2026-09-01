@@ -8,6 +8,8 @@ use App\Datagrid\DatagridService;
 use App\Enums\StatEnum;
 use App\Enums\TipoEnum;
 use App\Models\ExploracionActiva;
+use App\Models\PokemonStat;
+use App\Models\PokemonType;
 use App\Models\Reclutable;
 use App\Models\Reclutado;
 use App\Models\Team;
@@ -16,6 +18,7 @@ use Illuminate\View\View;
 use Src\Equipos\App\ObtenerEquipos;
 use Src\Exploraciones\Domain\RolExploracion;
 use Src\Exploraciones\Domain\SinergiaEquipo;
+use Src\Shared\Domain\NivelHelper;
 
 class PlayerController extends Controller
 {
@@ -93,11 +96,15 @@ class PlayerController extends Controller
             ];
         })->all();
 
-        $reclutados = Reclutado::with('pokemon.types')->get();
+        $reclutadosQuery = Reclutado::with(['pokemon.types', 'pokemon.stats', 'teamMember'])->get();
 
-        $teamIds = $reclutados->filter(function ($r) {
-            return $r->teamMember !== null;
-        })->pluck('id')->toArray();
+        $teamIds = $reclutadosQuery->filter(
+            fn (Reclutado $r): bool => $r->teamMember !== null
+        )->pluck('id')->toArray();
+
+        $reclutados = $reclutadosQuery
+            ->map(fn (Reclutado $reclutado): array => $this->serializarReclutado($reclutado))
+            ->values();
 
         $equiposEnExploracion = ExploracionActiva::whereNull('regreso')
             ->get()
@@ -110,5 +117,61 @@ class PlayerController extends Controller
             'teamIds' => $teamIds,
             'equiposEnExploracion' => $equiposEnExploracion,
         ]);
+    }
+
+    /**
+     * Serializa un reclutado para /equipos preservando el contrato existente
+     * (pokemon.types[].tipo_nombre, campos base) y añadiendo nivel, exp_total,
+     * base_experience, es_shiny y stats ordenadas por stat (1-6).
+     *
+     * @return array<string, mixed>
+     */
+    private function serializarReclutado(Reclutado $reclutado): array
+    {
+        $datos = $reclutado->toArray();
+
+        $datos['nivel'] = NivelHelper::nivelDesdeExperiencia($reclutado->exp->total());
+        $datos['exp_total'] = $reclutado->exp->total();
+        $datos['base_experience'] = $reclutado->pokemon?->base_experience;
+        $datos['es_shiny'] = $reclutado->es_shiny;
+        $datos['stats'] = $this->statsDe($reclutado);
+
+        if ($reclutado->pokemon?->types->isNotEmpty()) {
+            $datos['pokemon']['types'] = $this->tiposDe($reclutado);
+        }
+
+        return $datos;
+    }
+
+    /**
+     * Stats base del pokémon como {name, value} con label en español,
+     * ordenadas por stat (1-6).
+     *
+     * @return list<array{name: string, value: int}>
+     */
+    private function statsDe(Reclutado $reclutado): array
+    {
+        return $reclutado->pokemon?->stats
+            ->sortBy(fn (PokemonStat $stat): int => $stat->stat->value)
+            ->map(fn (PokemonStat $stat): array => [
+                'name' => $stat->stat->label(),
+                'value' => $stat->base_stat,
+            ])
+            ->values()
+            ->all() ?? [];
+    }
+
+    /**
+     * Tipos del pokémon preservando el contrato del frontend
+     * (`tipo_nombre` en español además de los campos serializados).
+     *
+     * @return list<array<string, mixed>>
+     */
+    private function tiposDe(Reclutado $reclutado): array
+    {
+        return $reclutado->pokemon?->types
+            ->map(fn (PokemonType $tipo): array => $tipo->toArray() + ['tipo_nombre' => $tipo->tipo_nombre])
+            ->values()
+            ->all() ?? [];
     }
 }
