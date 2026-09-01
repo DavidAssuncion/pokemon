@@ -58,7 +58,7 @@ class EfectoOrbeVidaTest extends TestCase
         mt_srand(1); // sin crítico
         $daño = $this->chain->calculate($accion);
 
-        $this->assertSame(31.0, $daño); // 24 * 1.3 = 31.2 → floor 31
+        $this->assertSame(57.0, $daño); // 44 * 1.3 = 57.2 → floor 57
     }
 
     public function test_orbe_vida_recoil_10_por_ciento(): void

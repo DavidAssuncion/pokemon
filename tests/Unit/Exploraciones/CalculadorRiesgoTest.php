@@ -54,7 +54,7 @@ class CalculadorRiesgoTest extends TestCase
 
     public function test_tipo_sin_ventaja_genera_fracaso_asegurado(): void
     {
-        // Planta contra pool Fuego/Volador: ambos matchups negativos (defensa 2.0) →
+        // Planta contra pool Fuego/Volador: ambos matchups negativos (defensa 1.5) →
         // matchups críticos → Fracaso asegurado aunque la capacidad sea alta.
         $resultado = CalculadorRiesgo::evaluar(
             peligro: 1,
@@ -73,7 +73,7 @@ class CalculadorRiesgoTest extends TestCase
         $this->assertCount(2, $resultado['matchups']);
         $this->assertSame(['Planta'], $resultado['matchups'][0]['miembro_tipos']);
         $this->assertSame('Fuego', $resultado['matchups'][0]['pool_tipo']);
-        $this->assertSame(2.0, $resultado['matchups'][0]['defensa']);
+        $this->assertSame(1.5, $resultado['matchups'][0]['defensa']);
         $this->assertSame(CalculadorMatchups::NEGATIVO, $resultado['matchups'][0]['clasificacion']);
         $this->assertSame('Volador', $resultado['matchups'][1]['pool_tipo']);
         $this->assertSame(CalculadorMatchups::NEGATIVO, $resultado['matchups'][1]['clasificacion']);

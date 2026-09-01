@@ -246,13 +246,14 @@
                                     >
                                 </div>
                                 <p class="text-[10px] text-gray-600 dark:text-gray-400 truncate px-1 pb-1" x-text="pokemon.nombre"></p>
-                                <!-- Add button -->
-                                <div class="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center rounded-lg">
+                                <!-- Action buttons -->
+                                <div class="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2 rounded-lg">
                                     <div class="relative">
                                         <button
                                             @click="showTeamDropdown = !showTeamDropdown"
                                             class="w-8 h-8 bg-green-500 text-white rounded-full flex items-center justify-center hover:bg-green-600 transition-colors text-lg font-bold"
                                             :aria-label="'Agregar ' + pokemon.nombre + ' a equipo'"
+                                            :title="'Agregar ' + pokemon.nombre + ' a equipo'"
                                         >
                                             +
                                         </button>
@@ -269,6 +270,18 @@
                                             </div>
                                         </template>
                                     </div>
+                                    <!-- Inspect (always available, read-only) -->
+                                    <button
+                                        @click="openDetail(pokemon)"
+                                        class="w-8 h-8 bg-blue-500 text-white rounded-full flex items-center justify-center hover:bg-blue-600 transition-colors"
+                                        :aria-label="'Ver detalle de ' + pokemon.nombre"
+                                        :title="'Ver detalle de ' + pokemon.nombre"
+                                    >
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                                        </svg>
+                                    </button>
                                 </div>
                             </div>
                         </template>
@@ -302,11 +315,26 @@
                                     >
                                 </div>
                                 <p class="text-[10px] text-gray-500 dark:text-gray-500 truncate px-1 pb-1" x-text="pokemon.nombre"></p>
-                                <!-- Remove button -->
-                                <div class="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                <!-- Action buttons -->
+                                <div class="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                                    <!-- Inspect (always available, read-only) -->
                                     <button
-                                        @click="removeFromTeam(pokemon)"
-                                        class="w-8 h-8 bg-orange-500 text-white rounded-full flex items-center justify-center hover:bg-orange-600 transition-colors text-sm"
+                                        @click="openDetail(pokemon)"
+                                        class="w-8 h-8 bg-blue-500 text-white rounded-full flex items-center justify-center hover:bg-blue-600 transition-colors"
+                                        :aria-label="'Ver detalle de ' + pokemon.nombre"
+                                        :title="'Ver detalle de ' + pokemon.nombre"
+                                    >
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                                        </svg>
+                                    </button>
+                                    <!-- Remove from team (blocked while the team is exploring) -->
+                                    <button
+                                        @click="!pokemonEnExploracion(pokemon) && removeFromTeam(pokemon)"
+                                        :disabled="pokemonEnExploracion(pokemon)"
+                                        :title="pokemonEnExploracion(pokemon) ? 'El equipo está en exploración' : 'Quitar ' + pokemon.nombre + ' de equipo'"
+                                        class="w-8 h-8 bg-orange-500 text-white rounded-full flex items-center justify-center hover:bg-orange-600 transition-colors text-sm disabled:opacity-30 disabled:cursor-not-allowed"
                                         :aria-label="'Quitar ' + pokemon.nombre + ' de equipo'"
                                     >
                                         →
@@ -360,36 +388,127 @@
         </div>
     </template>
 
-    <!-- Pokemon Tooltip (hover stats) -->
-    <template x-if="hoveredPokemon">
-        <div
-            class="fixed z-50 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-lg p-4 w-56 pointer-events-none"
-            :style="'left: ' + tooltipX + 'px; top: ' + tooltipY + 'px'"
-        >
-            <div class="text-center mb-2">
-                <img
-                    :src="'/images/iconos_webp/' + hoveredPokemon.pokemon_id + '.webp'"
-                    loading="lazy"
-                    decoding="async"
-                    :alt="hoveredPokemon.nombre"
-                    class="w-24 h-24 object-contain mx-auto"
-                >
-                <p class="text-sm font-medium text-gray-900 dark:text-white mt-1" x-text="hoveredPokemon.nombre"></p>
-                <p class="text-xs text-gray-400 dark:text-gray-500" x-text="'#' + hoveredPokemon.pokemon_id"></p>
-            </div>
-            <template x-if="hoveredPokemon.stats && hoveredPokemon.stats.length > 0">
-                <div class="space-y-1">
-                    <template x-for="stat in hoveredPokemon.stats" :key="stat.name">
-                        <div class="flex items-center gap-2">
-                            <span class="text-[10px] text-gray-500 dark:text-gray-400 w-14 text-right" x-text="stat.name"></span>
-                            <div class="flex-1 h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
-                                <div class="h-full bg-blue-500 rounded-full" :style="'width: ' + Math.min((stat.value / 255) * 100, 100) + '%'"></div>
+    <!-- Pokemon Detail Modal -->
+    <template x-if="showDetailModal">
+        <div class="fixed inset-0 z-50 flex items-center justify-center p-4" @keydown.escape.window="closeDetail()" role="dialog" aria-modal="true" aria-labelledby="detail-modal-title">
+            <div class="absolute inset-0 bg-black/60" @click="closeDetail()"></div>
+            <div class="relative bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
+                <!-- Header -->
+                <div class="flex items-start gap-4 p-6 border-b border-gray-100 dark:border-gray-700">
+                    <div class="w-24 h-24 shrink-0 rounded-lg bg-gray-50 dark:bg-gray-900/50 flex items-center justify-center overflow-hidden">
+                        <img
+                            :src="'/images/iconos_webp/' + detailPokemon.pokemon_id + '.webp'"
+                            loading="lazy"
+                            decoding="async"
+                            :alt="detailPokemon.nombre"
+                            class="w-full h-full object-contain"
+                            onerror="this.style.display='none'"
+                        >
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <div class="flex items-center gap-2 flex-wrap">
+                            <h3 id="detail-modal-title" class="text-lg font-bold text-gray-900 dark:text-white capitalize truncate" x-text="detailPokemon.nombre"></h3>
+                            <template x-if="detailPokemon.es_shiny">
+                                <span class="px-1.5 py-0.5 bg-yellow-100 dark:bg-yellow-900/40 text-yellow-700 dark:text-yellow-400 text-[10px] font-bold rounded uppercase" title="Shiny">★ Shiny</span>
+                            </template>
+                        </div>
+                        <p class="text-xs text-gray-400 dark:text-gray-500" x-text="'#' + detailPokemon.pokemon_id"></p>
+                        <div class="flex items-center gap-2 mt-1 flex-wrap">
+                            <span class="px-2 py-0.5 bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-400 text-xs font-bold rounded-full">Nv <span x-text="nivelDe(detailPokemon)"></span></span>
+                            <span class="text-xs text-gray-500 dark:text-gray-400" x-text="formatExp(expTotalDe(detailPokemon)) + ' exp'"></span>
+                        </div>
+                        <!-- Progress to next level -->
+                        <div class="mt-2">
+                            <div class="flex items-center justify-between text-[10px] text-gray-400 dark:text-gray-500 mb-1">
+                                <span>Progreso al siguiente nivel</span>
+                                <span x-text="progresoNivelDe(detailPokemon) + '%'"></span>
                             </div>
-                            <span class="text-[10px] font-medium text-gray-700 dark:text-gray-300 w-6" x-text="stat.value"></span>
+                            <div class="h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                                <div class="h-full bg-blue-500 rounded-full transition-all duration-500" :style="'width: ' + progresoNivelDe(detailPokemon) + '%'"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <button
+                        @click="closeDetail()"
+                        class="shrink-0 w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                        aria-label="Cerrar"
+                    >
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                        </svg>
+                    </button>
+                </div>
+
+                <div class="p-6 space-y-5">
+                    <!-- Types -->
+                    <template x-if="detailPokemon.pokemon?.types?.length">
+                        <div class="flex items-center gap-2 flex-wrap">
+                            <template x-for="t in detailPokemon.pokemon.types" :key="t.id ?? t.slot ?? t.type">
+                                <span class="px-2 py-0.5 text-xs font-medium rounded-full inline-flex items-center" :class="tipoClase(tipoLabelDel(t))" x-text="tipoLabelDel(t)"></span>
+                            </template>
                         </div>
                     </template>
+
+                    <!-- Base experience -->
+                    <template x-if="baseExperienceDe(detailPokemon) != null">
+                        <div class="flex items-center justify-between text-sm">
+                            <span class="text-gray-500 dark:text-gray-400">Exp. base</span>
+                            <span class="font-medium text-gray-800 dark:text-gray-200" x-text="formatExp(baseExperienceDe(detailPokemon))"></span>
+                        </div>
+                    </template>
+
+                    <!-- Base stats -->
+                    <template x-if="statsDe(detailPokemon).length > 0">
+                        <div>
+                            <h4 class="text-xs font-bold uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-2">Stats base</h4>
+                            <div class="space-y-1.5">
+                                <template x-for="stat in statsDe(detailPokemon)" :key="stat.name">
+                                    <div class="flex items-center gap-2">
+                                        <span class="text-[10px] text-gray-500 dark:text-gray-400 w-20 text-right truncate" x-text="stat.name"></span>
+                                        <div class="flex-1 h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                                            <div class="h-full bg-blue-500 rounded-full" :style="'width: ' + Math.min((stat.value / 255) * 100, 100) + '%'"></div>
+                                        </div>
+                                        <span class="text-[10px] font-medium text-gray-700 dark:text-gray-300 w-6" x-text="stat.value"></span>
+                                    </div>
+                                </template>
+                            </div>
+                        </div>
+                    </template>
+
+                    <!-- Locked while exploring -->
+                    <template x-if="pokemonEnExploracion(detailPokemon)">
+                        <div class="px-3 py-2 rounded-lg bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400 text-xs" role="status">
+                            Este Pokémon está en un equipo en exploración: no puedes evolucionarlo ni liberarlo hasta que vuelva.
+                        </div>
+                    </template>
+
+                    <!-- Evolution / release actions -->
+                    <div class="border-t border-gray-100 dark:border-gray-700 pt-4">
+                        <h4 class="text-xs font-bold uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-2">Evolución</h4>
+                        <div class="flex flex-col sm:flex-row gap-2">
+                            <button
+                                @click="evolvePokemon()"
+                                :disabled="detailLoading || pokemonEnExploracion(detailPokemon)"
+                                :title="pokemonEnExploracion(detailPokemon) ? 'El equipo está en exploración' : 'Evolucionar Pokémon'"
+                                class="flex-1 px-4 py-2.5 bg-green-600 text-white rounded-lg text-sm font-bold hover:bg-green-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                            >
+                                <span x-text="detailLoading ? 'Evolucionando…' : 'Evolucionar'"></span>
+                            </button>
+                            <button
+                                @click="releasePokemon()"
+                                :disabled="detailLoading || pokemonEnExploracion(detailPokemon)"
+                                :title="pokemonEnExploracion(detailPokemon) ? 'El equipo está en exploración' : 'Liberar Pokémon'"
+                                class="flex-1 px-4 py-2.5 bg-red-600 text-white rounded-lg text-sm font-bold hover:bg-red-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                            >
+                                Liberar
+                            </button>
+                        </div>
+                        <p class="text-[10px] text-gray-400 dark:text-gray-500 mt-2">
+                            La evolución consume caramelos y exp de tipo; los requisitos se validan al intentar evolucionar.
+                        </p>
+                    </div>
                 </div>
-            </template>
+            </div>
         </div>
     </template>
 </div>
@@ -410,9 +529,9 @@ function equiposApp() {
         showTypeFilter: false,
         showDeleteModal: false,
         teamToDelete: null,
-        hoveredPokemon: null,
-        tooltipX: 0,
-        tooltipY: 0,
+        showDetailModal: false,
+        detailPokemon: null,
+        detailLoading: false,
 
         init() {
             // Close type filter on outside click
@@ -424,7 +543,11 @@ function equiposApp() {
         },
 
         isInExploration(teamId) {
-            return this.equiposEnExploracion.some(e => e.equipo_id === teamId);
+            // Defensivo con ambos contratos: el backend hoy envía un array plano de
+            // equipo_id (pluck), y la vista asumía objetos {equipo_id}.
+            return this.equiposEnExploracion.some(e =>
+                typeof e === 'object' && e !== null ? e.equipo_id === teamId : e === teamId
+            );
         },
 
         get availablePokemons() {
@@ -705,6 +828,213 @@ function equiposApp() {
                     // Ignorar: el cuerpo no es JSON
                 }
                 alert(message);
+            }
+        },
+
+        // ─── Modal de detalle ──────────────────────────────────────────────
+
+        openDetail(pokemon) {
+            this.detailPokemon = pokemon;
+            this.detailLoading = false;
+            this.showDetailModal = true;
+        },
+
+        closeDetail() {
+            this.showDetailModal = false;
+            this.detailPokemon = null;
+            this.detailLoading = false;
+        },
+
+        // ─── Nivel/exp (replica NivelHelper: curva media ×10) ──────────────
+
+        expTotalDe(pokemon) {
+            if (!pokemon) return 0;
+            if (typeof pokemon.exp_total === 'number') return pokemon.exp_total;
+            return pokemon.exp && typeof pokemon.exp.total === 'number' ? pokemon.exp.total : 0;
+        },
+
+        expParaNivel(nivel) {
+            return 10 * Math.pow(nivel, 3);
+        },
+
+        nivelDe(pokemon) {
+            if (pokemon && typeof pokemon.nivel === 'number' && pokemon.nivel >= 1) return pokemon.nivel;
+
+            const exp = this.expTotalDe(pokemon);
+            if (exp <= 0) return 1;
+
+            const base = exp / 10;
+            let nivel = Math.floor(Math.cbrt(base));
+            while (Math.pow(nivel + 1, 3) <= base) nivel++;
+            while (Math.pow(nivel, 3) > base) nivel--;
+
+            return Math.max(1, nivel);
+        },
+
+        progresoNivelDe(pokemon) {
+            const exp = this.expTotalDe(pokemon);
+            const nivel = this.nivelDe(pokemon);
+            const inicio = this.expParaNivel(nivel);
+            const fin = this.expParaNivel(nivel + 1);
+            const rango = fin - inicio;
+            if (rango <= 0) return 100;
+
+            return Math.max(0, Math.min(100, Math.round(((exp - inicio) / rango) * 100)));
+        },
+
+        formatExp(exp) {
+            return Number(exp || 0).toLocaleString('es-ES');
+        },
+
+        statsDe(pokemon) {
+            if (!pokemon) return [];
+            if (Array.isArray(pokemon.stats) && pokemon.stats.length > 0) return pokemon.stats;
+            if (pokemon.pokemon && Array.isArray(pokemon.pokemon.stats) && pokemon.pokemon.stats.length > 0) return pokemon.pokemon.stats;
+            return [];
+        },
+
+        baseExperienceDe(pokemon) {
+            if (!pokemon) return null;
+            if (typeof pokemon.base_experience === 'number') return pokemon.base_experience;
+            if (pokemon.pokemon && typeof pokemon.pokemon.base_experience === 'number') return pokemon.pokemon.base_experience;
+            return null;
+        },
+
+        // ─── Tipos (defensivo: tipo_nombre si el backend lo expone; si no, mapa TipoEnum int → español) ───
+
+        tipoLabelDel(t) {
+            if (!t) return 'Tipo';
+            if (t.tipo_nombre) return t.tipo_nombre;
+            if (typeof t.type === 'number') {
+                const nombres = {
+                    1: 'Normal', 2: 'Lucha', 3: 'Volador', 4: 'Veneno', 5: 'Tierra', 6: 'Roca',
+                    7: 'Bicho', 8: 'Fantasma', 9: 'Acero', 10: 'Fuego', 11: 'Agua', 12: 'Planta',
+                    13: 'Eléctrico', 14: 'Psíquico', 15: 'Hielo', 16: 'Dragón', 17: 'Siniestro', 18: 'Hada',
+                };
+                return nombres[t.type] || ('#' + t.type);
+            }
+            return t.type || 'Tipo';
+        },
+
+        tipoClase(nombre) {
+            const mapa = {
+                'normal': 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300',
+                'lucha': 'bg-red-100 text-red-700 dark:bg-red-900/50 dark:text-red-300',
+                'volador': 'bg-sky-100 text-sky-700 dark:bg-sky-900/50 dark:text-sky-300',
+                'veneno': 'bg-purple-100 text-purple-700 dark:bg-purple-900/50 dark:text-purple-300',
+                'tierra': 'bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-300',
+                'roca': 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/50 dark:text-yellow-300',
+                'bicho': 'bg-lime-100 text-lime-700 dark:bg-lime-900/50 dark:text-lime-300',
+                'fantasma': 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/50 dark:text-indigo-300',
+                'acero': 'bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-300',
+                'fuego': 'bg-orange-100 text-orange-700 dark:bg-orange-900/50 dark:text-orange-300',
+                'agua': 'bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300',
+                'planta': 'bg-green-100 text-green-700 dark:bg-green-900/50 dark:text-green-300',
+                'eléctrico': 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/50 dark:text-yellow-300',
+                'psíquico': 'bg-pink-100 text-pink-700 dark:bg-pink-900/50 dark:text-pink-300',
+                'hielo': 'bg-cyan-100 text-cyan-700 dark:bg-cyan-900/50 dark:text-cyan-300',
+                'dragón': 'bg-violet-100 text-violet-700 dark:bg-violet-900/50 dark:text-violet-300',
+                'siniestro': 'bg-gray-200 text-gray-800 dark:bg-gray-800 dark:text-gray-200',
+                'hada': 'bg-rose-100 text-rose-700 dark:bg-rose-900/50 dark:text-rose-300',
+            };
+            return mapa[String(nombre || '').toLowerCase()] || 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300';
+        },
+
+        // ─── Guardas: equipo del reclutado / equipo en exploración ─────────
+
+        pokemonTeamId(pokemon) {
+            if (!pokemon) return null;
+            const team = this.teams.find(t => t.members.some(m => m.pokemon_id === pokemon.id));
+            return team ? team.id : null;
+        },
+
+        pokemonEnExploracion(pokemon) {
+            const teamId = this.pokemonTeamId(pokemon);
+            return teamId !== null && this.isInExploration(teamId);
+        },
+
+        // ─── Acciones: evolucionar / liberar ───────────────────────────────
+
+        async evolvePokemon() {
+            const pokemon = this.detailPokemon;
+            if (!pokemon || this.pokemonEnExploracion(pokemon)) return;
+
+            this.detailLoading = true;
+            try {
+                const response = await fetch('/reclutado/' + pokemon.id + '/evolucionar', {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '',
+                        'Accept': 'application/json',
+                    },
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.pokemon_id) {
+                        pokemon.pokemon_id = data.pokemon_id;
+                    }
+                    // El payload no expone el pokémon destino completo (nombre/tipos/stats);
+                    // recargamos la página para mantener listas/badges coherentes (criterio de updateMemberRole).
+                    location.reload();
+                    return;
+                }
+                await this.handleError(response);
+            } catch (err) {
+                console.error('Error evolving pokemon:', err);
+            } finally {
+                this.detailLoading = false;
+            }
+        },
+
+        async releasePokemon() {
+            const pokemon = this.detailPokemon;
+            if (!pokemon || this.pokemonEnExploracion(pokemon)) return;
+
+            if (!confirm('¿Seguro que quieres liberar a ' + (pokemon.nombre || 'este Pokémon') + '? Esta acción no se puede deshacer.')) {
+                return;
+            }
+
+            this.detailLoading = true;
+            try {
+                const response = await fetch('/reclutado/' + pokemon.id, {
+                    method: 'DELETE',
+                    headers: {
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '',
+                        'Accept': 'application/json',
+                    },
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data && data.success !== false) {
+                        // Quitar de la lista de reclutados, de asignados y de los miembros de equipos
+                        this.reclutados = this.reclutados.filter(r => r.id !== pokemon.id);
+                        this.teamPokemonIds = this.teamPokemonIds.filter(id => id !== pokemon.id);
+                        this.teams.forEach(t => {
+                            t.members = t.members.filter(m => m.pokemon_id !== pokemon.id);
+                        });
+                        this.closeDetail();
+                        return;
+                    }
+                    alert('No se pudo liberar el Pokémon');
+                    return;
+                }
+
+                // Robustez: si el endpoint aún no está desplegado (404/405) o rechaza (422),
+                // mostramos el error sin mutar estado.
+                let message = 'Error al liberar el Pokémon';
+                try {
+                    const data = await response.json();
+                    message = data.error || data.message || message;
+                } catch (err) {
+                    // Ignorar: el cuerpo no es JSON
+                }
+                alert(message);
+            } catch (err) {
+                console.error('Error releasing pokemon:', err);
+            } finally {
+                this.detailLoading = false;
             }
         },
     };

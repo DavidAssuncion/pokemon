@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Src\Exploraciones\Domain;
 
 use Src\Shared\Tipos\TipoPokemon;
+use Src\Shared\Tipos\TypeChart;
 
 /**
  * RF-02/RF-03: capacidad de un equipo de expedición (dominio puro).
@@ -56,7 +57,7 @@ final class CalculadorCapacidadEquipo
 
                 if ($efectividad > 1.0) {
                     $afinidad += 2;
-                } elseif ($efectividad === 0.0) {
+                } elseif ($efectividad === TypeChart::INMUNE) {
                     $afinidad -= 2;
                 } elseif ($efectividad < 1.0) {
                     $afinidad -= 1;

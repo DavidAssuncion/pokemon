@@ -6,6 +6,8 @@ namespace Src\Pokemon\Domain\Stats;
 
 class BattleStats
 {
+    public readonly int $nivel;
+
     public float $hp;
 
     public float $defenseHp;
@@ -27,7 +29,13 @@ class BattleStats
         StatsValue $evs,
         int $nivel = 100
     ) {
+        $this->nivel = $nivel;
         $this->calcularStats($stats, $evs, $nivel);
+    }
+
+    public function nivel(): int
+    {
+        return $this->nivel;
     }
 
     private function calcularStats(StatsValue $stats, StatsValue $evs, int $nivel): void

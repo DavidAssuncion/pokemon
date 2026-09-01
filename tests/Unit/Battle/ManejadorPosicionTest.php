@@ -57,7 +57,7 @@ class ManejadorPosicionTest extends TestCase
         mt_srand(1); // sin crítico
         $daño = $this->chain->calculate($accion);
 
-        $this->assertSame(12.0, $daño); // 24 * 0.5
+        $this->assertSame(22.0, $daño); // 44 * 0.5
     }
 
     public function test_vanguardia_sin_penalizacion(): void
@@ -88,6 +88,6 @@ class ManejadorPosicionTest extends TestCase
         mt_srand(1); // sin crítico
         $daño = $this->chain->calculate($accion);
 
-        $this->assertSame(24.0, $daño);
+        $this->assertSame(44.0, $daño);
     }
 }

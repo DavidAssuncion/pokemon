@@ -18,7 +18,7 @@ use Src\CombateEntrenadores\Domain\Repositories\EntrenadorLogRepositoryInterface
  */
 class IniciarCombateEntrenador
 {
-    private const SESSION_VERSION = 5;
+    private const SESSION_VERSION = 7;
 
     public function __construct(
         private readonly GeneradorEquipoEntrenador $generadorEquipo,
@@ -36,6 +36,7 @@ class IniciarCombateEntrenador
         int $trainerIndex,
         int $teamId,
         int $userId,
+        int $nivelJugador,
         string $fecha,
         array $formacion = [],
     ): string {
@@ -46,8 +47,11 @@ class IniciarCombateEntrenador
         $equipo = Team::with('members.reclutado.pokemon.stats', 'members.reclutado.pokemon.types')
             ->findOrFail($teamId);
 
-        $datosJugador = $this->construirEquipoJugador->desdeEquipo($equipo, $formacion);
-        $datosRival = $this->generadorEquipo->generar($habitatId, $nivel, $trainerIndex, $fecha);
+        $datosJugador = $this->construirEquipoJugador->desdeEquipo($equipo, $formacion, $nivelJugador);
+
+        $nivelRival = $nivelJugador;
+
+        $datosRival = $this->generadorEquipo->generar($habitatId, $nivel, $trainerIndex, $fecha, $nivelRival);
 
         $team1 = EquipoBatalla::fromData($datosJugador, $equipo->name);
         $team2 = EquipoBatalla::fromData($datosRival, "Entrenador Nivel {$nivel}");

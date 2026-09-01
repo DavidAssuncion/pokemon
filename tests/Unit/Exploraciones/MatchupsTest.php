@@ -51,8 +51,8 @@ class MatchupsTest extends TestCase
 
         $this->assertSame(['Fuego'], $m['miembro_tipos']);
         $this->assertSame('Agua', $m['pool_tipo']);
-        $this->assertSame(2.0, $m['defensa']);
-        $this->assertSame(0.5, $m['ataque']);
+        $this->assertSame(1.5, $m['defensa']);
+        $this->assertSame(0.75, $m['ataque']);
         $this->assertSame(CalculadorMatchups::NEGATIVO, $m['clasificacion']);
     }
 
@@ -60,8 +60,8 @@ class MatchupsTest extends TestCase
     {
         $m = $this->unicoMatchup([TipoPokemon::AGUA], TipoPokemon::AGUA);
 
-        $this->assertSame(0.5, $m['defensa']);
-        $this->assertSame(0.5, $m['ataque']);
+        $this->assertSame(0.75, $m['defensa']);
+        $this->assertSame(0.75, $m['ataque']);
         $this->assertSame(CalculadorMatchups::POSITIVO, $m['clasificacion']);
     }
 
@@ -95,7 +95,7 @@ class MatchupsTest extends TestCase
         $m = $this->unicoMatchup([TipoPokemon::VENENO], TipoPokemon::ACERO);
 
         $this->assertSame(1.0, $m['defensa']);
-        $this->assertSame(0.0, $m['ataque']);
+        $this->assertSame(0.25, $m['ataque']);
         $this->assertSame(CalculadorMatchups::SEVERO, $m['clasificacion']);
     }
 
@@ -103,8 +103,8 @@ class MatchupsTest extends TestCase
     {
         $m = $this->unicoMatchup([TipoPokemon::FUEGO], TipoPokemon::HIELO);
 
-        $this->assertSame(0.5, $m['defensa']);
-        $this->assertSame(2.0, $m['ataque']);
+        $this->assertSame(0.75, $m['defensa']);
+        $this->assertSame(1.5, $m['ataque']);
         $this->assertSame(CalculadorMatchups::POSITIVO, $m['clasificacion']);
     }
 
@@ -112,8 +112,8 @@ class MatchupsTest extends TestCase
     {
         $m = $this->unicoMatchup([TipoPokemon::FUEGO], TipoPokemon::ACERO);
 
-        $this->assertSame(0.5, $m['defensa']);
-        $this->assertSame(2.0, $m['ataque']);
+        $this->assertSame(0.75, $m['defensa']);
+        $this->assertSame(1.5, $m['ataque']);
         $this->assertSame(CalculadorMatchups::POSITIVO, $m['clasificacion']);
     }
 
@@ -124,7 +124,7 @@ class MatchupsTest extends TestCase
         // corresponde a Planta→Acero, es decir, miembro Acero contra pool Planta.
         $m = $this->unicoMatchup([TipoPokemon::ACERO], TipoPokemon::PLANTA);
 
-        $this->assertSame(0.5, $m['defensa']);
+        $this->assertSame(0.75, $m['defensa']);
         $this->assertSame(1.0, $m['ataque']);
         $this->assertSame(CalculadorMatchups::POSITIVO, $m['clasificacion']);
     }
@@ -136,7 +136,7 @@ class MatchupsTest extends TestCase
         $m = $this->unicoMatchup([TipoPokemon::PLANTA], TipoPokemon::ACERO);
 
         $this->assertSame(1.0, $m['defensa']);
-        $this->assertSame(0.5, $m['ataque']);
+        $this->assertSame(0.75, $m['ataque']);
         $this->assertSame(CalculadorMatchups::NEGATIVO, $m['clasificacion']);
     }
 
@@ -144,8 +144,8 @@ class MatchupsTest extends TestCase
     {
         $m = $this->unicoMatchup([TipoPokemon::PSIQUICO], TipoPokemon::SINIESTRO);
 
-        $this->assertSame(2.0, $m['defensa']);
-        $this->assertSame(0.0, $m['ataque']);
+        $this->assertSame(1.5, $m['defensa']);
+        $this->assertSame(0.25, $m['ataque']);
         $this->assertSame(CalculadorMatchups::SEVERO, $m['clasificacion']);
     }
 
@@ -166,41 +166,41 @@ class MatchupsTest extends TestCase
         $m = $this->unicoMatchup([TipoPokemon::FUEGO, TipoPokemon::VOLADOR], TipoPokemon::AGUA);
 
         $this->assertSame(['Fuego', 'Volador'], $m['miembro_tipos']);
-        $this->assertSame(2.0 * 1.0, $m['defensa']);
-        $this->assertSame(max(0.5, 1.0), $m['ataque']);
+        $this->assertSame(1.5 * 1.0, $m['defensa']);
+        $this->assertSame(max(0.75, 1.0), $m['ataque']);
         $this->assertSame(CalculadorMatchups::NEGATIVO, $m['clasificacion']);
     }
 
     public function test_doble_tipo_fuego_volador_en_pool_bicho_defensa_multiplicativa_y_ataque_max(): void
     {
-        // Nota: el caso de referencia del brief dice "0.5×2.0=1.0" pero el TypeChart
-        // real da Bicho→Volador = 0.5 (no 2.0). La defensa real es 0.5×0.5 = 0.25.
+        // Nota: el caso de referencia del brief dice "0.75×0.75=0.5625" pero el TypeChart
+        // real da Bicho→Volador = 0.75 y Bicho→Fuego = 0.75. La defensa real es 0.75×0.75 = 0.5625.
         // La clasificación (positivo) es correcta porque defensa < 1.0.
         $m = $this->unicoMatchup([TipoPokemon::FUEGO, TipoPokemon::VOLADOR], TipoPokemon::BICHO);
 
-        $this->assertSame(0.5 * 0.5, $m['defensa']);
-        $this->assertSame(max(2.0, 2.0), $m['ataque']);
+        $this->assertSame(0.75 * 0.75, $m['defensa']);
+        $this->assertSame(max(1.5, 1.5), $m['ataque']);
         $this->assertSame(CalculadorMatchups::POSITIVO, $m['clasificacion']);
     }
 
     public function test_inmunidad_defensiva_es_positivo_y_nunca_severo(): void
     {
-        // Eléctrico→Tierra = 0.0 (inmunidad defensiva del miembro) → ventaja, positivo.
+        // Eléctrico→Tierra = 0.25 (inmunidad defensiva del miembro) → ventaja, positivo.
         $m = $this->unicoMatchup([TipoPokemon::TIERRA], TipoPokemon::ELECTRICO);
 
-        $this->assertSame(0.0, $m['defensa']);
-        $this->assertSame(2.0, $m['ataque']);
+        $this->assertSame(0.25, $m['defensa']);
+        $this->assertSame(1.5, $m['ataque']);
         $this->assertSame(CalculadorMatchups::POSITIVO, $m['clasificacion']);
     }
 
     public function test_severo_prevalece_aunque_haya_inmunidad_defensiva(): void
     {
-        // Normal contra Fantasma: defensa 0.0 (no le pegan) PERO ataque 0.0 (no daña) →
+        // Normal contra Fantasma: defensa 0.25 (no le pegan) PERO ataque 0.25 (no daña) →
         // severo por prioridad estricta del ataque.
         $m = $this->unicoMatchup([TipoPokemon::NORMAL], TipoPokemon::FANTASMA);
 
-        $this->assertSame(0.0, $m['defensa']);
-        $this->assertSame(0.0, $m['ataque']);
+        $this->assertSame(0.25, $m['defensa']);
+        $this->assertSame(0.25, $m['ataque']);
         $this->assertSame(CalculadorMatchups::SEVERO, $m['clasificacion']);
     }
 
@@ -209,7 +209,7 @@ class MatchupsTest extends TestCase
         $m = $this->unicoMatchup([TipoPokemon::LUCHA], TipoPokemon::NORMAL);
 
         $this->assertSame(1.0, $m['defensa']);
-        $this->assertSame(2.0, $m['ataque']);
+        $this->assertSame(1.5, $m['ataque']);
         $this->assertSame(CalculadorMatchups::POSITIVO, $m['clasificacion']);
     }
 

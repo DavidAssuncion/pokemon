@@ -61,9 +61,9 @@ class CadenaDanioTest extends TestCase
 
     public function test_dano_base_sigue_formula(): void
     {
-        // Base esperada: ((2*50/5+2) * 50 * atk / max(def,1)) / 50 + 2
+        // Base esperada: ((2*100/5+2) * 50 * atk / max(def,1)) / 50 + 2
         // atk=100, def=100 → tras BattleStats lv100 ambos 205 → ratio 1
-        // = 22*50*1/50 + 2 = 24
+        // = 42*50*1/50 + 2 = 44
         $atacante = $this->combatiente(
             stats: ['atk' => 100, 'def' => 100],
             moves: [new MovimientoBatalla('Golpe', 50, TipoPokemon::NORMAL, CategoriaMovimiento::FISICO)],
@@ -90,7 +90,7 @@ class CadenaDanioTest extends TestCase
         mt_srand(1); // sin crítico
         $daño = $this->chain->calculate($accion);
 
-        $this->assertSame(24.0, $daño);
+        $this->assertSame(44.0, $daño);
     }
 
     public function test_stab_multiplica_por_1_5(): void
@@ -143,14 +143,14 @@ class CadenaDanioTest extends TestCase
         $dañoNoStab = $this->chain->calculate($accionNoStab);
 
         $this->assertSame($dañoStab, $dañoNoStab * 1.5);
-        $this->assertSame(36.0, $dañoStab);  // 24 * 1.5
-        $this->assertSame(24.0, $dañoNoStab);
+        $this->assertSame(66.0, $dañoStab);  // 44 * 1.5
+        $this->assertSame(44.0, $dañoNoStab);
     }
 
     public function test_clamp_minimo_1_cuando_dano_seria_menor_que_1(): void
     {
         // Atacante muy débil (atk=1 → stat 7) vs defensor muy resistente (def=200 → stat 405)
-        // + efectividad 0.5 (NORMAL vs ROCA) + posición -50% (retaguardia) → daño < 1
+        // + efectividad 0.75 (NORMAL vs ROCA) + posición -50% (retaguardia) → daño < 1
         $atacante = $this->combatiente(
             stats: ['atk' => 1, 'def' => 100],
             moves: [new MovimientoBatalla('Golpecito', 1, TipoPokemon::NORMAL, CategoriaMovimiento::FISICO)],

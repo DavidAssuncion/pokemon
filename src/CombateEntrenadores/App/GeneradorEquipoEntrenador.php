@@ -33,7 +33,7 @@ class GeneradorEquipoEntrenador
     /**
      * @return list<DatosPokemonBatalla>
      */
-    public function generar(int $habitatId, int $nivel, int $entrenadorIndex, string $fecha): array
+    public function generar(int $habitatId, int $nivel, int $entrenadorIndex, string $fecha, ?int $nivelRival = null): array
     {
         $pool = $this->poolDelHabitat($habitatId, $nivel);
         if ($pool === []) {
@@ -56,6 +56,7 @@ class GeneradorEquipoEntrenador
                 id: "entrenador_{$habitatId}_{$nivel}_{$entrenadorIndex}_{$i}",
                 nombre: $pokemon->name,
                 posicion: Posicion::from($posiciones[$i]),
+                nivel: $nivelRival,
             );
         }
 

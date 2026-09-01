@@ -33,8 +33,10 @@ class MapeadorPokemonBatalla
         Posicion $posicion,
         bool $shiny = false,
         ?string $item = null,
+        ?int $nivel = null,
     ): DatosPokemonBatalla {
         $stats = $this->statsDe($pokemon);
+
         $tipos = $this->tiposDe($pokemon);
 
         $movimientos = [];
@@ -65,6 +67,7 @@ class MapeadorPokemonBatalla
             item: $item,
             speciesId: (int) $pokemon->id,
             formSuffix: '',
+            nivel: $nivel,
         );
     }
 

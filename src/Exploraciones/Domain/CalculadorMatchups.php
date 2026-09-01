@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Src\Exploraciones\Domain;
 
 use Src\Shared\Tipos\TipoPokemon;
+use Src\Shared\Tipos\TypeChart;
 
 /**
  * Matchups de tipos de una expedición para el preview (semáforo de tipos).
@@ -15,12 +16,12 @@ use Src\Shared\Tipos\TipoPokemon;
  * - ataque: prevalece el tipo del miembro más óptimo contra el tipo del pool.
  *
  * Clasificación (prioridad estricta):
- * - severo si ataque === 0.0 (inmunidad ofensiva: no puede dañar).
+ * - severo si ataque === TypeChart::INMUNE (inmunidad ofensiva: no puede dañar).
  * - negativo si defensa > 1.0 (el pool le pega súper eficaz).
  * - positivo si defensa < 1.0 (resiste).
  * - defensa === 1.0 → desempate ofensivo: ataque < 1.0 → negativo; ataque > 1.0 →
  *   positivo; ataque === 1.0 → neutral (se omite del resultado, no se muestra).
- * - La inmunidad defensiva (pool→miembro = 0.0) es ventaja → positivo (nunca severo).
+ * - La inmunidad defensiva (pool→miembro = TypeChart::INMUNE) es ventaja → positivo (nunca severo).
  *
  * Los matchups neutrales NO se incluyen en el resultado. Orden estable: por miembro
  * y por tipo del pool.
@@ -75,7 +76,7 @@ final class CalculadorMatchups
 
     public static function clasificar(float $defensa, float $ataque): string
     {
-        if ($ataque === 0.0) {
+        if ($ataque === TypeChart::INMUNE) {
             return self::SEVERO;
         }
 

@@ -39,12 +39,15 @@ class EntrenadorController extends Controller
             'formacion.*' => 'in:vanguardia,retaguardia',
         ]);
 
+        $user = Auth::user();
+
         $battleId = $this->iniciarCombate->iniciar(
             habitatId: $habitat,
             nivel: $nivel,
             trainerIndex: $trainer,
             teamId: (int) $data['team_id'],
-            userId: (int) Auth::id(),
+            userId: $user->id,
+            nivelJugador: $user->nivel(),
             fecha: today()->toDateString(),
             formacion: (array) ($data['formacion'] ?? []),
         );

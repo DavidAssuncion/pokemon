@@ -34,8 +34,10 @@ final class OtorgarRecompensasEntrenador
 
     /**
      * @param  list<int>  $speciesIdsRival  ids de las especies derrotadas (team2)
+     * @param  float  $multiplicador  multiplicador sobre la fórmula de exploración
+     *                                (2.0 entrenadores, 10.0 gimnasios)
      */
-    public function otorgar(int $userId, int $teamId, array $speciesIdsRival, int $nivelEntrenador): array
+    public function otorgar(int $userId, int $teamId, array $speciesIdsRival, int $nivelEntrenador, float $multiplicador = 2.0): array
     {
         $usuario = User::find($userId);
         $equipo = Team::with('members.reclutado')->find($teamId);
@@ -68,7 +70,6 @@ final class OtorgarRecompensasEntrenador
         $aleatorioCaptura = static fn (PokemonDerrotado $pokemon): bool => false;
 
         $nivelSalvaje = $usuario->nivel();
-        $multiplicador = 2.0;
 
         $recompensas = $this->calculador->calcular(
             $derrotados,

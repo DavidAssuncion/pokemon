@@ -32,13 +32,13 @@ class SelectorAccionIATest extends TestCase
     public function test_elegir_mejor_movimiento_elige_mayor_efectividad_por_potencia(): void
     {
         // Contra defensor NORMAL:
-        // - LUCHA (2.0 × 60) = 120
+        // - LUCHA (1.5 × 90) = 135
         // - PLANTA (1.0 × 100) = 100
         // Gana el de LUCHA aunque tenga menos potencia.
         $atacante = $this->combatiente(
             stats: ['atk' => 100, 'def' => 100],
             moves: [
-                new MovimientoBatalla('Plancha', 60, TipoPokemon::LUCHA, \Src\Battle\Domain\Enums\CategoriaMovimiento::FISICO),
+                new MovimientoBatalla('Plancha', 90, TipoPokemon::LUCHA, \Src\Battle\Domain\Enums\CategoriaMovimiento::FISICO),
                 new MovimientoBatalla('Hoja Afilada', 100, TipoPokemon::PLANTA, \Src\Battle\Domain\Enums\CategoriaMovimiento::FISICO),
             ],
             tipos: [TipoPokemon::LUCHA],

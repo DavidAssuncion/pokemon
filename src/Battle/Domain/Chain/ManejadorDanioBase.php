@@ -11,7 +11,7 @@ class ManejadorDanioBase extends ManejadorDanioAbstracto
     protected function process(AccionBatalla $action, float $daño): float
     {
         $move = $action->move;
-        $nivel = 50;
+        $nivel = $action->attacker->pokemon()->battleStats()->nivel ?? 50;
 
         $atk = $move->esEspecial()
             ? $action->attacker->obtenerStatEfectivo('spAtk')

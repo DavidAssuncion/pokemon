@@ -6,12 +6,17 @@ namespace Src\Shared\Tipos;
 
 /**
  * Matriz 18×18 de efectividades entre tipos.
- * Cada atacante → defensor devuelve 2.0 (súper eficaz), 0.5 (poco eficaz),
- * 0.0 (inmune) o 1.0 (neutral).
- * Solo se almacenan entradas distintas de 1.0; el resto se resuelve por omisión.
+ * Cada atacante → defensor devuelve EFICAZ (1.5), POKO_EFICAZ (0.75),
+ * INMUNE (0.25) o NEUTRAL (1.0).
+ * Solo se almacenan entradas distintas de NEUTRAL; el resto se resuelve por omisión.
  */
 class TypeChart
 {
+    public const NEUTRAL = 1.0;
+    public const POKO_EFICAZ = 0.75;
+    public const EFICAZ = 1.5;
+    public const INMUNE = 0.25;
+
     private static ?array $chart = null;
 
     /**
@@ -30,194 +35,194 @@ class TypeChart
 
         // ── NORMAL (1) ──
         $chart[TipoPokemon::NORMAL->value] = [
-            TipoPokemon::ROCA->value => 0.5,
-            TipoPokemon::ACERO->value => 0.5,
-            TipoPokemon::FANTASMA->value => 0.0,
+            TipoPokemon::ROCA->value => self::POKO_EFICAZ,
+            TipoPokemon::ACERO->value => self::POKO_EFICAZ,
+            TipoPokemon::FANTASMA->value => self::INMUNE,
         ];
 
         // ── LUCHA (2) ──
         $chart[TipoPokemon::LUCHA->value] = [
-            TipoPokemon::NORMAL->value => 2.0,
-            TipoPokemon::ROCA->value => 2.0,
-            TipoPokemon::ACERO->value => 2.0,
-            TipoPokemon::HIELO->value => 2.0,
-            TipoPokemon::SINIESTRO->value => 2.0,
-            TipoPokemon::VOLADOR->value => 0.5,
-            TipoPokemon::VENENO->value => 0.5,
-            TipoPokemon::BICHO->value => 0.5,
-            TipoPokemon::PSIQUICO->value => 0.5,
-            TipoPokemon::HADA->value => 0.5,
-            TipoPokemon::FANTASMA->value => 0.0,
+            TipoPokemon::NORMAL->value => self::EFICAZ,
+            TipoPokemon::ROCA->value => self::EFICAZ,
+            TipoPokemon::ACERO->value => self::EFICAZ,
+            TipoPokemon::HIELO->value => self::EFICAZ,
+            TipoPokemon::SINIESTRO->value => self::EFICAZ,
+            TipoPokemon::VOLADOR->value => self::POKO_EFICAZ,
+            TipoPokemon::VENENO->value => self::POKO_EFICAZ,
+            TipoPokemon::BICHO->value => self::POKO_EFICAZ,
+            TipoPokemon::PSIQUICO->value => self::POKO_EFICAZ,
+            TipoPokemon::HADA->value => self::POKO_EFICAZ,
+            TipoPokemon::FANTASMA->value => self::INMUNE,
         ];
 
         // ── VOLADOR (3) ──
         $chart[TipoPokemon::VOLADOR->value] = [
-            TipoPokemon::LUCHA->value => 2.0,
-            TipoPokemon::BICHO->value => 2.0,
-            TipoPokemon::PLANTA->value => 2.0,
-            TipoPokemon::ROCA->value => 0.5,
-            TipoPokemon::ACERO->value => 0.5,
-            TipoPokemon::ELECTRICO->value => 0.5,
+            TipoPokemon::LUCHA->value => self::EFICAZ,
+            TipoPokemon::BICHO->value => self::EFICAZ,
+            TipoPokemon::PLANTA->value => self::EFICAZ,
+            TipoPokemon::ROCA->value => self::POKO_EFICAZ,
+            TipoPokemon::ACERO->value => self::POKO_EFICAZ,
+            TipoPokemon::ELECTRICO->value => self::POKO_EFICAZ,
         ];
 
         // ── VENENO (4) ──
         $chart[TipoPokemon::VENENO->value] = [
-            TipoPokemon::PLANTA->value => 2.0,
-            TipoPokemon::HADA->value => 2.0,
-            TipoPokemon::VENENO->value => 0.5,
-            TipoPokemon::TIERRA->value => 0.5,
-            TipoPokemon::ROCA->value => 0.5,
-            TipoPokemon::FANTASMA->value => 0.5,
-            TipoPokemon::ACERO->value => 0.0,
+            TipoPokemon::PLANTA->value => self::EFICAZ,
+            TipoPokemon::HADA->value => self::EFICAZ,
+            TipoPokemon::VENENO->value => self::POKO_EFICAZ,
+            TipoPokemon::TIERRA->value => self::POKO_EFICAZ,
+            TipoPokemon::ROCA->value => self::POKO_EFICAZ,
+            TipoPokemon::FANTASMA->value => self::POKO_EFICAZ,
+            TipoPokemon::ACERO->value => self::INMUNE,
         ];
 
         // ── TIERRA (5) ──
         $chart[TipoPokemon::TIERRA->value] = [
-            TipoPokemon::VENENO->value => 2.0,
-            TipoPokemon::ROCA->value => 2.0,
-            TipoPokemon::ACERO->value => 2.0,
-            TipoPokemon::FUEGO->value => 2.0,
-            TipoPokemon::ELECTRICO->value => 2.0,
-            TipoPokemon::BICHO->value => 0.5,
-            TipoPokemon::PLANTA->value => 0.5,
-            TipoPokemon::VOLADOR->value => 0.0,
+            TipoPokemon::VENENO->value => self::EFICAZ,
+            TipoPokemon::ROCA->value => self::EFICAZ,
+            TipoPokemon::ACERO->value => self::EFICAZ,
+            TipoPokemon::FUEGO->value => self::EFICAZ,
+            TipoPokemon::ELECTRICO->value => self::EFICAZ,
+            TipoPokemon::BICHO->value => self::POKO_EFICAZ,
+            TipoPokemon::PLANTA->value => self::POKO_EFICAZ,
+            TipoPokemon::VOLADOR->value => self::INMUNE,
         ];
 
         // ── ROCA (6) ──
         $chart[TipoPokemon::ROCA->value] = [
-            TipoPokemon::VOLADOR->value => 2.0,
-            TipoPokemon::BICHO->value => 2.0,
-            TipoPokemon::FUEGO->value => 2.0,
-            TipoPokemon::HIELO->value => 2.0,
-            TipoPokemon::LUCHA->value => 0.5,
-            TipoPokemon::TIERRA->value => 0.5,
-            TipoPokemon::ACERO->value => 0.5,
+            TipoPokemon::VOLADOR->value => self::EFICAZ,
+            TipoPokemon::BICHO->value => self::EFICAZ,
+            TipoPokemon::FUEGO->value => self::EFICAZ,
+            TipoPokemon::HIELO->value => self::EFICAZ,
+            TipoPokemon::LUCHA->value => self::POKO_EFICAZ,
+            TipoPokemon::TIERRA->value => self::POKO_EFICAZ,
+            TipoPokemon::ACERO->value => self::POKO_EFICAZ,
         ];
 
         // ── BICHO (7) ──
         $chart[TipoPokemon::BICHO->value] = [
-            TipoPokemon::PLANTA->value => 2.0,
-            TipoPokemon::PSIQUICO->value => 2.0,
-            TipoPokemon::SINIESTRO->value => 2.0,
-            TipoPokemon::LUCHA->value => 0.5,
-            TipoPokemon::VOLADOR->value => 0.5,
-            TipoPokemon::VENENO->value => 0.5,
-            TipoPokemon::FANTASMA->value => 0.5,
-            TipoPokemon::ACERO->value => 0.5,
-            TipoPokemon::FUEGO->value => 0.5,
-            TipoPokemon::HADA->value => 0.5,
+            TipoPokemon::PLANTA->value => self::EFICAZ,
+            TipoPokemon::PSIQUICO->value => self::EFICAZ,
+            TipoPokemon::SINIESTRO->value => self::EFICAZ,
+            TipoPokemon::LUCHA->value => self::POKO_EFICAZ,
+            TipoPokemon::VOLADOR->value => self::POKO_EFICAZ,
+            TipoPokemon::VENENO->value => self::POKO_EFICAZ,
+            TipoPokemon::FANTASMA->value => self::POKO_EFICAZ,
+            TipoPokemon::ACERO->value => self::POKO_EFICAZ,
+            TipoPokemon::FUEGO->value => self::POKO_EFICAZ,
+            TipoPokemon::HADA->value => self::POKO_EFICAZ,
         ];
 
         // ── FANTASMA (8) ──
         $chart[TipoPokemon::FANTASMA->value] = [
-            TipoPokemon::FANTASMA->value => 2.0,
-            TipoPokemon::PSIQUICO->value => 2.0,
-            TipoPokemon::SINIESTRO->value => 0.5,
-            TipoPokemon::NORMAL->value => 0.0,
+            TipoPokemon::FANTASMA->value => self::EFICAZ,
+            TipoPokemon::PSIQUICO->value => self::EFICAZ,
+            TipoPokemon::SINIESTRO->value => self::POKO_EFICAZ,
+            TipoPokemon::NORMAL->value => self::INMUNE,
         ];
 
         // ── ACERO (9) ──
         $chart[TipoPokemon::ACERO->value] = [
-            TipoPokemon::ROCA->value => 2.0,
-            TipoPokemon::HIELO->value => 2.0,
-            TipoPokemon::HADA->value => 2.0,
-            TipoPokemon::ACERO->value => 0.5,
-            TipoPokemon::FUEGO->value => 0.5,
-            TipoPokemon::AGUA->value => 0.5,
-            TipoPokemon::ELECTRICO->value => 0.5,
+            TipoPokemon::ROCA->value => self::EFICAZ,
+            TipoPokemon::HIELO->value => self::EFICAZ,
+            TipoPokemon::HADA->value => self::EFICAZ,
+            TipoPokemon::ACERO->value => self::POKO_EFICAZ,
+            TipoPokemon::FUEGO->value => self::POKO_EFICAZ,
+            TipoPokemon::AGUA->value => self::POKO_EFICAZ,
+            TipoPokemon::ELECTRICO->value => self::POKO_EFICAZ,
         ];
 
         // ── FUEGO (10) ──
         $chart[TipoPokemon::FUEGO->value] = [
-            TipoPokemon::PLANTA->value => 2.0,
-            TipoPokemon::HIELO->value => 2.0,
-            TipoPokemon::BICHO->value => 2.0,
-            TipoPokemon::ACERO->value => 2.0,
-            TipoPokemon::FUEGO->value => 0.5,
-            TipoPokemon::AGUA->value => 0.5,
-            TipoPokemon::ROCA->value => 0.5,
-            TipoPokemon::DRAGON->value => 0.5,
+            TipoPokemon::PLANTA->value => self::EFICAZ,
+            TipoPokemon::HIELO->value => self::EFICAZ,
+            TipoPokemon::BICHO->value => self::EFICAZ,
+            TipoPokemon::ACERO->value => self::EFICAZ,
+            TipoPokemon::FUEGO->value => self::POKO_EFICAZ,
+            TipoPokemon::AGUA->value => self::POKO_EFICAZ,
+            TipoPokemon::ROCA->value => self::POKO_EFICAZ,
+            TipoPokemon::DRAGON->value => self::POKO_EFICAZ,
         ];
 
         // ── AGUA (11) ──
         $chart[TipoPokemon::AGUA->value] = [
-            TipoPokemon::TIERRA->value => 2.0,
-            TipoPokemon::ROCA->value => 2.0,
-            TipoPokemon::FUEGO->value => 2.0,
-            TipoPokemon::AGUA->value => 0.5,
-            TipoPokemon::PLANTA->value => 0.5,
-            TipoPokemon::DRAGON->value => 0.5,
+            TipoPokemon::TIERRA->value => self::EFICAZ,
+            TipoPokemon::ROCA->value => self::EFICAZ,
+            TipoPokemon::FUEGO->value => self::EFICAZ,
+            TipoPokemon::AGUA->value => self::POKO_EFICAZ,
+            TipoPokemon::PLANTA->value => self::POKO_EFICAZ,
+            TipoPokemon::DRAGON->value => self::POKO_EFICAZ,
         ];
 
         // ── PLANTA (12) ──
         $chart[TipoPokemon::PLANTA->value] = [
-            TipoPokemon::TIERRA->value => 2.0,
-            TipoPokemon::ROCA->value => 2.0,
-            TipoPokemon::AGUA->value => 2.0,
-            TipoPokemon::VOLADOR->value => 0.5,
-            TipoPokemon::VENENO->value => 0.5,
-            TipoPokemon::BICHO->value => 0.5,
-            TipoPokemon::FUEGO->value => 0.5,
-            TipoPokemon::PLANTA->value => 0.5,
-            TipoPokemon::DRAGON->value => 0.5,
-            TipoPokemon::ACERO->value => 0.5,
+            TipoPokemon::TIERRA->value => self::EFICAZ,
+            TipoPokemon::ROCA->value => self::EFICAZ,
+            TipoPokemon::AGUA->value => self::EFICAZ,
+            TipoPokemon::VOLADOR->value => self::POKO_EFICAZ,
+            TipoPokemon::VENENO->value => self::POKO_EFICAZ,
+            TipoPokemon::BICHO->value => self::POKO_EFICAZ,
+            TipoPokemon::FUEGO->value => self::POKO_EFICAZ,
+            TipoPokemon::PLANTA->value => self::POKO_EFICAZ,
+            TipoPokemon::DRAGON->value => self::POKO_EFICAZ,
+            TipoPokemon::ACERO->value => self::POKO_EFICAZ,
         ];
 
         // ── ELECTRICO (13) ──
         $chart[TipoPokemon::ELECTRICO->value] = [
-            TipoPokemon::VOLADOR->value => 2.0,
-            TipoPokemon::AGUA->value => 2.0,
-            TipoPokemon::PLANTA->value => 0.5,
-            TipoPokemon::ELECTRICO->value => 0.5,
-            TipoPokemon::DRAGON->value => 0.5,
-            TipoPokemon::TIERRA->value => 0.0,
+            TipoPokemon::VOLADOR->value => self::EFICAZ,
+            TipoPokemon::AGUA->value => self::EFICAZ,
+            TipoPokemon::PLANTA->value => self::POKO_EFICAZ,
+            TipoPokemon::ELECTRICO->value => self::POKO_EFICAZ,
+            TipoPokemon::DRAGON->value => self::POKO_EFICAZ,
+            TipoPokemon::TIERRA->value => self::INMUNE,
         ];
 
         // ── PSIQUICO (14) ──
         $chart[TipoPokemon::PSIQUICO->value] = [
-            TipoPokemon::LUCHA->value => 2.0,
-            TipoPokemon::VENENO->value => 2.0,
-            TipoPokemon::ACERO->value => 0.5,
-            TipoPokemon::PSIQUICO->value => 0.5,
-            TipoPokemon::SINIESTRO->value => 0.0,
+            TipoPokemon::LUCHA->value => self::EFICAZ,
+            TipoPokemon::VENENO->value => self::EFICAZ,
+            TipoPokemon::ACERO->value => self::POKO_EFICAZ,
+            TipoPokemon::PSIQUICO->value => self::POKO_EFICAZ,
+            TipoPokemon::SINIESTRO->value => self::INMUNE,
         ];
 
         // ── HIELO (15) ──
         $chart[TipoPokemon::HIELO->value] = [
-            TipoPokemon::VOLADOR->value => 2.0,
-            TipoPokemon::TIERRA->value => 2.0,
-            TipoPokemon::PLANTA->value => 2.0,
-            TipoPokemon::DRAGON->value => 2.0,
-            TipoPokemon::ACERO->value => 0.5,
-            TipoPokemon::FUEGO->value => 0.5,
-            TipoPokemon::AGUA->value => 0.5,
-            TipoPokemon::HIELO->value => 0.5,
+            TipoPokemon::VOLADOR->value => self::EFICAZ,
+            TipoPokemon::TIERRA->value => self::EFICAZ,
+            TipoPokemon::PLANTA->value => self::EFICAZ,
+            TipoPokemon::DRAGON->value => self::EFICAZ,
+            TipoPokemon::ACERO->value => self::POKO_EFICAZ,
+            TipoPokemon::FUEGO->value => self::POKO_EFICAZ,
+            TipoPokemon::AGUA->value => self::POKO_EFICAZ,
+            TipoPokemon::HIELO->value => self::POKO_EFICAZ,
         ];
 
         // ── DRAGON (16) ──
         $chart[TipoPokemon::DRAGON->value] = [
-            TipoPokemon::DRAGON->value => 2.0,
-            TipoPokemon::ACERO->value => 0.5,
-            TipoPokemon::HADA->value => 0.0,
+            TipoPokemon::DRAGON->value => self::EFICAZ,
+            TipoPokemon::ACERO->value => self::POKO_EFICAZ,
+            TipoPokemon::HADA->value => self::INMUNE,
         ];
 
         // ── SINIESTRO (17) ──
         $chart[TipoPokemon::SINIESTRO->value] = [
-            TipoPokemon::FANTASMA->value => 2.0,
-            TipoPokemon::PSIQUICO->value => 2.0,
-            TipoPokemon::LUCHA->value => 0.5,
-            TipoPokemon::SINIESTRO->value => 0.5,
-            TipoPokemon::HADA->value => 0.5,
+            TipoPokemon::FANTASMA->value => self::EFICAZ,
+            TipoPokemon::PSIQUICO->value => self::EFICAZ,
+            TipoPokemon::LUCHA->value => self::POKO_EFICAZ,
+            TipoPokemon::SINIESTRO->value => self::POKO_EFICAZ,
+            TipoPokemon::HADA->value => self::POKO_EFICAZ,
         ];
 
         // ── HADA (18) ──
         $chart[TipoPokemon::HADA->value] = [
-            TipoPokemon::LUCHA->value => 2.0,
-            TipoPokemon::DRAGON->value => 2.0,
-            TipoPokemon::SINIESTRO->value => 2.0,
-            TipoPokemon::VENENO->value => 0.5,
-            TipoPokemon::ACERO->value => 0.5,
-            TipoPokemon::FUEGO->value => 0.5,
+            TipoPokemon::LUCHA->value => self::EFICAZ,
+            TipoPokemon::DRAGON->value => self::EFICAZ,
+            TipoPokemon::SINIESTRO->value => self::EFICAZ,
+            TipoPokemon::VENENO->value => self::POKO_EFICAZ,
+            TipoPokemon::ACERO->value => self::POKO_EFICAZ,
+            TipoPokemon::FUEGO->value => self::POKO_EFICAZ,
         ];
 
         return self::$chart;
@@ -228,6 +233,6 @@ class TypeChart
      */
     public static function getEffectiveness(TipoPokemon $attackType, TipoPokemon $defenderType): float
     {
-        return self::getChart()[$attackType->value][$defenderType->value] ?? 1.0;
+        return self::getChart()[$attackType->value][$defenderType->value] ?? self::NEUTRAL;
     }
 }

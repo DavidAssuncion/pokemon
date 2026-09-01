@@ -36,6 +36,7 @@ class PokemonEntity
         TiposCollection $tiposCollection,
         ?string $objetos = null,
         ?string $habilidad = null,
+        ?BattleStats $precomputedBattleStats = null,
     ) {
         $this->stats = $stats;
         $this->evs = $evs;
@@ -43,7 +44,7 @@ class PokemonEntity
         $this->tiposCollection = $tiposCollection;
         $this->objetos = $objetos;
         $this->habilidad = $habilidad;
-        $this->battleStats = new BattleStats($stats, $evs);
+        $this->battleStats = $precomputedBattleStats ?? new BattleStats($stats, $evs);
     }
 
     public function battleStats(): BattleStats

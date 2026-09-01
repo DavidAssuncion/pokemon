@@ -33,6 +33,7 @@ class DatosPokemonBatalla
         public readonly ?string $item = null,
         public readonly int $speciesId = 0,
         public readonly string $formSuffix = '',
+        public readonly ?int $nivel = null,
     ) {
         foreach ($moves as $m) {
             if (! $m instanceof MovimientoBatalla) {

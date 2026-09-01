@@ -32,35 +32,35 @@ class ManejadorClimaTest extends TestCase
     {
         $daño = $this->calcular(TipoPokemon::FUEGO, TipoClima::SEQUIA);
 
-        $this->assertSame(30.0, $daño); // 24 * 1.25
+        $this->assertSame(55.0, $daño); // 44 * 1.25
     }
 
     public function test_sequia_agua_075(): void
     {
         $daño = $this->calcular(TipoPokemon::AGUA, TipoClima::SEQUIA);
 
-        $this->assertSame(18.0, $daño); // 24 * 0.75
+        $this->assertSame(33.0, $daño); // 44 * 0.75
     }
 
     public function test_sin_clima_1(): void
     {
         $daño = $this->calcular(TipoPokemon::FUEGO, TipoClima::NONE);
 
-        $this->assertSame(24.0, $daño);
+        $this->assertSame(44.0, $daño);
     }
 
     public function test_diluvio_agua_125(): void
     {
         $daño = $this->calcular(TipoPokemon::AGUA, TipoClima::DILUVIO);
 
-        $this->assertSame(30.0, $daño); // 24 * 1.25
+        $this->assertSame(55.0, $daño); // 44 * 1.25
     }
 
     public function test_diluvio_fuego_075(): void
     {
         $daño = $this->calcular(TipoPokemon::FUEGO, TipoClima::DILUVIO);
 
-        $this->assertSame(18.0, $daño); // 24 * 0.75
+        $this->assertSame(33.0, $daño); // 44 * 0.75
     }
 
     public function test_niebla_siniestro_125(): void
@@ -68,7 +68,7 @@ class ManejadorClimaTest extends TestCase
         // Defensor AGUA: efectividad 1.0 contra SINIESTRO
         $daño = $this->calcular(TipoPokemon::SINIESTRO, TipoClima::NIEBLA, tiposDefensor: [TipoPokemon::AGUA]);
 
-        $this->assertSame(30.0, $daño); // 24 * 1.25
+        $this->assertSame(55.0, $daño); // 44 * 1.25
     }
 
     public function test_niebla_fantasma_125(): void
@@ -76,7 +76,7 @@ class ManejadorClimaTest extends TestCase
         // Defensor AGUA: efectividad 1.0 contra FANTASMA (NORMAL sería 0.0 por inmunidad)
         $daño = $this->calcular(TipoPokemon::FANTASMA, TipoClima::NIEBLA, tiposDefensor: [TipoPokemon::AGUA]);
 
-        $this->assertSame(30.0, $daño); // 24 * 1.25
+        $this->assertSame(55.0, $daño); // 44 * 1.25
     }
 
     public function test_niebla_psiquico_125(): void
@@ -84,21 +84,21 @@ class ManejadorClimaTest extends TestCase
         // Defensor AGUA: efectividad 1.0 contra PSIQUICO
         $daño = $this->calcular(TipoPokemon::PSIQUICO, TipoClima::NIEBLA, tiposDefensor: [TipoPokemon::AGUA]);
 
-        $this->assertSame(30.0, $daño); // 24 * 1.25
+        $this->assertSame(55.0, $daño); // 44 * 1.25
     }
 
     public function test_turbulencias_dragon_125(): void
     {
         $daño = $this->calcular(TipoPokemon::DRAGON, TipoClima::TURBULENCIAS);
 
-        $this->assertSame(30.0, $daño); // 24 * 1.25
+        $this->assertSame(55.0, $daño); // 44 * 1.25
     }
 
     public function test_turbulencias_volador_125(): void
     {
         $daño = $this->calcular(TipoPokemon::VOLADOR, TipoClima::TURBULENCIAS);
 
-        $this->assertSame(30.0, $daño); // 24 * 1.25
+        $this->assertSame(55.0, $daño); // 44 * 1.25
     }
 
     public function test_granizo_hielo_especial_080(): void
@@ -109,7 +109,7 @@ class ManejadorClimaTest extends TestCase
             categoria: CategoriaMovimiento::ESPECIAL,
         );
 
-        $this->assertSame(19.0, $daño); // floor(24 * 0.80) = 19
+        $this->assertSame(35.0, $daño); // floor(44 * 0.80) = 35
     }
 
     public function test_tormenta_arena_fisico_roca_080(): void
@@ -121,7 +121,7 @@ class ManejadorClimaTest extends TestCase
             tiposDefensor: [TipoPokemon::ROCA],
         );
 
-        $this->assertSame(19.0, $daño); // floor(24 * 0.80) = 19
+        $this->assertSame(35.0, $daño); // floor(44 * 0.80) = 35
     }
 
     public function test_granizo_fisico_hielo_no_reduce(): void
@@ -132,7 +132,7 @@ class ManejadorClimaTest extends TestCase
             categoria: CategoriaMovimiento::FISICO,
         );
 
-        $this->assertSame(24.0, $daño); // solo reduce movimientos ESPECIALES de HIELO
+        $this->assertSame(44.0, $daño); // solo reduce movimientos ESPECIALES de HIELO
     }
 
     private function calcular(

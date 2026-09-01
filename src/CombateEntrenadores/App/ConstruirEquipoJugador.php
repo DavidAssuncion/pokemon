@@ -23,9 +23,10 @@ class ConstruirEquipoJugador
 
     /**
      * @param  array<int, string>  $formacion  posición por slot: [slot => 'vanguardia'|'retaguardia']
+     * @param  int|null  $nivel  nivel del jugador (para escalar stats en gimnasios); null = stats base (entrenadores hábitat)
      * @return list<DatosPokemonBatalla>
      */
-    public function desdeEquipo(Team $equipo, array $formacion): array
+    public function desdeEquipo(Team $equipo, array $formacion, ?int $nivel = null): array
     {
         $combatientes = [];
 
@@ -40,7 +41,7 @@ class ConstruirEquipoJugador
             }
 
             $slot = (int) $miembro->slot;
-            $posicion = $this->posicionPara($slot, $formacion, $pokemon);
+            $posicion = $this->posicionPara($slot, $formacion, $pokemon, $nivel);
 
             $combatientes[] = $this->mapeador->desdePokemon(
                 pokemon: $pokemon,
@@ -48,6 +49,7 @@ class ConstruirEquipoJugador
                 nombre: $reclutado->nombre ?: $pokemon->name,
                 posicion: $posicion,
                 shiny: (bool) $reclutado->es_shiny,
+                nivel: $nivel,
             );
         }
 
@@ -57,8 +59,10 @@ class ConstruirEquipoJugador
     /**
      * Posición para un slot: la elegida por el usuario si existe; si no, la
      * clasificación por stats (defensivo → vanguardia, ofensivo → retaguardia).
+     * Se usan stats base: el ratio atk+spAtk vs def+spDef es el mismo a
+     * cualquier nivel.
      */
-    private function posicionPara(int $slot, array $formacion, mixed $pokemon): Posicion
+    private function posicionPara(int $slot, array $formacion, mixed $pokemon, ?int $nivel): Posicion
     {
         $elegida = $formacion[$slot] ?? null;
 
@@ -66,7 +70,9 @@ class ConstruirEquipoJugador
             return Posicion::from($elegida);
         }
 
-        return $this->clasificador->esDefensivo($this->mapeador->statsDe($pokemon))
+        $stats = $this->mapeador->statsDe($pokemon);
+
+        return $this->clasificador->esDefensivo($stats)
             ? Posicion::VANGUARDIA
             : Posicion::RETAGUARDIA;
     }

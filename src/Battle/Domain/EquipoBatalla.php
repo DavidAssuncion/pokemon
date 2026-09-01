@@ -6,6 +6,7 @@ namespace Src\Battle\Domain;
 
 use Src\Battle\Domain\Effects\FabricaEfectos;
 use Src\Pokemon\Domain\PokemonEntity;
+use Src\Pokemon\Domain\Stats\BattleStats;
 use Src\Pokemon\Domain\Stats\StatsValue;
 use Src\Shared\Tipos\TiposCollection;
 
@@ -98,11 +99,16 @@ class EquipoBatalla
             $evs = new StatsValue(0, 0, 0, 0, 0, 0);
             $tipos = new TiposCollection($member->tipos);
 
+            $precomputedBattleStats = $member->nivel !== null
+                ? new BattleStats($stats, $evs, $member->nivel)
+                : null;
+
             $pokemon = new PokemonEntity(
                 stats: $stats,
                 evs: $evs,
                 moves: $member->moves,
                 tiposCollection: $tipos,
+                precomputedBattleStats: $precomputedBattleStats,
             );
 
             $combatant = new Combatiente($pokemon, $member->posicion);
