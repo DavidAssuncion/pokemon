@@ -417,16 +417,6 @@
                             <span class="px-2 py-0.5 bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-400 text-xs font-bold rounded-full">Nv <span x-text="nivelDe(detailPokemon)"></span></span>
                             <span class="text-xs text-gray-500 dark:text-gray-400" x-text="formatExp(expTotalDe(detailPokemon)) + ' exp'"></span>
                         </div>
-                        <!-- Progress to next level -->
-                        <div class="mt-2">
-                            <div class="flex items-center justify-between text-[10px] text-gray-400 dark:text-gray-500 mb-1">
-                                <span>Progreso al siguiente nivel</span>
-                                <span x-text="progresoNivelDe(detailPokemon) + '%'"></span>
-                            </div>
-                            <div class="h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
-                                <div class="h-full bg-blue-500 rounded-full transition-all duration-500" :style="'width: ' + progresoNivelDe(detailPokemon) + '%'"></div>
-                            </div>
-                        </div>
                     </div>
                     <button
                         @click="closeDetail()"
@@ -485,27 +475,116 @@
                     <!-- Evolution / release actions -->
                     <div class="border-t border-gray-100 dark:border-gray-700 pt-4">
                         <h4 class="text-xs font-bold uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-2">Evolución</h4>
-                        <div class="flex flex-col sm:flex-row gap-2">
-                            <button
-                                @click="evolvePokemon()"
-                                :disabled="detailLoading || pokemonEnExploracion(detailPokemon)"
-                                :title="pokemonEnExploracion(detailPokemon) ? 'El equipo está en exploración' : 'Evolucionar Pokémon'"
-                                class="flex-1 px-4 py-2.5 bg-green-600 text-white rounded-lg text-sm font-bold hover:bg-green-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-                            >
-                                <span x-text="detailLoading ? 'Evolucionando…' : 'Evolucionar'"></span>
-                            </button>
-                            <button
-                                @click="releasePokemon()"
-                                :disabled="detailLoading || pokemonEnExploracion(detailPokemon)"
-                                :title="pokemonEnExploracion(detailPokemon) ? 'El equipo está en exploración' : 'Liberar Pokémon'"
-                                class="flex-1 px-4 py-2.5 bg-red-600 text-white rounded-lg text-sm font-bold hover:bg-red-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-                            >
-                                Liberar
-                            </button>
-                        </div>
-                        <p class="text-[10px] text-gray-400 dark:text-gray-500 mt-2">
-                            La evolución consume caramelos y exp de tipo; los requisitos se validan al intentar evolucionar.
-                        </p>
+
+                        <!-- Loading -->
+                        <template x-if="detailEvolucionesLoading">
+                            <div class="text-sm text-gray-400 dark:text-gray-500 py-2" role="status">Cargando opciones de evolución…</div>
+                        </template>
+
+                        <!-- Error sin información -->
+                        <template x-if="!detailEvolucionesLoading && detailEvolucionesError">
+                            <div class="text-sm text-gray-400 dark:text-gray-500 py-2">No hay información de evolución disponible.</div>
+                        </template>
+
+                        <!-- Sin evolución -->
+                        <template x-if="!detailEvolucionesLoading && !detailEvolucionesError && detailEvoluciones.length === 0">
+                            <div class="text-sm text-gray-400 dark:text-gray-500 py-2">Este Pokémon no tiene evolución.</div>
+                        </template>
+
+                        <template x-if="!detailEvolucionesLoading && !detailEvolucionesError && detailEvoluciones.length > 0">
+                            <div class="space-y-4">
+                                <!-- Target selector (solo si hay varias opciones) -->
+                                <template x-if="detailEvoluciones.length > 1">
+                                    <div>
+                                        <p class="text-[10px] text-gray-500 dark:text-gray-400 mb-2">Selecciona a qué Pokémon evolucionar</p>
+                                        <div class="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                                            <template x-for="opcion in detailEvoluciones" :key="opcion.pokemon_id">
+                                                <button
+                                                    @click="selectedEvolucionId = opcion.pokemon_id"
+                                                    class="flex flex-col items-center gap-1 p-2 rounded-lg border-2 transition-colors"
+                                                    :class="selectedEvolucionId === opcion.pokemon_id
+                                                        ? 'border-blue-500 dark:border-blue-400 ring-2 ring-blue-500/30'
+                                                        : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'"
+                                                    :aria-pressed="selectedEvolucionId === opcion.pokemon_id"
+                                                    :aria-label="'Evolucionar a ' + opcion.nombre"
+                                                >
+                                                    <img
+                                                        :src="opcion.imagen || '/images/iconos_webp/' + opcion.pokemon_id + '.webp'"
+                                                        loading="lazy"
+                                                        decoding="async"
+                                                        :alt="opcion.nombre"
+                                                        class="w-12 h-12 object-contain"
+                                                        onerror="this.style.display='none'"
+                                                    >
+                                                    <span class="text-[10px] text-gray-700 dark:text-gray-300 capitalize truncate" x-text="opcion.nombre"></span>
+                                                </button>
+                                            </template>
+                                        </div>
+                                    </div>
+                                </template>
+
+                                <!-- Exp bars toward evolution for selected option -->
+                                <template x-if="opcionSeleccionada()">
+                                    <div class="space-y-2.5">
+                                        <template x-for="req in opcionSeleccionada().requisitos" :key="req.slug">
+                                            <div>
+                                                <div class="flex items-center justify-between mb-1">
+                                                    <span class="text-[10px] text-gray-500 dark:text-gray-400" x-text="req.tipo"></span>
+                                                    <span class="text-[10px] text-gray-400 dark:text-gray-500" x-text="formatExp(req.actual) + ' / ' + formatExp(req.necesario)"></span>
+                                                </div>
+                                                <div class="flex items-center gap-2">
+                                                    <div class="flex-1 h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden" role="progressbar" :aria-valuenow="porcentajeExpRequisito(req)" aria-valuemin="0" aria-valuemax="100">
+                                                        <div class="h-full bg-blue-500 rounded-full transition-all duration-500" :style="'width: ' + porcentajeExpRequisito(req) + '%'"></div>
+                                                    </div>
+                                                    <button
+                                                        @click="alimentarCaramelo(req)"
+                                                        :disabled="!puedeAlimentar(req)"
+                                                        :title="'Usar caramelo de ' + req.tipo + ' (+100 exp)'"
+                                                        :aria-label="'Usar caramelo de ' + req.tipo + ' (+100 exp)'"
+                                                        class="shrink-0 flex items-center gap-1 px-1.5 py-0.5 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                                                    >
+                                                        <img
+                                                            :src="'/images/candy_type/' + req.slug + '.webp'"
+                                                            loading="lazy"
+                                                            decoding="async"
+                                                            :alt="'Caramelo de ' + req.tipo"
+                                                            class="w-4 h-4 object-contain"
+                                                            onerror="this.onerror=null; this.src='/images/candy_pokemon/0.webp';"
+                                                        >
+                                                        <span class="text-[10px] font-medium text-gray-600 dark:text-gray-300" x-text="'× ' + req.caramelosDisponibles"></span>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </template>
+                                    </div>
+                                </template>
+
+                                <!-- Actions -->
+                                <div class="flex flex-col sm:flex-row gap-2 border-t border-gray-100 dark:border-gray-700 pt-3">
+                                    <button
+                                        @click="evolvePokemon()"
+                                        :disabled="detailLoading || pokemonEnExploracion(detailPokemon) || !opcionSeleccionada()?.puede_evolucionar"
+                                        :title="pokemonEnExploracion(detailPokemon)
+                                            ? 'El equipo está en exploración'
+                                            : (opcionSeleccionada()?.puede_evolucionar ? 'Evolucionar Pokémon' : 'Completa la exp de tipo para evolucionar')"
+                                        class="flex-1 px-4 py-2.5 bg-green-600 text-white rounded-lg text-sm font-bold hover:bg-green-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                                    >
+                                        <span x-text="detailLoading ? 'Evolucionando…' : 'Evolucionar'"></span>
+                                    </button>
+                                    <button
+                                        @click="releasePokemon()"
+                                        :disabled="detailLoading || pokemonEnExploracion(detailPokemon)"
+                                        :title="pokemonEnExploracion(detailPokemon) ? 'El equipo está en exploración' : 'Liberar Pokémon'"
+                                        class="flex-1 px-4 py-2.5 bg-red-600 text-white rounded-lg text-sm font-bold hover:bg-red-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                                    >
+                                        Liberar
+                                    </button>
+                                </div>
+                                <p class="text-[10px] text-gray-400 dark:text-gray-500 mt-1">
+                                    Usa caramelos de tipo para llenar la barra y poder evolucionar.
+                                </p>
+                            </div>
+                        </template>
                     </div>
                 </div>
             </div>
@@ -532,6 +611,10 @@ function equiposApp() {
         showDetailModal: false,
         detailPokemon: null,
         detailLoading: false,
+        detailEvoluciones: [],
+        detailEvolucionesLoading: false,
+        detailEvolucionesError: false,
+        selectedEvolucionId: null,
 
         init() {
             // Close type filter on outside click
@@ -837,12 +920,17 @@ function equiposApp() {
             this.detailPokemon = pokemon;
             this.detailLoading = false;
             this.showDetailModal = true;
+            this.cargarEvoluciones(pokemon);
         },
 
         closeDetail() {
             this.showDetailModal = false;
             this.detailPokemon = null;
             this.detailLoading = false;
+            this.detailEvoluciones = [];
+            this.detailEvolucionesLoading = false;
+            this.detailEvolucionesError = false;
+            this.selectedEvolucionId = null;
         },
 
         // ─── Nivel/exp (replica NivelHelper: curva media ×10) ──────────────
@@ -884,6 +972,15 @@ function equiposApp() {
 
         formatExp(exp) {
             return Number(exp || 0).toLocaleString('es-ES');
+        },
+
+        // Porcentaje defensivo de la barra de exp hacia la evolución (evita NaN/Infinity).
+        porcentajeExpRequisito(req) {
+            if (!req) return 0;
+            const actual = Number(req.actual || 0);
+            const necesario = Number(req.necesario || 0);
+            if (!(necesario > 0)) return 0;
+            return Math.min(100, Math.round((actual / necesario) * 100));
         },
 
         statsDe(pokemon) {
@@ -959,14 +1056,23 @@ function equiposApp() {
             const pokemon = this.detailPokemon;
             if (!pokemon || this.pokemonEnExploracion(pokemon)) return;
 
+            // Si hay múltiples opciones y no se ha seleccionado una, avisar
+            if (this.detailEvoluciones.length > 1 && !this.selectedEvolucionId) {
+                alert('Selecciona a qué pokémon evolucionar');
+                return;
+            }
+
             this.detailLoading = true;
             try {
+                const body = this.selectedEvolucionId ? { evolved_species_id: this.selectedEvolucionId } : {};
                 const response = await fetch('/reclutado/' + pokemon.id + '/evolucionar', {
                     method: 'POST',
                     headers: {
+                        'Content-Type': 'application/json',
                         'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '',
                         'Accept': 'application/json',
                     },
+                    body: JSON.stringify(body),
                 });
 
                 if (response.ok) {
@@ -1035,6 +1141,90 @@ function equiposApp() {
                 console.error('Error releasing pokemon:', err);
             } finally {
                 this.detailLoading = false;
+            }
+        },
+
+        // ─── Evolución: opciones, selección y caramelos ───────────────────
+
+        async cargarEvoluciones(pokemon) {
+            if (!pokemon) return;
+
+            this.detailEvoluciones = [];
+            this.detailEvolucionesError = false;
+            this.selectedEvolucionId = null;
+            this.detailEvolucionesLoading = true;
+
+            try {
+                const response = await fetch('/reclutado/' + pokemon.id + '/evoluciones', {
+                    headers: {
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '',
+                        'Accept': 'application/json',
+                    },
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    this.detailEvoluciones = data.opciones || [];
+                    // Con una sola opción se preselecciona automáticamente
+                    if (this.detailEvoluciones.length === 1) {
+                        this.selectedEvolucionId = this.detailEvoluciones[0].pokemon_id;
+                    }
+                } else {
+                    this.detailEvolucionesError = true;
+                }
+            } catch (err) {
+                console.error('Error cargando evoluciones:', err);
+                this.detailEvolucionesError = true;
+            } finally {
+                this.detailEvolucionesLoading = false;
+            }
+        },
+
+        opcionSeleccionada() {
+            if (!this.selectedEvolucionId || this.detailEvoluciones.length === 0) return null;
+            return this.detailEvoluciones.find(o => o.pokemon_id === this.selectedEvolucionId) || null;
+        },
+
+        puedeAlimentar(requisito) {
+            if (!requisito) return false;
+            if (this.pokemonEnExploracion(this.detailPokemon)) return false;
+            if (requisito.actual >= requisito.necesario) return false;
+            if (requisito.caramelosDisponibles <= 0) return false;
+            return true;
+        },
+
+        async alimentarCaramelo(requisito) {
+            const pokemon = this.detailPokemon;
+            if (!pokemon || !requisito || !this.puedeAlimentar(requisito)) return;
+
+            try {
+                const response = await fetch('/reclutado/' + pokemon.id + '/dar-caramelo', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '',
+                        'Accept': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        tipo: requisito.tipo,
+                        evolved_species_id: this.selectedEvolucionId,
+                    }),
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    // Actualización local sin recargar (estado Alpine reactivo)
+                    requisito.actual = data.actual;
+                    requisito.caramelosDisponibles = data.caramelos_disponibles;
+                    const opcion = this.opcionSeleccionada();
+                    if (opcion && typeof data.puede_evolucionar === 'boolean') {
+                        opcion.puede_evolucionar = data.puede_evolucionar;
+                    }
+                } else {
+                    await this.handleError(response);
+                }
+            } catch (err) {
+                console.error('Error dando caramelo:', err);
             }
         },
     };

@@ -60,12 +60,9 @@ class ReclutadoEvolucionTest extends TestCase
         $this->crearPokemon(4, 'charmander', 4);
         $this->crearPokemon(5, 'charmeleon', 5);
         $this->crearPokemon(6, 'charizard', 6);
-        $this->crearPokemon(10034, 'charizard-mega-x', 6);
 
         $this->crearEvolucion(4, 5, 16);
         $this->crearEvolucion(5, 6, 36);
-        // Forma alterna (mega): no debe considerarse la "siguiente evolución"
-        $this->crearEvolucion(5, 10034, 40);
 
         PokemonType::create(['pokemon_id' => 5, 'type' => TipoEnum::FIRE, 'slot' => 1]);
         PokemonType::create(['pokemon_id' => 6, 'type' => TipoEnum::FIRE, 'slot' => 1]);

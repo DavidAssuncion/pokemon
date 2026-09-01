@@ -44,3 +44,6 @@ Route::get('/reclutado/{reclutado}', [ReclutadoController::class, 'show']);
 Route::post('/reclutado/{reclutado}/dar-caramelo', [ReclutadoController::class, 'darCaramelo']);
 Route::post('/reclutado/{reclutado}/evolucionar', [ReclutadoController::class, 'evolucionar']);
 Route::delete('/reclutado/{reclutado}', [ReclutadoController::class, 'destroy']);
+
+// Opciones de evolución bajo demanda (usado por el modal de /equipos)
+Route::get('/reclutado/{reclutado}/evoluciones', [ReclutadoController::class, 'evoluciones']);

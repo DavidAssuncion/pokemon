@@ -43,6 +43,7 @@ final class CalculadorRecompensas
             caramelosTipo: $this->calcularCaramelosTipo($derrotados, $nivelSalvaje, $multiplicador),
             expTotal: $this->calcularExp($derrotados, $nivelSalvaje, $multiplicador),
             expPorMiembro: $this->calcularExpPorMiembro($derrotados, $nivelSalvaje, $multiplicador),
+            expTipoPorMiembro: $this->calcularExpTipoPorMiembro($derrotados, $nivelSalvaje, $multiplicador),
         );
     }
 
@@ -293,5 +294,34 @@ final class CalculadorRecompensas
         }
 
         return max(0, (int) floor($total * $multiplicador));
+    }
+
+    /**
+     * EXP de tipo por miembro: reparto de la EXP tipada igual que
+     * calcularExpPorMiembro (floor(exp×0.8/3) por derrota), pero DESPUÉS del
+     * reparto por tipo (1 tipo → 100 %, 2 tipos → 50/50). Se acumula por tipo,
+     * se aplica el multiplicador con floor y se filtra exp > 0.
+     *
+     * @param  Collection<int, PokemonDerrotado>  $derrotados
+     * @return array<string, int>
+     */
+    private function calcularExpTipoPorMiembro(Collection $derrotados, int $nivelSalvaje, float $multiplicador): array
+    {
+        $expTipo = [];
+        foreach ($derrotados as $pokemon) {
+            $exp = NivelHelper::expDerrota($pokemon->baseExperience, $nivelSalvaje);
+            $numTipos = count($pokemon->tipos);
+            if ($numTipos === 0) {
+                continue;
+            }
+            $expMiembro = (int) floor(($numTipos === 1 ? $exp : intdiv($exp, 2)) * 0.8 / 3);
+            foreach ($pokemon->tipos as $tipo) {
+                $expTipo[$tipo] = ($expTipo[$tipo] ?? 0) + $expMiembro;
+            }
+        }
+        foreach ($expTipo as $tipo => $exp) {
+            $expTipo[$tipo] = (int) floor($exp * $multiplicador);
+        }
+        return array_filter($expTipo, fn (int $exp): bool => $exp > 0);
     }
 }

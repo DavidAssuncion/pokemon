@@ -329,5 +329,57 @@ class CalculadorRecompensasTest extends TestCase
         $this->assertTrue($resultado->caramelosTipo->isEmpty());
         $this->assertSame(0, $resultado->expTotal);
         $this->assertSame(0, $resultado->expPorMiembro);
+        $this->assertSame([], $resultado->expTipoPorMiembro);
+    }
+
+    public function test_calcular_incluye_exp_tipo_por_miembro(): void
+    {
+        // exp = expDerrota(500, 100) = intdiv(50000, 5) = 10000.
+        // Doble tipo → intdiv(10000, 2) = 5000 → por miembro floor(5000×0.8/3) = 1333.
+        // Tipo único → 10000 → por miembro floor(10000×0.8/3) = 2666.
+        $derrotados = collect([
+            $this->derrotado(id: 1, baseExperience: 500, tipos: ['Eléctrico', 'Fuego']),
+            $this->derrotado(id: 2, baseExperience: 500, tipos: ['Fuego']),
+        ]);
+
+        $resultado = $this->calculador->calcular($derrotados, fn (): bool => false, 100);
+
+        $this->assertSame(1333, $resultado->expTipoPorMiembro['Eléctrico']);
+        $this->assertSame(3999, $resultado->expTipoPorMiembro['Fuego']);
+    }
+
+    public function test_calcular_exp_tipo_por_miembro_aplica_multiplicador(): void
+    {
+        $derrotados = collect([
+            $this->derrotado(id: 1, baseExperience: 500, tipos: ['Fuego']),
+        ]);
+
+        $resultado = $this->calculador->calcular($derrotados, fn (): bool => false, 100, 2.0);
+
+        // floor(2666 × 2.0) = 5332.
+        $this->assertSame(5332, $resultado->expTipoPorMiembro['Fuego']);
+    }
+
+    public function test_calcular_exp_tipo_por_miembro_ignora_pokemon_sin_tipos(): void
+    {
+        $derrotados = collect([
+            $this->derrotado(id: 1, baseExperience: 500, tipos: []),
+        ]);
+
+        $resultado = $this->calculador->calcular($derrotados, fn (): bool => false, 100);
+
+        $this->assertSame([], $resultado->expTipoPorMiembro);
+    }
+
+    public function test_sumar_hallazgos_conserva_exp_tipo_por_miembro(): void
+    {
+        $derrotados = collect([
+            $this->derrotado(id: 1, baseExperience: 500, tipos: ['Fuego']),
+        ]);
+        $recompensas = $this->calculador->calcular($derrotados, fn (): bool => false, 100);
+
+        $combinado = $recompensas->sumarHallazgos(collect(), collect(), collect());
+
+        $this->assertSame($recompensas->expTipoPorMiembro, $combinado->expTipoPorMiembro);
     }
 }

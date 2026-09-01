@@ -98,4 +98,40 @@ class EquiposViewTest extends TestCase
         $response->assertSee('"\'/images/iconos_webp/\' + detailPokemon.pokemon_id + \'.webp\'"', false);
         $response->assertSee('tipoLabelDel(t)', false);
     }
+
+    /**
+     * El modal de detalle consume el contrato de opciones de evolución:
+     * fetch de /evoluciones, selector de destino, barras de exp y botón de caramelo.
+     */
+    public function test_equipos_detail_modal_evolution_markers_are_present(): void
+    {
+        $response = $this->get('/equipos');
+
+        $response->assertOk();
+        // Estados Alpine de evolución
+        $response->assertSee('detailEvoluciones', false);
+        $response->assertSee('detailEvolucionesLoading', false);
+        $response->assertSee('selectedEvolucionId', false);
+        // Fetch de opciones de evolución al abrir el modal
+        $response->assertSee('cargarEvoluciones(pokemon)', false);
+        $response->assertSee("'/reclutado/' + pokemon.id + '/evoluciones'", false);
+        // Selector de destino (solo si hay varias opciones)
+        $response->assertSee('Selecciona a qué Pokémon evolucionar', false);
+        $response->assertSee('selectedEvolucionId === opcion.pokemon_id', false);
+        // Opción seleccionada (barras de exp hacia la evolución)
+        $response->assertSee('opcionSeleccionada()', false);
+        $response->assertSee("formatExp(req.actual) + ' / ' + formatExp(req.necesario)", false);
+        // Botón de caramelo con guardas
+        $response->assertSee('alimentarCaramelo(req)', false);
+        $response->assertSee('puedeAlimentar(req)', false);
+        $response->assertSee("'/images/candy_type/' + req.slug + '.webp'", false);
+        $response->assertSee("'/images/candy_pokemon/0.webp'", false);
+        // POST de caramelo con destino seleccionado
+        $response->assertSee("'/reclutado/' + pokemon.id + '/dar-caramelo'", false);
+        // Evolucionar envía el destino seleccionado
+        $response->assertSee('evolved_species_id: this.selectedEvolucionId', false);
+        // Sin evolución / error silencioso
+        $response->assertSee('Este Pokémon no tiene evolución.', false);
+        $response->assertSee('No hay información de evolución disponible.', false);
+    }
 }

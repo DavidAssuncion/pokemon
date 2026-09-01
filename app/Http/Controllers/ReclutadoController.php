@@ -6,6 +6,7 @@ namespace App\Http\Controllers;
 
 use App\Jobs\ActualizarPokedexJob;
 use App\Models\PlayerInventory;
+use App\Models\Pokemon;
 use App\Models\Reclutado;
 use App\Support\ItemCatalogo;
 use Illuminate\Http\JsonResponse;
@@ -50,11 +51,25 @@ class ReclutadoController extends Controller
     {
         $data = $request->validate([
             'tipo' => 'required|string',
+            'evolved_species_id' => 'sometimes|integer|nullable',
         ]);
 
+        // Coherencia con liberar/evolucionar: un pokémon en equipo en
+        // exploración no puede recibir caramelos.
+        if ($reclutado->teamMember?->team?->isExploring()) {
+            return response()->json([
+                'error' => 'No se puede dar caramelos a un pokémon de un equipo en exploración',
+            ], 422);
+        }
+
         $tipo = $data['tipo'];
-        $siguiente = ServicioEvolucion::siguienteEvolucion($reclutado->pokemon);
-        $tiposRequeridos = ServicioEvolucion::tiposRequeridos($siguiente);
+        $destino = $this->resolverDestino($reclutado, $data['evolved_species_id'] ?? null);
+
+        if ($destino === null) {
+            return response()->json(['error' => 'No hay evolución disponible'], 422);
+        }
+
+        $tiposRequeridos = ServicioEvolucion::tiposRequeridos($destino);
 
         if (! in_array($tipo, $tiposRequeridos, true)) {
             return response()->json(['error' => 'Ese tipo no es necesario para la evolución'], 422);
@@ -91,30 +106,107 @@ class ReclutadoController extends Controller
             'success' => true,
             'actual' => $reclutado->exp->expTipo($tipo),
             'caramelos_disponibles' => $caramelo->cantidad,
-            'puede_evolucionar' => ServicioEvolucion::puedeEvolucionar($reclutado, $userId),
+            'puede_evolucionar' => ServicioEvolucion::puedeEvolucionarPara($reclutado, $userId, $destino),
         ]);
     }
 
-    public function evolucionar(Reclutado $reclutado): JsonResponse
+    public function evolucionar(Request $request, Reclutado $reclutado): JsonResponse
     {
-        $userId = auth()->id();
-        $siguiente = ServicioEvolucion::siguienteEvolucion($reclutado->pokemon);
+        $data = $request->validate([
+            'evolved_species_id' => 'sometimes|integer|nullable',
+        ]);
 
-        if ($siguiente === null || ! ServicioEvolucion::puedeEvolucionar($reclutado, $userId)) {
+        $userId = auth()->id();
+        $opciones = ServicioEvolucion::opcionesEvolucion($reclutado->pokemon);
+
+        if ($opciones === []) {
+            return response()->json(['error' => 'No hay evolución disponible'], 422);
+        }
+
+        $destino = $this->resolverDestinoSeleccion($opciones, $data['evolved_species_id'] ?? null);
+
+        if ($destino === null) {
+            // Hay selección explícita (inválida) → destino inválido; si no, exige elegir.
+            $haySeleccion = array_key_exists('evolved_species_id', $data) && $data['evolved_species_id'] !== null;
+            $error = $haySeleccion ? 'Evolución no válida' : 'Selecciona a qué pokémon evolucionar';
+
+            return response()->json(['error' => $error], 422);
+        }
+
+        if (! ServicioEvolucion::puedeEvolucionarPara($reclutado, $userId, $destino)) {
             return response()->json(['error' => 'No cumple los requisitos'], 422);
         }
 
         $umbral = ServicioEvolucion::umbralParaNivel(ServicioEvolucion::nivelDe($reclutado));
-        $tipos = ServicioEvolucion::tiposRequeridos($siguiente);
+        $tipos = ServicioEvolucion::tiposRequeridos($destino);
 
-        DB::transaction(function () use ($reclutado, $siguiente, $tipos, $umbral): void {
+        DB::transaction(function () use ($reclutado, $destino, $tipos, $umbral): void {
             ServicioEvolucion::consumirExpTipo($reclutado, $tipos, $umbral);
-            $reclutado->update(['pokemon_id' => $siguiente->id]);
+            $reclutado->update(['pokemon_id' => $destino->id]);
         });
 
-        ActualizarPokedexJob::dispatch($userId, $siguiente->id, 'RECLUTADO');
+        ActualizarPokedexJob::dispatch($userId, $destino->id, 'RECLUTADO');
 
-        return response()->json(['success' => true, 'pokemon_id' => $siguiente->id]);
+        return response()->json(['success' => true, 'pokemon_id' => $destino->id]);
+    }
+
+    /**
+     * Opciones de evolución bajo demanda (usado por el modal de /equipos).
+     */
+    public function evoluciones(Reclutado $reclutado): JsonResponse
+    {
+        return response()->json([
+            'opciones' => ServicioEvolucion::requisitosDeOpciones($reclutado, auth()->id()),
+        ]);
+    }
+
+    /**
+     * Resuelve el destino de evolución devolviendo null si no se puede
+     * determinar (para que el caller distinga entre "sin selección" e
+     * "selección inválida").
+     *
+     * - Una sola opción → siempre esa (se acepta con o sin evolved_species_id).
+     * - Varias opciones → exige evolved_species_id ∈ opciones.
+     *
+     * @param  array<int, Pokemon>  $opciones
+     */
+    private function resolverDestinoSeleccion(array $opciones, ?int $evolvedSpeciesId): ?Pokemon
+    {
+        if (count($opciones) === 1) {
+            return $evolvedSpeciesId === null || $evolvedSpeciesId === $opciones[0]->id ? $opciones[0] : null;
+        }
+        if ($evolvedSpeciesId === null) {
+            return null;
+        }
+        foreach ($opciones as $opcion) {
+            if ($opcion->id === $evolvedSpeciesId) {
+                return $opcion;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Resuelve el destino para dar caramelos. Si viene `evolved_species_id`,
+     * debe pertenecer a las opciones; si no, se usa la primera.
+     */
+    private function resolverDestino(Reclutado $reclutado, ?int $evolvedSpeciesId): ?Pokemon
+    {
+        $opciones = ServicioEvolucion::opcionesEvolucion($reclutado->pokemon);
+        if ($opciones === []) {
+            return null;
+        }
+        if ($evolvedSpeciesId === null) {
+            return $opciones[0];
+        }
+        foreach ($opciones as $opcion) {
+            if ($opcion->id === $evolvedSpeciesId) {
+                return $opcion;
+            }
+        }
+
+        return null;
     }
 
     /**

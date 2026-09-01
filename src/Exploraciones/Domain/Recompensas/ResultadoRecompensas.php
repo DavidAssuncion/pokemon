@@ -33,6 +33,8 @@ final class ResultadoRecompensas
      * @param  Collection<int, RecompensaFamilia>|array<int, RecompensaFamilia>  $caramelosFamilia
      * @param  Collection<int, RecompensaEv>|array<int, RecompensaEv>  $caramelosEv
      * @param  Collection<int, RecompensaTipo>|array<int, RecompensaTipo>  $caramelosTipo
+     * @param  array<string, int>  $expTipoPorMiembro  EXP de tipo que recibe CADA
+     *                                                 integrante (clave = label de tipo)
      */
     public function __construct(
         Collection|array $capturas,
@@ -41,6 +43,7 @@ final class ResultadoRecompensas
         Collection|array $caramelosTipo,
         public readonly int $expTotal,
         public readonly int $expPorMiembro = 0,
+        public readonly array $expTipoPorMiembro = [],
     ) {
         $this->capturas = self::coleccionTipada($capturas, RecompensaCaptura::class);
         $this->caramelosFamilia = self::coleccionTipada($caramelosFamilia, RecompensaFamilia::class);
@@ -69,6 +72,7 @@ final class ResultadoRecompensas
             caramelosTipo: $this->combinarTipo($caramelosTipo),
             expTotal: $this->expTotal,
             expPorMiembro: $this->expPorMiembro,
+            expTipoPorMiembro: $this->expTipoPorMiembro,
         );
     }
 

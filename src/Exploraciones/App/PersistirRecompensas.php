@@ -32,7 +32,13 @@ class PersistirRecompensas
         $this->guardarCaramelosEv($recompensas->caramelosEv, $usuario);
         $this->guardarCaramelosTipo($recompensas->caramelosTipo, $usuario);
         $this->aplicarCapturas($recompensas->capturas, $usuario);
-        $this->aplicarExperiencia($recompensas->expTotal, $recompensas->expPorMiembro, $equipo, $usuario);
+        $this->aplicarExperiencia(
+            $recompensas->expTotal,
+            $recompensas->expPorMiembro,
+            $recompensas->expTipoPorMiembro,
+            $equipo,
+            $usuario,
+        );
     }
 
     /**
@@ -106,9 +112,12 @@ class PersistirRecompensas
     /**
      * Reparto de EXP (D3/RF-14): el jugador recibe el 100 % del total; cada
      * miembro del equipo recibe la parte del 80 % repartida entre 3
-     * (expPorMiembro ya calculado por el dominio).
+     * (expPorMiembro ya calculado por el dominio) y acumula la exp de tipo
+     * correspondiente en `reclutados.exp.tipos`.
+     *
+     * @param  array<string, int>  $expTipoPorMiembro
      */
-    private function aplicarExperiencia(int $expTotal, int $expPorMiembro, ?Team $equipo, ?User $usuario): void
+    private function aplicarExperiencia(int $expTotal, int $expPorMiembro, array $expTipoPorMiembro, ?Team $equipo, ?User $usuario): void
     {
         if ($usuario !== null && $expTotal > 0) {
             $usuario->increment('experiencia', $expTotal);
@@ -120,17 +129,27 @@ class PersistirRecompensas
 
         foreach ($equipo->members as $miembro) {
             if ($miembro->reclutado !== null) {
-                $this->sumarExpTotal($miembro->reclutado, $expPorMiembro);
+                $this->sumarExp($miembro->reclutado, $expPorMiembro, $expTipoPorMiembro);
             }
         }
     }
 
-    private function sumarExpTotal(Reclutado $reclutado, int $expTotal): void
+    /**
+     * @param  array<string, int>  $expTipoPorMiembro
+     */
+    private function sumarExp(Reclutado $reclutado, int $expTotal, array $expTipoPorMiembro): void
     {
         // El cast ExpReclutado devuelve el VO: se normaliza a array para sumar
-        // el total y se reasigna (el set del cast normaliza de nuevo).
+        // el total y los tipos y se reasigna (el set del cast normaliza de nuevo).
         $expActual = $reclutado->exp->toArray();
         $expActual['total'] += $expTotal;
+
+        foreach ($expTipoPorMiembro as $tipo => $exp) {
+            if ($exp > 0) {
+                $expActual['tipos'][$tipo] = ($expActual['tipos'][$tipo] ?? 0) + $exp;
+            }
+        }
+
         $reclutado->update(['exp' => $expActual]);
     }
 }

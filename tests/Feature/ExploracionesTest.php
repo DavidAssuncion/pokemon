@@ -585,6 +585,42 @@ class ExploracionesTest extends TestCase
         }
     }
 
+    public function test_finalizacion_acumula_exp_de_tipo_en_los_reclutados(): void
+    {
+        // Bug 2: la exp de tipo calculada internamente debe acumularse en
+        // reclutados.exp.tipos (antes solo sumaba al total).
+        $ctx = $this->crearContexto(['duracion_horas' => 1, 'inicio' => now()->subHours(2)]);
+        Pokemon::where('id', 2)->update(['base_experience' => 5000]);
+
+        // Pool determinista: solo charmander (2 tipos) para no depender del RNG.
+        DB::table('pokemon_habitat')->where('pokemon_id', 1)->delete();
+
+        PokemonType::create(['pokemon_id' => 2, 'type' => 13, 'slot' => 1]); // Eléctrico
+        PokemonType::create(['pokemon_id' => 2, 'type' => 10, 'slot' => 2]); // Fuego
+
+        // Tick determinista: solo encuentros normales (categoría exito, ×1.0).
+        $this->bindProcesarConAleatorio(fn (): float => 0.3);
+
+        $this->artisan('exploraciones:procesar')->assertSuccessful();
+
+        $ctx['exploracion']->refresh();
+        $conteos = $this->conteoPorEspecie($ctx['exploracion']->eventos['bitacora']);
+        $this->assertGreaterThan(0, $conteos[2] ?? 0);
+
+        // T por derrota (nivel salvaje 5); 2 tipos → 50/50; por miembro
+        // floor((T/2)×0.8/3) por derrota y por tipo.
+        $T = NivelHelper::expDerrota(5000, 5);
+        $expTipoPorDerrota = (int) floor(intdiv($T, 2) * 0.8 / 3);
+        $esperadoPorTipo = $expTipoPorDerrota * ($conteos[2] ?? 0);
+        $this->assertGreaterThan(0, $esperadoPorTipo);
+
+        foreach ([$ctx['reclutado1'], $ctx['reclutado2']] as $reclutado) {
+            $reclutado->refresh();
+            $this->assertSame($esperadoPorTipo, $reclutado->exp->expTipo('Eléctrico'));
+            $this->assertSame($esperadoPorTipo, $reclutado->exp->expTipo('Fuego'));
+        }
+    }
+
     // ==========================================
     // CommandBus: rollback transaccional de FinalizarExploracion
     // ==========================================
