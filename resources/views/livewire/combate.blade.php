@@ -1,3 +1,4 @@
+<div>
 <div class="container-fluid py-3 battle-container"
      wire:key="battle-{{ $round }}"
      x-init="$nextTick(() => {
@@ -67,3 +68,4 @@
             </div>
         </div>
     @endif
+</div>
