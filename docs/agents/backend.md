@@ -46,6 +46,8 @@ Para cada comportamiento:
 
 NO ejecutar la suite completa después de cada modificación.
 
+NO crees arrays. Debes comunicarte con DTOCollection, DTOs, o clases tipadas
+
 NO ejecutar Infection durante el ciclo TDD.
 
 NO ejecutar PHPStan global durante cada ciclo TDD.

@@ -6,6 +6,7 @@
 - PSR-4 autoloading: `App\` → `app/`, `Src\` → `src/`.
 - Sigue el estilo de Laravel Pint (PSR-12).
 - Sin comentarios triviales. El código debe ser autoexplicativo.
+- Prohibido trabajar con arrays. Todas las estructuras de datos deben ser DTOs, DTOCollection, o clases tipadas. No se pueden usar arrays
 
 ## Nombrado
 
