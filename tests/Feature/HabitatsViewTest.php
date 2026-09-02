@@ -10,9 +10,10 @@ use Tests\TestCase;
 class HabitatsViewTest extends TestCase
 {
     /**
-     * El modal de exploración del detalle de hábitat renderiza el panel de
-     * preparación de la expedición (preview) con fetch a /exploraciones/preview
-     * y el botón "Enviar expedición" deshabilitado hasta cargar el preview.
+     * El modal de exploración individual del detalle de hábitat renderiza el
+     * panel de preparación de la expedición (preview individual) con fetch a
+     * /exploraciones/preview y el botón "Enviar expedición" deshabilitado
+     * hasta cargar el preview.
      */
     public function test_habitat_show_renders_expedition_preview_panel(): void
     {
@@ -37,21 +38,19 @@ class HabitatsViewTest extends TestCase
             'nivelJugador' => 5,
         ]);
 
-        // Modal de exploración + panel de preparación
+        // Modal de exploración + panel de preparación individual
         $view->assertSee('Confirmar Exploración', false);
         $view->assertSee('/exploraciones/preview', false);
         $view->assertSee('previewLoading', false);
         $view->assertSee('Peligro de la zona', false);
-        $view->assertSee('Afinidad del equipo', false);
-        $view->assertSee('Equipo bien preparado para esta zona', false);
+        $view->assertSee('Capacidades del Pokémon', false);
+        $view->assertSee('Nivel mínimo requerido', false);
         $view->assertSee('starRating', false);
         $view->assertSee('riesgoClass', false);
-        // Sección "Tipos frente a la zona" (matchups) + defensividad ante contrato ausente
-        $view->assertSee('Tipos frente a la zona', false);
-        $view->assertSee('preview.matchups && preview.matchups.length', false);
-        $view->assertSee('mu.miembro_tipos.join', false);
-        $view->assertSee('mu.pool_tipo', false);
-        $view->assertSee("mu.clasificacion === 'severo'", false);
+        // Capacidades individuales
+        $view->assertSee('preview.capacidades', false);
+        $view->assertSee('preview.nivel_pokemon', false);
+        $view->assertSee('preview.min_lvl', false);
         // Botón renombrado y con estado de carga
         $view->assertSee('Enviar expedición', false);
         $view->assertSee(':disabled="!previewLoaded"', false);

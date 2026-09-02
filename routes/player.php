@@ -47,3 +47,8 @@ Route::delete('/reclutado/{reclutado}', [ReclutadoController::class, 'destroy'])
 
 // Opciones de evolución bajo demanda (usado por el modal de /equipos)
 Route::get('/reclutado/{reclutado}/evoluciones', [ReclutadoController::class, 'evoluciones']);
+
+// Favoritos y capacidades de reclutados (API JSON)
+Route::post('/api/reclutados/{reclutado}/toggle-favorito', [ReclutadoController::class, 'toggleFavorito']);
+Route::get('/api/reclutados/favoritos', [ReclutadoController::class, 'favoritos']);
+Route::get('/api/reclutado/{reclutado}/capacidades', [ReclutadoController::class, 'capacidades']);

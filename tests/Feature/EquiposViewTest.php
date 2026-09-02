@@ -37,8 +37,8 @@ class EquiposViewTest extends TestCase
     }
 
     /**
-     * La vista /equipos renderiza el componente Alpine con el modal de detalle:
-     * ojo de inspección en ambos overlays, acciones evolucionar/liberar y guardas.
+     * La vista /equipos (Favoritos) renderiza el componente Alpine con el modal
+     * de detalle y los controles de favoritos.
      */
     public function test_equipos_renders_detail_modal_markers(): void
     {
@@ -57,8 +57,8 @@ class EquiposViewTest extends TestCase
         $response = $this->get('/equipos');
 
         $response->assertOk();
-        $response->assertSee('equiposApp', false);
-        // Botón ojo en ambos overlays (Disponibles y Asignados)
+        $response->assertSee('favoritosApp', false);
+        // Botón ojo en el grid de disponibles
         $response->assertSee('openDetail(pokemon)', false);
         // Modal de detalle
         $response->assertSee('showDetailModal', false);
@@ -68,9 +68,13 @@ class EquiposViewTest extends TestCase
         $response->assertSee("'/reclutado/' + pokemon.id + '/evolucionar'", false);
         $response->assertSee("method: 'DELETE'", false);
         // Guardas de exploración
-        $response->assertSee('pokemonEnExploracion(pokemon)', false);
-        // isInExploration defensivo para lista plana de equipo_id
-        $response->assertSee('e.equipo_id === teamId', false);
+        $response->assertSee('enExploracion(detailPokemon.id)', false);
+        // Favoritos: toggle y gestión
+        $response->assertSee('toggleFavorito(pokemon)', false);
+        $response->assertSee('Gestionar favoritos', false);
+        // Exploración individual
+        $response->assertSee('/api/exploraciones/store-individual', false);
+        $response->assertSee('/api/reclutados/', false);
     }
 
     /**
@@ -95,8 +99,7 @@ class EquiposViewTest extends TestCase
 
         $response->assertOk();
         $response->assertSee('expTotalDe(pokemon)', false);
-        $response->assertSee('"\'/images/iconos_webp/\' + detailPokemon.pokemon_id + \'.webp\'"', false);
-        $response->assertSee('tipoLabelDel(t)', false);
+        $response->assertSee("'/images/iconos_webp/' + detailPokemon.pokemon_id + '.webp'", false);
     }
 
     /**

@@ -9,9 +9,11 @@ use Src\Battle\Domain\AgregadoBatalla;
 use Src\Battle\Domain\EquipoBatalla;
 use Src\CombateEntrenadores\App\ConstruirEquipoJugador;
 use Src\Gimnasios\Domain\CatalogoGimnasios;
+use Src\Gimnasios\Domain\EvsRangoEntrenador;
 use Src\Gimnasios\Domain\Exceptions\GimnasioBloqueado;
 use Src\Gimnasios\Domain\Exceptions\GimnasioCompletado;
 use Src\Gimnasios\Domain\Repositories\GymProgressRepositoryInterface;
+use Src\Shared\Domain\EscaladorNivelRival;
 
 /**
  * Crea una batalla contra un gimnasio y la guarda en sesión.
@@ -22,7 +24,7 @@ use Src\Gimnasios\Domain\Repositories\GymProgressRepositoryInterface;
  */
 final class IniciarCombateGimnasio
 {
-    private const SESSION_VERSION = 7;
+    private const SESSION_VERSION = 8;
 
     public function __construct(
         private readonly CatalogoGimnasios $catalogo,
@@ -57,11 +59,20 @@ final class IniciarCombateGimnasio
 
         $nivelRival = $this->escalador->escalar($gimnasio->nivelMinimo, $nivelJugador);
 
+        // Etapas 1-3 (entrenadores): 64/64; etapa 4 (líder): 128/64
+        [$evPrincipal, $evResto] = $etapa === 4
+            ? [EvsRangoEntrenador::LIDER_PRINCIPAL, EvsRangoEntrenador::LIDER_RESTO]
+            : [EvsRangoEntrenador::GIMNASIO_PRINCIPAL, EvsRangoEntrenador::GIMNASIO_RESTO];
+
         $equipo = Team::with('members.reclutado.pokemon.stats', 'members.reclutado.pokemon.types')
             ->findOrFail($teamId);
 
         $datosJugador = $this->construirEquipoJugador->desdeEquipo($equipo, $formacion, $nivelJugador);
-        $datosRival = $this->generador->generar($gimnasio->equipoEtapa($etapa), $nivelRival);
+
+        $equipoEtapa = $gimnasio->equipoEtapa($etapa);
+        $datosRival = $equipoEtapa !== null
+            ? $this->generador->generar($equipoEtapa, $nivelRival, $evPrincipal, $evResto)
+            : [];
 
         $team1 = EquipoBatalla::fromData($datosJugador, $equipo->name);
         $team2 = EquipoBatalla::fromData($datosRival, $gimnasio->nombreEtapa($etapa));

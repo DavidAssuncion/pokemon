@@ -26,3 +26,5 @@ Route::delete('/api/habitats/{id}/families/{chainId}', [HabitatsController::clas
 Route::patch('/api/habitats/{habitat}/pokemon/{pokemon}', [HabitatsController::class, 'movePokemonLevel']);
 
 Route::get('/api/habitats/unassigned-families', [HabitatsController::class, 'unassignedFamilies']);
+
+Route::post('/api/habitats/{habitat}/toggle-favorito', [HabitatsController::class, 'toggleFavorito']);

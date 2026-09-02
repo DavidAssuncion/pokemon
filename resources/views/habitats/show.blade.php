@@ -127,7 +127,7 @@
                                     </svg>
                                 </div>
                                 <div>
-                                    <p class="text-sm font-medium text-gray-900 dark:text-white">{{ $exp->team->name ?? 'Equipo eliminado' }}</p>
+                                    <p class="text-sm font-medium text-gray-900 dark:text-white">{{ $exp->reclutado->nombre ?? 'Reclutado eliminado' }}</p>
                                     <p class="text-xs text-gray-500 dark:text-gray-400">Nivel {{ $exp->nivel }}</p>
                                 </div>
                             </div>
@@ -143,8 +143,64 @@
                 </div>
                 @endif
 
-                <!-- Teams Panel: 3-column grid of team cards -->
-                <div class="{{ $cardPanelClass }}">
+                <!-- Favoritos Panel (exploración individual; modo pokémon) -->
+                <div class="{{ $cardPanelClass }}" x-show="modo === 'pokemon'" x-cloak>
+                    <div class="p-4 border-b border-gray-200 dark:border-gray-700">
+                        <h3 class="text-sm font-semibold text-gray-900 dark:text-white">Tus favoritos</h3>
+                    </div>
+                    <div class="p-4">
+                        <div x-show="favoritosLoading" x-cloak role="status" class="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
+                            <svg class="w-4 h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                            Cargando favoritos...
+                        </div>
+                        <div x-show="favoritosError" x-cloak role="alert" class="text-sm text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg px-3 py-2">
+                            <span x-text="favoritosError"></span>
+                        </div>
+                        <div x-show="!favoritosLoading && !favoritosError && favoritos.length === 0" x-cloak class="text-center py-6">
+                            <p class="text-sm text-gray-500 dark:text-gray-400">No tienes Pokémon favoritos</p>
+                            <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">Marca favoritos desde <a href="/equipos" class="text-blue-600 dark:text-blue-400 hover:underline">Favoritos</a></p>
+                        </div>
+                        <div x-show="!favoritosLoading && favoritos.length > 0" x-cloak class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                            <template x-for="favorito in favoritos" :key="favorito.id">
+                                <div
+                                    class="rounded-lg p-2 border-2 transition-all cursor-pointer text-center"
+                                    :class="esFavoritoEnExploracion(favorito.id)
+                                        ? 'bg-gray-100 dark:bg-gray-900/30 border-gray-200 dark:border-gray-700 opacity-60 cursor-not-allowed'
+                                        : (selectedFavoritoId === favorito.id
+                                            ? 'border-blue-500 dark:border-blue-400 bg-blue-50 dark:bg-blue-900/20 ring-1 ring-blue-200 dark:ring-blue-800'
+                                            : 'border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 hover:border-gray-300 dark:hover:border-gray-600')"
+                                    @if(true)
+                                    @click="!esFavoritoEnExploracion(favorito.id) && selectFavorito(favorito.id, favorito.nombre)"
+                                    role="button"
+                                    tabindex="0"
+                                    @keydown.space.prevent="!esFavoritoEnExploracion(favorito.id) && selectFavorito(favorito.id, favorito.nombre)"
+                                    @keydown.enter.prevent="!esFavoritoEnExploracion(favorito.id) && selectFavorito(favorito.id, favorito.nombre)"
+                                    @endif
+                                    :aria-label="esFavoritoEnExploracion(favorito.id) ? 'Pokémon en exploración' : 'Seleccionar ' + favorito.nombre"
+                                >
+                                    <div class="flex items-center justify-end mb-1">
+                                        <template x-if="esFavoritoEnExploracion(favorito.id)">
+                                            <span class="px-1.5 py-0.5 bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400 text-[10px] font-bold rounded-full uppercase">En exploración</span>
+                                        </template>
+                                    </div>
+                                    <img
+                                        :src="'/images/iconos_webp/' + favorito.pokemon_id + '.webp'"
+                                        loading="lazy"
+                                        decoding="async"
+                                        :alt="favorito.nombre"
+                                        class="w-16 h-16 object-contain mx-auto"
+                                        onerror="this.style.display='none'"
+                                    >
+                                    <p class="text-[10px] text-gray-700 dark:text-gray-300 truncate mt-1" x-text="favorito.nombre"></p>
+                                    <p class="text-[10px] text-gray-400 dark:text-gray-500" x-text="'Nv ' + favorito.nivel"></p>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Teams Panel: 3-column grid of team cards (modo entrenadores) -->
+                <div class="{{ $cardPanelClass }}" x-show="modo === 'entrenadores'" x-cloak>
                     <div class="p-4 border-b border-gray-200 dark:border-gray-700">
                         <h3 class="text-sm font-semibold text-gray-900 dark:text-white">Equipos</h3>
                     </div>
@@ -319,14 +375,6 @@
                                                     <span class="text-xs font-semibold text-gray-900 dark:text-white" x-text="'Entrenador ' + entrenador.indice"></span>
                                                     <span x-show="!entrenador.desbloqueado" class="px-1.5 py-0.5 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 text-[10px] font-bold rounded-full">Derrotado</span>
                                                 </div>
-                                                <div class="flex gap-1">
-                                                    <template x-for="(poke, pIdx) in entrenador.pokemon" :key="pIdx">
-                                                        <div class="flex-1 text-center">
-                                                            <img :src="poke.icon" loading="lazy" decoding="async" :alt="poke.nombre" :title="poke.nombre + ' (' + poke.posicion + ')'" class="w-12 h-12 object-contain mx-auto" onerror="this.style.display='none'">
-                                                            <span class="text-[8px] text-gray-500 dark:text-gray-400 block" x-text="poke.posicion === 'vanguardia' ? '🛡️' : '⚔️'"></span>
-                                                        </div>
-                                                    </template>
-                                                </div>
                                             </button>
                                         </template>
                                     </div>
@@ -355,17 +403,17 @@
             </div>
         </div>
 
-    <!-- Exploration Modal -->
+    <!-- Exploration Modal (individual) -->
     <template x-if="showExplorationModal">
         <div class="fixed inset-0 z-50 flex items-center justify-center p-4" @keydown.escape.window="closeExplorationModal()">
             <div class="absolute inset-0 bg-black/60" @click="closeExplorationModal()"></div>
             <div class="relative bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-md p-6">
                 <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-4">Confirmar Exploración</h3>
                 <p class="text-sm text-gray-600 dark:text-gray-300 mb-4">
-                    ¿Quieres mandar a explorar <strong class="text-gray-900 dark:text-white" x-text="selectedTeamName"></strong> a la zona <strong class="text-gray-900 dark:text-white">{{ $habitat['name'] }}</strong>?
+                    ¿Quieres enviar a explorar a <strong class="text-gray-900 dark:text-white capitalize" x-text="selectedFavoritoName"></strong> a la zona <strong class="text-gray-900 dark:text-white">{{ $habitat['name'] }}</strong>?
                 </p>
 
-                <!-- Preparación de la expedición (preview) -->
+                <!-- Preparación de la expedición (preview individual) -->
                 <div class="mb-4">
                     <div x-show="previewLoading" x-cloak role="status" class="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2">
                         <svg class="w-4 h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -380,86 +428,40 @@
                         <div class="space-y-3 bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700 rounded-lg p-3">
                             <div class="flex items-center justify-between">
                                 <span class="text-xs font-medium text-gray-600 dark:text-gray-300">Peligro de la zona</span>
-                                <span class="text-sm text-amber-500 tracking-tight" x-html="starRating(preview.peligro_estrellas)"
-                                      :title="'Peligro ' + preview.peligro_estrellas + ' de 5 estrellas'" aria-hidden="true"></span>
+                                <span class="text-sm text-amber-500 tracking-tight" x-html="starRating(preview.peligro)"
+                                      :title="'Peligro ' + preview.peligro + ' de 5 estrellas'" aria-hidden="true"></span>
                             </div>
                             <div class="flex items-center justify-between">
-                                <span class="text-xs font-medium text-gray-600 dark:text-gray-300">Afinidad del equipo</span>
-                                <span class="text-sm font-medium text-gray-900 dark:text-white" x-text="preview.afinidad"></span>
+                                <span class="text-xs font-medium text-gray-600 dark:text-gray-300">Nivel del Pokémon</span>
+                                <span class="text-sm font-medium text-gray-900 dark:text-white" x-text="'Nv ' + preview.nivel_pokemon"></span>
                             </div>
-                            <template x-if="preview.advertencias && preview.advertencias.length">
-                                <div class="space-y-1">
-                                    <template x-for="adv in preview.advertencias" :key="adv">
-                                        <p class="text-xs" :class="adv.includes('Fracaso') ? 'text-red-600 dark:text-red-400' : 'text-amber-700 dark:text-amber-400'" x-text="adv"></p>
-                                    </template>
-                                </div>
-                            </template>
-                            <template x-if="preview.matchups && preview.matchups.length">
+                            <template x-if="preview.capacidades">
                                 <div>
-                                    <p class="text-xs font-medium text-gray-600 dark:text-gray-300 mb-1.5">Tipos frente a la zona</p>
-                                    <div class="flex flex-wrap gap-2">
-                                        {{-- Desventajas (negativo + severo) --}}
-                                        <template x-if="preview.matchups.filter(mu => mu.clasificacion === 'negativo' || mu.clasificacion === 'severo').length > 0">
-                                            <div class="relative" x-data="{ show: false }" @mouseenter="show = true" @mouseleave="show = false">
-                                                <span class="px-2 py-0.5 bg-red-600 text-white text-[10px] font-bold rounded-full cursor-help select-none"
-                                                      x-text="'⚠️ ' + preview.matchups.filter(mu => mu.clasificacion === 'negativo' || mu.clasificacion === 'severo').length + ' Desventajas'"></span>
-                                                <div x-show="show" x-cloak
-                                                     class="absolute z-50 top-full mt-1 left-0 bg-gray-900 dark:bg-gray-700 text-white text-xs rounded-lg p-2 shadow-lg min-w-[200px] space-y-0.5">
-                                                    <template x-for="mu in preview.matchups.filter(mu => mu.clasificacion === 'negativo' || mu.clasificacion === 'severo')" :key="mu.miembro_tipos.join('-') + '-' + mu.pool_tipo">
-                                                        <p :class="mu.clasificacion === 'severo' ? 'font-bold' : ''">
-                                                            <template x-if="mu.clasificacion === 'severo'"><span>⚠ Inmune: </span></template>
-                                                            <span x-text="'Pokémon de tipo ' + mu.miembro_tipos.join('/') + ' en zona con Pokémon ' + mu.pool_tipo"></span>
-                                                        </p>
-                                                    </template>
-                                                </div>
-                                            </div>
-                                        </template>
-                                        {{-- Ventajas (positivo) --}}
-                                        <template x-if="preview.matchups.filter(mu => mu.clasificacion === 'positivo').length > 0">
-                                            <div class="relative" x-data="{ show: false }" @mouseenter="show = true" @mouseleave="show = false">
-                                                <span class="px-2 py-0.5 bg-green-600 text-white text-[10px] font-bold rounded-full cursor-help select-none"
-                                                      x-text="'✅ ' + preview.matchups.filter(mu => mu.clasificacion === 'positivo').length + ' Ventajas'"></span>
-                                                <div x-show="show" x-cloak
-                                                     class="absolute z-50 top-full mt-1 right-0 bg-gray-900 dark:bg-gray-700 text-white text-xs rounded-lg p-2 shadow-lg min-w-[200px] space-y-0.5">
-                                                    <template x-for="mu in preview.matchups.filter(mu => mu.clasificacion === 'positivo')" :key="mu.miembro_tipos.join('-') + '-' + mu.pool_tipo">
-                                                        <p>
-                                                            <span x-text="'Pokémon de tipo ' + mu.miembro_tipos.join('/') + ' en zona con Pokémon ' + mu.pool_tipo"></span>
-                                                        </p>
-                                                    </template>
-                                                </div>
+                                    <p class="text-xs font-medium text-gray-600 dark:text-gray-300 mb-1.5">Capacidades del Pokémon</p>
+                                    <div class="grid grid-cols-2 gap-2">
+                                        <template x-for="(valor, key) in preview.capacidades" :key="key">
+                                            <div class="flex items-center justify-between px-2 py-1 bg-white dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-700">
+                                                <span class="text-[10px] text-gray-500 dark:text-gray-400 capitalize" x-text="key"></span>
+                                                <span class="text-[10px] font-medium text-gray-700 dark:text-gray-300" x-text="Math.round(valor * 100) / 100"></span>
                                             </div>
                                         </template>
                                     </div>
                                 </div>
                             </template>
-                            <template x-if="preview.roles && preview.roles.length">
-                                <div>
-                                    <p class="text-xs font-medium text-gray-600 dark:text-gray-300 mb-1.5">Roles del equipo</p>
-                                    <div class="flex flex-wrap gap-1.5">
-                                        <template x-for="rol in preview.roles" :key="rol">
-                                            <span class="px-2 py-0.5 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 text-[10px] font-bold rounded-full uppercase" x-text="rol"></span>
-                                        </template>
-                                    </div>
+                            <template x-if="preview.min_lvl">
+                                <div class="flex items-center justify-between">
+                                    <span class="text-xs font-medium text-gray-600 dark:text-gray-300">Nivel mínimo requerido</span>
+                                    <span class="text-xs font-medium text-gray-700 dark:text-gray-300">Nv <span x-text="preview.min_lvl"></span></span>
                                 </div>
                             </template>
                             <div class="flex items-center justify-between gap-2 pt-1 border-t border-gray-200 dark:border-gray-700">
                                 <span class="px-2 py-0.5 text-[10px] font-bold rounded-full uppercase" :class="riesgoClass(preview.riesgo)" x-text="'Riesgo ' + preview.riesgo"></span>
-                                <span class="text-xs text-gray-600 dark:text-gray-300">
-                                    Recompensa esperada:
-                                    <strong class="text-gray-900 dark:text-white" x-text="preview.recompensa_esperada"></strong>
-                                </span>
                             </div>
-                            <p x-show="teamWellPrepared" x-cloak class="text-xs font-medium text-green-600 dark:text-green-400 flex items-center gap-1">
-                                <svg class="w-4 h-4 shrink-0" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
-                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
-                                </svg>
-                                Equipo bien preparado para esta zona
-                            </p>
                         </div>
                     </template>
                 </div>
 
-                <!-- Duration options -->
+                <!-- Duration options (copied from existing) -->
                 <div class="space-y-3 mb-6">
                     <label class="flex items-center gap-3 p-3 rounded-lg border border-gray-200 dark:border-gray-700 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
                         :class="{ 'border-blue-500 dark:border-blue-400 bg-blue-50 dark:bg-blue-900/20': durationMode === 'hours' }"
@@ -778,6 +780,13 @@ function habitatShow() {
         sightedPokemonIds: @json($sightedPokemonIds ?? []),
         equiposEnExploracion: @json($equiposEnExploracion->pluck('equipo_id')->toArray()),
         teams: @json($teams),
+        // Favoritos (exploración individual): se cargan desde /api/reclutados/favoritos.
+        favoritos: [],
+        favoritosLoading: false,
+        favoritosError: '',
+        selectedFavoritoId: null,
+        selectedFavoritoName: '',
+        reclutadosEnExploracion: @json($reclutadosEnExploracion ?? ($exploracionesActivas ? $exploracionesActivas->pluck('reclutado_id')->all() : [])),
         minLvls: {
             1: {{ $habitat['min_lvl_1'] ?? 'null' }},
             2: {{ $habitat['min_lvl_2'] ?? 'null' }},
@@ -913,18 +922,9 @@ function habitatShow() {
         allTypes: @json(collect(\App\Enums\TipoEnum::options())->map(fn ($name, $id) => ['id' => (int) $id, 'name' => $name])->values()->all()),
 
         get canStartExploration() {
-            return this.selectedTeamId !== null
+            return this.selectedFavoritoId !== null
                 && this.selectedLevel !== null
                 && !this.levelBlocked(this.selectedLevel);
-        },
-
-        get teamWellPrepared() {
-            if (!this.previewLoaded || !this.preview) {
-                return false;
-            }
-            const riesgoBajo = this.preview.riesgo === 'Bajo' || this.preview.riesgo === 'Medio';
-            const sinAdvertencias = !(this.preview.advertencias && this.preview.advertencias.length > 0);
-            return riesgoBajo && sinAdvertencias;
         },
 
         get availableTeams() {
@@ -932,7 +932,43 @@ function habitatShow() {
         },
 
         init() {
-            // No auto-selection for existing explorations
+            // Cargar favoritos para la exploración individual. Tolerante: si el
+            // endpoint aún no está disponible, se muestra el estado vacío/error.
+            this.cargarFavoritos();
+        },
+
+        async cargarFavoritos() {
+            this.favoritosLoading = true;
+            this.favoritosError = '';
+            try {
+                const response = await fetch('/api/reclutados/favoritos', {
+                    headers: { 'Accept': 'application/json' },
+                });
+                if (!response.ok) {
+                    throw new Error('No se pudieron cargar tus favoritos');
+                }
+                this.favoritos = await response.json();
+            } catch (e) {
+                console.error('Error loading favoritos:', e);
+                this.favoritosError = 'Función en preparación.';
+                this.favoritos = [];
+            } finally {
+                this.favoritosLoading = false;
+            }
+        },
+
+        esFavoritoEnExploracion(id) {
+            return this.reclutadosEnExploracion.includes(id);
+        },
+
+        selectFavorito(id, name) {
+            if (this.reclutadosEnExploracion.includes(id)) {
+                alert('Este Pokémon ya está en una exploración activa.');
+                return;
+            }
+            this.selectedFavoritoId = id;
+            this.selectedFavoritoName = name;
+            this.checkAndOpenModal();
         },
 
         levelBlocked(level) {
@@ -965,7 +1001,7 @@ function habitatShow() {
                 this.selectedLevel = null;
                 return;
             }
-            if (this.selectedTeamId !== null && this.selectedLevel !== null) {
+            if (this.selectedFavoritoId !== null && this.selectedLevel !== null) {
                 this.openExplorationModal();
             }
         },
@@ -980,7 +1016,7 @@ function habitatShow() {
         },
 
         async loadPreview() {
-            if (!this.selectedTeamId || !this.selectedLevel) {
+            if (!this.selectedFavoritoId || !this.selectedLevel) {
                 return;
             }
             this.previewLoading = true;
@@ -990,7 +1026,7 @@ function habitatShow() {
             try {
                 const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || '';
                 const params = new URLSearchParams({
-                    team_id: this.selectedTeamId,
+                    reclutado_id: this.selectedFavoritoId,
                     habitat_id: {{ $habitat['id'] }},
                     level: this.selectedLevel,
                 });
@@ -1033,9 +1069,13 @@ function habitatShow() {
         },
 
         confirmExploration() {
-            // Client-side validation: ensure team is not already exploring
-            if (this.equiposEnExploracion.includes(this.selectedTeamId)) {
-                alert('Este equipo ya está en una exploración activa.');
+            // Client-side validation: ensure favorite is not already exploring
+            if (this.selectedFavoritoId === null) {
+                alert('Selecciona un Pokémon favorito para enviar.');
+                return;
+            }
+            if (this.reclutadosEnExploracion.includes(this.selectedFavoritoId)) {
+                alert('Este Pokémon ya está en una exploración activa.');
                 this.closeExplorationModal();
                 return;
             }
@@ -1056,46 +1096,43 @@ function habitatShow() {
             }
 
             const data = {
-                team_id: this.selectedTeamId,
+                reclutado_id: this.selectedFavoritoId,
                 level: this.selectedLevel,
                 habitat_id: {{ $habitat['id'] }},
-                duration_mode: this.durationMode,
             };
 
             if (this.durationMode === 'hours') {
-                data.duration_hours = this.durationHours;
+                data.duracion_horas = this.durationHours;
             } else if (this.durationMode === 'return_time') {
                 data.return_time = this.returnTime;
+            } else {
+                data.indefinido = true;
             }
 
-            // POST to exploration endpoint
-            const form = document.createElement('form');
-            form.method = 'POST';
-            form.action = '/exploraciones';
-
+            // POST to individual exploration API
             const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || '';
-            const csrfInput = document.createElement('input');
-            csrfInput.type = 'hidden';
-            csrfInput.name = '_token';
-            csrfInput.value = csrfToken;
-            form.appendChild(csrfInput);
 
-            const methodInput = document.createElement('input');
-            methodInput.type = 'hidden';
-            methodInput.name = '_method';
-            methodInput.value = 'POST';
-            form.appendChild(methodInput);
-
-            for (const [key, value] of Object.entries(data)) {
-                const input = document.createElement('input');
-                input.type = 'hidden';
-                input.name = key;
-                input.value = value;
-                form.appendChild(input);
-            }
-
-            document.body.appendChild(form);
-            form.submit();
+            fetch('/api/exploraciones/store-individual', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': csrfToken,
+                },
+                body: JSON.stringify(data),
+            })
+                .then(async (response) => {
+                    if (response.ok) {
+                        location.reload();
+                        return;
+                    }
+                    const body = await response.json().catch(() => ({}));
+                    alert(body.message || 'No se pudo enviar la exploración.');
+                })
+                .catch((err) => {
+                    console.error('Error sending exploration:', err);
+                    alert('Error de conexión al enviar la exploración.');
+                });
         },
 
         get filteredUnassigned() {

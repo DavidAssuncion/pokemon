@@ -16,9 +16,12 @@ use LogicException;
 use Src\Exploraciones\Domain\CalculadorRecompensas;
 use Src\Exploraciones\Domain\EvaluadorExploracion;
 use Src\Exploraciones\Domain\Recompensas\PokemonDerrotado;
+use Src\Exploraciones\Domain\Recompensas\RecompensaCaptura;
+use Src\Exploraciones\Domain\Recompensas\RecompensaEv;
+use Src\Exploraciones\Domain\Recompensas\RecompensaFamilia;
+use Src\Exploraciones\Domain\Recompensas\RecompensaTipo;
 use Src\Exploraciones\Domain\Recompensas\ResultadoRecompensas;
 use Src\Exploraciones\Domain\RolExploracion;
-use Src\Exploraciones\Domain\SinergiaEquipo;
 use Src\Exploraciones\Presentation\TransformadorResultadoExploracion;
 use Src\Shared\Bus\Command;
 use Src\Shared\Bus\CommandHandler;
@@ -150,7 +153,15 @@ final class FinalizarExploracionHandler implements CommandHandler
             $caramelosHallazgos['caramelosTipo'],
         );
 
-        $this->persistir->persistir($recompensas, $exploracion->team, $usuario);
+        // Derrota → pérdida de objetos: ceil(cantidad/2) de cada recompensa
+        // (familia/EV/tipo/capturas), restado de las recompensas finales.
+        $objetosPerdidos = $this->objetosPerdidos($bitacora, $eventos, $recompensas);
+        if ($objetosPerdidos !== []) {
+            $recompensas = $this->restarPerdidas($recompensas, $objetosPerdidos);
+            $eventos->put('objetos_perdidos', $objetosPerdidos);
+        }
+
+        $this->persistir->persistir($recompensas, $exploracion->reclutado, $usuario);
         $this->despacharAvistados($this->idsAvistados($bitacora), $exploracion->user_id);
 
         $tiempoPerdido = (int) $eventos->get('tiempo_perdido', 0);
@@ -314,36 +325,22 @@ final class FinalizarExploracionHandler implements CommandHandler
 
     /**
      * Multiplicador de caramelos de hallazgo: categoría × rol Recolector (+50 %)
-     * × sinergia (prospección/recolección segura, etc.).
+     * × sinergia (prospección/recolección segura, etc.). La exploración
+     * INDIVIDUAL (por reclutado) no tiene roles de equipo: se conserva la
+     * multiplicación por el rol del miembro si hubiera team histórico.
      */
     private function multiplicadorCaramelosEquipo(ExploracionActiva $exploracion, float $multiplicadorCategoria): float
     {
+        $reclutado = $exploracion->reclutado;
+        if ($reclutado === null || $reclutado->teamMember === null) {
+            return $multiplicadorCategoria;
+        }
+
         $multiplicador = $multiplicadorCategoria;
-        $roles = $this->rolesDelEquipo($exploracion);
-
-        foreach ($roles as $rol) {
-            $multiplicador *= $rol->multiplicadorCaramelosHallazgo();
-        }
-
-        $sinergia = SinergiaEquipo::sinergiaPara($roles);
-        if ($sinergia !== null) {
-            $multiplicador *= $sinergia['multiplicadorCaramelos'];
-        }
+        $rol = RolExploracion::tryFrom($reclutado->teamMember->behavior ?? '') ?? RolExploracion::COMBATIENTE;
+        $multiplicador *= $rol->multiplicadorCaramelosHallazgo();
 
         return $multiplicador;
-    }
-
-    /**
-     * @return list<RolExploracion>
-     */
-    private function rolesDelEquipo(ExploracionActiva $exploracion): array
-    {
-        $roles = [];
-        foreach ($exploracion->team->members ?? [] as $miembro) {
-            $roles[] = RolExploracion::tryFrom($miembro->behavior ?? '') ?? RolExploracion::COMBATIENTE;
-        }
-
-        return $roles;
     }
 
     /**
@@ -466,6 +463,149 @@ final class FinalizarExploracionHandler implements CommandHandler
         ));
 
         $exploracion->eventos = $eventos;
+    }
+
+    /**
+     * Detecta si la exploración terminó por derrota (bitácora contiene un evento
+     * con resolución 'derrota' o el flag eventos['derrota'] está presente).
+     *
+     * @param  list<array<string, mixed>>  $bitacora
+     * @param  BaseCollection<string, mixed>  $eventos
+     */
+    private function terminoPorDerrota(array $bitacora, BaseCollection $eventos): bool
+    {
+        if ($eventos->get('derrota') !== null) {
+            return true;
+        }
+
+        foreach ($bitacora as $evento) {
+            if (($evento['resolucion'] ?? '') === 'derrota') {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Calcula la pérdida de objetos por derrota: ceil(cantidad/2) de cada
+     * recompensa (familia/EV/tipo/capturas). Si no hay derrota, devuelve [].
+     *
+     * @param  list<array<string, mixed>>  $bitacora
+     * @param  BaseCollection<string, mixed>  $eventos
+     * @return list<array{tipo: string, id: int|string, label: string|null, cantidad_perdida: int}>
+     */
+    private function objetosPerdidos(array $bitacora, BaseCollection $eventos, ResultadoRecompensas $recompensas): array
+    {
+        if (! $this->terminoPorDerrota($bitacora, $eventos)) {
+            return [];
+        }
+
+        $perdidas = [];
+
+        foreach ($recompensas->caramelosFamilia as $recompensa) {
+            $perdida = (int) ceil($recompensa->cantidad / 2);
+            if ($perdida <= 0) {
+                continue;
+            }
+            $perdidas[] = [
+                'tipo' => 'familia',
+                'id' => $recompensa->evolutionChainId,
+                'label' => null,
+                'cantidad_perdida' => $perdida,
+            ];
+        }
+
+        foreach ($recompensas->caramelosEv as $recompensa) {
+            $perdida = (int) ceil($recompensa->cantidad / 2);
+            if ($perdida <= 0) {
+                continue;
+            }
+            $perdidas[] = [
+                'tipo' => 'ev',
+                'id' => $recompensa->stat,
+                'label' => null,
+                'cantidad_perdida' => $perdida,
+            ];
+        }
+
+        foreach ($recompensas->caramelosTipo as $recompensa) {
+            $perdida = (int) ceil($recompensa->cantidad / 2);
+            if ($perdida <= 0) {
+                continue;
+            }
+            $perdidas[] = [
+                'tipo' => 'tipo',
+                'id' => $recompensa->slug(),
+                'label' => $recompensa->tipo,
+                'cantidad_perdida' => $perdida,
+            ];
+        }
+
+        foreach ($recompensas->capturas as $recompensa) {
+            $perdida = (int) ceil($recompensa->cantidad / 2);
+            if ($perdida <= 0) {
+                continue;
+            }
+            $perdidas[] = [
+                'tipo' => 'captura',
+                'id' => $recompensa->pokemonId,
+                'label' => null,
+                'cantidad_perdida' => $perdida,
+            ];
+        }
+
+        return $perdidas;
+    }
+
+    /**
+     * Resta las pérdidas de las recompensas finales, devolviendo una nueva
+     * instancia de ResultadoRecompensas con cantidades reducidas.
+     *
+     * @param  list<array{tipo: string, id: int|string, label: string|null, cantidad_perdida: int}>  $perdidas
+     */
+    private function restarPerdidas(ResultadoRecompensas $recompensas, array $perdidas): ResultadoRecompensas
+    {
+        $mapaPerdidas = [];
+        foreach ($perdidas as $p) {
+            $mapaPerdidas[$p['tipo']][(string) $p['id']] = $p['cantidad_perdida'];
+        }
+
+        $reducir = function (int $cantidad, int|string $clave, string $tipo) use ($mapaPerdidas): int {
+            $perdida = $mapaPerdidas[$tipo][(string) $clave] ?? 0;
+
+            return max(0, $cantidad - $perdida);
+        };
+
+        return new ResultadoRecompensas(
+            capturas: $recompensas->capturas
+                ->map(fn (RecompensaCaptura $c) => new RecompensaCaptura(
+                    pokemonId: $c->pokemonId,
+                    cantidad: $reducir($c->cantidad, $c->pokemonId, 'captura'),
+                ))
+                ->filter(fn (RecompensaCaptura $c) => $c->cantidad > 0),
+            caramelosFamilia: $recompensas->caramelosFamilia
+                ->map(fn (RecompensaFamilia $c) => new RecompensaFamilia(
+                    evolutionChainId: $c->evolutionChainId,
+                    cantidad: $reducir($c->cantidad, $c->evolutionChainId, 'familia'),
+                ))
+                ->filter(fn (RecompensaFamilia $c) => $c->cantidad > 0),
+            caramelosEv: $recompensas->caramelosEv
+                ->map(fn (RecompensaEv $c) => new RecompensaEv(
+                    stat: $c->stat,
+                    cantidad: $reducir($c->cantidad, $c->stat, 'ev'),
+                ))
+                ->filter(fn (RecompensaEv $c) => $c->cantidad > 0),
+            caramelosTipo: $recompensas->caramelosTipo
+                ->map(fn (RecompensaTipo $c) => new RecompensaTipo(
+                    tipo: $c->tipo,
+                    cantidad: $reducir($c->cantidad, $c->slug(), 'tipo'),
+                ))
+                ->filter(fn (RecompensaTipo $c) => $c->cantidad > 0),
+            expTotal: $recompensas->expTotal,
+            expPorMiembro: $recompensas->expPorMiembro,
+            expTipoPorMiembro: $recompensas->expTipoPorMiembro,
+        );
     }
 
     private function finExploracion(ExploracionActiva $exploracion, CarbonInterface $inicio): ?CarbonInterface

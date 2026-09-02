@@ -258,6 +258,40 @@
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
         </svg>
         <span class="text-sm text-gray-700 dark:text-gray-300">Evento neutral</span>
+    @elseif($tipo === 'combate')
+        @php
+            $combateLog = $evento['combate_log'] ?? '';
+            $hpFinal = (int) ($evento['hp_final'] ?? 0);
+            $resolucion = (string) ($evento['resolucion'] ?? '');
+        @endphp
+        <svg class="w-5 h-5 text-red-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+        </svg>
+        <div class="flex flex-wrap items-center gap-2">
+            <span class="text-sm font-semibold text-red-600 dark:text-red-400">⚔️ Combate</span>
+            @if($resolucion !== '')
+                <span class="text-xs text-gray-600 dark:text-gray-300">· {{ $resolucion }}</span>
+            @endif
+            @if($hpFinal > 0)
+                <span class="text-xs text-gray-500 dark:text-gray-400">· HP final: {{ $hpFinal }}</span>
+            @endif
+            @if($combateLog !== '')
+                <p class="text-xs text-gray-500 dark:text-gray-400 w-full">{{ $combateLog }}</p>
+            @endif
+        </div>
+    @elseif($tipo === 'descanso')
+        @php
+            $duracion = (int) ($evento['duracion'] ?? $evento['duration_loss'] ?? 0);
+        @endphp
+        <svg class="w-5 h-5 text-green-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+        <span class="text-sm text-gray-700 dark:text-gray-300">
+            El equipo descansa
+            @if($duracion > 0)
+                <span class="text-xs text-gray-500 dark:text-gray-400">({{ $duracion }} min)</span>
+            @endif
+        </span>
     @else
         <span class="text-sm text-gray-500 dark:text-gray-400">
             Evento: {{ $tipo }}@if(!empty($evento['subtype'])) ({{ $evento['subtype'] }}) @endif

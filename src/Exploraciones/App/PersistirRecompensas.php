@@ -19,14 +19,16 @@ use Src\Exploraciones\Domain\Recompensas\ResultadoRecompensas;
 
 /**
  * Persiste en DB todas las recompensas de una exploración (increment-or-create
- * atómico por clave única; EXP al jugador y a los miembros del equipo).
+ * atómico por clave única; EXP al jugador y al equipo/reclutado).
  * Los caramelos y capturas van al inventario/reclutables del DUEÑO de la
  * exploración (user_id NOT NULL con FK cascade: el dueño siempre existe).
+ * El destino de EXP puede ser un Team (exploración por equipo legacy) o un
+ * Reclutado individual (exploración por reclutado).
  * No final: los tests sustituyen persistir() por un mock parcial.
  */
 class PersistirRecompensas
 {
-    public function persistir(ResultadoRecompensas $recompensas, ?Team $equipo, ?User $usuario): void
+    public function persistir(ResultadoRecompensas $recompensas, Team|Reclutado|null $destinoExp, ?User $usuario): void
     {
         $this->guardarCaramelosFamilia($recompensas->caramelosFamilia, $usuario);
         $this->guardarCaramelosEv($recompensas->caramelosEv, $usuario);
@@ -36,7 +38,7 @@ class PersistirRecompensas
             $recompensas->expTotal,
             $recompensas->expPorMiembro,
             $recompensas->expTipoPorMiembro,
-            $equipo,
+            $destinoExp,
             $usuario,
         );
     }
@@ -113,25 +115,32 @@ class PersistirRecompensas
      * Reparto de EXP (D3/RF-14): el jugador recibe el 100 % del total; cada
      * miembro del equipo recibe la parte del 80 % repartida entre 3
      * (expPorMiembro ya calculado por el dominio) y acumula la exp de tipo
-     * correspondiente en `reclutados.exp.tipos`.
+     * correspondiente en `reclutados.exp.tipos`. Si el destino es un reclutado
+     * individual (exploración individual), el reclutado recibe expPorMiembro.
      *
      * @param  array<string, int>  $expTipoPorMiembro
      */
-    private function aplicarExperiencia(int $expTotal, int $expPorMiembro, array $expTipoPorMiembro, ?Team $equipo, ?User $usuario): void
+    private function aplicarExperiencia(int $expTotal, int $expPorMiembro, array $expTipoPorMiembro, Team|Reclutado|null $destinoExp, ?User $usuario): void
     {
         if ($usuario !== null && $expTotal > 0) {
             $usuario->increment('experiencia', $expTotal);
         }
 
-        if ($equipo === null || $expPorMiembro <= 0) {
+        if ($destinoExp === null || $expPorMiembro <= 0) {
             return;
         }
 
-        foreach ($equipo->members as $miembro) {
-            if ($miembro->reclutado !== null) {
-                $this->sumarExp($miembro->reclutado, $expPorMiembro, $expTipoPorMiembro);
+        if ($destinoExp instanceof Team) {
+            foreach ($destinoExp->members as $miembro) {
+                if ($miembro->reclutado !== null) {
+                    $this->sumarExp($miembro->reclutado, $expPorMiembro, $expTipoPorMiembro);
+                }
             }
+
+            return;
         }
+
+        $this->sumarExp($destinoExp, $expPorMiembro, $expTipoPorMiembro);
     }
 
     /**

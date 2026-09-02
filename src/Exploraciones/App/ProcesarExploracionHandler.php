@@ -13,21 +13,23 @@ use Carbon\CarbonInterface;
 use Closure;
 use Illuminate\Support\Collection;
 use LogicException;
-use Src\Exploraciones\Domain\CalculadorCapacidadEquipo;
 use Src\Exploraciones\Domain\EvaluadorExploracion;
-use Src\Exploraciones\Domain\RolExploracion;
 use Src\Exploraciones\Domain\SimuladorEncuentros;
-use Src\Exploraciones\Domain\SinergiaEquipo;
 use Src\Shared\Bus\Command;
 use Src\Shared\Bus\CommandBus;
 use Src\Shared\Bus\CommandHandler;
+use Src\Shared\Domain\EscaladorNivelRival;
 use Src\Shared\Tipos\TipoPokemon;
 
 /**
- * Tick de expedición (RF-05/D2): genera un evento por slot, lo resuelve con el
- * EvaluadorExploracion, acumula el tiempo perdido y adelanta `ultimo_procesado`
- * hasta la próxima ejecución (incluso en el futuro). Si hay retirada, despacha
- * FinalizarExploracionCommand a través del bus.
+ * Tick de expedición individual (RF-05/D2): genera un evento por slot y lo
+ * resuelve con combate real 1v1 (CombateExploracion) en lugar del evaluador
+ * de capacidad. El explorador es un ÚNICO reclutado (sin roles ni sinergia).
+ *
+ * Tras cada combate: victoria → regenera barreras al 100 % (solo si NO es
+ * emboscada secuencial); el HP no se cura por combate. Si HP < 50 % → descanso
+ * hasta 100 % a 3 %/min real (acumulado en tiempo_perdido + evento bitácora).
+ * Si el explorador pierde un combate → la exploración termina (derrota).
  *
  * @todo Excepción temporal a la regla de dependencias: src/ importa
  *       App\Models/Illuminate (deuda WIP). Ticket v2: extraer repositorio.
@@ -35,6 +37,12 @@ use Src\Shared\Tipos\TipoPokemon;
 final class ProcesarExploracionHandler implements CommandHandler
 {
     private const MINUTOS_POR_ENCUENTRO = 3;
+
+    /** Umbral de HP (porcentaje del máximo) para forzar descanso. */
+    private const UMBRAL_DESCANSO_HP = 50;
+
+    /** Porcentaje de HP recuperado por minuto real de descanso. */
+    private const HP_POR_MINUTO_DESCANSO = 3;
 
     private readonly ?Closure $aleatorio;
 
@@ -44,6 +52,8 @@ final class ProcesarExploracionHandler implements CommandHandler
      */
     public function __construct(
         private readonly CommandBus $bus,
+        private readonly CombateExploracion $combate,
+        private readonly EscaladorNivelRival $escalador,
         ?callable $aleatorio = null,
     ) {
         $this->aleatorio = $aleatorio !== null ? Closure::fromCallable($aleatorio) : null;
@@ -72,13 +82,20 @@ final class ProcesarExploracionHandler implements CommandHandler
         $desde = $this->ultimoProcesado($eventos) ?? $inicio;
         $hasta = $this->limiteTick(now(), $fin, $inicioVuelta);
 
-        $retirada = $this->procesarTick($exploracion, $eventos, $desde, $hasta);
+        [$terminada, $motivo] = $this->procesarTick($exploracion, $eventos, $desde, $hasta);
 
         $completada = $command->forzarRegreso
             || ($inicioVuelta !== null && now()->greaterThanOrEqualTo($inicioVuelta))
-            || $retirada;
+            || $terminada;
 
         if ($completada) {
+            $eventos->put($motivo === 'derrota' ? 'derrota' : 'retirada', [
+                'reason' => $motivo === 'derrota' ? 'explorador_debilitado' : 'grupo_enemigo',
+                'timestamp' => now()->toIso8601String(),
+            ]);
+            $exploracion->eventos = $eventos;
+            $exploracion->save();
+
             $this->bus->dispatch(new FinalizarExploracionCommand($exploracion));
         }
 
@@ -86,25 +103,24 @@ final class ProcesarExploracionHandler implements CommandHandler
     }
 
     /**
-     * Genera y resuelve los eventos del tick (RF-05): acumula duration_loss,
-     * adelanta ultimo_procesado al futuro (D2) y detecta retirada.
+     * Genera y resuelve los eventos del tick con combate real. Devuelve
+     * [terminada, motivo] donde motivo es 'derrota'|'retirada'.
      *
      * @param  Collection<string, mixed>  $eventos
+     * @return array{0: bool, 1: string}
      */
     private function procesarTick(
         ExploracionActiva $exploracion,
         Collection $eventos,
         CarbonInterface $desde,
         CarbonInterface $hasta,
-    ): bool {
-        $retirada = false;
-
+    ): array {
         if (! $hasta->greaterThan($desde)) {
             $eventos->put('ultimo_procesado', $hasta->toIso8601String());
             $exploracion->eventos = $eventos;
             $exploracion->save();
 
-            return false;
+            return [false, ''];
         }
 
         $nuevos = SimuladorEncuentros::generarEventos(
@@ -120,33 +136,42 @@ final class ProcesarExploracionHandler implements CommandHandler
             $exploracion->eventos = $eventos;
             $exploracion->save();
 
-            return false;
+            return [false, ''];
         }
 
-        $aleatorio = $this->aleatorio ?? static fn (): float => mt_rand(1, 100) / 100;
-        $contexto = $this->contextoEvaluacion($exploracion);
+        // Estado del explorador persistido entre ticks (hp/barreras).
+        $estadoExplorador = $this->estadoExplorador($eventos);
+
+        // Al inicio de tick: descanso si HP < 50 %.
+        $perdidoTick = $this->aplicarDescansoSiNecesario($exploracion, $eventos, $estadoExplorador);
 
         $resueltos = [];
-        $perdidoTick = 0;
+        $derrota = false;
+        $retirada = false;
+
         foreach ($nuevos as $evento) {
-            $resuelto = $this->resolverEvento($evento, $contexto, $aleatorio);
+            $resuelto = $this->resolverEvento($evento, $exploracion, $estadoExplorador, $eventos);
             $resueltos[] = $resuelto;
             $perdidoTick += $resuelto['duration_loss'] ?? 0;
 
-            if (($resuelto['resolucion'] ?? '') === 'retirada') {
-                $retirada = true;
+            if (($resuelto['resolucion'] ?? '') === 'derrota') {
+                $derrota = true;
+                break; // Emboscada/encuentro perdido → la exploración termina.
             }
 
-            if (($resuelto['retirada_probable'] ?? false) === true && $aleatorio() < 0.5) {
+            if (($resuelto['retirada_probable'] ?? false) === true && $this->aleatorio() < 0.5) {
                 $retirada = true;
+                break;
             }
+
+            // Tras cada evento: descanso si el explorador quedó con HP < 50 %.
+            $perdidoTick += $this->aplicarDescansoSiNecesario($exploracion, $eventos, $estadoExplorador);
         }
-
-        $perdidoTick = $this->aplicarReduccionTiempo($perdidoTick, $contexto['roles']);
 
         $bitacora = $eventos->get('bitacora', []);
         $eventos->put('bitacora', [...$bitacora, ...$resueltos]);
         $eventos->put('tiempo_perdido', (int) $eventos->get('tiempo_perdido', 0) + $perdidoTick);
+        $eventos->put('explorador', $estadoExplorador);
 
         if ($retirada) {
             $eventos->put('retirada', [
@@ -161,120 +186,35 @@ final class ProcesarExploracionHandler implements CommandHandler
         $exploracion->eventos = $eventos;
         $exploracion->save();
 
-        return $retirada;
+        return [$derrota || $retirada, $derrota ? 'derrota' : ($retirada ? 'retirada' : '')];
     }
 
     /**
-     * Contexto de evaluación: peligro del hábitat, roles, capacidad del equipo
-     * (base stats + afinidad + rol + sinergia) y detección de emboscadas.
+     * Resuelve un evento con combate real (encuentro/emboscada) o el evaluador
+     * para contratiempos. Mantiene el contrato de resolución existente
+     * (resolucion, duration_loss) para FinalizarExploracionHandler.
      *
-     * @return array{
-     *     peligro: int,
-     *     roles: list<RolExploracion>,
-     *     capacidad: int,
-     *     detectaEmboscadas: bool,
-     * }
-     */
-    private function contextoEvaluacion(ExploracionActiva $exploracion): array
-    {
-        $habitat = $exploracion->habitat;
-        $peligro = $habitat !== null ? max(1, $habitat->peligro ?? 1) : 1;
-
-        $pool = $this->poolHabitat($exploracion);
-        $tiposPool = $this->tiposDelPool($pool);
-
-        $equipo = $exploracion->team;
-        $roles = [];
-        $capacidades = [];
-        $detectaEmboscadas = false;
-
-        foreach ($equipo->members ?? [] as $miembro) {
-            $reclutado = $miembro->reclutado;
-            $pokemon = $reclutado?->pokemon;
-            if ($pokemon === null) {
-                continue;
-            }
-
-            $rol = RolExploracion::tryFrom($miembro->behavior ?? '') ?? RolExploracion::COMBATIENTE;
-            $roles[] = $rol;
-
-            if ($rol->detectaEmboscadas()) {
-                $detectaEmboscadas = true;
-            }
-
-            $tipos = $this->tiposDe($pokemon);
-            $enPool = in_array($pokemon->id, array_column($pool, 'id'), true);
-            $base = CalculadorCapacidadEquipo::baseDeStats($pokemon->stats->pluck('base_stat')->all());
-            $afinidad = CalculadorCapacidadEquipo::afinidadDeMiembro($tipos, $tiposPool, $enPool);
-
-            $capacidades[] = CalculadorCapacidadEquipo::capacidadMiembro(
-                base: $base,
-                afinidad: $afinidad,
-                bonusRol: $rol->bonusCapacidad(),
-                bonusSinergia: 0,
-            );
-        }
-
-        $capacidad = CalculadorCapacidadEquipo::capacidadEquipo($capacidades);
-
-        $sinergia = SinergiaEquipo::sinergiaPara($roles);
-        if ($sinergia !== null) {
-            $capacidad = max(0, $capacidad + $sinergia['bonusCapacidad']);
-            if ($sinergia['detectaEmboscadas']) {
-                $detectaEmboscadas = true;
-            }
-        }
-
-        return [
-            'peligro' => $peligro,
-            'roles' => $roles,
-            'capacidad' => $capacidad,
-            'detectaEmboscadas' => $detectaEmboscadas,
-        ];
-    }
-
-    /**
      * @param  array<string, mixed>  $evento
-     * @param  array{
-     *     peligro: int,
-     *     roles: list<RolExploracion>,
-     *     capacidad: int,
-     *     detectaEmboscadas: bool,
-     * }  $contexto
+     * @param  Collection<string, mixed>  $eventos
+     * @param  array{hp: float, hp_max: float, barrera_fisica: float, barrera_fisica_max: float, barrera_especial: float, barrera_especial_max: float}  $estadoExplorador
      * @return array<string, mixed>
      */
-    private function resolverEvento(array $evento, array $contexto, callable $aleatorio): array
+    private function resolverEvento(array $evento, ExploracionActiva $exploracion, array &$estadoExplorador, Collection $eventos): array
     {
         $tipo = $evento['tipo'] ?? '';
 
-        if ($tipo === 'encuentro') {
-            $resolucion = EvaluadorExploracion::resolverEncuentro(
-                subtipo: (string) ($evento['subtype'] ?? 'normal'),
-                capacidad: $contexto['capacidad'],
-                peligro: $contexto['peligro'],
-                aleatorio: $aleatorio,
-                roles: $contexto['roles'],
-            );
-
-            return array_merge($evento, $resolucion);
+        if ($tipo === 'emboscada') {
+            return $this->resolverEmboscada($evento, $exploracion, $estadoExplorador, $eventos);
         }
 
-        if ($tipo === 'emboscada') {
-            $resolucion = EvaluadorExploracion::resolverEmboscada(
-                detectadaPorVanguardia: $contexto['detectaEmboscadas'],
-                capacidad: $contexto['capacidad'],
-                peligro: $contexto['peligro'],
-                aleatorio: $aleatorio,
-                roles: $contexto['roles'],
-            );
-
-            return array_merge($evento, $resolucion);
+        if ($tipo === 'encuentro') {
+            return $this->resolverEncuentro($evento, $exploracion, $estadoExplorador, $eventos);
         }
 
         if ($tipo === 'contratiempo') {
             $resolucion = EvaluadorExploracion::resolverContratiempo(
                 subtipo: (string) ($evento['subtype'] ?? 'terreno'),
-                roles: $contexto['roles'],
+                roles: [], // Exploración individual: sin roles de equipo.
             );
 
             return array_merge($evento, $resolucion);
@@ -284,18 +224,248 @@ final class ProcesarExploracionHandler implements CommandHandler
     }
 
     /**
-     * Rastreador: −50 % de tiempo perdido general (se aplica al total del tick).
+     * Combate 1v1 real contra un salvaje del evento (pokemon_id).
+     * Victoria → 'victoria'; derrota → 'derrota' (la exploración termina).
      *
-     * @param  list<RolExploracion>  $roles
+     * @param  array<string, mixed>  $evento
+     * @param  Collection<string, mixed>  $eventos
+     * @param  array{hp: float, hp_max: float, barrera_fisica: float, barrera_fisica_max: float, barrera_especial: float, barrera_especial_max: float}  $estadoExplorador
+     * @return array<string, mixed>
      */
-    private function aplicarReduccionTiempo(int $perdido, array $roles): int
+    private function resolverEncuentro(array $evento, ExploracionActiva $exploracion, array &$estadoExplorador, Collection $eventos): array
     {
-        $multiplicador = 1.0;
-        foreach ($roles as $rol) {
-            $multiplicador *= $rol->multiplicadorTiempoPerdido();
+        $pokemonId = (int) ($evento['pokemon_id'] ?? 0);
+        $salvaje = Pokemon::find($pokemonId);
+
+        if ($salvaje === null) {
+            return array_merge($evento, ['resolucion' => 'derrota', 'duration_loss' => 0, 'derrota' => true]);
         }
 
-        return (int) floor($perdido * $multiplicador);
+        // Encuentro con HP < 50 % → descanso a 100 % antes de combatir.
+        $perdidoAntes = $this->aplicarDescansoSiNecesario($exploracion, $eventos, $estadoExplorador);
+
+        $resultado = $this->combatirEvento($exploracion, $salvaje, $estadoExplorador, false);
+
+        return array_merge($evento, $this->resolucionCombate($resultado, 'victoria', $estadoExplorador) + ['duration_loss' => $perdidoAntes]);
+    }
+
+    /**
+     * Emboscada: los pokemon_ids se combaten de uno en uno SIN regenerar
+     * barreras entre sub-combates. Si el explorador pierde uno → 'derrota'
+     * (no combate el resto). Victoria total → 'superada' (contrato existente:
+     * las emboscadas solo reportan avistados, no derrotados).
+     *
+     * @param  array<string, mixed>  $evento
+     * @param  Collection<string, mixed>  $eventos
+     * @param  array{hp: float, hp_max: float, barrera_fisica: float, barrera_fisica_max: float, barrera_especial: float, barrera_especial_max: float}  $estadoExplorador
+     * @return array<string, mixed>
+     */
+    private function resolverEmboscada(array $evento, ExploracionActiva $exploracion, array &$estadoExplorador, Collection $eventos): array
+    {
+        $ids = array_values(array_map('intval', (array) ($evento['pokemon_ids'] ?? [])));
+
+        if ($ids === []) {
+            return array_merge($evento, ['resolucion' => 'derrota', 'duration_loss' => 0, 'derrota' => true]);
+        }
+
+        $subCombates = [];
+        $perdidoTotal = 0;
+
+        foreach ($ids as $pokemonId) {
+            $salvaje = Pokemon::find($pokemonId);
+            if ($salvaje === null) {
+                continue;
+            }
+
+            // En emboscada con HP < 50 % → primero descanso a 100 %.
+            $perdidoTotal += $this->aplicarDescansoSiNecesario($exploracion, $eventos, $estadoExplorador);
+
+            $resultado = $this->combatirEvento($exploracion, $salvaje, $estadoExplorador, true);
+            $subCombates[] = [
+                'pokemon_id' => $pokemonId,
+                'victoria' => $resultado['victoria'],
+            ];
+
+            if (! $resultado['victoria']) {
+                return array_merge($evento, $this->resolucionCombate($resultado, 'derrota', $estadoExplorador) + [
+                    'sub_combates' => $subCombates,
+                    'duration_loss' => $perdidoTotal,
+                    'derrota' => true,
+                ]);
+            }
+        }
+
+        return array_merge($evento, $this->resolucionCombate($resultado, 'superada', $estadoExplorador) + [
+            'sub_combates' => $subCombates,
+            'duration_loss' => $perdidoTotal,
+        ]);
+    }
+
+    /**
+     * Ejecuta el combate y actualiza el estado del explorador. Tras victoria
+     * NO-emboscada regenera las barreras al 100 %; en emboscada secuencial no
+     * regenera entre sub-combates. El HP nunca se cura por combate.
+     *
+     * @param  array{hp: float, hp_max: float, barrera_fisica: float, barrera_fisica_max: float, barrera_especial: float, barrera_especial_max: float}  $estadoExplorador
+     * @return array<string, mixed>
+     */
+    private function combatirEvento(
+        ExploracionActiva $exploracion,
+        Pokemon $salvaje,
+        array &$estadoExplorador,
+        bool $emboscadaSecuencial,
+    ): array {
+        $reclutado = $exploracion->reclutado;
+        $nivelRival = $this->nivelRival($exploracion);
+
+        $resultado = $this->combate->combatir(
+            reclutado: $reclutado,
+            salvaje: $salvaje,
+            nivelRival: $nivelRival,
+            estadoInicial: $this->estadoInicialCombate($estadoExplorador),
+        );
+
+        // Actualizar estado persistido.
+        $estadoExplorador['hp'] = $resultado['hp_final'];
+        $estadoExplorador['hp_max'] = $resultado['hp_max'];
+        $estadoExplorador['barrera_fisica'] = $resultado['barrera_fisica_final'];
+        $estadoExplorador['barrera_fisica_max'] = $resultado['barrera_fisica_max'];
+        $estadoExplorador['barrera_especial'] = $resultado['barrera_especial_final'];
+        $estadoExplorador['barrera_especial_max'] = $resultado['barrera_especial_max'];
+
+        // Victoria no-emboscada → regenerar barreras al 100 %.
+        if ($resultado['victoria'] && ! $emboscadaSecuencial) {
+            $estadoExplorador['barrera_fisica'] = $resultado['barrera_fisica_max'];
+            $estadoExplorador['barrera_especial'] = $resultado['barrera_especial_max'];
+        }
+
+        $resultado['emboscada_secuencial'] = $emboscadaSecuencial;
+
+        return $resultado;
+    }
+
+    /**
+     * Traduce el resultado del combate al contrato de resolución de eventos.
+     * Documenta el estado del explorador DESPUÉS del combate (ya con barreras
+     * regeneradas al 100 % en victoria no-emboscada).
+     *
+     * @param  array<string, mixed>  $resultado
+     * @param  array{hp: float, hp_max: float, barrera_fisica: float, barrera_fisica_max: float, barrera_especial: float, barrera_especial_max: float}  $estadoExplorador
+     * @return array<string, mixed>
+     */
+    private function resolucionCombate(array $resultado, string $resolucionVictoria, array $estadoExplorador): array
+    {
+        return [
+            'resolucion' => $resultado['victoria'] ? $resolucionVictoria : 'derrota',
+            'victoria' => $resultado['victoria'],
+            'hp_final' => $estadoExplorador['hp'],
+            'barrera_fisica_final' => $estadoExplorador['barrera_fisica'],
+            'barrera_especial_final' => $estadoExplorador['barrera_especial'],
+            'barrera_fisica_max' => $estadoExplorador['barrera_fisica_max'],
+            'barrera_especial_max' => $estadoExplorador['barrera_especial_max'],
+            'log' => $resultado['log'],
+            'duration_loss' => 0,
+        ];
+    }
+
+    /**
+     * Nivel del rival escalado: EscaladorNivelRival::escalar(min_lvl del
+     * hábitat para el nivel de exploración, nivel del jugador). Si el hábitat
+     * no tiene mínimo → nivel del jugador.
+     */
+    private function nivelRival(ExploracionActiva $exploracion): int
+    {
+        $nivelJugador = $exploracion->user?->nivel() ?? 1;
+        $minLvl = $exploracion->habitat?->getAttribute('min_lvl_'.$exploracion->nivel);
+
+        if ($minLvl === null) {
+            return $nivelJugador;
+        }
+
+        return $this->escalador->escalar((int) $minLvl, $nivelJugador);
+    }
+
+    /**
+     * Estado inicial para el combate desde el estado persistido (o null si el
+     * explorador no ha combatido aún → comienza al 100 %).
+     *
+     * @param  array{hp: float, hp_max: float, barrera_fisica: float, barrera_fisica_max: float, barrera_especial: float, barrera_especial_max: float}|null  $estadoExplorador
+     * @return array{hpa: float, barrera_fisica: float, barrera_especial: float}|null
+     */
+    private function estadoInicialCombate(?array $estadoExplorador): ?array
+    {
+        if ($estadoExplorador === null || ($estadoExplorador['hp_max'] ?? 0) <= 0) {
+            return null;
+        }
+
+        return [
+            'hp' => $estadoExplorador['hp'],
+            'barrera_fisica' => $estadoExplorador['barrera_fisica'],
+            'barrera_especial' => $estadoExplorador['barrera_especial'],
+        ];
+    }
+
+    /**
+     * Lee el estado persistido del explorador (eventos['explorador']) o
+     * devuelve un estado vacío (primer tick → combate al 100 %).
+     *
+     * @param  Collection<string, mixed>  $eventos
+     * @return array{hp: float, hp_max: float, barrera_fisica: float, barrera_fisica_max: float, barrera_especial: float, barrera_especial_max: float}
+     */
+    private function estadoExplorador(Collection $eventos): array
+    {
+        /** @var array<string, mixed>|null $estado */
+        $estado = $eventos->get('explorador');
+
+        return [
+            'hp' => (float) ($estado['hp'] ?? 0),
+            'hp_max' => (float) ($estado['hp_max'] ?? 0),
+            'barrera_fisica' => (float) ($estado['barrera_fisica'] ?? 0),
+            'barrera_fisica_max' => (float) ($estado['barrera_fisica_max'] ?? 0),
+            'barrera_especial' => (float) ($estado['barrera_especial'] ?? 0),
+            'barrera_especial_max' => (float) ($estado['barrera_especial_max'] ?? 0),
+        ];
+    }
+
+    /**
+     * Aplica descanso hasta el 100 % del HP si el explorador está por debajo
+     * del 50 %: recupera 3 % por minuto real, acumula el tiempo en
+     * tiempo_perdido y registra un evento de bitácora. Devuelve los minutos de
+     * descanso aplicados (0 si no procede).
+     *
+     * @param  Collection<string, mixed>  $eventos
+     * @param  array{hp: float, hp_max: float, barrera_fisica: float, barrera_fisica_max: float, barrera_especial: float, barrera_especial_max: float}  $estadoExplorador
+     */
+    private function aplicarDescansoSiNecesario(
+        ExploracionActiva $exploracion,
+        Collection $eventos,
+        array &$estadoExplorador,
+    ): int {
+        if (($estadoExplorador['hp_max'] ?? 0) <= 0) {
+            return 0; // Aún no ha combatido: comienza al 100 %.
+        }
+
+        $pctActual = ($estadoExplorador['hp'] / $estadoExplorador['hp_max']) * 100;
+
+        if ($pctActual >= self::UMBRAL_DESCANSO_HP) {
+            return 0;
+        }
+
+        $pctFaltante = 100 - $pctActual;
+        $duracionMinutos = (int) ceil($pctFaltante / self::HP_POR_MINUTO_DESCANSO);
+        $hpRecuperado = $estadoExplorador['hp_max'] - $estadoExplorador['hp'];
+
+        $estadoExplorador['hp'] = $estadoExplorador['hp_max'];
+
+        $bitacora = $eventos->get('bitacora', []);
+        $eventos->put('bitacora', [...$bitacora, [
+            'tipo' => 'descanso',
+            'timestamp' => now()->toIso8601String(),
+            'duracion_minutos' => $duracionMinutos,
+            'hp_recuperado' => $hpRecuperado,
+        ]]);
+
+        return $duracionMinutos;
     }
 
     private function inicioExploracion(ExploracionActiva $exploracion): CarbonInterface
@@ -354,8 +524,7 @@ final class ProcesarExploracionHandler implements CommandHandler
 
     /**
      * Pool de encuentros: pokémon del hábitat asignados al nivel de la
-     * exploración, con sus tipos (para afinidad) y stats con effort>0
-     * (para caramelos EV restringidos al pool).
+     * exploración, con sus tipos y stats con effort>0 (para caramelos EV).
      *
      * @return array<int, array{id: int, capture_rate: int, hatch: int|null, tipos: list<TipoPokemon>, stats: list<array{stat: int, effort: int}>}>
      */
@@ -386,24 +555,6 @@ final class ProcesarExploracionHandler implements CommandHandler
             ])
             ->values()
             ->all();
-    }
-
-    /**
-     * @param  array<int, array{id: int, capture_rate: int, hatch: int|null, tipos: list<TipoPokemon>}>  $pool
-     * @return list<TipoPokemon>
-     */
-    private function tiposDelPool(array $pool): array
-    {
-        $tipos = [];
-        foreach ($pool as $pokemon) {
-            foreach ($pokemon['tipos'] as $tipo) {
-                if (! in_array($tipo, $tipos, true)) {
-                    $tipos[] = $tipo;
-                }
-            }
-        }
-
-        return $tipos;
     }
 
     /** @return list<TipoPokemon> */

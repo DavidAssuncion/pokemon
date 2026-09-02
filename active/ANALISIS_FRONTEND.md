@@ -1,94 +1,124 @@
-# ANÁLISIS FRONTEND — Modal de detalle con evolución y caramelos
+# ANÁLISIS FRONTEND — Favoritos, hábitats favoritos, exploración individual, pérdidas en resultados
 
 ## Fecha
-2026-09-01
+2026-09-02
 
 ## Tarea
-Implementar métodos Alpine faltantes en el modal de detalle de `/equipos`:
-`cargarEvoluciones`, `opcionSeleccionada`, `puedeAlimentar`, `alimentarCaramelo`,
-y actualizar `evolvePokemon` para enviar `evolved_species_id`.
+Implementar frontend Blade/Alpine.js/Tailwind para el sistema de favoritos:
+1. Vista "Favoritos" (reescribir `/equipos`)
+2. Modal de gestión de favoritos
+3. Favoritos en hábitats (corazón en tarjetas)
+4. Modal de envío a exploración individual
+5. Pérdidas en rojo en resultados
+6. Nav: "Equipos" → "Favoritos"
 
-## Estado actual del archivo
-- `resources/views/equipos/index.blade.php` — la vista Blade y el componente Alpine
-  ya tienen: el template de evolución completo (selector de destino, barras de exp,
-  botón de caramelo, acciones) y los estados (`detailEvoluciones`,
-  `detailEvolucionesLoading`, `detailEvolucionesError`, `selectedEvolucionId`).
-- **Faltan** 4 métodos Alpine:
-  - `cargarEvoluciones(pokemon)` — fetch a `GET /reclutado/{id}/evoluciones`
-  - `opcionSeleccionada()` — getter de la opción seleccionada
-  - `puedeAlimentar(requisito)` — guarda del botón de caramelo
-  - `alimentarCaramelo(requisito)` — POST a `/reclutado/{id}/dar-caramelo`
-- `evolvePokemon()` no envía `evolved_species_id` en el body.
+## Archivos a modificar
 
-## Contrato backend consumido (verificado en `ReclutadoOpcionesEvolucionTest.php`)
+### 1. `resources/views/equipos/index.blade.php` — REESCRITURA COMPLETA
+- Cambiar título a "Pokémon Favoritos"
+- Eliminar toda lógica de equipos/teams/slots/roles
+- Panel izquierdo (1/3): lista de favoritos con hover "Enviar a explorar"
+- Panel derecho (2/3): grid de no-favoritos con toggle favorito + búsqueda/filtro
+- Mantener modal de detalle (reutilizado)
+- Eliminar modal de eliminar equipo
+- Añadir modal de gestión de favoritos (nuevo)
+- Alpine -> `favoritosApp()`
 
-| Endpoint | Método | Body | Respuesta |
-|---|---|---|---|
-| `/reclutado/{id}/evoluciones` | GET | — | `{opciones: [{pokemon_id, nombre, imagen, requisitos: [{tipo, slug, necesario, actual, caramelosDisponibles}], puede_evolucionar}]}` |
-| `/reclutado/{id}/dar-caramelo` | POST | `{tipo: string (label español), evolved_species_id?: int}` | `{success, actual, caramelos_disponibles, puede_evolucionar}` |
-| `/reclutado/{id}/evolucionar` | POST | `{evolved_species_id?: int}` | `{success, pokemon_id}` |
-| `/reclutado/{id}` | DELETE | — | `{success: true}` |
+### 2. `resources/views/habitats/index.blade.php` — MODIFICACIÓN
+- Añadir `x-data="habitatsApp()"` con estado `favoritosIds`
+- Añadir icono corazón/estrella en cada tarjeta de hábitat
+- Llamar a `POST /api/habitats/{id}/toggle-favorito` con CSRF
+- Filtrar favoritos primero (client-side)
+
+### 3. `resources/views/habitats/show.blade.php` — MODIFICACIÓN
+- Adaptar modal de exploración para individual (reemplazar equipo por favorito)
+- Añadir selección de favorito + botón "Enviar a explorar"
+- Preview adaptado para individual (capacidades si llegan)
+- Eliminar envío de bayas (sin campo)
+- POST a `/api/exploraciones/store-individual`
+
+### 4. `resources/views/exploraciones/index.blade.php` — MODIFICACIÓN
+- Añadir bloque de pérdidas (rojo) en resultados terminados
+- Contrato: `objetos_perdidos: [{tipo, id/label, cantidad_perdida}]` en resultado
+
+### 5. `resources/views/exploraciones/_evento.blade.php` — MODIFICACIÓN MÍNIMA
+- Añadir tipos `combate`, `descanso` si el backend los añade
+- Mostrar `hp_final`, `combate_log` de forma legible
+
+### 6. `resources/views/layouts/app.blade.php` — MODIFICACIÓN MÍNIMA
+- Cambiar "Equipos" por "Favoritos" en el nav
+
+### 7. `tests/Feature/EquiposViewTest.php` — ACTUALIZAR
+- Cambiar asserts de `equiposApp` a `favoritosApp`
+- Añadir asserts para favoritos toggle, gestión modal, exploración individual
+- Mantener asserts de detalle (evolución, release)
+
+### 8. `tests/Feature/HabitatsViewTest.php` — ACTUALIZAR (opcional)
+- Si hay asserts que se rompan por cambios en el show
+
+## Contratos backend asumidos
+
+### Ya existentes:
+- `POST /api/reclutados/{reclutado}/toggle-favorito` → `{favorito: bool}` (ReclutadoController::toggleFavorito)
+- `GET /api/reclutados/favoritos` → list serializados (ReclutadoController::favoritos)
+- `POST /api/habitats/{habitat}/toggle-favorito` → `{favorito: bool, count: int}` / 422 con message (HabitatsController::toggleFavorito)
+- `POST /api/exploraciones/store-individual` → 201 `{ok: true, id}` / 422 `{message}` (ExploracionActivaController::storeIndividual)
+- `GET /exploraciones/preview` → `{capacidades, nivel_jugador, nivel_pokemon, min_lvl, peligro, riesgo}` (nuevo contrato individual)
+
+### Datos que llegan del controlador:
+- `PlayerController::equipos()`: `$teams`, `$reclutados` (ya incluyen `favorito` de la BD), `$teamIds`, `$equiposEnExploracion`
+- `HabitatsController::index()`: `$provincias`
+- `HabitatsController::show()`: `$habitat`, `$teams`, `$exploracionesActivas`, `$equiposEnExploracion`, `$sightedPokemonIds`
+- `ExploracionActivaController::index()`: `$activas`, `$terminadas`
+
+### Tolerancia:
+- `favorito` puede faltar en reclutados (fallback false)
+- `$favoritosIds` (habitats) inicializado desde controlador, tolera vacío
+- `objetos_perdidos` puede faltar en resultado (no mostrar nada)
+- Preview individual puede fallar (mostrar error "Función en preparación")
+- `capacidades` puede venir o no
 
 ## Estados UI cubiertos
 
-| Estado | Visual |
-|---|---|
-| Loading | `Cargando opciones de evolución…` |
-| Error (fetch falló) | `No hay información de evolución disponible.` |
-| Sin evolución (`opciones.length === 0`) | `Este Pokémon no tiene evolución.` |
-| Con opciones, sin seleccionar | Selector de destino visible (si >1 opción) |
-| Con opciones, seleccionada | Barras de exp + botón de caramelo + botón Evolucionar |
-| Barra llena o caramelo 0 | Botón de caramelo deshabilitado |
-| Pokémon en exploración | Aviso + todo deshabilitado |
-| 422 en dar-caramelo | `alert(data.error)` |
-| 422 en evolucionar (sin destino) | `alert('Selecciona a qué pokémon evolucionar')` |
+### Vista Favoritos:
+- Loading: renderizado server-side, sin spinner
+- Empty favoritos: mensaje + botón "Gestionar favoritos"
+- Empty no-favoritos: mensaje vacío
+- Error toggle favorito: console.error, no romper página
+- Error 422 toggle (limite hábitats): alert con mensaje
+- Favorito en exploración: bloqueado para enviar a explorar
+
+### Modal gestión favoritos:
+- Loading: n/a (datos ya cargados)
+- Empty: mensaje si no hay reclutados
+- Toggle: mutación local sin recarga
+- Error: console.error + no romper
+
+### Hábitats favoritos:
+- Sin favoritos: orden normal
+- Con favoritos: favoritos primero
+- Error 422 toggle: alert máximo 6
+- Error genérico: console.error
+
+### Exploración individual:
+- Sin favoritos: mensaje "No tienes favoritos"
+- Preview falla: mostrar error
+- Envío exitoso: location.reload() o redirect
+- Error 422 envío: alert mensaje
+- Favorito en exploración: bloqueado
+
+### Pérdidas en resultados:
+- Con pérdidas: panel rojo con detalle
+- Sin pérdidas: no mostrar nada
+- Sin objetos_perdidos: no mostrar nada
 
 ## Riesgos accesibilidad/UX
-- Botón de caramelo tiene `aria-label` en el template (ya cubierto).
-- Selector de destino tiene `aria-pressed` y `aria-label`.
-- Progressbar tiene `role="progressbar"` + `aria-valuenow/min/max`.
-- Confirmación en liberar (heredado: `confirm()`).
-- Sin `x-ref` — patrón Alpine puro con estado en `equiposApp()`.
+- Iconos WebP con onerror hide (cubierto)
+- Modal con @keydown.escape y backdrop click (cubierto por patrón existente)
+- Botones con aria-label
+- Toggle favorito con feedback visual inmediato
 
 ## Tests
-- Test existente: `tests/Feature/EquiposViewTest.php`
-  - `test_equipos_renders_detail_modal_markers` — assertSee existentes OK.
-  - Añadir asserts: `cargarEvoluciones`, `opcionSeleccionada`, `puedeAlimentar`,
-    `alimentarCaramelo`, `'/reclutado/' + pokemon.id + '/evoluciones'`.
-  - No romper asserts existentes: mantener `openDetail`, `showDetailModal`,
-    `detail-modal-title`, `nivelDe`, `evolucionar`, `DELETE`, `pokemonEnExploracion`.
-
-## Ajustes de tests
-- El nuevo endpoint `GET /reclutado/{id}/evoluciones` aparece en el template como
-  string literal. Añadir `assertSee` para él.
-- Los métodos `opcionSeleccionada()`, `puedeAlimentar(req)`, `alimentarCaramelo(req)`
-  aparecen en el template — añadir `assertSee` para cada uno.
-
----
-
-## 2026-09-01 — Corrección bug: `${}` en comillas simples en barra de exp (línea 533)
-
-### Causa raíz
-Línea 533: `x-text="'${formatExp(req.actual)} / ${formatExp(req.necesario)}'"` usa comillas
-simples encerrando interpolación `${}`. JS solo interpola en template literals (backticks).
-El usuario veía el texto literal `${formatExp(req.actual)} / ${formatExp(req.necesario)}`.
-
-### Scope de cambios
-- `resources/views/equipos/index.blade.php`:
-  - Línea 533: cambiar a concatenación normal (coherente con el resto del archivo).
-  - Líneas 536-537: añadir helper `porcentajeExpRequisito(req)` defensivo (evita NaN/Infinity
-    si `necesario` es 0 o no numérico) y usarlo en `:aria-valuenow` y `:style`.
-  - Componente Alpine `equiposApp()`: añadir método `porcentajeExpRequisito(req)` junto a
-    `formatExp`.
-- `tests/Feature/EquiposViewTest.php`:
-  - Línea 123: actualizar `assertSee` de `'req.actual / req.necesario'` (texto del bug)
-    a `"formatExp(req.actual) + ' / ' + formatExp(req.necesario)"` (nuevo marcador correcto).
-
-### Busqueda de otros casos del mismo bug
-`grep -rn "x-text=\|x-html=\|:style=" resources/views | grep "'\${"` → SÓLO línea 533 en
-todo el proyecto. No hay otros casos.
-
-### Tests
-- `EquiposViewTest::test_equipos_renders_detail_modal_markers` debe quedar verde.
-- Verificación visual: texto "0 / X" (formateado con toLocaleString) en lugar de
-  `${formatExp(0)} / ${formatExp(X)}`.
+- EquiposViewTest: actualizar para nuevos asserts
+- HabitatsViewTest: mantener asserts existentes, añadir favoritos
+- Sin Dusk tests existentes para crear
