@@ -6,12 +6,12 @@ namespace Tests\Unit\Battle;
 
 use PHPUnit\Framework\TestCase;
 use Src\Battle\Domain\AgregadoBatalla;
+use Src\Battle\Domain\AI\SelectorAccionIA;
 use Src\Battle\Domain\Combatiente;
 use Src\Battle\Domain\Enums\CategoriaMovimiento;
 use Src\Battle\Domain\EquipoBatalla;
 use Src\Battle\Domain\MovimientoBatalla;
 use Src\Battle\Domain\Posicion;
-use Src\Battle\Domain\SelectorAccionIA;
 use Src\Shared\Tipos\TipoPokemon;
 
 /**
