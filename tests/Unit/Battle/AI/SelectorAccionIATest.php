@@ -220,9 +220,13 @@ class SelectorAccionIATest extends TestCase
 
         $resultado = $this->selector->elegirAccion($battle, $actor);
 
-        $evalDebil = $resultado->evaluaciones->first(
-            fn ($ev) => $ev->accion->defender->id() === 'e1'
-        );
+        $evalDebil = null;
+        foreach ($resultado->evaluaciones as $ev) {
+            if ($ev->accion->defender->id() === 'e1') {
+                $evalDebil = $ev;
+                break;
+            }
+        }
         $this->assertNotNull($evalDebil);
         $this->assertSame(-50.0, $evalDebil->survivalValue);
     }
@@ -257,9 +261,13 @@ class SelectorAccionIATest extends TestCase
 
         $resultado = $this->selector->elegirAccion($battle, $actor);
 
-        $eval = $resultado->evaluaciones->first(
-            fn ($ev) => $ev->accion->defender->id() === 'e1'
-        );
+        $eval = null;
+        foreach ($resultado->evaluaciones as $ev) {
+            if ($ev->accion->defender->id() === 'e1') {
+                $eval = $ev;
+                break;
+            }
+        }
         $this->assertNotNull($eval);
         $this->assertSame(50.0, $eval->survivalValue);
     }

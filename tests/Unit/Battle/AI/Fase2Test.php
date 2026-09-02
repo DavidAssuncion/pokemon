@@ -171,7 +171,7 @@ class Fase2Test extends TestCase
         $respuestas = $respuestaRival->generarRespuestas($battle, $actorQueActuo, 'team1');
 
         $this->assertNotEmpty($respuestas);
-        $this->assertLessThanOrEqual(3, $respuestas->count());
+        $this->assertLessThanOrEqual(3, count($respuestas));
     }
 
     public function test_respuesta_rival_vacia_si_no_hay_enemigos(): void
@@ -185,7 +185,7 @@ class Fase2Test extends TestCase
 
         $respuestas = $respuestaRival->generarRespuestas($battle, $actorQueActuo, 'team1');
 
-        $this->assertTrue($respuestas->isEmpty());
+        $this->assertSame([], $respuestas);
     }
 
     // ─── Lookahead ────────────────────────────────────────

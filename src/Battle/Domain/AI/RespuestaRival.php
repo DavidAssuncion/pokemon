@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Src\Battle\Domain\AI;
 
-use Illuminate\Support\Collection;
 use Src\Battle\Domain\AccionBatalla;
 use Src\Battle\Domain\AgregadoBatalla;
 use Src\Battle\Domain\Combatiente;
@@ -24,13 +23,13 @@ class RespuestaRival
     /**
      * Genera las respuestas más peligrosas del rival contra el equipo del actor.
      *
-     * @return Collection<int, AccionBatalla> Máximo 3 acciones más peligrosas
+     * @return AccionBatalla[] Máximo 3 acciones más peligrosas
      */
     public function generarRespuestas(
         AgregadoBatalla $estadoSimulado,
         Combatiente $actorQueActuo,
         string $equipoActor,
-    ): Collection {
+    ): array {
         $equipoEnemigo = $equipoActor === 'team1'
             ? $estadoSimulado->team2
             : $estadoSimulado->team1;
@@ -39,14 +38,14 @@ class RespuestaRival
             ? $estadoSimulado->team1
             : $estadoSimulado->team2;
 
-        $enemigosVivos = collect($equipoEnemigo->combatientesVivos());
-        $aliadosVivos = collect($equipoAliado->combatientesVivos());
+        $enemigosVivos = $equipoEnemigo->combatientesVivos();
+        $aliadosVivos = $equipoAliado->combatientesVivos();
 
-        if ($enemigosVivos->isEmpty() || $aliadosVivos->isEmpty()) {
-            return new Collection();
+        if ($enemigosVivos === [] || $aliadosVivos === []) {
+            return [];
         }
 
-        $accionesPeligrosas = new Collection();
+        $accionesPeligrosas = [];
 
         foreach ($enemigosVivos as $enemigo) {
             foreach ($aliadosVivos as $aliado) {
@@ -61,35 +60,40 @@ class RespuestaRival
 
                     $defenderTeamHasVanguard = $equipoAliado->tieneVanguardiaViva();
 
-                    $accionesPeligrosas->add(new AccionBatalla(
+                    $accionesPeligrosas[] = new AccionBatalla(
                         attacker: $enemigo,
                         defender: $aliado,
                         move: $movimiento,
                         fromPosition: $enemigo->posicion(),
                         defenderTeamHasVanguard: $defenderTeamHasVanguard,
                         weather: $estadoSimulado->weather(),
-                    ));
+                    );
                 }
             }
         }
 
         // Ordenar por daño estimado descendente, tomar top 3
-        return $accionesPeligrosas
-            ->sortByDesc(function (AccionBatalla $accion) use ($estadoSimulado) {
-                if ($accion->move->esEstado()) {
-                    return 0.0;
-                }
+        usort($accionesPeligrosas, function (AccionBatalla $a, AccionBatalla $b) use ($estadoSimulado) {
+            $danoA = $a->move->esEstado() ? 0.0 : $this->estimarDano($a, $estadoSimulado);
+            $danoB = $b->move->esEstado() ? 0.0 : $this->estimarDano($b, $estadoSimulado);
 
-                $estimacion = $this->calculadoraDanio->estimar(
-                    $accion->attacker,
-                    $accion->defender,
-                    $accion->move,
-                    $estadoSimulado,
-                );
+            return $danoB <=> $danoA;
+        });
 
-                return $estimacion->esperado;
-            })
-            ->take(3)
-            ->values();
+        return array_slice($accionesPeligrosas, 0, 3);
+    }
+
+    private function estimarDano(AccionBatalla $accion, AgregadoBatalla $estadoSimulado): float
+    {
+        if ($accion->move->esEstado()) {
+            return 0.0;
+        }
+
+        return $this->calculadoraDanio->estimar(
+            $accion->attacker,
+            $accion->defender,
+            $accion->move,
+            $estadoSimulado,
+        )->esperado;
     }
 }

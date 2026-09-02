@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Src\Battle\Domain\AI;
 
-use Illuminate\Support\Collection;
 use Src\Battle\Domain\AI\ValueObjects\EvaluacionAmenaza;
 use Src\Battle\Domain\Combatiente;
 
@@ -20,15 +19,18 @@ class AnalizadorAmenazasImpl implements AnalizadorAmenazas
     ) {
     }
 
-    public function analizar(ContextoDecisionIA $contexto): Collection
+    public function analizar(ContextoDecisionIA $contexto): array
     {
-        $amenazas = new Collection();
+        $amenazas = [];
 
         foreach ($contexto->enemigos as $enemigo) {
-            $amenazas->add($this->evaluarEnemigo($contexto, $enemigo));
+            $amenazas[] = $this->evaluarEnemigo($contexto, $enemigo);
         }
 
-        return $amenazas->sortByDesc(fn (EvaluacionAmenaza $a) => $a->score)->values();
+        // Ordenar por score descendente
+        usort($amenazas, fn (EvaluacionAmenaza $a, EvaluacionAmenaza $b) => $b->score <=> $a->score);
+
+        return array_values($amenazas);
     }
 
     private function evaluarEnemigo(ContextoDecisionIA $contexto, Combatiente $enemigo): EvaluacionAmenaza

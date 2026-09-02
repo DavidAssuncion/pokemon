@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Src\Battle\Domain\AI;
 
-use Illuminate\Support\Collection;
 use Src\Battle\Domain\AccionBatalla;
 use Src\Battle\Domain\AgregadoBatalla;
 use Src\Battle\Domain\AI\ValueObjects\EvaluacionAccion;
@@ -38,14 +37,17 @@ class SelectorAccionIA
     public function __construct(
         ?PesosAmenaza $pesos = null,
         ?MemoriaCombateIA $memoria = null,
+        ?AnalizadorAmenazasImpl $analizadorAmenazas = null,
+        ?EvaluadorAccionIAImpl $evaluadorAccion = null,
+        ?EvaluadorPosicionIA $evaluadorPosicion = null,
     ) {
         $pesos ??= PesosAmenaza::porDefecto();
         $cadenaDanio = new CadenaDanio();
         $this->calculadoraDanio = new CalculadoraDanioIA($cadenaDanio);
-        $this->analizadorAmenazas = new AnalizadorAmenazasImpl($this->calculadoraDanio, $pesos);
-        $this->evaluadorAccion = new EvaluadorAccionIAImpl($this->calculadoraDanio, $pesos);
-        $this->evaluadorPosicion = new EvaluadorPosicionIA($pesos);
         $this->memoria = $memoria ?? new MemoriaCombateIA($pesos);
+        $this->analizadorAmenazas = $analizadorAmenazas ?? new AnalizadorAmenazasImpl($this->calculadoraDanio, $pesos);
+        $this->evaluadorAccion = $evaluadorAccion ?? new EvaluadorAccionIAImpl($this->calculadoraDanio, $pesos);
+        $this->evaluadorPosicion = $evaluadorPosicion ?? new EvaluadorPosicionIA($pesos);
     }
 
     /**
@@ -62,9 +64,12 @@ class SelectorAccionIA
 
         $acciones = $this->generarAccionesCandidatas($contexto);
 
-        $evaluaciones = $acciones->map(
-            fn (AccionBatalla $accion) => $this->evaluadorAccion->evaluar($contexto, $amenazas, $accion)
+        $evaluaciones = array_map(
+            fn (AccionBatalla $accion) => $this->evaluadorAccion->evaluar($contexto, $amenazas, $accion),
+            $acciones,
         );
+
+        $evaluaciones = array_values($evaluaciones);
 
         $mejor = $this->seleccionarSegunDificultad($evaluaciones, $dificultad);
 
@@ -75,7 +80,7 @@ class SelectorAccionIA
         return new ResultadoDecision(
             accion: $mejor->accion,
             amenazas: $amenazas,
-            evaluaciones: $evaluaciones->values(),
+            evaluaciones: $evaluaciones,
         );
     }
 
@@ -129,6 +134,14 @@ class SelectorAccionIA
         return $this->memoria;
     }
 
+    /**
+     * Registra una acción enemiga observada en la memoria compartida.
+     */
+    public function registrarAccionEnemiga(AccionBatalla $accion, float $dano, int $turno = 0): void
+    {
+        $this->memoria->registrarAccionEnemiga($turno, $accion, $dano);
+    }
+
     // ─── Contexto ──────────────────────────────────────────
 
     private function construirContexto(
@@ -140,11 +153,12 @@ class SelectorAccionIA
         $equipoActor = $esTeam1 ? $battle->team1 : $battle->team2;
         $equipoEnemigo = $esTeam1 ? $battle->team2 : $battle->team1;
 
-        $aliados = collect($equipoActor->combatientesVivos())->filter(
+        $aliados = array_values(array_filter(
+            $equipoActor->combatientesVivos(),
             fn (Combatiente $c) => $c->id() !== $actor->id()
-        );
+        ));
 
-        $enemigos = collect($equipoEnemigo->combatientesVivos());
+        $enemigos = array_values($equipoEnemigo->combatientesVivos());
 
         return new ContextoDecisionIA(
             battle: $battle,
@@ -165,11 +179,11 @@ class SelectorAccionIA
      * - Vanguardia solo puede atacar vanguardia enemiga.
      * - Retaguardia puede atacar a cualquier enemigo vivo.
      *
-     * @return Collection<int, AccionBatalla>
+     * @return AccionBatalla[]
      */
-    private function generarAccionesCandidatas(ContextoDecisionIA $contexto): Collection
+    private function generarAccionesCandidatas(ContextoDecisionIA $contexto): array
     {
-        $acciones = new Collection();
+        $acciones = [];
         $actor = $contexto->actor;
         $battle = $contexto->battle;
 
@@ -188,14 +202,14 @@ class SelectorAccionIA
             }
 
             foreach ($enemigosLegales as $enemigo) {
-                $acciones->add(new AccionBatalla(
+                $acciones[] = new AccionBatalla(
                     attacker: $actor,
                     defender: $enemigo,
                     move: $movimiento,
                     fromPosition: $actor->posicion(),
                     defenderTeamHasVanguard: $defenderTeamHasVanguard,
                     weather: $battle->weather(),
-                ));
+                );
             }
         }
 
@@ -207,15 +221,16 @@ class SelectorAccionIA
      * - Actor en vanguardia → solo vanguardia enemiga.
      * - Actor en retaguardia → cualquier enemigo vivo.
      *
-     * @param  Collection<int, Combatiente> $enemigos
-     * @return Collection<int, Combatiente>
+     * @param  Combatiente[]  $enemigos
+     * @return Combatiente[]
      */
-    private function filtrarEnemigosPorPosicion(Collection $enemigos, Combatiente $actor): Collection
+    private function filtrarEnemigosPorPosicion(array $enemigos, Combatiente $actor): array
     {
         if ($actor->estaEnVanguardia()) {
-            return $enemigos->filter(
+            return array_values(array_filter(
+                $enemigos,
                 fn (Combatiente $e) => $e->estaEnVanguardia()
-            )->values();
+            ));
         }
 
         return $enemigos;
@@ -228,22 +243,29 @@ class SelectorAccionIA
      * PERFECTA: siempre la mejor.
      * DIFÍCIL: entre las 2 mejores.
      * NORMAL: entre las 3 mejores.
+     *
+     * @param  EvaluacionAccion[]  $evaluaciones
      */
-    private function seleccionarSegunDificultad(
-        Collection $evaluaciones,
-        NivelDificultad $dificultad,
-    ): ?EvaluacionAccion {
-        $ordenadas = $evaluaciones->sortByDesc(fn ($e) => $e->score)->values();
-
-        if ($ordenadas->isEmpty()) {
+    private function seleccionarSegunDificultad(array $evaluaciones, NivelDificultad $dificultad): ?EvaluacionAccion
+    {
+        if ($evaluaciones === []) {
             return null;
         }
 
-        return match ($dificultad) {
-            NivelDificultad::PERFECTA => $ordenadas->first(),
-            NivelDificultad::DIFICIL => $ordenadas->take(2)->random(),
-            NivelDificultad::NORMAL => $ordenadas->take(3)->random(),
+        usort(
+            $evaluaciones,
+            fn (EvaluacionAccion $a, EvaluacionAccion $b) => $b->score <=> $a->score
+        );
+
+        $candidatas = match ($dificultad) {
+            NivelDificultad::PERFECTA => 1,
+            NivelDificultad::DIFICIL => 2,
+            NivelDificultad::NORMAL => 3,
         };
+
+        $top = array_slice($evaluaciones, 0, $candidatas);
+
+        return $top[array_rand($top)];
     }
 
     // ─── Fallback ──────────────────────────────────────────
@@ -251,7 +273,7 @@ class SelectorAccionIA
     private function accionFallback(ContextoDecisionIA $contexto): EvaluacionAccion
     {
         $actor = $contexto->actor;
-        $enemigo = $contexto->enemigos->first();
+        $enemigo = $contexto->enemigos[0] ?? null;
 
         if ($enemigo === null) {
             throw new \LogicException('No hay enemigos vivos para la IA');

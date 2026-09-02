@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Src\Battle\Domain;
 
+use Src\Battle\Domain\AI\NivelDificultad;
 use Src\Battle\Domain\AI\SelectorAccionIA;
 use Src\Battle\Domain\Chain\CadenaDanio;
 use Src\Battle\Domain\Enums\TipoClima;
@@ -28,6 +29,8 @@ class AgregadoBatalla
     private ?CalculadorDañoClima $calculadorClima = null;
 
     private ?SelectorAccionIA $selectorAccion = null;
+
+    private NivelDificultad $dificultad = NivelDificultad::PERFECTA;
 
     public function __construct(
         public readonly EquipoBatalla $team1,
@@ -100,6 +103,11 @@ class AgregadoBatalla
     private function getSelectorAccion(): SelectorAccionIA
     {
         return $this->selectorAccion ??= new SelectorAccionIA();
+    }
+
+    public function setDificultad(NivelDificultad $dificultad): void
+    {
+        $this->dificultad = $dificultad;
     }
 
     // ─── Log ──────────────────────────────────────────────────
@@ -234,6 +242,9 @@ class AgregadoBatalla
         $servicio->aplicarEstado($objetivo, $movimiento);
         $servicio->aplicarStatChanges($actor, $objetivo, $movimiento);
 
+        // Alimentar la memoria con la acción observada
+        $this->getSelectorAccion()->registrarAccionEnemiga($accion, $daño, $this->turnManager->round());
+
         $this->agregarLog(
             "{$actor->velocidadAcumulada()}vel {$actor->hpActual()}hp] "
             ."ataca a {$objetivo->hpActual()}hp] "
@@ -246,6 +257,11 @@ class AgregadoBatalla
 
         if (! $objetivo->estaVivo()) {
             $this->agregarLog("¡{$objetivo->nombre()} se ha debilitado!");
+            $this->getSelectorAccion()->memoria()->registrarKO(
+                $this->turnManager->round(),
+                $actor->id(),
+                $objetivo->id(),
+            );
             $this->subject->notifyFainted($objetivo);
         }
     }
@@ -255,11 +271,11 @@ class AgregadoBatalla
      */
     public function elegirObjetivoPara(Combatiente $actor): ?Combatiente
     {
-        return $this->getSelectorAccion()->elegirObjetivoPara($this, $actor);
+        return $this->getSelectorAccion()->elegirAccion($this, $actor, $this->dificultad)->accion->defender;
     }
 
     public function elegirMejorMovimiento(Combatiente $attacker, Combatiente $defender): ?MovimientoBatalla
     {
-        return $this->getSelectorAccion()->elegirMejorMovimiento($attacker, $defender);
+        return $this->getSelectorAccion()->elegirAccion($this, $attacker, $this->dificultad)->accion->move;
     }
 }

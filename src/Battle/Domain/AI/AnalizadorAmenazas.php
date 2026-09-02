@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Src\Battle\Domain\AI;
 
-use Illuminate\Support\Collection;
 use Src\Battle\Domain\AI\ValueObjects\EvaluacionAmenaza;
 
 /**
@@ -15,7 +14,7 @@ interface AnalizadorAmenazas
     /**
      * Analiza la amenaza de cada enemigo vivo contra los aliados del actor.
      *
-     * @return Collection<int, EvaluacionAmenaza>
+     * @return EvaluacionAmenaza[]
      */
-    public function analizar(ContextoDecisionIA $contexto): Collection;
+    public function analizar(ContextoDecisionIA $contexto): array;
 }

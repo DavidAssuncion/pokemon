@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Src\Battle\Domain\AI\ValueObjects;
 
-use Illuminate\Support\Collection;
 use Src\Battle\Domain\AccionBatalla;
 
 /**
@@ -13,13 +12,13 @@ use Src\Battle\Domain\AccionBatalla;
 final readonly class ResultadoDecision
 {
     /**
-     * @param Collection<int, EvaluacionAmenaza> $amenazas
-     * @param Collection<int, EvaluacionAccion> $evaluaciones
+     * @param EvaluacionAmenaza[] $amenazas
+     * @param EvaluacionAccion[]  $evaluaciones
      */
     public function __construct(
         public AccionBatalla $accion,
-        public Collection $amenazas,
-        public Collection $evaluaciones,
+        public array $amenazas,
+        public array $evaluaciones,
     ) {
     }
 }

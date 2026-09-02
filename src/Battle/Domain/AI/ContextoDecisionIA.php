@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Src\Battle\Domain\AI;
 
-use Illuminate\Support\Collection;
 use Src\Battle\Domain\AgregadoBatalla;
 use Src\Battle\Domain\Combatiente;
 
@@ -14,15 +13,15 @@ use Src\Battle\Domain\Combatiente;
 final readonly class ContextoDecisionIA
 {
     /**
-     * @param Collection<int, Combatiente> $aliados   Combatientes vivos del equipo del actor
-     * @param Collection<int, Combatiente> $enemigos  Combatientes vivos del equipo enemigo
+     * @param Combatiente[] $aliados   Combatientes vivos del equipo del actor
+     * @param Combatiente[] $enemigos  Combatientes vivos del equipo enemigo
      */
     public function __construct(
         public AgregadoBatalla $battle,
         public Combatiente $actor,
         public NivelDificultad $dificultad,
-        public Collection $aliados,
-        public Collection $enemigos,
+        public array $aliados,
+        public array $enemigos,
         public int $turno,
         public ?MemoriaCombateIA $memoria = null,
         public string $equipoActor = 'team1',

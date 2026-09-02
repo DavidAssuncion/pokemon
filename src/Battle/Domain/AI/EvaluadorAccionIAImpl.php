@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Src\Battle\Domain\AI;
 
-use Illuminate\Support\Collection;
 use Src\Battle\Domain\AccionBatalla;
 use Src\Battle\Domain\AI\ValueObjects\EvaluacionAccion;
 use Src\Battle\Domain\AI\ValueObjects\EvaluacionAmenaza;
@@ -33,7 +32,7 @@ class EvaluadorAccionIAImpl implements EvaluadorAccionIA
 
     public function evaluar(
         ContextoDecisionIA $contexto,
-        Collection $amenazas,
+        array $amenazas,
         AccionBatalla $accion,
     ): EvaluacionAccion {
         $movimiento = $accion->move;
@@ -122,7 +121,7 @@ class EvaluadorAccionIAImpl implements EvaluadorAccionIA
             $contexto->equipoActor,
         );
 
-        if ($respuestas->isEmpty()) {
+        if ($respuestas === []) {
             return 0.0;
         }
 
@@ -153,7 +152,7 @@ class EvaluadorAccionIAImpl implements EvaluadorAccionIA
     /**
      * Si el objetivo muere, el score de amenaza de ese enemigo se suma como reducción.
      */
-    private function calcularReduccionAmenaza(Collection $amenazas, Combatiente $objetivo, float $koValue): float
+    private function calcularReduccionAmenaza(array $amenazas, Combatiente $objetivo, float $koValue): float
     {
         if ($koValue <= 0) {
             return 0.0;
@@ -182,9 +181,10 @@ class EvaluadorAccionIAImpl implements EvaluadorAccionIA
         // Si el objetivo muere, no puede contraatacar
         $enemigosRestantes = $contexto->enemigos;
         if ($koValue > 0) {
-            $enemigosRestantes = $contexto->enemigos->filter(
+            $enemigosRestantes = array_values(array_filter(
+                $contexto->enemigos,
                 fn ($e) => $e->id() !== $objetivo->id()
-            )->values();
+            ));
         }
 
         $hpEfectivoActor = $actor->hpActual()

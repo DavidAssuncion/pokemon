@@ -793,11 +793,37 @@ El `@switch($weather)` en `battle-field.blade.php` comparaba con valores inglese
 - `NivelDificultad` (NORMAL/DIFÍCIL/PERFECTA) afecta selección de acción
 - 6 tests de decisión + 156 tests de Battle verdes
 
-**Pendientes Fase 2:**
-- Lookahead 1-2 turnos (`SimuladorAccionIA`, `RespuestaRival`)
-- Memoria de combate (`MemoriaCombateIA`)
-- Migrar `Illuminate\Support\Collection` a colecciones nativas en Domain
-- Inyectar servicios en `SelectorAccionIA` en vez de crear en constructor
+**Pendientes Fase 2 (completadas en iteración IA Fase 2/3):**
+- Lookahead 1-2 turnos (`SimuladorAccionIA`, `RespuestaRival`) ✔
+- Memoria de combate (`MemoriaCombateIA`) ✔
+- Migrar `Illuminate\Support\Collection` a colecciones nativas en Domain ✔
+- Inyectar servicios en `SelectorAccionIA` en vez de crear en constructor ✔
+
+### Iteración IA Fase 2 (2026-09-02)
+
+**Commit:** `1fffd49`
+
+**Cambios:**
+- `SimuladorAccionIA`: ejecuta acciones sobre clon del estado sin mutar la batalla original
+- `RespuestaRival`: genera las top-3 respuestas más peligrosas del rival
+- `MemoriaCombateIA`: registra acciones enemigas observadas, daño recibido y KOs realizados
+- `EvaluadorAccionIAImpl`: lookahead 1 para DIFÍCIL/PERFECTA (simula → respuesta → posición)
+- `ContextoDecisionIA`: incluye memoria y equipoActor
+- `AgregadoBatalla`/`EquipoBatalla`: `__clone()` profundo
+- `ValueObjects/ResultadoSimulacion`: DTO de simulación
+- 13 tests nuevos en `tests/Unit/Battle/AI/Fase2Test.php`; 169 tests de Battle verdes
+
+### Iteración IA Fase 3 (2026-09-02)
+
+**Cambios:**
+- La memoria se alimenta desde `AgregadoBatalla::ejecutarAccion` (acciones y KOs registrados)
+- `AgregadoBatalla::setDificultad(NivelDificultad)` conecta la dificultad al flujo de batalla
+- `equipoActor` se resuelve correctamente según el equipo del actor
+- **Migración completa**: la capa `src/Battle/Domain/AI/` ya NO usa `Illuminate\Support\Collection` — usa arrays nativos (interfaces, ValueObjects, implementaciones)
+- `SelectorAccionIA` ahora acepta servicios inyectados (analizador, evaluador, posición, memoria) con defaults por retrocompatibilidad
+- 6 tests de integración nuevos en `tests/Unit/Battle/AI/Fase3Test.php`; 175 tests de Battle verdes
+
+**Nota de arquitectura:** al migrar a arrays nativos, los VOs `ResultadoDecision`, `ContextoDecisionIA`, `EvaluacionAccion`, etc. exponen arrays tipados (PHPDoc `@return X[]`). Los tests que usaban métodos de Collection se actualizaron a funciones nativas (`count`, `array_values`, `foreach`).
 
 ---
 
