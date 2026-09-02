@@ -19,8 +19,25 @@ src/Battle/
 │   ├── GestorTurnos.php
 │   ├── MovimientoBatalla.php
 │   ├── Posicion.php
-│   ├── SelectorAccionIA.php
 │   ├── ServicioEjecucionBatalla.php
+│   ├── AI/              (IA de combate — Fase 1 completada)
+│   │   ├── SelectorAccionIA.php          (orquestador principal)
+│   │   ├── ContextoDecisionIA.php        (DTO de contexto)
+│   │   ├── NivelDificultad.php           (enum NORMAL/DIFÍCIL/PERFECTA)
+│   │   ├── PesosAmenaza.php              (configuración centralizada de pesos)
+│   │   ├── CalculadoraDanioIA.php        (servicio compartido de daño)
+│   │   ├── AnalizadorAmenazas.php        (interfaz)
+│   │   ├── AnalizadorAmenazasImpl.php    (ThreatScore compuesto)
+│   │   ├── EvaluadorAccionIA.php         (interfaz)
+│   │   ├── EvaluadorAccionIAImpl.php     (MoveScore compuesto)
+│   │   ├── EvaluadorPosicionIA.php       (posición global del equipo)
+│   │   ├── EstimadorDanioIA.php          (interfaz deprecated)
+│   │   ├── EstimadorDanioIAImpl.php      (redirect deprecated)
+│   │   └── ValueObjects/
+│   │       ├── EvaluacionAmenaza.php
+│   │       ├── EvaluacionAccion.php
+│   │       ├── EstimacionDanio.php
+│   │       └── ResultadoDecision.php
 │   ├── Chain/             (Chain of Responsibility para cálculo de daño)
 │   │   ├── CadenaDanio.php
 │   │   ├── ManejadorDanio.php               (interface)
@@ -103,15 +120,51 @@ Inmunes declarados como constantes privadas (`INMUNES_GRANIZO`, `INMUNES_TORMENT
 
 ---
 
-#### `SelectorAccionIA` (`src/Battle/Domain/SelectorAccionIA.php`)
+#### `SelectorAccionIA` (`src/Battle/Domain/AI/SelectorAccionIA.php`)
 
-**Responsabilidad:** Servicio con la lógica de IA para batalla (objetivo + mejor movimiento), extraída de `AgregadoBatalla` en el refactor 2026 para mantener el agregado orquestando solo el ciclo. Stateless.
+**Responsabilidad:** Orquestador principal de la IA de combate. Construye contexto, analiza amenazas, evalúa acciones candidatas y selecciona la mejor según el nivel de dificultad. Respeta la restricción de posición: vanguardia solo puede atacar vanguardia enemiga.
+
+**Métodos públicos:**
+- `elegirAccion(AgregadoBatalla, Combatiente, NivelDificultad): ResultadoDecision` — Selección completa con amenazas y evaluaciones.
+- `elegirObjetivoPara(AgregadoBatalla, Combatiente): ?Combatiente` — API legacy, delega al nuevo sistema.
+- `elegirMejorMovimiento(Combatiente, Combatiente): ?MovimientoBatalla` — API legacy, delega al nuevo sistema.
+
+**Constructor:** Acepta `?PesosAmenaza` (default: `PesosAmenaza::porDefecto()`).
+
+---
+
+#### `CalculadoraDanioIA` (`src/Battle/Domain/AI/CalculadoraDanioIA.php`)
+
+**Responsabilidad:** Servicio compartido de estimación de daño. Reutiliza `CadenaDanio` para no duplicar la fórmula. Usado por `AnalizadorAmenazasImpl` y `EvaluadorAccionIAImpl` (DRY).
 
 **Métodos:**
-- `elegirObjetivoPara(AgregadoBatalla $battle, Combatiente $actor): ?Combatiente` — Vanguardia → vanguardia enemiga viva (aleatorio); si no hay, retaguardia. Retaguardia → cualquier enemigo vivo. Fallback: cualquier enemigo vivo; `null` si no hay vivos.
-- `elegirMejorMovimiento(Combatiente $attacker, Combatiente $defender): ?MovimientoBatalla` — Mayor `efectividad × potencia`; fallback Placaje (40, NORMAL, FÍSICO) si no hay movimientos.
+- `estimar(Combatiente, Combatiente, MovimientoBatalla, AgregadoBatalla): EstimacionDanio`
+- `mejorEstimacionContra(Combatiente, Combatiente, AgregadoBatalla): ?EstimacionDanio`
+- `calcularHPEfectivo(Combatiente, MovimientoBatalla): float`
 
-`AgregadoBatalla` conserva la API pública `elegirObjetivoPara`/`elegirMejorMovimiento` como **delegación** a este servicio (para `Combate::prepareAiAnimation`). Se instancia vía lazy getter en el agregado (patrón `??=`).
+---
+
+#### `AnalizadorAmenazasImpl` (`src/Battle/Domain/AI/AnalizadorAmenazasImpl.php`)
+
+**Responsabilidad:** Calcula ThreatScore compuesto para cada enemigo vivo. Componentes: amenaza ofensiva, KO, velocidad, setup y estratégica. Usa `PesosAmenaza` para valores configurables.
+
+---
+
+#### `EvaluadorAccionIAImpl` (`src/Battle/Domain/AI/EvaluadorAccionIAImpl.php`)
+
+**Responsabilidad:** Evalúa cada acción candidata (atacante + movimiento + objetivo) con MoveScore compuesto: KO value, damage value, threat reduction, survival value y risk. Usa `PesosAmenaza`.
+
+---
+
+#### `EvaluadorPosicionIA` (`src/Battle/Domain/AI/EvaluadorPosicionIA.php`)
+
+**Responsabilidad:** Evalúa la posición global de la batalla para un equipo. Considera ventaja numérica y estado del HP aliado.
+
+---
+
+#### `PesosAmenaza` (`src/Battle/Domain/AI/PesosAmenaza.php`)
+
+**Responsabilidad:** Configuración centralizada de todos los pesos y puntos usados por la IA. Elimina strings mágicos. Permite registrar items y efectos con `registrarItem()` y `registrarEfecto()`.
 
 ---
 
@@ -725,6 +778,26 @@ El `@switch($weather)` en `battle-field.blade.php` comparaba con valores inglese
 - **140 tests de Battle** verdes (20 unit files + 1 trait helper + 1 feature file = 140 tests, 362 assertions).
 - Suite completa: **533 passed**, 1 failed pre-existente (`ServicioCapturaTest` ajeno a Battle).
 - QA PASS. Arquitecto APROBADO con deuda documentada.
+
+### Iteración IA Fase 1 (2026-09-02)
+
+**Commit:** `dee3422`
+
+**Cambios:**
+- `SelectorAccionIA` reescrito como orquestador con análisis de amenazas
+- Nuevo directorio `src/Battle/Domain/AI/` con 14 archivos
+- Fix: vanguardia solo puede atacar vanguardia enemiga (restricción de posición)
+- `PesosAmenaza` reemplaza strings mágicos por configuración centralizada
+- `CalculadoraDanioIA` extrae lógica compartida de daño (DRY)
+- `EvaluadorPosicionIA` evalúa posición global del equipo
+- `NivelDificultad` (NORMAL/DIFÍCIL/PERFECTA) afecta selección de acción
+- 6 tests de decisión + 156 tests de Battle verdes
+
+**Pendientes Fase 2:**
+- Lookahead 1-2 turnos (`SimuladorAccionIA`, `RespuestaRival`)
+- Memoria de combate (`MemoriaCombateIA`)
+- Migrar `Illuminate\Support\Collection` a colecciones nativas en Domain
+- Inyectar servicios en `SelectorAccionIA` en vez de crear en constructor
 
 ---
 
