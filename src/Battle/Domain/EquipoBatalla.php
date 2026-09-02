@@ -20,6 +20,13 @@ class EquipoBatalla
     ) {
     }
 
+    public function __clone(): void
+    {
+        foreach ($this->combatants as $key => $combatant) {
+            $this->combatants[$key] = clone $combatant;
+        }
+    }
+
     /**
      * @return Combatiente[]
      */

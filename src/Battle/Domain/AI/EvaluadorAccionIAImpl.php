@@ -11,15 +11,24 @@ use Src\Battle\Domain\AI\ValueObjects\EvaluacionAmenaza;
 use Src\Battle\Domain\Combatiente;
 
 /**
- * Evalúa cada acción candidata según KO, daño, reducción de amenaza, supervivencia y riesgo.
+ * Evalúa cada acción candidata según KO, daño, reducción de amenaza, supervivencia, riesgo y lookahead.
  * Usa CalculadoraDanioIA (DRY) y PesosAmenaza (escalable).
  */
 class EvaluadorAccionIAImpl implements EvaluadorAccionIA
 {
+    private SimuladorAccionIA $simulador;
+
+    private RespuestaRival $respuestaRival;
+
+    private EvaluadorPosicionIA $evaluadorPosicion;
+
     public function __construct(
         private readonly CalculadoraDanioIA $calculadoraDanio,
         private readonly PesosAmenaza $pesos,
     ) {
+        $this->simulador = new SimuladorAccionIA($calculadoraDanio->cadenaDanio());
+        $this->respuestaRival = new RespuestaRival($calculadoraDanio);
+        $this->evaluadorPosicion = new EvaluadorPosicionIA($pesos);
     }
 
     public function evaluar(
@@ -32,30 +41,25 @@ class EvaluadorAccionIAImpl implements EvaluadorAccionIA
 
         // --- KO Value ---
         $koValue = 0.0;
+        $estimacionDanio = null;
         if (! $movimiento->esEstado()) {
-            $estimacion = $this->calculadoraDanio->estimar(
+            $estimacionDanio = $this->calculadoraDanio->estimar(
                 $accion->attacker,
                 $objetivo,
                 $movimiento,
                 $contexto->battle,
             );
-            if ($estimacion->probabilidadKO > 0) {
+            if ($estimacionDanio->probabilidadKO > 0) {
                 $koValue = $this->pesos->puntosKO;
             }
         }
 
         // --- Damage Value ---
         $damageValue = 0.0;
-        if (! $movimiento->esEstado()) {
-            $estimacion = $this->calculadoraDanio->estimar(
-                $accion->attacker,
-                $objetivo,
-                $movimiento,
-                $contexto->battle,
-            );
+        if ($estimacionDanio !== null) {
             $hpEfectivo = $this->calculadoraDanio->calcularHPEfectivo($objetivo, $movimiento);
             if ($hpEfectivo > 0) {
-                $damageValue = ($estimacion->esperado / $hpEfectivo) * $this->pesos->multiplicadorDanio;
+                $damageValue = ($estimacionDanio->esperado / $hpEfectivo) * $this->pesos->multiplicadorDanio;
             }
         }
 
@@ -68,8 +72,14 @@ class EvaluadorAccionIAImpl implements EvaluadorAccionIA
         // --- Risk ---
         $risk = $this->calcularRiesgo($contexto);
 
+        // --- Lookahead Score ---
+        $lookaheadScore = 0.0;
+        if ($this->debeAplicarLookahead($contexto)) {
+            $lookaheadScore = $this->calcularLookahead($contexto, $accion, $koValue);
+        }
+
         // --- Score ---
-        $score = $koValue + $damageValue + $threatReduction + $survivalValue - $risk;
+        $score = $koValue + $damageValue + $threatReduction + $survivalValue - $risk + $lookaheadScore;
 
         return new EvaluacionAccion(
             accion: $accion,
@@ -80,6 +90,64 @@ class EvaluadorAccionIAImpl implements EvaluadorAccionIA
             survivalValue: $survivalValue,
             risk: $risk,
         );
+    }
+
+    private function debeAplicarLookahead(ContextoDecisionIA $contexto): bool
+    {
+        return match ($contexto->dificultad) {
+            NivelDificultad::PERFECTA => true,
+            NivelDificultad::DIFICIL => true,
+            NivelDificultad::NORMAL => false,
+        };
+    }
+
+    /**
+     * Simula la acción, genera la respuesta del rival, y evalúa la posición resultante.
+     */
+    private function calcularLookahead(
+        ContextoDecisionIA $contexto,
+        AccionBatalla $accion,
+        float $koValue,
+    ): float {
+        $resultadoSimulacion = $this->simulador->simular($contexto->battle, $accion);
+
+        // Si el objetivo muere, no hay respuesta rival
+        if ($resultadoSimulacion->objetivoDerrotado) {
+            return $this->pesos->puntosSupervivencia * 0.5;
+        }
+
+        $respuestas = $this->respuestaRival->generarRespuestas(
+            $resultadoSimulacion->estadoSimulado,
+            $accion->attacker,
+            $contexto->equipoActor,
+        );
+
+        if ($respuestas->isEmpty()) {
+            return 0.0;
+        }
+
+        // Evaluar la peor respuesta del rival
+        $peorPosicion = 0.0;
+        $primera = true;
+
+        foreach ($respuestas as $respuestaRival) {
+            $resultadoRival = $this->simulador->simular(
+                $resultadoSimulacion->estadoSimulado,
+                $respuestaRival,
+            );
+
+            $posicionPostRival = $this->evaluadorPosicion->evaluar(
+                $resultadoRival->estadoSimulado,
+                $contexto->equipoActor,
+            );
+
+            if ($primera || $posicionPostRival < $peorPosicion) {
+                $peorPosicion = $posicionPostRival;
+                $primera = false;
+            }
+        }
+
+        return $peorPosicion * 0.3;
     }
 
     /**

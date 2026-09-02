@@ -33,8 +33,11 @@ class SelectorAccionIA
 
     private EvaluadorPosicionIA $evaluadorPosicion;
 
+    private MemoriaCombateIA $memoria;
+
     public function __construct(
         ?PesosAmenaza $pesos = null,
+        ?MemoriaCombateIA $memoria = null,
     ) {
         $pesos ??= PesosAmenaza::porDefecto();
         $cadenaDanio = new CadenaDanio();
@@ -42,6 +45,7 @@ class SelectorAccionIA
         $this->analizadorAmenazas = new AnalizadorAmenazasImpl($this->calculadoraDanio, $pesos);
         $this->evaluadorAccion = new EvaluadorAccionIAImpl($this->calculadoraDanio, $pesos);
         $this->evaluadorPosicion = new EvaluadorPosicionIA($pesos);
+        $this->memoria = $memoria ?? new MemoriaCombateIA($pesos);
     }
 
     /**
@@ -120,6 +124,11 @@ class SelectorAccionIA
         return $best;
     }
 
+    public function memoria(): MemoriaCombateIA
+    {
+        return $this->memoria;
+    }
+
     // ─── Contexto ──────────────────────────────────────────
 
     private function construirContexto(
@@ -127,12 +136,9 @@ class SelectorAccionIA
         Combatiente $actor,
         NivelDificultad $dificultad,
     ): ContextoDecisionIA {
-        $equipoActor = $battle->team1->findCombatant($actor) !== null
-            ? $battle->team1
-            : $battle->team2;
-        $equipoEnemigo = $battle->team1->findCombatant($actor) !== null
-            ? $battle->team2
-            : $battle->team1;
+        $esTeam1 = $battle->team1->findCombatant($actor) !== null;
+        $equipoActor = $esTeam1 ? $battle->team1 : $battle->team2;
+        $equipoEnemigo = $esTeam1 ? $battle->team2 : $battle->team1;
 
         $aliados = collect($equipoActor->combatientesVivos())->filter(
             fn (Combatiente $c) => $c->id() !== $actor->id()
@@ -147,6 +153,8 @@ class SelectorAccionIA
             aliados: $aliados,
             enemigos: $enemigos,
             turno: 0,
+            memoria: $this->memoria,
+            equipoActor: $esTeam1 ? 'team1' : 'team2',
         );
     }
 

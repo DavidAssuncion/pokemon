@@ -23,6 +23,11 @@ class CalculadoraDanioIA
     ) {
     }
 
+    public function cadenaDanio(): CadenaDanio
+    {
+        return $this->cadenaDanio;
+    }
+
     /**
      * Estima el daño de un movimiento de un atacante contra un defensor.
      */

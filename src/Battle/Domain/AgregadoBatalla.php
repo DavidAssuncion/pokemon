@@ -38,6 +38,15 @@ class AgregadoBatalla
         $this->subject = new SujetoBatalla();
     }
 
+    public function __clone(): void
+    {
+        $this->team1 = clone $this->team1;
+        $this->team2 = clone $this->team2;
+        $this->turnManager = new GestorTurnos($this->team1, $this->team2);
+        $this->subject = new SujetoBatalla();
+        $this->selectorAccion = null;
+    }
+
     // ─── Getters ──────────────────────────────────────────────
 
     public function turnManager(): GestorTurnos

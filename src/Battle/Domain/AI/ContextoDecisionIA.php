@@ -24,6 +24,8 @@ final readonly class ContextoDecisionIA
         public Collection $aliados,
         public Collection $enemigos,
         public int $turno,
+        public ?MemoriaCombateIA $memoria = null,
+        public string $equipoActor = 'team1',
     ) {
     }
 }
