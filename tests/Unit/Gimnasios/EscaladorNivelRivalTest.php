@@ -6,7 +6,7 @@ namespace Tests\Unit\Gimnasios;
 
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
-use Src\Gimnasios\App\EscaladorNivelRival;
+use Src\Shared\Domain\EscaladorNivelRival;
 use Tests\TestCase;
 
 class EscaladorNivelRivalTest extends TestCase

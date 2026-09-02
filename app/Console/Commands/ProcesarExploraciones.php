@@ -32,8 +32,8 @@ class ProcesarExploraciones extends Command
         $exploraciones = ExploracionActiva::withoutUserScope()
             ->whereNull('regreso')
             ->with([
-                'team.members.reclutado.pokemon.stats',
-                'team.members.reclutado.pokemon.types',
+                'reclutado.pokemon.stats',
+                'reclutado.pokemon.types',
                 'habitat',
             ])
             ->get();

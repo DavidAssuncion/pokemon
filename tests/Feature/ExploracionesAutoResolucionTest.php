@@ -15,6 +15,9 @@ use App\Models\TeamMember;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use Src\CombateEntrenadores\App\MapeadorPokemonBatalla;
+use Src\CombateEntrenadores\Domain\GeneradorMovimientosTipo;
+use Src\Exploraciones\App\CombateExploracion;
 use Src\Exploraciones\App\FinalizarExploracionHandler;
 use Src\Exploraciones\App\PersistirRecompensas;
 use Src\Exploraciones\App\ProcesarExploracionHandler;
@@ -22,6 +25,7 @@ use Src\Exploraciones\Domain\CalculadorRecompensas;
 use Src\Exploraciones\Presentation\TransformadorResultadoExploracion;
 use Src\Shared\Bus\CommandBus;
 use Src\Shared\Bus\UnitOfWork;
+use Src\Shared\Domain\EscaladorNivelRival;
 use Tests\TestCase;
 
 class ExploracionesAutoResolucionTest extends TestCase
@@ -88,7 +92,7 @@ class ExploracionesAutoResolucionTest extends TestCase
 
         $exploracion = ExploracionActiva::create([
             'user_id' => $this->usuario->id,
-            'equipo_id' => $team->id,
+            'reclutado_id' => $reclutado->id,
             'habitat_id' => $habitat->id,
             'nivel' => 1,
             'duracion_horas' => $opciones['duracion_horas'] ?? null,
@@ -110,10 +114,27 @@ class ExploracionesAutoResolucionTest extends TestCase
         $province = Province::create(['id' => 2, 'name' => 'Johto']);
         $habitat = Habitat::create(['id' => 2, 'name' => 'Cueva', 'province_id' => 2]);
         $team = Team::create(['name' => 'Equipo Ajeno', 'user_id' => $this->otroUsuario->id]);
+        $pokemonAjeno = Pokemon::create([
+            'id' => 2,
+            'name' => 'charmander',
+            'species_id' => 4,
+            'capture_rate' => 45,
+            'base_experience' => 62,
+            'height' => 6,
+            'weight' => 85,
+            'hatch' => 10,
+            'evolution_chain_id' => 2,
+        ]);
+        $reclutadoAjeno = Reclutado::create([
+            'user_id' => $this->otroUsuario->id,
+            'pokemon_id' => $pokemonAjeno->id,
+            'nombre' => 'Ajeno',
+            'exp' => ['total' => 0],
+        ]);
 
         return ExploracionActiva::create([
             'user_id' => $this->otroUsuario->id,
-            'equipo_id' => $team->id,
+            'reclutado_id' => $reclutadoAjeno->id,
             'habitat_id' => $habitat->id,
             'nivel' => 1,
             'duracion_horas' => $opciones['duracion_horas'] ?? null,
@@ -130,7 +151,12 @@ class ExploracionesAutoResolucionTest extends TestCase
     {
         $this->app->instance(
             ProcesarExploracionHandler::class,
-            new ProcesarExploracionHandler(app(CommandBus::class), fn (): float => 0.3),
+            new ProcesarExploracionHandler(
+                app(CommandBus::class),
+                new CombateExploracion(new MapeadorPokemonBatalla(new GeneradorMovimientosTipo())),
+                new EscaladorNivelRival(),
+                fn (): float => 0.3,
+            ),
         );
         $this->app->instance(
             FinalizarExploracionHandler::class,

@@ -9,10 +9,12 @@ use App\Models\PlayerInventory;
 use App\Models\Pokemon;
 use App\Models\Reclutado;
 use App\Support\ItemCatalogo;
+use App\Support\ReclutadoSerializer;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
+use Src\Exploraciones\Domain\CapacidadesStats;
 use Src\Reclutamiento\App\ServicioEvolucion;
 use Src\Shared\Domain\NivelHelper;
 
@@ -232,5 +234,44 @@ class ReclutadoController extends Controller
         });
 
         return response()->json(['success' => true]);
+    }
+
+    /**
+     * Alterna el marcador de favorito del reclutado del usuario autenticado.
+     * Anti-IDOR: route-model binding + global scope BelongsToUser → 404 si ajeno.
+     */
+    public function toggleFavorito(Reclutado $reclutado): JsonResponse
+    {
+        $reclutado->update(['favorito' => ! $reclutado->favorito]);
+
+        return response()->json(['favorito' => $reclutado->favorito]);
+    }
+
+    /**
+     * Lista los reclutados favoritos del usuario autenticado, serializados con
+     * el mismo formato que /equipos (ReclutadoSerializer compartido).
+     */
+    public function favoritos(): JsonResponse
+    {
+        $reclutados = Reclutado::with(['pokemon.types', 'pokemon.stats'])
+            ->where('favorito', true)
+            ->get()
+            ->map(fn (Reclutado $reclutado): array => ReclutadoSerializer::serializar($reclutado))
+            ->values();
+
+        return response()->json($reclutados);
+    }
+
+    /**
+     * Capacidades del reclutado (stats + niveles) para el detalle de
+     * exploración individual. Anti-IDOR: route-model binding + scope.
+     */
+    public function capacidades(Reclutado $reclutado): JsonResponse
+    {
+        $reclutado->loadMissing('pokemon.stats', 'pokemon.types');
+
+        return response()->json(
+            CapacidadesStats::desdeReclutado($reclutado, auth()->user())->todas()
+        );
     }
 }

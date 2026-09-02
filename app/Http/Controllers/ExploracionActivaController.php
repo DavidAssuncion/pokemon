@@ -7,8 +7,7 @@ namespace App\Http\Controllers;
 use App\Models\ExploracionActiva;
 use App\Models\Habitat;
 use App\Models\Pokemon;
-use App\Models\PokemonType;
-use App\Models\Team;
+use App\Models\Reclutado;
 use App\Models\User;
 use Carbon\Carbon;
 use Carbon\CarbonInterface;
@@ -21,13 +20,11 @@ use Illuminate\Support\Collection as BaseCollection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
 use Src\Exploraciones\App\ProcesarExploracionCommand;
-use Src\Exploraciones\Domain\CalculadorCapacidadEquipo;
-use Src\Exploraciones\Domain\CalculadorRiesgo;
-use Src\Exploraciones\Domain\RolExploracion;
-use Src\Exploraciones\Domain\SinergiaEquipo;
+use Src\Exploraciones\Domain\CapacidadesStats;
+use Src\Exploraciones\Domain\EvaluadorExploracion;
 use Src\Habitats\App\ValidadorExploracion;
 use Src\Shared\Bus\CommandBus;
-use Src\Shared\Tipos\TipoPokemon;
+use Src\Shared\Domain\NivelHelper;
 
 class ExploracionActivaController extends Controller
 {
@@ -57,11 +54,11 @@ class ExploracionActivaController extends Controller
     public function index(): View
     {
         $activas = ExploracionActiva::whereNull('regreso')
-            ->with('team', 'habitat')
+            ->with('reclutado', 'habitat')
             ->get();
 
         $terminadas = ExploracionActiva::whereNotNull('regreso')
-            ->with('team', 'habitat')
+            ->with('reclutado', 'habitat')
             ->get();
 
         $nombres = $this->nombresPokemon($activas, $terminadas);
@@ -77,95 +74,99 @@ class ExploracionActivaController extends Controller
     }
 
     /**
-     * RF-11: preview de riesgo antes de enviar el equipo (D12). Anti-IDOR: el
-     * equipo debe pertenecer al usuario autenticado (regla exists con user_id).
+     * RF-11: preview de riesgo antes de enviar al reclutado (D12). Anti-IDOR:
+     * el reclutado debe pertenecer al usuario autenticado (regla exists con
+     * user_id). Contrato aditivo individual: capacidades por stats + nivel +
+     * min_lvl + peligro + riesgo simple.
      */
     public function preview(Request $request): JsonResponse
     {
         $data = $request->validate([
-            'team_id' => ['required', 'integer', Rule::exists('teams', 'id')->where('user_id', Auth::id())],
+            'reclutado_id' => ['required', 'integer', Rule::exists('reclutados', 'id')->where('user_id', Auth::id())],
             'habitat_id' => 'required|integer|exists:habitats,id',
             'level' => 'required|integer|min:1|max:3',
         ]);
 
+        $usuario = Auth::user();
+        $reclutado = Reclutado::with('pokemon.stats', 'pokemon.types')->findOrFail((int) $data['reclutado_id']);
         $habitat = Habitat::find((int) $data['habitat_id']);
         $nivel = (int) $data['level'];
+        $minLvl = $this->minLvlDelHabitat($habitat, $nivel);
 
-        $pool = $habitat !== null
-            ? $habitat->pokemon()->wherePivot('level', $nivel)->get()->loadMissing('types')
-            : new Collection();
-        $tiposPool = $this->tiposDelPool($pool);
+        $capacidades = CapacidadesStats::desdeReclutado($reclutado, $usuario)->todas();
 
-        $equipo = Team::with('members.reclutado.pokemon.stats', 'members.reclutado.pokemon.types')
-            ->findOrFail((int) $data['team_id']);
+        // Riesgo simple (exploración individual): combate vs dificultad base
+        // normal del hábitat (30 + peligro×5).
+        $peligro = $habitat?->peligro ?? 1;
+        $dificultad = EvaluadorExploracion::dificultad('normal', max(1, $peligro));
+        $riesgo = $capacidades['combate'] >= $dificultad
+            ? 'Bajo'
+            : ($capacidades['combate'] >= $dificultad - EvaluadorExploracion::MARGEN_EXITO_CON_COSTE ? 'Medio' : 'Alto');
 
-        $miembros = [];
-        $roles = [];
-        $capacidades = [];
-
-        foreach ($equipo->members as $miembro) {
-            $pokemon = $miembro->reclutado?->pokemon;
-            if ($pokemon === null) {
-                continue;
-            }
-
-            $rol = RolExploracion::tryFrom($miembro->behavior ?? '') ?? RolExploracion::COMBATIENTE;
-            $roles[] = $rol;
-
-            $tipos = $this->tiposDe($pokemon);
-            $enPool = $pool->contains('id', $pokemon->id);
-            $base = CalculadorCapacidadEquipo::baseDeStats($pokemon->stats->pluck('base_stat')->all());
-            $afinidad = CalculadorCapacidadEquipo::afinidadDeMiembro($tipos, $tiposPool, $enPool);
-
-            $capacidades[] = CalculadorCapacidadEquipo::capacidadMiembro(
-                base: $base,
-                afinidad: $afinidad,
-                bonusRol: $rol->bonusCapacidad(),
-                bonusSinergia: 0,
-            );
-
-            $miembros[] = [
-                'tipos' => $tipos,
-                'enPool' => $enPool,
-                'rol' => $rol,
-                'base' => $base,
-            ];
-        }
-
-        $capacidad = CalculadorCapacidadEquipo::capacidadEquipo($capacidades);
-        $sinergia = SinergiaEquipo::sinergiaPara($roles);
-        if ($sinergia !== null) {
-            $capacidad = max(0, $capacidad + $sinergia['bonusCapacidad']);
-        }
-
-        $resultado = CalculadorRiesgo::evaluar(
-            peligro: $habitat->peligro ?? 1,
-            nivel: $nivel,
-            capacidad: $capacidad,
-            tiposPool: $tiposPool,
-            miembros: $miembros,
-        );
-
-        return response()->json($resultado);
+        return response()->json([
+            'capacidades' => $capacidades,
+            'nivel_jugador' => $usuario->nivel(),
+            'nivel_pokemon' => NivelHelper::nivelDesdeExperiencia($reclutado->exp->total()),
+            'min_lvl' => $minLvl,
+            'peligro' => $peligro,
+            'riesgo' => $riesgo,
+        ]);
     }
 
     public function store(Request $request): RedirectResponse|JsonResponse
     {
-        // El global scope de Team (BelongsToUser) NO se aplica a la regla exists
-        // (usa el query builder, no Eloquent): la propiedad se fuerza con el where
-        // explícito por user_id (anti-IDOR).
+        $errores = $this->validarYNuevaExploracion($request, $exploracion);
+        if ($errores !== null) {
+            if ($request->wantsJson()) {
+                return response()->json(['message' => $errores], 422);
+            }
+
+            return redirect()->back()->with('error', $errores)->withInput();
+        }
+
+        return redirect()->back()->with('success', 'Exploración iniciada correctamente.');
+    }
+
+    /**
+     * POST /api/exploraciones/store-individual: inicia una exploración
+     * individual (API JSON). Mismo flujo que store pero devuelve JSON.
+     * Sin bayas (TODO).
+     */
+    public function storeIndividual(Request $request): JsonResponse
+    {
+        $errores = $this->validarYNuevaExploracion($request, $exploracion);
+        if ($errores !== null) {
+            return response()->json(['message' => $errores], 422);
+        }
+
+        return response()->json(['ok' => true, 'id' => $exploracion->id], 201);
+    }
+
+    /**
+     * Valida los datos de una nueva exploración y la crea si es válida.
+     * Devuelve null si todo ok, o un string de error si falla.
+     * Mutación: $exploracion recibe la instancia creada si éxito.
+     *
+     * @param  ExploracionActiva|null  $exploracion  Output: exploración creada.
+     */
+    private function validarYNuevaExploracion(Request $request, ?ExploracionActiva &$exploracion = null): ?string
+    {
         $data = $request->validate([
-            'team_id' => ['required', Rule::exists('teams', 'id')->where('user_id', Auth::id())],
+            'reclutado_id' => ['required', 'integer', Rule::exists('reclutados', 'id')->where('user_id', Auth::id())],
             'habitat_id' => 'required|exists:habitats,id',
             'level' => 'required|integer|min:1|max:3',
+            'duracion_horas' => 'nullable|integer|min:1|max:72',
             'duration_hours' => 'nullable|integer|min:1|max:72',
             'return_time' => 'nullable|date_format:H:i',
             'indefinido' => 'nullable|boolean',
         ]);
 
-        // Check team is not already in exploration
-        if (! $this->validadorExploracion->equipoDisponible((int) $data['team_id'])) {
-            return redirect()->back()->with('error', 'El equipo ya está en una exploración activa.');
+        if (! $this->validadorExploracion->reclutadoDisponible((int) $data['reclutado_id'])) {
+            return 'El reclutado ya está en una exploración activa.';
+        }
+
+        if (! $this->validadorExploracion->equipoDelReclutadoDisponible((int) $data['reclutado_id'])) {
+            return 'El equipo del reclutado está en una exploración activa.';
         }
 
         $usuario = $request->user();
@@ -175,28 +176,23 @@ class ExploracionActivaController extends Controller
         if ($minLvl !== null && $usuario instanceof User
             && ! $this->validadorExploracion->cumpleNivelMinimo($usuario->nivel(), (int) $minLvl)
         ) {
-            $mensaje = "Requiere nivel Nv {$minLvl} para explorar esta zona.";
-
-            if ($request->wantsJson()) {
-                return response()->json(['message' => $mensaje], 422);
-            }
-
-            return redirect()->back()->with('error', $mensaje)->withInput();
+            return "Requiere nivel Nv {$minLvl} para explorar esta zona.";
         }
 
-        $indefinido = ($data['indefinido'] ?? false) || (! isset($data['duration_hours']) && ! isset($data['return_time']));
+        $duracionHoras = (int) ($data['duracion_horas'] ?? $data['duration_hours'] ?? 0) ?: null;
+        $indefinido = ($data['indefinido'] ?? false) || ($duracionHoras === null && ! isset($data['return_time']));
 
         $horaLimite = null;
         if (isset($data['return_time'])) {
             $horaLimite = Carbon::today()->setTimeFromTimeString($data['return_time']);
         }
 
-        ExploracionActiva::create([
+        $exploracion = ExploracionActiva::create([
             'user_id' => $usuario?->id,
-            'equipo_id' => $data['team_id'],
+            'reclutado_id' => $data['reclutado_id'],
             'habitat_id' => $data['habitat_id'],
             'nivel' => $data['level'],
-            'duracion_horas' => $data['duration_hours'] ?? null,
+            'duracion_horas' => $duracionHoras,
             'hora_limite' => $horaLimite,
             'indefinido' => $indefinido,
             'inicio_exploracion' => null,
@@ -204,7 +200,7 @@ class ExploracionActivaController extends Controller
             'regreso' => null,
         ]);
 
-        return redirect()->back()->with('success', 'Exploración iniciada correctamente.');
+        return null;
     }
 
     /**
@@ -323,12 +319,13 @@ class ExploracionActivaController extends Controller
             $bitacora[] = $this->transformarEvento($evento, $nombres);
         }
 
-        $equipo = $exp->team;
+        $reclutado = $exp->reclutado;
         $habitat = $exp->habitat;
 
         return [
             'id' => $exp->id,
-            'equipo' => $equipo !== null ? $equipo->name : 'Sin equipo',
+            'equipo' => $reclutado !== null ? $reclutado->nombre : 'Sin reclutado',
+            'reclutado' => $reclutado !== null ? $reclutado->nombre : null,
             'habitat' => $habitat !== null ? $habitat->name : 'Sin hábitat',
             'habitat_id' => $exp->habitat_id,
             'nivel' => $exp->nivel,
@@ -395,12 +392,13 @@ class ExploracionActivaController extends Controller
             ];
         }
 
-        $equipo = $exp->team;
+        $reclutado = $exp->reclutado;
         $habitat = $exp->habitat;
 
         return [
             'id' => $exp->id,
-            'equipo' => $equipo !== null ? $equipo->name : 'Sin equipo',
+            'equipo' => $reclutado !== null ? $reclutado->nombre : 'Sin reclutado',
+            'reclutado' => $reclutado !== null ? $reclutado->nombre : null,
             'habitat' => $habitat !== null ? $habitat->name : 'Sin hábitat',
             'nivel' => $exp->nivel,
             'min_lvl' => $this->minLvlDelHabitat($habitat, $exp->nivel),
@@ -483,32 +481,5 @@ class ExploracionActivaController extends Controller
         }
 
         return $fin->copy()->subMinutes(intdiv((int) abs($fin->diffInMinutes($inicio)), 4));
-    }
-
-    /**
-     * @param  Collection<int, Pokemon>  $pool
-     * @return list<TipoPokemon>
-     */
-    private function tiposDelPool(Collection $pool): array
-    {
-        $tipos = [];
-        foreach ($pool as $pokemon) {
-            foreach ($this->tiposDe($pokemon) as $tipo) {
-                if (! in_array($tipo, $tipos, true)) {
-                    $tipos[] = $tipo;
-                }
-            }
-        }
-
-        return $tipos;
-    }
-
-    /** @return list<TipoPokemon> */
-    private function tiposDe(Pokemon $pokemon): array
-    {
-        return $pokemon->types
-            ->map(fn (PokemonType $tipo): TipoPokemon => TipoPokemon::from($tipo->type->value))
-            ->values()
-            ->all();
     }
 }

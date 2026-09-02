@@ -8,6 +8,8 @@ use App\Models\Concerns\BelongsToUser;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+// TODO(futuro): bayas
+
 class ExploracionActiva extends Model
 {
     use BelongsToUser;
@@ -16,7 +18,7 @@ class ExploracionActiva extends Model
 
     protected $fillable = [
         'user_id',
-        'equipo_id',
+        'reclutado_id',
         'habitat_id',
         'nivel',
         'duracion_horas',
@@ -37,11 +39,11 @@ class ExploracionActiva extends Model
     ];
 
     /**
-     * @return BelongsTo<Team, $this>
+     * @return BelongsTo<Reclutado, $this>
      */
-    public function team(): BelongsTo
+    public function reclutado(): BelongsTo
     {
-        return $this->belongsTo(Team::class, 'equipo_id');
+        return $this->belongsTo(Reclutado::class, 'reclutado_id');
     }
 
     /**

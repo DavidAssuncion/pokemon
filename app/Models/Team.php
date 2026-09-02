@@ -28,20 +28,14 @@ class Team extends Model
     }
 
     /**
-     * @return HasMany<ExploracionActiva, $this>
-     */
-    public function exploraciones(): HasMany
-    {
-        return $this->hasMany(ExploracionActiva::class, 'equipo_id');
-    }
-
-    /**
-     * Check if this team is currently exploring.
+     * Check if this team is currently exploring (any member in active exploration).
      */
     public function isExploring(): bool
     {
-        return $this->exploraciones()
-            ->whereNull('regreso')
+        $memberIds = $this->members()->pluck('pokemon_id');
+
+        return ExploracionActiva::whereNull('regreso')
+            ->whereIn('reclutado_id', $memberIds)
             ->exists();
     }
 }

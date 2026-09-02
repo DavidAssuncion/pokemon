@@ -17,7 +17,7 @@ class Reclutado extends Model
     protected $table = 'reclutados';
 
     protected $fillable = [
-        'user_id', 'nombre', 'pokemon_id', 'exp', 'es_shiny', 'obj_equipados', 'movimientos',
+        'user_id', 'nombre', 'pokemon_id', 'exp', 'es_shiny', 'favorito', 'obj_equipados', 'movimientos',
     ];
 
     protected $casts = [
@@ -25,6 +25,7 @@ class Reclutado extends Model
         'obj_equipados' => 'array',
         'movimientos' => 'array',
         'es_shiny' => 'boolean',
+        'favorito' => 'boolean',
     ];
 
     /**

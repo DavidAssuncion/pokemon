@@ -5,9 +5,12 @@ declare(strict_types=1);
 namespace App\Http\Controllers;
 
 use App\Models\ExploracionActiva;
+use App\Models\Habitat;
+use App\Models\HabitatFavorito;
 use App\Models\Pokedex;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\View\View;
 use Src\Equipos\App\ObtenerEquipos;
@@ -46,17 +49,23 @@ class HabitatsController extends Controller
     {
         $exploracionesActivas = ExploracionActiva::where('habitat_id', $id)
             ->whereNull('regreso')
-            ->with('team')
+            ->with('reclutado')
             ->get();
 
-        $equiposEnExploracion = ExploracionActiva::whereNull('regreso')
-            ->with('habitat')
+        // Equipos cuyo miembro está en exploración activa (bloqueo de envío).
+        $expMap = ExploracionActiva::whereNull('regreso')
             ->get()
-            ->map(fn (ExploracionActiva $exp) => [
-                'equipo_id' => $exp->equipo_id,
-                'habitat_id' => $exp->habitat_id,
-                'habitat_name' => $exp->habitat?->name ?? 'Desconocido',
-            ]);
+            ->keyBy('reclutado_id');
+        $reclutadoIds = $expMap->keys()->toArray();
+        $equiposEnExploracion = $reclutadoIds !== []
+            ? \App\Models\TeamMember::whereIn('pokemon_id', $reclutadoIds)
+                ->get()
+                ->map(fn (\App\Models\TeamMember $miembro) => [
+                    'equipo_id' => $miembro->team_id,
+                    'habitat_id' => $expMap->get($miembro->pokemon_id)?->habitat_id,
+                    'habitat_name' => $expMap->get($miembro->pokemon_id)?->habitat?->name ?? 'Desconocido',
+                ])
+            : collect();
 
         // Get sighted Pokemon IDs from Pokedex for this habitat
         $habitatData = $this->obtenerHabitatDetalle->handle($id);
@@ -151,5 +160,46 @@ class HabitatsController extends Controller
         } catch (\InvalidArgumentException $e) {
             return response()->json(['message' => $e->getMessage()], 422);
         }
+    }
+
+    /**
+     * Añade o elimina el hábitat de los favoritos del usuario autenticado.
+     * Límite: 6 hábitats favoritos por usuario (7º → 422).
+     */
+    public function toggleFavorito(Habitat $habitat): JsonResponse
+    {
+        $userId = (int) Auth::id();
+        $favorito = HabitatFavorito::where('user_id', $userId)
+            ->where('habitat_id', $habitat->id)
+            ->first();
+
+        if ($favorito !== null) {
+            $favorito->delete();
+
+            return response()->json([
+                'favorito' => false,
+                'count' => $this->countFavoritos($userId),
+            ]);
+        }
+
+        $count = $this->countFavoritos($userId);
+        if ($count >= HabitatFavorito::MAX_FAVORITOS) {
+            return response()->json(['message' => 'Máximo 6 hábitats favoritos'], 422);
+        }
+
+        HabitatFavorito::create([
+            'user_id' => $userId,
+            'habitat_id' => $habitat->id,
+        ]);
+
+        return response()->json([
+            'favorito' => true,
+            'count' => $count + 1,
+        ], 201);
+    }
+
+    private function countFavoritos(int $userId): int
+    {
+        return HabitatFavorito::where('user_id', $userId)->count();
     }
 }
