@@ -52,13 +52,17 @@ class CalculadoraDanioIA
         $dano = $this->cadenaDanio->calculate($accion);
         mt_srand($seed);
 
-        $hpEfectivo = $this->calcularHPEfectivo($defensor, $movimiento);
+        // Daño efectivo al HP real, descontando la barrera física/especial
+        $hpDamage = $this->calcularHpDamage($atacante, $defensor, $movimiento, $dano);
+
+        $probabilidadKO = $hpDamage >= $defensor->hpActual() ? 1.0 : 0.0;
 
         return new EstimacionDanio(
             minimo: $dano,
             maximo: $dano,
             esperado: $dano,
-            probabilidadKO: $dano >= $hpEfectivo ? 1.0 : 0.0,
+            probabilidadKO: $probabilidadKO,
+            hpDamage: $hpDamage,
         );
     }
 
@@ -106,6 +110,32 @@ class CalculadoraDanioIA
 
         // Movimientos de estado: solo HP
         return $hp;
+    }
+
+    /**
+     * Daño efectivo que recibe el HP real del defensor, replicando la lógica de
+     * Combatiente::recibirDaño: una fracción (obtenerPorcentajeDanioDirecto) ignora
+     * las barreras y va directa a HP; el resto se absorbe por la barrera física o
+     * especial relevante (según categoría del movimiento) y solo el excedente se
+     * desborda al HP.
+     */
+    public function calcularHpDamage(
+        Combatiente $atacante,
+        Combatiente $defensor,
+        MovimientoBatalla $movimiento,
+        float $danoBruto,
+    ): float {
+        $directPct = $atacante->obtenerPorcentajeDanioDirecto();
+
+        $dañoDirecto = $danoBruto * $directPct;
+        $dañoBarreras = $danoBruto - $dañoDirecto;
+
+        $barreraRelevante = $movimiento->esEspecial()
+            ? $defensor->defensaEspHpActual()
+            : $defensor->defensaHpActual();
+
+        // El excedente sobre la barrera se desborda al HP
+        return $dañoDirecto + max(0.0, $dañoBarreras - $barreraRelevante);
     }
 
     private function obtenerDefensorTieneVanguardia(

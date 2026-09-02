@@ -11,6 +11,7 @@ use Src\Battle\Domain\Enums\CategoriaMovimiento;
 use Src\Battle\Domain\EquipoBatalla;
 use Src\Battle\Domain\MovimientoBatalla;
 use Src\Battle\Domain\Posicion;
+use Src\Pokemon\Domain\Stats\StatsValue;
 use Src\Shared\Tipos\TipoPokemon;
 
 /**
@@ -144,6 +145,63 @@ class EquipoBatallaTest extends TestCase
         $this->assertSame($c1, $equipo->findCombatant($c1));
         $this->assertSame('Buscado', $equipo->findCombatantById('abc')?->nombre());
         $this->assertNull($equipo->findCombatantById('no_existe'));
+    }
+
+    public function test_from_data_propaga_evs(): void
+    {
+        $evs = new StatsValue(252, 128, 64, 0, 0, 0);
+
+        $dato = new DatosPokemonBatalla(
+            id: 'p1',
+            nombre: 'ConEVs',
+            hp: 100,
+            atk: 100,
+            def: 100,
+            spAtk: 100,
+            spDef: 100,
+            speed: 100,
+            tipos: [TipoPokemon::NORMAL],
+            posicion: Posicion::VANGUARDIA,
+            moves: [new MovimientoBatalla('Golpe', 50, TipoPokemon::NORMAL, CategoriaMovimiento::FISICO)],
+            evs: $evs,
+        );
+
+        $equipo = EquipoBatalla::fromData([$dato], 'Equipo');
+        $evs = $equipo->combatants()[0]->pokemon()->evs();
+
+        $this->assertSame(252.0, $evs->hp, 'hp debe ser 252');
+        $this->assertSame(128.0, $evs->attack, 'attack debe ser 128');
+        $this->assertSame(64.0, $evs->defense, 'defense debe ser 64');
+        $this->assertSame(0.0, $evs->spAtk, 'spAtk debe ser 0');
+        $this->assertSame(0.0, $evs->spDef, 'spDef debe ser 0');
+        $this->assertSame(0.0, $evs->speed, 'speed debe ser 0');
+    }
+
+    public function test_from_data_evs_default_cero_cuando_no_especificado(): void
+    {
+        $dato = new DatosPokemonBatalla(
+            id: 'p1',
+            nombre: 'SinEVs',
+            hp: 100,
+            atk: 100,
+            def: 100,
+            spAtk: 100,
+            spDef: 100,
+            speed: 100,
+            tipos: [TipoPokemon::NORMAL],
+            posicion: Posicion::VANGUARDIA,
+            moves: [new MovimientoBatalla('Golpe', 50, TipoPokemon::NORMAL, CategoriaMovimiento::FISICO)],
+        );
+
+        $equipo = EquipoBatalla::fromData([$dato], 'Equipo');
+        $evs = $equipo->combatants()[0]->pokemon()->evs();
+
+        $this->assertSame(0.0, $evs->hp);
+        $this->assertSame(0.0, $evs->attack);
+        $this->assertSame(0.0, $evs->defense);
+        $this->assertSame(0.0, $evs->spAtk);
+        $this->assertSame(0.0, $evs->spDef);
+        $this->assertSame(0.0, $evs->speed);
     }
 
     public function test_lowest_speed_entre_vivos(): void

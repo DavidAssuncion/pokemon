@@ -27,7 +27,7 @@ class GimnasioLivewireTest extends TestCase
     use ConstruyeCombatientes;
     use RefreshDatabase;
 
-    private const SESSION_VERSION = 6;
+    private const SESSION_VERSION = 8;
 
     private User $user;
 

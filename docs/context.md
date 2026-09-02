@@ -8,7 +8,7 @@ Pokemon Battle Game es un juego de combate por turnos 3v3 con sistema de clima, 
 
 El proyecto tiene funcionalidad base estable:
 
-- **Batalla 3v3 funcional** — con datos mock. Incluye turnos por velocidad acumulada, posiciones (vanguardia/retaguardia), daño con cadena de responsabilidad (7 manejadores), clima (sequía, diluvio, niebla, granizo, tormenta arena, turbulencias), efectos de habilidad y objetos (Strategy), estados (quemadura, veneno, parálisis, sueño, congelación, confusión), estadísticas con etapas (-6 a +6), STAB, efectividad de tipos (TypeChart 18×18), golpes críticos 6.25%, barreras duales (defensa física/especial), animaciones vía Alpine.js. Ruta `/combate` activa dentro de `auth`. 140 tests de Battle.
+- **Batalla 3v3 funcional** — con datos mock. Incluye turnos por velocidad acumulada, posiciones (vanguardia/retaguardia), daño con cadena de responsabilidad (7 manejadores), clima (sequía, diluvio, niebla, granizo, tormenta arena, turbulencias), efectos de habilidad y objetos (Strategy), estados (quemadura, veneno, parálisis, sueño, congelación, confusión), estadísticas con etapas (-6 a +6), STAB, efectividad de tipos (TypeChart 18×18), golpes críticos 6.25%, barreras duales (defensa física/especial), animaciones vía Alpine.js. Ruta `/combate` activa dentro de `auth`. ~176+ tests de Battle.
 - **Catálogo de provincias y hábitats** — con seeders, vistas y API.
 - **CRUD administrativo** — 13 módulos con vistas Blade (habilidades, evoluciones, tipos, stats, pokémon, provincias, hábitats, reclutados, equipos, exploraciones activas).
 - **Reclutamiento y equipos** — captura de pokémon, formación de equipos de 3.

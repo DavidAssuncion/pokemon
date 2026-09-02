@@ -12,6 +12,7 @@ use Src\Battle\Domain\Enums\CategoriaMovimiento;
 use Src\Battle\Domain\MovimientoBatalla;
 use Src\Battle\Domain\Posicion;
 use Src\CombateEntrenadores\Domain\GeneradorMovimientosTipo;
+use Src\Pokemon\Domain\Stats\StatsValue;
 use Src\Shared\Tipos\TipoPokemon;
 
 /**
@@ -34,6 +35,7 @@ class MapeadorPokemonBatalla
         bool $shiny = false,
         ?string $item = null,
         ?int $nivel = null,
+        ?StatsValue $evs = null,
     ): DatosPokemonBatalla {
         $stats = $this->statsDe($pokemon);
 
@@ -68,6 +70,7 @@ class MapeadorPokemonBatalla
             speciesId: (int) $pokemon->id,
             formSuffix: '',
             nivel: $nivel,
+            evs: $evs,
         );
     }
 

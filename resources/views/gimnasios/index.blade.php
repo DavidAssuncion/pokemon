@@ -50,7 +50,7 @@
     </div>
 
     {{-- Grid --}}
-    <div x-show="!loading && !error && gyms.length > 0" x-cloak class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+    <div x-show="!loading && !error && gyms.length > 0" x-cloak class="grid sm:grid-cols-2 lg:grid-cols-6 gap-4">
         <template x-for="gym in gyms" :key="gym.slug">
             <div
                 class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden flex flex-col

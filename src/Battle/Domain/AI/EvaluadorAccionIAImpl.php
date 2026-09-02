@@ -54,11 +54,15 @@ class EvaluadorAccionIAImpl implements EvaluadorAccionIA
         }
 
         // --- Damage Value ---
+        // Se valora el daño EFECTIVO al HP real (hpDamage), no el daño bruto:
+        // un golpe que se pierde absorbiendo una barrera física/especial no acerca al KO,
+        // mientras que uno que daña el HP directamente (por barrera agotada o perforación)
+        // sí. Dividimos entre el HP real para medir el progreso hacia el KO.
         $damageValue = 0.0;
         if ($estimacionDanio !== null) {
-            $hpEfectivo = $this->calculadoraDanio->calcularHPEfectivo($objetivo, $movimiento);
-            if ($hpEfectivo > 0) {
-                $damageValue = ($estimacionDanio->esperado / $hpEfectivo) * $this->pesos->multiplicadorDanio;
+            $hpReal = $objetivo->hpActual();
+            if ($hpReal > 0) {
+                $damageValue = ($estimacionDanio->hpDamage / $hpReal) * $this->pesos->multiplicadorDanio;
             }
         }
 

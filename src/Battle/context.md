@@ -135,12 +135,13 @@ Inmunes declarados como constantes privadas (`INMUNES_GRANIZO`, `INMUNES_TORMENT
 
 #### `CalculadoraDanioIA` (`src/Battle/Domain/AI/CalculadoraDanioIA.php`)
 
-**Responsabilidad:** Servicio compartido de estimación de daño. Reutiliza `CadenaDanio` para no duplicar la fórmula. Usado por `AnalizadorAmenazasImpl` y `EvaluadorAccionIAImpl` (DRY).
+**Responsabilidad:** Servicio compartido de estimación de daño para la IA. Reutiliza `CadenaDanio` para no duplicar la fórmula. Usado por `AnalizadorAmenazas` y `EvaluadorAccionIA` (DRY).
 
 **Métodos:**
-- `estimar(Combatiente, Combatiente, MovimientoBatalla, AgregadoBatalla): EstimacionDanio`
+- `estimar(Combatiente, Combatiente, MovimientoBatalla, AgregadoBatalla): EstimacionDanio` — calcula daño bruto vía `CadenaDanio`, daño efectivo al HP (`calcularHpDamage`) y `probabilidadKO` contra HP REAL (`hpDamage >= hpActual`).
 - `mejorEstimacionContra(Combatiente, Combatiente, AgregadoBatalla): ?EstimacionDanio`
-- `calcularHPEfectivo(Combatiente, MovimientoBatalla): float`
+- `calcularHPEfectivo(Combatiente, MovimientoBatalla): float` — HP + barrera relevante (legacy).
+- `calcularHpDamage(Combatiente, Combatiente, MovimientoBatalla, float): float` — replica la distribución de `Combatiente::recibirDaño`: fracción directa (`obtenerPorcentajeDanioDirecto`) ignora barreras y va a HP; el resto se absorbe por la barrera correspondiente y el excedente se desborda al HP.
 
 ---
 
@@ -152,7 +153,7 @@ Inmunes declarados como constantes privadas (`INMUNES_GRANIZO`, `INMUNES_TORMENT
 
 #### `EvaluadorAccionIAImpl` (`src/Battle/Domain/AI/EvaluadorAccionIAImpl.php`)
 
-**Responsabilidad:** Evalúa cada acción candidata (atacante + movimiento + objetivo) con MoveScore compuesto: KO value, damage value, threat reduction, survival value y risk. Usa `PesosAmenaza`.
+**Responsabilidad:** Evalúa cada acción candidata (atacante + movimiento + objetivo) con MoveScore compuesto: KO value, damage value (usa `hpDamage / hpActual` — daño efectivo al HP real, no bruto), threat reduction, survival value, risk y lookahead. Usa `PesosAmenaza`.
 
 ---
 
@@ -825,6 +826,26 @@ El `@switch($weather)` en `battle-field.blade.php` comparaba con valores inglese
 
 **Nota de arquitectura:** al migrar a arrays nativos, los VOs `ResultadoDecision`, `ContextoDecisionIA`, `EvaluacionAccion`, etc. exponen arrays tipados (PHPDoc `@return X[]`). Los tests que usaban métodos de Collection se actualizaron a funciones nativas (`count`, `array_values`, `foreach`).
 
+### Iteración IA Fase 4 — Barreras físicas/especiales (2026-09-02)
+
+**Cambios:**
+- La IA ahora valora el daño EFECTIVO al HP real, no el daño bruto, al elegir movimiento.
+- `EstimacionDanio` nuevo campo `hpDamage` (daño efectivo al HP descontando barrera + perforación).
+- `CalculadoraDanioIA::calcularHpDamage()` replica la distribución de `Combatiente::recibirDaño`.
+- `probabilidadKO` ahora se calcula contra el HP REAL (`hpDamage >= hpActual`), no HP+barrera.
+- `EvaluadorAccionIAImpl` usa `hpDamage / hpActual` para el damage value: premia atacar la barrera
+  correcta/agotada o usar perforación, porque acerca al KO y termina el combate antes, aunque un
+  movimiento haga algo menos de daño bruto.
+- Test de regresión: `test_elige_movimiento_que_dania_hp_real_aunque_haga_menos_dano_bruto`.
+
+**Contexto:** el juego tiene 2 barreras (física/especial) que absorben daño antes que el HP. Elegir
+el movimiento de mayor daño bruto puede desperdiciar el golpe absorbiendo una barrera enorme; la IA
+ahora prefiere el que daña directamente la salud para terminar antes el combate.
+
+**Riesgo/pendiente conocido:** posible flakiness del lookahead (test `...prioriza_ko_garantizado...`
+pasó en aislamiento pero falló una vez en suite completa eligiendo Ponzoña). POSTERGADO — hay otro
+desarrollo en marcha que puede interferir. Revisar al cerrar ese desarrollo.
+
 ---
 
 ## Iteración refactor (2026-08-30)
@@ -884,14 +905,15 @@ app/Providers/BattleEffectServiceProvider.php → src/Battle/Domain/Effects/ (Fa
 
 ## Testing
 
-- **Ubicación**: `tests/Unit/Battle/` (21 archivos: 20 tests + trait `ConstruyeCombatientes`) + `tests/Feature/PokemonBattleTest.php`. Total: **140 tests** (362 assertions).
+- **Ubicación**: `tests/Unit/Battle/` (24 archivos: 23 tests + trait `ConstruyeCombatientes`) + `tests/Feature/PokemonBattleTest.php`. Total: **~176+ tests** (verificar con `php artisan test --compact --filter=Battle`).
 - **Estrategia de construcción de combatientes (unit tests, sin boot de Laravel ni BD)**: dos enfoques:
   1. **Build directo**: `new Combatiente(new PokemonEntity(...), Posicion::VANGUARDIA)` con setters para id/nombre/item/effects.
   2. **EquipoBatalla::fromData()**: `EquipoBatalla::fromData([$dato], 'Equipo')` con `DatosPokemonBatalla` mínimo.
-  Para efectos (Orbe Vida, Restos, Invocador Clima) se construyen las instancias directamente y se añaden vía `$combatant->effects()->add($efecto)`, evitando dependencia de `FabricaEfectos` (requiere app boot). Helper compartido: trait `ConstruyeCombatientes` (`combatiente()`, `batallaMinima()`).
+  Para efectos (Orbe Vida, Restos, Invocador Clima) se construyen las instancias directamente y se añaden vía `$combatant->effects()->add($efecto)`, evitando dependencia de `FabricaEfectos` (requiere app boot). Helper compartido: trait `ConstruyeCombatientes` (`combatiente()`, `batallaMinima()`). Los tests de `Fase3Test` también definen helpers locales `combatiente()` y `batallaCon()` para escenarios específicos de la IA.
 - **RNG determinista**: `ManejadorCritico` y `procesarParalysis` usan `mt_rand`. Semillas verificadas: `mt_srand(1)` → no crit (0.417 > 0.0625) y parálisis permite actuar (40 > 25); `mt_srand(100)` → parálisis bloquea (13 ≤ 25).
 - **Feature test**: `PokemonBattleTest` migrado de `BattleAggregate` (@deprecated) a `AgregadoBatalla` + `FabricaBatallaMock::createBattle()` (requiere boot de Laravel + BD).
 - **Cobertura**: Infection `src/Battle` con **Covered Code MSI 80%** (656/816 mutantes matados; el MSI bruto incluye código sin cobertura). Se ejecuta con `--filter=src/Battle --only-covering-test-cases --test-framework-extra-args='--filter=Battle'`. Los mutantes escapados de `SelectorAccionIA` son equivalentes/neutros (rama retaguardia coincide con fallback; score inicial -1 no altera resultado con movimientos). Pendiente cerrar el 20% restante.
+- **Nota**: el número exacto de tests debe verificarse ejecutando `php artisan test --compact --filter=Battle`. Las iteraciones IA Fase 2-4 añadieron tests que elevaron el conteo por encima de los 175 reportados en Fase 3.
 
 ---
 
@@ -908,7 +930,7 @@ app/Providers/BattleEffectServiceProvider.php → src/Battle/Domain/Effects/ (Fa
 | `src/Battle/Domain/Combatiente.php` | Entidad de combatiente |
 | `src/Battle/Domain/EquipoBatalla.php` | Colección de combatientes |
 | `src/Battle/Domain/GestorTurnos.php` | Gestión de rondas y turnos |
-| `src/Battle/Domain/SelectorAccionIA.php` | IA de selección de objetivo/movimiento |
+| `src/Battle/Domain/AI/SelectorAccionIA.php` | IA de selección de objetivo/movimiento |
 | `src/Battle/Domain/ServicioEjecucionBatalla.php` | Servicio de ejecución de movimientos |
 | `src/Battle/Domain/Chain/CadenaDanio.php` | Cadena de daño (7 manejadores, último `ManejadorObjetosEquipados`) |
 | `src/Battle/Domain/Chain/ManejadorObjetosEquipados.php` | Multiplicador de objeto equipado (life_orb → 1.30) |
@@ -924,5 +946,5 @@ app/Providers/BattleEffectServiceProvider.php → src/Battle/Domain/Effects/ (Fa
 | `resources/views/livewire/partials/moves-panel.blade.php` | Panel de movimientos |
 | `resources/views/livewire/partials/turn-bar.blade.php` | Barra de turnos |
 | `resources/views/livewire/_pokemon-card.blade.php` | Card de pokémon en batalla |
-| `tests/Unit/Battle/` (21 archivos: 20 tests + trait) | Tests unitarios de mecánicas |
+| `tests/Unit/Battle/` (24 archivos: 23 tests + trait) | Tests unitarios de mecánicas e IA |
 | `tests/Feature/PokemonBattleTest.php` | Test de integración de batalla |

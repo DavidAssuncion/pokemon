@@ -103,7 +103,7 @@ class EquipoBatalla
                 speed: $member->speed,
             );
 
-            $evs = new StatsValue(0, 0, 0, 0, 0, 0);
+            $evs = $member->evs ?? new StatsValue(0, 0, 0, 0, 0, 0);
             $tipos = new TiposCollection($member->tipos);
 
             $precomputedBattleStats = $member->nivel !== null

@@ -4,16 +4,18 @@ declare(strict_types=1);
 
 namespace Src\Gimnasios\Domain;
 
+use Src\Gimnasios\Domain\DataTransferObjects\EquipoEtapaGimnasio;
 use Src\Shared\Tipos\TipoPokemon;
 
 /**
  * Representa un gimnasio del juego: sus datos fijos (slug, medalla, tipo, nivel
- * mínimo) y los equipos de cada etapa (species_id por etapa 1-4).
+ * mínimo) y los equipos de cada etapa (EquipoEtapaGimnasio con vanguardia y
+ * retaguardia para etapas 1-4).
  */
 final class Gimnasio
 {
     /**
-     * @param  array<int, list<int>>  $equipos  etapas 1-4, cada una con lista de species_id
+     * @param  array<int, EquipoEtapaGimnasio>  $equipos  etapas 1-4, cada una con vanguardia/retaguardia
      */
     public function __construct(
         public readonly string $slug,
@@ -24,12 +26,9 @@ final class Gimnasio
     ) {
     }
 
-    /**
-     * @return list<int>
-     */
-    public function equipoEtapa(int $etapa): array
+    public function equipoEtapa(int $etapa): ?EquipoEtapaGimnasio
     {
-        return $this->equipos[$etapa] ?? [];
+        return $this->equipos[$etapa] ?? null;
     }
 
     public function nombreEtapa(int $etapa): string

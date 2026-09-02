@@ -111,7 +111,7 @@ class Combate extends Component
 
     // ─── Persistencia (sesión) ───────────────────────────────
 
-    private const SESSION_VERSION = 7;
+    private const SESSION_VERSION = 8;
 
     private function getBattle(): ?AgregadoBatalla
     {

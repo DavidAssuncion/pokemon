@@ -4,10 +4,13 @@ declare(strict_types=1);
 
 namespace Src\Battle\Domain;
 
+use Src\Pokemon\Domain\Stats\StatsValue;
 use Src\Shared\Tipos\TipoPokemon;
 
 class DatosPokemonBatalla
 {
+    public readonly StatsValue $evs;
+
     /**
      * @param  MovimientoBatalla[]  $moves
      * @param  TipoPokemon[]  $tipos
@@ -34,7 +37,10 @@ class DatosPokemonBatalla
         public readonly int $speciesId = 0,
         public readonly string $formSuffix = '',
         public readonly ?int $nivel = null,
+        ?StatsValue $evs = null,
     ) {
+        $this->evs = $evs ?? new StatsValue(0, 0, 0, 0, 0, 0);
+
         foreach ($moves as $m) {
             if (! $m instanceof MovimientoBatalla) {
                 throw new \InvalidArgumentException('Moves must be MovimientoBatalla instances');

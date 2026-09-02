@@ -22,7 +22,7 @@ class GimnasioApiTest extends TestCase
     use RefreshDatabase;
 
     #[Test]
-    public function test_index_lista_los_5_gimnasios_con_estado(): void
+    public function test_index_lista_los_18_gimnasios_con_estado(): void
     {
         $user = $this->crearUsuarioNivel(10);
         $this->actingAs($user);
@@ -30,12 +30,25 @@ class GimnasioApiTest extends TestCase
         $response = $this->getJson('/api/gimnasios');
 
         $response->assertOk()
-            ->assertJsonCount(5)
+            ->assertJsonCount(18)
             ->assertJsonFragment(['slug' => 'bug', 'medalla' => 'Medalla Bicho', 'estado' => 'disponible'])
             ->assertJsonFragment(['slug' => 'poison', 'estado' => 'bloqueado'])
             ->assertJsonFragment(['slug' => 'normal', 'estado' => 'bloqueado'])
             ->assertJsonFragment(['slug' => 'grass', 'estado' => 'bloqueado'])
-            ->assertJsonFragment(['slug' => 'flying', 'estado' => 'bloqueado']);
+            ->assertJsonFragment(['slug' => 'flying', 'estado' => 'bloqueado'])
+            ->assertJsonFragment(['slug' => 'rock', 'estado' => 'bloqueado'])
+            ->assertJsonFragment(['slug' => 'electric', 'estado' => 'bloqueado'])
+            ->assertJsonFragment(['slug' => 'ice', 'estado' => 'bloqueado'])
+            ->assertJsonFragment(['slug' => 'fire', 'estado' => 'bloqueado'])
+            ->assertJsonFragment(['slug' => 'water', 'estado' => 'bloqueado'])
+            ->assertJsonFragment(['slug' => 'ground', 'estado' => 'bloqueado'])
+            ->assertJsonFragment(['slug' => 'psychic', 'estado' => 'bloqueado'])
+            ->assertJsonFragment(['slug' => 'dark', 'estado' => 'bloqueado'])
+            ->assertJsonFragment(['slug' => 'ghost', 'estado' => 'bloqueado'])
+            ->assertJsonFragment(['slug' => 'fighting', 'estado' => 'bloqueado'])
+            ->assertJsonFragment(['slug' => 'fairy', 'estado' => 'bloqueado'])
+            ->assertJsonFragment(['slug' => 'steel', 'estado' => 'bloqueado'])
+            ->assertJsonFragment(['slug' => 'dragon', 'estado' => 'bloqueado']);
     }
 
     #[Test]
@@ -257,6 +270,86 @@ class GimnasioApiTest extends TestCase
         $this->assertSame(25, (int) $combatants[0]->pokemon()->battleStats()->speed);
     }
 
+    #[Test]
+    public function test_combatir_etapa_entrenador_aplica_evs_64_64(): void
+    {
+        $user = $this->crearUsuarioNivel(20);
+        $this->actingAs($user);
+        $this->crearPokemonsGym('bug');
+        $team = $this->crearEquipoJugador($user);
+
+        $response = $this->postJson('/api/gimnasios/bug/combatir', [
+            'team_id' => $team->id,
+            'formacion' => ['1' => 'vanguardia', '2' => 'retaguardia', '3' => 'vanguardia'],
+        ]);
+
+        $response->assertOk();
+        $battle = $this->batallaDeSesion($response->json('battle_id'));
+
+        // Etapa 1-3 → gimnasio 64/64: todos los EVs del rival a 64
+        $rivales = $battle->team2->combatants();
+        $this->assertNotEmpty($rivales);
+
+        foreach ($rivales as $rival) {
+            $evs = $rival->pokemon()->evs();
+            $this->assertSame(64.0, $evs->hp, 'hp debe ser 64 en etapa entrenador');
+            $this->assertSame(64.0, $evs->attack, 'attack debe ser 64 en etapa entrenador');
+            $this->assertSame(64.0, $evs->defense, 'defense debe ser 64 en etapa entrenador');
+            $this->assertSame(64.0, $evs->spAtk, 'spAtk debe ser 64 en etapa entrenador');
+            $this->assertSame(64.0, $evs->spDef, 'spDef debe ser 64 en etapa entrenador');
+            $this->assertSame(64.0, $evs->speed, 'speed debe ser 64 en etapa entrenador');
+        }
+    }
+
+    #[Test]
+    public function test_combatir_lider_aplica_evs_128_64(): void
+    {
+        $user = $this->crearUsuarioNivel(20);
+        $this->actingAs($user);
+        $this->crearPokemonsGym('bug');
+        $team = $this->crearEquipoJugador($user);
+
+        // Avanza hasta el líder (etapa 4)
+        $repositorio = $this->app->make(\Src\Gimnasios\Domain\Repositories\GymProgressRepositoryInterface::class);
+        $repositorio->registrarVictoria((int) $user->id, 'bug', 1);
+        $repositorio->registrarVictoria((int) $user->id, 'bug', 2);
+        $repositorio->registrarVictoria((int) $user->id, 'bug', 3);
+
+        $response = $this->postJson('/api/gimnasios/bug/combatir', [
+            'team_id' => $team->id,
+            'formacion' => ['1' => 'vanguardia', '2' => 'retaguardia', '3' => 'vanguardia'],
+        ]);
+
+        $response->assertOk();
+        $battle = $this->batallaDeSesion($response->json('battle_id'));
+
+        // Etapa 4 (líder) → 128 para los 2 mejores stats base, 64 para el resto.
+        // Los pokémon de prueba tienen atk=60 y spAtk=60 (los más altos), el resto 50/55.
+        $rivales = $battle->team2->combatants();
+        $this->assertNotEmpty($rivales);
+
+        foreach ($rivales as $rival) {
+            $evs = $rival->pokemon()->evs();
+            $this->assertSame(64.0, $evs->hp, 'hp debe ser 64 en líder');
+            $this->assertSame(128.0, $evs->attack, 'attack debe ser 128 en líder (stat alto)');
+            $this->assertSame(64.0, $evs->defense, 'defense debe ser 64 en líder');
+            $this->assertSame(128.0, $evs->spAtk, 'spAtk debe ser 128 en líder (stat alto)');
+            $this->assertSame(64.0, $evs->spDef, 'spDef debe ser 64 en líder');
+            $this->assertSame(64.0, $evs->speed, 'speed debe ser 64 en líder');
+        }
+    }
+
+    private function batallaDeSesion(string $battleId): \Src\Battle\Domain\AgregadoBatalla
+    {
+        $raw = session($battleId);
+        $this->assertNotNull($raw, 'La batalla debe estar en sesión');
+        $serialized = substr($raw, strpos($raw, '|') + 1);
+        $battle = unserialize($serialized);
+        $this->assertInstanceOf(\Src\Battle\Domain\AgregadoBatalla::class, $battle);
+
+        return $battle;
+    }
+
     private function crearUsuarioNivel(int $nivel): User
     {
         $experiencia = 10 * $nivel ** 3;
@@ -264,14 +357,14 @@ class GimnasioApiTest extends TestCase
         return User::factory()->create(['experiencia' => $experiencia]);
     }
 
-    /** Crea los pokémon del gimnasio 'bug' con stats y tipos. */
+    /** Crea los pokémon del gimnasio con stats y tipos (una fila por species_id único). */
     private function crearPokemonsGym(string $gymSlug): void
     {
         $gimnasio = $this->app->make(\Src\Gimnasios\Domain\CatalogoGimnasios::class)->porSlug($gymSlug);
         $this->assertNotNull($gimnasio);
 
-        foreach ($gimnasio->equipos as $speciesIds) {
-            foreach ($speciesIds as $speciesId) {
+        foreach ($gimnasio->equipos as $equipo) {
+            foreach ($equipo->todos() as $speciesId) {
                 $this->crearPokemonCompleto($speciesId);
             }
         }
