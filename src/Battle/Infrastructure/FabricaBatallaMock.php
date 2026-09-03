@@ -23,8 +23,7 @@ class FabricaBatallaMock implements FabricaBatallaInterface
 {
     public function __construct(
         private readonly ?FabricaEfectos $fabricaEfectos = null,
-    ) {
-    }
+    ) {}
     /** @return DatosPokemonBatalla[] */
     public function generateTeam1(): array
     {
@@ -95,6 +94,49 @@ class FabricaBatallaMock implements FabricaBatallaInterface
                 item: 'leftovers',
                 speciesId: 248,
             ),
+            new DatosPokemonBatalla(
+                id: 'player_4',
+                nombre: 'Articuno',
+                hp: 90,
+                atk: 85,
+                def: 100,
+                spAtk: 95,
+                spDef: 125,
+                speed: 85,
+                tipos: [TipoPokemon::HIELO, TipoPokemon::VOLADOR],
+                posicion: Posicion::VANGUARDIA,
+                moves: [
+                    new MovimientoBatalla('Ventisca', 110, TipoPokemon::HIELO, CategoriaMovimiento::ESPECIAL),
+                    new MovimientoBatalla('Tornado', 110, TipoPokemon::VOLADOR, CategoriaMovimiento::ESPECIAL),
+                    new MovimientoBatalla('Rayo Hielo', 90, TipoPokemon::HIELO, CategoriaMovimiento::ESPECIAL),
+                    new MovimientoBatalla('Viento Hielo', 55, TipoPokemon::HIELO, CategoriaMovimiento::ESPECIAL, targetStatChanges: [['stat' => 'speed', 'stages' => -1]]),
+                ],
+                speciesId: 144,
+            ),
+            new DatosPokemonBatalla(
+                id: 'player_5',
+                nombre: 'Garchomp',
+                hp: 108,
+                atk: 130,
+                def: 95,
+                spAtk: 80,
+                spDef: 85,
+                speed: 102,
+                tipos: [TipoPokemon::DRAGON, TipoPokemon::TIERRA],
+                posicion: Posicion::RETAGUARDIA,
+                moves: [
+                    new MovimientoBatalla('Garra Dragón', 80, TipoPokemon::DRAGON, CategoriaMovimiento::FISICO),
+                    new MovimientoBatalla('Terremoto', 100, TipoPokemon::TIERRA, CategoriaMovimiento::FISICO),
+                    new MovimientoBatalla('Triturar', 80, TipoPokemon::SINIESTRO, CategoriaMovimiento::FISICO),
+                    new MovimientoBatalla('Roca Filada', 100, TipoPokemon::ROCA, CategoriaMovimiento::FISICO),
+                    new MovimientoBatalla('Cuchilla Bárbara', 120, TipoPokemon::DRAGON, CategoriaMovimiento::FISICO),
+                    new MovimientoBatalla('Danza Dragon', 0, TipoPokemon::NORMAL, CategoriaMovimiento::ESTADO, selfStatChanges: [['stat' => 'attack', 'stages' => 1], ['stat' => 'speed', 'stages' => 1]]),
+                ],
+                effectKeys: ['armor_pierce'],
+                item: 'life_orb',
+                speciesId: 445,
+                shiny: true,
+            ),
         ];
     }
 
@@ -159,9 +201,48 @@ class FabricaBatallaMock implements FabricaBatallaInterface
                     new MovimientoBatalla('Esfera Aural', 80, TipoPokemon::LUCHA, CategoriaMovimiento::ESPECIAL),
                     new MovimientoBatalla('Llamarada', 110, TipoPokemon::FUEGO, CategoriaMovimiento::ESPECIAL),
                     new MovimientoBatalla('Paz Mental', 0, TipoPokemon::PSIQUICO, CategoriaMovimiento::ESTADO, selfStatChanges: [['stat' => 'spAtk', 'stages' => 1], ['stat' => 'spDef', 'stages' => 1]]),
+                    new MovimientoBatalla('Ventisca', 110, TipoPokemon::HIELO, CategoriaMovimiento::ESPECIAL),
                 ],
                 item: 'life_orb',
                 speciesId: 150,
+            ),
+            new DatosPokemonBatalla(
+                id: 'enemy_4',
+                nombre: 'Swampert',
+                hp: 100,
+                atk: 110,
+                def: 90,
+                spAtk: 85,
+                spDef: 90,
+                speed: 60,
+                tipos: [TipoPokemon::AGUA, TipoPokemon::TIERRA],
+                posicion: Posicion::RETAGUARDIA,
+                moves: [
+                    new MovimientoBatalla('Hidroburst', 110, TipoPokemon::AGUA, CategoriaMovimiento::ESPECIAL),
+                    new MovimientoBatalla('Terremoto', 100, TipoPokemon::TIERRA, CategoriaMovimiento::FISICO),
+                    new MovimientoBatalla('Lodo', 90, TipoPokemon::TIERRA, CategoriaMovimiento::ESPECIAL),
+                    new MovimientoBatalla('Roca Afilada', 100, TipoPokemon::ROCA, CategoriaMovimiento::FISICO),
+                ],
+                speciesId: 260,
+            ),
+            new DatosPokemonBatalla(
+                id: 'enemy_5',
+                nombre: 'Venusaur',
+                hp: 80,
+                atk: 82,
+                def: 83,
+                spAtk: 100,
+                spDef: 100,
+                speed: 80,
+                tipos: [TipoPokemon::PLANTA, TipoPokemon::VENENO],
+                posicion: Posicion::RETAGUARDIA,
+                moves: [
+                    new MovimientoBatalla('Lanza Mugre', 120, TipoPokemon::VENENO, CategoriaMovimiento::ESPECIAL),
+                    new MovimientoBatalla('Rayo Solar', 120, TipoPokemon::PLANTA, CategoriaMovimiento::ESPECIAL),
+                    new MovimientoBatalla('Bomba Lodo', 90, TipoPokemon::VENENO, CategoriaMovimiento::ESPECIAL),
+                    new MovimientoBatalla('Bomba Germen', 75, TipoPokemon::PLANTA, CategoriaMovimiento::ESPECIAL, EstadoPokemon::POISON),
+                ],
+                speciesId: 3,
             ),
         ];
     }
