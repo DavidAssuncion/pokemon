@@ -237,11 +237,19 @@ class EquiposControllerTest extends TestCase
     {
         $user = $this->actingAsUser();
         $team = Team::create(['name' => 'Exploring', 'user_id' => $user->id]);
+        $pokemon = $this->createPokemon(1);
+        $reclutado = $this->createReclutado($user->id, $pokemon->id, 'Explorador');
+        TeamMember::create([
+            'team_id' => $team->id,
+            'pokemon_id' => $reclutado->id,
+            'slot' => 1,
+            'behavior' => 'VANGUARDIA',
+        ]);
         $province = Province::create(['id' => 1, 'name' => 'Kanto']);
         $habitat = Habitat::create(['id' => 1, 'name' => 'Bosque', 'province_id' => $province->id]);
         ExploracionActiva::create([
             'user_id' => $user->id,
-            'equipo_id' => $team->id,
+            'reclutado_id' => $reclutado->id,
             'habitat_id' => $habitat->id,
             'nivel' => 1,
             'duracion_horas' => 2,
@@ -537,7 +545,7 @@ class EquiposControllerTest extends TestCase
         $habitat = Habitat::create(['id' => 1, 'name' => 'Bosque', 'province_id' => $province->id]);
         ExploracionActiva::create([
             'user_id' => $user->id,
-            'equipo_id' => $team->id,
+            'reclutado_id' => $reclutado->id,
             'habitat_id' => $habitat->id,
             'nivel' => 1,
             'duracion_horas' => 2,
@@ -572,7 +580,7 @@ class EquiposControllerTest extends TestCase
         $habitat = Habitat::create(['id' => 1, 'name' => 'Bosque', 'province_id' => $province->id]);
         ExploracionActiva::create([
             'user_id' => $user->id,
-            'equipo_id' => $team->id,
+            'reclutado_id' => $reclutado->id,
             'habitat_id' => $habitat->id,
             'nivel' => 1,
             'duracion_horas' => 2,
