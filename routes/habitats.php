@@ -27,4 +27,5 @@ Route::patch('/api/habitats/{habitat}/pokemon/{pokemon}', [HabitatsController::c
 
 Route::get('/api/habitats/unassigned-families', [HabitatsController::class, 'unassignedFamilies']);
 
+// Legacy no-op: favoritos por hábitat se gestionan vía /api/reclutados/{reclutado}/toggle-favorito.
 Route::post('/api/habitats/{habitat}/toggle-favorito', [HabitatsController::class, 'toggleFavorito']);

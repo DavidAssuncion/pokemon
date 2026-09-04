@@ -48,6 +48,18 @@
                     $bloqueadoConstruccion = $exploracionesActivas && $exploracionesActivas->count() > 0;
                 @endphp
                 <div class="space-y-3">
+                    <!-- Favoritos (acceso rápido a la vista /equipos) -->
+                    <a
+                        href="/equipos"
+                        class="w-full px-4 py-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-sm font-medium text-gray-700 dark:text-gray-300 transition-colors flex items-center gap-3 hover:bg-yellow-50 dark:hover:bg-yellow-900/20 hover:border-yellow-300 dark:hover:border-yellow-700"
+                    >
+                        <span class="w-8 shrink-0 flex justify-center">
+                            <svg class="w-6 h-6 text-yellow-500" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                <path d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.196-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"/>
+                            </svg>
+                        </span>
+                        <span class="flex-1 text-sm text-left font-medium text-gray-700 dark:text-gray-300">Favoritos</span>
+                    </a>
                     <button
                         @click="{{ $bloqueadoConstruccion ? '' : "alert('Función próximamente')" }}"
                         {{ $bloqueadoConstruccion ? 'disabled' : '' }}
@@ -145,8 +157,9 @@
 
                 <!-- Favoritos Panel (exploración individual; modo pokémon) -->
                 <div class="{{ $cardPanelClass }}" x-show="modo === 'pokemon'" x-cloak>
-                    <div class="p-4 border-b border-gray-200 dark:border-gray-700">
-                        <h3 class="text-sm font-semibold text-gray-900 dark:text-white">Tus favoritos</h3>
+                    <div class="p-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between flex-wrap gap-2">
+                        <h3 class="text-sm font-semibold text-gray-900 dark:text-white">Tus favoritos para este hábitat</h3>
+                        <span class="px-2 py-0.5 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 text-[10px] font-bold rounded-full" x-text="favoritos.length + '/6'"></span>
                     </div>
                     <div class="p-4">
                         <div x-show="favoritosLoading" x-cloak role="status" class="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
@@ -157,44 +170,70 @@
                             <span x-text="favoritosError"></span>
                         </div>
                         <div x-show="!favoritosLoading && !favoritosError && favoritos.length === 0" x-cloak class="text-center py-6">
-                            <p class="text-sm text-gray-500 dark:text-gray-400">No tienes Pokémon favoritos</p>
-                            <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">Marca favoritos desde <a href="/equipos" class="text-blue-600 dark:text-blue-400 hover:underline">Favoritos</a></p>
+                            <p class="text-sm text-gray-500 dark:text-gray-400">No tienes Pokémon favoritos para este hábitat</p>
+                            <button
+                                @click="openGestionFavoritosHabitat()"
+                                class="mt-3 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors"
+                            >
+                                + Añadir favorito
+                            </button>
                         </div>
+
+                        <!-- Aviso preventivo: máx. 6 favoritos por hábitat -->
+                        <div x-show="!favoritosLoading && favoritos.length >= 6" x-cloak role="status"
+                             class="mb-3 px-3 py-2 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 text-xs text-amber-700 dark:text-amber-300">
+                            Has alcanzado el máximo de 6 favoritos para este hábitat.
+                        </div>
+
                         <div x-show="!favoritosLoading && favoritos.length > 0" x-cloak class="grid grid-cols-2 sm:grid-cols-3 gap-3">
                             <template x-for="favorito in favoritos" :key="favorito.id">
                                 <div
-                                    class="rounded-lg p-2 border-2 transition-all cursor-pointer text-center"
+                                    class="rounded-lg p-2 border-2 transition-all text-center select-none"
                                     :class="esFavoritoEnExploracion(favorito.id)
-                                        ? 'bg-gray-100 dark:bg-gray-900/30 border-gray-200 dark:border-gray-700 opacity-60 cursor-not-allowed'
+                                        ? 'bg-gray-100 dark:bg-gray-900/30 border-gray-200 dark:border-gray-700 opacity-60'
                                         : (selectedFavoritoId === favorito.id
                                             ? 'border-blue-500 dark:border-blue-400 bg-blue-50 dark:bg-blue-900/20 ring-1 ring-blue-200 dark:ring-blue-800'
-                                            : 'border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 hover:border-gray-300 dark:hover:border-gray-600')"
-                                    @if(true)
-                                    @click="!esFavoritoEnExploracion(favorito.id) && selectFavorito(favorito.id, favorito.nombre)"
-                                    role="button"
-                                    tabindex="0"
-                                    @keydown.space.prevent="!esFavoritoEnExploracion(favorito.id) && selectFavorito(favorito.id, favorito.nombre)"
-                                    @keydown.enter.prevent="!esFavoritoEnExploracion(favorito.id) && selectFavorito(favorito.id, favorito.nombre)"
-                                    @endif
-                                    :aria-label="esFavoritoEnExploracion(favorito.id) ? 'Pokémon en exploración' : 'Seleccionar ' + favorito.nombre"
+                                            : 'border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50')"
                                 >
-                                    <div class="flex items-center justify-end mb-1">
-                                        <template x-if="esFavoritoEnExploracion(favorito.id)">
-                                            <span class="px-1.5 py-0.5 bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400 text-[10px] font-bold rounded-full uppercase">En exploración</span>
-                                        </template>
+                                    <div class="flex items-center justify-end mb-1" x-show="esFavoritoEnExploracion(favorito.id)">
+                                        <span class="px-1.5 py-0.5 bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400 text-[10px] font-bold rounded-full uppercase">En exploración</span>
                                     </div>
-                                    <img
-                                        :src="'/images/iconos_webp/' + favorito.pokemon_id + '.webp'"
-                                        loading="lazy"
-                                        decoding="async"
-                                        :alt="favorito.nombre"
-                                        class="w-16 h-16 object-contain mx-auto"
-                                        onerror="this.style.display='none'"
+                                    <button
+                                        type="button"
+                                        @click="!esFavoritoEnExploracion(favorito.id) && selectFavorito(favorito.id, favorito.nombre)"
+                                        :disabled="esFavoritoEnExploracion(favorito.id)"
+                                        class="w-full text-center disabled:cursor-not-allowed"
+                                        :aria-label="esFavoritoEnExploracion(favorito.id) ? 'Pokémon en exploración' : 'Seleccionar ' + favorito.nombre"
                                     >
-                                    <p class="text-[10px] text-gray-700 dark:text-gray-300 truncate mt-1" x-text="favorito.nombre"></p>
-                                    <p class="text-[10px] text-gray-400 dark:text-gray-500" x-text="'Nv ' + favorito.nivel"></p>
+                                        <img
+                                            :src="'/images/iconos_webp/' + favorito.pokemon_id + '.webp'"
+                                            loading="lazy"
+                                            decoding="async"
+                                            :alt="favorito.nombre"
+                                            class="w-16 h-16 object-contain mx-auto"
+                                            onerror="this.style.display='none'"
+                                        >
+                                        <p class="text-[10px] text-gray-700 dark:text-gray-300 truncate mt-1" x-text="favorito.nombre"></p>
+                                        <p class="text-[10px] text-gray-400 dark:text-gray-500" x-text="'Nv ' + (favorito.nivel || 1)"></p>
+                                    </button>
+                                    <button
+                                        :disabled="esFavoritoEnExploracion(favorito.id)"
+                                        @click="!esFavoritoEnExploracion(favorito.id) && openEnviarHabitat(favorito)"
+                                        class="mt-2 w-full px-2 py-1 bg-green-600 text-white rounded-lg text-[10px] font-bold hover:bg-green-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed uppercase"
+                                        x-text="esFavoritoEnExploracion(favorito.id) ? 'En exploración' : 'Enviar a explorar'"
+                                    ></button>
                                 </div>
                             </template>
+                        </div>
+
+                        <!-- Botón añadir favorito (visible siempre que no esté al máximo) -->
+                        <div x-show="!favoritosLoading && !favoritosError && favoritos.length > 0 && favoritos.length < 6" class="mt-3">
+                            <button
+                                @click="openGestionFavoritosHabitat()"
+                                class="w-full px-4 py-2.5 border border-dashed border-gray-300 dark:border-gray-600 rounded-lg text-sm font-medium text-gray-600 dark:text-gray-300 hover:border-blue-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                            >
+                                + Añadir favorito
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -522,6 +561,78 @@
         </div>
     </template>
 
+    <!-- Gestion Favoritos Habitat Modal -->
+    <template x-if="showGestionFavoritosModal">
+        <div class="fixed inset-0 z-50 flex items-center justify-center p-4" @keydown.escape.window="closeGestionFavoritosModal()">
+            <div class="absolute inset-0 bg-black/60" @click="closeGestionFavoritosModal()"></div>
+            <div class="relative bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-2xl max-h-[85vh] overflow-hidden flex flex-col">
+                <!-- Header -->
+                <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+                    <h3 class="text-lg font-bold text-gray-900 dark:text-white">Favoritos de esta hábitat</h3>
+                    <button @click="closeGestionFavoritosModal()" class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400" aria-label="Cerrar">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                    </button>
+                </div>
+                <!-- Content -->
+                <div class="flex-1 overflow-y-auto p-6">
+                    <div x-show="gestionFavoritosLoading" x-cloak role="status" class="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
+                        <svg class="w-4 h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                        Cargando...
+                    </div>
+                    <div x-show="gestionFavoritosError" x-cloak role="alert" class="text-sm text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg px-3 py-2">
+                        <span x-text="gestionFavoritosError"></span>
+                    </div>
+                    <div x-show="!gestionFavoritosLoading && !gestionFavoritosError">
+                        <!-- Máximo alcanzado -->
+                        <div x-show="favoritos.length >= 6" class="mb-3 px-3 py-2 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 text-xs text-amber-700 dark:text-amber-300">
+                            Ya tienes 6 favoritos en este hábitat (máximo). Quita uno para poder añadir otro.
+                        </div>
+                        <!-- Grid de reclutados del usuario -->
+                        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                            <template x-for="pokemon in allReclutados" :key="pokemon.id">
+                                <div
+                                    class="relative bg-white dark:bg-gray-800 rounded-lg shadow-sm border text-center p-2 transition-all cursor-pointer select-none"
+                                    :class="esFavoritoHabitat(pokemon.id)
+                                        ? 'border-yellow-500 dark:border-yellow-400 ring-1 ring-yellow-500/30'
+                                        : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'"
+                                    @click="toggleFavoritoHabitat(pokemon)"
+                                    :title="esFavoritoHabitat(pokemon.id) ? 'Quitar de favoritos de este hábitat' : 'Añadir a favoritos de este hábitat'"
+                                >
+                                    <div class="w-16 h-16 mx-auto">
+                                        <img
+                                            :src="'/images/iconos_webp/' + pokemon.pokemon_id + '.webp'"
+                                            loading="lazy"
+                                            decoding="async"
+                                            :alt="pokemon.nombre"
+                                            class="w-full h-full object-contain"
+                                            onerror="this.style.display='none'"
+                                        >
+                                    </div>
+                                    <p class="text-[10px] text-gray-600 dark:text-gray-400 truncate mt-1" x-text="pokemon.nombre"></p>
+                                    <p class="text-[10px] text-gray-400 dark:text-gray-500" x-text="'Nv ' + (pokemon.nivel || 1)"></p>
+                                    <div class="mt-1">
+                                        <template x-if="esFavoritoHabitat(pokemon.id)">
+                                            <span class="inline-flex items-center gap-1 px-1.5 py-0.5 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 text-[10px] font-bold rounded-full">
+                                                <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+                                                Favorito
+                                            </span>
+                                        </template>
+                                        <template x-if="!esFavoritoHabitat(pokemon.id)">
+                                            <span class="text-[10px] text-gray-400 dark:text-gray-500">Click para marcar</span>
+                                        </template>
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
+                        <div x-show="allReclutados.length === 0" class="text-center py-12 text-gray-500 dark:text-gray-400">
+                            <p>No hay Pokémon disponibles</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </template>
+
     <!-- Formacion Modal (Entrenadores) -->
     <template x-if="showFormacionPopup">
         <div class="fixed inset-0 z-50 flex items-center justify-center p-4" @keydown.escape.window="closeFormacionPopup()">
@@ -780,12 +891,17 @@ function habitatShow() {
         sightedPokemonIds: @json($sightedPokemonIds ?? []),
         equiposEnExploracion: @json($equiposEnExploracion->pluck('equipo_id')->toArray()),
         teams: @json($teams),
-        // Favoritos (exploración individual): se cargan desde /api/reclutados/favoritos.
+        // Favoritos (exploración individual): se cargan desde /api/reclutados/favoritos?habitat_id={id}.
         favoritos: [],
         favoritosLoading: false,
         favoritosError: '',
         selectedFavoritoId: null,
         selectedFavoritoName: '',
+        // Gestión de favoritos del hábitat
+        showGestionFavoritosModal: false,
+        gestionFavoritosLoading: false,
+        gestionFavoritosError: '',
+        allReclutados: [],
         reclutadosEnExploracion: @json($reclutadosEnExploracion ?? ($exploracionesActivas ? $exploracionesActivas->pluck('reclutado_id')->all() : [])),
         minLvls: {
             1: {{ $habitat['min_lvl_1'] ?? 'null' }},
@@ -941,13 +1057,15 @@ function habitatShow() {
             this.favoritosLoading = true;
             this.favoritosError = '';
             try {
-                const response = await fetch('/api/reclutados/favoritos', {
+                const response = await fetch('/api/reclutados/favoritos?habitat_id={{ $habitat['id'] }}', {
                     headers: { 'Accept': 'application/json' },
                 });
                 if (!response.ok) {
                     throw new Error('No se pudieron cargar tus favoritos');
                 }
-                this.favoritos = await response.json();
+                // Tolerante: si el backend aún devuelve un objeto envuelto, normaliza a array.
+                const data = await response.json();
+                this.favoritos = Array.isArray(data) ? data : (data.data || []);
             } catch (e) {
                 console.error('Error loading favoritos:', e);
                 this.favoritosError = 'Función en preparación.';
@@ -969,6 +1087,112 @@ function habitatShow() {
             this.selectedFavoritoId = id;
             this.selectedFavoritoName = name;
             this.checkAndOpenModal();
+        },
+
+        // ─── Gestión de favoritos del hábitat ───────────────────────────────
+
+        esFavoritoHabitat(reclutadoId) {
+            return this.favoritos.some(f => Number(f.id) === Number(reclutadoId));
+        },
+
+        // El usuario quiere enviar este favorito a explorar directamente (ya con
+        // el hábitat preseleccionado). Inicializa el nivel y abre el modal.
+        openEnviarHabitat(favorito) {
+            if (this.esFavoritoEnExploracion(favorito.id)) {
+                return;
+            }
+            // Resetear estado de envío.
+            this.durationMode = 'hours';
+            this.durationHours = 4;
+            this.returnTime = '18:00';
+            this.preview = null;
+            this.previewLoaded = false;
+            this.previewError = '';
+            this.selectedFavoritoId = favorito.id;
+            this.selectedFavoritoName = favorito.nombre;
+            // Nivel por defecto: el primero disponible (no bloqueado). Si ninguno
+            // está bloqueado usa el nivel 1; en caso contrario lo deja para que la
+            // preview indique el error y el usuario ajuste desde el panel.
+            this.avisoNivel = '';
+            const nivelDefecto = [1, 2, 3].find(level => !this.levelBlocked(level)) || null;
+            this.selectedLevel = nivelDefecto;
+            if (nivelDefecto !== null) {
+                this.openExplorationModal();
+            } else {
+                alert('Ningún nivel está disponible para tu nivel de jugador.');
+            }
+        },
+
+        openGestionFavoritosHabitat() {
+            this.showGestionFavoritosModal = true;
+            this.gestionFavoritosError = '';
+            this.cargarReclutadosParaGestion();
+        },
+
+        closeGestionFavoritosModal() {
+            this.showGestionFavoritosModal = false;
+        },
+
+        async cargarReclutadosParaGestion() {
+            this.gestionFavoritosLoading = true;
+            this.gestionFavoritosError = '';
+            try {
+                const response = await fetch('/api/reclutados', {
+                    headers: { 'Accept': 'application/json' },
+                });
+                if (!response.ok) {
+                    throw new Error('No se pudieron cargar tus Pokémon');
+                }
+                const data = await response.json();
+                this.allReclutados = Array.isArray(data) ? data : (data.data || []);
+            } catch (e) {
+                console.error('Error loading reclutados:', e);
+                this.gestionFavoritosError = 'Función en preparación.';
+                this.allReclutados = [];
+                this.favoritos = [];
+            } finally {
+                this.gestionFavoritosLoading = false;
+            }
+        },
+
+        async toggleFavoritoHabitat(pokemon) {
+            // Máximo 6 favoritos por hábitat (aviso preventivo; el backend valida).
+            if (!this.esFavoritoHabitat(pokemon.id) && this.favoritos.length >= 6) {
+                alert('Máximo 6 favoritos por hábitat.');
+                return;
+            }
+            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || '';
+            try {
+                const response = await fetch('/api/reclutados/' + pokemon.id + '/toggle-favorito', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': csrfToken,
+                        'Accept': 'application/json',
+                    },
+                    body: JSON.stringify({ habitat_id: {{ $habitat['id'] }} }),
+                });
+                if (!response.ok) {
+                    const data = await response.json().catch(() => ({}));
+                    alert(data.message || 'No se pudo actualizar el favorito.');
+                    return;
+                }
+                const data = await response.json();
+                // Mutación local sin recargar.
+                if (data.favorito) {
+                    if (!this.esFavoritoHabitat(pokemon.id) && this.favoritos.length < 6) {
+                        this.favoritos.push({
+                            ...pokemon,
+                            nivel: pokemon.nivel || 1,
+                        });
+                    }
+                } else {
+                    this.favoritos = this.favoritos.filter(f => Number(f.id) !== Number(pokemon.id));
+                }
+            } catch (err) {
+                console.error('Error toggling habitat favorito:', err);
+                alert('Error de conexión al actualizar el favorito.');
+            }
         },
 
         levelBlocked(level) {

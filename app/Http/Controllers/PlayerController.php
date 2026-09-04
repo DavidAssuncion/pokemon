@@ -121,6 +121,7 @@ class PlayerController extends Controller
             'reclutados' => $reclutados,
             'teamIds' => $teamIds,
             'equiposEnExploracion' => $equiposEnExploracion,
+            'reclutadosEnExploracion' => $reclutadosEnExploracion,
         ]);
     }
 }

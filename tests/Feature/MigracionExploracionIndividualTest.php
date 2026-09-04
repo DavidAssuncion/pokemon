@@ -29,8 +29,9 @@ class MigracionExploracionIndividualTest extends TestCase
         // After all migrations, exploraciones_activas has reclutado_id, not equipo_id
         $this->assertTrue(Schema::hasColumn('exploraciones_activas', 'reclutado_id'));
         $this->assertFalse(Schema::hasColumn('exploraciones_activas', 'equipo_id'));
-        $this->assertTrue(Schema::hasColumn('reclutados', 'favorito'));
-        $this->assertTrue(Schema::hasTable('habitat_favoritos'));
+        $this->assertFalse(Schema::hasColumn('reclutados', 'favorito'));
+        $this->assertTrue(Schema::hasTable('favoritos'));
+        $this->assertFalse(Schema::hasTable('habitat_favoritos'));
     }
 
     private function crearHabitat(): Habitat

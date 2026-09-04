@@ -7,8 +7,8 @@ namespace Tests\Feature;
 use App\Enums\StatEnum;
 use App\Enums\TipoEnum;
 use App\Models\ExploracionActiva;
+use App\Models\Favorito;
 use App\Models\Habitat;
-use App\Models\HabitatFavorito;
 use App\Models\Pokemon;
 use App\Models\PokemonStat;
 use App\Models\PokemonType;
@@ -69,7 +69,7 @@ class ExploracionesIndividualEndpointsTest extends TestCase
         return $pokemon;
     }
 
-    private function crearReclutado(int $pokemonId, bool $favorito = false, string $nombre = 'Reclutado'): Reclutado
+    private function crearReclutado(int $pokemonId, string $nombre = 'Reclutado'): Reclutado
     {
         return Reclutado::create([
             'user_id' => $this->usuario->id,
@@ -77,7 +77,6 @@ class ExploracionesIndividualEndpointsTest extends TestCase
             'nombre' => $nombre,
             'exp' => ['total' => 10 * 5 ** 3],
             'es_shiny' => false,
-            'favorito' => $favorito,
             'obj_equipados' => [],
             'movimientos' => [],
         ]);
@@ -96,17 +95,23 @@ class ExploracionesIndividualEndpointsTest extends TestCase
         $pokemon = $this->crearPokemonConStats(1, ['hp' => 100, 'atk' => 80, 'def' => 70, 'spAtk' => 90, 'spDef' => 60, 'speed' => 50], TipoEnum::NORMAL);
         $reclutado = $this->crearReclutado($pokemon->id);
 
-        $response = $this->postJson("/api/reclutados/{$reclutado->id}/toggle-favorito");
-        $response->assertOk()->assertJson(['favorito' => true]);
+        // Global (habitat_id null).
+        $response = $this->postJson("/api/reclutados/{$reclutado->id}/toggle-favorito", ['habitat_id' => null]);
+        $response->assertOk()->assertJson(['favorito' => true, 'count' => 1]);
 
-        $reclutado->refresh();
-        $this->assertTrue($reclutado->favorito);
+        $this->assertDatabaseHas('favoritos', [
+            'user_id' => $this->usuario->id,
+            'reclutado_id' => $reclutado->id,
+            'habitat_id' => null,
+        ]);
 
-        $response = $this->postJson("/api/reclutados/{$reclutado->id}/toggle-favorito");
-        $response->assertOk()->assertJson(['favorito' => false]);
+        $response = $this->postJson("/api/reclutados/{$reclutado->id}/toggle-favorito", ['habitat_id' => null]);
+        $response->assertOk()->assertJson(['favorito' => false, 'count' => 0]);
 
-        $reclutado->refresh();
-        $this->assertFalse($reclutado->favorito);
+        $this->assertDatabaseMissing('favoritos', [
+            'user_id' => $this->usuario->id,
+            'reclutado_id' => $reclutado->id,
+        ]);
     }
 
     #[Test]
@@ -129,8 +134,13 @@ class ExploracionesIndividualEndpointsTest extends TestCase
     public function test_favoritos_lista_solo_favoritos_del_usuario(): void
     {
         $pokemon = $this->crearPokemonConStats(1, ['hp' => 100, 'atk' => 80, 'def' => 70, 'spAtk' => 90, 'spDef' => 60, 'speed' => 50], TipoEnum::NORMAL);
-        $this->crearReclutado($pokemon->id, favorito: true, nombre: 'Fav');
-        $this->crearReclutado($pokemon->id, favorito: false, nombre: 'NoFav');
+        $reclutadoFav = $this->crearReclutado($pokemon->id, 'Fav');
+        $this->postJson("/api/reclutados/{$reclutadoFav->id}/toggle-favorito", ['habitat_id' => null])->assertOk();
+        // Un favorito por hábitat NO debe aparecer en la lista global.
+        $habitat = $this->crearHabitat(1);
+        $pokemon2 = $this->crearPokemonConStats(2, ['hp' => 100, 'atk' => 80, 'def' => 70, 'spAtk' => 90, 'spDef' => 60, 'speed' => 50], TipoEnum::NORMAL);
+        $reclutadoHab = $this->crearReclutado($pokemon2->id, 'NoGlobal');
+        $this->postJson("/api/reclutados/{$reclutadoHab->id}/toggle-favorito", ['habitat_id' => $habitat->id])->assertOk();
 
         $response = $this->getJson('/api/reclutados/favoritos');
 
@@ -174,20 +184,24 @@ class ExploracionesIndividualEndpointsTest extends TestCase
     public function test_toggle_favorito_habitat_anade_y_elimina(): void
     {
         $habitat = $this->crearHabitat(1);
+        $pokemon = $this->crearPokemonConStats(1, ['hp' => 100, 'atk' => 80, 'def' => 70, 'spAtk' => 90, 'spDef' => 60, 'speed' => 50], TipoEnum::NORMAL);
+        $reclutado = $this->crearReclutado($pokemon->id);
 
-        $response = $this->postJson("/api/habitats/{$habitat->id}/toggle-favorito");
-        $response->assertStatus(201)->assertJson(['favorito' => true, 'count' => 1]);
+        $response = $this->postJson("/api/reclutados/{$reclutado->id}/toggle-favorito", ['habitat_id' => $habitat->id]);
+        $response->assertOk()->assertJson(['favorito' => true, 'count' => 1]);
 
-        $this->assertDatabaseHas('habitat_favoritos', [
+        $this->assertDatabaseHas('favoritos', [
             'user_id' => $this->usuario->id,
+            'reclutado_id' => $reclutado->id,
             'habitat_id' => $habitat->id,
         ]);
 
-        $response = $this->postJson("/api/habitats/{$habitat->id}/toggle-favorito");
+        $response = $this->postJson("/api/reclutados/{$reclutado->id}/toggle-favorito", ['habitat_id' => $habitat->id]);
         $response->assertOk()->assertJson(['favorito' => false, 'count' => 0]);
 
-        $this->assertDatabaseMissing('habitat_favoritos', [
+        $this->assertDatabaseMissing('favoritos', [
             'user_id' => $this->usuario->id,
+            'reclutado_id' => $reclutado->id,
             'habitat_id' => $habitat->id,
         ]);
     }
@@ -195,26 +209,33 @@ class ExploracionesIndividualEndpointsTest extends TestCase
     #[Test]
     public function test_toggle_favorito_habitat_limite_6(): void
     {
+        $habitat = $this->crearHabitat(1);
+        $pokemon = $this->crearPokemonConStats(1, ['hp' => 100, 'atk' => 80, 'def' => 70, 'spAtk' => 90, 'spDef' => 60, 'speed' => 50], TipoEnum::NORMAL);
+
         for ($i = 1; $i <= 6; $i++) {
-            $habitat = $this->crearHabitat($i);
-            $this->postJson("/api/habitats/{$habitat->id}/toggle-favorito")->assertStatus(201);
+            $this->crearPokemonConStats(100 + $i, ['hp' => 100, 'atk' => 80, 'def' => 70, 'spAtk' => 90, 'spDef' => 60, 'speed' => 50], TipoEnum::NORMAL);
+            $reclutado = $this->crearReclutado(100 + $i, 'P'.$i);
+            $this->postJson("/api/reclutados/{$reclutado->id}/toggle-favorito", ['habitat_id' => $habitat->id])->assertOk();
         }
 
-        $habitat7 = $this->crearHabitat(7);
-        $this->postJson("/api/habitats/{$habitat7->id}/toggle-favorito")
+        $reclutado7 = $this->crearReclutado($pokemon->id, 'P7');
+        $this->postJson("/api/reclutados/{$reclutado7->id}/toggle-favorito", ['habitat_id' => $habitat->id])
             ->assertStatus(422)
-            ->assertJson(['message' => 'Máximo 6 hábitats favoritos']);
+            ->assertJsonStructure(['message']);
     }
 
     #[Test]
     public function test_toggle_favorito_habitat_repetido_no_suma_mas_de_6(): void
     {
-        // Marcar y desmarcar el mismo no debe contar doble
         $habitat = $this->crearHabitat(1);
-        $this->postJson("/api/habitats/{$habitat->id}/toggle-favorito")->assertStatus(201);
-        $this->postJson("/api/habitats/{$habitat->id}/toggle-favorito")->assertOk();
+        $pokemon = $this->crearPokemonConStats(1, ['hp' => 100, 'atk' => 80, 'def' => 70, 'spAtk' => 90, 'spDef' => 60, 'speed' => 50], TipoEnum::NORMAL);
+        $reclutado = $this->crearReclutado($pokemon->id);
 
-        $this->assertSame(0, HabitatFavorito::where('user_id', $this->usuario->id)->count());
+        // Marcar y desmarcar el mismo no debe contar doble
+        $this->postJson("/api/reclutados/{$reclutado->id}/toggle-favorito", ['habitat_id' => $habitat->id])->assertOk();
+        $this->postJson("/api/reclutados/{$reclutado->id}/toggle-favorito", ['habitat_id' => $habitat->id])->assertOk();
+
+        $this->assertSame(0, Favorito::where('user_id', $this->usuario->id)->count());
     }
 
     #[Test]

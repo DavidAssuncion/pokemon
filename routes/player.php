@@ -49,6 +49,7 @@ Route::delete('/reclutado/{reclutado}', [ReclutadoController::class, 'destroy'])
 Route::get('/reclutado/{reclutado}/evoluciones', [ReclutadoController::class, 'evoluciones']);
 
 // Favoritos y capacidades de reclutados (API JSON)
+Route::get('/api/reclutados', [ReclutadoController::class, 'listarTodos']);
 Route::post('/api/reclutados/{reclutado}/toggle-favorito', [ReclutadoController::class, 'toggleFavorito']);
-Route::get('/api/reclutados/favoritos', [ReclutadoController::class, 'favoritos']);
+Route::get('/api/reclutados/favoritos', [ReclutadoController::class, 'listarFavoritos']);
 Route::get('/api/reclutado/{reclutado}/capacidades', [ReclutadoController::class, 'capacidades']);

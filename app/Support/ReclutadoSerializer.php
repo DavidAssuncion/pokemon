@@ -28,6 +28,12 @@ final class ReclutadoSerializer
         $datos['es_shiny'] = $reclutado->es_shiny;
         $datos['stats'] = self::statsDe($reclutado);
 
+        // Fallback de nombre cuando es null (column nullable): usa el nombre del
+        // pokémon para no romper/obtener "null" en el frontend.
+        if (($datos['nombre'] ?? null) === null) {
+            $datos['nombre'] = $reclutado->pokemon?->name ?? 'Desconocido';
+        }
+
         if ($reclutado->pokemon?->types->isNotEmpty()) {
             $datos['pokemon']['types'] = self::tiposDe($reclutado);
         }

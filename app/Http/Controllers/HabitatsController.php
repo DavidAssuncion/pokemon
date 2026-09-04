@@ -6,11 +6,9 @@ namespace App\Http\Controllers;
 
 use App\Models\ExploracionActiva;
 use App\Models\Habitat;
-use App\Models\HabitatFavorito;
 use App\Models\Pokedex;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\View\View;
 use Src\Equipos\App\ObtenerEquipos;
@@ -163,43 +161,13 @@ class HabitatsController extends Controller
     }
 
     /**
-     * Añade o elimina el hábitat de los favoritos del usuario autenticado.
-     * Límite: 6 hábitats favoritos por usuario (7º → 422).
+     * Legacy no-op: el frontend actual marca hábitats como favoritos a través de
+     * `POST /api/reclutados/{reclutado}/toggle-favorito` con body `habitat_id`.
+     * Este endpoint queda como compatibilidad sin efecto (los favoritos ahora son
+     * por reclutado dentro de un hábitat, no de hábitat en solitario).
      */
     public function toggleFavorito(Habitat $habitat): JsonResponse
     {
-        $userId = (int) Auth::id();
-        $favorito = HabitatFavorito::where('user_id', $userId)
-            ->where('habitat_id', $habitat->id)
-            ->first();
-
-        if ($favorito !== null) {
-            $favorito->delete();
-
-            return response()->json([
-                'favorito' => false,
-                'count' => $this->countFavoritos($userId),
-            ]);
-        }
-
-        $count = $this->countFavoritos($userId);
-        if ($count >= HabitatFavorito::MAX_FAVORITOS) {
-            return response()->json(['message' => 'Máximo 6 hábitats favoritos'], 422);
-        }
-
-        HabitatFavorito::create([
-            'user_id' => $userId,
-            'habitat_id' => $habitat->id,
-        ]);
-
-        return response()->json([
-            'favorito' => true,
-            'count' => $count + 1,
-        ], 201);
-    }
-
-    private function countFavoritos(int $userId): int
-    {
-        return HabitatFavorito::where('user_id', $userId)->count();
+        return response()->json(['favorito' => false, 'count' => 0]);
     }
 }

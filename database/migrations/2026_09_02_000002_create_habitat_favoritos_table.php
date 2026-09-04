@@ -9,9 +9,19 @@ use Illuminate\Support\Facades\Schema;
 return new class () extends Migration {
     /**
      * Run the migrations.
+     *
+     * No-op: la tabla `favoritos` unificada la crea M1.
      */
     public function up(): void
     {
+    }
+
+    /**
+     * Reverse the migrations.
+     */
+    public function down(): void
+    {
+        // Recrea la tabla legacy habitat_favoritos para un rollback simétrico.
         Schema::create('habitat_favoritos', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('user_id');
@@ -22,13 +32,5 @@ return new class () extends Migration {
             $table->foreign('habitat_id')->references('id')->on('habitats')->onDelete('cascade');
             $table->unique(['user_id', 'habitat_id']);
         });
-    }
-
-    /**
-     * Reverse the migrations.
-     */
-    public function down(): void
-    {
-        Schema::dropIfExists('habitat_favoritos');
     }
 };

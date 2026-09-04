@@ -49,7 +49,7 @@ class CombateExploracion
         $explorador = $this->mapeador->desdePokemon(
             pokemon: $reclutado->pokemon,
             id: (string) $reclutado->id,
-            nombre: $reclutado->nombre,
+            nombre: $reclutado->nombre ?? $reclutado->pokemon->name,
             posicion: Posicion::VANGUARDIA,
             shiny: $reclutado->es_shiny,
             item: $item,

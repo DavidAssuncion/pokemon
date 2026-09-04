@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers;
 
 use App\Jobs\ActualizarPokedexJob;
+use App\Models\Favorito;
 use App\Models\PlayerInventory;
 use App\Models\Pokemon;
 use App\Models\Reclutado;
@@ -238,23 +239,85 @@ class ReclutadoController extends Controller
 
     /**
      * Alterna el marcador de favorito del reclutado del usuario autenticado.
+     *
+     * - `habitat_id = null` → favorito global (límite 6 por usuario).
+     * - `habitat_id = N` → favorito dentro de ese hábitat (límite 6 por hábitat).
+     *
      * Anti-IDOR: route-model binding + global scope BelongsToUser → 404 si ajeno.
      */
-    public function toggleFavorito(Reclutado $reclutado): JsonResponse
+    public function toggleFavorito(Request $request, Reclutado $reclutado): JsonResponse
     {
-        $reclutado->update(['favorito' => ! $reclutado->favorito]);
+        $data = $request->validate([
+            'habitat_id' => 'nullable|integer|exists:habitats,id',
+        ]);
 
-        return response()->json(['favorito' => $reclutado->favorito]);
+        $habitatId = $data['habitat_id'] ?? null;
+        $userId = (int) auth()->id();
+
+        // Antes de añadir, validar el límite del alcance (7º → 422).
+        if (! Favorito::esFavorito($userId, $reclutado->id, $habitatId)) {
+            $max = $habitatId === null ? 6 : 6;
+            $actual = $habitatId === null
+                ? Favorito::countGlobales($userId)
+                : Favorito::countParaHabitat($userId, $habitatId);
+
+            if ($actual >= $max) {
+                $mensaje = $habitatId === null
+                    ? 'Máximo 6 favoritos globales.'
+                    : 'Máximo 6 favoritos para este hábitat.';
+
+                return response()->json(['message' => $mensaje], 422);
+            }
+        }
+
+        $favorito = Favorito::toggle($userId, $reclutado->id, $habitatId);
+        $count = $habitatId === null
+            ? Favorito::countGlobales($userId)
+            : Favorito::countParaHabitat($userId, $habitatId);
+
+        return response()->json(['favorito' => $favorito, 'count' => $count]);
     }
 
     /**
      * Lista los reclutados favoritos del usuario autenticado, serializados con
      * el mismo formato que /equipos (ReclutadoSerializer compartido).
+     *
+     * - Sin query param → favoritos globales (habitat_id null).
+     * - Con `?habitat_id=N` → favoritos de ese hábitat.
      */
-    public function favoritos(): JsonResponse
+    public function listarFavoritos(Request $request): JsonResponse
+    {
+        $habitatId = $request->integer('habitat_id');
+        $userId = (int) auth()->id();
+
+        $query = Favorito::with(['reclutado.pokemon.types', 'reclutado.pokemon.stats']);
+
+        if ($habitatId > 0) {
+            $query->paraHabitat($habitatId);
+        } else {
+            $query->globales();
+        }
+
+        $reclutados = $query
+            ->withoutGlobalScope('belongsToUser')
+            ->where('user_id', $userId)
+            ->get()
+            ->map(fn (Favorito $favorito): array => ReclutadoSerializer::serializar($favorito->reclutado))
+            ->values();
+
+        return response()->json($reclutados);
+    }
+
+    /**
+     * Lista todos los reclutados del usuario autenticado, serializados con el
+     * mismo formato que /equipos (ReclutadoSerializer compartido). El modal de
+     * gestión de favoritos del hábitat lo usa para mostrar "todos" los reclutados.
+     *
+     * Anti-IDOR: el global scope BelongsToUser filtra por el usuario autenticado.
+     */
+    public function listarTodos(): JsonResponse
     {
         $reclutados = Reclutado::with(['pokemon.types', 'pokemon.stats'])
-            ->where('favorito', true)
             ->get()
             ->map(fn (Reclutado $reclutado): array => ReclutadoSerializer::serializar($reclutado))
             ->values();

@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Favoritos')
+@section('title', 'Equipos y Favoritos')
 
 @section('content')
 @php
@@ -9,194 +9,577 @@
 <div x-data="favoritosApp()" x-init="init()">
     <!-- Header -->
     <div class="mb-6">
-        <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Pokémon Favoritos</h1>
-        <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Marca tus Pokémon favoritos y envíalos a explorar</p>
+        <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Equipos y Favoritos</h1>
+        <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Gestiona tus equipos de combate y Pokémon favoritos</p>
     </div>
 
-    <div class="grid lg:grid-cols-3 gap-6">
-        <!-- Left 1/3: Favoritos List -->
-        <div class="space-y-4">
-            <div class="flex items-center justify-between bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-2">
-                <h2 class="text-sm font-bold uppercase tracking-wide text-gray-700 dark:text-gray-300">Mis Favoritos</h2>
-                <span class="px-2 py-0.5 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 text-xs font-bold rounded-full" x-text="favoritos.length"></span>
-            </div>
+    <!-- Tabs -->
+    <div class="flex gap-1 mb-6 bg-gray-100 dark:bg-gray-900/50 rounded-lg p-1 w-fit">
+        <button
+            @click="activeTab = 'favoritos'"
+            class="px-4 py-2 rounded-md text-sm font-medium transition-colors"
+            :class="activeTab === 'favoritos'
+                ? 'bg-white dark:bg-gray-800 text-gray-900 dark:text-white shadow-sm'
+                : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'"
+        >
+            <span class="flex items-center gap-2">
+                <svg class="w-4 h-4 text-yellow-500" fill="currentColor" viewBox="0 0 24 24"><path d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.196-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"/></svg>
+                Favoritos
+            </span>
+        </button>
+        <button
+            @click="activeTab = 'equipos'"
+            class="px-4 py-2 rounded-md text-sm font-medium transition-colors"
+            :class="activeTab === 'equipos'
+                ? 'bg-white dark:bg-gray-800 text-gray-900 dark:text-white shadow-sm'
+                : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'"
+        >
+            <span class="flex items-center gap-2">
+                <svg class="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                Equipos
+            </span>
+        </button>
+    </div>
 
-            <div class="space-y-3">
-                <template x-for="pokemon in favoritos" :key="pokemon.id">
-                    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden group relative">
-                        <button @click="openDetail(pokemon)" class="w-full p-3 flex items-center gap-3 text-left">
-                            <div class="w-16 h-16 shrink-0 bg-gray-50 dark:bg-gray-900/50 rounded-lg flex items-center justify-center overflow-hidden">
-                                <img
-                                    :src="'/images/iconos_webp/' + pokemon.pokemon_id + '.webp'"
-                                    loading="lazy"
-                                    decoding="async"
-                                    :alt="pokemon.nombre"
-                                    :title="pokemon.nombre"
-                                    class="w-full h-full object-contain"
-                                    onerror="this.style.display='none'"
-                                >
-                            </div>
-                            <div class="flex-1 min-w-0">
-                                <p class="text-sm font-medium text-gray-900 dark:text-white capitalize truncate" x-text="pokemon.nombre"></p>
-                                <div class="flex items-center gap-2 mt-1">
-                                    <span class="px-1.5 py-0.5 bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-400 text-[10px] font-bold rounded-full">Nv <span x-text="nivelDe(pokemon)"></span></span>
-                                    <template x-if="enExploracion(pokemon.id)">
-                                        <span class="px-1.5 py-0.5 bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400 text-[10px] font-bold rounded uppercase">En exploración</span>
-                                    </template>
-                                </div>
-                            </div>
-                            <svg class="w-5 h-5 text-yellow-500 shrink-0" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                                <path d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.196-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"/>
-                            </svg>
-                        </button>
-                        <!-- Hover action: send to explore -->
-                        <div class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent p-2 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
-                            <button
-                                @click="openExploracionModal(pokemon)"
-                                :disabled="enExploracion(pokemon.id)"
-                                class="w-full px-3 py-1.5 bg-green-600 text-white rounded-lg text-xs font-bold hover:bg-green-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed pointer-events-auto"
-                                :title="enExploracion(pokemon.id) ? 'Este Pokémon está en exploración activa' : 'Enviar a explorar'"
-                                x-text="enExploracion(pokemon.id) ? 'En exploración' : 'Enviar a explorar'"
-                            ></button>
-                        </div>
-                    </div>
-                </template>
-
-                <!-- Empty favorites -->
-                <template x-if="favoritos.length === 0">
-                    <div class="text-center py-8 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
-                        <svg class="w-12 h-12 mx-auto text-gray-300 dark:text-gray-600 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.196-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"/>
-                        </svg>
-                        <p class="text-sm text-gray-500 dark:text-gray-400 mb-3">No tienes Pokémon favoritos</p>
-                        <button
-                            @click="openFavoritosModal()"
-                            class="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors"
-                        >
-                            Gestionar favoritos
-                        </button>
-                    </div>
-                </template>
-            </div>
-        </div>
-
-        <!-- Right 2/3: Available Pokemon (not favorites) -->
-        <div class="lg:col-span-2 space-y-6">
-            <!-- Manage button -->
-            <div class="flex justify-end">
-                <button
-                    @click="openFavoritosModal()"
-                    class="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors flex items-center gap-2"
-                >
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.196-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"/>
-                    </svg>
-                    Gestionar favoritos
-                </button>
-            </div>
-
-            <!-- Search and Filter -->
-            <div class="flex flex-col sm:flex-row gap-3">
-                <div class="relative flex-1">
-                    <input
-                        type="text"
-                        x-model="searchQuery"
-                        placeholder="Buscar por nombre o ID..."
-                        class="w-full px-4 py-2 pl-10 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
-                    >
-                    <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-                    </svg>
+    <!-- ═══════════════════════════════════════════════════════════════════ -->
+    <!-- TAB: FAVORITOS                                                     -->
+    <!-- ═══════════════════════════════════════════════════════════════════ -->
+    <div x-show="activeTab === 'favoritos'" x-cloak>
+        <div class="grid lg:grid-cols-3 gap-6">
+            <!-- Left 1/3: Favoritos List -->
+            <div class="space-y-4">
+                <div class="flex items-center justify-between bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-2">
+                    <h2 class="text-sm font-bold uppercase tracking-wide text-gray-700 dark:text-gray-300">Mis Favoritos</h2>
+                    <span class="px-2 py-0.5 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 text-xs font-bold rounded-full" x-text="favoritos.length"></span>
                 </div>
-                <div class="relative">
-                    <button
-                        @click="showTypeFilter = !showTypeFilter"
-                        class="px-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors flex items-center gap-2"
-                    >
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/>
-                        </svg>
-                        Tipo
-                    </button>
-                    <template x-if="showTypeFilter">
-                        <div class="absolute right-0 top-full mt-1 z-40 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-lg p-3 w-48 max-h-64 overflow-y-auto">
-                            <button
-                                @click="typeFilter = null; showTypeFilter = false"
-                                class="w-full text-left px-3 py-1.5 text-sm rounded hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-                                :class="typeFilter === null ? 'text-blue-600 dark:text-blue-400 font-medium' : 'text-gray-700 dark:text-gray-300'"
-                            >
-                                Todos
+
+                <div class="space-y-3">
+                    <template x-for="pokemon in favoritos" :key="pokemon.id">
+                        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden group relative">
+                            <button @click="openDetail(pokemon)" class="w-full p-3 flex items-center gap-3 text-left">
+                                <div class="w-16 h-16 shrink-0 bg-gray-50 dark:bg-gray-900/50 rounded-lg flex items-center justify-center overflow-hidden">
+                                    <img
+                                        :src="'/images/iconos_webp/' + pokemon.pokemon_id + '.webp'"
+                                        loading="lazy"
+                                        decoding="async"
+                                        :alt="pokemon.nombre"
+                                        :title="pokemon.nombre"
+                                        class="w-full h-full object-contain"
+                                        onerror="this.style.display='none'"
+                                    >
+                                </div>
+                                <div class="flex-1 min-w-0">
+                                    <p class="text-sm font-medium text-gray-900 dark:text-white capitalize truncate" x-text="pokemon.nombre"></p>
+                                    <div class="flex items-center gap-2 mt-1">
+                                        <span class="px-1.5 py-0.5 bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-400 text-[10px] font-bold rounded-full">Nv <span x-text="nivelDe(pokemon)"></span></span>
+                                        <template x-if="enExploracion(pokemon.id)">
+                                            <span class="px-1.5 py-0.5 bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400 text-[10px] font-bold rounded uppercase">En exploración</span>
+                                        </template>
+                                    </div>
+                                </div>
+                                <svg class="w-5 h-5 text-yellow-500 shrink-0" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                    <path d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.196-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"/>
+                                </svg>
                             </button>
-                            @foreach($tipos as $id => $nombre)
+                            <!-- Hover action: send to explore -->
+                            <div class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent p-2 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                                <button
+                                    @click="openExploracionModal(pokemon)"
+                                    :disabled="enExploracion(pokemon.id)"
+                                    class="w-full px-3 py-1.5 bg-green-600 text-white rounded-lg text-xs font-bold hover:bg-green-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed pointer-events-auto"
+                                    :title="enExploracion(pokemon.id) ? 'Este Pokémon está en exploración activa' : 'Enviar a explorar'"
+                                    x-text="enExploracion(pokemon.id) ? 'En exploración' : 'Enviar a explorar'"
+                                ></button>
+                            </div>
+                        </div>
+                    </template>
+
+                    <!-- Empty favorites -->
+                    <template x-if="favoritos.length === 0">
+                        <div class="text-center py-8 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
+                            <svg class="w-12 h-12 mx-auto text-gray-300 dark:text-gray-600 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.196-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"/>
+                            </svg>
+                            <p class="text-sm text-gray-500 dark:text-gray-400 mb-3">No tienes Pokémon favoritos</p>
                             <button
-                                @click="typeFilter = '{{ $nombre }}'; showTypeFilter = false"
-                                class="w-full text-left px-3 py-1.5 text-sm rounded hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-                                :class="typeFilter === '{{ $nombre }}' ? 'text-blue-600 dark:text-blue-400 font-medium' : 'text-gray-700 dark:text-gray-300'"
+                                @click="openFavoritosModal()"
+                                class="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors"
                             >
-                                {{ $nombre }}
+                                Gestionar favoritos
                             </button>
-                            @endforeach
                         </div>
                     </template>
                 </div>
             </div>
 
-            <!-- Available Pokemon Grid -->
-            <div>
-                <div class="flex items-center justify-between bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-2 mb-4">
-                    <h2 class="text-sm font-bold uppercase tracking-wide text-gray-700 dark:text-gray-300">Reclutados Disponibles</h2>
+            <!-- Right 2/3: Available Pokemon (not favorites) -->
+            <div class="lg:col-span-2 space-y-6">
+                <!-- Manage button -->
+                <div class="flex justify-end">
+                    <button
+                        @click="openFavoritosModal()"
+                        class="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors flex items-center gap-2"
+                    >
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.196-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"/>
+                        </svg>
+                        Gestionar favoritos
+                    </button>
                 </div>
-                <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-2">
-                    <template x-for="pokemon in availablePokemons" :key="pokemon.id">
-                        <div class="relative bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 text-center group">
-                            <div class="w-24 h-24 mx-auto">
-                                <img
-                                    :src="'/images/iconos_webp/' + pokemon.pokemon_id + '.webp'"
-                                    loading="lazy"
-                                    decoding="async"
-                                    :alt="pokemon.nombre"
-                                    :title="pokemon.nombre"
-                                    class="w-full h-full object-contain"
-                                    onerror="this.style.display='none'"
-                                >
-                            </div>
-                            <p class="text-[10px] text-gray-600 dark:text-gray-400 truncate px-1 pb-1" x-text="pokemon.nombre"></p>
-                            <!-- Action buttons -->
-                            <div class="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2 rounded-lg">
+
+                <!-- Search and Filter -->
+                <div class="flex flex-col sm:flex-row gap-3">
+                    <div class="relative flex-1">
+                        <input
+                            type="text"
+                            x-model="searchQuery"
+                            placeholder="Buscar por nombre o ID..."
+                            class="w-full px-4 py-2 pl-10 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
+                        >
+                        <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                        </svg>
+                    </div>
+                    <div class="relative">
+                        <button
+                            @click="showTypeFilter = !showTypeFilter"
+                            class="px-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors flex items-center gap-2"
+                        >
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/>
+                            </svg>
+                            Tipo
+                        </button>
+                        <template x-if="showTypeFilter">
+                            <div class="absolute right-0 top-full mt-1 z-40 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-lg p-3 w-48 max-h-64 overflow-y-auto">
                                 <button
-                                    @click="toggleFavorito(pokemon)"
-                                    :disabled="togglingFavoritoId === pokemon.id"
-                                    class="w-8 h-8 bg-yellow-500 text-white rounded-full flex items-center justify-center hover:bg-yellow-600 transition-colors text-lg font-bold"
-                                    :aria-label="'Marcar ' + pokemon.nombre + ' como favorito'"
-                                    :title="'Marcar ' + pokemon.nombre + ' como favorito'"
+                                    @click="typeFilter = null; showTypeFilter = false"
+                                    class="w-full text-left px-3 py-1.5 text-sm rounded hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                                    :class="typeFilter === null ? 'text-blue-600 dark:text-blue-400 font-medium' : 'text-gray-700 dark:text-gray-300'"
                                 >
-                                    ★
+                                    Todos
                                 </button>
+                                @foreach($tipos as $id => $nombre)
                                 <button
-                                    @click="openDetail(pokemon)"
-                                    class="w-8 h-8 bg-blue-500 text-white rounded-full flex items-center justify-center hover:bg-blue-600 transition-colors"
-                                    :aria-label="'Ver detalle de ' + pokemon.nombre"
-                                    :title="'Ver detalle de ' + pokemon.nombre"
+                                    @click="typeFilter = '{{ $nombre }}'; showTypeFilter = false"
+                                    class="w-full text-left px-3 py-1.5 text-sm rounded hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                                    :class="typeFilter === '{{ $nombre }}' ? 'text-blue-600 dark:text-blue-400 font-medium' : 'text-gray-700 dark:text-gray-300'"
                                 >
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                                    {{ $nombre }}
+                                </button>
+                                @endforeach
+                            </div>
+                        </template>
+                    </div>
+                </div>
+
+                <!-- Available Pokemon Grid (favoritos) -->
+                <div>
+                    <div class="flex items-center justify-between bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-2 mb-4">
+                        <h2 class="text-sm font-bold uppercase tracking-wide text-gray-700 dark:text-gray-300">Reclutados Disponibles</h2>
+                    </div>
+                    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-2">
+                        <template x-for="pokemon in availablePokemonsFav" :key="'fav-'+pokemon.id">
+                            <div class="relative bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 text-center group">
+                                <div class="w-24 h-24 mx-auto">
+                                    <img
+                                        :src="'/images/iconos_webp/' + pokemon.pokemon_id + '.webp'"
+                                        loading="lazy"
+                                        decoding="async"
+                                        :alt="pokemon.nombre"
+                                        :title="pokemon.nombre"
+                                        class="w-full h-full object-contain"
+                                        onerror="this.style.display='none'"
+                                    >
+                                </div>
+                                <p class="text-[10px] text-gray-600 dark:text-gray-400 truncate px-1 pb-1" x-text="pokemon.nombre"></p>
+                                <!-- Action buttons -->
+                                <div class="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2 rounded-lg">
+                                    <button
+                                        @click="toggleFavorito(pokemon)"
+                                        :disabled="togglingFavoritoId === pokemon.id"
+                                        class="w-8 h-8 bg-yellow-500 text-white rounded-full flex items-center justify-center hover:bg-yellow-600 transition-colors text-lg font-bold"
+                                        :aria-label="'Marcar ' + pokemon.nombre + ' como favorito'"
+                                        :title="'Marcar ' + pokemon.nombre + ' como favorito'"
+                                    >
+                                        ★
+                                    </button>
+                                    <button
+                                        @click="openDetail(pokemon)"
+                                        class="w-8 h-8 bg-blue-500 text-white rounded-full flex items-center justify-center hover:bg-blue-600 transition-colors"
+                                        :aria-label="'Ver detalle de ' + pokemon.nombre"
+                                        :title="'Ver detalle de ' + pokemon.nombre"
+                                    >
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
+                        </template>
+
+                        <!-- Empty available -->
+                        <template x-if="availablePokemonsFav.length === 0">
+                            <div class="col-span-full text-center py-8">
+                                <p class="text-sm text-gray-400 dark:text-gray-500" x-text="searchQuery || typeFilter ? 'No se encontraron Pokémon' : 'No hay Pokémon disponibles para marcar como favoritos'"></p>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════════════ -->
+    <!-- TAB: EQUIPOS                                                       -->
+    <!-- ═══════════════════════════════════════════════════════════════════ -->
+    <div x-show="activeTab === 'equipos'" x-cloak>
+        <div class="grid lg:grid-cols-3 gap-6">
+            <!-- Left 1/3: Teams Panel -->
+            <div class="space-y-4">
+                <!-- New Team Button -->
+                <button
+                    @click="showNewTeamForm = !showNewTeamForm"
+                    class="w-full px-4 py-3 bg-blue-600 text-white rounded-xl text-sm font-medium hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
+                >
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                    </svg>
+                    Nuevo Equipo
+                </button>
+
+                <!-- New Team Form -->
+                <template x-if="showNewTeamForm">
+                    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-4">
+                        <input
+                            type="text"
+                            x-model="newTeamName"
+                            placeholder="Nombre del equipo"
+                            class="w-full px-3 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 mb-3"
+                            @keydown.enter="createTeam()"
+                        >
+                        <div class="flex gap-2">
+                            <button
+                                @click="createTeam()"
+                                :disabled="!newTeamName.trim()"
+                                class="flex-1 px-3 py-2 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700 disabled:bg-gray-300 dark:disabled:bg-gray-700 disabled:cursor-not-allowed transition-colors"
+                            >
+                                Crear
+                            </button>
+                            <button
+                                @click="showNewTeamForm = false; newTeamName = ''"
+                                class="px-3 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg text-sm font-medium hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                            >
+                                Cancelar
+                            </button>
+                        </div>
+                    </div>
+                </template>
+
+                <!-- Teams List -->
+                <div class="space-y-3">
+                    <template x-for="team in teams" :key="'team-'+team.id">
+                        <div
+                            class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border-2 overflow-hidden transition-all"
+                            :class="selectedTeamId === team.id
+                                ? 'border-blue-500 dark:border-blue-400'
+                                : 'border-gray-200 dark:border-gray-700'"
+                        >
+                            <!-- Team header -->
+                            <div class="flex items-center justify-between p-3 border-b border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50">
+                                <div class="flex items-center gap-2 flex-wrap">
+                                    <template x-if="isInExploration(team.id)">
+                                        <svg class="w-4 h-4 text-yellow-500" fill="currentColor" viewBox="0 0 24 24">
+                                            <path d="M12 2C9.243 2 7 4.243 7 7v3H6a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2v-8a2 2 0 00-2-2h-1V7c0-2.757-2.243-5-5-5zm0 2c1.654 0 3 1.346 3 3v3H9V7c0-1.654 1.346-3 3-3zm-6 8h12v8H6v-8z"/>
+                                        </svg>
+                                    </template>
+                                    <button
+                                        @click="!isInExploration(team.id) && startRename(team)"
+                                        class="text-sm font-medium text-gray-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                                        :class="{ 'cursor-not-allowed opacity-50': isInExploration(team.id) }"
+                                        :disabled="isInExploration(team.id)"
+                                        x-text="team.name"
+                                    ></button>
+                                    <template x-if="team.members.length < 3">
+                                        <span class="px-1.5 py-0.5 bg-gray-200 dark:bg-gray-600 text-gray-600 dark:text-gray-300 text-[10px] font-bold rounded">
+                                            INVÁLIDO
+                                        </span>
+                                    </template>
+                                    <template x-if="isInExploration(team.id)">
+                                        <span class="px-1.5 py-0.5 bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400 text-[10px] font-bold rounded uppercase">
+                                            En exploración
+                                        </span>
+                                    </template>
+                                    <template x-if="composicionBadge(team)">
+                                        <span
+                                            class="px-1.5 py-0.5 text-[10px] font-bold rounded uppercase"
+                                            :class="composicionBadge(team).clase"
+                                            x-text="composicionBadge(team).texto"
+                                        ></span>
+                                    </template>
+                                </div>
+                                <button
+                                    @click="!isInExploration(team.id) && confirmDeleteTeam(team)"
+                                    :disabled="isInExploration(team.id)"
+                                    class="w-6 h-6 flex items-center justify-center rounded text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                                    :aria-label="'Eliminar equipo ' + team.name"
+                                >
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
                                     </svg>
                                 </button>
                             </div>
+                            <!-- Team members -->
+                            <div class="p-3">
+                                <div class="flex gap-2">
+                                    <template x-for="slot in [1,2,3]" :key="'slot-'+team.id+'-'+slot">
+                                        <div class="flex-1 text-center">
+                                            <template x-if="getMember(team, slot)">
+                                                <div class="relative">
+                                                    <img
+                                                        :src="'/images/iconos_webp/' + getMember(team, slot).pokemon_id + '.webp'"
+                                                        loading="lazy"
+                                                        decoding="async"
+                                                        :alt="getMember(team, slot).nombre"
+                                                        :title="getMember(team, slot).nombre"
+                                                        class="w-24 h-24 object-contain mx-auto"
+                                                        onerror="this.style.display='none'"
+                                                    >
+                                                    <button
+                                                        @click="!isInExploration(team.id) && removeMember(team, getMember(team, slot))"
+                                                        :disabled="isInExploration(team.id)"
+                                                        class="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white rounded-full text-[8px] flex items-center justify-center hover:bg-red-600 transition-colors disabled:opacity-30"
+                                                        aria-label="Quitar miembro"
+                                                    >
+                                                        ✕
+                                                    </button>
+                                                    <p class="text-[10px] text-gray-500 dark:text-gray-400 truncate mt-0.5" x-text="getMember(team, slot).nombre"></p>
+                                                    <!-- Role selector -->
+                                                    <select
+                                                        :value="getTeamMember(team, slot)?.behavior || 'VANGUARDIA'"
+                                                        @change="updateMemberRole(team, getTeamMember(team, slot), $event.target.value)"
+                                                        :disabled="isInExploration(team.id)"
+                                                        class="mt-1 w-full max-w-[6.5rem] mx-auto block px-1 py-0.5 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded text-[10px] text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:opacity-40 disabled:cursor-not-allowed"
+                                                        :aria-label="'Rol de ' + getMember(team, slot).nombre"
+                                                    >
+                                                        <option value="VANGUARDIA">Vanguardia</option>
+                                                        <option value="COMBATIENTE">Combatiente</option>
+                                                        <option value="RECOLECTOR">Recolector</option>
+                                                        <option value="RASTREADOR">Rastreador</option>
+                                                    </select>
+                                                </div>
+                                            </template>
+                                            <template x-if="!getMember(team, slot)">
+                                                <div>
+                                                    <div class="w-24 h-24 mx-auto rounded border-2 border-dashed border-gray-300 dark:border-gray-600 flex items-center justify-center">
+                                                        <span class="text-gray-300 dark:text-gray-600 text-lg">+</span>
+                                                    </div>
+                                                    <p class="text-[10px] text-gray-400 dark:text-gray-500 mt-0.5">Slot <span x-text="slot"></span></p>
+                                                </div>
+                                            </template>
+                                        </div>
+                                    </template>
+                                </div>
+                            </div>
                         </div>
                     </template>
 
-                    <!-- Empty available -->
-                    <template x-if="availablePokemons.length === 0">
-                        <div class="col-span-full text-center py-8">
-                            <p class="text-sm text-gray-400 dark:text-gray-500" x-text="searchQuery || typeFilter ? 'No se encontraron Pokémon' : 'No hay Pokémon disponibles para marcar como favoritos'"></p>
+                    <!-- Empty teams -->
+                    <template x-if="teams.length === 0">
+                        <div class="text-center py-8 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
+                            <svg class="w-12 h-12 mx-auto text-gray-300 dark:text-gray-600 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
+                            </svg>
+                            <p class="text-sm text-gray-500 dark:text-gray-400">No hay equipos creados</p>
                         </div>
                     </template>
                 </div>
             </div>
+
+            <!-- Right 2/3: Available Pokemon (equipos) -->
+            <div class="lg:col-span-2 space-y-6">
+                <!-- Search and Filter -->
+                <div class="flex flex-col sm:flex-row gap-3">
+                    <div class="relative flex-1">
+                        <input
+                            type="text"
+                            x-model="searchQuery"
+                            placeholder="Buscar por nombre o ID..."
+                            class="w-full px-4 py-2 pl-10 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
+                        >
+                        <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                        </svg>
+                    </div>
+                    <div class="relative">
+                        <button
+                            @click="showTypeFilter = !showTypeFilter"
+                            class="px-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors flex items-center gap-2"
+                        >
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/>
+                            </svg>
+                            Tipo
+                        </button>
+                        <template x-if="showTypeFilter">
+                            <div class="absolute right-0 top-full mt-1 z-40 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-lg p-3 w-48 max-h-64 overflow-y-auto">
+                                <button
+                                    @click="typeFilter = null; showTypeFilter = false"
+                                    class="w-full text-left px-3 py-1.5 text-sm rounded hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                                    :class="typeFilter === null ? 'text-blue-600 dark:text-blue-400 font-medium' : 'text-gray-700 dark:text-gray-300'"
+                                >
+                                    Todos
+                                </button>
+                                @foreach($tipos as $id => $nombre)
+                                <button
+                                    @click="typeFilter = '{{ $nombre }}'; showTypeFilter = false"
+                                    class="w-full text-left px-3 py-1.5 text-sm rounded hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                                    :class="typeFilter === '{{ $nombre }}' ? 'text-blue-600 dark:text-blue-400 font-medium' : 'text-gray-700 dark:text-gray-300'"
+                                >
+                                    {{ $nombre }}
+                                </button>
+                                @endforeach
+                            </div>
+                        </template>
+                    </div>
+                </div>
+
+                <!-- Available Pokemon Section (not assigned to any team) -->
+                <div>
+                    <div class="flex items-center justify-between bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-2 mb-4">
+                        <h2 class="text-sm font-bold uppercase tracking-wide text-gray-700 dark:text-gray-300">Reclutados Disponibles</h2>
+                    </div>
+                    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-2">
+                        <template x-for="pokemon in availablePokemonsTeams" :key="'eq-avail-'+pokemon.id">
+                            <div
+                                class="relative bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 text-center group"
+                                x-data="{ showTeamDropdown: false }"
+                            >
+                                <div class="w-24 h-24 mx-auto">
+                                    <img
+                                        :src="'/images/iconos_webp/' + pokemon.pokemon_id + '.webp'"
+                                        loading="lazy"
+                                        decoding="async"
+                                        :alt="pokemon.nombre"
+                                        :title="pokemon.nombre"
+                                        class="w-full h-full object-contain"
+                                        onerror="this.style.display='none'"
+                                    >
+                                </div>
+                                <p class="text-[10px] text-gray-600 dark:text-gray-400 truncate px-1 pb-1" x-text="pokemon.nombre"></p>
+                                <!-- Action buttons -->
+                                <div class="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2 rounded-lg">
+                                    <div class="relative">
+                                        <button
+                                            @click="showTeamDropdown = !showTeamDropdown"
+                                            class="w-8 h-8 bg-green-500 text-white rounded-full flex items-center justify-center hover:bg-green-600 transition-colors text-lg font-bold"
+                                            :aria-label="'Agregar ' + pokemon.nombre + ' a equipo'"
+                                            :title="'Agregar ' + pokemon.nombre + ' a equipo'"
+                                        >
+                                            +
+                                        </button>
+                                        <!-- Team dropdown -->
+                                        <template x-if="showTeamDropdown && teams.length > 0">
+                                            <div class="absolute left-1/2 -translate-x-1/2 top-full mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg p-1 w-36 z-50">
+                                                <template x-for="team in teams" :key="'dd-'+team.id">
+                                                    <button
+                                                        @click="addToTeam(pokemon, team); showTeamDropdown = false"
+                                                        class="w-full text-left px-3 py-1.5 text-xs text-gray-700 dark:text-gray-300 rounded hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                                                        x-text="team.name"
+                                                    ></button>
+                                                </template>
+                                            </div>
+                                        </template>
+                                    </div>
+                                    <!-- Inspect (always available, read-only) -->
+                                    <button
+                                        @click="openDetail(pokemon)"
+                                        class="w-8 h-8 bg-blue-500 text-white rounded-full flex items-center justify-center hover:bg-blue-600 transition-colors"
+                                        :aria-label="'Ver detalle de ' + pokemon.nombre"
+                                        :title="'Ver detalle de ' + pokemon.nombre"
+                                    >
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
+                        </template>
+
+                        <!-- Empty available -->
+                        <template x-if="availablePokemonsTeams.length === 0">
+                            <div class="col-span-full text-center py-8">
+                                <p class="text-sm text-gray-400 dark:text-gray-500" x-text="searchQuery || typeFilter ? 'No se encontraron Pokémon' : 'No hay Pokémon disponibles para asignar'"></p>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+
+                <!-- Assigned Pokemon Section -->
+                <div>
+                    <div class="flex items-center justify-between bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-2 mb-4">
+                        <h2 class="text-sm font-bold uppercase tracking-wide text-gray-700 dark:text-gray-300">Asignados</h2>
+                    </div>
+                    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-2">
+                        <template x-for="pokemon in assignedPokemons" :key="'eq-assigned-'+pokemon.id">
+                            <div class="relative bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden text-center group opacity-60">
+                                <div class="w-24 h-24 mx-auto">
+                                    <img
+                                        :src="'/images/iconos_webp/' + pokemon.pokemon_id + '.webp'"
+                                        loading="lazy"
+                                        decoding="async"
+                                        :alt="pokemon.nombre"
+                                        :title="pokemon.nombre + ' — ' + getTeamName(pokemon.team_id)"
+                                        class="w-full h-full object-contain grayscale"
+                                        onerror="this.style.display='none'"
+                                    >
+                                </div>
+                                <p class="text-[10px] text-gray-500 dark:text-gray-500 truncate px-1 pb-1" x-text="pokemon.nombre"></p>
+                                <!-- Action buttons -->
+                                <div class="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                                    <!-- Inspect (always available, read-only) -->
+                                    <button
+                                        @click="openDetail(pokemon)"
+                                        class="w-8 h-8 bg-blue-500 text-white rounded-full flex items-center justify-center hover:bg-blue-600 transition-colors"
+                                        :aria-label="'Ver detalle de ' + pokemon.nombre"
+                                        :title="'Ver detalle de ' + pokemon.nombre"
+                                    >
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                                        </svg>
+                                    </button>
+                                    <!-- Remove from team (blocked while the team is exploring) -->
+                                    <button
+                                        @click="!pokemonEnExploracion(pokemon) && removeFromTeam(pokemon)"
+                                        :disabled="pokemonEnExploracion(pokemon)"
+                                        :title="pokemonEnExploracion(pokemon) ? 'El equipo está en exploración' : 'Quitar ' + pokemon.nombre + ' de equipo'"
+                                        class="w-8 h-8 bg-orange-500 text-white rounded-full flex items-center justify-center hover:bg-orange-600 transition-colors text-sm disabled:opacity-30 disabled:cursor-not-allowed"
+                                        :aria-label="'Quitar ' + pokemon.nombre + ' de equipo'"
+                                    >
+                                        →
+                                    </button>
+                                </div>
+                            </div>
+                        </template>
+
+                        <!-- Empty assigned -->
+                        <template x-if="assignedPokemons.length === 0">
+                            <div class="col-span-full text-center py-8">
+                                <p class="text-sm text-gray-400 dark:text-gray-500">No hay Pokémon asignados a equipos</p>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
+
+    <!-- ═══════════════════════════════════════════════════════════════════ -->
+    <!-- MODALS (shared between tabs)                                       -->
+    <!-- ═══════════════════════════════════════════════════════════════════ -->
 
     <!-- Favorites Management Modal -->
     <template x-if="showFavoritosModal">
@@ -213,7 +596,7 @@
                 <!-- Content: scrollable grid of all reclutados (not in exploration), each with star toggle -->
                 <div class="flex-1 overflow-y-auto p-6">
                     <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-                        <template x-for="pokemon in allGestionables" :key="pokemon.id">
+                        <template x-for="pokemon in allGestionables" :key="'mgmt-'+pokemon.id">
                             <div
                                 class="relative bg-white dark:bg-gray-800 rounded-lg shadow-sm border text-center p-2 transition-all cursor-pointer"
                                 :class="pokemon.favorito
@@ -411,7 +794,41 @@
         </div>
     </template>
 
-    <!-- Pokemon Detail Modal (reused from equipos) -->
+    <!-- Confirm Delete Team Modal -->
+    <template x-if="showDeleteModal">
+        <div class="fixed inset-0 z-50 flex items-center justify-center p-4" @keydown.escape.window="showDeleteModal = false">
+            <div class="absolute inset-0 bg-black/60" @click="showDeleteModal = false"></div>
+            <div class="relative bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-sm p-6">
+                <div class="text-center mb-4">
+                    <div class="w-12 h-12 mx-auto mb-3 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
+                        <svg class="w-6 h-6 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                        </svg>
+                    </div>
+                    <h3 class="text-lg font-bold text-gray-900 dark:text-white">Eliminar equipo</h3>
+                    <p class="text-sm text-gray-500 dark:text-gray-400 mt-2">
+                        ¿Seguro que quieres eliminar <strong class="text-gray-900 dark:text-white" x-text="teamToDelete?.name"></strong>? Los miembros serán liberados.
+                    </p>
+                </div>
+                <div class="flex gap-3">
+                    <button
+                        @click="showDeleteModal = false; teamToDelete = null"
+                        class="flex-1 px-4 py-2.5 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg text-sm font-medium hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                    >
+                        Cancelar
+                    </button>
+                    <button
+                        @click="deleteTeam()"
+                        class="flex-1 px-4 py-2.5 bg-red-600 text-white rounded-lg text-sm font-bold hover:bg-red-700 transition-colors"
+                    >
+                        Eliminar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </template>
+
+    <!-- Pokemon Detail Modal (shared) -->
     <template x-if="showDetailModal">
         <div class="fixed inset-0 z-50 flex items-center justify-center p-4" @keydown.escape.window="closeDetail()" role="dialog" aria-modal="true" aria-labelledby="detail-modal-title">
             <div class="absolute inset-0 bg-black/60" @click="closeDetail()"></div>
@@ -488,8 +905,8 @@
                         </div>
                     </template>
 
-                    <!-- Locked while exploring -->
-                    <template x-if="detailPokemon && enExploracion(detailPokemon.id)">
+                    <!-- Locked while exploring (individual or team) -->
+                    <template x-if="detailPokemon && (enExploracion(detailPokemon.id) || pokemonEnExploracion(detailPokemon))">
                         <div class="px-3 py-2 rounded-lg bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400 text-xs" role="status">
                             Este Pokémon está en exploración activa: no puedes evolucionarlo ni liberarlo hasta que vuelva.
                         </div>
@@ -586,8 +1003,8 @@
                                 <div class="flex flex-col sm:flex-row gap-2 border-t border-gray-100 dark:border-gray-700 pt-3">
                                     <button
                                         @click="evolvePokemon()"
-                                        :disabled="detailLoading || (detailPokemon && enExploracion(detailPokemon.id)) || !opcionSeleccionada()?.puede_evolucionar"
-                                        :title="detailPokemon && enExploracion(detailPokemon.id)
+                                        :disabled="detailLoading || detailPokemon && (enExploracion(detailPokemon.id) || pokemonEnExploracion(detailPokemon)) || !opcionSeleccionada()?.puede_evolucionar"
+                                        :title="(detailPokemon && (enExploracion(detailPokemon.id) || pokemonEnExploracion(detailPokemon)))
                                             ? 'El Pokémon está en exploración'
                                             : (opcionSeleccionada()?.puede_evolucionar ? 'Evolucionar Pokémon' : 'Completa la exp de tipo para evolucionar')"
                                         class="flex-1 px-4 py-2.5 bg-green-600 text-white rounded-lg text-sm font-bold hover:bg-green-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
@@ -596,8 +1013,8 @@
                                     </button>
                                     <button
                                         @click="releasePokemon()"
-                                        :disabled="detailLoading || (detailPokemon && enExploracion(detailPokemon.id))"
-                                        :title="detailPokemon && enExploracion(detailPokemon.id) ? 'El Pokémon está en exploración' : 'Liberar Pokémon'"
+                                        :disabled="detailLoading || detailPokemon && (enExploracion(detailPokemon.id) || pokemonEnExploracion(detailPokemon))"
+                                        :title="detailPokemon && (enExploracion(detailPokemon.id) || pokemonEnExploracion(detailPokemon)) ? 'El Pokémon está en exploración' : 'Liberar Pokémon'"
                                         class="flex-1 px-4 py-2.5 bg-red-600 text-white rounded-lg text-sm font-bold hover:bg-red-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                                     >
                                         Liberar
@@ -622,18 +1039,28 @@ function favoritosApp() {
         // ─── Datos del servidor ─────────────────────────────────────────────
         reclutados: @json($reclutados ?? []),
         reclutadosEnExploracion: @json($reclutadosEnExploracion ?? []),
-        // helpers para el modal de detalle (evolution/release)
         teams: @json($teams ?? []),
         teamPokemonIds: @json($teamIds ?? []),
         equiposEnExploracion: @json($equiposEnExploracion ?? []),
 
-        // ─── UI ─────────────────────────────────────────────────────────────
+        // ─── UI: Tabs ──────────────────────────────────────────────────────
+        activeTab: 'favoritos',
+
+        // ─── UI: Favoritos ─────────────────────────────────────────────────
         searchQuery: '',
         typeFilter: null,
         showTypeFilter: false,
         togglingFavoritoId: null,
+        showFavoritosModal: false,
 
-        // ─── Detail Modal ───────────────────────────────────────────────────
+        // ─── UI: Equipos ───────────────────────────────────────────────────
+        selectedTeamId: null,
+        showNewTeamForm: false,
+        newTeamName: '',
+        showDeleteModal: false,
+        teamToDelete: null,
+
+        // ─── Detail Modal (shared) ─────────────────────────────────────────
         showDetailModal: false,
         detailPokemon: null,
         detailLoading: false,
@@ -641,9 +1068,6 @@ function favoritosApp() {
         detailEvolucionesLoading: false,
         detailEvolucionesError: false,
         selectedEvolucionId: null,
-
-        // ─── Favorites Management Modal ─────────────────────────────────────
-        showFavoritosModal: false,
 
         // ─── Exploration Modal ──────────────────────────────────────────────
         showExploracionModal: false,
@@ -662,7 +1086,9 @@ function favoritosApp() {
         previewError: '',
         sendingExploracion: false,
 
-        // ─── Computed getters ───────────────────────────────────────────────
+        // ═══════════════════════════════════════════════════════════════════════
+        // COMPUTED GETTERS
+        // ═══════════════════════════════════════════════════════════════════════
 
         get favoritos() {
             return this.reclutados.filter(r => r.favorito === true);
@@ -676,9 +1102,9 @@ function favoritosApp() {
             return this.reclutados.filter(r => !this.enExploracion(r.id));
         },
 
-        get availablePokemons() {
+        /** Favoritos tab: non-favorited reclutados with search/type filter */
+        get availablePokemonsFav() {
             let result = this.noFavoritos;
-
             if (this.searchQuery.trim()) {
                 const q = this.searchQuery.toLowerCase().trim();
                 result = result.filter(r =>
@@ -686,26 +1112,56 @@ function favoritosApp() {
                     String(r.pokemon_id).includes(q)
                 );
             }
-
             if (this.typeFilter) {
                 result = result.filter(r =>
                     r.pokemon && r.pokemon.types &&
                     r.pokemon.types.some(t => t.tipo_nombre === this.typeFilter)
                 );
             }
-
             return result;
         },
 
-        // ─── Init ───────────────────────────────────────────────────────────
+        /** Equipos tab: reclutados not assigned to any team */
+        get availablePokemonsTeams() {
+            let result = this.reclutados.filter(r => !this.teamPokemonIds.includes(r.id));
+            if (this.searchQuery.trim()) {
+                const q = this.searchQuery.toLowerCase().trim();
+                result = result.filter(r =>
+                    r.nombre.toLowerCase().includes(q) ||
+                    String(r.pokemon_id).includes(q)
+                );
+            }
+            if (this.typeFilter) {
+                result = result.filter(r =>
+                    r.pokemon && r.pokemon.types &&
+                    r.pokemon.types.some(t => t.tipo_nombre === this.typeFilter)
+                );
+            }
+            return result;
+        },
+
+        /** Equipos tab: reclutados already assigned to a team */
+        get assignedPokemons() {
+            let result = this.reclutados.filter(r => this.teamPokemonIds.includes(r.id));
+            if (this.searchQuery.trim()) {
+                const q = this.searchQuery.toLowerCase().trim();
+                result = result.filter(r =>
+                    r.nombre.toLowerCase().includes(q) ||
+                    String(r.pokemon_id).includes(q)
+                );
+            }
+            return result;
+        },
+
+        // ═══════════════════════════════════════════════════════════════════════
+        // INIT
+        // ═══════════════════════════════════════════════════════════════════════
 
         init() {
-            // Normalizar favorito (tolerante: si el backend no lo envía, false)
             this.reclutados.forEach(r => {
                 if (typeof r.favorito !== 'boolean') r.favorito = false;
             });
 
-            // Close type filter on outside click
             document.addEventListener('click', (e) => {
                 if (!e.target.closest('[x-data]')?.contains(e.target)) {
                     this.showTypeFilter = false;
@@ -713,68 +1169,21 @@ function favoritosApp() {
             });
         },
 
-        // ─── Favorito ───────────────────────────────────────────────────────
+        // ═══════════════════════════════════════════════════════════════════════
+        // SHARED HELPERS
+        // ═══════════════════════════════════════════════════════════════════════
 
         enExploracion(reclutadoId) {
             return this.reclutadosEnExploracion.includes(reclutadoId);
         },
 
-        async toggleFavorito(pokemon) {
-            if (this.togglingFavoritoId === pokemon.id) return;
-            this.togglingFavoritoId = pokemon.id;
-            try {
-                const response = await fetch('/api/reclutados/' + pokemon.id + '/toggle-favorito', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '',
-                        'Accept': 'application/json',
-                    },
-                });
-                if (response.ok) {
-                    const data = await response.json();
-                    pokemon.favorito = !!data.favorito;
-                } else {
-                    const data = await response.json().catch(() => ({}));
-                    console.warn('toggle favorito falló:', data.message || response.status);
-                    alert(data.message || 'No se pudo actualizar el favorito.');
-                }
-            } catch (err) {
-                console.error('Error toggling favorito:', err);
-                alert('Error de conexión al actualizar el favorito.');
-            } finally {
-                this.togglingFavoritoId = null;
-            }
+        isInExploration(teamId) {
+            return this.equiposEnExploracion.some(e =>
+                typeof e === 'object' && e !== null ? e.equipo_id === teamId : e === teamId
+            );
         },
 
-        openFavoritosModal() {
-            this.showFavoritosModal = true;
-        },
-
-        closeFavoritosModal() {
-            this.showFavoritosModal = false;
-        },
-
-        // ─── Detail Modal (reused) ──────────────────────────────────────────
-
-        openDetail(pokemon) {
-            this.detailPokemon = pokemon;
-            this.detailLoading = false;
-            this.showDetailModal = true;
-            this.cargarEvoluciones(pokemon);
-        },
-
-        closeDetail() {
-            this.showDetailModal = false;
-            this.detailPokemon = null;
-            this.detailLoading = false;
-            this.detailEvoluciones = [];
-            this.detailEvolucionesLoading = false;
-            this.detailEvolucionesError = false;
-            this.selectedEvolucionId = null;
-        },
-
-        // ─── Nivel/exp (replica NivelHelper: curva media ×10) ──────────────
+        // ─── Nivel/exp ─────────────────────────────────────────────────────
 
         expTotalDe(pokemon) {
             if (!pokemon) return 0;
@@ -861,7 +1270,36 @@ function favoritosApp() {
             return mapa[String(nombre || '').toLowerCase()] || 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300';
         },
 
-        // ─── Acciones: evolucionar / liberar ───────────────────────────────
+        riesgoClass(riesgo) {
+            const clases = {
+                'Bajo': 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400',
+                'Medio': 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400',
+                'Alto': 'bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400',
+                'Extremo': 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400',
+            };
+            return clases[riesgo] || 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400';
+        },
+
+        // ═══════════════════════════════════════════════════════════════════════
+        // DETAIL MODAL (shared)
+        // ═══════════════════════════════════════════════════════════════════════
+
+        openDetail(pokemon) {
+            this.detailPokemon = pokemon;
+            this.detailLoading = false;
+            this.showDetailModal = true;
+            this.cargarEvoluciones(pokemon);
+        },
+
+        closeDetail() {
+            this.showDetailModal = false;
+            this.detailPokemon = null;
+            this.detailLoading = false;
+            this.detailEvoluciones = [];
+            this.detailEvolucionesLoading = false;
+            this.detailEvolucionesError = false;
+            this.selectedEvolucionId = null;
+        },
 
         async cargarEvoluciones(pokemon) {
             if (!pokemon) return;
@@ -898,9 +1336,285 @@ function favoritosApp() {
             return this.detailEvoluciones.find(o => o.pokemon_id === this.selectedEvolucionId) || null;
         },
 
+        // ═══════════════════════════════════════════════════════════════════════
+        // FAVORITOS LOGIC
+        // ═══════════════════════════════════════════════════════════════════════
+
+        async toggleFavorito(pokemon) {
+            if (this.togglingFavoritoId === pokemon.id) return;
+            this.togglingFavoritoId = pokemon.id;
+            try {
+                const response = await fetch('/api/reclutados/' + pokemon.id + '/toggle-favorito', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '',
+                        'Accept': 'application/json',
+                    },
+                    body: JSON.stringify({ habitat_id: null }),
+                });
+                if (response.ok) {
+                    const data = await response.json();
+                    pokemon.favorito = !!data.favorito;
+                } else {
+                    const data = await response.json().catch(() => ({}));
+                    console.warn('toggle favorito falló:', data.message || response.status);
+                    alert(data.message || 'No se pudo actualizar el favorito.');
+                }
+            } catch (err) {
+                console.error('Error toggling favorito:', err);
+                alert('Error de conexión al actualizar el favorito.');
+            } finally {
+                this.togglingFavoritoId = null;
+            }
+        },
+
+        openFavoritosModal() {
+            this.showFavoritosModal = true;
+        },
+
+        closeFavoritosModal() {
+            this.showFavoritosModal = false;
+        },
+
+        // ═══════════════════════════════════════════════════════════════════════
+        // EQUIPOS LOGIC
+        // ═══════════════════════════════════════════════════════════════════════
+
+        getMember(team, slot) {
+            const member = team.members.find(m => m.slot === slot);
+            return member ? member.reclutado : null;
+        },
+
+        getTeamMember(team, slot) {
+            return team.members.find(m => m.slot === slot) || null;
+        },
+
+        getTeamName(teamId) {
+            const team = this.teams.find(t => t.id === teamId);
+            return team ? team.name : '';
+        },
+
+        composicionBadge(team) {
+            if (!team.members || team.members.length !== 3) return null;
+            const nombre = team.sinergia_nombre;
+            if (typeof nombre === 'string' && nombre.trim()) {
+                return {
+                    texto: 'Composición: ' + nombre,
+                    clase: 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400',
+                };
+            }
+            return {
+                texto: 'Composición neutra',
+                clase: 'bg-gray-200 dark:bg-gray-600 text-gray-600 dark:text-gray-300',
+            };
+        },
+
+        pokemonTeamId(pokemon) {
+            if (!pokemon) return null;
+            const team = this.teams.find(t => t.members.some(m => m.pokemon_id === pokemon.id));
+            return team ? team.id : null;
+        },
+
+        pokemonEnExploracion(pokemon) {
+            const teamId = this.pokemonTeamId(pokemon);
+            return teamId !== null && this.isInExploration(teamId);
+        },
+
+        async createTeam() {
+            if (!this.newTeamName.trim()) return;
+            try {
+                const response = await fetch('/teams', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '',
+                        'Accept': 'application/json',
+                    },
+                    body: JSON.stringify({ name: this.newTeamName.trim() }),
+                });
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.team) {
+                        this.teams.push({ ...data.team, members: [] });
+                        this.showNewTeamForm = false;
+                        this.newTeamName = '';
+                    }
+                } else {
+                    await this.handleError(response);
+                }
+            } catch (err) {
+                console.error('Error creating team:', err);
+            }
+        },
+
+        confirmDeleteTeam(team) {
+            this.teamToDelete = team;
+            this.showDeleteModal = true;
+        },
+
+        async deleteTeam() {
+            if (!this.teamToDelete) return;
+            try {
+                const response = await fetch('/teams/' + this.teamToDelete.id, {
+                    method: 'DELETE',
+                    headers: {
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '',
+                        'Accept': 'application/json',
+                    },
+                });
+                if (response.ok) {
+                    this.teamToDelete.members.forEach(m => {
+                        if (m.pokemon_id) {
+                            this.teamPokemonIds = this.teamPokemonIds.filter(id => id !== m.pokemon_id);
+                        }
+                    });
+                    this.teams = this.teams.filter(t => t.id !== this.teamToDelete.id);
+                    this.showDeleteModal = false;
+                    this.teamToDelete = null;
+                } else {
+                    await this.handleError(response);
+                }
+            } catch (err) {
+                console.error('Error deleting team:', err);
+            }
+        },
+
+        startRename(team) {
+            const newName = prompt('Nuevo nombre del equipo:', team.name);
+            if (newName && newName.trim() && newName.trim() !== team.name) {
+                fetch('/teams/' + team.id, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '',
+                        'Accept': 'application/json',
+                    },
+                    body: JSON.stringify({ name: newName.trim() }),
+                }).then(r => r.json()).then(data => {
+                    if (data.team) {
+                        team.name = data.team.name;
+                    } else if (data.error) {
+                        alert(data.error);
+                    }
+                }).catch(err => console.error('Error renaming:', err));
+            }
+        },
+
+        async addToTeam(pokemon, team) {
+            const emptySlot = [1,2,3].find(s => !team.members.some(m => m.slot === s));
+            if (!emptySlot) {
+                alert('Este equipo está lleno');
+                return;
+            }
+            try {
+                const response = await fetch('/teams/add-member', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '',
+                        'Accept': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        team_id: team.id,
+                        reclutado_id: pokemon.id,
+                        slot: emptySlot,
+                        behavior: 'VANGUARDIA',
+                    }),
+                });
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.member) {
+                        const t = this.teams.find(t => t.id === data.member.team_id);
+                        if (t) {
+                            t.members.push({
+                                id: data.member.id,
+                                team_id: data.member.team_id,
+                                pokemon_id: data.member.pokemon_id,
+                                slot: data.member.slot,
+                                behavior: data.member.behavior || 'VANGUARDIA',
+                                reclutado: pokemon,
+                            });
+                        }
+                        this.teamPokemonIds.push(pokemon.id);
+                    }
+                } else {
+                    await this.handleError(response);
+                }
+            } catch (err) {
+                console.error('Error adding member:', err);
+            }
+        },
+
+        async removeMember(team, pokemon) {
+            const member = team.members.find(m => m.pokemon_id === pokemon.id);
+            if (!member) return;
+            try {
+                const response = await fetch('/teams/remove-member', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '',
+                        'Accept': 'application/json',
+                    },
+                    body: JSON.stringify({ member_id: member.id }),
+                });
+                if (response.ok) {
+                    team.members = team.members.filter(m => m.id !== member.id);
+                    this.teamPokemonIds = this.teamPokemonIds.filter(id => id !== pokemon.id);
+                } else {
+                    await this.handleError(response);
+                }
+            } catch (err) {
+                console.error('Error removing member:', err);
+            }
+        },
+
+        removeFromTeam(pokemon) {
+            const team = this.teams.find(t => t.members.some(m => m.pokemon_id === pokemon.id));
+            if (team) {
+                this.removeMember(team, pokemon);
+            }
+        },
+
+        async updateMemberRole(team, member, behavior) {
+            if (!member || !member.id || !behavior) return;
+            try {
+                const response = await fetch('/teams/update-member-role', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '',
+                        'Accept': 'application/json',
+                    },
+                    body: JSON.stringify({ member_id: member.id, behavior }),
+                });
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.member) {
+                        member.behavior = data.member.behavior || behavior;
+                    }
+                    location.reload();
+                } else {
+                    await this.handleError(response);
+                }
+            } catch (err) {
+                console.error('Error updating member role:', err);
+            }
+        },
+
+        // ═══════════════════════════════════════════════════════════════════════
+        // EVOLVE / RELEASE (shared — respects both individual & team exploration)
+        // ═══════════════════════════════════════════════════════════════════════
+
+        _pokemonBloqueado(pokemon) {
+            if (!pokemon) return true;
+            return this.enExploracion(pokemon.id) || this.pokemonEnExploracion(pokemon);
+        },
+
         puedeAlimentar(requisito) {
             if (!requisito) return false;
-            if (this.detailPokemon && this.enExploracion(this.detailPokemon.id)) return false;
+            if (this._pokemonBloqueado(this.detailPokemon)) return false;
             if (requisito.actual >= requisito.necesario) return false;
             if (requisito.caramelosDisponibles <= 0) return false;
             return true;
@@ -940,7 +1654,7 @@ function favoritosApp() {
 
         async evolvePokemon() {
             const pokemon = this.detailPokemon;
-            if (!pokemon || this.enExploracion(pokemon.id)) return;
+            if (!pokemon || this._pokemonBloqueado(pokemon)) return;
             if (this.detailEvoluciones.length > 1 && !this.selectedEvolucionId) {
                 alert('Selecciona a qué pokémon evolucionar');
                 return;
@@ -975,7 +1689,7 @@ function favoritosApp() {
 
         async releasePokemon() {
             const pokemon = this.detailPokemon;
-            if (!pokemon || this.enExploracion(pokemon.id)) return;
+            if (!pokemon || this._pokemonBloqueado(pokemon)) return;
             if (!confirm('¿Seguro que quieres liberar a ' + (pokemon.nombre || 'este Pokémon') + '? Esta acción no se puede deshacer.')) return;
             this.detailLoading = true;
             try {
@@ -990,6 +1704,10 @@ function favoritosApp() {
                     const data = await response.json();
                     if (data && data.success !== false) {
                         this.reclutados = this.reclutados.filter(r => r.id !== pokemon.id);
+                        this.teamPokemonIds = this.teamPokemonIds.filter(id => id !== pokemon.id);
+                        this.teams.forEach(t => {
+                            t.members = t.members.filter(m => m.pokemon_id !== pokemon.id);
+                        });
                         this.closeDetail();
                         return;
                     }
@@ -1020,7 +1738,9 @@ function favoritosApp() {
             }
         },
 
-        // ─── Exploration Modal ──────────────────────────────────────────────
+        // ═══════════════════════════════════════════════════════════════════════
+        // EXPLORATION MODAL
+        // ═══════════════════════════════════════════════════════════════════════
 
         async openExploracionModal(pokemon) {
             this.exploracionPokemon = pokemon;
@@ -1035,12 +1755,9 @@ function favoritosApp() {
             this.sendingExploracion = false;
             this.showExploracionModal = true;
 
-            // Cargar hábitats si no están cargados
             if (this.habitats.length === 0 && !this.habitatsLoading && !this.habitatsError) {
                 await this.loadHabitats();
             }
-
-            // Cargar preview si hay habitat y nivel
             if (this.exploracionHabitatId && this.exploracionLevel) {
                 this.loadPreview();
             }
@@ -1058,9 +1775,7 @@ function favoritosApp() {
                 const response = await fetch('/datagrid/habitat?per_page=200', {
                     headers: { 'Accept': 'application/json' },
                 });
-                if (!response.ok) {
-                    throw new Error('No se pudieron cargar los hábitats');
-                }
+                if (!response.ok) throw new Error('No se pudieron cargar los hábitats');
                 const data = await response.json();
                 this.habitats = data.data || [];
                 if (this.habitats.length === 0) {
@@ -1076,9 +1791,7 @@ function favoritosApp() {
         },
 
         async loadPreview() {
-            if (!this.exploracionPokemon || !this.exploracionHabitatId || !this.exploracionLevel) {
-                return;
-            }
+            if (!this.exploracionPokemon || !this.exploracionHabitatId || !this.exploracionLevel) return;
             this.previewLoading = true;
             this.previewLoaded = false;
             this.previewError = '';
@@ -1109,26 +1822,13 @@ function favoritosApp() {
             }
         },
 
-        riesgoClass(riesgo) {
-            const clases = {
-                'Bajo': 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400',
-                'Medio': 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400',
-                'Alto': 'bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400',
-                'Extremo': 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400',
-            };
-            return clases[riesgo] || 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400';
-        },
-
         async confirmExploracion() {
             if (!this.exploracionPokemon || !this.exploracionHabitatId || this.sendingExploracion) return;
-
-            // Client-side validation: no enviar si ya está en exploración
             if (this.enExploracion(this.exploracionPokemon.id)) {
                 alert('Este Pokémon ya está en una exploración activa.');
                 this.closeExploracionModal();
                 return;
             }
-
             this.sendingExploracion = true;
             try {
                 const body = {
@@ -1136,7 +1836,6 @@ function favoritosApp() {
                     habitat_id: this.exploracionHabitatId,
                     level: this.exploracionLevel,
                 };
-
                 if (this.durationMode === 'hours') {
                     body.duracion_horas = this.durationHours;
                 } else if (this.durationMode === 'return_time') {
@@ -1144,7 +1843,6 @@ function favoritosApp() {
                 } else {
                     body.indefinido = true;
                 }
-
                 const response = await fetch('/api/exploraciones/store-individual', {
                     method: 'POST',
                     headers: {
@@ -1154,7 +1852,6 @@ function favoritosApp() {
                     },
                     body: JSON.stringify(body),
                 });
-
                 if (response.ok) {
                     location.reload();
                 } else {
