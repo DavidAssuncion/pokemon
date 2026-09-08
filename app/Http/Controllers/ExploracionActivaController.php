@@ -7,47 +7,35 @@ namespace App\Http\Controllers;
 use App\Models\ExploracionActiva;
 use App\Models\Habitat;
 use App\Models\Pokemon;
+use App\Models\PokemonStat;
+use App\Models\PokemonType;
 use App\Models\Reclutado;
 use App\Models\User;
 use Carbon\Carbon;
-use Carbon\CarbonInterface;
 use Illuminate\Contracts\View\View;
-use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Collection as BaseCollection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
+use Src\Exploraciones\App\FabricaCapacidadesStats;
 use Src\Exploraciones\App\ProcesarExploracionCommand;
-use Src\Exploraciones\Domain\CapacidadesStats;
+use Src\Exploraciones\Domain\EstimadorRecompensasExploracion;
 use Src\Exploraciones\Domain\EvaluadorExploracion;
+use Src\Exploraciones\Domain\RolExploracion;
+use Src\Exploraciones\Presentation\PresentadorExploraciones;
 use Src\Habitats\App\ValidadorExploracion;
 use Src\Shared\Bus\CommandBus;
 use Src\Shared\Domain\NivelHelper;
+use Src\Shared\Tipos\TipoPokemon;
 
 class ExploracionActivaController extends Controller
 {
-    /**
-     * Datos de stat por id (índice = stat id): nombre en español alineado con
-     * el fallback JS de la vista (statName) — StatEnum::label() devuelve
-     * 'PS (HP)' para HP y divergiría — y slug usado por el frontend para los
-     * iconos de los caramelos EV.
-     *
-     * @var array<int, array{nombre: string, slug: string}>
-     */
-    private const STATS = [
-        1 => ['nombre' => 'PS', 'slug' => 'hp'],
-        2 => ['nombre' => 'Ataque', 'slug' => 'atk'],
-        3 => ['nombre' => 'Defensa', 'slug' => 'def'],
-        4 => ['nombre' => 'Ataque Especial', 'slug' => 'atksp'],
-        5 => ['nombre' => 'Defensa Especial', 'slug' => 'defsp'],
-        6 => ['nombre' => 'Velocidad', 'slug' => 'spd'],
-    ];
-
     public function __construct(
         private readonly ValidadorExploracion $validadorExploracion,
         private readonly CommandBus $bus,
+        private readonly EstimadorRecompensasExploracion $estimador,
+        private readonly PresentadorExploraciones $presentador,
     ) {
     }
 
@@ -57,18 +45,21 @@ class ExploracionActivaController extends Controller
             ->with('reclutado', 'habitat')
             ->get();
 
+        // RF-A: excluye canceladas de "Resultados por revisar".
         $terminadas = ExploracionActiva::whereNotNull('regreso')
             ->with('reclutado', 'habitat')
-            ->get();
+            ->get()
+            ->reject(fn (ExploracionActiva $exp): bool => $this->estaCancelada($exp))
+            ->values();
 
-        $nombres = $this->nombresPokemon($activas, $terminadas);
+        $nombres = $this->presentador->nombresPokemon($activas, $terminadas);
 
         return view('exploraciones.index', [
             'activas' => $activas
-                ->map(fn (ExploracionActiva $exp) => $this->toActiva($exp, $nombres))
+                ->map(fn (ExploracionActiva $exp) => $this->presentador->toActiva($exp, $nombres))
                 ->all(),
             'terminadas' => $terminadas
-                ->map(fn (ExploracionActiva $exp) => $this->toTerminada($exp, $nombres))
+                ->map(fn (ExploracionActiva $exp) => $this->presentador->toTerminada($exp, $nombres))
                 ->all(),
         ]);
     }
@@ -85,32 +76,142 @@ class ExploracionActivaController extends Controller
             'reclutado_id' => ['required', 'integer', Rule::exists('reclutados', 'id')->where('user_id', Auth::id())],
             'habitat_id' => 'required|integer|exists:habitats,id',
             'level' => 'required|integer|min:1|max:3',
+            'duracion_horas' => 'nullable|integer|min:1|max:72',
+            'duration_hours' => 'nullable|integer|min:1|max:72',
+            'return_time' => 'nullable|date_format:H:i',
         ]);
 
         $usuario = Auth::user();
         $reclutado = Reclutado::with('pokemon.stats', 'pokemon.types')->findOrFail((int) $data['reclutado_id']);
         $habitat = Habitat::find((int) $data['habitat_id']);
         $nivel = (int) $data['level'];
-        $minLvl = $this->minLvlDelHabitat($habitat, $nivel);
+        $minLvl = $this->presentador->minLvlDelHabitat($habitat, $nivel);
 
-        $capacidades = CapacidadesStats::desdeReclutado($reclutado, $usuario)->todas();
+        $capacidades = FabricaCapacidadesStats::desdeReclutado($reclutado, $usuario);
 
         // Riesgo simple (exploración individual): combate vs dificultad base
         // normal del hábitat (30 + peligro×5).
         $peligro = $habitat?->peligro ?? 1;
         $dificultad = EvaluadorExploracion::dificultad('normal', max(1, $peligro));
-        $riesgo = $capacidades['combate'] >= $dificultad
+        $combate = $capacidades->combate();
+        $riesgo = $combate >= $dificultad
             ? 'Bajo'
-            : ($capacidades['combate'] >= $dificultad - EvaluadorExploracion::MARGEN_EXITO_CON_COSTE ? 'Medio' : 'Alto');
+            : ($combate >= $dificultad - EvaluadorExploracion::MARGEN_EXITO_CON_COSTE ? 'Medio' : 'Alto');
+
+        // RF-D: recompensas esperadas (estimador puro) sobre el pool del hábitat.
+        $porHoras = $this->porHorasDe($data);
+        $pool = $this->poolParaEstimador($habitat, $nivel);
+        $nivelSalvaje = max(1, $minLvl ?? $dificultad);
+        $estimacion = $this->estimador->estimar(
+            pool: $pool,
+            porHoras: $porHoras,
+            capacidades: $capacidades,
+            dificultad: $dificultad,
+            nivelSalvaje: $nivelSalvaje,
+            cadenas: $this->cadenasDelPool($pool),
+        );
 
         return response()->json([
-            'capacidades' => $capacidades,
+            'capacidades' => $capacidades->todas(),
             'nivel_jugador' => $usuario->nivel(),
             'nivel_pokemon' => NivelHelper::nivelDesdeExperiencia($reclutado->exp->total()),
             'min_lvl' => $minLvl,
             'peligro' => $peligro,
             'riesgo' => $riesgo,
+            'rol' => $reclutado->rol()?->value,
+            'rol_sugerido' => RolExploracion::sugeridoPara($capacidades)->value,
+            'recompensas_esperadas' => $estimacion,
         ]);
+    }
+
+    /**
+     * Resuelve las horas previstas para la estimación de recompensas (RF-D):
+     * duracion_horas si se indica, return_time → horas hasta hoy a esa hora
+     * (mínimo 1), o 4 horas por defecto.
+     *
+     * @param  array<string, mixed>  $data
+     */
+    private function porHorasDe(array $data): int
+    {
+        $duracion = (int) ($data['duracion_horas'] ?? $data['duration_hours'] ?? 0);
+        if ($duracion > 0) {
+            return min(72, $duracion);
+        }
+
+        if (isset($data['return_time'])) {
+            $limite = Carbon::today()->setTimeFromTimeString((string) $data['return_time']);
+            $horas = max(1, (int) ceil(now()->diffInMinutes($limite, false) / 60));
+
+            return min(72, $horas);
+        }
+
+        return 4;
+    }
+
+    /**
+     * Pool de pokémon del hábitat-nivel con los campos extra que necesita el
+     * EstimadorRecompensasExploracion (base_experience, evolution_chain_id,
+     * species_id) sobre la misma base de ProcesarExploracionHandler.
+     *
+     * @param  int  $nivel
+     * @return list<array{id:int, capture_rate:int, hatch:int|null, tipos:list<TipoPokemon>, stats:list<array{stat:int,effort:int}>, base_experience:int, evolution_chain_id:?int, species_id:int}>
+     */
+    private function poolParaEstimador(?Habitat $habitat, int $nivel): array
+    {
+        if ($habitat === null) {
+            return [];
+        }
+
+        return $habitat->pokemon()
+            ->wherePivot('level', $nivel)
+            ->get()
+            ->loadMissing('types', 'stats')
+            ->map(fn (Pokemon $pokemon) => [
+                'id' => $pokemon->id,
+                'capture_rate' => $pokemon->capture_rate,
+                'hatch' => $pokemon->hatch,
+                'tipos' => $pokemon->types
+                    ->map(fn (PokemonType $tipo): TipoPokemon => TipoPokemon::from($tipo->type->value))
+                    ->values()
+                    ->all(),
+                'stats' => $pokemon->stats
+                    ->filter(fn (PokemonStat $stat) => $stat->effort > 0)
+                    ->map(fn (PokemonStat $stat) => [
+                        'stat' => $stat->stat->value,
+                        'effort' => $stat->effort,
+                    ])
+                    ->values()
+                    ->all(),
+                'base_experience' => $pokemon->base_experience,
+                'evolution_chain_id' => $pokemon->evolution_chain_id,
+                'species_id' => $pokemon->species_id,
+            ])
+            ->values()
+            ->all();
+    }
+
+    /**
+     * Mapa de especies por cadena evolutiva, para estimar la "fase" de familia.
+     *
+     * @param  list<array{id:int, capture_rate:int, hatch:int|null, tipos:list<TipoPokemon>, stats:list<array{stat:int,effort:int}>, base_experience:int, evolution_chain_id:?int, species_id:int}>  $pool
+     * @return array<int, list<int>>
+     */
+    private function cadenasDelPool(array $pool): array
+    {
+        $ids = array_values(array_unique(array_filter(
+            array_map(fn (array $p): ?int => $p['evolution_chain_id'] ?? null, $pool),
+            static fn (?int $id): bool => $id !== null,
+        )));
+
+        if ($ids === []) {
+            return [];
+        }
+
+        return Pokemon::whereIn('evolution_chain_id', $ids)
+            ->get(['id', 'species_id', 'evolution_chain_id'])
+            ->groupBy('evolution_chain_id')
+            ->map(fn ($grupo) => $grupo->pluck('species_id')->unique()->values()->all())
+            ->all();
     }
 
     public function store(Request $request): RedirectResponse|JsonResponse
@@ -165,10 +266,6 @@ class ExploracionActivaController extends Controller
             return 'El reclutado ya está en una exploración activa.';
         }
 
-        if (! $this->validadorExploracion->equipoDelReclutadoDisponible((int) $data['reclutado_id'])) {
-            return 'El equipo del reclutado está en una exploración activa.';
-        }
-
         $usuario = $request->user();
         $habitat = Habitat::find((int) $data['habitat_id']);
         $minLvl = $habitat?->getAttribute('min_lvl_'.$data['level']);
@@ -204,6 +301,46 @@ class ExploracionActivaController extends Controller
     }
 
     /**
+     * Cancela una exploración activa sin ejecutar el pipeline de recompensas:
+     * marca `regreso = now()` y registra `eventos.cancelada = {motivo, timestamp}`.
+     * No reparte recompensas ni avistados (RF-A). Solo el dueño; 422 si el
+     * regreso ya estaba marcado por otra vía. Idempotente si ya fue cancelada.
+     */
+    public function cancelar(Request $request, ExploracionActiva $exploracion): RedirectResponse|JsonResponse
+    {
+        if ($exploracion->regreso !== null && ! $this->estaCancelada($exploracion)) {
+            if ($request->wantsJson()) {
+                return response()->json(['message' => 'La exploración ya no está activa.'], 422);
+            }
+
+            return redirect()->back()->with('error', 'La exploración ya no está activa.');
+        }
+
+        if ($exploracion->regreso === null) {
+            $eventos = $exploracion->eventos ?? collect();
+            $eventos->put('cancelada', [
+                'motivo' => 'manual',
+                'timestamp' => now()->toIso8601String(),
+            ]);
+
+            $exploracion->update(['regreso' => now(), 'eventos' => $eventos]);
+        }
+
+        if ($request->wantsJson()) {
+            return response()->json(['ok' => true]);
+        }
+
+        return redirect()->back()->with('success', 'Exploración cancelada correctamente.');
+    }
+
+    private function estaCancelada(ExploracionActiva $exploracion): bool
+    {
+        $eventos = $this->presentador->eventosDe($exploracion);
+
+        return $eventos->get('cancelada') !== null;
+    }
+
+    /**
      * Finaliza la exploración manualmente (vuelta anticipada o indefinida)
      * y ejecuta el pipeline de recompensas.
      */
@@ -232,254 +369,5 @@ class ExploracionActivaController extends Controller
         }
 
         return redirect()->back()->with('success', 'Resultados cerrados correctamente.');
-    }
-
-    /**
-     * @param  Collection<int, ExploracionActiva>  $activas
-     * @param  Collection<int, ExploracionActiva>  $terminadas
-     * @return array<array-key, string>
-     */
-    private function nombresPokemon(Collection $activas, Collection $terminadas): array
-    {
-        $ids = [];
-        foreach ($activas as $exp) {
-            foreach ($this->eventosDe($exp)->get('bitacora', []) as $evento) {
-                foreach ($this->idsDeEvento($evento) as $id) {
-                    $ids[] = $id;
-                }
-            }
-        }
-
-        foreach ($terminadas as $exp) {
-            $resultado = $this->eventosDe($exp)->get('resultado', []);
-            foreach ($resultado['capturados'] ?? [] as $capturado) {
-                $ids[] = (int) $capturado['pokemon_id'];
-            }
-        }
-
-        $ids = array_values(array_unique(array_filter($ids, static fn (int $id): bool => $id > 0)));
-
-        return $ids === []
-            ? []
-            : Pokemon::whereIn('id', $ids)->pluck('name', 'id')->all();
-    }
-
-    /**
-     * Eventos de la expedición como Collection (D11: cast 'collection').
-     * null → colección vacía (exploración recién creada sin eventos).
-     *
-     * @return BaseCollection<array-key, mixed>
-     */
-    private function eventosDe(ExploracionActiva $exp): BaseCollection
-    {
-        return $exp->eventos ?? collect();
-    }
-
-    /**
-     * @param  array<string, mixed>  $evento
-     * @return list<int>
-     */
-    private function idsDeEvento(array $evento): array
-    {
-        if (isset($evento['pokemon_ids']) && is_array($evento['pokemon_ids'])) {
-            return array_values(array_map('intval', $evento['pokemon_ids']));
-        }
-
-        if (isset($evento['pokemon_id'])) {
-            return [(int) $evento['pokemon_id']];
-        }
-
-        return [];
-    }
-
-    /**
-     * @param  array<array-key, string>  $nombres
-     * @return array<string, mixed>
-     */
-    private function toActiva(ExploracionActiva $exp, array $nombres): array
-    {
-        $inicio = $exp->inicio_exploracion?->copy() ?? $exp->created_at?->copy() ?? now();
-        $fin = $this->finExploracion($exp, $inicio);
-        $inicioVuelta = $this->inicioVuelta($inicio, $fin);
-        $ahora = now();
-
-        $estado = $inicioVuelta !== null && ! $ahora->lessThan($inicioVuelta)
-            ? 'volviendo'
-            : 'explorando';
-
-        $progreso = 0;
-        if ($fin !== null && $fin->greaterThan($inicio)) {
-            $total = (int) abs($fin->diffInSeconds($inicio));
-            $transcurrido = (int) abs($ahora->diffInSeconds($inicio));
-            $progreso = max(0, min(100, (int) round(($transcurrido / $total) * 100)));
-        }
-
-        $bitacora = [];
-        foreach ($this->eventosDe($exp)->get('bitacora', []) as $evento) {
-            $bitacora[] = $this->transformarEvento($evento, $nombres);
-        }
-
-        $reclutado = $exp->reclutado;
-        $habitat = $exp->habitat;
-
-        return [
-            'id' => $exp->id,
-            'equipo' => $reclutado !== null ? $reclutado->nombre : 'Sin reclutado',
-            'reclutado' => $reclutado !== null ? $reclutado->nombre : null,
-            'habitat' => $habitat !== null ? $habitat->name : 'Sin hábitat',
-            'habitat_id' => $exp->habitat_id,
-            'nivel' => $exp->nivel,
-            'min_lvl' => $this->minLvlDelHabitat($habitat, $exp->nivel),
-            'indefinido' => $exp->indefinido,
-            'duracion_horas' => $exp->duracion_horas,
-            'inicio' => $inicio->toIso8601String(),
-            'inicio_vuelta' => $inicioVuelta?->toIso8601String(),
-            'fin' => $fin?->toIso8601String(),
-            'estado' => $estado,
-            'progreso' => $progreso,
-            'tiempo_perdido' => (int) $this->eventosDe($exp)->get('tiempo_perdido', 0),
-            'bitacora' => $bitacora,
-        ];
-    }
-
-    /**
-     * @param  array<array-key, string>  $nombres
-     * @return array<string, mixed>
-     */
-    private function toTerminada(ExploracionActiva $exp, array $nombres): array
-    {
-        /** @var array<string, mixed> $resultado */
-        $resultado = $this->eventosDe($exp)->get('resultado', []);
-
-        $capturados = [];
-        foreach ($resultado['capturados'] ?? [] as $capturado) {
-            $id = (int) $capturado['pokemon_id'];
-            $capturados[] = [
-                'pokemon_id' => $id,
-                'nombre' => $capturado['nombre'] ?? $nombres[$id] ?? null,
-                'cantidad' => (int) ($capturado['cantidad'] ?? 0),
-            ];
-        }
-
-        $caramelosFamilia = [];
-        foreach ($resultado['caramelos_familia'] ?? [] as $caramelo) {
-            $caramelosFamilia[] = [
-                'evolution_chain_id' => (int) ($caramelo['evolution_chain_id'] ?? 0),
-                'nombre' => $caramelo['nombre'] ?? null,
-                'pokemon_id' => $caramelo['pokemon_id'] ?? null,
-                'cantidad' => (int) ($caramelo['cantidad'] ?? 0),
-            ];
-        }
-
-        $caramelosEv = [];
-        foreach ($resultado['caramelos_ev'] ?? [] as $caramelo) {
-            $stat = (int) ($caramelo['stat'] ?? 0);
-            $statInfo = self::STATS[$stat] ?? null;
-            $caramelosEv[] = [
-                'stat' => $stat,
-                'stat_nombre' => $statInfo['nombre'] ?? null,
-                'stat_slug' => $statInfo['slug'] ?? null,
-                'cantidad' => (int) ($caramelo['cantidad'] ?? 0),
-            ];
-        }
-
-        $caramelosTipo = [];
-        foreach ($resultado['caramelos_tipo'] ?? [] as $caramelo) {
-            $caramelosTipo[] = [
-                'tipo' => $caramelo['tipo'] ?? null,
-                'slug' => $caramelo['slug'] ?? null,
-                'cantidad' => (int) ($caramelo['cantidad'] ?? 0),
-            ];
-        }
-
-        $reclutado = $exp->reclutado;
-        $habitat = $exp->habitat;
-
-        return [
-            'id' => $exp->id,
-            'equipo' => $reclutado !== null ? $reclutado->nombre : 'Sin reclutado',
-            'reclutado' => $reclutado !== null ? $reclutado->nombre : null,
-            'habitat' => $habitat !== null ? $habitat->name : 'Sin hábitat',
-            'nivel' => $exp->nivel,
-            'min_lvl' => $this->minLvlDelHabitat($habitat, $exp->nivel),
-            'resultado' => [
-                'capturados' => $capturados,
-                'caramelos_familia' => $caramelosFamilia,
-                'caramelos_ev' => $caramelosEv,
-                'caramelos_tipo' => $caramelosTipo,
-                'exp' => (int) ($resultado['exp'] ?? 0),
-                'resultado' => (string) ($resultado['resultado'] ?? 'exito'),
-                'duration_real' => (int) ($resultado['duration_real'] ?? 0),
-                'tiempo_perdido' => (int) ($resultado['tiempo_perdido'] ?? 0),
-                'incidentes' => $resultado['incidentes'] ?? [
-                    'encuentros' => 0,
-                    'victorias' => 0,
-                    'huidas' => 0,
-                    'emboscadas' => 0,
-                    'contratiempos' => 0,
-                ],
-            ],
-            'derrotados' => $this->eventosDe($exp)->get('derrotados', []),
-        ];
-    }
-
-    /**
-     * @param  array<string, mixed>  $evento
-     * @param  array<array-key, string>  $nombres
-     * @return array<string, mixed>
-     */
-    private function transformarEvento(array $evento, array $nombres): array
-    {
-        $tipo = $evento['tipo'] ?? 'desconocido';
-
-        if ($tipo === 'caramelo_ev') {
-            $statInfo = self::STATS[(int) ($evento['stat'] ?? 0)] ?? null;
-            $evento['stat_nombre'] = $statInfo['nombre'] ?? null;
-            $evento['stat_slug'] = $statInfo['slug'] ?? null;
-        } elseif (isset($evento['pokemon_id'])) {
-            $evento['nombre'] = $nombres[(int) $evento['pokemon_id']] ?? null;
-        } elseif (isset($evento['pokemon_ids'])) {
-            $ids = array_values(array_filter(
-                array_map('intval', (array) $evento['pokemon_ids']),
-                static fn (int $id): bool => $id > 0
-            ));
-            $evento['nombre'] = $ids === [] ? null : ($nombres[$ids[0]] ?? null);
-        }
-
-        return $evento;
-    }
-
-    /**
-     * Nivel mínimo de jugador requerido por el hábitat para el nivel de
-     * exploración dado (null = sin restricción). Lo consume el badge
-     * "Requiere Nv X" de la vista de exploraciones.
-     */
-    private function minLvlDelHabitat(?Habitat $habitat, int $nivel): ?int
-    {
-        $minLvl = $habitat?->getAttribute('min_lvl_'.$nivel);
-
-        return $minLvl !== null ? (int) $minLvl : null;
-    }
-
-    private function finExploracion(ExploracionActiva $exp, CarbonInterface $inicio): ?CarbonInterface
-    {
-        if ($exp->hora_limite !== null) {
-            return Carbon::today()->setTimeFromTimeString($exp->hora_limite);
-        }
-
-        if ($exp->duracion_horas !== null) {
-            return $inicio->copy()->addHours($exp->duracion_horas);
-        }
-
-        return null;
-    }
-
-    private function inicioVuelta(CarbonInterface $inicio, ?CarbonInterface $fin): ?CarbonInterface
-    {
-        if ($fin === null) {
-            return null;
-        }
-
-        return $fin->copy()->subMinutes(intdiv((int) abs($fin->diffInMinutes($inicio)), 4));
     }
 }
