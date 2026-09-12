@@ -136,9 +136,9 @@ class ReclutadoEvolucionTest extends TestCase
     {
         $this->crearCadenaCharmander();
 
-        $this->assertSame(['Fuego'], ServicioEvolucion::tiposRequeridos(Pokemon::findOrFail(5)));
-        $this->assertSame(['Fuego', 'Volador'], ServicioEvolucion::tiposRequeridos(Pokemon::findOrFail(6)));
-        $this->assertSame([], ServicioEvolucion::tiposRequeridos(null));
+        $this->assertSame(['Fuego'], ServicioEvolucion::tiposRequeridos(Pokemon::findOrFail(5))->toList());
+        $this->assertSame(['Fuego', 'Volador'], ServicioEvolucion::tiposRequeridos(Pokemon::findOrFail(6))->toList());
+        $this->assertSame([], ServicioEvolucion::tiposRequeridos(null)->toList());
     }
 
     public function test_requisitos_incluye_necesario_actual_caramelos_y_slug(): void
@@ -150,11 +150,13 @@ class ReclutadoEvolucionTest extends TestCase
         $requisitos = ServicioEvolucion::requisitos($reclutado, $this->usuario->id);
 
         $this->assertCount(1, $requisitos);
-        $this->assertSame('Fuego', $requisitos[0]['tipo']);
-        $this->assertSame(7210, $requisitos[0]['necesario']);
-        $this->assertSame(0, $requisitos[0]['actual']);
-        $this->assertSame(5, $requisitos[0]['caramelosDisponibles']);
-        $this->assertSame('fuego', $requisitos[0]['slug']);
+        $requisito = $requisitos->first();
+        $this->assertNotNull($requisito);
+        $this->assertSame('Fuego', $requisito->tipo);
+        $this->assertSame(7210, $requisito->necesario);
+        $this->assertSame(0, $requisito->actual);
+        $this->assertSame(5, $requisito->caramelosDisponibles);
+        $this->assertSame('fuego', $requisito->slug);
     }
 
     public function test_requisitos_con_acentos_genera_slug_ascii(): void
@@ -167,8 +169,10 @@ class ReclutadoEvolucionTest extends TestCase
 
         $requisitos = ServicioEvolucion::requisitos($reclutado, $this->usuario->id);
 
-        $this->assertSame('Eléctrico', $requisitos[0]['tipo']);
-        $this->assertSame('electrico', $requisitos[0]['slug']);
+        $requisito = $requisitos->first();
+        $this->assertNotNull($requisito);
+        $this->assertSame('Eléctrico', $requisito->tipo);
+        $this->assertSame('electrico', $requisito->slug);
     }
 
     public function test_puede_evolucionar_requiere_todos_los_tipos(): void

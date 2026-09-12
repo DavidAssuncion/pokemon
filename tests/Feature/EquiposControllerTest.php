@@ -40,7 +40,7 @@ class EquiposControllerTest extends TestCase
         ]);
     }
 
-    private function createReclutado(int $userId, int $pokemonId, string $nombre): Reclutado
+    private function createReclutado(int $userId, int $pokemonId, string $nombre, string $behavior = 'COMBATIENTE'): Reclutado
     {
         return Reclutado::create([
             'user_id' => $userId,
@@ -49,6 +49,7 @@ class EquiposControllerTest extends TestCase
             'exp' => ['exp' => 100],
             'obj_equipados' => [],
             'movimientos' => [],
+            'behavior' => $behavior,
         ]);
     }
 
@@ -607,9 +608,9 @@ class EquiposControllerTest extends TestCase
         $this->createPokemon(1);
         $this->createPokemon(2);
         $this->createPokemon(3);
-        $r1 = $this->createReclutado($user->id, 1, 'A');
-        $r2 = $this->createReclutado($user->id, 2, 'B');
-        $r3 = $this->createReclutado($user->id, 3, 'C');
+        $r1 = $this->createReclutado($user->id, 1, 'A', 'VANGUARDIA');
+        $r2 = $this->createReclutado($user->id, 2, 'B', 'COMBATIENTE');
+        $r3 = $this->createReclutado($user->id, 3, 'C', 'RECOLECTOR');
         TeamMember::create(['team_id' => $team->id, 'pokemon_id' => $r1->id, 'slot' => 1, 'behavior' => 'VANGUARDIA']);
         TeamMember::create(['team_id' => $team->id, 'pokemon_id' => $r2->id, 'slot' => 2, 'behavior' => 'COMBATIENTE']);
         TeamMember::create(['team_id' => $team->id, 'pokemon_id' => $r3->id, 'slot' => 3, 'behavior' => 'RECOLECTOR']);
@@ -663,12 +664,12 @@ class EquiposControllerTest extends TestCase
         $team1 = Team::create(['name' => 'Alpha', 'user_id' => $user->id]);
         $team2 = Team::create(['name' => 'Beta', 'user_id' => $user->id]);
 
-        $r1 = $this->createReclutado($user->id, 1, 'A');
-        $r2 = $this->createReclutado($user->id, 2, 'B');
-        $r3 = $this->createReclutado($user->id, 3, 'C');
-        $r4 = $this->createReclutado($user->id, 4, 'D');
-        $r5 = $this->createReclutado($user->id, 5, 'E');
-        $r6 = $this->createReclutado($user->id, 6, 'F');
+        $r1 = $this->createReclutado($user->id, 1, 'A', 'VANGUARDIA');
+        $r2 = $this->createReclutado($user->id, 2, 'B', 'COMBATIENTE');
+        $r3 = $this->createReclutado($user->id, 3, 'C', 'RASTREADOR');
+        $r4 = $this->createReclutado($user->id, 4, 'D', 'VANGUARDIA');
+        $r5 = $this->createReclutado($user->id, 5, 'E', 'VANGUARDIA');
+        $r6 = $this->createReclutado($user->id, 6, 'F', 'VANGUARDIA');
 
         TeamMember::create(['team_id' => $team1->id, 'pokemon_id' => $r1->id, 'slot' => 1, 'behavior' => 'VANGUARDIA']);
         TeamMember::create(['team_id' => $team1->id, 'pokemon_id' => $r2->id, 'slot' => 2, 'behavior' => 'COMBATIENTE']);
@@ -686,5 +687,47 @@ class EquiposControllerTest extends TestCase
         $this->assertSame('caceria', $teams[0]['sinergia_nombre']);
         // Beta: V+V+V = VVV = 'exploracion_agresiva'
         $this->assertSame('exploracion_agresiva', $teams[1]['sinergia_nombre']);
+    }
+
+    public function test_add_member_permite_slots_hasta_cinco(): void
+    {
+        $user = $this->actingAsUser();
+        $team = Team::create(['name' => 'Mazmorra', 'user_id' => $user->id]);
+
+        foreach ([1, 2, 3, 4, 5] as $slot) {
+            $this->createPokemon(100 + $slot);
+            $reclutado = $this->createReclutado($user->id, 100 + $slot, 'M'.$slot);
+
+            $response = $this->post('/teams/add-member', [
+                'team_id' => $team->id,
+                'reclutado_id' => $reclutado->id,
+                'slot' => $slot,
+                'behavior' => 'VANGUARDIA',
+            ]);
+
+            $response->assertRedirect();
+        }
+
+        $this->assertDatabaseCount('team_members', 5);
+        $this->assertDatabaseHas('team_members', ['team_id' => $team->id, 'slot' => 4]);
+        $this->assertDatabaseHas('team_members', ['team_id' => $team->id, 'slot' => 5]);
+    }
+
+    public function test_add_member_rechaza_slot_seis(): void
+    {
+        $user = $this->actingAsUser();
+        $team = Team::create(['name' => 'Mazmorra', 'user_id' => $user->id]);
+        $this->createPokemon(200);
+        $reclutado = $this->createReclutado($user->id, 200, 'M6');
+
+        $response = $this->post('/teams/add-member', [
+            'team_id' => $team->id,
+            'reclutado_id' => $reclutado->id,
+            'slot' => 6,
+            'behavior' => 'VANGUARDIA',
+        ]);
+
+        $response->assertSessionHasErrors(['slot']);
+        $this->assertDatabaseCount('team_members', 0);
     }
 }

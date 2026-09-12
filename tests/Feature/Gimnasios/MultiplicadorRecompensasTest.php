@@ -16,6 +16,7 @@ use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\Test;
 use Src\CombateEntrenadores\App\OtorgarRecompensasEntrenador;
+use Src\CombateEntrenadores\Domain\DataTransferObjects\DatosModalVictoria;
 use Src\Exploraciones\App\PersistirRecompensas;
 use Src\Exploraciones\Domain\CalculadorRecompensas;
 use Tests\TestCase;
@@ -47,17 +48,12 @@ class MultiplicadorRecompensasTest extends TestCase
         $gimnasio = $this->otorgar(multiplicador: 10.0);
 
         // exp_total con ×10 debe ser 5× el de ×2 (10/2 = 5)
-        $this->assertSame(5 * $entrenador['exp_total'], $gimnasio['exp_total']);
+        $this->assertNotNull($entrenador);
+        $this->assertNotNull($gimnasio);
+        $this->assertSame(5 * $entrenador->expTotal, $gimnasio->expTotal);
     }
 
-    /**
-     * @return array{
-     *     exp_total: int,
-     *     exp_miembro: int,
-     *     caramelos: list<array{nombre: string, imagen: string, cantidad: int}>
-     * }
-     */
-    private function otorgar(?float $multiplicador): array
+    private function otorgar(?float $multiplicador): ?DatosModalVictoria
     {
         $calculador = new CalculadorRecompensas();
         $persistir = $this->createMock(PersistirRecompensas::class);
@@ -75,15 +71,7 @@ class MultiplicadorRecompensasTest extends TestCase
             $args['multiplicador'] = $multiplicador;
         }
 
-        /** @var array{
-         *     exp_total: int,
-         *     exp_miembro: int,
-         *     caramelos: list<array{nombre: string, imagen: string, cantidad: int}>
-         * } $recompensas
-         */
-        $recompensas = $otorgar->otorgar(...$args);
-
-        return $recompensas;
+        return $otorgar->otorgar(...$args);
     }
 
     private function crearPokemonCompleto(int $speciesId): Pokemon

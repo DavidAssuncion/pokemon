@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Src\Gimnasios\Domain;
 
-use Src\Gimnasios\Domain\Collections\IntCollection;
 use Src\Gimnasios\Domain\DataTransferObjects\EquipoEtapaGimnasio;
 use Src\Gimnasios\Domain\Exceptions\GimnasioNoExiste;
+use Src\Shared\Collections\IntCollection;
 use Src\Shared\Tipos\TipoPokemon;
 
 /**
@@ -174,7 +174,7 @@ final class CatalogoGimnasios
                 equipos: [
                     1 => new EquipoEtapaGimnasio(new IntCollection([197]), new IntCollection([319, 229])),
                     2 => new EquipoEtapaGimnasio(new IntCollection([248]), new IntCollection([302, 635])),
-                    3 => new EquipoEtapaGimnasio(new IntCollection([215,215,215, 215, 215]), new IntCollection([461])),
+                    3 => new EquipoEtapaGimnasio(new IntCollection([560]), new IntCollection([461, 861, 461])),
                     4 => new EquipoEtapaGimnasio(new IntCollection([630, 862]), new IntCollection([491])),
                 ],
             ),

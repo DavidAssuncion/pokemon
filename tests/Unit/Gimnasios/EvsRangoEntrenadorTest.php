@@ -6,6 +6,7 @@ namespace Tests\Unit\Gimnasios;
 
 use PHPUnit\Framework\Attributes\Test;
 use Src\Gimnasios\Domain\EvsRangoEntrenador;
+use Src\Pokemon\Domain\Stats\DatosStats;
 use Src\Pokemon\Domain\Stats\StatsValue;
 use Tests\TestCase;
 
@@ -17,7 +18,7 @@ class EvsRangoEntrenadorTest extends TestCase
         // stats: atk=90, spAtk=80, speed=75, hp=50, def=40, spDef=30
         // Los 2 mejores: atk(90), spAtk(80) → principal 128
         // Los 4 restantes: speed(75), hp(50), def(40), spDef(30) → resto 64
-        $statsBase = ['hp' => 50, 'atk' => 90, 'def' => 40, 'spAtk' => 80, 'spDef' => 30, 'speed' => 75];
+        $statsBase = new DatosStats(hp: 50, atk: 90, def: 40, spAtk: 80, spDef: 30, speed: 75);
         $resultado = EvsRangoEntrenador::distribuir(128, 64, $statsBase);
 
         $this->assertInstanceOf(StatsValue::class, $resultado);
@@ -35,7 +36,7 @@ class EvsRangoEntrenadorTest extends TestCase
         // Todos los stats iguales (60), orden fijo: hp, atk, def, spAtk, spDef, speed
         // Los 2 primeros: hp(60), atk(60) → principal 252
         // Los 4 restantes: def(60), spAtk(60), spDef(60), speed(60) → resto 128
-        $statsBase = ['hp' => 60, 'atk' => 60, 'def' => 60, 'spAtk' => 60, 'spDef' => 60, 'speed' => 60];
+        $statsBase = new DatosStats(hp: 60, atk: 60, def: 60, spAtk: 60, spDef: 60, speed: 60);
         $resultado = EvsRangoEntrenador::distribuir(252, 128, $statsBase);
 
         $this->assertSame(252.0, $resultado->hp);
@@ -49,7 +50,7 @@ class EvsRangoEntrenadorTest extends TestCase
     #[Test]
     public function test_gimnasio_64_64_todos_a_64(): void
     {
-        $statsBase = ['hp' => 100, 'atk' => 90, 'def' => 80, 'spAtk' => 70, 'spDef' => 60, 'speed' => 50];
+        $statsBase = new DatosStats(hp: 100, atk: 90, def: 80, spAtk: 70, spDef: 60, speed: 50);
         $resultado = EvsRangoEntrenador::distribuir(64, 64, $statsBase);
 
         $this->assertSame(64.0, $resultado->hp);
@@ -63,7 +64,7 @@ class EvsRangoEntrenadorTest extends TestCase
     #[Test]
     public function test_ruta_0_0_todos_a_0(): void
     {
-        $statsBase = ['hp' => 100, 'atk' => 90, 'def' => 80, 'spAtk' => 70, 'spDef' => 60, 'speed' => 50];
+        $statsBase = new DatosStats(hp: 100, atk: 90, def: 80, spAtk: 70, spDef: 60, speed: 50);
         $resultado = EvsRangoEntrenador::distribuir(0, 0, $statsBase);
 
         $this->assertSame(0.0, $resultado->hp);
@@ -81,7 +82,7 @@ class EvsRangoEntrenadorTest extends TestCase
         // Empate atk(95) vs spAtk(95) → por orden fijo: atk va antes que spAtk
         // Mejores: hp(100), atk(95) → principal 252
         // Resto: spAtk(95), def(30), spDef(30), speed(20) → resto 128
-        $statsBase = ['hp' => 100, 'atk' => 95, 'def' => 30, 'spAtk' => 95, 'spDef' => 30, 'speed' => 20];
+        $statsBase = new DatosStats(hp: 100, atk: 95, def: 30, spAtk: 95, spDef: 30, speed: 20);
         $resultado = EvsRangoEntrenador::distribuir(252, 128, $statsBase);
 
         $this->assertSame(252.0, $resultado->hp, 'hp es el mejor con 100');

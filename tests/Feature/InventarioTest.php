@@ -144,8 +144,8 @@ class InventarioTest extends TestCase
         $requisitosA = ServicioEvolucion::requisitos($reclutadoA, $this->usuarioA->id);
         $requisitosB = ServicioEvolucion::requisitos($reclutadoB, $this->usuarioB->id);
 
-        $this->assertSame(5, $requisitosA[0]['caramelosDisponibles']);
-        $this->assertSame(9, $requisitosB[0]['caramelosDisponibles']);
+        $this->assertSame(5, $requisitosA->first()?->caramelosDisponibles);
+        $this->assertSame(9, $requisitosB->first()?->caramelosDisponibles);
     }
 
     public function test_discard_de_A_otorga_caramelos_solo_al_inventario_de_A(): void

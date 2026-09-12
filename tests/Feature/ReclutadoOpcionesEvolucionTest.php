@@ -20,6 +20,8 @@ use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Bus;
 use Src\Reclutamiento\App\ServicioEvolucion;
+use Src\Reclutamiento\Domain\DataTransferObjects\OpcionEvolucion;
+use Src\Reclutamiento\Domain\DataTransferObjects\RequisitoEvolucion;
 use Src\Shared\Domain\SlugTipo;
 use Tests\TestCase;
 
@@ -142,12 +144,19 @@ class ReclutadoOpcionesEvolucionTest extends TestCase
         $opciones = ServicioEvolucion::requisitosDeOpciones($reclutado, $this->usuario->id);
 
         $this->assertCount(4, $opciones);
-        $this->assertSame([134, 135, 136, 700], array_column($opciones, 'pokemon_id'));
-        $this->assertSame('vaporeon', $opciones[0]['nombre']);
-        $this->assertSame('/images/iconos_webp/134.webp', $opciones[0]['imagen']);
-        $this->assertSame(['Agua'], array_column($opciones[0]['requisitos'], 'tipo'));
-        $this->assertSame(3, $opciones[0]['requisitos'][0]['caramelosDisponibles']);
-        $this->assertFalse($opciones[0]['puede_evolucionar']);
+        $this->assertSame(
+            [134, 135, 136, 700],
+            $opciones->pluck(fn (OpcionEvolucion $opcion): int => $opcion->pokemonId)
+        );
+        $primera = $opciones->first();
+        $this->assertInstanceOf(OpcionEvolucion::class, $primera);
+        $this->assertSame('vaporeon', $primera->nombre);
+        $this->assertSame('/images/iconos_webp/134.webp', $primera->imagen);
+        $requisito = $primera->requisitos->first();
+        $this->assertInstanceOf(RequisitoEvolucion::class, $requisito);
+        $this->assertSame(['Agua'], $primera->requisitos->pluck(fn (RequisitoEvolucion $r): string => $r->tipo));
+        $this->assertSame(3, $requisito->caramelosDisponibles);
+        $this->assertFalse($primera->puedeEvolucionar);
     }
 
     public function test_evolucionar_con_varias_opciones_sin_destino_devuelve_422(): void
@@ -242,7 +251,7 @@ class ReclutadoOpcionesEvolucionTest extends TestCase
         $habitat = Habitat::create(['id' => 1, 'name' => 'Bosque', 'province_id' => $province->id]);
         ExploracionActiva::create([
             'user_id' => $this->usuario->id,
-            'equipo_id' => $team->id,
+            'reclutado_id' => $reclutado->id,
             'habitat_id' => $habitat->id,
             'nivel' => 1,
             'duracion_horas' => 2,

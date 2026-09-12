@@ -103,15 +103,15 @@ class GimnasioCombateTest extends TestCase
 
         // won=false → no avance
         $resultado = $this->registrar->registrar($gymId, 1, $userId, false, $userId);
-        $this->assertFalse($resultado['avance']);
-        $this->assertFalse($resultado['completado']);
-        $this->assertNull($resultado['medalla']);
+        $this->assertFalse($resultado->avance);
+        $this->assertFalse($resultado->completado);
+        $this->assertNull($resultado->medalla);
 
         // won=true → avance
         $resultado = $this->registrar->registrar($gymId, 1, $userId, true, $userId);
-        $this->assertTrue($resultado['avance']);
-        $this->assertFalse($resultado['completado']);
-        $this->assertNull($resultado['medalla']);
+        $this->assertTrue($resultado->avance);
+        $this->assertFalse($resultado->completado);
+        $this->assertNull($resultado->medalla);
     }
 
     #[Test]
@@ -127,9 +127,9 @@ class GimnasioCombateTest extends TestCase
 
         // Gana al líder → completado, medalla
         $resultado = $this->registrar->registrar($gymId, 4, $userId, true, $userId, 'Medalla Bicho');
-        $this->assertTrue($resultado['avance']);
-        $this->assertTrue($resultado['completado']);
-        $this->assertSame('Medalla Bicho', $resultado['medalla']);
+        $this->assertTrue($resultado->avance);
+        $this->assertTrue($resultado->completado);
+        $this->assertSame('Medalla Bicho', $resultado->medalla);
     }
 
     private function obtenerProgreso(int $userId, string $gymId): ?int
