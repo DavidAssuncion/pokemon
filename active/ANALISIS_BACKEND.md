@@ -207,3 +207,68 @@ Sin abstracciones nuevas. Uso de las APIs existentes:
   `reclutados.behavior`): fuera de alcance (el frontend usa `/api/reclutado/{id}/rol` que sí sincroniza).
 - El `first()` de `Collection` devuelve `?object`; se sigue el patrón ya existente en tests
   (`->first()->propiedad`), sin cambios de dominio.
+
+---
+
+# ANALISIS_BACKEND — LOTE: SyncCandyRegionales + FaseEvolutiva (clases borradas) + bug de orden en FamiliesTest
+
+## Objetivo
+
+Cubrir los 3 fallos pendientes del lote: (1) `tests/Unit/SyncCandyRegionalesTest.php` apunta a un
+comando eliminado, (2) `tests/Unit/Shared/FaseEvolutivaTest.php` apunta a una clase eliminada
+(reemplazo real: `ResolvedorCadenasEvolutivas`), (3) `tests/Feature/Habitats/FamiliesTest.php:790`
+(regresión de PRODUCCIÓN del refactor F1-F9 en el orden de familias sin hábitat).
+
+## Archivos afectados
+
+### Tests
+- `tests/Unit/SyncCandyRegionalesTest.php` — skip con decisión pendiente (sin reemplazo).
+- `tests/Unit/Shared/FaseEvolutivaTest.php` — reescrito contra `ResolvedorCadenasEvolutivas::getFamilyMembersByChain`.
+
+### Producción (fix de regresión real, no cubierto por lotes anteriores)
+- `src/Habitats/Presentation/DTOPokemonFamilia.php` — añadir `$id` (id de pokémon, frontera API)
+  separado de `$speciesId` (id de especie, regla de negocio "primer integrante = menor species_id").
+- `src/Habitats/Infra/HabitatRepository.php` — builders `buildAvailableFamilyFromChain` /
+  `buildUnassignedFamilyFromChain`: pasar `id: $member['id']` y `speciesId: $member['species_id']`.
+- `src/Habitats/Presentation/ColeccionPokemonFamilia.php` — `porId()` debe buscar por `->id` (pokémon), no por `->speciesId`.
+
+## Tests
+
+- Unit `SyncCandyRegionalesTest` (7 escenarios) → SKIPPED (clase eliminada; asserts preservados).
+- Unit `FaseEvolutivaTest` (4 escenarios) → `getFamilyMembersByChain` con fixtures pequeñas:
+  (a) cadena simple de 2, (b) ramificada de 3, (c) fase 1/2/3 por miembro, (d) especie sin fila de
+  evolución → estructura `{id,name,icon,stage,species_id}` con stage fallback 3.
+- Feature `FamiliesTest::test_familias_sin_asignar_se_ordenan_por_species_id_minimo_de_la_cadena`
+  (ya en verde) confirma el fix de producción.
+
+## Diseño
+
+- **SyncCandyRegionales**: grep `candy_regionales|candyRegionales|SyncCandy` en `app src routes` →
+  SOLO el propio test. No existe `RegionalesCandyService` ni comando sustituto. Decisión (opción b del
+  brief): `markTestSkipped('SyncCandyRegionales eliminado en el refactor (F*-series). Pendiente
+  decisión: recrear comando o eliminar test.')` en `setUp()`. Los 7 tests y sus asserts quedan
+  íntegros en el archivo. **PENDIENTE para el analista**: recrear el comando (mapeo variantes
+  regionales + copia de WebP) o eliminar el test.
+- **FaseEvolutiva**: la fase evolutiva ya no es un cálculo de dominio standalone; vive como `stage`
+  (BFS) en `ResolvedorCadenasEvolutivas::getFamilyMembersByChain`. Se reescribe el test a la API
+  nueva (mismo directorio `tests/Unit/Shared`), con `#[Test]` y fixtures charmander/eevee/rattata.
+- **FamiliesTest — causa raíz (regresión del refactor F1-F9)**: el refactor extrajo
+  `ResolvedorCadenasEvolutivas` y convirtió base/evoluciones de arrays a `DTOPokemonFamilia`, pero
+  el builder pasó `$member['id']` a la propiedad `speciesId`, conflactando id de pokémon con id de
+  especie. `minSpeciesId()` — usado por `ordenadasPorMinSpeciesId()` en `getUnassignedFamilies()` y
+  `getFamiliesByHabitat()` — calculaba el mínimo del id de POKÉMON en vez del species_id: con un
+  pokémon id=300/species_id=1 (fixture de test) la familia salía DESPUÉS de la de species 10
+  (`assertLessThan(1, 4)`). Fix mínimo: `DTOPokemonFamilia` distingue `id` (pokémon, frontera: campo
+  `id` de la API e icono) de `speciesId` (especie, regla de negocio). `toArray()` sigue emitiendo el
+  id de pokémon → contrato de la API intacto (los tests de iconos y de base 113/242/440 lo prueban).
+- Nota: `HabitatRepository::getFamiliesByHabitat()`/`getUnassignedFamilies()` YA llaman
+  `ordenadasPorMinSpeciesId()` (working tree); el controller `unassignedFamilies()` NO necesita
+  reordenar. El bug estaba en el dato que alimentaba el orden, no en el call-site.
+
+## Riesgos
+
+- La invariante real del seeder es `id == species_id` (normales y regionales con species propio),
+  por lo que el fix no cambia datos reales; solo corrige el caso artificial del test donde difieren.
+- `Compartes` ajenos del refactor (149 archivos dirty) NO se tocan; solo las 3 clases nombradas.
+- No validar contra `resultado-tests.txt` (estado previo a LOTE 1-3); el único fallo comprobable de
+  este lote es `FamiliesTest:790` (reproducido por el análisis del flujo, confirmado en el run final).

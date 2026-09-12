@@ -18,10 +18,14 @@ use Src\CombateEntrenadores\Domain\Repositories\EntrenadorLogRepositoryInterface
 use Src\CombateEntrenadores\Infra\EloquentEntrenadorLogRepository;
 use Src\Equipos\Domain\TeamRepositoryInterface;
 use Src\Equipos\Infra\EloquentTeamRepository;
+use Src\Gimnasios\Domain\Repositories\GymCatalogoRepositoryInterface;
 use Src\Gimnasios\Domain\Repositories\GymProgressRepositoryInterface;
+use Src\Gimnasios\Infra\EloquentGymCatalogoRepository;
 use Src\Gimnasios\Infra\EloquentGymProgressRepository;
 use Src\Habitats\Domain\Repositories\HabitatRepositoryInterface;
 use Src\Habitats\Infra\HabitatRepository;
+use Src\Mazmorras\Domain\Repositories\DungeonProgresoRepositoryInterface;
+use Src\Mazmorras\Infra\EloquentDungeonProgresoRepository;
 use Src\Shared\Bus\CommandBus;
 use Src\Shared\Bus\UnitOfWork;
 use Src\Shared\Domain\NivelHelper;
@@ -41,6 +45,8 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(UnitOfWork::class, DatabaseUnitOfWork::class);
         $this->app->bind(EntrenadorLogRepositoryInterface::class, EloquentEntrenadorLogRepository::class);
         $this->app->bind(GymProgressRepositoryInterface::class, EloquentGymProgressRepository::class);
+        $this->app->bind(GymCatalogoRepositoryInterface::class, EloquentGymCatalogoRepository::class);
+        $this->app->bind(DungeonProgresoRepositoryInterface::class, EloquentDungeonProgresoRepository::class);
     }
 
     /**

@@ -4,9 +4,13 @@ declare(strict_types=1);
 
 namespace App\Support;
 
+use App\Enums\StatEnum;
 use App\Models\PokemonStat;
 use App\Models\PokemonType;
 use App\Models\Reclutado;
+use Src\Pokemon\Domain\Stats\BattleStats;
+use Src\Pokemon\Domain\Stats\CalculadorCP;
+use Src\Pokemon\Domain\Stats\StatsValue;
 use Src\Shared\Domain\NivelHelper;
 
 /**
@@ -26,12 +30,15 @@ final class ReclutadoSerializer
         $datos['exp_total'] = $reclutado->exp->total();
         $datos['base_experience'] = $reclutado->pokemon?->base_experience;
         $datos['es_shiny'] = $reclutado->es_shiny;
+        $datos['behavior'] = $reclutado->behavior;
+        $datos['rol'] = $reclutado->rol()->value;
         $datos['stats'] = self::statsDe($reclutado);
+        $datos['cp'] = self::cpDe($reclutado);
 
         // Fallback de nombre cuando es null (column nullable): usa el nombre del
         // pokémon para no romper/obtener "null" en el frontend.
         if (($datos['nombre'] ?? null) === null) {
-            $datos['nombre'] = $reclutado->pokemon?->name ?? 'Desconocido';
+            $datos['nombre'] = $reclutado->pokemon->name ?? 'Desconocido';
         }
 
         if ($reclutado->pokemon?->types->isNotEmpty()) {
@@ -54,6 +61,49 @@ final class ReclutadoSerializer
             ])
             ->values()
             ->all() ?? [];
+    }
+
+    /**
+     * Combat Power del reclutado: BattleStats a su nivel actual con EV = 0
+     * (los pokémon del jugador no tienen EVs; EV>0 es exclusivo de rivales).
+     * Si el rekado no tiene pokémon o stats, devuelve 0 (valores nunca ausentes).
+     */
+    private static function cpDe(Reclutado $reclutado): int
+    {
+        $pokemon = $reclutado->pokemon;
+        if ($pokemon === null || $pokemon->stats->isEmpty()) {
+            return 0;
+        }
+
+        $base = ['hp' => 0, 'atk' => 0, 'def' => 0, 'spAtk' => 0, 'spDef' => 0, 'speed' => 0];
+
+        foreach ($pokemon->stats as $stat) {
+            $clave = match ($stat->stat) {
+                StatEnum::HP => 'hp',
+                StatEnum::ATTACK => 'atk',
+                StatEnum::DEFENSE => 'def',
+                StatEnum::SPECIAL_ATTACK => 'spAtk',
+                StatEnum::SPECIAL_DEFENSE => 'spDef',
+                StatEnum::SPEED => 'speed',
+            };
+            $base[$clave] = (int) $stat->base_stat;
+        }
+
+        $nivel = NivelHelper::nivelDesdeExperiencia($reclutado->exp->total());
+        $stats = new BattleStats(
+            stats: new StatsValue(
+                hp: $base['hp'],
+                attack: $base['atk'],
+                defense: $base['def'],
+                spAtk: $base['spAtk'],
+                spDef: $base['spDef'],
+                speed: $base['speed'],
+            ),
+            evs: new StatsValue(0, 0, 0, 0, 0, 0),
+            nivel: $nivel,
+        );
+
+        return CalculadorCP::calcular($stats, 0);
     }
 
     /**

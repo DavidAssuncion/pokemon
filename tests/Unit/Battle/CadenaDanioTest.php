@@ -48,7 +48,6 @@ class CadenaDanioTest extends TestCase
             attacker: $atacante,
             defender: $defensor,
             move: new MovimientoBatalla('Golpe', 50, TipoPokemon::NORMAL, CategoriaMovimiento::FISICO),
-            fromPosition: Posicion::VANGUARDIA,
             defenderTeamHasVanguard: false,
             weather: TipoClima::NONE,
         );
@@ -82,7 +81,6 @@ class CadenaDanioTest extends TestCase
             attacker: $atacante,
             defender: $defensor,
             move: new MovimientoBatalla('Golpe', 50, TipoPokemon::NORMAL, CategoriaMovimiento::FISICO),
-            fromPosition: Posicion::VANGUARDIA,
             defenderTeamHasVanguard: false,
             weather: TipoClima::NONE,
         );
@@ -125,7 +123,6 @@ class CadenaDanioTest extends TestCase
             attacker: $atacanteStab,
             defender: $defensor,
             move: $move,
-            fromPosition: Posicion::VANGUARDIA,
             defenderTeamHasVanguard: false,
             weather: TipoClima::NONE,
         );
@@ -133,7 +130,6 @@ class CadenaDanioTest extends TestCase
             attacker: $atacanteNoStab,
             defender: $defensor,
             move: $move,
-            fromPosition: Posicion::VANGUARDIA,
             defenderTeamHasVanguard: false,
             weather: TipoClima::NONE,
         );
@@ -170,7 +166,6 @@ class CadenaDanioTest extends TestCase
             attacker: $atacante,
             defender: $defensor,
             move: new MovimientoBatalla('Golpecito', 1, TipoPokemon::NORMAL, CategoriaMovimiento::FISICO),
-            fromPosition: Posicion::VANGUARDIA,
             defenderTeamHasVanguard: true,
             weather: TipoClima::NONE,
         );

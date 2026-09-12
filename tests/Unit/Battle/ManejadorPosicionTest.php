@@ -49,7 +49,6 @@ class ManejadorPosicionTest extends TestCase
             attacker: $atacante,
             defender: $defensor,
             move: new MovimientoBatalla('Golpe', 50, TipoPokemon::NORMAL, CategoriaMovimiento::FISICO),
-            fromPosition: Posicion::VANGUARDIA,
             defenderTeamHasVanguard: true,
             weather: TipoClima::NONE,
         );
@@ -80,7 +79,6 @@ class ManejadorPosicionTest extends TestCase
             attacker: $atacante,
             defender: $defensor,
             move: new MovimientoBatalla('Golpe', 50, TipoPokemon::NORMAL, CategoriaMovimiento::FISICO),
-            fromPosition: Posicion::VANGUARDIA,
             defenderTeamHasVanguard: true,
             weather: TipoClima::NONE,
         );

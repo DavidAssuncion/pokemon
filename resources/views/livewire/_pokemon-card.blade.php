@@ -18,6 +18,9 @@
         <div class="flex-grow-1 min-w-0">
             <div class="d-flex justify-content-between align-items-center gap-1">
                 <span class="fw-bold small text-truncate {{ $p['alive'] ? '' : 'text-muted' }}">{{ $p['nombre'] }}</span>
+                @if(! empty($p['cp']))
+                    <span class="badge bg-purple-100 text-purple-700 small" title="Poder de combate">CP {{ number_format($p['cp']) }}</span>
+                @endif
             </div>
 
             {{-- Barreras (def física y especial) — 50% ancho c/u, arriba de la vida --}}

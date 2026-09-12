@@ -125,7 +125,7 @@ class EvaluadorAccionIAImpl implements EvaluadorAccionIA
             $contexto->equipoActor,
         );
 
-        if ($respuestas === []) {
+        if ($respuestas->isEmpty()) {
             return 0.0;
         }
 
@@ -185,10 +185,9 @@ class EvaluadorAccionIAImpl implements EvaluadorAccionIA
         // Si el objetivo muere, no puede contraatacar
         $enemigosRestantes = $contexto->enemigos;
         if ($koValue > 0) {
-            $enemigosRestantes = array_values(array_filter(
-                $contexto->enemigos,
+            $enemigosRestantes = $contexto->enemigos->filter(
                 fn ($e) => $e->id() !== $objetivo->id()
-            ));
+            );
         }
 
         $hpEfectivoActor = $actor->hpActual()

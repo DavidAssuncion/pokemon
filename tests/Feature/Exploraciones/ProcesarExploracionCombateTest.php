@@ -17,9 +17,11 @@ use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use PHPUnit\Framework\Attributes\Test;
+use Src\Battle\Domain\ValueObjects\BattleLog;
 use Src\Exploraciones\App\CombateExploracion;
 use Src\Exploraciones\App\ProcesarExploracionCommand;
 use Src\Exploraciones\App\ProcesarExploracionHandler;
+use Src\Exploraciones\Domain\ValueObjects\ResultadoBatallaExploracion;
 use Src\Shared\Bus\CommandBus;
 use Src\Shared\Domain\EscaladorNivelRival;
 use Tests\TestCase;
@@ -145,8 +147,8 @@ class ProcesarExploracionCombateTest extends TestCase
         $bitacora = $ctx['exploracion']->eventos->get('bitacora', []);
 
         $this->assertNotEmpty($bitacora, 'Debe haber eventos en la bitácora');
-        $encuentro = $bitacora[0] ?? [];
-        $this->assertSame('encuentro', $encuentro['tipo'] ?? null);
+        $encuentro = collect($bitacora)->first(fn (array $e) => ($e['tipo'] ?? '') === 'encuentro');
+        $this->assertNotNull($encuentro, 'Debe haber un encuentro en la bitácora');
         $this->assertSame('victoria', $encuentro['resolucion'] ?? null, 'El explorador fuerte debe vencer');
         $this->assertTrue($encuentro['victoria'] ?? false);
         $this->assertGreaterThan(0, $encuentro['hp_final'] ?? 0);
@@ -170,7 +172,8 @@ class ProcesarExploracionCombateTest extends TestCase
         $bitacora = $ctx['exploracion']->eventos->get('bitacora', []);
 
         $this->assertNotEmpty($bitacora, 'Debe haber eventos en la bitácora');
-        $encuentro = $bitacora[0] ?? [];
+        $encuentro = collect($bitacora)->first(fn (array $e) => ($e['tipo'] ?? '') === 'encuentro');
+        $this->assertNotNull($encuentro, 'Debe haber un encuentro en la bitácora');
         $this->assertSame('derrota', $encuentro['resolucion'] ?? null, 'El explorador débil debe perder');
         $this->assertFalse($encuentro['victoria'] ?? true);
         $this->assertSame(0, $encuentro['hp_final'] ?? -1, 'HP final debe ser 0');
@@ -183,7 +186,11 @@ class ProcesarExploracionCombateTest extends TestCase
     public function test_emboscada_secuencial_combate_todos_los_ids_si_gana(): void
     {
         mt_srand(1);
-        $ctx = $this->crearContexto();
+        // Detección EXPERTO (speed 20 → 122): ni auto-evisión MAESTRO ni 50 %
+        // de evasión con aleatorio 0.7 → combate la emboscada si gana.
+        $ctx = $this->crearContexto([
+            'explorador_stats' => ['hp' => 200, 'atk' => 180, 'def' => 150, 'spAtk' => 180, 'spDef' => 150, 'speed' => 20],
+        ]);
         // Forzar un evento emboscada manualmente en eventos previos (ultimo_procesado pasado)
         // Usamos aleatorio 0.7 para que el simulador genere emboscadas.
         $handler = new ProcesarExploracionHandler(
@@ -240,7 +247,7 @@ class ProcesarExploracionCombateTest extends TestCase
     #[Test]
     public function test_nivel_rival_se_escala_con_el_minimo_del_habitat(): void
     {
-        // min_lvl_1 = 4, nivel jugador = 10 → escalar(4, 10) = 4 + intdiv(6,2) = 7
+        // min_lvl_1 = 4, nivel pokemon = 40 → escalar(4, 40) = 4 + intdiv(36,2) = 22
         $ctx = $this->crearContexto(['min_lvl_1' => 4]);
         $salvaje = $ctx['salvaje'];
 
@@ -250,7 +257,8 @@ class ProcesarExploracionCombateTest extends TestCase
 
         $ctx['exploracion']->refresh();
         $bitacora = $ctx['exploracion']->eventos->get('bitacora', []);
-        $encuentro = $bitacora[0] ?? [];
+        $encuentro = collect($bitacora)->first(fn (array $e) => ($e['tipo'] ?? '') === 'encuentro');
+        $this->assertNotNull($encuentro, 'Debe haber un encuentro en la bitácora');
 
         // El salvaje fuerte vs explorador fuerte: verificar que el combate ocurrió
         $this->assertSame('victoria', $encuentro['resolucion'] ?? null);
@@ -261,16 +269,16 @@ class ProcesarExploracionCombateTest extends TestCase
     public function test_descanso_cuando_hp_menor_50_registra_evento_y_tiempo(): void
     {
         $combate = $this->createMock(CombateExploracion::class);
-        $combate->method('combatir')->willReturn([
-            'victoria' => true,
-            'hp_final' => 30.0,
-            'barrera_fisica_final' => 100.0,
-            'barrera_especial_final' => 100.0,
-            'hp_max' => 100.0,
-            'barrera_fisica_max' => 100.0,
-            'barrera_especial_max' => 100.0,
-            'log' => ['log'],
-        ]);
+        $combate->method('combatir')->willReturn(new ResultadoBatallaExploracion(
+            victoria: true,
+            hpFinal: 30.0,
+            barreraFisicaFinal: 100.0,
+            barreraEspecialFinal: 100.0,
+            hpMax: 100.0,
+            barreraFisicaMax: 100.0,
+            barreraEspecialMax: 100.0,
+            log: BattleLog::vacia()->agregar('log'),
+        ));
 
         $ctx = $this->crearContexto();
         $this->handler($combate)->handle(new ProcesarExploracionCommand($ctx['exploracion']));
@@ -279,17 +287,55 @@ class ProcesarExploracionCombateTest extends TestCase
         $eventos = $ctx['exploracion']->eventos;
         $bitacora = $eventos->get('bitacora', []);
 
-        // HP al 30 % → falta 70 % → ceil(70/3) = 24 min
+        // HP al 30 % → falta 70 % → supervivencia MAESTRO (nivel 40, dificultad 35)
+        // → tasa 3 × 1.75 = 5.25 %/min → ceil(70/5.25) = 14 min
         $descanso = collect($bitacora)->first(fn (array $e) => ($e['tipo'] ?? '') === 'descanso');
         $this->assertNotNull($descanso, 'Debe registrarse descanso al quedar HP < 50 %');
-        $this->assertSame(24, $descanso['duracion_minutos']);
+        $this->assertSame(14, $descanso['duracion_minutos']);
         $this->assertSame(70, $descanso['hp_recuperado']);
 
-        // tiempo_perdido acumulado (24 min del descanso)
-        $this->assertGreaterThanOrEqual(24, (int) $eventos->get('tiempo_perdido', 0));
+        // tiempo_perdido acumulado (14 min del descanso)
+        $this->assertGreaterThanOrEqual(14, (int) $eventos->get('tiempo_perdido', 0));
 
         // El estado persistido debe quedar al 100 % HP (JSON normaliza floats → int)
         $estado = $eventos->get('explorador');
         $this->assertSame(100, (int) $estado['hp']);
+    }
+
+    #[Test]
+    public function test_emboscada_evitada_con_deteccion_maestro_genera_un_evento_extra(): void
+    {
+        mt_srand(1);
+        // Mewtwo con detección MAESTRO (speed 200, spDef 150, nivel 40 + 10)
+        $ctx = $this->crearContexto();
+        $handler = new ProcesarExploracionHandler(
+            app(CommandBus::class),
+            new CombateExploracion(new \Src\CombateEntrenadores\App\MapeadorPokemonBatalla(new \Src\CombateEntrenadores\Domain\GeneradorMovimientosTipo())),
+            new EscaladorNivelRival(),
+            fn (): float => 0.7,
+        );
+
+        $handler->handle(new ProcesarExploracionCommand($ctx['exploracion']));
+        mt_srand();
+
+        $ctx['exploracion']->refresh();
+        $bitacora = $ctx['exploracion']->eventos->get('bitacora', []);
+
+        $emboscadas = collect($bitacora)->filter(fn (array $e) => ($e['tipo'] ?? '') === 'emboscada')->values();
+        $extras = collect($bitacora)->filter(fn (array $e) => ($e['tipo'] ?? '') !== 'emboscada')->values();
+
+        $this->assertNotEmpty($emboscadas, 'Debe haber emboscadas con aleatorio 0.7');
+        $primera = $emboscadas->first();
+        $this->assertSame('evitada', $primera['resolucion'] ?? null);
+        $this->assertTrue($primera['evitada'] ?? false);
+        $this->assertArrayNotHasKey('sub_combates', $primera, 'Una emboscada evitada no combate');
+
+        // Cada emboscada evitada genera exactamente 1 evento extra (hallazgo/neutral).
+        $this->assertSame(
+            $emboscadas->count(),
+            $extras->count(),
+            'Debe haber exactamente un evento extra por emboscada evitada',
+        );
+        $this->assertSame('neutral', $extras->first()['tipo'] ?? null);
     }
 }

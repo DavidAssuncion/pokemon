@@ -22,11 +22,13 @@ class Habitat extends Model
         'name',
         'pokemons',
         'peligro',
+        'mazmorra',
     ];
 
     protected $casts = [
         'pokemons' => 'array',
         'peligro' => 'integer',
+        'mazmorra' => 'array',
     ];
 
     /**
@@ -44,6 +46,15 @@ class Habitat extends Model
     {
         return $this->belongsToMany(Pokemon::class, 'pokemon_habitat')
             ->withPivot('level');
+    }
+
+    /**
+     * Nivel mínimo de jugador requerido para explorar este hábitat en el
+     * nivel de exploración dado (columnas min_lvl_1/2/3; null = sin restricción).
+     */
+    public function minLvlParaNivel(int $nivel): ?int
+    {
+        return $this->getAttribute('min_lvl_'.$nivel);
     }
 
     /**

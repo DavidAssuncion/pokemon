@@ -20,6 +20,9 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Mockery;
 use RuntimeException;
+use Src\CombateEntrenadores\App\MapeadorPokemonBatalla;
+use Src\CombateEntrenadores\Domain\GeneradorMovimientosTipo;
+use Src\Exploraciones\App\CombateExploracion;
 use Src\Exploraciones\App\FinalizarExploracionCommand;
 use Src\Exploraciones\App\FinalizarExploracionHandler;
 use Src\Exploraciones\App\PersistirRecompensas;
@@ -29,6 +32,7 @@ use Src\Exploraciones\Domain\CalculadorRecompensas;
 use Src\Exploraciones\Presentation\TransformadorResultadoExploracion;
 use Src\Shared\Bus\CommandBus;
 use Src\Shared\Bus\UnitOfWork;
+use Src\Shared\Domain\EscaladorNivelRival;
 use Src\Shared\Domain\NivelHelper;
 use Tests\TestCase;
 
@@ -72,15 +76,27 @@ class ExploracionesTest extends TestCase
         ]);
 
         DB::table('pokemon_habitat')->insert([
-            ['pokemon_id' => 1, 'habitat_id' => 1, 'level' => 1],
+            // RFC combate real: el pool SÓLO contiene el salvaje débil (charmander).
+            // El explorador (bulbasaur, stats fuertes) se excluye del pool para
+            // que los encuentros sean deterministas (victorias seguras).
             ['pokemon_id' => 2, 'habitat_id' => 1, 'level' => 1],
         ]);
 
-        PokemonStat::create(['pokemon_id' => 1, 'stat' => 1, 'base_stat' => 45, 'effort' => 2]);
-        PokemonStat::create(['pokemon_id' => 1, 'stat' => 2, 'base_stat' => 49, 'effort' => 0]);
-        PokemonStat::create(['pokemon_id' => 1, 'stat' => 3, 'base_stat' => 49, 'effort' => 1]);
-        PokemonStat::create(['pokemon_id' => 2, 'stat' => 2, 'base_stat' => 52, 'effort' => 1]);
-        PokemonStat::create(['pokemon_id' => 2, 'stat' => 4, 'base_stat' => 60, 'effort' => 0]);
+        // Explorador (pokemon 1): por defecto stats fuertes tipo mewtwo → gana
+        // todo encuentro. Los tests mecánicos pasan explorador_stats NOVATO para
+        // conservar las cuentas deterministas de encuentros/tiempo perdido.
+        $exploradorDefaults = [1 => 200, 2 => 180, 3 => 150, 4 => 180, 5 => 150, 6 => 200];
+        $exploradorStats = $opciones['explorador_stats'] ?? $exploradorDefaults;
+        PokemonStat::where('pokemon_id', 1)->delete();
+        foreach ($exploradorStats as $stat => $base) {
+            PokemonStat::create(['pokemon_id' => 1, 'stat' => $stat, 'base_stat' => $base, 'effort' => 0]);
+        }
+
+        // Salvaje (pokemon 2): stats débiles; el ataque conserva effort 1 (caramelos EV).
+        PokemonStat::where('pokemon_id', 2)->delete();
+        foreach ([1 => 30, 2 => 52, 3 => 25, 4 => 60, 5 => 25, 6 => 40] as $stat => $base) {
+            PokemonStat::create(['pokemon_id' => 2, 'stat' => $stat, 'base_stat' => $base, 'effort' => $stat === 2 ? 1 : 0]);
+        }
 
         $user = User::factory()->create(['experiencia' => 1_250]); // nivel 5 (10 × 5³)
 
@@ -104,7 +120,7 @@ class ExploracionesTest extends TestCase
 
         $exploracion = ExploracionActiva::create([
             'user_id' => $user->id,
-            'equipo_id' => $team->id,
+            'reclutado_id' => $reclutado1->id,
             'habitat_id' => $habitat->id,
             'nivel' => 1,
             'duracion_horas' => $opciones['duracion_horas'] ?? null,
@@ -150,7 +166,12 @@ class ExploracionesTest extends TestCase
     {
         $this->app->instance(
             ProcesarExploracionHandler::class,
-            new ProcesarExploracionHandler(app(CommandBus::class), $aleatorio),
+            new ProcesarExploracionHandler(
+                app(CommandBus::class),
+                new CombateExploracion(new MapeadorPokemonBatalla(new GeneradorMovimientosTipo())),
+                new EscaladorNivelRival(),
+                $aleatorio,
+            ),
         );
     }
 
@@ -281,14 +302,16 @@ class ExploracionesTest extends TestCase
             }
         }
 
-        // EXP: user (nivel 5) recibe el 100 %; cada miembro floor((T×0.8)/3) por derrota.
+        // RFC individual: la exp va SOLO al reclutado que exploró (reclutado1);
+        // el otro miembro del equipo (reclutado2) ya no recibe (destinoExp =
+        // exploracion->reclutado). user (nivel 5) recibe el 100 %.
         $expEsperado = ($conteos[1] ?? 0) * NivelHelper::expDerrota(64, 5)
             + ($conteos[2] ?? 0) * NivelHelper::expDerrota(62, 5);
         $expMiembroEsperado = ($conteos[1] ?? 0) * (int) floor(NivelHelper::expDerrota(64, 5) * 0.8 / 3)
             + ($conteos[2] ?? 0) * (int) floor(NivelHelper::expDerrota(62, 5) * 0.8 / 3);
         $this->assertSame(1_250 + $expEsperado, $ctx['user']->refresh()->experiencia);
         $this->assertSame($expMiembroEsperado, $ctx['reclutado1']->refresh()->exp->total());
-        $this->assertSame($expMiembroEsperado, $ctx['reclutado2']->refresh()->exp->total());
+        $this->assertSame(0, $ctx['reclutado2']->refresh()->exp->total());
     }
 
     public function test_indefinido_no_completa_hasta_recoger(): void
@@ -334,9 +357,13 @@ class ExploracionesTest extends TestCase
         $this->assertSame($primeraPasada, $segundaPasada);
     }
 
-    public function test_tick_con_ultimo_procesado_hace_10_min_genera_tres_encuentros(): void
+    public function test_tick_con_ultimo_procesado_hace_10_min_genera_eventos(): void
     {
-        // Tras 10 min sin procesar, el tick divide 10 ÷ MINUTOS_POR_ENCUENTRO (3) = 3 encuentros.
+        // Tras 10 min sin procesar, el tick divide el intervalo (base 3 min,
+        // modulado por el rango de movilidad/exploración del reclutado) y
+        // genera varios eventos. La cadencia exacta es dominio puro y se
+        // cubre en CapacidadesStatsTest; aquí se validan invariantes del
+        // pipeline (genera eventos, no duplica, avanza ultimo_procesado).
         $ctx = $this->crearContexto(['indefinido' => true, 'inicio' => now()->subMinutes(30)]);
         $ctx['exploracion']->update([
             'eventos' => [
@@ -350,7 +377,10 @@ class ExploracionesTest extends TestCase
         $ctx['exploracion']->refresh();
         $bitacora = $ctx['exploracion']->eventos['bitacora'] ?? [];
 
-        $this->assertCount(3, $bitacora);
+        // Al menos un encuentro (10 min ÷ 3 min) y no más de los que caben
+        // en la ventana (mitigado por el rango de movilidad).
+        $this->assertNotEmpty($bitacora);
+        $this->assertLessThanOrEqual(30, count($bitacora));
     }
 
     public function test_exploracion_ya_completada_no_se_retoca(): void
@@ -614,11 +644,15 @@ class ExploracionesTest extends TestCase
         $esperadoPorTipo = $expTipoPorDerrota * ($conteos[2] ?? 0);
         $this->assertGreaterThan(0, $esperadoPorTipo);
 
-        foreach ([$ctx['reclutado1'], $ctx['reclutado2']] as $reclutado) {
-            $reclutado->refresh();
-            $this->assertSame($esperadoPorTipo, $reclutado->exp->expTipo('Eléctrico'));
-            $this->assertSame($esperadoPorTipo, $reclutado->exp->expTipo('Fuego'));
-        }
+        // RFC individual: la exp (también la de tipo) se acumula SOLO en el
+        // reclutado que exploró (reclutado1); reclutado2 ya no recibe.
+        $reclutado1 = $ctx['reclutado1']->refresh();
+        $this->assertSame($esperadoPorTipo, $reclutado1->exp->expTipo('Eléctrico'));
+        $this->assertSame($esperadoPorTipo, $reclutado1->exp->expTipo('Fuego'));
+
+        $reclutado2 = $ctx['reclutado2']->refresh();
+        $this->assertSame(0, $reclutado2->exp->expTipo('Eléctrico'));
+        $this->assertSame(0, $reclutado2->exp->expTipo('Fuego'));
     }
 
     // ==========================================
@@ -913,30 +947,32 @@ class ExploracionesTest extends TestCase
         ]);
     }
 
-    public function test_tick_con_equipo_debil_genera_retirada(): void
+    public function test_tick_con_explorador_debil_genera_derrota_y_finaliza(): void
     {
-        // Tick con aleatorio 0.15 → encuentro grupo; capacidad baja (< dificultad−30)
-        // y roll < 0.5 → retirada → despacha FinalizarExploracionCommand.
+        // RFC combate real: el evento "grupo" ya no pasa por el evaluador de
+        // retirada; un explorador que PIERDE un combate genera derrota y
+        // finaliza la exploración (reason explorador_debilitado).
         $ctx = $this->crearContexto(['indefinido' => true]);
-        // Stats base mínimos (capacidad ~11) y rol sin bonus.
+        // Explorador mínimo (capacidad ~11) vs salvaje fortísimo → derrota segura.
         PokemonStat::where('pokemon_id', 1)->update(['base_stat' => 1]);
-        PokemonStat::where('pokemon_id', 2)->update(['base_stat' => 1]);
-        TeamMember::where('team_id', $ctx['exploracion']->equipo_id)->update(['behavior' => 'RECOLECTOR']);
+        PokemonStat::where('pokemon_id', 2)->update(['base_stat' => 500]);
 
-        $this->bindProcesarConAleatorio(fn (): float => 0.15);
+        $this->bindProcesarConAleatorio(fn (): float => 0.3);
 
         $this->artisan('exploraciones:procesar')->assertSuccessful();
 
         $fresh = $ctx['exploracion']->fresh();
         $this->assertNotNull($fresh->regreso);
-        $this->assertIsArray($fresh->eventos->get('retirada'));
-        $this->assertSame('grupo_enemigo', $fresh->eventos->get('retirada')['reason']);
+        $this->assertIsArray($fresh->eventos->get('derrota'));
+        $this->assertSame('explorador_debilitado', $fresh->eventos->get('derrota')['reason']);
     }
 
     public function test_tick_acumula_tiempo_perdido_y_adelanta_ultimo_procesado(): void
     {
-        // D2/RF-05: contratiempos (aleatorio 0.85 → bloqueo, sin vanguardia) acumulan
-        // duration_loss y adelantan ultimo_procesado al futuro.
+        // D2/RF-05: contratiempos (aleatorio 0.85 → bloqueo) acumulan
+        // duration_loss y adelantan ultimo_procesado al futuro. La cantidad
+        // exacta depende del rango de movilidad (dominio puro, cubierto en
+        // CapacidadesStatsTest); aquí se validan los invariantes del pipeline.
         $ctx = $this->crearContexto(['indefinido' => true, 'inicio' => now()->subMinutes(30)]);
         $ctx['exploracion']->update([
             'eventos' => [
@@ -954,25 +990,28 @@ class ExploracionesTest extends TestCase
         $perdido = (int) $eventos->get('tiempo_perdido', 0);
         $this->assertGreaterThan(0, $perdido);
 
-        // 10 min ÷ 3 = 3 slots; cada bloqueo cuesta 15 min → 45.
-        $this->assertSame(45, $perdido);
-
         // ultimo_procesado = hasta + tiempo perdido (en el futuro).
         $ultimo = Carbon::parse($eventos->get('ultimo_procesado'));
         $this->assertTrue($ultimo->greaterThan(now()));
 
-        // duration_real en el resultado final: nominal (30 min) − tiempo perdido → 0 (mín).
+        // duration_real en el resultado final: nominal (30 min) − tiempo
+        // perdido, con mínimo 0 (no puede ser negativo).
         app(CommandBus::class)->dispatch(new FinalizarExploracionCommand($fresh));
         $resultado = $fresh->refresh()->eventos->get('resultado');
         $this->assertSame(0, $resultado['duration_real']);
-        $this->assertSame(45, $resultado['tiempo_perdido']);
-        $this->assertSame(3, $resultado['incidentes']['contratiempos']);
+        $this->assertSame($perdido, $resultado['tiempo_perdido']);
+        $this->assertGreaterThan(0, $resultado['incidentes']['contratiempos']);
     }
 
     public function test_hallazgos_otorgan_caramelos_de_familia_ev_y_tipo(): void
     {
         // D8: los eventos hallazgo entregan caramelos (familia/EV/tipo).
-        $ctx = $this->crearContexto(['indefinido' => true]);
+        // Explorador NOVATO (recolección sin bonus) para que cada hallazgo rinda
+        // exactamente su cantidad base (multiplicador recolector = 1.0).
+        $ctx = $this->crearContexto([
+            'indefinido' => true,
+            'explorador_stats' => [1 => 20, 2 => 20, 3 => 20, 4 => 20, 5 => 20, 6 => 20],
+        ]);
         $ctx['exploracion']->update([
             'eventos' => [
                 'bitacora' => [

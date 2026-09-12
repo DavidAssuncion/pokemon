@@ -26,8 +26,8 @@ class CombateLivewireTest extends TestCase
     {
         Livewire::test(Combate::class)
             ->assertSet('battleId', fn (string $battleId) => str_starts_with($battleId, 'battle_'))
-            ->assertCount('team1', 3)
-            ->assertCount('team2', 3)
+            ->assertCount('team1', 5)
+            ->assertCount('team2', 5)
             ->assertSet('round', 1);
     }
 }

@@ -66,10 +66,10 @@ class HabitatsController extends Controller
             : collect();
 
         // Get sighted Pokemon IDs from Pokedex for this habitat
-        $habitatData = $this->obtenerHabitatDetalle->handle($id);
+        $habitatData = $this->obtenerHabitatDetalle->handle($id)->toArray();
         $pokemonIds = [];
-        if (! empty($habitatData->toArray()['levels'])) {
-            foreach ($habitatData->toArray()['levels'] as $levelPokemon) {
+        if (! empty($habitatData['levels'])) {
+            foreach ($habitatData['levels'] as $levelPokemon) {
                 foreach ($levelPokemon as $pokemon) {
                     $pokemonIds[] = $pokemon['id'] ?? $pokemon['species_id'] ?? 0;
                 }
@@ -81,7 +81,7 @@ class HabitatsController extends Controller
             ->toArray();
 
         return view('habitats.show', [
-            'habitat' => $habitatData->toArray(),
+            'habitat' => $habitatData,
             'teams' => $this->obtenerEquipos->run(),
             'exploracionesActivas' => $exploracionesActivas,
             'equiposEnExploracion' => $equiposEnExploracion,

@@ -11,6 +11,8 @@ use Src\Battle\Domain\Effects\EfectoPerforacionArmadura;
 use Src\Battle\Domain\Effects\EfectoRegeneracionDefensa;
 use Src\Battle\Domain\Effects\EfectoRestos;
 use Src\Battle\Domain\Effects\FabricaEfectos;
+use Src\Battle\Domain\Enums\ClaveEfecto;
+use Src\Battle\Domain\Enums\ClaveItem;
 use Src\Battle\Domain\Enums\TipoClima;
 
 class BattleEffectServiceProvider extends ServiceProvider
@@ -21,20 +23,20 @@ class BattleEffectServiceProvider extends ServiceProvider
             $fabrica = new FabricaEfectos();
 
             // Registrar efectos de habilidad
-            $fabrica->registrarEfecto('armor_pierce', EfectoPerforacionArmadura::class, 0.10);
-            $fabrica->registrarEfecto('regen_def', EfectoRegeneracionDefensa::class, 10.0);
-            $fabrica->registrarEfecto('sandstorm_summoner', EfectoInvocadorClima::class, TipoClima::TORMENTA_ARENA);
+            $fabrica->registrarEfecto(ClaveEfecto::PERFORACION_ARMADURA, EfectoPerforacionArmadura::class, 0.10);
+            $fabrica->registrarEfecto(ClaveEfecto::REGEN_DEF, EfectoRegeneracionDefensa::class, 10.0);
+            $fabrica->registrarEfecto(ClaveEfecto::TORMENTA_ARENA, EfectoInvocadorClima::class, TipoClima::TORMENTA_ARENA);
 
             // Climas (EfectoInvocadorClima recibe el tipo de clima como 2º argumento)
-            $fabrica->registrarEfecto('sequia_summoner', EfectoInvocadorClima::class, TipoClima::SEQUIA);
-            $fabrica->registrarEfecto('diluvio_summoner', EfectoInvocadorClima::class, TipoClima::DILUVIO);
-            $fabrica->registrarEfecto('niebla_summoner', EfectoInvocadorClima::class, TipoClima::NIEBLA);
-            $fabrica->registrarEfecto('granizo_summoner', EfectoInvocadorClima::class, TipoClima::GRANIZO);
-            $fabrica->registrarEfecto('turbulencias_summoner', EfectoInvocadorClima::class, TipoClima::TURBULENCIAS);
+            $fabrica->registrarEfecto(ClaveEfecto::SEQUIA, EfectoInvocadorClima::class, TipoClima::SEQUIA);
+            $fabrica->registrarEfecto(ClaveEfecto::DILUVIO, EfectoInvocadorClima::class, TipoClima::DILUVIO);
+            $fabrica->registrarEfecto(ClaveEfecto::NIEBLA, EfectoInvocadorClima::class, TipoClima::NIEBLA);
+            $fabrica->registrarEfecto(ClaveEfecto::GRANIZO, EfectoInvocadorClima::class, TipoClima::GRANIZO);
+            $fabrica->registrarEfecto(ClaveEfecto::TURBULENCIAS, EfectoInvocadorClima::class, TipoClima::TURBULENCIAS);
 
             // Registrar efectos de objetos equipados
-            $fabrica->registrarItem('leftovers', EfectoRestos::class);
-            $fabrica->registrarItem('life_orb', EfectoOrbeVida::class);
+            $fabrica->registrarItem(ClaveItem::RESTOS, EfectoRestos::class);
+            $fabrica->registrarItem(ClaveItem::ORBE_VIDA, EfectoOrbeVida::class);
 
             return $fabrica;
         });

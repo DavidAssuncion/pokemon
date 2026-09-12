@@ -16,13 +16,17 @@ use Src\Habitats\Domain\HabitatsCollection;
 use Src\Habitats\Domain\ProvinceEntity;
 use Src\Habitats\Domain\ProvinciasCollection;
 use Src\Habitats\Domain\Repositories\HabitatRepositoryInterface;
+use Src\Habitats\Domain\ResolvedorCadenasEvolutivas;
+use Src\Habitats\Presentation\ColeccionTiposFamilia;
 use Src\Habitats\Presentation\DTOFamiliaDisponible;
 use Src\Habitats\Presentation\DTOFamiliaEliminada;
 use Src\Habitats\Presentation\DTOFamiliasDisponibles;
 use Src\Habitats\Presentation\DTOFamiliaSinHabitat;
 use Src\Habitats\Presentation\DTOFamiliasSinHabitat;
 use Src\Habitats\Presentation\DTOHabitatDetalle;
+use Src\Habitats\Presentation\DTOPokemonFamilia;
 use Src\Habitats\Presentation\DTOPokemonNivelActualizado;
+use Src\Habitats\Presentation\DTOPokemonTipo;
 
 /**
  * Repositorio Eloquent de hábitats.
@@ -33,6 +37,15 @@ use Src\Habitats\Presentation\DTOPokemonNivelActualizado;
  */
 class HabitatRepository implements HabitatRepositoryInterface
 {
+    private readonly ResolvedorCadenasEvolutivas $resolvedorCadenas;
+
+    public function __construct()
+    {
+        $this->resolvedorCadenas = new ResolvedorCadenasEvolutivas(
+            fn (int $id): string => $this->iconPath($id),
+        );
+    }
+
     public function allProvinciasWithHabitats(): ProvinciasCollection
     {
         $provinces = Province::with('habitats')->get()->sortBy('id');
@@ -138,12 +151,10 @@ class HabitatRepository implements HabitatRepositoryInterface
             ->values()
             ->toArray();
 
-        $chainIds = $this->sortChainIdsByMinSpeciesId($chainIds);
-
         $result = new DTOFamiliasDisponibles();
 
         foreach ($chainIds as $chainId) {
-            $members = $this->getFamilyMembersByChain($chainId);
+            $members = $this->cargarMiembrosFamilia($chainId);
             if ($members === []) {
                 continue;
             }
@@ -154,7 +165,7 @@ class HabitatRepository implements HabitatRepositoryInterface
             }
         }
 
-        return $result;
+        return $result->ordenadasPorMinSpeciesId();
     }
 
     public function getUnassignedFamilies(): DTOFamiliasSinHabitat
@@ -174,12 +185,10 @@ class HabitatRepository implements HabitatRepositoryInterface
             ->values()
             ->toArray();
 
-        $unassignedChains = $this->sortChainIdsByMinSpeciesId($unassignedChains);
-
         $result = new DTOFamiliasSinHabitat();
 
         foreach ($unassignedChains as $chainId) {
-            $members = $this->getFamilyMembersByChain($chainId);
+            $members = $this->cargarMiembrosFamilia($chainId);
             if ($members === []) {
                 continue;
             }
@@ -190,23 +199,23 @@ class HabitatRepository implements HabitatRepositoryInterface
             }
         }
 
-        return $result;
+        return $result->ordenadasPorMinSpeciesId();
     }
 
     public function assignFamily(int $habitatId, int $evolutionChainId): DTOFamiliaDisponible
     {
         $this->assertHabitatExists($habitatId);
 
-        $members = $this->getFamilyMembersByChain($evolutionChainId);
+        $members = $this->cargarMiembrosFamilia($evolutionChainId);
         $this->assertFamilyMembersExist($evolutionChainId, $members);
 
-        $totalStages = $this->totalStages($members);
+        $totalStages = $this->resolvedorCadenas->totalStages($members);
 
         DB::transaction(function () use ($habitatId, $members, $totalStages) {
             $records = array_map(fn (array $member) => [
                 'pokemon_id' => $member['id'],
                 'habitat_id' => $habitatId,
-                'level' => $this->levelForStage($member['stage'], $totalStages),
+                'level' => $this->resolvedorCadenas->levelForStage($member['stage'], $totalStages),
             ], $members);
 
             DB::table('pokemon_habitat')
@@ -224,7 +233,7 @@ class HabitatRepository implements HabitatRepositoryInterface
     {
         $this->assertHabitatExists($habitatId);
 
-        $members = $this->getFamilyMembersByChain($evolutionChainId);
+        $members = $this->cargarMiembrosFamilia($evolutionChainId);
         $this->assertFamilyMembersExist($evolutionChainId, $members);
 
         $pokemonIds = array_map(fn (array $member) => $member['id'], $members);
@@ -280,118 +289,19 @@ class HabitatRepository implements HabitatRepositoryInterface
     }
 
     /**
-     * Resuelve todos los miembros de la cadena con su etapa evolutiva,
-     * empezando por la base (evolves_from_species_id null) y haciendo BFS.
-     * Los miembros se ordenan por species_id asc (el "primer integrante" de la
-     * familia, criterio de negocio) con desempate por id.
-     *
-     * @return array<int, array{id: int, name: string, icon: string, stage: int, species_id: int}>
-     */
-    private function getFamilyMembersByChain(int $chainId): array
-    {
-        // Miembros de la familia (por pokemon.evolution_chain_id), ordenados por species_id
-        $pokemon = Pokemon::where('evolution_chain_id', $chainId)
-            ->get(['id', 'name', 'species_id'])
-            ->sortBy([
-                ['species_id', 'asc'],
-                ['id', 'asc'],
-            ]);
-
-        if ($pokemon->isEmpty()) {
-            return [];
-        }
-
-        // Mapa evolutivo: evolved_species_id => evolves_from_species_id (solo de este chain, filtrando por los ids de la familia)
-        $ids = $pokemon->pluck('id')->map(fn ($id) => (int) $id)->all();
-        $evolutionRows = PokemonEvolution::whereIn('evolved_species_id', $ids)
-            ->get(['evolved_species_id', 'evolves_from_species_id']);
-
-        $evolvesFrom = [];
-        foreach ($evolutionRows as $row) {
-            $evolvesFrom[(int) $row['evolved_species_id']] = $row['evolves_from_species_id'] !== null ? (int) $row['evolves_from_species_id'] : null;
-        }
-
-        // Base = el miembro cuyo evolves_from es null o no está en la familia
-        $baseId = null;
-        foreach ($pokemon as $p) {
-            $from = $evolvesFrom[(int) $p['id']] ?? null;
-            if ($from === null || ! in_array($from, $ids, true)) {
-                $baseId = (int) $p['id'];
-                break;
-            }
-        }
-        if ($baseId === null) {
-            $baseId = (int) $pokemon->first()['id'];
-        }
-
-        // BFS: base stage 1, hijos directos stage 2, resto stage 3
-        $stages = [];
-        $stage = 1;
-        $current = [$baseId];
-        while ($current !== [] && $stage <= 3) {
-            $next = [];
-            foreach ($current as $pid) {
-                $stages[$pid] = $stage;
-                foreach ($evolvesFrom as $evolvedId => $fromId) {
-                    if ($fromId === $pid && ! isset($stages[$evolvedId])) {
-                        $next[] = $evolvedId;
-                    }
-                }
-            }
-            $current = $next;
-            $stage++;
-        }
-        foreach ($pokemon as $p) {
-            $stages[(int) $p['id']] ??= 3;
-        }
-
-        return $pokemon->map(fn ($p) => [
-            'id' => (int) $p['id'],
-            'name' => $p['name'],
-            'icon' => $this->iconPath((int) $p['id']),
-            'stage' => $stages[(int) $p['id']] ?? 3,
-            'species_id' => (int) $p['species_id'],
-        ])->values()->toArray();
-    }
-
-    /**
-     * Ordena los ids de cadena evolutiva por el species_id mínimo de sus miembros
-     * (el "primer integrante" de cada familia, criterio de negocio).
-     *
-     * @param  list<int>  $chainIds
-     * @return list<int>
-     */
-    private function sortChainIdsByMinSpeciesId(array $chainIds): array
-    {
-        if ($chainIds === []) {
-            return [];
-        }
-
-        /** @var array<int, int> $minSpeciesByChain */
-        $minSpeciesByChain = Pokemon::whereIn('evolution_chain_id', $chainIds)
-            ->get(['evolution_chain_id', 'species_id'])
-            ->groupBy('evolution_chain_id')
-            ->map(fn ($members): int => (int) $members->min('species_id'))
-            ->all();
-
-        usort($chainIds, fn (int $a, int $b): int => ($minSpeciesByChain[$a] ?? PHP_INT_MAX) <=> ($minSpeciesByChain[$b] ?? PHP_INT_MAX));
-
-        return $chainIds;
-    }
-
-    /**
      * @param  array<int, array{id: int, name: string, icon: string, stage: int, species_id: int}>  $members
      */
     private function buildAvailableFamilyFromChain(int $chainId, array $members): ?DTOFamiliaDisponible
     {
-        $totalStages = $this->totalStages($members);
+        $totalStages = $this->resolvedorCadenas->totalStages($members);
 
-        [$base, $evolutions] = $this->splitFamilyMembers($members, fn (array $member): array => [
-            'id' => $member['id'],
-            'name' => $member['name'],
-            'icon' => $this->iconPath($member['id']),
-            'level' => $this->levelForStage($member['stage'], $totalStages),
-        ]);
+        [$base, $evolutions] = $this->resolvedorCadenas->splitFamilyMembers($members, fn (array $member): DTOPokemonFamilia => new DTOPokemonFamilia(
+            id: $member['id'],
+            name: $member['name'],
+            icon: $this->iconPath($member['id']),
+            level: $this->resolvedorCadenas->levelForStage($member['stage'], $totalStages),
+            speciesId: $member['species_id'],
+        ));
 
         if ($base === null) {
             return null;
@@ -410,11 +320,13 @@ class HabitatRepository implements HabitatRepositoryInterface
      */
     private function buildUnassignedFamilyFromChain(int $chainId, array $members): ?DTOFamiliaSinHabitat
     {
-        [$base, $evolutions] = $this->splitFamilyMembers($members, fn (array $member): array => [
-            'id' => $member['id'],
-            'name' => $member['name'],
-            'icon' => $this->iconPath($member['id']),
-        ]);
+        [$base, $evolutions] = $this->resolvedorCadenas->splitFamilyMembers($members, fn (array $member): DTOPokemonFamilia => new DTOPokemonFamilia(
+            id: $member['id'],
+            name: $member['name'],
+            icon: $this->iconPath($member['id']),
+            level: null,
+            speciesId: $member['species_id'],
+        ));
 
         if ($base === null) {
             return null;
@@ -429,63 +341,58 @@ class HabitatRepository implements HabitatRepositoryInterface
     }
 
     /**
-     * Divide los miembros de una familia entre el "primer integrante" (menor
-     * species_id, ya ordenado por getFamilyMembersByChain) y el resto de
-     * evoluciones, construyendo la entrada de cada uno con el builder recibido.
-     *
-     * @template TEntry of array
-     *
      * @param  array<int, array{id: int, name: string, icon: string, stage: int, species_id: int}>  $members
-     * @param  callable(array{id: int, name: string, icon: string, stage: int, species_id: int}): TEntry  $entryBuilder
-     * @return array{0: ?TEntry, 1: array<int, TEntry>}
      */
-    private function splitFamilyMembers(array $members, callable $entryBuilder): array
-    {
-        if ($members === []) {
-            return [null, []];
-        }
-
-        $base = $entryBuilder($members[0]);
-        $evolutions = array_map($entryBuilder, array_slice($members, 1));
-
-        return [$base, $evolutions];
-    }
-
-    /**
-     * @param  array<int, array{id: int, name: string, icon: string, stage: int, species_id: int}>  $members
-     * @return array<int, array{id: int, name: string}>
-     */
-    private function getChainTypes(array $members): array
+    private function getChainTypes(array $members): ColeccionTiposFamilia
     {
         $ids = array_map(fn (array $member) => $member['id'], $members);
 
-        $types = PokemonType::whereIn('pokemon_id', $ids)
+        $tipos = PokemonType::whereIn('pokemon_id', $ids)
             ->get()
             ->pluck('type')
-            ->map(fn (TipoEnum $type) => ['id' => $type->value, 'name' => $type->label()])
-            ->unique('id')
-            ->sortBy('id')
+            ->map(fn (TipoEnum $type) => new DTOPokemonTipo(id: $type->value, name: $type->label()))
+            ->unique(fn (DTOPokemonTipo $tipo) => $tipo->id)
+            ->sortBy(fn (DTOPokemonTipo $tipo) => $tipo->id)
             ->values()
-            ->toArray();
+            ->all();
 
-        return $types;
+        return new ColeccionTiposFamilia($tipos);
     }
 
     /**
-     * @param  array<int, array{id: int, name: string, icon: string, stage: int, species_id: int}>  $members
+     * Carga los miembros de la cadena evolutiva (queries Eloquent) y delega el
+     * cálculo de etapas por BFS en el resolvedor de dominio (puro).
+     *
+     * @return array<int, array{id: int, name: string, icon: string, stage: int, species_id: int}>
      */
-    private function totalStages(array $members): int
+    private function cargarMiembrosFamilia(int $chainId): array
     {
-        return max(array_column($members, 'stage'));
-    }
+        $pokemon = Pokemon::where('evolution_chain_id', $chainId)
+            ->get(['id', 'name', 'species_id'])
+            ->sortBy([
+                ['species_id', 'asc'],
+                ['id', 'asc'],
+            ])
+            ->map(fn (Pokemon $p) => [
+                'id' => (int) $p->id,
+                'name' => (string) $p->name,
+                'species_id' => (int) $p->species_id,
+            ])
+            ->values()
+            ->toArray();
 
-    private function levelForStage(int $stage, int $totalStages): int
-    {
-        if ($totalStages === 1) {
-            return 2;
-        }
+        $ids = array_column($pokemon, 'id');
 
-        return min($stage, 3);
+        $evolutions = PokemonEvolution::whereIn('evolved_species_id', $ids)
+            ->get(['evolved_species_id', 'evolves_from_species_id'])
+            ->map(fn ($row) => [
+                'evolved_species_id' => (int) $row['evolved_species_id'],
+                'evolves_from_species_id' => $row['evolves_from_species_id'] !== null ? (int) $row['evolves_from_species_id'] : null,
+            ])
+            ->values()
+            ->toArray();
+
+        return $this->resolvedorCadenas->getFamilyMembersByChain($pokemon, $evolutions);
     }
 
     private function assertHabitatExists(int $habitatId): void

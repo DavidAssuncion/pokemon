@@ -31,9 +31,17 @@
 <div x-data="gimnasiosIndex()" x-init="init()">
     <div class="flex items-center justify-between mb-6">
         <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Gimnasios</h1>
-        <span class="px-3 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 text-xs font-bold rounded-full">
-            Nv {{ $nivelJugador ?? 1 }}
-        </span>
+        <div class="flex items-center gap-3">
+            <a href="{{ route('gimnasios.admin') }}"
+               class="px-3 py-1.5 bg-blue-600 text-white rounded-lg text-xs font-bold uppercase tracking-wide hover:bg-blue-700 transition-colors"
+               aria-label="Gestión-Admin de gimnasios"
+               title="Gestión-Admin de gimnasios">
+                Admin
+            </a>
+            <span class="px-3 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 text-xs font-bold rounded-full">
+                Nv {{ $nivelJugador ?? 1 }}
+            </span>
+        </div>
     </div>
 
     {{-- Loading --}}

@@ -18,8 +18,12 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use PHPUnit\Framework\Attributes\Test;
 use ReflectionMethod;
+use Src\CombateEntrenadores\App\MapeadorPokemonBatalla;
+use Src\CombateEntrenadores\Domain\GeneradorMovimientosTipo;
+use Src\Exploraciones\App\CombateExploracion;
 use Src\Exploraciones\App\ProcesarExploracionHandler;
 use Src\Shared\Bus\CommandBus;
+use Src\Shared\Domain\EscaladorNivelRival;
 use Tests\TestCase;
 
 class ProcesarExploracionPoolTest extends TestCase
@@ -79,7 +83,7 @@ class ProcesarExploracionPoolTest extends TestCase
 
         return ExploracionActiva::create([
             'user_id' => $this->usuario->id,
-            'equipo_id' => $team->id,
+            'reclutado_id' => $reclutado->id,
             'habitat_id' => $habitat->id,
             'nivel' => 1,
             'duracion_horas' => 1,
@@ -92,7 +96,11 @@ class ProcesarExploracionPoolTest extends TestCase
     {
         $exploracion = $this->crearContextoConStats();
 
-        $handler = new ProcesarExploracionHandler($this->createMock(CommandBus::class));
+        $handler = new ProcesarExploracionHandler(
+            $this->createMock(CommandBus::class),
+            new CombateExploracion(new MapeadorPokemonBatalla(new GeneradorMovimientosTipo())),
+            new EscaladorNivelRival(),
+        );
         $metodo = new ReflectionMethod(ProcesarExploracionHandler::class, 'poolHabitat');
         $metodo->setAccessible(true);
 

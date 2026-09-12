@@ -5,14 +5,17 @@ declare(strict_types=1);
 namespace Src\Battle\Infrastructure;
 
 use Src\Battle\Domain\AgregadoBatalla;
+use Src\Battle\Domain\Collections\CambiosStatsCollection;
 use Src\Battle\Domain\DatosPokemonBatalla;
 use Src\Battle\Domain\Effects\FabricaEfectos;
 use Src\Battle\Domain\Enums\CategoriaMovimiento;
 use Src\Battle\Domain\Enums\EstadoPokemon;
+use Src\Battle\Domain\Enums\StatClave;
 use Src\Battle\Domain\EquipoBatalla;
 use Src\Battle\Domain\FabricaBatallaInterface;
 use Src\Battle\Domain\MovimientoBatalla;
 use Src\Battle\Domain\Posicion;
+use Src\Battle\Domain\ValueObjects\CambioStat;
 use Src\Shared\Tipos\TipoPokemon;
 
 /**
@@ -23,7 +26,17 @@ class FabricaBatallaMock implements FabricaBatallaInterface
 {
     public function __construct(
         private readonly ?FabricaEfectos $fabricaEfectos = null,
-    ) {}
+    ) {
+    }
+
+    /**
+     * Construye una colección de cambios de stats desde etapas enteras.
+     */
+    private static function cambios(CambioStat ...$cambios): CambiosStatsCollection
+    {
+        return new CambiosStatsCollection($cambios);
+    }
+
     /** @return DatosPokemonBatalla[] */
     public function generateTeam1(): array
     {
@@ -66,7 +79,7 @@ class FabricaBatallaMock implements FabricaBatallaInterface
                     new MovimientoBatalla('Bola Sombra', 80, TipoPokemon::FANTASMA, CategoriaMovimiento::ESPECIAL),
                     new MovimientoBatalla('Cometa Draco', 130, TipoPokemon::DRAGON, CategoriaMovimiento::ESPECIAL),
                     new MovimientoBatalla('Tierra Viva', 90, TipoPokemon::TIERRA, CategoriaMovimiento::ESPECIAL),
-                    new MovimientoBatalla('Paz Mental', 0, TipoPokemon::PSIQUICO, CategoriaMovimiento::ESTADO, selfStatChanges: [['stat' => 'spAtk', 'stages' => 1], ['stat' => 'spDef', 'stages' => 1]]),
+                    new MovimientoBatalla('Paz Mental', 0, TipoPokemon::PSIQUICO, CategoriaMovimiento::ESTADO, selfStatChanges: self::cambios(CambioStat::desdeEtapas(StatClave::ATAQUE_ESPECIAL, 1), CambioStat::desdeEtapas(StatClave::DEFENSA_ESPECIAL, 1))),
                 ],
                 shiny: true,
                 speciesId: 487,
@@ -87,7 +100,7 @@ class FabricaBatallaMock implements FabricaBatallaInterface
                     new MovimientoBatalla('Triturar', 80, TipoPokemon::SINIESTRO, CategoriaMovimiento::FISICO),
                     new MovimientoBatalla('Terremoto', 100, TipoPokemon::TIERRA, CategoriaMovimiento::FISICO),
                     new MovimientoBatalla('Onda Trueno', 0, TipoPokemon::ELECTRICO, CategoriaMovimiento::ESTADO, statusEffect: EstadoPokemon::PARALYSIS),
-                    new MovimientoBatalla('Danza Dragon', 0, TipoPokemon::NORMAL, CategoriaMovimiento::ESTADO, selfStatChanges: [['stat' => 'attack', 'stages' => 1], ['stat' => 'speed', 'stages' => 1]]),
+                    new MovimientoBatalla('Danza Dragon', 0, TipoPokemon::NORMAL, CategoriaMovimiento::ESTADO, selfStatChanges: self::cambios(CambioStat::desdeEtapas(StatClave::ATAQUE, 1), CambioStat::desdeEtapas(StatClave::VELOCIDAD, 1))),
                 ],
                 shiny: true,
                 effectKeys: ['sandstorm_summoner'],
@@ -109,7 +122,7 @@ class FabricaBatallaMock implements FabricaBatallaInterface
                     new MovimientoBatalla('Ventisca', 110, TipoPokemon::HIELO, CategoriaMovimiento::ESPECIAL),
                     new MovimientoBatalla('Tornado', 110, TipoPokemon::VOLADOR, CategoriaMovimiento::ESPECIAL),
                     new MovimientoBatalla('Rayo Hielo', 90, TipoPokemon::HIELO, CategoriaMovimiento::ESPECIAL),
-                    new MovimientoBatalla('Viento Hielo', 55, TipoPokemon::HIELO, CategoriaMovimiento::ESPECIAL, targetStatChanges: [['stat' => 'speed', 'stages' => -1]]),
+                    new MovimientoBatalla('Viento Hielo', 55, TipoPokemon::HIELO, CategoriaMovimiento::ESPECIAL, targetStatChanges: self::cambios(CambioStat::desdeEtapas(StatClave::VELOCIDAD, -1))),
                 ],
                 speciesId: 144,
             ),
@@ -130,7 +143,7 @@ class FabricaBatallaMock implements FabricaBatallaInterface
                     new MovimientoBatalla('Triturar', 80, TipoPokemon::SINIESTRO, CategoriaMovimiento::FISICO),
                     new MovimientoBatalla('Roca Filada', 100, TipoPokemon::ROCA, CategoriaMovimiento::FISICO),
                     new MovimientoBatalla('Cuchilla Bárbara', 120, TipoPokemon::DRAGON, CategoriaMovimiento::FISICO),
-                    new MovimientoBatalla('Danza Dragon', 0, TipoPokemon::NORMAL, CategoriaMovimiento::ESTADO, selfStatChanges: [['stat' => 'attack', 'stages' => 1], ['stat' => 'speed', 'stages' => 1]]),
+                    new MovimientoBatalla('Danza Dragon', 0, TipoPokemon::NORMAL, CategoriaMovimiento::ESTADO, selfStatChanges: self::cambios(CambioStat::desdeEtapas(StatClave::ATAQUE, 1), CambioStat::desdeEtapas(StatClave::VELOCIDAD, 1))),
                 ],
                 effectKeys: ['armor_pierce'],
                 item: 'life_orb',
@@ -159,7 +172,7 @@ class FabricaBatallaMock implements FabricaBatallaInterface
                     new MovimientoBatalla('Cabeza de Hierro', 80, TipoPokemon::ACERO, CategoriaMovimiento::FISICO),
                     new MovimientoBatalla('Roca Afilada', 100, TipoPokemon::ROCA, CategoriaMovimiento::FISICO),
                     new MovimientoBatalla('Terremoto', 100, TipoPokemon::TIERRA, CategoriaMovimiento::FISICO),
-                    new MovimientoBatalla('Defensa Férrea', 0, TipoPokemon::ACERO, CategoriaMovimiento::ESTADO, selfStatChanges: [['stat' => 'defense', 'stages' => 2]]),
+                    new MovimientoBatalla('Defensa Férrea', 0, TipoPokemon::ACERO, CategoriaMovimiento::ESTADO, selfStatChanges: self::cambios(CambioStat::desdeEtapas(StatClave::DEFENSA, 2))),
                 ],
                 effectKeys: ['regen_def'],
                 speciesId: 306,
@@ -200,7 +213,7 @@ class FabricaBatallaMock implements FabricaBatallaInterface
                     new MovimientoBatalla('Psíquico', 90, TipoPokemon::PSIQUICO, CategoriaMovimiento::ESPECIAL),
                     new MovimientoBatalla('Esfera Aural', 80, TipoPokemon::LUCHA, CategoriaMovimiento::ESPECIAL),
                     new MovimientoBatalla('Llamarada', 110, TipoPokemon::FUEGO, CategoriaMovimiento::ESPECIAL),
-                    new MovimientoBatalla('Paz Mental', 0, TipoPokemon::PSIQUICO, CategoriaMovimiento::ESTADO, selfStatChanges: [['stat' => 'spAtk', 'stages' => 1], ['stat' => 'spDef', 'stages' => 1]]),
+                    new MovimientoBatalla('Paz Mental', 0, TipoPokemon::PSIQUICO, CategoriaMovimiento::ESTADO, selfStatChanges: self::cambios(CambioStat::desdeEtapas(StatClave::ATAQUE_ESPECIAL, 1), CambioStat::desdeEtapas(StatClave::DEFENSA_ESPECIAL, 1))),
                     new MovimientoBatalla('Ventisca', 110, TipoPokemon::HIELO, CategoriaMovimiento::ESPECIAL),
                 ],
                 item: 'life_orb',

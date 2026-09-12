@@ -112,7 +112,7 @@ class ExploracionesAutoResolucionTest extends TestCase
     private function crearExploracionAjena(array $opciones = []): ExploracionActiva
     {
         $province = Province::create(['id' => 2, 'name' => 'Johto']);
-        $habitat = Habitat::create(['id' => 2, 'name' => 'Cueva', 'province_id' => 2]);
+        $habitat = Habitat::create(['id' => 2, 'name' => 'Cueva', 'province_id' => 2, 'peligro' => 1]);
         $team = Team::create(['name' => 'Equipo Ajeno', 'user_id' => $this->otroUsuario->id]);
         $pokemonAjeno = Pokemon::create([
             'id' => 2,
@@ -125,6 +125,15 @@ class ExploracionesAutoResolucionTest extends TestCase
             'hatch' => 10,
             'evolution_chain_id' => 2,
         ]);
+
+        DB::table('pokemon_habitat')->insert([
+            ['pokemon_id' => 2, 'habitat_id' => 2, 'level' => 1],
+        ]);
+
+        PokemonStat::create(['pokemon_id' => 2, 'stat' => 1, 'base_stat' => 39, 'effort' => 0]);
+        PokemonStat::create(['pokemon_id' => 2, 'stat' => 2, 'base_stat' => 52, 'effort' => 1]);
+        PokemonStat::create(['pokemon_id' => 2, 'stat' => 3, 'base_stat' => 43, 'effort' => 0]);
+
         $reclutadoAjeno = Reclutado::create([
             'user_id' => $this->otroUsuario->id,
             'pokemon_id' => $pokemonAjeno->id,
@@ -170,14 +179,15 @@ class ExploracionesAutoResolucionTest extends TestCase
         );
     }
 
-    public function test_index_procesa_exploraciones_activas_al_cargar(): void
+    public function test_comando_procesa_exploraciones_activas_al_ejecutarse(): void
     {
-        // Crear exploración activa que ya pasó su duración (2h de duración,
-        // inicio hace 3h) → el tick debe finalizarla.
+        // Adaptación RFC: el tick ya NO se dispara al cargar /exploraciones
+        // (index es solo lectura). La auto-resolución vive en el comando
+        // exploraciones:procesar (programado cada 5 min).
         $this->bindHandlersDeterministas();
         $ctx = $this->crearContexto(['duracion_horas' => 2, 'inicio' => now()->subHours(3)]);
 
-        $this->get('/exploraciones')->assertOk();
+        $this->artisan('exploraciones:procesar')->assertSuccessful();
 
         $ctx['exploracion']->refresh();
         $this->assertNotNull($ctx['exploracion']->regreso, 'La exploración debió finalizarse.');
@@ -185,7 +195,7 @@ class ExploracionesAutoResolucionTest extends TestCase
         $this->assertNotEmpty($ctx['exploracion']->eventos['derrotados'] ?? [], 'Debe haber derrotados.');
     }
 
-    public function test_index_no_reprocesa_exploracion_ya_finalizada(): void
+    public function test_comando_no_reprocesa_exploracion_ya_finalizada(): void
     {
         $this->bindHandlersDeterministas();
         $ctx = $this->crearContexto(['duracion_horas' => 2, 'inicio' => now()->subHours(3)]);
@@ -200,37 +210,39 @@ class ExploracionesAutoResolucionTest extends TestCase
         $ctx['exploracion']->regreso = now()->subMinutes(10);
         $ctx['exploracion']->save();
 
-        $this->get('/exploraciones')->assertOk();
+        $this->artisan('exploraciones:procesar')->assertSuccessful();
 
         $ctx['exploracion']->refresh();
         // La bitácora debe seguir intacta (sin duplicados)
         $this->assertCount(2, $ctx['exploracion']->eventos['bitacora']);
     }
 
-    public function test_index_no_procesa_exploraciones_de_otro_usuario(): void
+    public function test_comando_procesa_tambien_exploraciones_de_otros_usuarios(): void
     {
+        // RFC: el comando corre en CLI sin sesión (withoutUserScope), por lo que
+        // procesa TODOS los usuarios, no solo el autenticado (al contrario que
+        // el index web, que está limitado por el scope BelongsToUser).
         $this->bindHandlersDeterministas();
         $ajena = $this->crearExploracionAjena(['duracion_horas' => 2, 'inicio' => now()->subHours(3)]);
 
-        $this->get('/exploraciones')->assertOk();
+        // En CLI no hay usuario autenticado: sin sesión los scopes BelongsToUser
+        // (de ExploracionActiva y de Reclutado) quedan inactivos.
+        \Illuminate\Support\Facades\Auth::logout();
+
+        $this->artisan('exploraciones:procesar')->assertSuccessful();
 
         $ajena->refresh();
-        $this->assertNull($ajena->regreso, 'La exploración ajena no debe ser procesada.');
+        $this->assertNotNull($ajena->regreso, 'El comando global debe procesar también la exploración ajena.');
     }
 
-    public function test_index_no_bloquea_si_un_tick_falla(): void
+    public function test_index_no_dispara_ticks_ni_se_bloquea_con_bus_roto(): void
     {
-        // Mock del CommandBus que lanza excepción en el dispatch
+        // RFC: index es solo lectura (no despacha ticks). Aunque el bus esté
+        // roto, la página carga y la exploración no se toca.
         $busMock = $this->createMock(CommandBus::class);
         $busMock->method('dispatch')
             ->willThrowException(new \RuntimeException('Fallo simulado'));
         $this->app->instance(CommandBus::class, $busMock);
-
-        // Handler que usa el bus mockeado
-        $this->app->instance(
-            ProcesarExploracionHandler::class,
-            new ProcesarExploracionHandler($busMock, fn (): float => 0.3),
-        );
 
         $ctx = $this->crearContexto(['duracion_horas' => 2, 'inicio' => now()->subHours(3)]);
 
@@ -240,12 +252,12 @@ class ExploracionesAutoResolucionTest extends TestCase
             $this->fail('La página no debe bloquearse aunque falle un tick: '.$e->getMessage());
         }
 
-        // La exploración sigue activa (no se procesó)
+        // La exploración sigue activa (el index no la procesa)
         $ctx['exploracion']->refresh();
         $this->assertNull($ctx['exploracion']->regreso);
     }
 
-    public function test_index_no_reaplica_auto_resolucion_si_no_hay_activas(): void
+    public function test_comando_no_falla_cuando_no_hay_activas(): void
     {
         $this->bindHandlersDeterministas();
 
@@ -255,6 +267,6 @@ class ExploracionesAutoResolucionTest extends TestCase
         $ctx['exploracion']->save();
 
         // No debe lanzar error
-        $this->get('/exploraciones')->assertOk();
+        $this->artisan('exploraciones:procesar')->assertSuccessful();
     }
 }

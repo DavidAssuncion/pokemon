@@ -297,4 +297,51 @@ class ReclutamientoControllerTest extends TestCase
         ]);
         $this->assertDatabaseCount('reclutables', 0);
     }
+
+    public function test_recruit_es_atomico_si_falla_despues_de_insertar_el_reclutado(): void
+    {
+        $pokemon = $this->crearPokemon();
+        $reclutable = $this->crearReclutable($pokemon->id, 5);
+
+        // El error ocurre DESPUÉS del INSERT del reclutado (evento created):
+        // sin transacción la fila quedaría commiteada aunque el handler falle.
+        Reclutado::created(function (): never {
+            throw new \RuntimeException('boom');
+        });
+
+        try {
+            $response = $this->postJson('/reclutamiento/recruit', [
+                'reclutable_id' => $reclutable->id,
+            ]);
+        } finally {
+            Reclutado::flushEventListeners();
+        }
+
+        $response->assertStatus(500);
+        $this->assertDatabaseCount('reclutados', 0);
+        $this->assertDatabaseHas('reclutables', ['id' => $reclutable->id, 'cantidad' => 5]);
+    }
+
+    public function test_discard_all_es_atomico_si_falla_otorgar_caramelos(): void
+    {
+        $pokemon = $this->crearPokemon(1, 'bulbasaur', 1, 51);
+        $reclutable = $this->crearReclutable($pokemon->id, 3);
+
+        // El error ocurre DESPUÉS del INSERT del caramelo (evento created):
+        // sin transacción quedaría un caramelo commiteado y el reclutable
+        // intacto a medias (escritura parcial entre otorgarCaramelos y delete).
+        PlayerInventory::created(function (): never {
+            throw new \RuntimeException('boom');
+        });
+
+        try {
+            $response = $this->postJson('/reclutamiento/discard-all');
+        } finally {
+            PlayerInventory::flushEventListeners();
+        }
+
+        $response->assertStatus(500);
+        $this->assertDatabaseCount('player_inventory', 0);
+        $this->assertDatabaseHas('reclutables', ['id' => $reclutable->id, 'cantidad' => 3]);
+    }
 }

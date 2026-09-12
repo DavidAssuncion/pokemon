@@ -113,6 +113,49 @@ enum RolExploracion: string
         return false;
     }
 
+    /**
+     * Devuelve el rol sugerido para un pokémon en función de sus capacidades
+     * nucleares normalizadas: combate → COMBATIENTE, recolección → RECOLECTOR,
+     * detección → RASTREADOR, supervivencia → VANGUARDIA.
+     *
+     * Se elige la capacidad de mayor valor. Para el desempate (empates entre
+     * las capacidades máximas) se usa un orden determinista de prioridad:
+     * COMBATIENTE > RECOLECTOR > RASTREADOR > VANGUARDIA, de modo que con
+     * todas las capacidades iguales el resultado es COMBATIENTE.
+     */
+    public static function sugeridoPara(CapacidadesStats $c): self
+    {
+        $capacidades = [
+            self::COMBATIENTE->value => $c->combate(),
+            self::RECOLECTOR->value => $c->recoleccion(),
+            self::RASTREADOR->value => $c->deteccion(),
+            self::VANGUARDIA->value => $c->supervivencia(),
+        ];
+
+        $maximo = max($capacidades);
+
+        foreach (self::ORDEN_SUGERIDO as $valor) {
+            if ($capacidades[$valor] === $maximo) {
+                return self::from($valor);
+            }
+        }
+
+        return self::COMBATIENTE;
+    }
+
+    /**
+     * Orden de prioridad (valores string) para el desempate de sugeridoPara().
+     * COMBATIENTE > RECOLECTOR > RASTREADOR > VANGUARDIA.
+     *
+     * @var list<string>
+     */
+    private const ORDEN_SUGERIDO = [
+        self::COMBATIENTE->value,
+        self::RECOLECTOR->value,
+        self::RASTREADOR->value,
+        self::VANGUARDIA->value,
+    ];
+
     public static function desde(string $valor): self
     {
         return self::tryFrom($valor) ?? throw new InvalidArgumentException("Rol de exploración inválido: {$valor}");

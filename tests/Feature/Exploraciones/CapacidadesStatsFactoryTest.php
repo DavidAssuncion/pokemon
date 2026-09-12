@@ -10,6 +10,7 @@ use App\Models\Reclutado;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\Test;
+use Src\Exploraciones\App\FabricaCapacidadesStats;
 use Src\Exploraciones\Domain\CapacidadesStats;
 use Tests\TestCase;
 
@@ -25,7 +26,7 @@ class CapacidadesStatsFactoryTest extends TestCase
         $user = User::factory()->create(['experiencia' => 80_000]);
         $reclutado = $this->crearReclutado($user, expTotal: 1_250_000);
 
-        $stats = CapacidadesStats::desdeReclutado($reclutado, $user);
+        $stats = FabricaCapacidadesStats::desdeReclutado($reclutado, $user);
 
         $this->assertSame(50, $stats->nivelPokemon);
         $this->assertSame(20, $stats->nivelEntrenador);
@@ -43,7 +44,7 @@ class CapacidadesStatsFactoryTest extends TestCase
         $user = User::factory()->create(['experiencia' => 0]); // nivel 1
         $reclutado = $this->crearReclutado($user, expTotal: 0, soloHp: true);
 
-        $stats = CapacidadesStats::desdeReclutado($reclutado, $user);
+        $stats = FabricaCapacidadesStats::desdeReclutado($reclutado, $user);
 
         $this->assertSame(1, $stats->nivelPokemon);
         $this->assertSame(1, $stats->nivelEntrenador);
@@ -61,7 +62,7 @@ class CapacidadesStatsFactoryTest extends TestCase
         $user = User::factory()->create(['experiencia' => 10 * 3 ** 3]); // nivel 3
         $reclutado = $this->crearReclutado($user, expTotal: 10 * 7 ** 3); // nivel 7
 
-        $stats = CapacidadesStats::desdeReclutado($reclutado, $user);
+        $stats = FabricaCapacidadesStats::desdeReclutado($reclutado, $user);
 
         // Recalculamos con los valores reales: hp=100, atk=80, def=70, spAtk=90, spDef=60, speed=50
         $manual = (new CapacidadesStats(100, 80, 70, 90, 60, 50, 7, 3))->todas();

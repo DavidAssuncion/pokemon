@@ -53,3 +53,4 @@ Route::get('/api/reclutados', [ReclutadoController::class, 'listarTodos']);
 Route::post('/api/reclutados/{reclutado}/toggle-favorito', [ReclutadoController::class, 'toggleFavorito']);
 Route::get('/api/reclutados/favoritos', [ReclutadoController::class, 'listarFavoritos']);
 Route::get('/api/reclutado/{reclutado}/capacidades', [ReclutadoController::class, 'capacidades']);
+Route::post('/api/reclutado/{reclutado}/rol', [ReclutadoController::class, 'actualizarRol']);

@@ -6,6 +6,7 @@ namespace Src\Battle\Domain\Effects;
 
 use Src\Battle\Domain\AgregadoBatalla;
 use Src\Battle\Domain\Combatiente;
+use Src\Battle\Domain\ReglasBatalla;
 
 /**
  * Restos: cura 1/16 del HP máximo al final de cada ronda.
@@ -31,7 +32,7 @@ class EfectoRestos implements InterfazEfecto
         }
 
         $maxHp = $portador->pokemon()->battleStats()->hp;
-        $cura = max(1, $maxHp * 0.0625);
+        $cura = max(1, $maxHp * ReglasBatalla::FRACCION_HP_POR_RONDA);
         $portador->setHpActual(min($maxHp, $portador->hpActual() + $cura));
         $battle->agregarLog("{$portador->nombre()} Restos recuperan {$cura} PS");
     }

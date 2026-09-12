@@ -69,9 +69,12 @@
                                     >
                                 </div>
                                 <div class="flex-1 min-w-0">
-                                    <p class="text-sm font-medium text-gray-900 dark:text-white capitalize truncate" x-text="pokemon.nombre"></p>
+                                    <p class="text-sm font-medium text-gray-900 dark:text-white capitalize truncate" x-text="nombreDe(pokemon)"></p>
                                     <div class="flex items-center gap-2 mt-1">
                                         <span class="px-1.5 py-0.5 bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-400 text-[10px] font-bold rounded-full">Nv <span x-text="nivelDe(pokemon)"></span></span>
+                                        <template x-if="cpDe(pokemon) != null">
+                                            <span class="px-1.5 py-0.5 bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300 text-[10px] font-bold rounded-full" title="Poder de combate">CP <span x-text="cpDe(pokemon)"></span></span>
+                                        </template>
                                         <template x-if="enExploracion(pokemon.id)">
                                             <span class="px-1.5 py-0.5 bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400 text-[10px] font-bold rounded uppercase">En exploración</span>
                                         </template>
@@ -192,7 +195,10 @@
                                         onerror="this.style.display='none'"
                                     >
                                 </div>
-                                <p class="text-[10px] text-gray-600 dark:text-gray-400 truncate px-1 pb-1" x-text="pokemon.nombre"></p>
+                                <p class="text-[10px] text-gray-600 dark:text-gray-400 truncate px-1 pb-1" x-text="nombreDe(pokemon)"></p>
+                                <template x-if="cpDe(pokemon) != null">
+                                    <p class="text-[10px] font-bold text-purple-600 dark:text-purple-400 leading-none" x-text="'CP ' + cpDe(pokemon)"></p>
+                                </template>
                                 <!-- Action buttons -->
                                 <div class="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2 rounded-lg">
                                     <button
@@ -357,7 +363,7 @@
                                                     <p class="text-[10px] text-gray-500 dark:text-gray-400 truncate mt-0.5" x-text="getMember(team, slot).nombre"></p>
                                                     <!-- Role selector -->
                                                     <select
-                                                        :value="getTeamMember(team, slot)?.behavior || 'VANGUARDIA'"
+                                                        :value="rolInicialDe(getTeamMember(team, slot))"
                                                         @change="updateMemberRole(team, getTeamMember(team, slot), $event.target.value)"
                                                         :disabled="isInExploration(team.id)"
                                                         class="mt-1 w-full max-w-[6.5rem] mx-auto block px-1 py-0.5 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded text-[10px] text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:opacity-40 disabled:cursor-not-allowed"
@@ -467,7 +473,10 @@
                                         onerror="this.style.display='none'"
                                     >
                                 </div>
-                                <p class="text-[10px] text-gray-600 dark:text-gray-400 truncate px-1 pb-1" x-text="pokemon.nombre"></p>
+                                <p class="text-[10px] text-gray-600 dark:text-gray-400 truncate px-1 pb-1" x-text="nombreDe(pokemon)"></p>
+                                <template x-if="cpDe(pokemon) != null">
+                                    <p class="text-[10px] font-bold text-purple-600 dark:text-purple-400 leading-none" x-text="'CP ' + cpDe(pokemon)"></p>
+                                </template>
                                 <!-- Action buttons -->
                                 <div class="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2 rounded-lg">
                                     <div class="relative">
@@ -536,7 +545,10 @@
                                         onerror="this.style.display='none'"
                                     >
                                 </div>
-                                <p class="text-[10px] text-gray-500 dark:text-gray-500 truncate px-1 pb-1" x-text="pokemon.nombre"></p>
+                                <p class="text-[10px] text-gray-500 dark:text-gray-500 truncate px-1 pb-1" x-text="nombreDe(pokemon)"></p>
+                                <template x-if="cpDe(pokemon) != null">
+                                    <p class="text-[10px] font-bold text-purple-500/70 leading-none" x-text="'CP ' + cpDe(pokemon)"></p>
+                                </template>
                                 <!-- Action buttons -->
                                 <div class="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
                                     <!-- Inspect (always available, read-only) -->
@@ -614,7 +626,10 @@
                                         onerror="this.style.display='none'"
                                     >
                                 </div>
-                                <p class="text-[10px] text-gray-600 dark:text-gray-400 truncate mt-1" x-text="pokemon.nombre"></p>
+                                <p class="text-[10px] text-gray-600 dark:text-gray-400 truncate mt-1" x-text="nombreDe(pokemon)"></p>
+                                <template x-if="cpDe(pokemon) != null">
+                                    <p class="text-[10px] font-bold text-purple-600 dark:text-purple-400 leading-none" x-text="'CP ' + cpDe(pokemon)"></p>
+                                </template>
                                 <div class="mt-1">
                                     <template x-if="pokemon.favorito">
                                         <span class="inline-flex items-center gap-1 px-1.5 py-0.5 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 text-[10px] font-bold rounded-full">
@@ -646,7 +661,7 @@
             <div class="relative bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-md p-6">
                 <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-2">Enviar a explorar</h3>
                 <p class="text-sm text-gray-600 dark:text-gray-300 mb-4">
-                    Enviar a <strong class="text-gray-900 dark:text-white capitalize" x-text="exploracionPokemon?.nombre"></strong> (Nv <span x-text="exploracionPokemon ? nivelDe(exploracionPokemon) : ''"></span>)
+                    Enviar a <strong class="text-gray-900 dark:text-white capitalize" x-text="exploracionPokemon ? nombreDe(exploracionPokemon) : ''"></strong> (Nv <span x-text="exploracionPokemon ? nivelDe(exploracionPokemon) : ''"></span>)
                 </p>
 
                 <!-- Habitat selector -->
@@ -724,13 +739,6 @@
                             class="px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-900 text-gray-900 dark:text-white disabled:opacity-50"
                             @click.stop
                         >
-                    </label>
-
-                    <label class="flex items-center gap-3 p-3 rounded-lg border border-gray-200 dark:border-gray-700 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
-                        :class="{ 'border-blue-500 dark:border-blue-400 bg-blue-50 dark:bg-blue-900/20': durationMode === 'indefinite' }"
-                    >
-                        <input type="radio" x-model="durationMode" value="indefinite" class="w-4 h-4 text-blue-600">
-                        <span class="text-sm text-gray-700 dark:text-gray-300">Indefinido</span>
                     </label>
                 </div>
 
@@ -847,7 +855,7 @@
                     </div>
                     <div class="flex-1 min-w-0">
                         <div class="flex items-center gap-2 flex-wrap">
-                            <h3 id="detail-modal-title" class="text-lg font-bold text-gray-900 dark:text-white capitalize truncate" x-text="detailPokemon.nombre"></h3>
+                            <h3 id="detail-modal-title" class="text-lg font-bold text-gray-900 dark:text-white capitalize truncate" x-text="nombreDe(detailPokemon)"></h3>
                             <template x-if="detailPokemon.es_shiny">
                                 <span class="px-1.5 py-0.5 bg-yellow-100 dark:bg-yellow-900/40 text-yellow-700 dark:text-yellow-400 text-[10px] font-bold rounded uppercase" title="Shiny">★ Shiny</span>
                             </template>
@@ -855,6 +863,9 @@
                         <p class="text-xs text-gray-400 dark:text-gray-500" x-text="'#' + detailPokemon.pokemon_id"></p>
                         <div class="flex items-center gap-2 mt-1 flex-wrap">
                             <span class="px-2 py-0.5 bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-400 text-xs font-bold rounded-full">Nv <span x-text="nivelDe(detailPokemon)"></span></span>
+                            <template x-if="cpDe(detailPokemon) != null">
+                                <span class="px-2 py-0.5 bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300 text-xs font-bold rounded-full" title="Poder de combate">CP <span x-text="cpDe(detailPokemon)"></span></span>
+                            </template>
                             <span class="text-xs text-gray-500 dark:text-gray-400" x-text="formatExp(expTotalDe(detailPokemon)) + ' exp'"></span>
                         </div>
                     </div>
@@ -1189,6 +1200,24 @@ function favoritosApp() {
             if (!pokemon) return 0;
             if (typeof pokemon.exp_total === 'number') return pokemon.exp_total;
             return pokemon.exp && typeof pokemon.exp.total === 'number' ? pokemon.exp.total : 0;
+        },
+
+        // CP (poder de combate) expuesto por el backend en el serializador de reclutado.
+        // Tolerante a data legacy que aún no lo entrega → devuelve null y se omite la badge.
+        cpDe(pokemon) {
+            if (!pokemon) return null;
+            if (typeof pokemon.cp === 'number') return pokemon.cp;
+            return null;
+        },
+
+        // Nombre visible del reclutado: si no tiene nombre personalizado (null), usa el
+        // nombre por defecto del pokémon CAPITALIZADO (ucfirst). Sirve para todos los sitios
+        // que muestran un nombre en la UI (tarjetas, detalle, formación).
+        nombreDe(pokemon) {
+            if (!pokemon) return '';
+            let nombre = pokemon.nombre;
+            if (!nombre && pokemon.pokemon && pokemon.pokemon.name) nombre = pokemon.pokemon.name;
+            return String(nombre || '').charAt(0).toUpperCase() + String(nombre || '').slice(1);
         },
 
         expParaNivel(nivel) {
@@ -1578,29 +1607,36 @@ function favoritosApp() {
         },
 
         async updateMemberRole(team, member, behavior) {
-            if (!member || !member.id || !behavior) return;
+            if (!member || !behavior) return;
+            const reclutadoId = member.reclutado?.id ?? member.pokemon_id;
+            if (!reclutadoId) return;
             try {
-                const response = await fetch('/teams/update-member-role', {
+                const response = await fetch('/api/reclutado/' + reclutadoId + '/rol', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                         'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '',
                         'Accept': 'application/json',
                     },
-                    body: JSON.stringify({ member_id: member.id, behavior }),
+                    body: JSON.stringify({ behavior }),
                 });
                 if (response.ok) {
-                    const data = await response.json();
-                    if (data.member) {
-                        member.behavior = data.member.behavior || behavior;
-                    }
+                    // El backend sincroniza team_members; refresco completo para lectura limpia.
                     location.reload();
                 } else {
-                    await this.handleError(response);
+                    const body = await response.json().catch(() => ({}));
+                    alert(body.message || body.error || 'No se pudo actualizar el rol.');
                 }
             } catch (err) {
-                console.error('Error updating member role:', err);
+                console.error('Error updating reclutado role:', err);
+                alert('Error de conexión al actualizar el rol.');
             }
+        },
+
+        rolInicialDe(member) {
+            if (!member) return 'VANGUARDIA';
+            // RFC: el rol vive ahora en reclutados.behavior; fallback al legado team_members.behavior.
+            return member.reclutado?.behavior || member.behavior || 'VANGUARDIA';
         },
 
         // ═══════════════════════════════════════════════════════════════════════
@@ -1840,8 +1876,6 @@ function favoritosApp() {
                     body.duracion_horas = this.durationHours;
                 } else if (this.durationMode === 'return_time') {
                     body.return_time = this.returnTime;
-                } else {
-                    body.indefinido = true;
                 }
                 const response = await fetch('/api/exploraciones/store-individual', {
                     method: 'POST',

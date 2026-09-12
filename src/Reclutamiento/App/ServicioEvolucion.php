@@ -10,6 +10,11 @@ use App\Models\PokemonEvolution;
 use App\Models\PokemonType;
 use App\Models\Reclutado;
 use App\Support\ItemCatalogo;
+use Src\Reclutamiento\Domain\Collections\OpcionEvolucionCollection;
+use Src\Reclutamiento\Domain\Collections\RequisitoEvolucionCollection;
+use Src\Reclutamiento\Domain\DataTransferObjects\OpcionEvolucion;
+use Src\Reclutamiento\Domain\DataTransferObjects\RequisitoEvolucion;
+use Src\Shared\Collections\StringCollection;
 use Src\Shared\Domain\NivelHelper;
 use Src\Shared\Domain\SlugTipo;
 
@@ -89,74 +94,74 @@ final class ServicioEvolucion
 
     /**
      * Nombres de los tipos requeridos para la siguiente evolución.
-     *
-     * @return list<string>
      */
-    public static function tiposRequeridos(?Pokemon $siguiente): array
+    public static function tiposRequeridos(?Pokemon $siguiente): StringCollection
     {
         if ($siguiente === null) {
-            return [];
+            return new StringCollection();
         }
 
-        return $siguiente->types
-            ->map(fn (PokemonType $tipo): string => $tipo->tipo_nombre)
-            ->values()
-            ->all();
+        return new StringCollection(
+            $siguiente->types
+                ->map(fn (PokemonType $tipo): string => $tipo->tipo_nombre)
+                ->values()
+                ->all()
+        );
     }
 
     /**
      * Requisitos completos para la vista (primera opción), con la exp de tipo
      * del JSON y los caramelos del inventario del jugador.
-     *
-     * @return list<array{tipo: string, slug: string, necesario: int, actual: int, caramelosDisponibles: int}>
      */
-    public static function requisitos(Reclutado $reclutado, int $userId): array
+    public static function requisitos(Reclutado $reclutado, int $userId): RequisitoEvolucionCollection
     {
         $siguiente = self::siguienteEvolucion($reclutado->pokemon);
 
         return $siguiente !== null
             ? self::requisitosPara($reclutado, $siguiente, $userId)
-            : [];
+            : new RequisitoEvolucionCollection();
     }
 
     /**
      * Requisitos para UN destino concreto: umbral del nivel actual y, por cada
      * tipo requerido del destino, la exp de tipo del JSON y los caramelos del
      * inventario del jugador.
-     *
-     * @return list<array{tipo: string, slug: string, necesario: int, actual: int, caramelosDisponibles: int}>
      */
-    public static function requisitosPara(Reclutado $reclutado, Pokemon $destino, int $userId): array
+    public static function requisitosPara(Reclutado $reclutado, Pokemon $destino, int $userId): RequisitoEvolucionCollection
     {
         $umbral = self::umbralParaNivel(self::nivelDe($reclutado));
+        $requisitos = new RequisitoEvolucionCollection();
 
-        return array_map(
-            fn (string $tipo): array => self::requisitoTipo($tipo, $umbral, $reclutado, $userId),
-            self::tiposRequeridos($destino),
-        );
+        foreach (self::tiposRequeridos($destino) as $tipo) {
+            $requisitos->add(self::requisitoTipo($tipo, $umbral, $reclutado, $userId));
+        }
+
+        return $requisitos;
     }
 
     /**
      * Requisitos de TODAS las opciones de evolución del pokémon. Consulta el
      * inventario del usuario en bloque (una sola query de PlayerInventory, no
      * una por tipo/opción) para evitar N+1.
-     *
-     * @return list<array{pokemon_id: int, nombre: string, imagen: string, requisitos: list<array{tipo: string, slug: string, necesario: int, actual: int, caramelosDisponibles: int}>, puede_evolucionar: bool}>
      */
-    public static function requisitosDeOpciones(Reclutado $reclutado, int $userId): array
+    public static function requisitosDeOpciones(Reclutado $reclutado, int $userId): OpcionEvolucionCollection
     {
         $opciones = self::opcionesEvolucion($reclutado->pokemon);
+
+        $resultado = new OpcionEvolucionCollection();
+
         if ($opciones === []) {
-            return [];
+            return $resultado;
         }
 
         $inventario = self::caramelosDeOpciones($opciones, $userId);
         $umbral = self::umbralParaNivel(self::nivelDe($reclutado));
 
-        return array_map(
-            fn (Pokemon $opcion): array => self::opcionRequisitos($opcion, $umbral, $reclutado, $inventario),
-            $opciones,
-        );
+        foreach ($opciones as $opcion) {
+            $resultado->add(self::opcionRequisitos($opcion, $umbral, $reclutado, $inventario));
+        }
+
+        return $resultado;
     }
 
     /**
@@ -185,31 +190,29 @@ final class ServicioEvolucion
 
     /**
      * @param  array<string, int>  $inventario  item_key -> cantidad
-     * @return array{pokemon_id: int, nombre: string, imagen: string, requisitos: list<array{tipo: string, slug: string, necesario: int, actual: int, caramelosDisponibles: int}>, puede_evolucionar: bool}
      */
-    private static function opcionRequisitos(Pokemon $opcion, int $umbral, Reclutado $reclutado, array $inventario): array
+    private static function opcionRequisitos(Pokemon $opcion, int $umbral, Reclutado $reclutado, array $inventario): OpcionEvolucion
     {
-        $requisitos = array_map(
-            fn (string $tipo): array => self::requisitoTipoConInventario($tipo, $umbral, $reclutado, $inventario),
-            self::tiposRequeridos($opcion),
-        );
+        $requisitos = new RequisitoEvolucionCollection();
 
-        return [
-            'pokemon_id' => $opcion->id,
-            'nombre' => $opcion->name,
-            'imagen' => "/images/iconos_webp/{$opcion->id}.webp",
-            'requisitos' => $requisitos,
-            'puede_evolucionar' => self::cumpleRequisitos($requisitos),
-        ];
+        foreach (self::tiposRequeridos($opcion) as $tipo) {
+            $requisitos->add(self::requisitoTipoConInventario($tipo, $umbral, $reclutado, $inventario));
+        }
+
+        return new OpcionEvolucion(
+            pokemonId: $opcion->id,
+            nombre: $opcion->name,
+            imagen: "/images/iconos_webp/{$opcion->id}.webp",
+            requisitos: $requisitos,
+            puedeEvolucionar: $requisitos->cumple(),
+        );
     }
 
     /**
      * Requisito de UN tipo: umbral compartido, exp de tipo del JSON y caramelos
      * del inventario del jugador.
-     *
-     * @return array{tipo: string, slug: string, necesario: int, actual: int, caramelosDisponibles: int}
      */
-    private static function requisitoTipo(string $tipo, int $umbral, Reclutado $reclutado, int $userId): array
+    private static function requisitoTipo(string $tipo, int $umbral, Reclutado $reclutado, int $userId): RequisitoEvolucion
     {
         return self::requisitoTipoConInventario(
             $tipo,
@@ -221,17 +224,16 @@ final class ServicioEvolucion
 
     /**
      * @param  array<string, int>  $inventario  item_key -> cantidad
-     * @return array{tipo: string, slug: string, necesario: int, actual: int, caramelosDisponibles: int}
      */
-    private static function requisitoTipoConInventario(string $tipo, int $umbral, Reclutado $reclutado, array $inventario): array
+    private static function requisitoTipoConInventario(string $tipo, int $umbral, Reclutado $reclutado, array $inventario): RequisitoEvolucion
     {
-        return [
-            'tipo' => $tipo,
-            'slug' => SlugTipo::de($tipo),
-            'necesario' => $umbral,
-            'actual' => $reclutado->exp->expTipo($tipo),
-            'caramelosDisponibles' => $inventario[ItemCatalogo::keyTipo($tipo)] ?? 0,
-        ];
+        return new RequisitoEvolucion(
+            tipo: $tipo,
+            slug: SlugTipo::de($tipo),
+            necesario: $umbral,
+            actual: $reclutado->exp->expTipo($tipo),
+            caramelosDisponibles: $inventario[ItemCatalogo::keyTipo($tipo)] ?? 0,
+        );
     }
 
     /**
@@ -252,25 +254,7 @@ final class ServicioEvolucion
             return false;
         }
 
-        return self::cumpleRequisitos(self::requisitosPara($reclutado, $destino, $userId));
-    }
-
-    /**
-     * @param  list<array{tipo: string, slug: string, necesario: int, actual: int, caramelosDisponibles: int}>  $requisitos
-     */
-    private static function cumpleRequisitos(array $requisitos): bool
-    {
-        if ($requisitos === []) {
-            return false;
-        }
-
-        foreach ($requisitos as $requisito) {
-            if ($requisito['actual'] < $requisito['necesario']) {
-                return false;
-            }
-        }
-
-        return true;
+        return self::requisitosPara($reclutado, $destino, $userId)->cumple();
     }
 
     /**
@@ -294,12 +278,10 @@ final class ServicioEvolucion
     /**
      * Consume la exp de tipo del JSON `reclutados.exp` tras evolucionar
      * (cast ExpReclutado::consumirTipos: resta el umbral y elimina ≤ 0).
-     *
-     * @param  list<string>  $tipos
      */
-    public static function consumirExpTipo(Reclutado $reclutado, array $tipos, int $umbral): void
+    public static function consumirExpTipo(Reclutado $reclutado, StringCollection $tipos, int $umbral): void
     {
-        $reclutado->exp = $reclutado->exp->consumirTipos($tipos, $umbral);
+        $reclutado->exp = $reclutado->exp->consumirTipos($tipos->toList(), $umbral);
         $reclutado->save();
     }
 }

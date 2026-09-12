@@ -4,21 +4,18 @@ declare(strict_types=1);
 
 namespace Src\Exploraciones\Domain;
 
-use App\Enums\StatEnum;
-use App\Models\Reclutado;
-use App\Models\User;
-use Src\Shared\Domain\NivelHelper;
-
 /**
  * Capacidades de un pokémon reclutado para exploración, calculadas a partir
  * de sus stats base y niveles (dominio puro).
- *
- * @todo Excepción temporal a la regla de dependencias: el factory estático
- *       desdeReclutado() recibe App\Models\Reclutado y App\Models\User
- *       (deuda WIP). Ticket v2: extraer a un repositorio/factory de dominio.
  */
 final class CapacidadesStats
 {
+    public const UMBRAL_COMPETENTE = 1.0;
+
+    public const UMBRAL_EXPERTO = 2.0;
+
+    public const UMBRAL_MAESTRO = 3.5;
+
     public function __construct(
         public readonly int $hp,
         public readonly int $atk,
@@ -104,6 +101,126 @@ final class CapacidadesStats
     }
 
     /**
+     * Rango de la capacidad pedida comparando su valor con la dificultad del
+     * hábitat: NOVATO < 1×, COMPETENTE ≥ 1×, EXPERTO ≥ 2×, MAESTRO ≥ 3.5×.
+     *
+     * @throws \InvalidArgumentException si la capacidad no existe.
+     */
+    public function rangoDe(string $capacidad, int $dificultad): RangoCapacidad
+    {
+        $valor = match ($capacidad) {
+            'combate' => $this->combate(),
+            'deteccion' => $this->deteccion(),
+            'recoleccion' => $this->recoleccion(),
+            'supervivencia' => $this->supervivencia(),
+            'exploracion' => $this->exploracion(),
+            'movilidad' => $this->movilidad(),
+            default => throw new \InvalidArgumentException("Capacidad desconocida: {$capacidad}"),
+        };
+
+        if ($valor >= $dificultad * self::UMBRAL_MAESTRO) {
+            return RangoCapacidad::MAESTRO;
+        }
+
+        if ($valor >= $dificultad * self::UMBRAL_EXPERTO) {
+            return RangoCapacidad::EXPERTO;
+        }
+
+        if ($valor >= $dificultad * self::UMBRAL_COMPETENTE) {
+            return RangoCapacidad::COMPETENTE;
+        }
+
+        return RangoCapacidad::NOVATO;
+    }
+
+    /**
+     * Rango de detección para la dificultad dada.
+     */
+    public function rangoDeteccion(int $dificultad): RangoCapacidad
+    {
+        return $this->rangoDe('deteccion', $dificultad);
+    }
+
+    /**
+     * Bonus de caramelos de recolección: nivel de rango de recolección.
+     */
+    public function bonusCaramelosRecoleccion(int $dificultad): int
+    {
+        return $this->rangoDe('recoleccion', $dificultad)->nivel();
+    }
+
+    /**
+     * Bonus de eventos por tick: nivel de rango de exploración.
+     */
+    public function bonusEventosExploracion(int $dificultad): int
+    {
+        return $this->rangoDe('exploracion', $dificultad)->nivel();
+    }
+
+    /**
+     * Multiplicador de recuperación por descanso (supervivencia).
+     */
+    public function multiplicadorRecuperacion(int $dificultad): float
+    {
+        return match ($this->rangoDe('supervivencia', $dificultad)) {
+            RangoCapacidad::NOVATO => 1.0,
+            RangoCapacidad::COMPETENTE => 1.25,
+            RangoCapacidad::EXPERTO => 1.5,
+            RangoCapacidad::MAESTRO => 1.75,
+        };
+    }
+
+    /**
+     * Reducción del intervalo entre encuentros (movilidad).
+     */
+    public function reduccionIntervaloMovilidad(int $dificultad): float
+    {
+        return match ($this->rangoDe('movilidad', $dificultad)) {
+            RangoCapacidad::NOVATO => 0.0,
+            RangoCapacidad::COMPETENTE => 0.10,
+            RangoCapacidad::EXPERTO => 0.25,
+            RangoCapacidad::MAESTRO => 0.40,
+        };
+    }
+
+    /**
+     * Bonus de daño en combate (combate).
+     */
+    public function bonusDanoCombate(int $dificultad): float
+    {
+        return match ($this->rangoDe('combate', $dificultad)) {
+            RangoCapacidad::NOVATO => 1.0,
+            RangoCapacidad::COMPETENTE => 1.05,
+            RangoCapacidad::EXPERTO => 1.10,
+            RangoCapacidad::MAESTRO => 1.15,
+        };
+    }
+
+    /**
+     * Detección MAESTRO: la emboscada se evita automáticamente sin coste.
+     */
+    public function deteccionAutoEvasion(int $dificultad): bool
+    {
+        return $this->rangoDeteccion($dificultad) === RangoCapacidad::MAESTRO;
+    }
+
+    /**
+     * Detección ≥ COMPETENTE: se permiten emboscadas en los eventos.
+     */
+    public function permitirEmboscadas(int $dificultad): bool
+    {
+        return $this->rangoDeteccion($dificultad)->nivel() >= RangoCapacidad::COMPETENTE->nivel();
+    }
+
+    /**
+     * Detección ≥ EXPERTO: se permiten encuentros excepcionales.
+     */
+    public function permitirExcepcionales(int $dificultad): bool
+    {
+        return $this->rangoDeteccion($dificultad)->nivel() >= RangoCapacidad::EXPERTO->nivel();
+    }
+
+    /**
      * @return array{combate: float, deteccion: float, recoleccion: float, supervivencia: float, exploracion: float, movilidad: float}
      */
     public function todas(): array
@@ -116,40 +233,5 @@ final class CapacidadesStats
             'exploracion' => $this->exploracion(),
             'movilidad' => $this->movilidad(),
         ];
-    }
-
-    /**
-     * Factory desde modelos Eloquent: calcula nivel y stats del reclutado.
-     * Los stats base se obtienen del pokémon asociado (misma lógica que
-     * MapeadorPokemonBatalla::statsDe()). Los faltantes se rellenan con 0.
-     */
-    public static function desdeReclutado(Reclutado $reclutado, User $user): self
-    {
-        $nivelPokemon = NivelHelper::nivelDesdeExperiencia($reclutado->exp->total());
-        $nivelEntrenador = $user->nivel();
-
-        $stats = ['hp' => 0, 'atk' => 0, 'def' => 0, 'spAtk' => 0, 'spDef' => 0, 'speed' => 0];
-        foreach ($reclutado->pokemon->stats as $stat) {
-            $clave = match ($stat->stat) {
-                StatEnum::HP => 'hp',
-                StatEnum::ATTACK => 'atk',
-                StatEnum::DEFENSE => 'def',
-                StatEnum::SPECIAL_ATTACK => 'spAtk',
-                StatEnum::SPECIAL_DEFENSE => 'spDef',
-                StatEnum::SPEED => 'speed',
-            };
-            $stats[$clave] = (int) $stat->base_stat;
-        }
-
-        return new self(
-            hp: $stats['hp'],
-            atk: $stats['atk'],
-            def: $stats['def'],
-            spAtk: $stats['spAtk'],
-            spDef: $stats['spDef'],
-            speed: $stats['speed'],
-            nivelPokemon: $nivelPokemon,
-            nivelEntrenador: $nivelEntrenador,
-        );
     }
 }

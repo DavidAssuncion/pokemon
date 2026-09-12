@@ -10,7 +10,6 @@ use Src\Battle\Domain\Chain\ManejadorObjetosEquipados;
 use Src\Battle\Domain\Enums\CategoriaMovimiento;
 use Src\Battle\Domain\Enums\TipoClima;
 use Src\Battle\Domain\MovimientoBatalla;
-use Src\Battle\Domain\Posicion;
 use Src\Shared\Tipos\TipoPokemon;
 
 /**
@@ -144,7 +143,6 @@ class ManejadorObjetosEquipadosTest extends TestCase
             attacker: $atacante,
             defender: $defensor,
             move: new MovimientoBatalla('Golpe', 50, TipoPokemon::NORMAL, CategoriaMovimiento::FISICO),
-            fromPosition: Posicion::VANGUARDIA,
             defenderTeamHasVanguard: false,
             weather: TipoClima::NONE,
         );

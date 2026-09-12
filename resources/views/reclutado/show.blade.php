@@ -15,10 +15,13 @@
         >
         <div>
             <h1 class="text-2xl font-bold text-gray-900 dark:text-white capitalize">
-                {{ $reclutado['nombre'] ?? $reclutado['pokemon_nombre'] }}
+                {{ \Illuminate\Support\Str::ucfirst($reclutado['nombre'] ?? $reclutado['pokemon_nombre']) }}
             </h1>
             <p class="text-sm text-gray-500 dark:text-gray-400">
                 Nivel {{ $reclutado['nivel'] }} &middot; {{ number_format($reclutado['exp_total'] ?? 0) }} exp
+                @if(!empty($reclutado['cp']))
+                    &middot; <span class="font-bold text-purple-600 dark:text-purple-400">CP {{ number_format($reclutado['cp']) }}</span>
+                @endif
             </p>
         </div>
     </div>

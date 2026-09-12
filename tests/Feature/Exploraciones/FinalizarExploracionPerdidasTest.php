@@ -222,23 +222,25 @@ class FinalizarExploracionPerdidasTest extends TestCase
         $this->assertNotEmpty($perdidas);
 
         // Categoría exito_parcial (1 victoria de 2 combates, ratio 0.5) → multiplicador 0.7.
-        // Familia: hallazgo floor(5*0.7)=3 + derrota floor(1*0.7)=0 → 3 → pierde ceil(3/2)=2 → 1
-        // EV: hallazgo floor(4*0.7)=2 + derrota floor(1*0.7)=0 → 2 → pierde ceil(2/2)=1 → 1
-        // Tipo: hallazgo floor(6*0.7)=4 + derrota 0 → 4 → pierde ceil(4/2)=2 → 2
+        // Rango Recolector del Mewtwo (MAESTRO, dificultad 35) → bonus 3 caramelos.
+        // Familia: hallazgo floor(5*(1+3)*0.7)=14 + derrota floor(1*0.7)=0 → 14 → pierde ceil(14/2)=7 → 7
+        // EV: hallazgo floor(4*4*0.7)=11 + derrota stat1 floor(2*0.7)=1 → pierde ceil(11/2)=6 → 5
+        //      (la entrada de la derrota pierde ceil(1/2)=1 → se filtra a 0)
+        // Tipo: hallazgo floor(6*4*0.7)=16 + derrota 0 → 16 → pierde ceil(16/2)=8 → 8
         $familia = collect($resultado['caramelos_familia'])->first();
-        $this->assertSame(1, $familia['cantidad'], 'Familia 3 - 2 = 1');
+        $this->assertSame(7, $familia['cantidad'], 'Familia 14 - 7 = 7');
         $ev = collect($resultado['caramelos_ev'])->first();
-        $this->assertSame(1, $ev['cantidad'], 'EV 2 - 1 = 1');
+        $this->assertSame(5, $ev['cantidad'], 'EV 11 - 6 = 5');
         $tipo = collect($resultado['caramelos_tipo'])->first();
-        $this->assertSame(2, $tipo['cantidad'], 'Tipo 4 - 2 = 2');
+        $this->assertSame(8, $tipo['cantidad'], 'Tipo 16 - 8 = 8');
 
         // Las pérdidas están registradas con su cantidad
         $familiaPerdida = collect($perdidas)->first(fn (array $p) => $p['tipo'] === 'familia');
-        $this->assertSame(2, $familiaPerdida['cantidad_perdida']);
-        $evPerdida = collect($perdidas)->first(fn (array $p) => $p['tipo'] === 'ev');
-        $this->assertSame(1, $evPerdida['cantidad_perdida']);
+        $this->assertSame(7, $familiaPerdida['cantidad_perdida']);
+        $evPerdida = collect($perdidas)->first(fn (array $p) => $p['tipo'] === 'ev' && $p['id'] === 6);
+        $this->assertSame(6, $evPerdida['cantidad_perdida']);
         $tipoPerdida = collect($perdidas)->first(fn (array $p) => $p['tipo'] === 'tipo');
-        $this->assertSame(2, $tipoPerdida['cantidad_perdida']);
+        $this->assertSame(8, $tipoPerdida['cantidad_perdida']);
     }
 
     #[Test]

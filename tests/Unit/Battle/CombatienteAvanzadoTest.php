@@ -8,6 +8,8 @@ use PHPUnit\Framework\TestCase;
 use Src\Battle\Domain\Combatiente;
 use Src\Battle\Domain\Effects\EfectoPerforacionArmadura;
 use Src\Battle\Domain\Enums\EstadoPokemon;
+use Src\Battle\Domain\Enums\StatClave;
+use Src\Battle\Domain\ValueObjects\MultiplicadoresStats;
 use Src\Shared\Tipos\TipoPokemon;
 
 /**
@@ -28,7 +30,7 @@ class CombatienteAvanzadoTest extends TestCase
             nombre: 'Test',
         );
 
-        $this->assertSame(0.0, $c->obtenerStatEfectivo('evasion'));
+        $this->assertSame(0.0, $c->obtenerStatEfectivo(StatClave::EVASION));
     }
 
     public function test_paralysis_reduce_speed_a_la_mitad(): void
@@ -42,7 +44,7 @@ class CombatienteAvanzadoTest extends TestCase
         $c->setEstado(EstadoPokemon::PARALYSIS);
 
         // speed stat lvl100 = 2*100+5 = 205, con parálisis /2 = 102.5
-        $this->assertSame(102.5, $c->obtenerStatEfectivo('speed'));
+        $this->assertSame(102.5, $c->obtenerStatEfectivo(StatClave::VELOCIDAD));
     }
 
     public function test_paralysis_no_reduce_attack(): void
@@ -56,7 +58,7 @@ class CombatienteAvanzadoTest extends TestCase
         $c->setEstado(EstadoPokemon::PARALYSIS);
 
         // attack stat lvl100 = 2*100+5 = 205, sin reducción
-        $this->assertSame(205.0, $c->obtenerStatEfectivo('attack'));
+        $this->assertSame(205.0, $c->obtenerStatEfectivo(StatClave::ATAQUE));
     }
 
     public function test_obtener_stat_efectivo_con_stage_no_cero_aplica_multiplicador(): void
@@ -67,10 +69,10 @@ class CombatienteAvanzadoTest extends TestCase
             id: 'c1',
             nombre: 'Buff',
         );
-        $c->aplicarCambioEtapa('attack', 2);
+        $c->setMultiplicadores(MultiplicadoresStats::desdeEtapas(['attack' => 2]));
 
         // attack stat = 205 * 2.0 = 410
-        $this->assertSame(410.0, $c->obtenerStatEfectivo('attack'));
+        $this->assertSame(410.0, $c->obtenerStatEfectivo(StatClave::ATAQUE));
     }
 
     public function test_freeze_puede_impedir_actuar(): void
@@ -86,8 +88,8 @@ class CombatienteAvanzadoTest extends TestCase
         mt_srand(42); // seed que no descongela (20% chance)
         $result = $c->puedeActuar();
 
-        $this->assertFalse($result['canAct']);
-        $this->assertSame('está congelado', $result['reason']);
+        $this->assertFalse($result->esPermitida());
+        $this->assertSame('está congelado', $result->motivo());
     }
 
     public function test_sleep_turnos_decrecen_y_despierte(): void
@@ -102,13 +104,13 @@ class CombatienteAvanzadoTest extends TestCase
         $c->setTurnosEstado(1);
 
         $result = $c->puedeActuar();
-        $this->assertFalse($result['canAct']);
-        $this->assertSame('está dormido', $result['reason']);
+        $this->assertFalse($result->esPermitida());
+        $this->assertSame('está dormido', $result->motivo());
 
         // Siguiente llamada: turnos 0 → despierta
         $result2 = $c->puedeActuar();
-        $this->assertTrue($result2['canAct']);
-        $this->assertSame('despertó', $result2['reason']);
+        $this->assertTrue($result2->esPermitida());
+        $this->assertSame('despertó', $result2->motivo());
         $this->assertSame(EstadoPokemon::NONE, $c->estado());
     }
 

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Src\Equipos\App;
 
+use Src\Equipos\Domain\TeamAggregate;
 use Src\Equipos\Domain\TeamRepositoryInterface;
 
 class ObtenerEquipos
@@ -13,7 +14,7 @@ class ObtenerEquipos
     ) {
     }
 
-    /** @return array */
+    /** @return TeamAggregate[] */
     public function run(): array
     {
         return $this->teamRepository->obtenerTodos();

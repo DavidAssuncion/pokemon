@@ -5,13 +5,14 @@ declare(strict_types=1);
 namespace Src\Gimnasios\App;
 
 use App\Models\Team;
+use App\Support\BattleSessionService;
 use Src\Battle\Domain\AgregadoBatalla;
 use Src\Battle\Domain\EquipoBatalla;
 use Src\CombateEntrenadores\App\ConstruirEquipoJugador;
-use Src\Gimnasios\Domain\CatalogoGimnasios;
 use Src\Gimnasios\Domain\EvsRangoEntrenador;
 use Src\Gimnasios\Domain\Exceptions\GimnasioBloqueado;
 use Src\Gimnasios\Domain\Exceptions\GimnasioCompletado;
+use Src\Gimnasios\Domain\Repositories\GymCatalogoRepositoryInterface;
 use Src\Gimnasios\Domain\Repositories\GymProgressRepositoryInterface;
 use Src\Shared\Domain\EscaladorNivelRival;
 
@@ -24,14 +25,13 @@ use Src\Shared\Domain\EscaladorNivelRival;
  */
 final class IniciarCombateGimnasio
 {
-    private const SESSION_VERSION = 8;
-
     public function __construct(
-        private readonly CatalogoGimnasios $catalogo,
+        private readonly GymCatalogoRepositoryInterface $catalogo,
         private readonly GymProgressRepositoryInterface $repositorio,
         private readonly EscaladorNivelRival $escalador,
         private readonly GeneradorPokemonGimnasio $generador,
         private readonly ConstruirEquipoJugador $construirEquipoJugador,
+        private readonly BattleSessionService $battleSession,
     ) {
     }
 
@@ -45,7 +45,7 @@ final class IniciarCombateGimnasio
         int $nivelJugador,
         array $formacion = [],
     ): string {
-        $gimnasio = $this->catalogo->porSlugOrFail($gymSlug);
+        $gimnasio = $this->catalogo->obtenerPorSlugOrFail($gymSlug);
 
         if ($this->repositorio->esCompletado($userId, $gymSlug)) {
             throw new GimnasioCompletado();
@@ -82,8 +82,8 @@ final class IniciarCombateGimnasio
 
         $battleId = 'battle_gimnasio_'.uniqid();
 
-        session()->put($battleId, self::SESSION_VERSION.'|'.serialize($batalla));
-        session()->put($battleId.'_meta', [
+        $this->battleSession->guardar($battleId, $batalla);
+        $this->battleSession->guardarMeta($battleId, [
             'tipo' => 'gimnasio',
             'gym_id' => $gymSlug,
             'stage' => $etapa,

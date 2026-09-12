@@ -20,22 +20,6 @@ use Src\Shared\Domain\SlugTipo;
  */
 final class ItemCatalogo
 {
-    /**
-     * Slug de los caramelos EV por stat id. Referencia: la const STATS de
-     * ExploracionActivaController (contrato aditivo duplicado, sin tocar el
-     * controlador — backend D).
-     *
-     * @var array<int, string>
-     */
-    private const STAT_SLUGS = [
-        1 => 'hp',
-        2 => 'atk',
-        3 => 'def',
-        4 => 'atksp',
-        5 => 'defsp',
-        6 => 'spd',
-    ];
-
     public static function keyFamilia(int $chainId): string
     {
         return 'familia:'.$chainId;
@@ -101,11 +85,7 @@ final class ItemCatalogo
             ->first();
 
         if ($base === null) {
-            return [
-                'nombre' => 'Desconocido',
-                'imagen' => '/images/candy_pokemon/0.webp',
-                'categoria' => 'familia',
-            ];
+            return self::desconocido('familia');
         }
 
         return [
@@ -120,16 +100,12 @@ final class ItemCatalogo
      */
     private static function resolverEv(int $stat): array
     {
-        $slug = self::STAT_SLUGS[$stat] ?? null;
+        $slug = StatEnum::fromId($stat)?->slug();
         $nombre = StatEnum::fromId($stat)?->label();
 
         if ($slug === null || $nombre === null) {
             // Stat fuera de rango 1-6: es una clave EV válida pero irresoluble.
-            return [
-                'nombre' => 'Desconocido',
-                'imagen' => '/images/candy_pokemon/0.webp',
-                'categoria' => 'ev',
-            ];
+            return self::desconocido('ev');
         }
 
         return [
@@ -153,11 +129,7 @@ final class ItemCatalogo
         }
 
         if ($nombre === null) {
-            return [
-                'nombre' => 'Desconocido',
-                'imagen' => '/images/candy_pokemon/0.webp',
-                'categoria' => 'tipo',
-            ];
+            return self::desconocido('tipo');
         }
 
         return [
@@ -170,12 +142,12 @@ final class ItemCatalogo
     /**
      * @return array{nombre: string, imagen: string, categoria: string}
      */
-    private static function desconocido(): array
+    private static function desconocido(string $categoria = 'desconocida'): array
     {
         return [
             'nombre' => 'Desconocido',
             'imagen' => '/images/candy_pokemon/0.webp',
-            'categoria' => 'desconocida',
+            'categoria' => $categoria,
         ];
     }
 }

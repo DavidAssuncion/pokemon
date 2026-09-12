@@ -4,7 +4,11 @@ declare(strict_types=1);
 
 namespace Src\CombateEntrenadores\Domain;
 
+use Src\Battle\Domain\Enums\CategoriaMovimiento;
+use Src\CombateEntrenadores\Domain\Collections\MovimientosSinteticosCollection;
+use Src\CombateEntrenadores\Domain\DataTransferObjects\MovimientoSintetico;
 use Src\Shared\Tipos\TipoPokemon;
+use Src\Shared\Tipos\TiposCollection;
 
 /**
  * Generación temporal de movimientos a partir de los tipos del pokémon.
@@ -18,45 +22,27 @@ use Src\Shared\Tipos\TipoPokemon;
  */
 class GeneradorMovimientosTipo
 {
-    /**
-     * @param  TipoPokemon[]  $tipos
-     * @return list<array{nombre: string, potencia: int, tipo: TipoPokemon, categoria: string}>
-     */
-    public function generar(array $tipos): array
+    public function generar(TiposCollection $tipos): MovimientosSinteticosCollection
     {
-        $tiposNoNormal = array_values(array_filter(
-            $tipos,
+        $tiposNoNormal = $tipos->filter(
             static fn (TipoPokemon $tipo): bool => $tipo !== TipoPokemon::NORMAL
-        ));
+        );
 
-        $movimientos = [];
+        $movimientos = new MovimientosSinteticosCollection();
 
         foreach ($tiposNoNormal as $tipo) {
-            $movimientos[] = $this->movimiento("Golpe {$tipo->label()}", 60, $tipo, 'fisico');
-            $movimientos[] = $this->movimiento("Ráfaga {$tipo->label()}", 80, $tipo, 'especial');
+            $movimientos->add(new MovimientoSintetico("Golpe {$tipo->label()}", 60, $tipo, CategoriaMovimiento::FISICO));
+            $movimientos->add(new MovimientoSintetico("Ráfaga {$tipo->label()}", 80, $tipo, CategoriaMovimiento::ESPECIAL));
         }
 
-        if ($tiposNoNormal === []) {
-            $movimientos[] = $this->movimiento('Golpe Normal', 80, TipoPokemon::NORMAL, 'fisico');
-            $movimientos[] = $this->movimiento('Ráfaga Normal', 100, TipoPokemon::NORMAL, 'especial');
+        if ($tiposNoNormal->isEmpty()) {
+            $movimientos->add(new MovimientoSintetico('Golpe Normal', 80, TipoPokemon::NORMAL, CategoriaMovimiento::FISICO));
+            $movimientos->add(new MovimientoSintetico('Ráfaga Normal', 100, TipoPokemon::NORMAL, CategoriaMovimiento::ESPECIAL));
         } else {
-            $movimientos[] = $this->movimiento('Golpe Normal', 40, TipoPokemon::NORMAL, 'fisico');
-            $movimientos[] = $this->movimiento('Ráfaga Normal', 60, TipoPokemon::NORMAL, 'especial');
+            $movimientos->add(new MovimientoSintetico('Golpe Normal', 40, TipoPokemon::NORMAL, CategoriaMovimiento::FISICO));
+            $movimientos->add(new MovimientoSintetico('Ráfaga Normal', 60, TipoPokemon::NORMAL, CategoriaMovimiento::ESPECIAL));
         }
 
         return $movimientos;
-    }
-
-    /**
-     * @return array{nombre: string, potencia: int, tipo: TipoPokemon, categoria: string}
-     */
-    private function movimiento(string $nombre, int $potencia, TipoPokemon $tipo, string $categoria): array
-    {
-        return [
-            'nombre' => $nombre,
-            'potencia' => $potencia,
-            'tipo' => $tipo,
-            'categoria' => $categoria,
-        ];
     }
 }

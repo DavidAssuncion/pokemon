@@ -12,22 +12,23 @@ class CadenaDanio
 
     public function __construct()
     {
-        $base = new ManejadorDanioBase();
-        $type = new ManejadorEfectividadTipo();
-        $stab = new ManejadorSTAB();
-        $crit = new ManejadorCritico();
-        $position = new ManejadorPosicion();
-        $weather = new ManejadorClima();
-        $objetos = new ManejadorObjetosEquipados();
+        $manejadores = [
+            new ManejadorDanioBase(),
+            new ManejadorEfectividadTipo(),
+            new ManejadorSTAB(),
+            new ManejadorCritico(),
+            new ManejadorPosicion(),
+            new ManejadorClima(),
+            new ManejadorObjetosEquipados(),
+            new ManejadorBonusDaño(),
+            new ManejadorBonificadorDanio(),
+        ];
 
-        $base->setNext($type);
-        $type->setNext($stab);
-        $stab->setNext($crit);
-        $crit->setNext($position);
-        $position->setNext($weather);
-        $weather->setNext($objetos);
+        for ($indice = 0; $indice < count($manejadores) - 1; $indice++) {
+            $manejadores[$indice]->setNext($manejadores[$indice + 1]);
+        }
 
-        $this->first = $base;
+        $this->first = $manejadores[0];
     }
 
     public function calculate(AccionBatalla $action): float

@@ -23,6 +23,7 @@ use Src\Exploraciones\App\ProcesarExploracionCommand;
 use Src\Exploraciones\Domain\EstimadorRecompensasExploracion;
 use Src\Exploraciones\Domain\EvaluadorExploracion;
 use Src\Exploraciones\Domain\RolExploracion;
+use Src\Exploraciones\Domain\ValueObjects\PoolHabitat;
 use Src\Exploraciones\Presentation\PresentadorExploraciones;
 use Src\Habitats\App\ValidadorExploracion;
 use Src\Shared\Bus\CommandBus;
@@ -100,15 +101,16 @@ class ExploracionActivaController extends Controller
 
         // RF-D: recompensas esperadas (estimador puro) sobre el pool del hábitat.
         $porHoras = $this->porHorasDe($data);
-        $pool = $this->poolParaEstimador($habitat, $nivel);
+        $poolArray = $this->poolParaEstimador($habitat, $nivel);
+        $pool = PoolHabitat::desdeArray($poolArray);
         $nivelSalvaje = max(1, $minLvl ?? $dificultad);
-        $estimacion = $this->estimador->estimar(
+        $estimacion = $this->estimador->estimarDePool(
             pool: $pool,
             porHoras: $porHoras,
             capacidades: $capacidades,
             dificultad: $dificultad,
             nivelSalvaje: $nivelSalvaje,
-            cadenas: $this->cadenasDelPool($pool),
+            cadenas: $this->cadenasDelPool($poolArray),
         );
 
         return response()->json([
@@ -268,7 +270,7 @@ class ExploracionActivaController extends Controller
 
         $usuario = $request->user();
         $habitat = Habitat::find((int) $data['habitat_id']);
-        $minLvl = $habitat?->getAttribute('min_lvl_'.$data['level']);
+        $minLvl = $habitat?->minLvlParaNivel((int) $data['level']);
 
         if ($minLvl !== null && $usuario instanceof User
             && ! $this->validadorExploracion->cumpleNivelMinimo($usuario->nivel(), (int) $minLvl)

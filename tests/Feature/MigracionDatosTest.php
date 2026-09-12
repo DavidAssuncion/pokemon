@@ -16,13 +16,26 @@ class MigracionDatosTest extends TestCase
 {
     use RefreshDatabase;
 
+    /**
+     * Pasos de rollback necesarios para deshacer la migración de volcado de
+     * caramelos/exp_tipo (2026_08_29_000008) y todas las posteriores, aunque
+     * se añadan nuevas migraciones después de ella.
+     */
+    private function pasosHastaVuelcoCaramelos(): int
+    {
+        $orden = DB::table('migrations')->orderBy('id')->pluck('migration')->values();
+        $indice = $orden->search(fn (string $migracion): bool => str_contains($migracion, '2026_08_29_000008_migrate_caramelos_to_player_inventory'));
+
+        return $orden->count() - $indice;
+    }
+
     public function test_vuelca_caramelos_a_player_inventory_y_exp_tipo_a_exp_tipos(): void
     {
         // Reversa las migraciones posteriores a las de volcado de caramelos/exp_tipo
-        // (000008/000009): las 3 de la iteración expediciones (2026_08_30_*) + las 4
-        // originales posteriores (000010/000011/000009/000008) = 7 pasos, para poder
+        // (000008/000009): las de la iteración expediciones + las originales
+        // posteriores + las nuevas (gyms/mazmorra/behavior...), para poder
         // insertar los datos "viejos" antes de volver a migrar.
-        Artisan::call('migrate:rollback', ['--step' => 7]);
+        Artisan::call('migrate:rollback', ['--step' => $this->pasosHastaVuelcoCaramelos()]);
 
         $usuario = User::factory()->create();
         $pokemon = $this->createPokemon();
@@ -90,9 +103,8 @@ class MigracionDatosTest extends TestCase
 
     public function test_down_restaura_caramelos_y_reclutados_exp_tipo_best_effort(): void
     {
-        // 7 pasos: las 3 migraciones de la iteración expediciones + las 4 de
-        // índices/min_lvl/volcado que recrean las tablas legacy.
-        Artisan::call('migrate:rollback', ['--step' => 7]);
+        // Mismas pasos que el vuelco: deshace 000008 y todas las posteriores.
+        Artisan::call('migrate:rollback', ['--step' => $this->pasosHastaVuelcoCaramelos()]);
 
         $usuario = User::factory()->create();
         $pokemon = $this->createPokemon();
@@ -112,7 +124,7 @@ class MigracionDatosTest extends TestCase
         DB::table('reclutados_exp_tipo')->insert(['reclutado_id' => $reclutadoId, 'tipo' => 'Eléctrico', 'cantidad' => 300, 'created_at' => now(), 'updated_at' => now()]);
 
         Artisan::call('migrate');
-        Artisan::call('migrate:rollback', ['--step' => 7]);
+        Artisan::call('migrate:rollback', ['--step' => $this->pasosHastaVuelcoCaramelos()]);
 
         $this->assertTrue(Schema::hasTable('caramelos'));
         $this->assertTrue(Schema::hasTable('reclutados_exp_tipo'));

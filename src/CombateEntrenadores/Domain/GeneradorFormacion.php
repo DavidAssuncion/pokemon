@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Src\CombateEntrenadores\Domain;
 
+use Src\Battle\Domain\Posicion;
+
 /**
  * Genera la formación 1/2 o 2/1 (vanguardia/retaguardia) para un equipo de 3.
  *
@@ -15,7 +17,7 @@ class GeneradorFormacion
 {
     /**
      * @param  bool[]  $esDefensivoPorIndice  ordenado por índice del miembro
-     * @return string[]  'vanguardia'|'retaguardia' por índice
+     * @return list<Posicion>  posición por índice
      */
     public function generar(array $esDefensivoPorIndice): array
     {
@@ -35,9 +37,9 @@ class GeneradorFormacion
 
         $vanguardia = array_slice(array_merge($indicesDefensivos, $indicesOfensivos), 0, $vanguardiaCount);
 
-        $posiciones = array_fill(0, $total, 'retaguardia');
+        $posiciones = array_fill(0, $total, Posicion::RETAGUARDIA);
         foreach ($vanguardia as $i) {
-            $posiciones[$i] = 'vanguardia';
+            $posiciones[$i] = Posicion::VANGUARDIA;
         }
 
         return $posiciones;

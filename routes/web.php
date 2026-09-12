@@ -34,6 +34,7 @@ Route::middleware('auth')->group(function (): void {
 
     // Gimnasios — vistas (la API vive en routes/gimnasios.php, sin duplicar)
     Route::get('/gimnasios', [GimnasiosViewController::class, 'index'])->name('gimnasios.index');
+    Route::get('/gimnasios/admin', [GimnasiosViewController::class, 'admin'])->name('gimnasios.admin');
     Route::get('/gimnasios/{slug}', [GimnasiosViewController::class, 'show'])->name('gimnasios.show');
 
     // Reclutados merged into Equipos — old /reclutados redirects to /equipos (see player.php)
@@ -43,5 +44,6 @@ Route::middleware('auth')->group(function (): void {
     require __DIR__.'/datagrid.php';
     require __DIR__.'/entrenadores.php';
     require __DIR__.'/gimnasios.php';
+    require __DIR__.'/mazmorras.php';
     // require __DIR__ . '/../src/Crud/routes.php';
 });

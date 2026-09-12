@@ -9,7 +9,6 @@ use App\Models\Pokemon;
 use Random\Engine\Mt19937;
 use Random\Randomizer;
 use Src\Battle\Domain\DatosPokemonBatalla;
-use Src\Battle\Domain\Posicion;
 use Src\CombateEntrenadores\Domain\ClasificadorPosicion;
 use Src\CombateEntrenadores\Domain\GeneradorFormacion;
 
@@ -55,7 +54,7 @@ class GeneradorEquipoEntrenador
                 pokemon: $pokemon,
                 id: "entrenador_{$habitatId}_{$nivel}_{$entrenadorIndex}_{$i}",
                 nombre: $pokemon->name,
-                posicion: Posicion::from($posiciones[$i]),
+                posicion: $posiciones[$i],
                 nivel: $nivelRival,
             );
         }

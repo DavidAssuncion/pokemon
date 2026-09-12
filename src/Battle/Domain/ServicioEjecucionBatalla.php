@@ -51,15 +51,17 @@ class ServicioEjecucionBatalla
     }
 
     /**
-     * Aplica cambios de estadísticas del movimiento.
+     * Aplica cambios de estadísticas del movimiento al actor y al objetivo.
+     * Los cambios son CambioStat (StatClave, factor) ya traducidos desde etapas;
+     * cada uno se aplica sobre los multiplicadores actuales del combatiente.
      */
     public function aplicarStatChanges(Combatiente $actor, Combatiente $objetivo, MovimientoBatalla $movimiento): void
     {
         foreach ($movimiento->selfStatChanges as $cambio) {
-            $actor->aplicarCambioEtapa($cambio['stat'], $cambio['stages']);
+            $actor->setMultiplicadores($cambio->aplicadoEn($actor->multiplicadores()));
         }
         foreach ($movimiento->targetStatChanges as $cambio) {
-            $objetivo->aplicarCambioEtapa($cambio['stat'], $cambio['stages']);
+            $objetivo->setMultiplicadores($cambio->aplicadoEn($objetivo->multiplicadores()));
         }
     }
 
@@ -77,8 +79,10 @@ class ServicioEjecucionBatalla
         $dmgPart = $daño > 0 ? " → {$daño} de daño a {$objetivo->nombre()}" : '';
         $logMsg = "{$actor->nombre()} usa {$movimiento->nombre}{$dmgPart}";
 
+        // El label del log está derivado de ReglasBatalla::MULTIPLICADOR_RETAGUARDIA
+        // (reducción del 50% cuando el defensor está en retaguardia).
         if ($daño > 0 && $objetivo->estaEnRetaguardia() && $defenderTeamHasVanguard) {
-            $logMsg .= ' (-50% retaguardia)';
+            $logMsg .= ' (-'.(int) ((1 - ReglasBatalla::MULTIPLICADOR_RETAGUARDIA) * 100).'% retaguardia)';
         }
 
         if ($daño > 0 && $directPct > 0) {

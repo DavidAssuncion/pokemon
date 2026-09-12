@@ -80,14 +80,24 @@
                         <span class="font-medium text-gray-700 dark:text-gray-300" x-text="fmtTime('{{ $exp['fin'] ?? '' }}')"></span>
                     </p>
 
-                    @if(!empty($exp['indefinido']))
+                    <div class="flex items-center gap-2 flex-wrap">
                         <button
-                            @click="recogerResultados({{ $exp['id'] }})"
-                            class="px-4 py-2 bg-red-600 text-white rounded-lg text-sm font-medium hover:bg-red-700 transition-colors"
+                            type="button"
+                            @click="cancelarExploracion({{ $exp['id'] }})"
+                            class="px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg text-sm font-medium hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
                         >
-                            Recoger resultados
+                            Cancelar
                         </button>
-                    @endif
+                        @if(!empty($exp['indefinido']))
+                            <button
+                                type="button"
+                                @click="recogerResultados({{ $exp['id'] }})"
+                                class="px-4 py-2 bg-red-600 text-white rounded-lg text-sm font-medium hover:bg-red-700 transition-colors"
+                            >
+                                Recoger resultados
+                            </button>
+                        @endif
+                    </div>
 
                     <!-- Bitácora (collapsible) -->
                     <div x-data="{ open: false }" class="border-t border-gray-200 dark:border-gray-700 pt-3">
@@ -462,6 +472,10 @@ function exploracionesPage() {
 
         recogerResultados(id) {
             this.postAction(`/exploraciones/${id}/recoger`, null);
+        },
+
+        cancelarExploracion(id) {
+            this.postAction(`/exploraciones/${id}/cancelar`, '¿Cancelar la exploración? No recibirás recompensas.');
         },
 
         cerrarResultados(id) {

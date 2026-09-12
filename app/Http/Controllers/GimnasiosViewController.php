@@ -28,4 +28,9 @@ class GimnasiosViewController extends Controller
             'teams' => $teams,
         ]);
     }
+
+    public function admin(): View
+    {
+        return view('gimnasios.admin');
+    }
 }

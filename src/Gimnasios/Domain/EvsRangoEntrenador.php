@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Src\Gimnasios\Domain;
 
+use Src\Pokemon\Domain\Stats\DatosStats;
 use Src\Pokemon\Domain\Stats\StatsValue;
 
 final class EvsRangoEntrenador
@@ -21,17 +22,19 @@ final class EvsRangoEntrenador
      * Reparte EVs entre los 6 stats: los 2 mejores stats base reciben
      * $evPrincipal y los 4 restantes $evResto. Los empates se resuelven
      * con el orden fijo (hp, atk, def, spAtk, spDef, speed).
-     *
-     * @param  array{hp: int, atk: int, def: int, spAtk: int, spDef: int, speed: int}  $statsBase
      */
-    public static function distribuir(int $evPrincipal, int $evResto, array $statsBase): StatsValue
+    public static function distribuir(int $evPrincipal, int $evResto, DatosStats $statsBase): StatsValue
     {
         $orden = ['hp', 'atk', 'def', 'spAtk', 'spDef', 'speed'];
 
-        $pares = [];
-        foreach ($orden as $stat) {
-            $pares[] = [$stat, $statsBase[$stat]];
-        }
+        $pares = [
+            ['hp', $statsBase->hp],
+            ['atk', $statsBase->atk],
+            ['def', $statsBase->def],
+            ['spAtk', $statsBase->spAtk],
+            ['spDef', $statsBase->spDef],
+            ['speed', $statsBase->speed],
+        ];
 
         usort($pares, function (array $a, array $b) use ($orden): int {
             $cmp = $b[1] <=> $a[1];

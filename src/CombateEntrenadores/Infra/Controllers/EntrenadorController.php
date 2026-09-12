@@ -28,7 +28,13 @@ class EntrenadorController extends Controller
             today()->toDateString(),
         );
 
-        return response()->json($entrenadores);
+        // Frontera: la blade consume el mapa keyed por nivel (trainers[level][i]).
+        $porNivel = [];
+        foreach ($entrenadores as $nivel) {
+            $porNivel[$nivel->nivel] = $nivel->entrenadores->toArray();
+        }
+
+        return response()->json($porNivel);
     }
 
     public function combatir(int $habitat, int $nivel, int $trainer, Request $request): JsonResponse

@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace Src\Battle\Domain\Effects;
 
+use Src\Battle\Domain\Enums\ClaveEfecto;
+use Src\Battle\Domain\Enums\ClaveItem;
+
 /**
  * Fábrica que registra y crea efectos (habilidades e items).
  * Para añadir un nuevo efecto/item solo se necesita registrarlo aquí
@@ -20,51 +23,61 @@ class FabricaEfectos
     /**
      * Registra un efecto de habilidad.
      *
-     * @param  string  $clave  Identificador del efecto
+     * @param  string|ClaveEfecto  $clave  Identificador del efecto
      * @param  string  $clase  Clase que implementa InterfazEfecto
      * @param  mixed  ...$args  Argumentos extra para el constructor (además de $clave)
      */
-    public function registrarEfecto(string $clave, string $clase, mixed ...$args): void
+    public function registrarEfecto(string|ClaveEfecto $clave, string $clase, mixed ...$args): void
     {
-        $this->efectosRegistrados[$clave] = ['clase' => $clase, 'args' => $args];
+        $key = $clave instanceof ClaveEfecto ? $clave->value : $clave;
+        $this->efectosRegistrados[$key] = ['clase' => $clase, 'args' => $args];
     }
 
     /**
      * Registra un efecto de objeto equipado.
+     *
+     * @param  string|ClaveItem  $clave
      */
-    public function registrarItem(string $clave, string $clase): void
+    public function registrarItem(string|ClaveItem $clave, string $clase): void
     {
-        $this->itemsRegistrados[$clave] = $clase;
+        $key = $clave instanceof ClaveItem ? $clave->value : $clave;
+        $this->itemsRegistrados[$key] = $clase;
     }
 
     /**
      * Crea un efecto de habilidad a partir de su clave.
+     *
+     * @param  string|ClaveEfecto  $clave
      */
-    public function crearEfecto(string $clave): ?InterfazEfecto
+    public function crearEfecto(string|ClaveEfecto $clave): ?InterfazEfecto
     {
-        $registro = $this->efectosRegistrados[$clave] ?? null;
+        $key = $clave instanceof ClaveEfecto ? $clave->value : $clave;
+        $registro = $this->efectosRegistrados[$key] ?? null;
         if ($registro === null) {
             return null;
         }
         $clase = $registro['clase'];
         $args = $registro['args'];
         // El primer argumento siempre es la clave
-        array_unshift($args, $clave);
+        array_unshift($args, $key);
 
         return new $clase(...$args);
     }
 
     /**
      * Crea un efecto de objeto a partir de su clave.
+     *
+     * @param  string|ClaveItem  $clave
      */
-    public function crearItem(string $clave): ?InterfazEfecto
+    public function crearItem(string|ClaveItem $clave): ?InterfazEfecto
     {
-        $clase = $this->itemsRegistrados[$clave] ?? null;
+        $key = $clave instanceof ClaveItem ? $clave->value : $clave;
+        $clase = $this->itemsRegistrados[$key] ?? null;
         if ($clase === null) {
             return null;
         }
 
-        return new $clase($clave);
+        return new $clase($key);
     }
 
     /**

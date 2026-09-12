@@ -6,13 +6,13 @@ namespace App\Http\Controllers;
 
 use App\Jobs\ActualizarPokedexJob;
 use App\Models\PlayerInventory;
-use App\Models\Pokemon;
 use App\Models\Reclutable;
 use App\Models\Reclutado;
+use App\Support\CadenasEvolutivas;
 use App\Support\ItemCatalogo;
-use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class ReclutamientoController extends Controller
 {
@@ -22,30 +22,32 @@ class ReclutamientoController extends Controller
             'reclutable_id' => 'required|exists:reclutables,id',
         ]);
 
-        // Propiedad: el global scope BelongsToUser + findOrFail → 404 si el
-        // reclutable es de otro jugador (la regla exists no filtra por usuario).
-        $reclutable = Reclutable::findOrFail($data['reclutable_id']);
+        return DB::transaction(function () use ($data): JsonResponse {
+            // Propiedad: el global scope BelongsToUser + findOrFail → 404 si el
+            // reclutable es de otro jugador (la regla exists no filtra por usuario).
+            $reclutable = Reclutable::findOrFail($data['reclutable_id']);
 
-        // Create the recruited pokemon
-        Reclutado::create([
-            'user_id' => auth()->id(),
-            'pokemon_id' => $reclutable->pokemon_id,
-            'nombre' => null, // default: uses pokemon name in UI
-            'exp' => null,
-            'es_shiny' => false,
-            'obj_equipados' => null,
-            'movimientos' => null,
-        ]);
+            // Create the recruited pokemon
+            Reclutado::create([
+                'user_id' => auth()->id(),
+                'pokemon_id' => $reclutable->pokemon_id,
+                'nombre' => null, // default: uses pokemon name in UI
+                'exp' => null,
+                'es_shiny' => false,
+                'obj_equipados' => null,
+                'movimientos' => null,
+            ]);
 
-        ActualizarPokedexJob::dispatch(auth()->id(), $reclutable->pokemon_id, 'RECLUTADO');
+            ActualizarPokedexJob::dispatch(auth()->id(), $reclutable->pokemon_id, 'RECLUTADO');
 
-        if ($reclutable->cantidad > 1) {
-            $reclutable->decrement('cantidad');
-        } else {
-            $reclutable->delete();
-        }
+            if ($reclutable->cantidad > 1) {
+                $reclutable->decrement('cantidad');
+            } else {
+                $reclutable->delete();
+            }
 
-        return response()->json(['success' => true]);
+            return response()->json(['success' => true]);
+        });
     }
 
     public function discard(Request $request): JsonResponse
@@ -73,14 +75,16 @@ class ReclutamientoController extends Controller
 
     public function discardAll(): JsonResponse
     {
-        // Global scope BelongsToUser: solo los reclutables del usuario autenticado.
-        $reclutables = Reclutable::with('pokemon')->get();
+        return DB::transaction(function (): JsonResponse {
+            // Global scope BelongsToUser: solo los reclutables del usuario autenticado.
+            $reclutables = Reclutable::with('pokemon')->get();
 
-        $candyRewards = $this->otorgarCaramelos($reclutables->all(), auth()->id());
+            $candyRewards = $this->otorgarCaramelos($reclutables->all(), auth()->id());
 
-        Reclutable::query()->delete();
+            Reclutable::query()->delete();
 
-        return response()->json(['success' => true, 'candies' => $candyRewards]);
+            return response()->json(['success' => true, 'candies' => $candyRewards]);
+        });
     }
 
     /**
@@ -93,7 +97,9 @@ class ReclutamientoController extends Controller
     private function otorgarCaramelos(array $reclutables, ?int $userId, ?int $cantidad = null): array
     {
         $candyRewards = [];
-        $miembrosPorCadena = $this->miembrosDeLasCadenas($reclutables);
+        $miembrosPorCadena = CadenasEvolutivas::miembrosDe(
+            collect($reclutables)->map(fn (Reclutable $reclutable): ?int => $reclutable->pokemon?->evolution_chain_id)
+        );
 
         foreach ($reclutables as $reclutable) {
             $pokemon = $reclutable->pokemon;
@@ -117,34 +123,5 @@ class ReclutamientoController extends Controller
         }
 
         return $candyRewards;
-    }
-
-    /**
-     * Miembros de TODAS las familias implicadas (por columna evolution_chain_id),
-     * keyed por chain id. Sustituye a la antigua relación de la tabla
-     * evolution_chains (eliminada): mismo criterio (misma columna) y además cubre
-     * cadenas huérfanas (bug 23503) con fase 1 en vez de error.
-     *
-     * @param  array<int, Reclutable>  $reclutables
-     * @return array<int, Collection<int, Pokemon>>
-     */
-    private function miembrosDeLasCadenas(array $reclutables): array
-    {
-        $chainIds = collect($reclutables)
-            ->map(fn (Reclutable $reclutable): ?int => $reclutable->pokemon?->evolution_chain_id)
-            ->filter()
-            ->unique()
-            ->values();
-
-        if ($chainIds->isEmpty()) {
-            return [];
-        }
-
-        $query = Pokemon::query();
-        $query->getQuery()->whereIn('evolution_chain_id', $chainIds);
-
-        return $query->get(['id', 'name', 'species_id', 'evolution_chain_id'])
-            ->groupBy('evolution_chain_id')
-            ->all();
     }
 }

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Src\Battle\Domain;
 
+use Src\Battle\Domain\Collections\CombatientesCollection;
 use Src\Battle\Domain\Effects\FabricaEfectos;
 use Src\Pokemon\Domain\PokemonEntity;
 use Src\Pokemon\Domain\Stats\BattleStats;
@@ -12,77 +13,90 @@ use Src\Shared\Tipos\TiposCollection;
 
 class EquipoBatalla
 {
-    /** @var Combatiente[] */
-    private array $combatants = [];
+    private CombatientesCollection $combatientes;
 
     public function __construct(
         public readonly string $name,
     ) {
+        $this->combatientes = new CombatientesCollection();
     }
 
     public function __clone(): void
     {
-        foreach ($this->combatants as $key => $combatant) {
-            $this->combatants[$key] = clone $combatant;
+        $nuevaColeccion = new CombatientesCollection();
+        foreach ($this->combatientes as $combatant) {
+            $nuevaColeccion->add(clone $combatant);
         }
+        $this->combatientes = $nuevaColeccion;
+    }
+
+    /**
+     * Colección tipada de combatientes.
+     */
+    public function combatientesCollection(): CombatientesCollection
+    {
+        return $this->combatientes;
     }
 
     /**
      * @return Combatiente[]
+     *
+     * @deprecated Frontera — migrar a combatientesCollection()
      */
     public function combatants(): array
     {
-        return $this->combatants;
+        return $this->combatientes->all();
     }
 
     public function agregarCombatiente(Combatiente $combatant, Posicion $posicion): void
     {
         $combatant->setPosicion($posicion);
-        $this->combatants[] = $combatant;
+        $this->combatientes->add($combatant);
     }
 
+    /**
+     * @return Combatiente[]
+     *
+     * @deprecated Frontera — usar combatientesCollection()->vivos()
+     */
     public function combatientesVivos(): array
     {
-        return array_values(array_filter($this->combatants, fn (Combatiente $c) => $c->estaVivo()));
+        return $this->combatientes->vivos()->all();
     }
 
+    /**
+     * @return Combatiente[]
+     *
+     * @deprecated Frontera — usar combatientesCollection()->vanguardia()
+     */
     public function vanguardiaAlive(): array
     {
-        return array_values(array_filter(
-            $this->combatants,
-            fn (Combatiente $c) => $c->estaVivo() && $c->estaEnVanguardia()
-        ));
+        return $this->combatientes->vanguardia()->all();
     }
 
+    /**
+     * @return Combatiente[]
+     *
+     * @deprecated Frontera — usar combatientesCollection()->retaguardia()
+     */
     public function retaguardiaAlive(): array
     {
-        return array_values(array_filter(
-            $this->combatants,
-            fn (Combatiente $c) => $c->estaVivo() && $c->estaEnRetaguardia()
-        ));
+        return $this->combatientes->retaguardia()->all();
     }
 
     public function tieneVanguardiaViva(): bool
     {
-        return ! empty($this->vanguardiaAlive());
+        return $this->combatientes->vanguardia()->alMenosUnoVivo();
     }
 
     public function todosDebilitados(): bool
     {
-        return empty($this->combatientesVivos());
+        return ! $this->combatientes->alMenosUnoVivo();
     }
 
     public function lowestSpeed(): float
     {
-        $alive = $this->combatientesVivos();
-        if (empty($alive)) {
-            return 0;
-        }
-
-        return min(array_map(
-            fn (Combatiente $c) => $c->pokemon()->battleStats()->speed,
-            $alive
-        ));
+        return $this->combatientes->menorVelocidadBase();
     }
 
     /**
@@ -151,7 +165,7 @@ class EquipoBatalla
 
     public function findCombatant(Combatiente $target): ?Combatiente
     {
-        foreach ($this->combatants as $c) {
+        foreach ($this->combatientes as $c) {
             if ($c->id() === $target->id()) {
                 return $c;
             }
@@ -162,7 +176,7 @@ class EquipoBatalla
 
     public function findCombatantById(string $id): ?Combatiente
     {
-        foreach ($this->combatants as $c) {
+        foreach ($this->combatientes as $c) {
             if ($c->id() === $id) {
                 return $c;
             }

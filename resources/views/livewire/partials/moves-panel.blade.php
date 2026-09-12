@@ -127,15 +127,21 @@
                         @endif
                         @if(!empty($move['selfStatChanges']))
                             @foreach($move['selfStatChanges'] as $sc)
+                                @php
+                                    $pct = (int) round((($sc['factor'] ?? 1.0) - 1) * 100);
+                                @endphp
                                 <span class="badge stage-up stat-self">
-                                    {{ $sc['stages'] > 0 ? '+' : '' }}{{ $sc['stages'] }} {{ $statLabels[$sc['stat']] ?? $sc['stat'] }}
+                                    {{ $pct > 0 ? '+' : '' }}{{ $pct }}% {{ $statLabels[$sc['stat']] ?? $sc['stat'] }}
                                 </span>
                             @endforeach
                         @endif
                         @if(!empty($move['targetStatChanges']))
                             @foreach($move['targetStatChanges'] as $tc)
+                                @php
+                                    $pct = (int) round((($tc['factor'] ?? 1.0) - 1) * 100);
+                                @endphp
                                 <span class="badge stage-down stat-target">
-                                    {{ $tc['stages'] > 0 ? '+' : '' }}{{ $tc['stages'] }} {{ $statLabels[$tc['stat']] ?? $tc['stat'] }}
+                                    {{ $pct > 0 ? '+' : '' }}{{ $pct }}% {{ $statLabels[$tc['stat']] ?? $tc['stat'] }}
                                 </span>
                             @endforeach
                         @endif

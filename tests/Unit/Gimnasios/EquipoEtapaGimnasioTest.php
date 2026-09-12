@@ -6,8 +6,8 @@ namespace Tests\Unit\Gimnasios;
 
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use Src\Gimnasios\Domain\Collections\IntCollection;
 use Src\Gimnasios\Domain\DataTransferObjects\EquipoEtapaGimnasio;
+use Src\Shared\Collections\IntCollection;
 
 class EquipoEtapaGimnasioTest extends TestCase
 {

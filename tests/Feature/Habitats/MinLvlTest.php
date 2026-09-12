@@ -6,15 +6,17 @@ namespace Tests\Feature\Habitats;
 
 use App\Models\ExploracionActiva;
 use App\Models\Habitat;
+use App\Models\Pokemon;
 use App\Models\Province;
-use App\Models\Team;
+use App\Models\Reclutado;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
 /**
  * Fase D: niveles mínimos de hábitat (min_lvl_1/2/3) + anti-IDOR del
- * controlador de exploraciones (equipo ajeno, recoger/cerrar ajenos).
+ * controlador de exploraciones (reclutado ajeno, recoger/cerrar ajenos).
+ * Las expediciones son individuales (RF-B/RFC): el envío es por reclutado.
  */
 class MinLvlTest extends TestCase
 {
@@ -30,9 +32,9 @@ class MinLvlTest extends TestCase
      */
     private function crearHabitat(array $minLvls = []): Habitat
     {
-        Province::create(['id' => 1, 'name' => 'Kanto']);
+        $province = Province::firstOrCreate(['id' => 1], ['name' => 'Kanto']);
 
-        $habitat = Habitat::create(['id' => 1, 'name' => 'Bosque', 'province_id' => 1]);
+        $habitat = Habitat::firstOrCreate(['id' => 1], ['name' => 'Bosque', 'province_id' => $province->id]);
 
         foreach ($minLvls as $columna => $valor) {
             $habitat->forceFill([$columna => $valor])->save();
@@ -41,9 +43,22 @@ class MinLvlTest extends TestCase
         return $habitat;
     }
 
-    private function crearEquipo(User $user): Team
+    private function crearReclutado(User $user, int $pokemonId = 101): Reclutado
     {
-        return Team::create(['name' => 'Alpha', 'user_id' => $user->id]);
+        $pokemon = Pokemon::firstOrCreate(['id' => $pokemonId], [
+            'name' => 'poke-'.$pokemonId,
+            'species_id' => $pokemonId,
+            'capture_rate' => 45,
+            'base_experience' => 64,
+            'height' => 7,
+            'weight' => 69,
+            'evolution_chain_id' => 51,
+        ]);
+
+        return Reclutado::firstOrCreate(
+            ['pokemon_id' => $pokemon->id, 'user_id' => $user->id],
+            ['nombre' => 'Reclutado', 'exp' => ['total' => 0], 'es_shiny' => false, 'obj_equipados' => [], 'movimientos' => []],
+        );
     }
 
     // ── store: nivel mínimo del jugador ────────────────────────────────
@@ -52,12 +67,12 @@ class MinLvlTest extends TestCase
     {
         $user = $this->crearUsuario(1_250); // nivel 5 (10 × 5³)
         $habitat = $this->crearHabitat(['min_lvl_2' => 10]);
-        $team = $this->crearEquipo($user);
+        $reclutado = $this->crearReclutado($user);
 
         $this->actingAs($user);
 
         $response = $this->post('/exploraciones', [
-            'team_id' => $team->id,
+            'reclutado_id' => $reclutado->id,
             'habitat_id' => $habitat->id,
             'level' => 2,
         ]);
@@ -71,12 +86,12 @@ class MinLvlTest extends TestCase
     {
         $user = $this->crearUsuario(1_250); // nivel 5
         $habitat = $this->crearHabitat(['min_lvl_2' => 10]);
-        $team = $this->crearEquipo($user);
+        $reclutado = $this->crearReclutado($user);
 
         $this->actingAs($user);
 
         $response = $this->postJson('/exploraciones', [
-            'team_id' => $team->id,
+            'reclutado_id' => $reclutado->id,
             'habitat_id' => $habitat->id,
             'level' => 2,
         ]);
@@ -90,12 +105,12 @@ class MinLvlTest extends TestCase
     {
         $user = $this->crearUsuario(10_000); // nivel 10 (10 × 10³)
         $habitat = $this->crearHabitat(['min_lvl_2' => 10]);
-        $team = $this->crearEquipo($user);
+        $reclutado = $this->crearReclutado($user);
 
         $this->actingAs($user);
 
         $response = $this->post('/exploraciones', [
-            'team_id' => $team->id,
+            'reclutado_id' => $reclutado->id,
             'habitat_id' => $habitat->id,
             'level' => 2,
         ]);
@@ -103,7 +118,7 @@ class MinLvlTest extends TestCase
         $response->assertSessionHas('success', 'Exploración iniciada correctamente.');
         $this->assertDatabaseHas('exploraciones_activas', [
             'user_id' => $user->id,
-            'equipo_id' => $team->id,
+            'reclutado_id' => $reclutado->id,
             'habitat_id' => $habitat->id,
             'nivel' => 2,
         ]);
@@ -113,12 +128,12 @@ class MinLvlTest extends TestCase
     {
         $user = $this->crearUsuario(1_250); // nivel 5
         $habitat = $this->crearHabitat(); // sin restricciones (null)
-        $team = $this->crearEquipo($user);
+        $reclutado = $this->crearReclutado($user);
 
         $this->actingAs($user);
 
         $response = $this->post('/exploraciones', [
-            'team_id' => $team->id,
+            'reclutado_id' => $reclutado->id,
             'habitat_id' => $habitat->id,
             'level' => 1,
         ]);
@@ -126,30 +141,30 @@ class MinLvlTest extends TestCase
         $response->assertSessionHas('success', 'Exploración iniciada correctamente.');
         $this->assertDatabaseHas('exploraciones_activas', [
             'user_id' => $user->id,
-            'equipo_id' => $team->id,
+            'reclutado_id' => $reclutado->id,
             'habitat_id' => $habitat->id,
             'nivel' => 1,
         ]);
     }
 
-    // ── store: propiedad del equipo (anti-IDOR) ────────────────────────
+    // ── store: propiedad del reclutado (anti-IDOR) ─────────────────────
 
-    public function test_store_rechaza_un_equipo_de_otro_usuario(): void
+    public function test_store_rechaza_un_reclutado_de_otro_usuario(): void
     {
         $usuarioA = $this->crearUsuario(1_250);
         $usuarioB = $this->crearUsuario(1_250);
         $habitat = $this->crearHabitat();
-        $teamB = $this->crearEquipo($usuarioB);
+        $reclutadoB = $this->crearReclutado($usuarioB);
 
         $this->actingAs($usuarioA);
 
         $response = $this->post('/exploraciones', [
-            'team_id' => $teamB->id,
+            'reclutado_id' => $reclutadoB->id,
             'habitat_id' => $habitat->id,
             'level' => 1,
         ]);
 
-        $response->assertSessionHasErrors('team_id');
+        $response->assertSessionHasErrors('reclutado_id');
         $this->assertDatabaseCount('exploraciones_activas', 0);
     }
 
@@ -160,10 +175,10 @@ class MinLvlTest extends TestCase
         $usuarioA = $this->crearUsuario(1_250);
         $usuarioB = $this->crearUsuario(1_250);
         $habitat = $this->crearHabitat();
-        $teamB = $this->crearEquipo($usuarioB);
+        $reclutadoB = $this->crearReclutado($usuarioB);
         $exploracion = ExploracionActiva::create([
             'user_id' => $usuarioB->id,
-            'equipo_id' => $teamB->id,
+            'reclutado_id' => $reclutadoB->id,
             'habitat_id' => $habitat->id,
             'nivel' => 1,
         ]);
@@ -179,10 +194,10 @@ class MinLvlTest extends TestCase
         $usuarioA = $this->crearUsuario(1_250);
         $usuarioB = $this->crearUsuario(1_250);
         $habitat = $this->crearHabitat();
-        $teamB = $this->crearEquipo($usuarioB);
+        $reclutadoB = $this->crearReclutado($usuarioB);
         $exploracion = ExploracionActiva::create([
             'user_id' => $usuarioB->id,
-            'equipo_id' => $teamB->id,
+            'reclutado_id' => $reclutadoB->id,
             'habitat_id' => $habitat->id,
             'nivel' => 1,
             'regreso' => now(),
@@ -200,11 +215,11 @@ class MinLvlTest extends TestCase
     {
         $user = $this->crearUsuario(10_000);
         $habitat = $this->crearHabitat(['min_lvl_2' => 10]);
-        $team = $this->crearEquipo($user);
+        $reclutado = $this->crearReclutado($user);
 
         ExploracionActiva::create([
             'user_id' => $user->id,
-            'equipo_id' => $team->id,
+            'reclutado_id' => $reclutado->id,
             'habitat_id' => $habitat->id,
             'nivel' => 2,
         ]);
@@ -222,11 +237,11 @@ class MinLvlTest extends TestCase
     {
         $user = $this->crearUsuario(10_000);
         $habitat = $this->crearHabitat(); // sin restricciones
-        $team = $this->crearEquipo($user);
+        $reclutado = $this->crearReclutado($user);
 
         ExploracionActiva::create([
             'user_id' => $user->id,
-            'equipo_id' => $team->id,
+            'reclutado_id' => $reclutado->id,
             'habitat_id' => $habitat->id,
             'nivel' => 1,
         ]);

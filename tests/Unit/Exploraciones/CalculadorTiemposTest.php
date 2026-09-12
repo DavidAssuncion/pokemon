@@ -6,7 +6,7 @@ namespace Tests\Unit\Exploraciones;
 
 use Carbon\Carbon;
 use PHPUnit\Framework\TestCase;
-use Src\Exploraciones\Domain\CalculadorTiempos;
+use Src\Exploraciones\Domain\CalculadorVueltaExploracion;
 
 class CalculadorTiemposTest extends TestCase
 {
@@ -15,7 +15,7 @@ class CalculadorTiemposTest extends TestCase
         $inicio = Carbon::parse('2026-08-28 10:00:00');
         $fin = Carbon::parse('2026-08-28 14:00:00');
 
-        $vuelta = CalculadorTiempos::inicioVuelta($inicio, $fin);
+        $vuelta = CalculadorVueltaExploracion::inicioVuelta($inicio, $fin);
 
         $this->assertSame('2026-08-28 13:00:00', $vuelta->format('Y-m-d H:i:s'));
     }
@@ -25,7 +25,7 @@ class CalculadorTiemposTest extends TestCase
         $inicio = Carbon::parse('2026-08-28 10:00:00');
         $fin = Carbon::parse('2026-08-28 11:00:00');
 
-        $vuelta = CalculadorTiempos::inicioVuelta($inicio, $fin);
+        $vuelta = CalculadorVueltaExploracion::inicioVuelta($inicio, $fin);
 
         $this->assertSame('2026-08-28 10:45:00', $vuelta->format('Y-m-d H:i:s'));
     }
@@ -34,7 +34,7 @@ class CalculadorTiemposTest extends TestCase
     {
         $momento = Carbon::parse('2026-08-28 10:00:00');
 
-        $vuelta = CalculadorTiempos::inicioVuelta($momento, $momento->copy());
+        $vuelta = CalculadorVueltaExploracion::inicioVuelta($momento, $momento->copy());
 
         $this->assertTrue($vuelta->equalTo($momento));
     }
@@ -44,9 +44,18 @@ class CalculadorTiemposTest extends TestCase
         $inicio = Carbon::parse('2026-08-28 10:00:00');
         $fin = Carbon::parse('2026-08-28 14:00:00');
 
-        CalculadorTiempos::inicioVuelta($inicio, $fin);
+        CalculadorVueltaExploracion::inicioVuelta($inicio, $fin);
 
         $this->assertSame('2026-08-28 14:00:00', $fin->format('Y-m-d H:i:s'));
+    }
+
+    public function test_inicio_vuelta_con_fin_nulo_devuelve_null(): void
+    {
+        $inicio = Carbon::parse('2026-08-28 10:00:00');
+
+        $vuelta = CalculadorVueltaExploracion::inicioVuelta($inicio, null);
+
+        $this->assertNull($vuelta);
     }
 
     public function test_progreso_en_el_inicio_es_cero(): void
@@ -54,7 +63,7 @@ class CalculadorTiemposTest extends TestCase
         $inicio = Carbon::parse('2026-08-28 10:00:00');
         $fin = $inicio->copy()->addHours(4);
 
-        $this->assertSame(0, CalculadorTiempos::progreso($inicio, $fin, $inicio->copy()));
+        $this->assertSame(0, CalculadorVueltaExploracion::progreso($inicio, $fin, $inicio->copy()));
     }
 
     public function test_progreso_a_la_mitad_es_cincuenta(): void
@@ -62,7 +71,7 @@ class CalculadorTiemposTest extends TestCase
         $inicio = Carbon::parse('2026-08-28 10:00:00');
         $fin = $inicio->copy()->addHours(4);
 
-        $this->assertSame(50, CalculadorTiempos::progreso($inicio, $fin, $inicio->copy()->addHours(2)));
+        $this->assertSame(50, CalculadorVueltaExploracion::progreso($inicio, $fin, $inicio->copy()->addHours(2)));
     }
 
     public function test_progreso_en_el_fin_es_cien(): void
@@ -70,7 +79,7 @@ class CalculadorTiemposTest extends TestCase
         $inicio = Carbon::parse('2026-08-28 10:00:00');
         $fin = $inicio->copy()->addHours(4);
 
-        $this->assertSame(100, CalculadorTiempos::progreso($inicio, $fin, $fin->copy()));
+        $this->assertSame(100, CalculadorVueltaExploracion::progreso($inicio, $fin, $fin->copy()));
     }
 
     public function test_progreso_se_recorta_a_cien_cuando_ahora_supera_el_fin(): void
@@ -78,13 +87,13 @@ class CalculadorTiemposTest extends TestCase
         $inicio = Carbon::parse('2026-08-28 10:00:00');
         $fin = $inicio->copy()->addHours(4);
 
-        $this->assertSame(100, CalculadorTiempos::progreso($inicio, $fin, $fin->copy()->addDay()));
+        $this->assertSame(100, CalculadorVueltaExploracion::progreso($inicio, $fin, $fin->copy()->addDay()));
     }
 
     public function test_duracion_cero_devuelve_progreso_cien(): void
     {
         $momento = Carbon::parse('2026-08-28 10:00:00');
 
-        $this->assertSame(100, CalculadorTiempos::progreso($momento, $momento->copy(), $momento->copy()));
+        $this->assertSame(100, CalculadorVueltaExploracion::progreso($momento, $momento->copy(), $momento->copy()));
     }
 }

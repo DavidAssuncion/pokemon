@@ -44,6 +44,6 @@ class CalculadorDañoClima
             }
         }
 
-        return max(1, $c->pokemon()->battleStats()->hp * 0.0625);
+        return max(1, $c->pokemon()->battleStats()->hp * ReglasBatalla::FRACCION_HP_POR_RONDA);
     }
 }

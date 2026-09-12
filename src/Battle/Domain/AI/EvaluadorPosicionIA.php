@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Src\Battle\Domain\AI;
 
 use Src\Battle\Domain\AgregadoBatalla;
+use Src\Battle\Domain\Enums\Bando;
 
 /**
  * Evalúa la posición global de la batalla para el equipo del actor.
@@ -17,18 +18,18 @@ class EvaluadorPosicionIA
     ) {
     }
 
-    public function evaluar(AgregadoBatalla $batalla, string $equipoActor): float
+    public function evaluar(AgregadoBatalla $batalla, Bando $equipoActor): float
     {
-        $miEquipo = $equipoActor === 'team1' ? $batalla->team1 : $batalla->team2;
-        $equipoRival = $equipoActor === 'team1' ? $batalla->team2 : $batalla->team1;
+        $miEquipo = $equipoActor === Bando::UNO ? $batalla->team1 : $batalla->team2;
+        $equipoRival = $equipoActor === Bando::UNO ? $batalla->team2 : $batalla->team1;
 
-        $vivosMiEquipo = $miEquipo->combatientesVivos();
-        $vivosRival = $equipoRival->combatientesVivos();
+        $vivosMiEquipo = $miEquipo->combatientesCollection()->vivos();
+        $vivosRival = $equipoRival->combatientesCollection()->vivos();
 
         $score = 0.0;
 
         // ─── Ventaja numérica ───
-        $diferencia = count($vivosMiEquipo) - count($vivosRival);
+        $diferencia = $vivosMiEquipo->count() - $vivosRival->count();
         $score += $diferencia * $this->pesos->puntosVentajaNumerica;
 
         // ─── Estado del HP aliado ───

@@ -48,15 +48,8 @@ class PersistirRecompensas
      */
     private function guardarCaramelosFamilia(Collection $caramelos, ?User $usuario): void
     {
-        if ($usuario === null) {
-            return;
-        }
-
         foreach ($caramelos as $caramelo) {
-            PlayerInventory::firstOrCreate(
-                ['user_id' => $usuario->id, 'item_key' => ItemCatalogo::keyFamilia($caramelo->evolutionChainId)],
-                ['cantidad' => 0],
-            )->increment('cantidad', $caramelo->cantidad);
+            $this->incrementarItem($usuario, ItemCatalogo::keyFamilia($caramelo->evolutionChainId), $caramelo->cantidad);
         }
     }
 
@@ -65,15 +58,8 @@ class PersistirRecompensas
      */
     private function guardarCaramelosEv(Collection $caramelos, ?User $usuario): void
     {
-        if ($usuario === null) {
-            return;
-        }
-
         foreach ($caramelos as $caramelo) {
-            PlayerInventory::firstOrCreate(
-                ['user_id' => $usuario->id, 'item_key' => ItemCatalogo::keyEv($caramelo->stat)],
-                ['cantidad' => 0],
-            )->increment('cantidad', $caramelo->cantidad);
+            $this->incrementarItem($usuario, ItemCatalogo::keyEv($caramelo->stat), $caramelo->cantidad);
         }
     }
 
@@ -82,16 +68,21 @@ class PersistirRecompensas
      */
     private function guardarCaramelosTipo(Collection $caramelos, ?User $usuario): void
     {
+        foreach ($caramelos as $caramelo) {
+            $this->incrementarItem($usuario, ItemCatalogo::keyTipo($caramelo->tipo), $caramelo->cantidad);
+        }
+    }
+
+    private function incrementarItem(?User $usuario, string $itemKey, int $cantidad): void
+    {
         if ($usuario === null) {
             return;
         }
 
-        foreach ($caramelos as $caramelo) {
-            PlayerInventory::firstOrCreate(
-                ['user_id' => $usuario->id, 'item_key' => ItemCatalogo::keyTipo($caramelo->tipo)],
-                ['cantidad' => 0],
-            )->increment('cantidad', $caramelo->cantidad);
-        }
+        PlayerInventory::firstOrCreate(
+            ['user_id' => $usuario->id, 'item_key' => $itemKey],
+            ['cantidad' => 0],
+        )->increment('cantidad', $cantidad);
     }
 
     /**

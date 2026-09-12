@@ -53,13 +53,13 @@ class ReclutadoLiberarTest extends TestCase
         ]);
     }
 
-    private function createExploracionActiva(int $userId, Team $team): void
+    private function createExploracionActiva(int $userId, int $reclutadoId): void
     {
         $province = Province::create(['id' => 1, 'name' => 'Kanto']);
         $habitat = Habitat::create(['id' => 1, 'name' => 'Bosque', 'province_id' => $province->id]);
         ExploracionActiva::create([
             'user_id' => $userId,
-            'equipo_id' => $team->id,
+            'reclutado_id' => $reclutadoId,
             'habitat_id' => $habitat->id,
             'nivel' => 1,
             'duracion_horas' => 2,
@@ -113,7 +113,7 @@ class ReclutadoLiberarTest extends TestCase
             'slot' => 1,
             'behavior' => 'VANGUARDIA',
         ]);
-        $this->createExploracionActiva($user->id, $team);
+        $this->createExploracionActiva($user->id, $reclutado->id);
 
         $response = $this->deleteJson("/reclutado/{$reclutado->id}");
 

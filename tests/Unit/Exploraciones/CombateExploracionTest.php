@@ -130,10 +130,10 @@ class CombateExploracionTest extends TestCase
             $this->datoSalvajeDebil(),
         );
 
-        $this->assertTrue($resultado['victoria'], 'El explorador fuerte debe ganar');
-        $this->assertGreaterThan(0, $resultado['hp_final'], 'El explorador debe tener HP > 0');
-        $this->assertIsArray($resultado['log'], 'log debe ser array');
-        $this->assertNotEmpty($resultado['log'], 'log no debe estar vacío');
+        $this->assertTrue($resultado->victoria, 'El explorador fuerte debe ganar');
+        $this->assertGreaterThan(0, $resultado->hpFinal, 'El explorador debe tener HP > 0');
+        $this->assertIsArray($resultado->log->entries(), 'log debe ser array');
+        $this->assertNotEmpty($resultado->log->entries(), 'log no debe estar vacío');
     }
 
     #[Test]
@@ -147,8 +147,8 @@ class CombateExploracionTest extends TestCase
         );
         mt_srand();
 
-        $this->assertFalse($resultado['victoria'], 'El explorador débil debe perder');
-        $this->assertSame(0.0, $resultado['hp_final'], 'El explorador debe tener HP 0');
+        $this->assertFalse($resultado->victoria, 'El explorador débil debe perder');
+        $this->assertSame(0.0, $resultado->hpFinal, 'El explorador debe tener HP 0');
     }
 
     #[Test]
@@ -159,10 +159,10 @@ class CombateExploracionTest extends TestCase
             $this->datoSalvajeDebil(),
         );
 
-        $this->assertIsFloat($resultado['barrera_fisica_final']);
-        $this->assertIsFloat($resultado['barrera_especial_final']);
-        $this->assertGreaterThanOrEqual(0, $resultado['barrera_fisica_final']);
-        $this->assertGreaterThanOrEqual(0, $resultado['barrera_especial_final']);
+        $this->assertIsFloat($resultado->barreraFisicaFinal);
+        $this->assertIsFloat($resultado->barreraEspecialFinal);
+        $this->assertGreaterThanOrEqual(0, $resultado->barreraFisicaFinal);
+        $this->assertGreaterThanOrEqual(0, $resultado->barreraEspecialFinal);
     }
 
     #[Test]
@@ -174,21 +174,68 @@ class CombateExploracionTest extends TestCase
         );
 
         // El salvaje ataca con Megapuño (físico) → barrera física se reduce
-        $this->assertLessThanOrEqual(150, $resultado['barrera_fisica_final'], 'Barrera física debe poder reducirse');
+        $this->assertLessThanOrEqual(150, $resultado->barreraFisicaFinal, 'Barrera física debe poder reducirse');
     }
 
     #[Test]
-    public function test_resultado_tiene_4_claves_requeridas_mas_log(): void
+    public function test_modificador_danio_fuerte_aumenta_el_dano_del_explorador(): void
+    {
+        $salvaje = new DatosPokemonBatalla(
+            id: 'salvaje_medio',
+            nombre: 'SalvajeMedio',
+            hp: 350,
+            atk: 90,
+            def: 90,
+            spAtk: 90,
+            spDef: 90,
+            speed: 90,
+            tipos: [TipoPokemon::NORMAL],
+            posicion: Posicion::VANGUARDIA,
+            moves: [
+                new MovimientoBatalla(
+                    nombre: 'Placaje',
+                    potencia: 40,
+                    tipo: TipoPokemon::NORMAL,
+                    categoria: CategoriaMovimiento::FISICO,
+                ),
+            ],
+        );
+
+        mt_srand(1);
+        $sinBonus = $this->combate->combatirDatos($this->datoExploradorFuerte(), $salvaje);
+        mt_srand();
+        mt_srand(1);
+        $conBonus = $this->combate->combatirDatos($this->datoExploradorFuerte(), $salvaje, null, 1.15);
+        mt_srand();
+
+        $this->assertTrue($sinBonus->victoria, 'El explorador fuerte debe ganar sin bonus');
+        $this->assertTrue($conBonus->victoria, 'El explorador fuerte debe ganar con bonus');
+
+        $rondas = static fn (array $log): int => count(array_filter(
+            $log,
+            static fn (string $line): bool => str_starts_with($line, '--- Ronda'),
+        ));
+
+        // Con el bonus el salvaje cae antes: menos rondas de combate.
+        $this->assertLessThan(
+            $rondas($sinBonus->log->entries()),
+            $rondas($conBonus->log->entries()),
+            'El bonus de daño debe reducir las rondas del combate',
+        );
+    }
+
+    #[Test]
+    public function test_resultado_tiene_las_propiedades_requeridas(): void
     {
         $resultado = $this->combate->combatirDatos(
             $this->datoExploradorFuerte(),
             $this->datoSalvajeDebil(),
         );
 
-        $this->assertArrayHasKey('victoria', $resultado);
-        $this->assertArrayHasKey('hp_final', $resultado);
-        $this->assertArrayHasKey('barrera_fisica_final', $resultado);
-        $this->assertArrayHasKey('barrera_especial_final', $resultado);
-        $this->assertArrayHasKey('log', $resultado);
+        $this->assertObjectHasProperty('victoria', $resultado);
+        $this->assertObjectHasProperty('hpFinal', $resultado);
+        $this->assertObjectHasProperty('barreraFisicaFinal', $resultado);
+        $this->assertObjectHasProperty('barreraEspecialFinal', $resultado);
+        $this->assertObjectHasProperty('log', $resultado);
     }
 }

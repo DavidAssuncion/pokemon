@@ -54,12 +54,25 @@ class MigracionExploracionIndividualTest extends TestCase
         ]);
     }
 
+    /**
+     * Pasos de rollback necesarios para deshacer la migración
+     * change_equipo_id_to_reclutado_id (y todas las posteriores), aunque se
+     * añadan nuevas migraciones después de ella.
+     */
+    private function pasosHastaReclutadoId(): int
+    {
+        $orden = DB::table('migrations')->orderBy('id')->pluck('migration')->values();
+        $indice = $orden->search(fn (string $migracion): bool => str_contains($migracion, 'change_equipo_id_to_reclutado_id_in_exploraciones'));
+
+        return $orden->count() - $indice;
+    }
+
     #[Test]
     public function test_backfill_reclutado_id_desde_primer_miembro_del_equipo(): void
     {
         // Reversa la última migración (change_equipo_id...) para poder insertar
         // datos "viejos" con equipo_id y volver a migrar.
-        Artisan::call('migrate:rollback', ['--step' => 3]);
+        Artisan::call('migrate:rollback', ['--step' => $this->pasosHastaReclutadoId()]);
 
         $this->assertTrue(Schema::hasColumn('exploraciones_activas', 'equipo_id'));
 
@@ -123,7 +136,7 @@ class MigracionExploracionIndividualTest extends TestCase
             'indefinido' => true,
         ]);
 
-        Artisan::call('migrate:rollback', ['--step' => 1]);
+        Artisan::call('migrate:rollback', ['--step' => $this->pasosHastaReclutadoId()]);
 
         $this->assertTrue(Schema::hasColumn('exploraciones_activas', 'equipo_id'));
         $this->assertFalse(Schema::hasColumn('exploraciones_activas', 'reclutado_id'));

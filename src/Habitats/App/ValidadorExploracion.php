@@ -5,22 +5,20 @@ declare(strict_types=1);
 namespace Src\Habitats\App;
 
 use App\Models\ExploracionActiva;
-use App\Models\Reclutado;
+use App\Models\Team;
 
 class ValidadorExploracion
 {
     /**
      * Check if a team can start a new exploration (not already in one).
      * Las exploraciones son por reclutado: el equipo está "en exploración"
-     * si alguno de sus miembros tiene una exploración activa.
+     * si alguno de sus miembros tiene una exploración activa. P2: delega en la
+     * implementación canónica Team::isExploring() (misma semántica que la
+     * query directa previa; equipo inexistente → disponible).
      */
     public function equipoDisponible(int $teamId): bool
     {
-        $miembroIds = \App\Models\TeamMember::where('team_id', $teamId)->pluck('pokemon_id');
-
-        return ! ExploracionActiva::whereNull('regreso')
-            ->whereIn('reclutado_id', $miembroIds)
-            ->exists();
+        return ! Team::query()->find($teamId)?->isExploring();
     }
 
     /**
@@ -31,20 +29,6 @@ class ValidadorExploracion
         return !ExploracionActiva::where('reclutado_id', $reclutadoId)
             ->whereNull('regreso')
             ->exists();
-    }
-
-    /**
-     * Check if the team of the reclutado (if any) is NOT in active exploration.
-     */
-    public function equipoDelReclutadoDisponible(int $reclutadoId): bool
-    {
-        $teamMember = Reclutado::query()->find($reclutadoId)?->teamMember;
-
-        if ($teamMember === null || $teamMember->team === null) {
-            return true; // Sin equipo → sin restricción.
-        }
-
-        return ! $teamMember->team->isExploring();
     }
 
     /**

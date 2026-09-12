@@ -232,4 +232,43 @@ class EvaluadorExploracionTest extends TestCase
             'resolucion' => 'sin_combate',
         ]));
     }
+
+    public function test_emboscada_evitada_es_victoria_para_derrotados(): void
+    {
+        // Rango detección: 'evitada' otorga derrotado (doble premio) además de
+        // contar como victoria en la categoría final.
+        $this->assertTrue(EvaluadorExploracion::esVictoria([
+            'tipo' => 'emboscada',
+            'resolucion' => 'evitada',
+            'pokemon_ids' => [1, 2],
+        ]));
+    }
+
+    public function test_superada_no_otorga_derrotado_rf_07(): void
+    {
+        // RF-07: sobrevivir a una emboscada (superada) NO otorga derrotado,
+        // aunque sí cuenta como victoria en la categoría final.
+        $this->assertFalse(EvaluadorExploracion::esVictoria([
+            'tipo' => 'emboscada',
+            'resolucion' => 'superada',
+            'pokemon_ids' => [1],
+        ]));
+    }
+
+    public function test_categoria_final_cuenta_emboscada_evitada_como_victoria(): void
+    {
+        // 'evitada' es resolución de combate y de victoria: ratio 2/2 → exito.
+        $eventos = [
+            ['tipo' => 'emboscada', 'resolucion' => 'evitada'],
+            ['tipo' => 'encuentro', 'subtype' => 'normal', 'resolucion' => 'victoria'],
+        ];
+        $this->assertSame('exito', EvaluadorExploracion::categoriaFinal($eventos));
+
+        // Solo emboscadas evitadas: sin excepcional vencido → exito.
+        $soloEvitadas = [
+            ['tipo' => 'emboscada', 'resolucion' => 'evitada'],
+            ['tipo' => 'emboscada', 'resolucion' => 'evitada'],
+        ];
+        $this->assertSame('exito', EvaluadorExploracion::categoriaFinal($soloEvitadas));
+    }
 }

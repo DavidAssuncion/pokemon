@@ -295,6 +295,22 @@ class CalculadorRecompensasTest extends TestCase
         $this->assertTrue($resultado['caramelosFamilia']->isEmpty());
     }
 
+    public function test_calcular_hallazgos_aplica_bonus_de_caramelos_del_rango_recolector(): void
+    {
+        $hallazgos = collect([
+            ['tipo' => 'hallazgo', 'subtype' => 'caramelo_familia', 'pokemon_id' => 1, 'cantidad' => 2],
+            ['tipo' => 'hallazgo', 'subtype' => 'caramelo_ev', 'stat' => 2, 'cantidad' => 1],
+            ['tipo' => 'hallazgo', 'subtype' => 'caramelo_tipo', 'tipo_id' => 10, 'cantidad' => 3],
+        ]);
+
+        // Rango Recolector bonus 3 → cada hallazgo rinde ×(1 + 3) = ×4.
+        $resultado = $this->calculador->calcularHallazgos($hallazgos, [1 => 51], 1.0, 3);
+
+        $this->assertSame(8, $resultado['caramelosFamilia']->first()->cantidad);
+        $this->assertSame(4, $resultado['caramelosEv']->first()->cantidad);
+        $this->assertSame(12, $resultado['caramelosTipo']->first()->cantidad);
+    }
+
     public function test_sumar_hallazgos_a_resultado_existente_agrupa_cantidades(): void
     {
         $derrotados = collect([

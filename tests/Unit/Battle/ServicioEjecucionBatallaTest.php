@@ -7,12 +7,16 @@ namespace Tests\Unit\Battle;
 use PHPUnit\Framework\TestCase;
 use Src\Battle\Domain\AccionBatalla;
 use Src\Battle\Domain\Chain\CadenaDanio;
+use Src\Battle\Domain\Collections\CambiosStatsCollection;
 use Src\Battle\Domain\Enums\CategoriaMovimiento;
 use Src\Battle\Domain\Enums\EstadoPokemon;
+use Src\Battle\Domain\Enums\StatClave;
 use Src\Battle\Domain\Enums\TipoClima;
 use Src\Battle\Domain\MovimientoBatalla;
 use Src\Battle\Domain\Posicion;
 use Src\Battle\Domain\ServicioEjecucionBatalla;
+use Src\Battle\Domain\ValueObjects\CambioStat;
+use Src\Battle\Domain\ValueObjects\MultiplicadoresStats;
 use Src\Battle\Presentation\DTOResultadoDanio;
 use Src\Shared\Tipos\TipoPokemon;
 
@@ -51,7 +55,6 @@ class ServicioEjecucionBatallaTest extends TestCase
             attacker: $atacante,
             defender: $defensor,
             move: new MovimientoBatalla('Golpe', 50, TipoPokemon::NORMAL, CategoriaMovimiento::FISICO),
-            fromPosition: Posicion::VANGUARDIA,
             defenderTeamHasVanguard: false,
             weather: TipoClima::NONE,
         );
@@ -193,14 +196,24 @@ class ServicioEjecucionBatallaTest extends TestCase
             0,
             TipoPokemon::NORMAL,
             CategoriaMovimiento::ESTADO,
-            selfStatChanges: [['stat' => 'attack', 'stages' => 2]],
-            targetStatChanges: [['stat' => 'defense', 'stages' => -1]],
+            selfStatChanges: new CambiosStatsCollection([
+                CambioStat::desdeEtapas(StatClave::ATAQUE, 2),
+            ]),
+            targetStatChanges: new CambiosStatsCollection([
+                CambioStat::desdeEtapas(StatClave::DEFENSA, -1),
+            ]),
         );
 
         $this->servicio->aplicarStatChanges($actor, $objetivo, $movimiento);
 
-        $this->assertSame(2, $actor->etapas()->obtener('attack'));
-        $this->assertSame(-1, $objetivo->etapas()->obtener('defense'));
+        $this->assertSame(
+            MultiplicadoresStats::factorDesdeStages(2),
+            $actor->multiplicadores()->obtenerMultiplicador(StatClave::ATAQUE),
+        );
+        $this->assertSame(
+            MultiplicadoresStats::factorDesdeStages(-1),
+            $objetivo->multiplicadores()->obtenerMultiplicador(StatClave::DEFENSA),
+        );
     }
 
     public function test_generar_log_movimiento_formato_correcto(): void

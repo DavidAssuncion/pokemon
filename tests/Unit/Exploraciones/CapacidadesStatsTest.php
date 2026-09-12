@@ -4,124 +4,201 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Exploraciones;
 
-use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Src\Exploraciones\Domain\CapacidadesStats;
+use Src\Exploraciones\Domain\RangoCapacidad;
 
 class CapacidadesStatsTest extends TestCase
 {
-    private CapacidadesStats $stats;
-
-    protected function setUp(): void
+    /**
+     * Construye stats donde una sola capacidad toma el valor exacto pedido:
+     * movilidad = speed + niveles, con niveles 0 → valor exacto.
+     */
+    private function conMovilidad(int $velocidad): CapacidadesStats
     {
-        // hp=100, atk=80, def=70, spAtk=90, spDef=60, speed=50, nivelPok=10, nivelEntr=5
-        $this->stats = new CapacidadesStats(
-            hp: 100,
-            atk: 80,
-            def: 70,
-            spAtk: 90,
-            spDef: 60,
-            speed: 50,
-            nivelPokemon: 10,
-            nivelEntrenador: 5,
+        return new CapacidadesStats(
+            hp: 0,
+            atk: 0,
+            def: 0,
+            spAtk: 0,
+            spDef: 0,
+            speed: $velocidad,
+            nivelPokemon: 0,
+            nivelEntrenador: 0,
         );
     }
 
-    #[Test]
-    public function test_combate_formula(): void
+    /**
+     * Construye stats con deteccion = valor exacto (speed = spDef = valor).
+     */
+    private function conDeteccion(int $valor): CapacidadesStats
     {
-        // 0.25*80 + 0.25*90 + 0.25*70 + 0.25*60 + 10 + 5
-        // = 20 + 22.5 + 17.5 + 15 + 10 + 5 = 90
-        $this->assertSame(90.0, $this->stats->combate());
+        return new CapacidadesStats(
+            hp: 0,
+            atk: 0,
+            def: 0,
+            spAtk: 0,
+            spDef: $valor,
+            speed: $valor,
+            nivelPokemon: 0,
+            nivelEntrenador: 0,
+        );
     }
 
-    #[Test]
-    public function test_deteccion_formula(): void
+    public function test_rango_de_asigna_rango_segun_umbrales_multiplicativos(): void
     {
-        // 0.60*50 + 0.40*60 + 10 + 5
-        // = 30 + 24 + 10 + 5 = 69
-        $this->assertSame(69.0, $this->stats->deteccion());
+        $casos = [
+            [34, RangoCapacidad::NOVATO],
+            [35, RangoCapacidad::COMPETENTE],
+            [70, RangoCapacidad::EXPERTO],
+            [123, RangoCapacidad::MAESTRO],
+        ];
+
+        foreach ($casos as [$valor, $esperado]) {
+            $stats = $this->conMovilidad($valor);
+            $this->assertSame($esperado, $stats->rangoDe('movilidad', 35), "Valor {$valor} con dificultad 35");
+        }
     }
 
-    #[Test]
-    public function test_recoleccion_formula(): void
+    public function test_rango_de_usa_la_dificultad_del_habitat_como_referencia(): void
     {
-        // 0.25*60 + 0.25*50 + 0.25*100 + 0.25*70 + 10 + 5
-        // = 15 + 12.5 + 25 + 17.5 + 10 + 5 = 85
-        $this->assertSame(85.0, $this->stats->recoleccion());
+        $stats = $this->conMovilidad(40);
+
+        $this->assertSame(RangoCapacidad::COMPETENTE, $stats->rangoDe('movilidad', 35));
+        $this->assertSame(RangoCapacidad::MAESTRO, $stats->rangoDe('movilidad', 10));
+        $this->assertSame(RangoCapacidad::NOVATO, $stats->rangoDe('movilidad', 50));
     }
 
-    #[Test]
-    public function test_supervivencia_formula(): void
+    public function test_rango_deteccion_envuelve_rango_de(): void
     {
-        // 0.33*100 + 0.33*70 + 0.33*60 + 10 + 5
-        // = 33 + 23.1 + 19.8 + 10 + 5 = 90.9
-        $this->assertSame(90.9, $this->stats->supervivencia());
+        $stats = $this->conDeteccion(75);
+
+        $this->assertSame(RangoCapacidad::EXPERTO, $stats->rangoDeteccion(35));
     }
 
-    #[Test]
-    public function test_exploracion_formula(): void
+    public function test_bonus_caramelos_recoleccion_equivale_al_rango(): void
     {
-        // 0.40*50 + 0.20*60 + 0.20*70 + 0.20*supervivencia() + 10 + 5
-        // supervivencia = 90.9
-        // = 20 + 12 + 14 + 18.18 + 10 + 5 = 79.18
-        $this->assertSame(79.18, $this->stats->exploracion());
+        // recoleccion = 0.25*(spDef+speed+hp+def) + niveles → valor = X si los 4 son X
+        $stats = new CapacidadesStats(
+            hp: 70,
+            atk: 0,
+            def: 70,
+            spAtk: 0,
+            spDef: 70,
+            speed: 70,
+            nivelPokemon: 0,
+            nivelEntrenador: 0,
+        );
+
+        $this->assertSame(2, $stats->bonusCaramelosRecoleccion(35));
+        $this->assertSame(RangoCapacidad::EXPERTO, $stats->rangoDe('recoleccion', 35));
     }
 
-    #[Test]
-    public function test_movilidad_formula(): void
+    public function test_bonus_eventos_exploracion_equivale_al_rango(): void
     {
-        // 1.00*50 + 10 + 5 = 65
-        $this->assertSame(65.0, $this->stats->movilidad());
+        // exploracion con los 4 stats a 75 → ≈0.998*75 = 74.85 → EXPERTO (70 ≤ v < 122.5)
+        $stats = new CapacidadesStats(
+            hp: 75,
+            atk: 0,
+            def: 75,
+            spAtk: 0,
+            spDef: 75,
+            speed: 75,
+            nivelPokemon: 0,
+            nivelEntrenador: 0,
+        );
+
+        $this->assertSame(2, $stats->bonusEventosExploracion(35));
     }
 
-    #[Test]
-    public function test_todas_devuelve_array_con_6_claves(): void
+    public function test_multiplicador_recuperacion_por_rango_de_supervivencia(): void
     {
-        $todas = $this->stats->todas();
-        $this->assertCount(6, $todas);
-        $this->assertArrayHasKey('combate', $todas);
-        $this->assertArrayHasKey('deteccion', $todas);
-        $this->assertArrayHasKey('recoleccion', $todas);
-        $this->assertArrayHasKey('supervivencia', $todas);
-        $this->assertArrayHasKey('exploracion', $todas);
-        $this->assertArrayHasKey('movilidad', $todas);
+        // supervivencia = 0.33*(hp+def+spDef) + niveles
+        $casos = [
+            [30, 1.00],   // 29.7 → NOVATO
+            [40, 1.25],   // 39.6 → COMPETENTE
+            [75, 1.50],   // 74.25 → EXPERTO
+            [140, 1.75],  // 138.6 → MAESTRO
+        ];
+
+        foreach ($casos as [$stat, $esperado]) {
+            $stats = new CapacidadesStats(
+                hp: $stat,
+                atk: 0,
+                def: $stat,
+                spAtk: 0,
+                spDef: $stat,
+                speed: 0,
+                nivelPokemon: 0,
+                nivelEntrenador: 0,
+            );
+            $this->assertSame($esperado, $stats->multiplicadorRecuperacion(35), "Stat {$stat}");
+        }
     }
 
-    #[Test]
-    public function test_todas_valores_coinciden_con_metodos_individuales(): void
+    public function test_reduccion_intervalo_movilidad_por_rango(): void
     {
-        $todas = $this->stats->todas();
-        $this->assertSame($this->stats->combate(), $todas['combate']);
-        $this->assertSame($this->stats->deteccion(), $todas['deteccion']);
-        $this->assertSame($this->stats->recoleccion(), $todas['recoleccion']);
-        $this->assertSame($this->stats->supervivencia(), $todas['supervivencia']);
-        $this->assertSame($this->stats->exploracion(), $todas['exploracion']);
-        $this->assertSame($this->stats->movilidad(), $todas['movilidad']);
+        $casos = [
+            [30, 0.0],
+            [40, 0.10],
+            [75, 0.25],
+            [130, 0.40],
+        ];
+
+        foreach ($casos as [$valor, $esperado]) {
+            $stats = $this->conMovilidad($valor);
+            $this->assertSame($esperado, $stats->reduccionIntervaloMovilidad(35), "Valor {$valor}");
+        }
     }
 
-    #[Test]
-    public function test_stats_cero(): void
+    public function test_bonus_dano_combate_por_rango(): void
     {
-        $cero = new CapacidadesStats(0, 0, 0, 0, 0, 0, 0, 0);
-        $this->assertSame(0.0, $cero->combate());
-        $this->assertSame(0.0, $cero->deteccion());
-        $this->assertSame(0.0, $cero->recoleccion());
-        $this->assertSame(0.0, $cero->supervivencia());
-        $this->assertSame(0.0, $cero->exploracion());
-        $this->assertSame(0.0, $cero->movilidad());
+        $casos = [
+            [30, 1.0],
+            [40, 1.05],
+            [75, 1.10],
+            [130, 1.15],
+        ];
+
+        foreach ($casos as [$stat, $esperado]) {
+            $stats = new CapacidadesStats(
+                hp: 0,
+                atk: $stat,
+                def: $stat,
+                spAtk: $stat,
+                spDef: $stat,
+                speed: 0,
+                nivelPokemon: 0,
+                nivelEntrenador: 0,
+            );
+            $this->assertSame($esperado, $stats->bonusDanoCombate(35), "Stat {$stat}");
+        }
     }
 
-    #[Test]
-    public function test_solo_niveles_sin_stats(): void
+    public function test_deteccion_auto_evasion_solo_con_maestro(): void
     {
-        $soloNiveles = new CapacidadesStats(0, 0, 0, 0, 0, 0, 10, 20);
-        $this->assertSame(30.0, $soloNiveles->combate()); // 0 + 10 + 20
-        $this->assertSame(30.0, $soloNiveles->deteccion());
-        $this->assertSame(30.0, $soloNiveles->recoleccion());
-        $this->assertSame(30.0, $soloNiveles->supervivencia());
-        // exploracion incluye 0.20 * supervivencia() → 0 + 0.2*30 + 30 = 36
-        $this->assertSame(36.0, $soloNiveles->exploracion());
-        $this->assertSame(30.0, $soloNiveles->movilidad());
+        $this->assertTrue($this->conDeteccion(130)->deteccionAutoEvasion(35));
+        $this->assertFalse($this->conDeteccion(75)->deteccionAutoEvasion(35));
+        $this->assertFalse($this->conDeteccion(40)->deteccionAutoEvasion(35));
+    }
+
+    public function test_permitir_emboscadas_requiere_competente(): void
+    {
+        $this->assertTrue($this->conDeteccion(40)->permitirEmboscadas(35));
+        $this->assertTrue($this->conDeteccion(130)->permitirEmboscadas(35));
+        $this->assertFalse($this->conDeteccion(30)->permitirEmboscadas(35));
+    }
+
+    public function test_permitir_excepcionales_requiere_experto(): void
+    {
+        $this->assertTrue($this->conDeteccion(75)->permitirExcepcionales(35));
+        $this->assertFalse($this->conDeteccion(40)->permitirExcepcionales(35));
+    }
+
+    public function test_rango_de_rechaza_capacidad_desconocida(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+
+        $this->conMovilidad(50)->rangoDe('volar', 35);
     }
 }

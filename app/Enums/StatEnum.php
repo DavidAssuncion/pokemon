@@ -29,6 +29,21 @@ enum StatEnum: int
     }
 
     /**
+     * Slug de caramelo EV (contrato del frontend: candy_ev/{slug}.webp).
+     */
+    public function slug(): string
+    {
+        return match ($this) {
+            self::HP => 'hp',
+            self::ATTACK => 'atk',
+            self::DEFENSE => 'def',
+            self::SPECIAL_ATTACK => 'atksp',
+            self::SPECIAL_DEFENSE => 'defsp',
+            self::SPEED => 'spd',
+        };
+    }
+
+    /**
      * Obtener todos los stats como opciones para select.
      */
     public static function options(): array

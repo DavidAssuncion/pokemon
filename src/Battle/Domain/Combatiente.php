@@ -6,7 +6,9 @@ namespace Src\Battle\Domain;
 
 use Src\Battle\Domain\Effects\ColeccionEfectos;
 use Src\Battle\Domain\Enums\EstadoPokemon;
-use Src\Battle\Domain\ValueObjects\EtapasStats;
+use Src\Battle\Domain\Enums\StatClave;
+use Src\Battle\Domain\ValueObjects\MultiplicadoresStats;
+use Src\Battle\Domain\ValueObjects\ResultadoAccion;
 use Src\Pokemon\Domain\PokemonEntity;
 
 class Combatiente
@@ -27,7 +29,7 @@ class Combatiente
 
     private int $turnosEstado = 0;
 
-    private EtapasStats $etapas;
+    private MultiplicadoresStats $multiplicadores;
 
     private string $id = '';
 
@@ -43,11 +45,17 @@ class Combatiente
 
     private string $item = '';
 
+    private float $bonificadorDanio = 1.0;
+
     private ColeccionEfectos $effects;
 
     private PokemonEntity $pokemon;
 
     private Posicion $posicion;
+
+    private EstadoManager $estadoManager;
+
+    private BarrerasVidaManager $barrerasVidaManager;
 
     public function __construct(
         PokemonEntity $pokemon,
@@ -59,15 +67,9 @@ class Combatiente
         $this->defensaHpActual = $pokemon->battleStats()->defenseHp;
         $this->defensaEspHpActual = $pokemon->battleStats()->spDefenseHp;
         $this->effects = new ColeccionEfectos();
-        $this->etapas = new EtapasStats([
-            'attack' => 0,
-            'defense' => 0,
-            'spAtk' => 0,
-            'spDef' => 0,
-            'speed' => 0,
-            'accuracy' => 0,
-            'evasion' => 0,
-        ]);
+        $this->estadoManager = new EstadoManager();
+        $this->barrerasVidaManager = new BarrerasVidaManager();
+        $this->multiplicadores = MultiplicadoresStats::vacia();
     }
 
     // ─── Serialización para sesión ────────────────────────────
@@ -83,7 +85,7 @@ class Combatiente
             'estado' => $this->estado->value,
             'contadorVenenoGrave' => $this->contadorVenenoGrave,
             'turnosEstado' => $this->turnosEstado,
-            'etapas' => $this->etapas->toArray(),
+            'multiplicadores' => $this->multiplicadores->obtenerModificadores()->factores(),
             'id' => $this->id,
             'nombre' => $this->nombre,
             'iconName' => $this->iconName,
@@ -91,6 +93,7 @@ class Combatiente
             'formSuffix' => $this->formSuffix,
             'shiny' => $this->shiny,
             'item' => $this->item,
+            'bonificadorDanio' => $this->bonificadorDanio,
             'effects' => serialize($this->effects),
             'pokemon' => serialize($this->pokemon),
             'posicion' => $this->posicion->value,
@@ -104,10 +107,17 @@ class Combatiente
         $this->defensaEspHpActual = (float) ($data['defensaEspHpActual'] ?? 0);
         $this->velocidadAcumulada = (float) ($data['velocidadAcumulada'] ?? 0);
         $this->vecesActuadoEstaRonda = (int) ($data['vecesActuadoEstaRonda'] ?? 0);
-        $this->estado = EstadoPokemon::tryFrom($data['estado'] ?? 'none') ?? EstadoPokemon::NONE;
+        $this->estado = EstadoPokemon::tryFrom($data['estado'] ?? EstadoPokemon::NONE->value) ?? EstadoPokemon::NONE;
         $this->contadorVenenoGrave = (int) ($data['contadorVenenoGrave'] ?? 0);
         $this->turnosEstado = (int) ($data['turnosEstado'] ?? 0);
-        $this->etapas = new EtapasStats((array) ($data['etapas'] ?? []));
+        // Compatibilidad: payloads antiguos ('etapas' con int) y nuevos ('multiplicadores' con float)
+        if (isset($data['multiplicadores']) && is_array($data['multiplicadores'])) {
+            $this->multiplicadores = MultiplicadoresStats::desdeSerializado($data['multiplicadores']);
+        } elseif (isset($data['etapas']) && is_array($data['etapas'])) {
+            $this->multiplicadores = MultiplicadoresStats::desdeEtapas($data['etapas']);
+        } else {
+            $this->multiplicadores = MultiplicadoresStats::vacia();
+        }
         $this->id = (string) ($data['id'] ?? '');
         $this->nombre = (string) ($data['nombre'] ?? '');
         $this->iconName = (string) ($data['iconName'] ?? '');
@@ -115,9 +125,12 @@ class Combatiente
         $this->formSuffix = (string) ($data['formSuffix'] ?? '');
         $this->shiny = (bool) ($data['shiny'] ?? false);
         $this->item = (string) ($data['item'] ?? '');
+        $this->bonificadorDanio = (float) ($data['bonificadorDanio'] ?? 1.0);
         $this->effects = isset($data['effects']) ? unserialize($data['effects']) : new ColeccionEfectos();
         $this->pokemon = isset($data['pokemon']) ? unserialize($data['pokemon']) : throw new \RuntimeException('Missing pokemon data');
-        $this->posicion = Posicion::tryFrom($data['posicion'] ?? 'vanguardia') ?? Posicion::VANGUARDIA;
+        $this->posicion = Posicion::tryFrom($data['posicion'] ?? Posicion::VANGUARDIA->value) ?? Posicion::VANGUARDIA;
+        $this->estadoManager = new EstadoManager();
+        $this->barrerasVidaManager = new BarrerasVidaManager();
     }
 
     // ─── Getters ──────────────────────────────────────────────
@@ -162,9 +175,9 @@ class Combatiente
         return $this->turnosEstado;
     }
 
-    public function etapas(): EtapasStats
+    public function multiplicadores(): MultiplicadoresStats
     {
-        return $this->etapas;
+        return $this->multiplicadores;
     }
 
     public function id(): string
@@ -200,6 +213,11 @@ class Combatiente
     public function item(): string
     {
         return $this->item;
+    }
+
+    public function bonificadorDanio(): float
+    {
+        return $this->bonificadorDanio;
     }
 
     public function effects(): ColeccionEfectos
@@ -259,9 +277,9 @@ class Combatiente
         $this->turnosEstado = $turnosEstado;
     }
 
-    public function setEtapas(EtapasStats $etapas): void
+    public function setMultiplicadores(MultiplicadoresStats $multiplicadores): void
     {
-        $this->etapas = $etapas;
+        $this->multiplicadores = $multiplicadores;
     }
 
     public function setId(string $id): void
@@ -299,6 +317,11 @@ class Combatiente
         $this->item = $item;
     }
 
+    public function setBonificadorDanio(float $bonificador): void
+    {
+        $this->bonificadorDanio = $bonificador;
+    }
+
     public function setPosicion(Posicion $posicion): void
     {
         $this->posicion = $posicion;
@@ -330,7 +353,7 @@ class Combatiente
             'accumulatedSpeed' => $this->velocidadAcumulada,
             'status' => $this->estado->value,
             'statusTurns' => $this->turnosEstado,
-            'stages' => $this->etapas->toArray(),
+            'stages' => $this->multiplicadores->obtenerEtapas(),
             'team' => $teamIdx,
             'item' => $this->item,
         ];
@@ -338,17 +361,12 @@ class Combatiente
 
     public function estaVivo(): bool
     {
-        return $this->hpActual > 0;
-    }
-
-    public function reinicarVelocidadAcumulada(): void
-    {
-        $this->velocidadAcumulada = 0;
+        return $this->barrerasVidaManager->estaVivo($this->hpActual);
     }
 
     public function agregarVelocidad(): void
     {
-        $this->velocidadAcumulada += $this->obtenerStatEfectivo('speed');
+        $this->velocidadAcumulada += $this->obtenerStatEfectivo(StatClave::VELOCIDAD);
     }
 
     public function reducirVelocidad(float $amount): void
@@ -359,129 +377,72 @@ class Combatiente
     // ─── Stat Stages ─────────────────────────────────────────
 
     /**
-     * Aplica un cambio de stage (-6 a +6) a una estadística.
-     */
-    public function aplicarCambioEtapa(string $stat, int $change): void
-    {
-        $this->etapas = $this->etapas->aplicarCambio($stat, $change);
-    }
-
-    /**
-     * Retorna el stat base modificado por los stages actuales.
+     * Retorna el stat base modificado por los multiplicadores actuales.
      * La parálisis reduce la velocidad a la mitad.
      */
-    public function obtenerStatEfectivo(string $stat): float
+    public function obtenerStatEfectivo(StatClave $stat): float
     {
         $baseStat = match ($stat) {
-            'attack' => $this->pokemon->battleStats()->attack,
-            'defense' => $this->pokemon->battleStats()->defense,
-            'spAtk' => $this->pokemon->battleStats()->spAtk,
-            'spDef' => $this->pokemon->battleStats()->spDef,
-            'speed' => $this->pokemon->battleStats()->speed,
+            StatClave::ATAQUE => $this->pokemon->battleStats()->attack,
+            StatClave::DEFENSA => $this->pokemon->battleStats()->defense,
+            StatClave::ATAQUE_ESPECIAL => $this->pokemon->battleStats()->spAtk,
+            StatClave::DEFENSA_ESPECIAL => $this->pokemon->battleStats()->spDef,
+            StatClave::VELOCIDAD => $this->pokemon->battleStats()->speed,
             default => 0,
         };
 
-        $value = $this->etapas->obtener($stat) === 0
-            ? $baseStat
-            : $baseStat * $this->etapas->obtenerMultiplicador($stat);
+        $value = $baseStat * $this->multiplicadores->obtenerMultiplicador($stat);
 
         // La parálisis reduce la velocidad a la mitad
-        if ($stat === 'speed' && $this->estado === EstadoPokemon::PARALYSIS) {
-            $value *= 0.5;
+        if ($stat === StatClave::VELOCIDAD && $this->estado === EstadoPokemon::PARALYSIS) {
+            $value *= ReglasBatalla::REDUCCION_VELOCIDAD_PARALISIS;
         }
 
         return $value;
-    }
-
-    /**
-     * Retorna un array con los stages no neutros para mostrar en UI.
-     *
-     * @return array<string, int>
-     */
-    public function obtenerEtapasNoNeutras(): array
-    {
-        return $this->etapas->obtenerNoNeutras();
     }
 
     // ─── Estados (parálisis, sueño, hielo, confusión) ────────
 
     /**
      * Verifica si el combatiente puede actuar este turno según su estado.
-     * También gestiona contadores (sueño, confusión) y auto-daño (confusión).
-     *
-     * @return array{canAct: bool, reason: string, selfDamage: float}
+     * Delega la lógica a EstadoManager y aplica las mutaciones resultantes.
      */
-    public function puedeActuar(): array
+    public function puedeActuar(): ResultadoAccion
     {
         if ($this->estado === EstadoPokemon::NONE || ! $this->estaVivo()) {
-            return ['canAct' => true, 'reason' => '', 'selfDamage' => 0.0];
+            return ResultadoAccion::permitida();
         }
 
-        return match ($this->estado) {
-            EstadoPokemon::SLEEP => $this->procesarSleep(),
-            EstadoPokemon::FREEZE => $this->procesarFreeze(),
-            EstadoPokemon::PARALYSIS => $this->procesarParalysis(),
-            EstadoPokemon::CONFUSION => $this->procesarConfusion(),
-            default => ['canAct' => true, 'reason' => '', 'selfDamage' => 0.0],
-        };
+        $resultado = $this->estadoManager->puedeActuar(
+            $this->estado,
+            $this->turnosEstado,
+            $this->hpActual,
+            fn (StatClave $stat): float => $this->obtenerStatEfectivo($stat),
+        );
+
+        $this->estado = $resultado['estadoResultado'];
+        $this->turnosEstado = $resultado['turnosResultado'];
+        $this->hpActual = $resultado['hpResultado'];
+
+        return self::resultadoAccionDesde($resultado);
     }
 
-    private function procesarSleep(): array
+    /**
+     * Traduce el veredicto de EstadoManager (canAct/reason/selfDamage) al VO.
+     *
+     * @param  array{canAct: bool, reason: string, selfDamage: float}  $resultado
+     */
+    private static function resultadoAccionDesde(array $resultado): ResultadoAccion
     {
-        if ($this->turnosEstado <= 0) {
-            $this->estado = EstadoPokemon::NONE;
-
-            return ['canAct' => true, 'reason' => 'despertó', 'selfDamage' => 0.0];
+        if (! $resultado['canAct']) {
+            return $resultado['selfDamage'] > 0
+                ? ResultadoAccion::denegadaConAutoDanio($resultado['reason'], $resultado['selfDamage'])
+                : ResultadoAccion::denegada($resultado['reason']);
         }
 
-        $this->turnosEstado--;
-
-        return ['canAct' => false, 'reason' => 'está dormido', 'selfDamage' => 0.0];
-    }
-
-    private function procesarFreeze(): array
-    {
-        if (mt_rand(1, 100) <= 20) {
-            $this->estado = EstadoPokemon::NONE;
-
-            return ['canAct' => true, 'reason' => 'se descongeló', 'selfDamage' => 0.0];
-        }
-
-        return ['canAct' => false, 'reason' => 'está congelado', 'selfDamage' => 0.0];
-    }
-
-    private function procesarParalysis(): array
-    {
-        if (mt_rand(1, 100) <= 25) {
-            return ['canAct' => false, 'reason' => 'está paralizado', 'selfDamage' => 0.0];
-        }
-
-        return ['canAct' => true, 'reason' => '', 'selfDamage' => 0.0];
-    }
-
-    private function procesarConfusion(): array
-    {
-        $seAgoto = $this->turnosEstado <= 0;
-
-        if ($seAgoto) {
-            $this->estado = EstadoPokemon::NONE;
-            $this->turnosEstado = 0;
-
-            return ['canAct' => true, 'reason' => 'salió de confusión', 'selfDamage' => 0.0];
-        }
-
-        $this->turnosEstado--;
-
-        if (mt_rand(1, 100) <= 33) {
-            $atk = $this->obtenerStatEfectivo('attack');
-            $def = $this->obtenerStatEfectivo('defense');
-            $daño = max(1, ((((2 * 50 / 5 + 2) * 40 * $atk / max($def, 1)) / 50) + 2));
-            $this->hpActual = max(0, $this->hpActual - $daño);
-
-            return ['canAct' => false, 'reason' => 'se golpeó por confusión', 'selfDamage' => $daño];
-        }
-
-        return ['canAct' => true, 'reason' => '', 'selfDamage' => 0.0];
+        return $resultado['reason'] === ''
+            ? ResultadoAccion::permitida()
+            : ResultadoAccion::permitidaConMotivo($resultado['reason']);
     }
 
     public function tieneEfecto(string $clave): bool
@@ -505,43 +466,34 @@ class Combatiente
 
     public function recibirDaño(float $daño, bool $isSpecial, float $directPct = 0.0): float
     {
-        $dañoDirecto = $daño * $directPct;
-        $dañoBarreras = $daño - $dañoDirecto;
+        $resultado = $this->barrerasVidaManager->recibirDaño(
+            $this->hpActual,
+            $this->defensaHpActual,
+            $this->defensaEspHpActual,
+            $daño,
+            $isSpecial,
+            $directPct,
+        );
 
-        $this->hpActual -= $dañoDirecto;
-
-        $barrera = $isSpecial ? $this->defensaEspHpActual : $this->defensaHpActual;
-        $dañoBarrera = min($barrera, $dañoBarreras);
-
-        if ($isSpecial) {
-            $this->defensaEspHpActual -= $dañoBarrera;
-        } else {
-            $this->defensaHpActual -= $dañoBarrera;
-        }
-
-        $excedente = $dañoBarreras - $dañoBarrera;
-
-        if ($excedente > 0) {
-            $this->hpActual -= $excedente;
-        }
-
-        if ($this->hpActual < 0) {
-            $this->hpActual = 0;
-        }
+        $this->hpActual = $resultado['hpNuevo'];
+        $this->defensaHpActual = $resultado['defensaHpNuevo'];
+        $this->defensaEspHpActual = $resultado['defensaEspHpNuevo'];
 
         return $daño;
     }
 
     public function curarHp(float $porcentaje): void
     {
-        $this->hpActual = min(
+        $this->hpActual = $this->barrerasVidaManager->curarHp(
+            $this->hpActual,
             $this->pokemon->battleStats()->hp,
-            $this->hpActual + $this->pokemon->battleStats()->hp * $porcentaje / 100
+            $porcentaje,
         );
     }
 
     /**
      * Aplica el daño por efecto de estado al final de la ronda.
+     * Delega el cálculo a EstadoManager y aplica las mutaciones resultantes.
      *
      * @return float Daño real infligido
      */
@@ -551,46 +503,31 @@ class Combatiente
             return 0;
         }
 
-        if (! $this->estado->causaDanoPorRonda()) {
-            return 0;
-        }
+        $resultado = $this->estadoManager->calcularDanoStatus(
+            $this->estado,
+            $this->contadorVenenoGrave,
+            $this->pokemon->battleStats()->hp,
+            $this->hpActual,
+        );
 
-        $maxHp = $this->pokemon->battleStats()->hp;
-        $daño = match ($this->estado) {
-            EstadoPokemon::BURN => max(1, $maxHp * 0.0625),
-            EstadoPokemon::POISON => max(1, $maxHp * 0.125),
-            EstadoPokemon::BAD_POISON => max(1, $maxHp * $this->contadorVenenoGrave / 16),
-            default => 0,
-        };
+        $this->hpActual = $resultado['hpActualNueva'];
+        $this->contadorVenenoGrave = $resultado['contadorNuevo'];
 
-        if ($daño <= 0) {
-            return 0;
-        }
-
-        $this->hpActual = max(0, $this->hpActual - $daño);
-
-        if ($this->estado === EstadoPokemon::BAD_POISON) {
-            $this->contadorVenenoGrave++;
-        }
-
-        return $daño;
+        return $resultado['dano'];
     }
 
     public function curarBarreras(float $porcentaje): void
     {
-        $this->defensaHpActual = min(
+        $resultado = $this->barrerasVidaManager->curarBarreras(
+            $this->defensaHpActual,
+            $this->defensaEspHpActual,
             $this->pokemon->battleStats()->defenseHp,
-            $this->defensaHpActual + $this->pokemon->battleStats()->defenseHp * $porcentaje / 100
-        );
-        $this->defensaEspHpActual = min(
             $this->pokemon->battleStats()->spDefenseHp,
-            $this->defensaEspHpActual + $this->pokemon->battleStats()->spDefenseHp * $porcentaje / 100
+            $porcentaje,
         );
-    }
 
-    public function puedeAtacarRetaguardia(): bool
-    {
-        return $this->posicion === Posicion::RETAGUARDIA;
+        $this->defensaHpActual = $resultado['defensaHpNuevo'];
+        $this->defensaEspHpActual = $resultado['defensaEspHpNuevo'];
     }
 
     public function estaEnVanguardia(): bool
@@ -615,23 +552,4 @@ class Combatiente
         $this->effects->dispararDanioRecibido($this, $daño, $battle);
     }
 
-    public function triggerHealed(float $cantidad): void
-    {
-        $this->effects->triggerHealed($this, $cantidad);
-    }
-
-    public function dispararDebilitado(): void
-    {
-        $this->effects->dispararDebilitado($this);
-    }
-
-    public function dispararInicioTurno(AgregadoBatalla $battle): void
-    {
-        $this->effects->dispararInicioTurno($this, $battle);
-    }
-
-    public function dispararFinTurno(AgregadoBatalla $battle): void
-    {
-        $this->effects->dispararFinTurno($this, $battle);
-    }
 }

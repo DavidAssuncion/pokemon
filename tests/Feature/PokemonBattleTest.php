@@ -13,12 +13,12 @@ use Tests\TestCase;
  */
 class PokemonBattleTest extends TestCase
 {
-    public function test_battle_with_fabrica_mock_creates_2_teams_3_combatants(): void
+    public function test_battle_with_fabrica_mock_creates_2_teams_5_combatants(): void
     {
         $battle = $this->app->make(FabricaBatallaInterface::class)->createBattle();
 
-        $this->assertCount(3, $battle->team1->combatants());
-        $this->assertCount(3, $battle->team2->combatants());
+        $this->assertCount(5, $battle->team1->combatants());
+        $this->assertCount(5, $battle->team2->combatants());
         $this->assertSame('Tú', $battle->team1->name);
         $this->assertSame('Rival', $battle->team2->name);
     }

@@ -10,7 +10,6 @@ use Src\Battle\Domain\Chain\CadenaDanio;
 use Src\Battle\Domain\Enums\CategoriaMovimiento;
 use Src\Battle\Domain\Enums\TipoClima;
 use Src\Battle\Domain\MovimientoBatalla;
-use Src\Battle\Domain\Posicion;
 use Src\Shared\Tipos\TipoPokemon;
 
 /**
@@ -160,7 +159,6 @@ class ManejadorClimaTest extends TestCase
             attacker: $atacante,
             defender: $defensor,
             move: new MovimientoBatalla('Golpe', 50, $tipoMovimiento, $categoria),
-            fromPosition: Posicion::VANGUARDIA,
             defenderTeamHasVanguard: false,
             weather: $weather,
         );

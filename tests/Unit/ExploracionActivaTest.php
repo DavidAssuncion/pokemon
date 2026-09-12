@@ -6,8 +6,9 @@ namespace Tests\Unit;
 
 use App\Models\ExploracionActiva;
 use App\Models\Habitat;
+use App\Models\Pokemon;
 use App\Models\Province;
-use App\Models\Team;
+use App\Models\Reclutado;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -18,42 +19,69 @@ class ExploracionActivaTest extends TestCase
 
     private function createHabitat(): Habitat
     {
-        Province::create(['id' => 1, 'name' => 'Kanto']);
+        $province = Province::firstOrCreate(['id' => 1], ['name' => 'Kanto']);
 
-        return Habitat::create(['id' => 1, 'name' => 'Bosque', 'province_id' => 1]);
+        return Habitat::firstOrCreate(['id' => 1], ['name' => 'Bosque', 'province_id' => $province->id]);
+    }
+
+    private function createReclutado(): Reclutado
+    {
+        $usuario = User::factory()->create();
+        $pokemon = Pokemon::create([
+            'id' => 1,
+            'name' => 'bulbasaur',
+            'species_id' => 1,
+            'capture_rate' => 45,
+            'base_experience' => 64,
+            'height' => 7,
+            'weight' => 69,
+            'evolution_chain_id' => 51,
+        ]);
+
+        return Reclutado::create([
+            'user_id' => $usuario->id,
+            'pokemon_id' => $pokemon->id,
+            'nombre' => 'Bulbi',
+            'exp' => ['total' => 0],
+        ]);
+    }
+
+    private function createExploracion(array $atributos = []): ExploracionActiva
+    {
+        $habitat = $this->createHabitat();
+        $reclutado = $this->createReclutado();
+
+        return ExploracionActiva::create(array_merge([
+            'user_id' => $reclutado->user_id,
+            'reclutado_id' => $reclutado->id,
+            'habitat_id' => $habitat->id,
+            'nivel' => 1,
+        ], $atributos));
     }
 
     public function test_can_create_with_required_fields(): void
     {
         $habitat = $this->createHabitat();
-        $team = Team::create(['name' => 'Alpha', 'user_id' => User::factory()->create()->id]);
+        $reclutado = $this->createReclutado();
 
         $exploracion = ExploracionActiva::create([
-            'user_id' => $team->user_id,
-            'equipo_id' => $team->id,
+            'user_id' => $reclutado->user_id,
+            'reclutado_id' => $reclutado->id,
             'habitat_id' => $habitat->id,
             'nivel' => 1,
         ]);
 
         $this->assertDatabaseHas('exploraciones_activas', [
-            'equipo_id' => $team->id,
+            'reclutado_id' => $reclutado->id,
             'habitat_id' => $habitat->id,
             'nivel' => 1,
         ]);
-        $this->assertEquals($team->id, $exploracion->equipo_id);
+        $this->assertEquals($reclutado->id, $exploracion->reclutado_id);
     }
 
     public function test_nullable_fields_are_null_by_default(): void
     {
-        $habitat = $this->createHabitat();
-        $team = Team::create(['name' => 'Alpha', 'user_id' => User::factory()->create()->id]);
-
-        $exploracion = ExploracionActiva::create([
-            'user_id' => $team->user_id,
-            'equipo_id' => $team->id,
-            'habitat_id' => $habitat->id,
-            'nivel' => 1,
-        ]);
+        $exploracion = $this->createExploracion();
         $exploracion->refresh();
 
         $this->assertNull($exploracion->duracion_horas);
@@ -67,12 +95,12 @@ class ExploracionActivaTest extends TestCase
     public function test_can_set_nullable_fields(): void
     {
         $habitat = $this->createHabitat();
-        $team = Team::create(['name' => 'Alpha', 'user_id' => User::factory()->create()->id]);
+        $reclutado = $this->createReclutado();
         $now = now();
 
         $exploracion = ExploracionActiva::create([
-            'user_id' => $team->user_id,
-            'equipo_id' => $team->id,
+            'user_id' => $reclutado->user_id,
+            'reclutado_id' => $reclutado->id,
             'habitat_id' => $habitat->id,
             'nivel' => 2,
             'duracion_horas' => 4,
@@ -93,46 +121,30 @@ class ExploracionActivaTest extends TestCase
         $this->assertNotNull($exploracion->llegada_destino);
     }
 
-    public function test_belongs_to_team_relationship(): void
+    public function test_belongs_to_reclutado_relationship(): void
     {
-        $habitat = $this->createHabitat();
-        $team = Team::create(['name' => 'Alpha', 'user_id' => User::factory()->create()->id]);
+        $exploracion = $this->createExploracion();
 
-        $exploracion = ExploracionActiva::create([
-            'user_id' => $team->user_id,
-            'equipo_id' => $team->id,
-            'habitat_id' => $habitat->id,
-            'nivel' => 1,
-        ]);
-
-        $this->assertInstanceOf(Team::class, $exploracion->team);
-        $this->assertEquals($team->id, $exploracion->team->id);
+        $this->assertInstanceOf(Reclutado::class, $exploracion->reclutado);
+        $this->assertEquals($exploracion->reclutado_id, $exploracion->reclutado->id);
     }
 
     public function test_belongs_to_habitat_relationship(): void
     {
-        $habitat = $this->createHabitat();
-        $team = Team::create(['name' => 'Alpha', 'user_id' => User::factory()->create()->id]);
-
-        $exploracion = ExploracionActiva::create([
-            'user_id' => $team->user_id,
-            'equipo_id' => $team->id,
-            'habitat_id' => $habitat->id,
-            'nivel' => 1,
-        ]);
+        $exploracion = $this->createExploracion();
 
         $this->assertInstanceOf(Habitat::class, $exploracion->habitat);
-        $this->assertEquals($habitat->id, $exploracion->habitat->id);
+        $this->assertEquals($exploracion->habitat_id, $exploracion->habitat->id);
     }
 
     public function test_eventos_cast_to_array(): void
     {
         $habitat = $this->createHabitat();
-        $team = Team::create(['name' => 'Alpha', 'user_id' => User::factory()->create()->id]);
+        $reclutado = $this->createReclutado();
 
         $exploracion = ExploracionActiva::create([
-            'user_id' => $team->user_id,
-            'equipo_id' => $team->id,
+            'user_id' => $reclutado->user_id,
+            'reclutado_id' => $reclutado->id,
             'habitat_id' => $habitat->id,
             'nivel' => 1,
             'eventos' => ['battle' => 'wild', 'result' => 'captured'],
@@ -148,14 +160,7 @@ class ExploracionActivaTest extends TestCase
     public function test_has_exploraciones_has_many_relationship_on_habitat(): void
     {
         $habitat = $this->createHabitat();
-        $team = Team::create(['name' => 'Alpha', 'user_id' => User::factory()->create()->id]);
-
-        ExploracionActiva::create([
-            'user_id' => $team->user_id,
-            'equipo_id' => $team->id,
-            'habitat_id' => $habitat->id,
-            'nivel' => 1,
-        ]);
+        $this->createExploracion();
 
         $this->assertCount(1, $habitat->exploraciones);
     }

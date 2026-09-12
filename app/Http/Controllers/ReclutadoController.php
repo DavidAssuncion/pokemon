@@ -15,7 +15,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
-use Src\Exploraciones\Domain\CapacidadesStats;
+use Src\Exploraciones\App\FabricaCapacidadesStats;
 use Src\Reclutamiento\App\ServicioEvolucion;
 use Src\Shared\Domain\NivelHelper;
 
@@ -45,7 +45,7 @@ class ReclutadoController extends Controller
                     'imagen' => "/images/iconos/{$siguiente->id}.png",
                 ]
                 : null,
-            'requisitos' => ServicioEvolucion::requisitos($reclutado, auth()->id()),
+            'requisitos' => ServicioEvolucion::requisitos($reclutado, auth()->id())->toArray(),
             'puedeEvolucionar' => ServicioEvolucion::puedeEvolucionar($reclutado, auth()->id()),
         ]);
     }
@@ -74,7 +74,7 @@ class ReclutadoController extends Controller
 
         $tiposRequeridos = ServicioEvolucion::tiposRequeridos($destino);
 
-        if (! in_array($tipo, $tiposRequeridos, true)) {
+        if (! $tiposRequeridos->contiene($tipo)) {
             return response()->json(['error' => 'Ese tipo no es necesario para la evolución'], 422);
         }
 
@@ -159,7 +159,7 @@ class ReclutadoController extends Controller
     public function evoluciones(Reclutado $reclutado): JsonResponse
     {
         return response()->json([
-            'opciones' => ServicioEvolucion::requisitosDeOpciones($reclutado, auth()->id()),
+            'opciones' => ServicioEvolucion::requisitosDeOpciones($reclutado, auth()->id())->toArray(),
         ]);
     }
 
@@ -256,7 +256,7 @@ class ReclutadoController extends Controller
 
         // Antes de añadir, validar el límite del alcance (7º → 422).
         if (! Favorito::esFavorito($userId, $reclutado->id, $habitatId)) {
-            $max = $habitatId === null ? 6 : 6;
+            $max = 6;
             $actual = $habitatId === null
                 ? Favorito::countGlobales($userId)
                 : Favorito::countParaHabitat($userId, $habitatId);
@@ -334,7 +334,33 @@ class ReclutadoController extends Controller
         $reclutado->loadMissing('pokemon.stats', 'pokemon.types');
 
         return response()->json(
-            CapacidadesStats::desdeReclutado($reclutado, auth()->user())->todas()
+            FabricaCapacidadesStats::desdeReclutado($reclutado, auth()->user())->todas()
         );
+    }
+
+    /**
+     * Actualiza el rol de exploración individual del reclutado (RFC) y
+     * sincroniza team_members.behavior (mismo pokemon_id) para no romper los
+     * contratos legacy que aún leen el rol del miembro de equipo.
+     *
+     * Anti-IDOR: route-model binding + global scope BelongsToUser → 404 si ajeno.
+     */
+    public function actualizarRol(Request $request, Reclutado $reclutado): JsonResponse
+    {
+        $data = $request->validate([
+            'behavior' => ['required', 'string', 'in:VANGUARDIA,COMBATIENTE,RECOLECTOR,RASTREADOR'],
+        ]);
+
+        DB::transaction(function () use ($reclutado, $data): void {
+            $reclutado->update(['behavior' => $data['behavior']]);
+
+            \App\Models\TeamMember::where('pokemon_id', $reclutado->id)
+                ->update(['behavior' => $data['behavior']]);
+        });
+
+        return response()->json([
+            'behavior' => $reclutado->fresh()->behavior,
+            'rol' => $reclutado->rol()->value,
+        ]);
     }
 }

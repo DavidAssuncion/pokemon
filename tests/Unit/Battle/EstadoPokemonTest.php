@@ -46,8 +46,8 @@ class EstadoPokemonTest extends TestCase
 
         $result = $combatiente->puedeActuar();
 
-        $this->assertFalse($result['canAct']);
-        $this->assertSame('está dormido', $result['reason']);
+        $this->assertFalse($result->esPermitida());
+        $this->assertSame('está dormido', $result->motivo());
     }
 
     public function test_paralysis_puede_impedir_actuar(): void
@@ -63,8 +63,8 @@ class EstadoPokemonTest extends TestCase
         mt_srand(5); // seed=5 → mt_rand(1,100)=12 ≤ 25 → bloquea
         $result = $combatiente->puedeActuar();
 
-        $this->assertFalse($result['canAct']);
-        $this->assertSame('está paralizado', $result['reason']);
+        $this->assertFalse($result->esPermitida());
+        $this->assertSame('está paralizado', $result->motivo());
     }
 
     public function test_sin_estado_puede_actuar(): void
@@ -78,7 +78,7 @@ class EstadoPokemonTest extends TestCase
 
         $result = $combatiente->puedeActuar();
 
-        $this->assertTrue($result['canAct']);
+        $this->assertTrue($result->esPermitida());
     }
 
     public function test_poison_causa_dano_por_ronda_12_5(): void

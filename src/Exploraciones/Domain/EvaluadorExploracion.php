@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace Src\Exploraciones\Domain;
 
+use Src\Exploraciones\Domain\ValueObjects\ColeccionEventosExploracion;
+use Src\Exploraciones\Domain\ValueObjects\EventoExploracion;
+
 /**
  * Evaluador de expediciones (dominio puro). RF-06 (resolución por evento) y
  * RF-08 (categoría final + multiplicadores).
@@ -44,10 +47,10 @@ final class EvaluadorExploracion
     public const CATEGORIA_RETIRADA = 'retirada';
 
     /** Resoluciones que cuentan como combate para la categoría final. */
-    private const RESOLUCIONES_COMBATE = ['victoria', 'victoria_con_coste', 'superada', 'superada_con_cost', 'derrota', 'huida'];
+    private const RESOLUCIONES_COMBATE = ['victoria', 'victoria_con_coste', 'superada', 'superada_con_cost', 'derrota', 'huida', 'evitada'];
 
     /** Resoluciones que cuentan como victoria (derrotado obtenido) para la categoría. */
-    private const RESOLUCIONES_VICTORIA = ['victoria', 'victoria_con_coste', 'superada'];
+    private const RESOLUCIONES_VICTORIA = ['victoria', 'victoria_con_coste', 'superada', 'evitada'];
 
     /**
      * RF-06: dificultad de un evento = base(subtipo) + peligro×5.
@@ -182,18 +185,30 @@ final class EvaluadorExploracion
 
     /**
      * RF-08: categoría final de la expedición a partir de los eventos resueltos.
+     * Frontera — el dominio recomienda categoriaFinalDeEventos() con la colección tipada.
+     *
+     * @param  list<array<string, mixed>>  $eventos
+     *
+     * @deprecated Frontera (BC con tests unitarios que pasan arrays).
+     */
+    public static function categoriaFinal(array $eventos): string
+    {
+        return self::categoriaFinalDeEventos(ColeccionEventosExploracion::desdeArray($eventos));
+    }
+
+    /**
+     * RF-08: categoría final de la expedición a partir de los eventos resueltos.
      * - retirada presente → retirada.
      * - sin combates → exito.
      * - ratio victorias/combates ≥ 0.85 con un excepcional vencido → exito_excepcional.
      * - ≥ 0.6 → exito; ≥ 0.3 → exito_parcial; resto → fracaso.
-     *
-     * @param  list<array<string, mixed>>  $eventos
      */
-    public static function categoriaFinal(array $eventos): string
+    public static function categoriaFinalDeEventos(ColeccionEventosExploracion $eventos): string
     {
+        /** @var list<non-empty-string> $resoluciones */
         $resoluciones = array_values(array_filter(
-            array_column($eventos, 'resolucion'),
-            static fn (mixed $resolucion): bool => is_string($resolucion) && $resolucion !== ''
+            $eventos->pluck(static fn (EventoExploracion $evento): ?string => $evento->resolucion),
+            static fn (?string $resolucion): bool => $resolucion !== null && $resolucion !== '',
         ));
 
         if (in_array(self::CATEGORIA_RETIRADA, $resoluciones, true)) {
@@ -215,7 +230,7 @@ final class EvaluadorExploracion
         ));
         $ratio = $victorias / count($combates);
 
-        if ($ratio >= 0.85 && self::vencioExcepcional($eventos)) {
+        if ($ratio >= 0.85 && self::vencioExcepcionalDeEventos($eventos)) {
             return self::CATEGORIA_EXITO_EXCEPCIONAL;
         }
 
@@ -245,34 +260,34 @@ final class EvaluadorExploracion
 
     /**
      * RF-07: un evento cuenta como victoria (derrotado) si su resolución es
-     * 'victoria' o si NO tiene resolución (retrocompat de bitácoras antiguas).
-     * Solo los eventos de combate (encuentro/pokemon/emboscada) pueden ser
-     * derrotas: hallazgos y neutros nunca generan derrotado.
+     * 'victoria', 'evitada' (emboscada esquivada: doble premio por spec) o si
+     * NO tiene resolución (retrocompat de bitácoras antiguas). Solo los eventos
+     * de combate (encuentro/pokemon/emboscada) pueden ser derrotas: hallazgos y
+     * neutros nunca generan derrotado.
+     *
+     * NOTA: este método NO usa RESOLUCIONES_VICTORIA (resoluciones de categoría,
+     * que incluyen 'victoria_con_coste'/'superada') para no alterar RF-07: esos
+     * escenarios sobreviven (con coste) pero no otorgan derrotado.
      *
      * @param  array<string, mixed>  $evento
+     *
+     * @deprecated Frontera (BC con tests unitarios que pasan arrays).
      */
     public static function esVictoria(array $evento): bool
     {
-        $tipo = $evento['tipo'] ?? null;
-        $resolucion = $evento['resolucion'] ?? null;
-
-        if ($resolucion === null && ! in_array($tipo, ['encuentro', 'pokemon', 'emboscada'], true)) {
-            return false;
-        }
-
-        return $resolucion === null || $resolucion === 'victoria';
+        return EventoExploracion::desdeArray($evento)->esVictoria();
     }
 
     /**
      * ¿El evento es un encuentro con pokémon que puede reportar avistamiento?
      *
      * @param  array<string, mixed>  $evento
+     *
+     * @deprecated Frontera (BC con tests unitarios que pasan arrays).
      */
     public static function esAvistamiento(array $evento): bool
     {
-        $tipo = $evento['tipo'] ?? null;
-
-        return in_array($tipo, ['pokemon', 'encuentro', 'emboscada', 'huida'], true);
+        return EventoExploracion::desdeArray($evento)->esAvistamiento();
     }
 
     /**
@@ -280,18 +295,12 @@ final class EvaluadorExploracion
      *
      * @param  array<string, mixed>  $evento
      * @return list<int>
+     *
+     * @deprecated Frontera (BC con tests unitarios que pasan arrays).
      */
     public static function pokemonIdsDelEvento(array $evento): array
     {
-        if (isset($evento['pokemon_ids']) && is_array($evento['pokemon_ids'])) {
-            return array_values(array_map('intval', $evento['pokemon_ids']));
-        }
-
-        if (isset($evento['pokemon_id'])) {
-            return [(int) $evento['pokemon_id']];
-        }
-
-        return [];
+        return EventoExploracion::desdeArray($evento)->pokemonIds()->all();
     }
 
     /**
@@ -322,19 +331,16 @@ final class EvaluadorExploracion
 
     /**
      * ¿Se venció un evento excepcional (subtype excepcional/especial o emboscada)?
-     *
-     * @param  list<array<string, mixed>>  $eventos
      */
-    private static function vencioExcepcional(array $eventos): bool
+    private static function vencioExcepcionalDeEventos(ColeccionEventosExploracion $eventos): bool
     {
-        foreach ($eventos as $evento) {
-            $tipo = $evento['tipo'] ?? '';
-            $subtype = $evento['subtype'] ?? '';
-            $resolucion = $evento['resolucion'] ?? '';
+        /** @var list<EventoExploracion> $items */
+        $items = $eventos->toList();
 
-            $esRaro = $tipo === 'emboscada' || in_array($subtype, ['excepcional', 'especial'], true);
+        foreach ($items as $evento) {
+            $esRaro = $evento->tipo === 'emboscada' || in_array($evento->subtype, ['excepcional', 'especial'], true);
 
-            if ($esRaro && in_array($resolucion, ['victoria', 'superada'], true)) {
+            if ($esRaro && in_array($evento->resolucion, ['victoria', 'superada'], true)) {
                 return true;
             }
         }

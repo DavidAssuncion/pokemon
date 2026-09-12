@@ -8,12 +8,13 @@ use App\Enums\StatEnum;
 use App\Models\Pokemon;
 use App\Models\PokemonType;
 use Src\Battle\Domain\DatosPokemonBatalla;
-use Src\Battle\Domain\Enums\CategoriaMovimiento;
 use Src\Battle\Domain\MovimientoBatalla;
 use Src\Battle\Domain\Posicion;
 use Src\CombateEntrenadores\Domain\GeneradorMovimientosTipo;
+use Src\Pokemon\Domain\Stats\DatosStats;
 use Src\Pokemon\Domain\Stats\StatsValue;
 use Src\Shared\Tipos\TipoPokemon;
+use Src\Shared\Tipos\TiposCollection;
 
 /**
  * Mapea un pokémon de la BD (App\Models\Pokemon) a los datos de combate
@@ -44,23 +45,23 @@ class MapeadorPokemonBatalla
         $movimientos = [];
         foreach ($this->generadorMovimientos->generar($tipos) as $m) {
             $movimientos[] = new MovimientoBatalla(
-                nombre: $m['nombre'],
-                potencia: $m['potencia'],
-                tipo: $m['tipo'],
-                categoria: CategoriaMovimiento::from($m['categoria']),
+                nombre: $m->nombre,
+                potencia: $m->potencia,
+                tipo: $m->tipo,
+                categoria: $m->categoria,
             );
         }
 
         return new DatosPokemonBatalla(
             id: $id,
             nombre: $nombre,
-            hp: $stats['hp'],
-            atk: $stats['atk'],
-            def: $stats['def'],
-            spAtk: $stats['spAtk'],
-            spDef: $stats['spDef'],
-            speed: $stats['speed'],
-            tipos: $tipos,
+            hp: $stats->hp,
+            atk: $stats->atk,
+            def: $stats->def,
+            spAtk: $stats->spAtk,
+            spDef: $stats->spDef,
+            speed: $stats->speed,
+            tipos: $tipos->toList(),
             posicion: $posicion,
             moves: $movimientos,
             shiny: $shiny,
@@ -74,10 +75,7 @@ class MapeadorPokemonBatalla
         );
     }
 
-    /**
-     * @return array{hp: int, atk: int, def: int, spAtk: int, spDef: int, speed: int}
-     */
-    public function statsDe(Pokemon $pokemon): array
+    public function statsDe(Pokemon $pokemon): DatosStats
     {
         $stats = ['hp' => 0, 'atk' => 0, 'def' => 0, 'spAtk' => 0, 'spDef' => 0, 'speed' => 0];
 
@@ -93,17 +91,23 @@ class MapeadorPokemonBatalla
             $stats[$clave] = (int) $stat->base_stat;
         }
 
-        return $stats;
+        return new DatosStats(
+            hp: $stats['hp'],
+            atk: $stats['atk'],
+            def: $stats['def'],
+            spAtk: $stats['spAtk'],
+            spDef: $stats['spDef'],
+            speed: $stats['speed'],
+        );
     }
 
-    /**
-     * @return list<TipoPokemon>
-     */
-    public function tiposDe(Pokemon $pokemon): array
+    public function tiposDe(Pokemon $pokemon): TiposCollection
     {
-        return $pokemon->types
-            ->map(fn (PokemonType $tipo): TipoPokemon => TipoPokemon::from($tipo->type->value))
-            ->values()
-            ->all();
+        return new TiposCollection(
+            $pokemon->types
+                ->map(fn (PokemonType $tipo): TipoPokemon => TipoPokemon::from($tipo->type->value))
+                ->values()
+                ->all()
+        );
     }
 }

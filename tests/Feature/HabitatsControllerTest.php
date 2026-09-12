@@ -4,9 +4,11 @@ declare(strict_types=1);
 
 namespace Tests\Feature;
 
+use App\Models\ExploracionActiva;
 use App\Models\Habitat;
 use App\Models\Pokemon;
 use App\Models\Province;
+use App\Models\Reclutado;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
@@ -62,12 +64,30 @@ class HabitatsControllerTest extends TestCase
         $response->assertSee('Bosque');
     }
 
+    private function crearReclutado(int $pokemonId, string $nombre): Reclutado
+    {
+        $pokemon = Pokemon::firstOrCreate(['id' => $pokemonId], [
+            'name' => 'poke-'.$pokemonId,
+            'species_id' => $pokemonId,
+            'capture_rate' => 45,
+            'base_experience' => 64,
+            'height' => 7,
+            'weight' => 69,
+            'evolution_chain_id' => 51,
+        ]);
+
+        return Reclutado::firstOrCreate(
+            ['pokemon_id' => $pokemon->id, 'user_id' => $this->usuario->id],
+            ['nombre' => $nombre, 'exp' => ['total' => 0], 'es_shiny' => false, 'obj_equipados' => [], 'movimientos' => []],
+        );
+    }
+
     public function test_show_passes_exploraciones_activas(): void
     {
-        $team = \App\Models\Team::create(['name' => 'Alpha', 'user_id' => $this->usuario->id]);
-        \App\Models\ExploracionActiva::create([
+        $reclutado = $this->crearReclutado(101, 'Alpha');
+        ExploracionActiva::create([
             'user_id' => $this->usuario->id,
-            'equipo_id' => $team->id,
+            'reclutado_id' => $reclutado->id,
             'habitat_id' => $this->habitatId,
             'nivel' => 1,
         ]);
@@ -80,10 +100,10 @@ class HabitatsControllerTest extends TestCase
 
     public function test_show_passes_equipos_en_exploracion(): void
     {
-        $team = \App\Models\Team::create(['name' => 'Bravo', 'user_id' => $this->usuario->id]);
-        \App\Models\ExploracionActiva::create([
+        $reclutado = $this->crearReclutado(102, 'Bravo');
+        ExploracionActiva::create([
             'user_id' => $this->usuario->id,
-            'equipo_id' => $team->id,
+            'reclutado_id' => $reclutado->id,
             'habitat_id' => $this->habitatId,
             'nivel' => 1,
         ]);
@@ -96,17 +116,17 @@ class HabitatsControllerTest extends TestCase
 
     public function test_show_does_not_include_completed_exploraciones(): void
     {
-        $team = \App\Models\Team::create(['name' => 'Explorador', 'user_id' => $this->usuario->id]);
-        $exploracion = \App\Models\ExploracionActiva::create([
+        $reclutado = $this->crearReclutado(103, 'Explorador');
+        $exploracion = ExploracionActiva::create([
             'user_id' => $this->usuario->id,
-            'equipo_id' => $team->id,
+            'reclutado_id' => $reclutado->id,
             'habitat_id' => $this->habitatId,
             'nivel' => 1,
         ]);
         $exploracion->update(['regreso' => now()]);
 
         // Verify that the completed exploracion is not considered active
-        $activas = \App\Models\ExploracionActiva::where('habitat_id', $this->habitatId)
+        $activas = ExploracionActiva::where('habitat_id', $this->habitatId)
             ->whereNull('regreso')
             ->get();
 

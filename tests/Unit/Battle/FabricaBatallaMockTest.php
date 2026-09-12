@@ -77,7 +77,7 @@ class FabricaBatallaMockTest extends TestCase
         $this->assertSame(100, $giratina->spAtk);
         $this->assertSame(120, $giratina->spDef);
         $this->assertSame(90, $giratina->speed);
-        $this->assertSame([TipoPokemon::DRAGON], $giratina->tipos);
+        $this->assertSame([TipoPokemon::DRAGON, TipoPokemon::FANTASMA], $giratina->tipos);
         $this->assertSame(Posicion::VANGUARDIA, $giratina->posicion);
         $this->assertTrue($giratina->shiny);
         $this->assertNull($giratina->item);
@@ -85,14 +85,20 @@ class FabricaBatallaMockTest extends TestCase
         $this->assertSame('', $giratina->formSuffix);
     }
 
-    public function test_giratina_danza_espada_cambia_attack(): void
+    public function test_giratina_paz_mental_sube_spatk_y_spdef(): void
     {
         $giratina = $this->fabrica->generateTeam1()[1];
 
-        $danzaEspada = $giratina->moves[2];
-        $this->assertSame('Danza Espada', $danzaEspada->nombre);
-        $this->assertSame(CategoriaMovimiento::ESTADO, $danzaEspada->categoria);
-        $this->assertSame([['stat' => 'attack', 'stages' => 2]], $danzaEspada->selfStatChanges);
+        $pazMental = $giratina->moves[3];
+        $this->assertSame('Paz Mental', $pazMental->nombre);
+        $this->assertSame(CategoriaMovimiento::ESTADO, $pazMental->categoria);
+
+        $cambios = $pazMental->selfStatChanges->all();
+        $this->assertCount(2, $cambios);
+        $this->assertSame('spAtk', $cambios[0]->statValue());
+        $this->assertSame(1.5, $cambios[0]->factor);
+        $this->assertSame('spDef', $cambios[1]->statValue());
+        $this->assertSame(1.5, $cambios[1]->factor);
     }
 
     public function test_generate_team1_contiene_tyranitar(): void
@@ -150,7 +156,11 @@ class FabricaBatallaMockTest extends TestCase
         $defensaFerrea = $aggron->moves[3];
         $this->assertSame('Defensa Férrea', $defensaFerrea->nombre);
         $this->assertSame(CategoriaMovimiento::ESTADO, $defensaFerrea->categoria);
-        $this->assertSame([['stat' => 'defense', 'stages' => 2]], $defensaFerrea->selfStatChanges);
+
+        $cambios = $defensaFerrea->selfStatChanges->all();
+        $this->assertCount(1, $cambios);
+        $this->assertSame('defense', $cambios[0]->statValue());
+        $this->assertSame(2.0, $cambios[0]->factor);
     }
 
     public function test_generate_team2_contiene_deoxys(): void
@@ -169,7 +179,7 @@ class FabricaBatallaMockTest extends TestCase
         $this->assertSame('deoxys-defense', $deoxys->iconName);
         $this->assertSame(386, $deoxys->speciesId);
         $this->assertSame('f35', $deoxys->formSuffix);
-        $this->assertSame(['niebla_summoner'], $deoxys->effectKeys);
+        $this->assertSame([], $deoxys->effectKeys);
     }
 
     public function test_deoxys_psicorrayo_confunde(): void
@@ -206,10 +216,13 @@ class FabricaBatallaMockTest extends TestCase
         $pazMental = $mewtwo->moves[3];
         $this->assertSame('Paz Mental', $pazMental->nombre);
         $this->assertSame(CategoriaMovimiento::ESTADO, $pazMental->categoria);
-        $this->assertSame([
-            ['stat' => 'spAtk', 'stages' => 1],
-            ['stat' => 'spDef', 'stages' => 1],
-        ], $pazMental->selfStatChanges);
+
+        $cambios = $pazMental->selfStatChanges->all();
+        $this->assertCount(2, $cambios);
+        $this->assertSame('spAtk', $cambios[0]->statValue());
+        $this->assertSame(1.5, $cambios[0]->factor);
+        $this->assertSame('spDef', $cambios[1]->statValue());
+        $this->assertSame(1.5, $cambios[1]->factor);
     }
 
     public function test_create_battle_cadena_completa(): void
@@ -218,16 +231,19 @@ class FabricaBatallaMockTest extends TestCase
 
         $this->assertSame('Tú', $battle->team1->name);
         $this->assertSame('Rival', $battle->team2->name);
-        $this->assertCount(3, $battle->team1->combatants());
-        $this->assertCount(3, $battle->team2->combatants());
 
-        $gengar = $battle->team1->combatants()[0];
+        $team1 = $battle->team1->combatientesCollection()->all();
+        $team2 = $battle->team2->combatientesCollection()->all();
+        $this->assertCount(5, $team1);
+        $this->assertCount(5, $team2);
+
+        $gengar = $team1[0];
         $this->assertSame('Gengar', $gengar->nombre());
         $this->assertSame('life_orb', $gengar->item());
         $this->assertSame(94, $gengar->speciesId());
         $this->assertSame('', $gengar->formSuffix());
 
-        $deoxys = $battle->team2->combatants()[1];
+        $deoxys = $team2[1];
         $this->assertSame(386, $deoxys->speciesId());
         $this->assertSame('f35', $deoxys->formSuffix());
         $this->assertSame('/images/iconos_webp/386_f35.webp', $deoxys->aArrayVista(1)['icon']);
@@ -244,11 +260,14 @@ class FabricaBatallaMockTest extends TestCase
         $this->assertSame(TipoPokemon::SINIESTRO, $gengar->moves[3]->tipo);
 
         $giratina = $this->fabrica->generateTeam1()[1];
-        $this->assertSame(80, $giratina->moves[0]->potencia); // Garra Umbría
+        $this->assertSame(80, $giratina->moves[0]->potencia); // Bola Sombra
         $this->assertSame(130, $giratina->moves[1]->potencia); // Cometa Draco
-        $this->assertSame(90, $giratina->moves[3]->potencia); // Tierra Viva
-        $this->assertSame(CategoriaMovimiento::FISICO, $giratina->moves[0]->categoria);
+        $this->assertSame(90, $giratina->moves[2]->potencia); // Tierra Viva
+        $this->assertSame(CategoriaMovimiento::ESPECIAL, $giratina->moves[0]->categoria);
+        $this->assertSame(TipoPokemon::FANTASMA, $giratina->moves[0]->tipo);
         $this->assertSame(TipoPokemon::DRAGON, $giratina->moves[1]->tipo);
+        $this->assertSame(CategoriaMovimiento::ESPECIAL, $giratina->moves[1]->categoria);
+        $this->assertSame(TipoPokemon::TIERRA, $giratina->moves[2]->tipo);
 
         $tyranitar = $this->fabrica->generateTeam1()[2];
         $this->assertSame(100, $tyranitar->moves[0]->potencia); // Roca Afilada
@@ -274,6 +293,7 @@ class FabricaBatallaMockTest extends TestCase
         $this->assertSame(80, $deoxys->moves[3]->potencia); // Pulso Umbrío
         $this->assertSame(TipoPokemon::ELECTRICO, $deoxys->moves[1]->tipo);
         $this->assertSame(CategoriaMovimiento::ESPECIAL, $deoxys->moves[2]->categoria);
+        $this->assertSame(TipoPokemon::SINIESTRO, $deoxys->moves[3]->tipo);
 
         $mewtwo = $this->fabrica->generateTeam2()[2];
         $this->assertSame(90, $mewtwo->moves[0]->potencia); // Psíquico

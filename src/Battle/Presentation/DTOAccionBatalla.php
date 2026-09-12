@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Src\Battle\Presentation;
 
 use Livewire\Wireable;
+use Src\Battle\Domain\Enums\StatClave;
 
 /**
  * DTO de presentación para una acción de batalla pendiente.
@@ -36,7 +37,7 @@ class DTOAccionBatalla implements Wireable
     public static function fromLivewire($value): static
     {
         return new static(
-            type: $value['type'] ?? 'attack',
+            type: $value['type'] ?? StatClave::ATAQUE->value,
             actorId: $value['actorId'],
             defenderId: $value['defenderId'],
             attackerNombre: $value['attackerNombre'] ?? '',

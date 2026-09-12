@@ -8,12 +8,15 @@ use PHPUnit\Framework\TestCase;
 use Src\Battle\Domain\AgregadoBatalla;
 use Src\Battle\Domain\AI\SelectorAccionIA;
 use Src\Battle\Domain\AI\ValueObjects\ResultadoDecision;
+use Src\Battle\Domain\Collections\CambiosStatsCollection;
 use Src\Battle\Domain\Combatiente;
 use Src\Battle\Domain\Enums\CategoriaMovimiento;
 use Src\Battle\Domain\Enums\EstadoPokemon;
+use Src\Battle\Domain\Enums\StatClave;
 use Src\Battle\Domain\EquipoBatalla;
 use Src\Battle\Domain\MovimientoBatalla;
 use Src\Battle\Domain\Posicion;
+use Src\Battle\Domain\ValueObjects\CambioStat;
 use Src\Pokemon\Domain\PokemonEntity;
 use Src\Pokemon\Domain\Stats\StatsValue;
 use Src\Shared\Tipos\TiposCollection;
@@ -118,7 +121,7 @@ class SelectorAccionIATest extends TestCase
             stats: ['hp' => 200, 'atk' => 300, 'def' => 300, 'spAtk' => 300, 'spDef' => 300, 'speed' => 200],
             moves: [
                 new MovimientoBatalla('Golpe Brutal', 150, \Src\Shared\Tipos\TipoPokemon::NORMAL, CategoriaMovimiento::FISICO),
-                new MovimientoBatalla('Foco', 0, \Src\Shared\Tipos\TipoPokemon::NORMAL, CategoriaMovimiento::ESTADO, selfStatChanges: [['stat' => 'attack', 'stages' => 2]]),
+                new MovimientoBatalla('Foco', 0, \Src\Shared\Tipos\TipoPokemon::NORMAL, CategoriaMovimiento::ESTADO, selfStatChanges: new CambiosStatsCollection([CambioStat::desdeEtapas(StatClave::ATAQUE, 2)])),
             ],
             tipos: [\Src\Shared\Tipos\TipoPokemon::NORMAL],
             id: 'a1',

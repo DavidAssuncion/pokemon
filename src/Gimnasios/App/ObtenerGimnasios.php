@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace Src\Gimnasios\App;
 
-use Src\Gimnasios\Domain\CatalogoGimnasios;
+use Src\Gimnasios\Domain\Collections\GimnasioResumenCollection;
+use Src\Gimnasios\Domain\DataTransferObjects\GimnasioResumen;
+use Src\Gimnasios\Domain\Repositories\GymCatalogoRepositoryInterface;
 use Src\Gimnasios\Domain\Repositories\GymProgressRepositoryInterface;
 
 /**
@@ -14,42 +16,31 @@ use Src\Gimnasios\Domain\Repositories\GymProgressRepositoryInterface;
 final class ObtenerGimnasios
 {
     public function __construct(
-        private readonly CatalogoGimnasios $catalogo,
+        private readonly GymCatalogoRepositoryInterface $catalogo,
         private readonly GymProgressRepositoryInterface $repositorio,
     ) {
     }
 
-    /**
-     * @return list<array{
-     *     slug: string,
-     *     medalla: string,
-     *     tipo: int,
-     *     nivel_minimo: int,
-     *     nivel_jugador: int,
-     *     etapa_actual: int,
-     *     estado: string
-     * }>
-     */
-    public function obtener(int $userId, int $nivelJugador): array
+    public function obtener(int $userId, int $nivelJugador): GimnasioResumenCollection
     {
-        $resultado = [];
+        $resultado = new GimnasioResumenCollection();
 
-        foreach ($this->catalogo->todos() as $gimnasio) {
+        foreach ($this->catalogo->obtenerTodos() as $gimnasio) {
             $completado = $this->repositorio->esCompletado($userId, $gimnasio->slug);
             $etapaActual = $this->repositorio->obtenerProgreso($userId, $gimnasio->slug) ?? 1;
             $bloqueado = ! $completado && $nivelJugador < $gimnasio->nivelMinimo;
 
-            $resultado[] = [
-                'slug' => $gimnasio->slug,
-                'medalla' => $gimnasio->medalla,
-                'tipo' => $gimnasio->tipo->value,
-                'nivel_minimo' => $gimnasio->nivelMinimo,
-                'nivel_jugador' => $nivelJugador,
-                'etapa_actual' => $completado ? 5 : $etapaActual,
-                'estado' => $completado
+            $resultado->add(new GimnasioResumen(
+                slug: $gimnasio->slug,
+                medalla: $gimnasio->medalla,
+                tipo: $gimnasio->tipo,
+                nivelMinimo: $gimnasio->nivelMinimo,
+                nivelJugador: $nivelJugador,
+                etapaActual: $completado ? 5 : $etapaActual,
+                estado: $completado
                     ? 'completado'
                     : ($bloqueado ? 'bloqueado' : 'disponible'),
-            ];
+            ));
         }
 
         return $resultado;

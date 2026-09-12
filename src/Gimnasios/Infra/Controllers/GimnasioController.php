@@ -31,7 +31,7 @@ class GimnasioController extends Controller
             $user->nivel(),
         );
 
-        return response()->json($gimnasios);
+        return response()->json($gimnasios->toArray());
     }
 
     public function show(string $gym): JsonResponse
@@ -44,7 +44,7 @@ class GimnasioController extends Controller
             $user->nivel(),
         );
 
-        return response()->json($detalle);
+        return response()->json($detalle->toArray());
     }
 
     public function combatir(string $gym, Request $request): JsonResponse

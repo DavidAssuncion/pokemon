@@ -100,6 +100,6 @@ class EfectoRestosTest extends TestCase
         $portador->effects()->triggerRoundEnd($portador, $battle);
 
         $this->assertSame(0.0, $portador->hpActual());
-        $this->assertEmpty($battle->log());
+        $this->assertFalse($battle->log()->tieneContenido());
     }
 }

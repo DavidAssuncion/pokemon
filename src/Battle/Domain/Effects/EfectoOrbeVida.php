@@ -6,6 +6,7 @@ namespace Src\Battle\Domain\Effects;
 
 use Src\Battle\Domain\AgregadoBatalla;
 use Src\Battle\Domain\Combatiente;
+use Src\Battle\Domain\ReglasBatalla;
 
 /**
  * Orbe Vida: el portador pierde 10% de su HP máximo cada vez que
@@ -33,7 +34,7 @@ class EfectoOrbeVida implements InterfazEfecto
         }
 
         $maxHp = $portador->pokemon()->battleStats()->hp;
-        $recoil = max(1, $maxHp * 0.10);
+        $recoil = max(1, $maxHp * ReglasBatalla::RECOIL_ORBE_VIDA);
         $portador->setHpActual(max(0, $portador->hpActual() - $recoil));
         $battle->agregarLog("{$portador->nombre()} pierde {$recoil} PS por la Orbe Vida");
     }

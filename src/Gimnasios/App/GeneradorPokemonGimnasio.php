@@ -6,13 +6,13 @@ namespace Src\Gimnasios\App;
 
 use App\Models\Pokemon;
 use Src\Battle\Domain\DatosPokemonBatalla;
-use Src\Battle\Domain\Enums\CategoriaMovimiento;
 use Src\Battle\Domain\MovimientoBatalla;
 use Src\Battle\Domain\Posicion;
 use Src\CombateEntrenadores\App\MapeadorPokemonBatalla;
 use Src\CombateEntrenadores\Domain\GeneradorMovimientosTipo;
 use Src\Gimnasios\Domain\DataTransferObjects\EquipoEtapaGimnasio;
 use Src\Gimnasios\Domain\EvsRangoEntrenador;
+use Src\Shared\Tipos\TiposCollection;
 
 /**
  * Construye el equipo rival de un gimnasio a partir del EquipoEtapaGimnasio
@@ -49,13 +49,13 @@ final class GeneradorPokemonGimnasio
             $equipoRival[] = new DatosPokemonBatalla(
                 id: "gimnasio_rival_{$indice}",
                 nombre: $pokemon->name,
-                hp: $statsBase['hp'],
-                atk: $statsBase['atk'],
-                def: $statsBase['def'],
-                spAtk: $statsBase['spAtk'],
-                spDef: $statsBase['spDef'],
-                speed: $statsBase['speed'],
-                tipos: $this->mapeador->tiposDe($pokemon),
+                hp: $statsBase->hp,
+                atk: $statsBase->atk,
+                def: $statsBase->def,
+                spAtk: $statsBase->spAtk,
+                spDef: $statsBase->spDef,
+                speed: $statsBase->speed,
+                tipos: $this->mapeador->tiposDe($pokemon)->toList(),
                 posicion: $posicion,
                 moves: $this->movimientosDe($this->mapeador->tiposDe($pokemon)),
                 shiny: false,
@@ -130,18 +130,17 @@ final class GeneradorPokemonGimnasio
     }
 
     /**
-     * @param  \Src\Shared\Tipos\TipoPokemon[]  $tipos
      * @return list<MovimientoBatalla>
      */
-    private function movimientosDe(array $tipos): array
+    private function movimientosDe(TiposCollection $tipos): array
     {
         $movimientos = [];
         foreach ($this->generadorMovimientos->generar($tipos) as $m) {
             $movimientos[] = new MovimientoBatalla(
-                nombre: $m['nombre'],
-                potencia: $m['potencia'],
-                tipo: $m['tipo'],
-                categoria: CategoriaMovimiento::from($m['categoria']),
+                nombre: $m->nombre,
+                potencia: $m->potencia,
+                tipo: $m->tipo,
+                categoria: $m->categoria,
             );
         }
 

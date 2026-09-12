@@ -4,21 +4,20 @@ declare(strict_types=1);
 
 namespace App\Livewire;
 
-use Illuminate\Support\Facades\Auth;
+use App\Livewire\Presenters\MovesPreviewPresenter;
+use App\Livewire\Presenters\PresentadorResultadoBatalla;
+use App\Support\BattleSessionService;
 use Livewire\Component;
 use Src\Battle\Domain\AccionBatalla;
 use Src\Battle\Domain\AgregadoBatalla;
 use Src\Battle\Domain\Combatiente;
+use Src\Battle\Domain\Enums\FaseCombate;
 use Src\Battle\Domain\EquipoBatalla;
 use Src\Battle\Domain\FabricaBatallaInterface;
 use Src\Battle\Domain\MovimientoBatalla;
 use Src\Battle\Domain\ServicioEjecucionBatalla;
 use Src\Battle\Presentation\DTOAccionBatalla;
 use Src\Battle\Presentation\DTOMovimientoBatalla;
-use Src\CombateEntrenadores\App\OtorgarRecompensasEntrenador;
-use Src\CombateEntrenadores\App\RegistrarResultadoEntrenador;
-use Src\Gimnasios\App\RegistrarResultadoGimnasio;
-use Src\Gimnasios\Domain\CatalogoGimnasios;
 
 class Combate extends Component
 {
@@ -34,7 +33,7 @@ class Combate extends Component
 
     public ?int $selectedMoveIdx = null;
 
-    public string $phase = 'init';
+    public string $phase = FaseCombate::INICIO->value;
 
     public int $round = 0;
 
@@ -70,29 +69,43 @@ class Combate extends Component
 
     private FabricaBatallaInterface $fabricaBatalla;
 
+    private BattleSessionService $session;
+
     private ?ServicioEjecucionBatalla $servicioEjecucion = null;
 
     // ─── Lifecycle ───────────────────────────────────────────
 
     public function nuevaBatalla(): void
     {
-        $this->battleId = 'battle_'.uniqid();
+        $this->battleId = $this->session->crearId();
         $this->initMockBattle();
+    }
+
+    /**
+     * Livewire 3 ejecuta boot() en CADA request (montaje inicial y updates
+     * posteriores), mientras que mount() solo corre en el primero. Resolver
+     * aquí los servicios evita el Error "must not be accessed before
+     * initialization" en los métodos invocados por wire en requests siguientes.
+     * La sintaxis ??= es segura con propiedades tipadas no inicializadas
+     * (semántica isset); una lectura directa lanzaría el mismo Error.
+     */
+    public function boot(): void
+    {
+        $this->fabricaBatalla ??= app(FabricaBatallaInterface::class);
+        $this->session ??= app(BattleSessionService::class);
     }
 
     public function mount(): void
     {
-        $this->fabricaBatalla = app(FabricaBatallaInterface::class);
-
         $battleId = request()->query('battle_id');
-        if (is_string($battleId) && $battleId !== '' && session()->has($battleId)) {
+        if (is_string($battleId) && $battleId !== '') {
             $this->battleId = $battleId;
-            $battle = $this->getBattle();
+            $battle = $this->session->cargar($this->battleId);
             if ($battle !== null) {
                 $this->servicioEjecucion = new ServicioEjecucionBatalla($battle->damageChain());
                 $this->syncViewData($battle);
                 $this->log[] = '¡Comienza la batalla!';
-                $this->saveBattle($battle);
+                $this->session->guardar($this->battleId, $battle);
                 $this->nextActor();
 
                 return;
@@ -109,71 +122,21 @@ class Combate extends Component
             ->section('content');
     }
 
-    // ─── Persistencia (sesión) ───────────────────────────────
-
-    private const SESSION_VERSION = 8;
-
-    private function getBattle(): ?AgregadoBatalla
-    {
-        $data = session($this->battleId);
-        if ($data === null) {
-            return null;
-        }
-
-        // Formato: "v{version}|{serialized}"
-        if (! str_contains($data, '|')) {
-            session()->forget($this->battleId);
-
-            return null;
-        }
-
-        [$version, $payload] = explode('|', $data, 2);
-
-        try {
-            /** @var AgregadoBatalla $battle */
-            $battle = unserialize($payload);
-        } catch (\Throwable $e) {
-            // Versión antigua incompatible, limpiar sesión
-            session()->forget($this->battleId);
-
-            return null;
-        }
-
-        if (! $battle instanceof AgregadoBatalla) {
-            session()->forget($this->battleId);
-
-            return null;
-        }
-
-        return $battle;
-    }
-
-    private function saveBattle(AgregadoBatalla $battle): void
-    {
-        $payload = self::SESSION_VERSION.'|'.serialize($battle);
-        session()->put($this->battleId, $payload);
-    }
-
     // ─── Inicialización ──────────────────────────────────────
 
     private function initMockBattle(): void
     {
         $battle = $this->fabricaBatalla->createBattle();
         $this->servicioEjecucion = new ServicioEjecucionBatalla($battle->damageChain());
-        $this->saveBattle($battle);
+        $this->session->guardar($this->battleId, $battle);
 
         $this->syncViewData($battle);
-        $this->saveBattle($battle); // re-save after clearing log
+        $this->session->guardar($this->battleId, $battle); // re-save after clearing log
         $this->log[] = '¡Comienza la batalla!';
         $this->nextActor();
     }
 
     // ─── Ciclo de turno ──────────────────────────────────────
-
-    public function startBattle(): void
-    {
-        $this->nextActor();
-    }
 
     /**
      * Avanza al siguiente actor. Si la ronda terminó, inicia una nueva
@@ -181,7 +144,7 @@ class Combate extends Component
      */
     public function nextActor(): void
     {
-        $battle = $this->getBattle();
+        $battle = $this->session->cargar($this->battleId);
         if ($battle === null) {
             return;
         }
@@ -214,27 +177,27 @@ class Combate extends Component
 
         // Verificar si el actor puede actuar (sueño, hielo, parálisis, confusión)
         $statusCheck = $actor->puedeActuar();
-        if (! $statusCheck['canAct']) {
-            $this->log[] = "{$actor->nombre()} {$statusCheck['reason']}!";
-            if ($statusCheck['selfDamage'] > 0) {
-                $this->log[] = "¡{$actor->nombre()} se golpeó a sí mismo! ({$statusCheck['selfDamage']} daño)";
+        if (! $statusCheck->esPermitida()) {
+            $this->log[] = "{$actor->nombre()} {$statusCheck->motivo()}!";
+            if ($statusCheck->autoDanio() > 0) {
+                $this->log[] = "¡{$actor->nombre()} se golpeó a sí mismo! ({$statusCheck->autoDanio()} daño)";
             }
             $battle->turnManager()->consumeAction($actor);
             $this->syncViewData($battle);
-            $this->saveBattle($battle);
+            $this->session->guardar($this->battleId, $battle);
             $this->nextActor();
 
             return;
         }
-        if ($statusCheck['reason'] === 'despertó' || $statusCheck['reason'] === 'se descongeló') {
-            $this->log[] = "¡{$actor->nombre()} {$statusCheck['reason']}!";
+        if ($statusCheck->motivo() === 'despertó' || $statusCheck->motivo() === 'se descongeló') {
+            $this->log[] = "¡{$actor->nombre()} {$statusCheck->motivo()}!";
         }
 
         $this->syncViewData($battle, $actor);
         $actorView = $this->findPokemonViewData($actor);
 
         if ($actorView === null) {
-            $this->saveBattle($battle);
+            $this->session->guardar($this->battleId, $battle);
             $this->processing = false;
 
             return;
@@ -247,7 +210,7 @@ class Combate extends Component
                 fn (MovimientoBatalla $m) => DTOMovimientoBatalla::desdeDominio($m)->toLivewire(),
                 $actor->pokemon()->moves()->all()
             );
-            $this->phase = 'player_target';
+            $this->phase = FaseCombate::SELECCION_OBJETIVO->value;
             $this->processing = false;
         } else {
             $this->processing = true;
@@ -257,7 +220,7 @@ class Combate extends Component
         }
 
         $this->turnQueue = $this->buildTurnQueue($battle);
-        $this->saveBattle($battle);
+        $this->session->guardar($this->battleId, $battle);
     }
 
     /**
@@ -277,108 +240,18 @@ class Combate extends Component
 
     private function endBattle(AgregadoBatalla $battle): void
     {
-        $this->phase = 'battle_over';
+        $this->phase = FaseCombate::BATALLA_TERMINADA->value;
         $winner = ! $battle->team1->todosDebilitados() ? $battle->team1->name : $battle->team2->name;
         $this->log[] = "¡{$winner} gana la batalla!";
         $this->resetAnimState();
         $this->syncViewData($battle);
-        $this->saveBattle($battle);
+        $this->session->guardar($this->battleId, $battle);
         $this->processing = false;
-        $this->registrarResultadoEntrenador($battle);
-    }
 
-    private function registrarResultadoEntrenador(AgregadoBatalla $battle): void
-    {
-        $meta = session($this->battleId.'_meta');
-        if (! is_array($meta)) {
-            return;
-        }
-
-        if (($meta['tipo'] ?? null) === 'gimnasio') {
-            $this->registrarResultadoGimnasio($battle, $meta);
-
-            return;
-        }
-
-        $this->habitatId = (int) ($meta['habitat_id'] ?? 0);
-
-        $won = ! $battle->team1->todosDebilitados();
-
-        app(RegistrarResultadoEntrenador::class)->registrar(
-            habitatId: $this->habitatId,
-            nivel: (int) ($meta['nivel'] ?? 0),
-            trainerIndex: (int) ($meta['trainer_index'] ?? 0),
-            userId: (int) ($meta['user_id'] ?? 0),
-            fecha: (string) ($meta['fecha'] ?? today()->toDateString()),
-            won: $won,
-        );
-
-        if ($won) {
-            $speciesRival = array_map(
-                fn (Combatiente $c): int => $c->speciesId(),
-                $battle->team2->combatants()
-            );
-
-            $this->rewards = app(OtorgarRecompensasEntrenador::class)->otorgar(
-                userId: (int) ($meta['user_id'] ?? 0),
-                teamId: (int) ($meta['team_id'] ?? 0),
-                speciesIdsRival: $speciesRival,
-                nivelEntrenador: (int) ($meta['nivel'] ?? 0),
-            );
-        }
-
-        session()->forget($this->battleId.'_meta');
-    }
-
-    /**
-     * Finalización de un combate de gimnasio. Persiste el progreso si ganó
-     * (solo si el user_id del meta coincide con el autenticado, anti-IDOR) y
-     * otorga las recompensas dobles + avistados de la Pokédex. Si se derrota
-     * al líder (etapa 4), añade la medalla ganada al modal de victoria.
-     *
-     * @param  array<string, mixed>  $meta
-     */
-    private function registrarResultadoGimnasio(AgregadoBatalla $battle, array $meta): void
-    {
-        $gymId = (string) ($meta['gym_id'] ?? '');
-        $stage = (int) ($meta['stage'] ?? 0);
-        $userId = (int) ($meta['user_id'] ?? 0);
-        $teamId = (int) ($meta['team_id'] ?? 0);
-        $nivelRival = (int) ($meta['nivel_rival'] ?? 0);
-
-        $won = ! $battle->team1->todosDebilitados();
-
-        $gimnasio = app(CatalogoGimnasios::class)->porSlug($gymId);
-
-        $resultado = app(RegistrarResultadoGimnasio::class)->registrar(
-            gymId: $gymId,
-            etapaCompletada: $stage,
-            userId: $userId,
-            won: $won,
-            authUserId: (int) Auth::id(),
-            nombreMedalla: $gimnasio?->medalla,
-        );
-
-        if ($won && $resultado['avance']) {
-            $speciesRival = array_map(
-                fn (Combatiente $c): int => $c->speciesId(),
-                $battle->team2->combatants()
-            );
-
-            $this->rewards = app(OtorgarRecompensasEntrenador::class)->otorgar(
-                userId: $userId,
-                teamId: $teamId,
-                speciesIdsRival: $speciesRival,
-                nivelEntrenador: $nivelRival,
-                multiplicador: 10.0,
-            );
-
-            if ($resultado['medalla'] !== null) {
-                $this->rewards['medalla'] = $resultado['medalla'];
-            }
-        }
-
-        session()->forget($this->battleId.'_meta');
+        $resultado = PresentadorResultadoBatalla::procesar($battle, $this->battleId, $this->session);
+        $this->log = array_merge($this->log, $resultado['log']);
+        $this->rewards = $resultado['rewards'];
+        $this->habitatId = $resultado['habitatId'];
     }
 
     // ─── AI ──────────────────────────────────────────────────
@@ -413,14 +286,14 @@ class Combate extends Component
 
         $this->setAnimState($actor, $targetForAnim, $movimiento);
         $this->syncViewData($battle, $actor);
-        $this->saveBattle($battle);
+        $this->session->guardar($this->battleId, $battle);
     }
 
     // ─── Ejecutar acción (compartido: jugador + IA) ──────────
 
     public function commitAction(): void
     {
-        $battle = $this->getBattle();
+        $battle = $this->session->cargar($this->battleId);
         if ($battle === null) {
             return;
         }
@@ -437,7 +310,7 @@ class Combate extends Component
 
         if ($actor === null || $objetivo === null) {
             $battle->setPendingAction(null);
-            $this->saveBattle($battle);
+            $this->session->guardar($this->battleId, $battle);
             $this->resetAnimState();
             $this->nextActor();
 
@@ -460,7 +333,6 @@ class Combate extends Component
             attacker: $actor,
             defender: $objetivo,
             move: $movimiento,
-            fromPosition: $actor->posicion(),
             defenderTeamHasVanguard: $defenderTeam->tieneVanguardiaViva(),
             weather: $battle->weather(),
         );
@@ -511,7 +383,7 @@ class Combate extends Component
         $battle->setPendingAction(null);
         $this->resetAnimState();
         $this->syncViewData($battle, $actor);
-        $this->saveBattle($battle);
+        $this->session->guardar($this->battleId, $battle);
         $this->nextActor();
     }
 
@@ -519,7 +391,7 @@ class Combate extends Component
 
     public function previewTarget(int $teamIdx, int $pokemonIdx): void
     {
-        $battle = $this->getBattle();
+        $battle = $this->session->cargar($this->battleId);
         if ($battle === null) {
             return;
         }
@@ -538,43 +410,14 @@ class Combate extends Component
         $this->selectedTargetIdx = $pokemonIdx;
         $this->selectedTargetRefId = $target->id();
 
-        $previews = [];
-        foreach ($actor->pokemon()->moves() as $move) {
-            $defenderTeam = $this->defenderTeam($battle, $target);
-
-            $action = new AccionBatalla(
-                attacker: $actor,
-                defender: $target,
-                move: $move,
-                fromPosition: $actor->posicion(),
-                defenderTeamHasVanguard: $defenderTeam->tieneVanguardiaViva(),
-                weather: $battle->weather(),
-                isPreview: true,
-            );
-
-            $previews[] = [
-                'nombre' => $move->nombre,
-                'tipo' => $move->tipo->value,
-                'potencia' => $move->potencia,
-                'categoria' => $move->categoria->value,
-                'daño' => $battle->damageChain()->calculate($action),
-                'efectividad' => $move->tipo->effectiveness($target->pokemon()),
-                'stab' => $this->tieneStab($actor, $move),
-                'directo' => $actor->obtenerPorcentajeDanioDirecto() > 0,
-                'statusEffect' => $move->statusEffect->value,
-                'selfStatChanges' => $move->selfStatChanges,
-                'targetStatChanges' => $move->targetStatChanges,
-            ];
-        }
-
-        $this->currentMoves = $previews;
-        $this->phase = 'player_move';
-        $this->saveBattle($battle);
+        $this->currentMoves = MovesPreviewPresenter::para($actor, $battle, $target);
+        $this->phase = FaseCombate::SELECCION_MOVIMIENTO->value;
+        $this->session->guardar($this->battleId, $battle);
     }
 
     public function selectMove(int $index): void
     {
-        $battle = $this->getBattle();
+        $battle = $this->session->cargar($this->battleId);
         if ($battle === null) {
             return;
         }
@@ -610,7 +453,7 @@ class Combate extends Component
         $this->selectedMoveIdx = null;
         $this->setAnimState($actor, $defender, $move);
         $this->syncViewData($battle, $actor);
-        $this->saveBattle($battle);
+        $this->session->guardar($this->battleId, $battle);
     }
 
     public function cancelTarget(): void
@@ -618,7 +461,7 @@ class Combate extends Component
         $this->selectedTargetTeam = null;
         $this->selectedTargetIdx = null;
         $this->selectedTargetRefId = '';
-        $this->phase = 'player_target';
+        $this->phase = FaseCombate::SELECCION_OBJETIVO->value;
     }
 
     // ─── Helpers ─────────────────────────────────────────────
@@ -650,39 +493,22 @@ class Combate extends Component
             : $battle->team2;
     }
 
-    private function tieneStab(Combatiente $actor, MovimientoBatalla $move): bool
-    {
-        foreach ($actor->pokemon()->tiposCollection() as $tipo) {
-            if ($tipo === $move->tipo) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
     /**
      * Aplica los cambios de estadísticas de un movimiento al combatiente correspondiente.
      */
     private function applyMoveStatChanges(Combatiente $combatant, MovimientoBatalla $move, bool $isActor): void
     {
         $changes = $isActor ? $move->selfStatChanges : $move->targetStatChanges;
-        if (empty($changes)) {
+        if ($changes->isEmpty()) {
             return;
         }
 
-        $statLabels = [
-            'attack' => 'Ataque', 'defense' => 'Defensa',
-            'spAtk' => 'At. Especial', 'spDef' => 'Def. Especial',
-            'speed' => 'Velocidad', 'accuracy' => 'Precisión', 'evasion' => 'Evasión',
-        ];
-
-        foreach ($changes as $change) {
-            $combatant->aplicarCambioEtapa($change['stat'], $change['stages']);
-            $label = $statLabels[$change['stat']] ?? $change['stat'];
-            $verb = $change['stages'] > 0 ? 'subió' : 'bajó';
-            $stages = abs($change['stages']);
-            $this->log[] = "{$combatant->nombre()} {$verb} {$label} en {$stages}!";
+        foreach ($changes as $cambio) {
+            $label = $cambio->stat->label();
+            $combatant->setMultiplicadores($cambio->aplicadoEn($combatant->multiplicadores()));
+            $verb = $cambio->factor > 1.0 ? 'subió' : 'bajó';
+            $porcentaje = (int) round(abs($cambio->porcentaje()));
+            $this->log[] = "{$combatant->nombre()} {$verb} {$label} en {$porcentaje}%!";
         }
     }
 
@@ -704,7 +530,7 @@ class Combate extends Component
 
     private function buildTurnQueue(AgregadoBatalla $battle): array
     {
-        $alive = $battle->turnManager()->combatientesVivos();
+        $alive = $battle->turnManager()->combatientesVivos()->all();
 
         usort(
             $alive,
@@ -748,7 +574,7 @@ class Combate extends Component
     private function syncViewData(AgregadoBatalla $battle, ?Combatiente $actor = null): void
     {
         $this->weather = $battle->weather()->value;
-        $this->log = array_merge($this->log, $battle->log());
+        $this->log = array_merge($this->log, $battle->log()->entries());
         $battle->limpiarLog();
 
         $this->team1 = array_map(

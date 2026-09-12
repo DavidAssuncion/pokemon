@@ -102,10 +102,12 @@ class AnalizadorAmenazasImpl implements AnalizadorAmenazas
 
     /**
      * Puntos por etapas positivas del enemigo.
+     * Los multiplicadores se convierten a etapas enteras (obtenerEtapas)
+     * para conservar la semántica de amenaza por setup.
      */
     private function calcularAmenazaSetup(Combatiente $enemigo): float
     {
-        $etapas = $enemigo->etapas()->toArray();
+        $etapas = $enemigo->multiplicadores()->obtenerEtapas();
         $totalPositivas = 0;
         foreach ($etapas as $valor) {
             if ($valor > 0) {

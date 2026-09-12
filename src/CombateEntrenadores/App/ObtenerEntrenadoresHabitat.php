@@ -4,6 +4,10 @@ declare(strict_types=1);
 
 namespace Src\CombateEntrenadores\App;
 
+use Src\CombateEntrenadores\Domain\Collections\EntrenadoresNivelCollection;
+use Src\CombateEntrenadores\Domain\Collections\EstadoEntrenadorCollection;
+use Src\CombateEntrenadores\Domain\DataTransferObjects\EntrenadoresNivel;
+use Src\CombateEntrenadores\Domain\DataTransferObjects\EstadoEntrenador;
 use Src\CombateEntrenadores\Domain\Repositories\EntrenadorLogRepositoryInterface;
 
 /**
@@ -11,22 +15,19 @@ use Src\CombateEntrenadores\Domain\Repositories\EntrenadorLogRepositoryInterface
  * estado de desbloqueo del día. No revela el equipo (pokémon) de los
  * entrenadores.
  */
-class ObtenerEntrenadoresHabitat
+final class ObtenerEntrenadoresHabitat
 {
     public function __construct(
         private readonly EntrenadorLogRepositoryInterface $logRepository,
     ) {
     }
 
-    /**
-     * @return array<int, list<array{indice: int, desbloqueado: bool}>>
-     */
-    public function obtener(int $habitatId, int $userId, string $fecha): array
+    public function obtener(int $habitatId, int $userId, string $fecha): EntrenadoresNivelCollection
     {
-        $niveles = [];
+        $niveles = new EntrenadoresNivelCollection();
 
         for ($nivel = 1; $nivel <= 3; $nivel++) {
-            $entrenadores = [];
+            $entrenadores = new EstadoEntrenadorCollection();
 
             for ($indice = 1; $indice <= 3; $indice++) {
                 $desbloqueado = ! $this->logRepository->haGanadoHoy(
@@ -37,13 +38,16 @@ class ObtenerEntrenadoresHabitat
                     $fecha,
                 );
 
-                $entrenadores[] = [
-                    'indice' => $indice,
-                    'desbloqueado' => $desbloqueado,
-                ];
+                $entrenadores->add(new EstadoEntrenador(
+                    indice: $indice,
+                    desbloqueado: $desbloqueado,
+                ));
             }
 
-            $niveles[$nivel] = $entrenadores;
+            $niveles->add(new EntrenadoresNivel(
+                nivel: $nivel,
+                entrenadores: $entrenadores,
+            ));
         }
 
         return $niveles;

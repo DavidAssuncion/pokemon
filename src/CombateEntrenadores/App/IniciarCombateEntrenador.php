@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Src\CombateEntrenadores\App;
 
 use App\Models\Team;
+use App\Support\BattleSessionService;
 use Src\Battle\Domain\AgregadoBatalla;
 use Src\Battle\Domain\EquipoBatalla;
 use Src\CombateEntrenadores\Domain\Exceptions\EntrenadorDerrotadoHoy;
@@ -18,12 +19,11 @@ use Src\CombateEntrenadores\Domain\Repositories\EntrenadorLogRepositoryInterface
  */
 class IniciarCombateEntrenador
 {
-    private const SESSION_VERSION = 7;
-
     public function __construct(
         private readonly GeneradorEquipoEntrenador $generadorEquipo,
         private readonly ConstruirEquipoJugador $construirEquipoJugador,
         private readonly EntrenadorLogRepositoryInterface $logRepository,
+        private readonly BattleSessionService $battleSession,
     ) {
     }
 
@@ -61,8 +61,8 @@ class IniciarCombateEntrenador
 
         $battleId = 'battle_entrenador_'.uniqid();
 
-        session()->put($battleId, self::SESSION_VERSION.'|'.serialize($batalla));
-        session()->put($battleId.'_meta', [
+        $this->battleSession->guardar($battleId, $batalla);
+        $this->battleSession->guardarMeta($battleId, [
             'habitat_id' => $habitatId,
             'nivel' => $nivel,
             'trainer_index' => $trainerIndex,

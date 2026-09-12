@@ -11,6 +11,8 @@ use Src\Exploraciones\Domain\Recompensas\RecompensaEv;
 use Src\Exploraciones\Domain\Recompensas\RecompensaFamilia;
 use Src\Exploraciones\Domain\Recompensas\RecompensaTipo;
 use Src\Exploraciones\Domain\Recompensas\ResultadoRecompensas;
+use Src\Exploraciones\Domain\ValueObjects\ColeccionEventosExploracion;
+use Src\Exploraciones\Domain\ValueObjects\EventoExploracion;
 use Src\Shared\Domain\NivelHelper;
 use Src\Shared\Tipos\TipoPokemon;
 
@@ -51,7 +53,31 @@ final class CalculadorRecompensas
      * Caramelos de los eventos hallazgo (D8): familia (resuelta por pokemon_id →
      * evolution_chain_id), EV (stat) y tipo (tipo_id → label).
      *
-     * @param  Collection<int, array<string, mixed>>  $hallazgos
+     * @param  Collection<int, array<string, mixed>>  $hallazgos  Ya filtrados por esHallazgo().
+     * @param  array<int, int>  $chainPorPokemon  pokemon_id → evolution_chain_id
+     * @return array{
+     *     caramelosFamilia: Collection<int, RecompensaFamilia>,
+     *     caramelosEv: Collection<int, RecompensaEv>,
+     *     caramelosTipo: Collection<int, RecompensaTipo>,
+     * }
+     *
+     * @deprecated Frontera (BC con tests unitarios que pasan arrays). El dominio
+     * recomienda calcularHallazgosDeEventos() con la colección tipada.
+     */
+    public function calcularHallazgos(Collection $hallazgos, array $chainPorPokemon, float $multiplicadorCaramelos = 1.0, int $bonusCaramelos = 0): array
+    {
+        return $this->calcularHallazgosDeEventos(
+            ColeccionEventosExploracion::desdeArray(array_values($hallazgos->all())),
+            $chainPorPokemon,
+            $multiplicadorCaramelos,
+            $bonusCaramelos,
+        );
+    }
+
+    /**
+     * Caramelos de los eventos hallazgo (D8): familia (resuelta por pokemon_id →
+     * evolution_chain_id), EV (stat) y tipo (tipo_id → label).
+     *
      * @param  array<int, int>  $chainPorPokemon  pokemon_id → evolution_chain_id
      * @return array{
      *     caramelosFamilia: Collection<int, RecompensaFamilia>,
@@ -59,21 +85,31 @@ final class CalculadorRecompensas
      *     caramelosTipo: Collection<int, RecompensaTipo>,
      * }
      */
-    public function calcularHallazgos(Collection $hallazgos, array $chainPorPokemon, float $multiplicadorCaramelos = 1.0): array
+    public function calcularHallazgosDeEventos(ColeccionEventosExploracion $eventos, array $chainPorPokemon, float $multiplicadorCaramelos = 1.0, int $bonusCaramelos = 0): array
     {
         $familia = [];
         $ev = [];
         $tipo = [];
 
-        foreach ($hallazgos as $hallazgo) {
-            $cantidad = (int) ($hallazgo['cantidad'] ?? 1);
-            if ($cantidad <= 0) {
+        /** @var list<EventoExploracion> $items */
+        $items = $eventos->toList();
+
+        foreach ($items as $evento) {
+            if (! $evento->esHallazgo()) {
                 continue;
             }
 
-            $this->acumularHallazgoFamilia($hallazgo, $chainPorPokemon, $cantidad, $familia);
-            $this->acumularHallazgoEv($hallazgo, $cantidad, $ev);
-            $this->acumularHallazgoTipo($hallazgo, $cantidad, $tipo);
+            $cantidadBase = $evento->cantidad ?? 1;
+            if ($cantidadBase <= 0) {
+                continue;
+            }
+
+            // Rango Recolector: cada hallazgo rinde ×(1 + bonus) caramelos.
+            $cantidad = $cantidadBase * (1 + $bonusCaramelos);
+
+            $this->acumularHallazgoFamiliaDeEvento($evento, $chainPorPokemon, $cantidad, $familia);
+            $this->acumularHallazgoEvDeEvento($evento, $cantidad, $ev);
+            $this->acumularHallazgoTipoDeEvento($evento, $cantidad, $tipo);
         }
 
         return [
@@ -84,49 +120,46 @@ final class CalculadorRecompensas
     }
 
     /**
-     * @param  array<string, mixed>  $hallazgo
      * @param  array<int, int>  $chainPorPokemon
      * @param  array<int, int>  $familia
      */
-    private function acumularHallazgoFamilia(array $hallazgo, array $chainPorPokemon, int $cantidad, array &$familia): void
+    private function acumularHallazgoFamiliaDeEvento(EventoExploracion $hallazgo, array $chainPorPokemon, int $cantidad, array &$familia): void
     {
-        if (($hallazgo['subtype'] ?? null) !== 'caramelo_familia') {
+        if ($hallazgo->subtype !== 'caramelo_familia') {
             return;
         }
 
-        $chainId = $chainPorPokemon[(int) ($hallazgo['pokemon_id'] ?? 0)] ?? null;
+        $chainId = $chainPorPokemon[$hallazgo->pokemonId ?? 0] ?? null;
         if ($chainId !== null) {
             $familia[$chainId] = ($familia[$chainId] ?? 0) + $cantidad;
         }
     }
 
     /**
-     * @param  array<string, mixed>  $hallazgo
      * @param  array<int, int>  $ev
      */
-    private function acumularHallazgoEv(array $hallazgo, int $cantidad, array &$ev): void
+    private function acumularHallazgoEvDeEvento(EventoExploracion $hallazgo, int $cantidad, array &$ev): void
     {
-        if (($hallazgo['subtype'] ?? null) !== 'caramelo_ev') {
+        if ($hallazgo->subtype !== 'caramelo_ev') {
             return;
         }
 
-        $stat = (int) ($hallazgo['stat'] ?? 0);
-        if ($stat >= 1 && $stat <= 6) {
+        $stat = $hallazgo->stat;
+        if ($stat !== null && $stat >= 1 && $stat <= 6) {
             $ev[$stat] = ($ev[$stat] ?? 0) + $cantidad;
         }
     }
 
     /**
-     * @param  array<string, mixed>  $hallazgo
      * @param  array<string, int>  $tipo
      */
-    private function acumularHallazgoTipo(array $hallazgo, int $cantidad, array &$tipo): void
+    private function acumularHallazgoTipoDeEvento(EventoExploracion $hallazgo, int $cantidad, array &$tipo): void
     {
-        if (($hallazgo['subtype'] ?? null) !== 'caramelo_tipo') {
+        if ($hallazgo->subtype !== 'caramelo_tipo') {
             return;
         }
 
-        $tipoPokemon = TipoPokemon::tryFrom((int) ($hallazgo['tipo_id'] ?? 0));
+        $tipoPokemon = TipoPokemon::tryFrom($hallazgo->tipoId ?? 0);
         if ($tipoPokemon !== null) {
             $tipo[$tipoPokemon->label()] = ($tipo[$tipoPokemon->label()] ?? 0) + $cantidad;
         }

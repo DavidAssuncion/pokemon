@@ -9,6 +9,7 @@ Route::get('/exploraciones', [ExploracionActivaController::class, 'index']);
 Route::get('/exploraciones/preview', [ExploracionActivaController::class, 'preview']);
 Route::post('/exploraciones', [ExploracionActivaController::class, 'store']);
 Route::post('/exploraciones/{exploracion}/recoger', [ExploracionActivaController::class, 'recoger']);
+Route::post('/exploraciones/{exploracion}/cancelar', [ExploracionActivaController::class, 'cancelar']);
 Route::post('/exploraciones/{exploracion}/cerrar', [ExploracionActivaController::class, 'cerrar']);
 
 // Exploración individual (API JSON) — sin bayas (TODO)

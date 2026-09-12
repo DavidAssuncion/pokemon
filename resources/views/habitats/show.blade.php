@@ -83,7 +83,7 @@
                         <span class="flex-1 text-sm text-left font-medium text-gray-700 dark:text-gray-300">Entrenadores</span>
                     </button>
                     <button
-                        @click="{{ $bloqueadoConstruccion ? '' : "alert('Función próximamente')" }}"
+                        @click="{{ $bloqueadoConstruccion ? '' : 'openMazmorraModal()' }}"
                         {{ $bloqueadoConstruccion ? 'disabled' : '' }}
                         @if($bloqueadoConstruccion) title="No disponible durante exploraciones activas" @endif
                         class="{{ $constructionButtonClass }} {{ $bloqueadoConstruccion ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-50 dark:hover:bg-gray-700' }}"
@@ -493,8 +493,38 @@
                                     <span class="text-xs font-medium text-gray-700 dark:text-gray-300">Nv <span x-text="preview.min_lvl"></span></span>
                                 </div>
                             </template>
-                            <div class="flex items-center justify-between gap-2 pt-1 border-t border-gray-200 dark:border-gray-700">
+                            <div class="flex items-center justify-between">
                                 <span class="px-2 py-0.5 text-[10px] font-bold rounded-full uppercase" :class="riesgoClass(preview.riesgo)" x-text="'Riesgo ' + preview.riesgo"></span>
+                            </div>
+                            <template x-if="preview.rol || preview.rol_sugerido">
+                                <div class="flex items-center justify-between">
+                                    <span class="text-xs font-medium text-gray-600 dark:text-gray-300">Rol</span>
+                                    <span class="px-2 py-0.5 text-[10px] font-bold rounded-full uppercase bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300" x-text="preview.rol || preview.rol_sugerido"></span>
+                                </div>
+                            </template>
+                            <!-- Recompensas esperadas (tolerante: se oculta si el backend aún no las expone) -->
+                            <div class="space-y-1.5 pt-2 border-t border-gray-200 dark:border-gray-700"
+                                 x-show="previewLoaded && preview?.recompensas_esperadas">
+                                <p class="text-xs font-bold text-gray-700 dark:text-gray-300">Ganarás esto</p>
+                                <template x-if="preview.recompensas_esperadas?.por_horas">
+                                    <p class="text-xs text-gray-500 dark:text-gray-400">
+                                        Duración estimada:
+                                        <span class="font-medium text-gray-700 dark:text-gray-300" x-text="preview.recompensas_esperadas.por_horas + ' h'"></span>
+                                    </p>
+                                </template>
+                                <template x-if="preview.recompensas_esperadas?.items?.length">
+                                    <ul class="space-y-1">
+                                        <template x-for="(item, i) in preview.recompensas_esperadas.items" :key="i">
+                                            <li class="flex items-center justify-between gap-3 text-xs text-gray-500 dark:text-gray-400">
+                                                <span x-text="item.label"></span>
+                                                <span class="font-medium text-gray-700 dark:text-gray-300" x-text="'entre ' + item.min + ' y ' + item.max"></span>
+                                            </li>
+                                        </template>
+                                    </ul>
+                                </template>
+                                <template x-if="preview.recompensas_esperadas?.aviso">
+                                    <p class="text-[10px] text-gray-400 dark:text-gray-500 italic" x-text="preview.recompensas_esperadas.aviso"></p>
+                                </template>
                             </div>
                         </div>
                     </template>
@@ -505,7 +535,7 @@
                     <label class="flex items-center gap-3 p-3 rounded-lg border border-gray-200 dark:border-gray-700 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
                         :class="{ 'border-blue-500 dark:border-blue-400 bg-blue-50 dark:bg-blue-900/20': durationMode === 'hours' }"
                     >
-                        <input type="radio" x-model="durationMode" value="hours" class="w-4 h-4 text-blue-600">
+                        <input type="radio" x-model="durationMode" value="hours" class="w-4 h-4 text-blue-600" @change="loadPreview()">
                         <span class="text-sm text-gray-700 dark:text-gray-300">Duración: </span>
                         <input
                             type="number"
@@ -515,6 +545,7 @@
                             :disabled="durationMode !== 'hours'"
                             class="w-16 px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-900 text-gray-900 dark:text-white disabled:opacity-50"
                             @click.stop
+                            @change="loadPreview()"
                         >
                         <span class="text-sm text-gray-500 dark:text-gray-400">horas</span>
                     </label>
@@ -522,7 +553,7 @@
                     <label class="flex items-center gap-3 p-3 rounded-lg border border-gray-200 dark:border-gray-700 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
                         :class="{ 'border-blue-500 dark:border-blue-400 bg-blue-50 dark:bg-blue-900/20': durationMode === 'return_time' }"
                     >
-                        <input type="radio" x-model="durationMode" value="return_time" class="w-4 h-4 text-blue-600">
+                        <input type="radio" x-model="durationMode" value="return_time" class="w-4 h-4 text-blue-600" @change="loadPreview()">
                         <span class="text-sm text-gray-700 dark:text-gray-300">Regresar antes de las </span>
                         <input
                             type="time"
@@ -530,14 +561,8 @@
                             :disabled="durationMode !== 'return_time'"
                             class="px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-900 text-gray-900 dark:text-white disabled:opacity-50"
                             @click.stop
+                            @change="loadPreview()"
                         >
-                    </label>
-
-                    <label class="flex items-center gap-3 p-3 rounded-lg border border-gray-200 dark:border-gray-700 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
-                        :class="{ 'border-blue-500 dark:border-blue-400 bg-blue-50 dark:bg-blue-900/20': durationMode === 'indefinite' }"
-                    >
-                        <input type="radio" x-model="durationMode" value="indefinite" class="w-4 h-4 text-blue-600">
-                        <span class="text-sm text-gray-700 dark:text-gray-300">Indefinido</span>
                     </label>
                 </div>
 
@@ -870,6 +895,147 @@
             </div>
         </div>
     </template>
+
+    <!-- Mazmorra Modal -->
+    <template x-if="showMazmorraModal">
+        <div class="fixed inset-0 z-50 flex items-center justify-center p-4" @keydown.escape.window="closeMazmorraModal()">
+            <div class="absolute inset-0 bg-black/60" @click="closeMazmorraModal()"></div>
+            <div class="relative bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-2xl max-h-[85vh] overflow-hidden flex flex-col">
+                <!-- Header -->
+                <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+                    <h3 class="text-lg font-bold text-gray-900 dark:text-white">Mazmorra del Hábitat</h3>
+                    <button @click="closeMazmorraModal()" class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400" aria-label="Cerrar modal de mazmorra">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                    </button>
+                </div>
+
+                <!-- Content -->
+                <div class="flex-1 overflow-y-auto p-6">
+                    <!-- Loading -->
+                    <div x-show="mazmorraLoading" x-cloak role="status" class="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
+                        <svg class="w-4 h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                        Cargando mazmorra...
+                    </div>
+
+                    <!-- Error -->
+                    <div x-show="mazmorraError" x-cloak role="alert" class="text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg px-3 py-2">
+                        <span x-text="mazmorraError"></span>
+                        <button @click="loadMazmorra()" class="ml-2 underline font-medium">Reintentar</button>
+                    </div>
+
+                    <!-- Empty: sin pisos -->
+                    <template x-if="!mazmorraLoading && !mazmorraError && (!pisos || pisos.length === 0)">
+                        <div class="text-center py-10 text-gray-500 dark:text-gray-400">
+                            <p>Esta mazmorra aún no tiene pisos configurados.</p>
+                        </div>
+                    </template>
+
+                    <template x-if="!mazmorraLoading && !mazmorraError && pisos && pisos.length > 0">
+                        <div class="space-y-4">
+                            <p class="text-xs text-gray-500 dark:text-gray-400">
+                                En cada piso te enfrentas al pokémon más débil del hábitat. Si pierdes, tendrás
+                                que esperar 1 hora para repetir el piso; los pisos ganados no se pueden repetir.
+                            </p>
+
+                            <!-- Pisos -->
+                            <div class="space-y-2">
+                                <template x-for="piso in pisos" :key="'piso-'+piso.piso">
+                                    <div
+                                        class="flex items-center justify-between gap-3 p-3 rounded-xl border-2 transition-all"
+                                        :class="estadoPisoClass(piso)"
+                                    >
+                                        <div class="flex items-center gap-3 min-w-0">
+                                            <span class="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold shrink-0"
+                                                  :class="estadoPisoIconoClass(piso)">
+                                                <span x-text="piso.piso"></span>
+                                            </span>
+                                            <div class="min-w-0">
+                                                <p class="text-sm font-semibold text-gray-900 dark:text-white truncate" x-text="piso.nombre || 'Piso ' + piso.piso"></p>
+                                                <p class="text-xs text-gray-500 dark:text-gray-400" x-text="estadoPisoTexto(piso)"></p>
+                                            </div>
+                                        </div>
+                                        <template x-if="piso.estado === 'disponible'">
+                                            <button @click="selectPiso(piso)"
+                                                    class="shrink-0 px-3 py-1.5 bg-blue-600 text-white rounded-lg text-xs font-bold hover:bg-blue-700 transition-colors"
+                                                    :disabled="mazmorraCombatiendo">
+                                                Combatir
+                                            </button>
+                                        </template>
+                                    </div>
+                                </template>
+                            </div>
+
+                            <!-- Acción: conectar equipo + formación para el piso seleccionado -->
+                            <template x-if="pisoSeleccionado">
+                                <div class="border-t border-gray-200 dark:border-gray-700 pt-4">
+                                    <p class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">Equipo y formación</p>
+                                    <div class="space-y-2 mb-3">
+                                        <template x-if="availableTeams.length === 0">
+                                            <p class="text-sm text-gray-400 dark:text-gray-500 text-center py-2">No tienes equipos disponibles</p>
+                                        </template>
+                                        <template x-for="team in availableTeams" :key="team.id">
+                                            <button type="button" @click="selectMazmorraTeam(team.id, team.name)"
+                                                    :class="mazmorraTeamId === team.id
+                                                        ? 'border-blue-500 dark:border-blue-400 bg-blue-50 dark:bg-blue-900/20'
+                                                        : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'"
+                                                    class="w-full p-3 rounded-lg border-2 text-left transition-all flex items-center justify-between">
+                                                <span class="text-sm font-medium text-gray-900 dark:text-white" x-text="team.name"></span>
+                                                <template x-if="mazmorraTeamId === team.id">
+                                                    <svg class="w-5 h-5 text-blue-600 dark:text-blue-400" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+                                                </template>
+                                            </button>
+                                        </template>
+                                    </div>
+
+                                    <!-- Formación (hasta 5 miembros) -->
+                                    <div x-show="mazmorraTeamId" x-cloak class="space-y-3 mb-4">
+                                        <p class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Formación</p>
+                                        <template x-for="miembro in (mazmorraTeamMembers || [])" :key="miembro.id">
+                                            <div class="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700 rounded-lg">
+                                                <div class="flex items-center gap-3">
+                                                    <img :src="'/images/iconos_webp/' + miembro.reclutado.pokemon_id + '.webp'" loading="lazy" decoding="async" :alt="miembro.reclutado.nombre" class="w-12 h-12 object-contain" onerror="this.style.display='none'">
+                                                    <div>
+                                                        <p class="text-sm font-medium text-gray-900 dark:text-white" x-text="miembro.reclutado.nombre || miembro.reclutado?.pokemon?.name"></p>
+                                                        <p class="text-xs text-gray-500 dark:text-gray-400" x-text="'Posición ' + miembro.slot"></p>
+                                                    </div>
+                                                </div>
+                                                <button
+                                                    @click="toggleFormacionSlot(miembro.slot)"
+                                                    :class="mazmorraFormacion[miembro.slot] === 'vanguardia'
+                                                        ? 'bg-blue-600 text-white border-blue-600'
+                                                        : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600'"
+                                                    class="px-3 py-1.5 rounded-lg text-xs font-bold border transition-colors shrink-0"
+                                                    x-text="(mazmorraFormacion[miembro.slot] === 'vanguardia' ? '🛡️ Vanguardia' : '⚔️ Retaguardia')"
+                                                ></button>
+                                            </div>
+                                        </template>
+                                        <template x-if="!mazmorraTeamMembers || mazmorraTeamMembers.length === 0">
+                                            <p class="text-sm text-gray-400 dark:text-gray-500 text-center py-3">Selecciona un equipo primero</p>
+                                        </template>
+                                    </div>
+
+                                    <!-- Error de combate -->
+                                    <div x-show="mazmorraCombatError" x-cloak role="alert" class="text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg px-3 py-2 mb-3">
+                                        <span x-text="mazmorraCombatError"></span>
+                                    </div>
+
+                                    <button @click="confirmarPiso()"
+                                            :disabled="!mazmorraTeamId || mazmorraCombatiendo"
+                                            class="w-full px-4 py-2.5 bg-red-600 text-white rounded-lg text-sm font-bold hover:bg-red-700 transition-colors disabled:bg-gray-300 dark:disabled:bg-gray-700 disabled:text-gray-500 dark:disabled:text-gray-500 disabled:cursor-not-allowed">
+                                        <span x-show="!mazmorraCombatiendo">¡Combatir en el piso <span x-text="pisoSeleccionado ? pisoSeleccionado.piso : ''"></span>!</span>
+                                        <span x-show="mazmorraCombatiendo" x-cloak class="inline-flex items-center gap-2">
+                                            <svg class="w-4 h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                                            Iniciando...
+                                        </span>
+                                    </button>
+                                </div>
+                            </template>
+                        </div>
+                    </template>
+                </div>
+            </div>
+        </div>
+    </template>
 </div>
 
 @push('scripts')
@@ -1024,6 +1190,133 @@ function habitatShow() {
                 window.location.href = data.redirect || '/combate?battle_id=' + data.battle_id;
             } catch (e) {
                 alert('Error al iniciar combate: ' + e.message);
+            }
+        },
+
+        // ─── Mazmorra ─────────────────────────────────────────────────────
+        showMazmorraModal: false,
+        mazmorraLoading: false,
+        mazmorraError: '',
+        pisos: null,
+        pisoSeleccionado: null,
+        mazmorraTeamId: null,
+        mazmorraTeamName: '',
+        mazmorraFormacion: {},
+        mazmorraCombatiendo: false,
+        mazmorraCombatError: '',
+
+        get mazmorraTeamMembers() {
+            if (!this.mazmorraTeamId || !this.teams) return [];
+            const team = this.teams.find(t => t.id === this.mazmorraTeamId);
+            if (!team || !team.members) return [];
+            return team.members.sort((a, b) => a.slot - b.slot).filter(m => m.reclutado && m.reclutado.pokemon);
+        },
+
+        async openMazmorraModal() {
+            this.showMazmorraModal = true;
+            this.pisoSeleccionado = null;
+            this.mazmorraTeamId = null;
+            this.mazmorraFormacion = {};
+            this.mazmorraCombatError = '';
+            await this.loadMazmorra();
+        },
+
+        closeMazmorraModal() {
+            this.showMazmorraModal = false;
+            this.pisoSeleccionado = null;
+            this.mazmorraCombatError = '';
+        },
+
+        async loadMazmorra() {
+            this.mazmorraLoading = true;
+            this.mazmorraError = '';
+            try {
+                const response = await fetch('/api/habitats/{{ $habitat['id'] }}/mazmorra', {
+                    headers: { 'Accept': 'application/json' },
+                });
+                if (!response.ok) throw new Error('Error al cargar la mazmorra');
+                const data = await response.json();
+                this.pisos = Array.isArray(data) ? data : (data.pisos || []);
+            } catch (e) {
+                console.error('Error loading mazmorra:', e);
+                this.mazmorraError = 'No se pudo cargar la mazmorra. Inténtalo de nuevo.';
+            } finally {
+                this.mazmorraLoading = false;
+            }
+        },
+
+        estadoPisoClass(piso) {
+            if (piso.estado === 'ganado') return 'border-green-300 dark:border-green-700 bg-green-50 dark:bg-green-900/20';
+            if (piso.estado === 'cooldown') return 'border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-900/20 opacity-70';
+            return 'border-gray-200 dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-600';
+        },
+
+        estadoPisoIconoClass(piso) {
+            if (piso.estado === 'ganado') return 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400';
+            if (piso.estado === 'cooldown') return 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400';
+            return 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400';
+        },
+
+        estadoPisoTexto(piso) {
+            if (piso.estado === 'ganado') return '✔ Piso superado';
+            if (piso.estado === 'cooldown') {
+                const hasta = piso.cooldown_hasta;
+                if (hasta) return 'Cooldown hasta ' + new Date(hasta).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+                return 'Cooldown activo (1 h)';
+            }
+            return 'Disponible — enfréntate al pokémon más débil del hábitat';
+        },
+
+        selectPiso(piso) {
+            if (piso.estado !== 'disponible') return;
+            this.pisoSeleccionado = piso;
+            this.mazmorraTeamId = null;
+            this.mazmorraFormacion = {};
+            this.mazmorraCombatError = '';
+        },
+
+        selectMazmorraTeam(id, name) {
+            this.mazmorraTeamId = id;
+            this.mazmorraTeamName = name;
+            this.mazmorraFormacion = {};
+            const team = this.teams.find(t => t.id === id);
+            if (team && team.members) {
+                team.members.forEach(m => {
+                    this.mazmorraFormacion[m.slot] = 'vanguardia';
+                });
+            }
+        },
+
+        async confirmarPiso() {
+            if (!this.pisoSeleccionado || !this.mazmorraTeamId || this.mazmorraCombatiendo) return;
+            this.mazmorraCombatiendo = true;
+            this.mazmorraCombatError = '';
+            try {
+                const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || '';
+                const response = await fetch('/api/habitats/{{ $habitat['id'] }}/mazmorra/' + this.pisoSeleccionado.piso + '/combatir', {
+                    method: 'POST',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': csrfToken,
+                    },
+                    body: JSON.stringify({
+                        team_id: this.mazmorraTeamId,
+                        formacion: this.mazmorraFormacion,
+                    }),
+                });
+                if (!response.ok) {
+                    const err = await response.json().catch(() => ({}));
+                    this.mazmorraCombatError = err.message || 'Error al iniciar combate';
+                    return;
+                }
+                const data = await response.json();
+                this.showMazmorraModal = false;
+                window.location.href = data.redirect || '/combate?battle_id=' + data.battle_id;
+            } catch (e) {
+                this.mazmorraCombatError = 'Error al iniciar combate: ' + e.message;
+            } finally {
+                this.mazmorraCombatiendo = false;
             }
         },
 
@@ -1254,6 +1547,11 @@ function habitatShow() {
                     habitat_id: {{ $habitat['id'] }},
                     level: this.selectedLevel,
                 });
+                if (this.durationMode === 'hours') {
+                    params.set('duracion_horas', String(this.durationHours));
+                } else if (this.durationMode === 'return_time') {
+                    params.set('return_time', this.returnTime);
+                }
                 const response = await fetch('/exploraciones/preview?' + params.toString(), {
                     headers: {
                         'Accept': 'application/json',
@@ -1329,8 +1627,6 @@ function habitatShow() {
                 data.duracion_horas = this.durationHours;
             } else if (this.durationMode === 'return_time') {
                 data.return_time = this.returnTime;
-            } else {
-                data.indefinido = true;
             }
 
             // POST to individual exploration API

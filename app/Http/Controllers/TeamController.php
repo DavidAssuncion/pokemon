@@ -62,13 +62,7 @@ class TeamController extends Controller
     public function destroy(Request $request, Team $team): RedirectResponse|JsonResponse
     {
         if ($team->isExploring()) {
-            $error = 'No se puede borrar un equipo con exploraciones activas';
-
-            if ($request->wantsJson()) {
-                return response()->json(['error' => $error], 422);
-            }
-
-            return redirect()->back()->with('error', $error);
+            return $this->responderError($request, 'No se puede borrar un equipo con exploraciones activas');
         }
 
         $this->teamRepository->eliminar($team->id);
@@ -86,7 +80,8 @@ class TeamController extends Controller
             'team_id' => 'required|exists:teams,id',
             // El reclutado debe ser del usuario autenticado (anti-IDOR).
             'reclutado_id' => ['required', Rule::exists('reclutados', 'id')->where('user_id', Auth::id())],
-            'slot' => 'required|integer|min:1|max:3',
+            // Equipos de hasta 5 para mazmorras (antes 3).
+            'slot' => 'required|integer|min:1|max:5',
             'behavior' => 'required|in:VANGUARDIA,COMBATIENTE,RECOLECTOR,RASTREADOR',
         ]);
 
@@ -95,37 +90,19 @@ class TeamController extends Controller
         $team = Team::findOrFail($data['team_id']);
 
         if ($team->isExploring()) {
-            $error = 'No se puede modificar un equipo con exploraciones activas';
-
-            if ($request->wantsJson()) {
-                return response()->json(['error' => $error], 422);
-            }
-
-            return redirect()->back()->with('error', $error);
+            return $this->responderError($request, 'No se puede modificar un equipo con exploraciones activas');
         }
 
         // ensure slot not taken
         $exists = TeamMember::where('team_id', $data['team_id'])->where('slot', $data['slot'])->exists();
         if ($exists) {
-            $error = 'Slot ya ocupado';
-
-            if ($request->wantsJson()) {
-                return response()->json(['error' => $error], 422);
-            }
-
-            return redirect()->back()->with('error', $error);
+            return $this->responderError($request, 'Slot ya ocupado');
         }
 
         // ensure recultado not already in a team
         $already = TeamMember::where('pokemon_id', $data['reclutado_id'])->exists();
         if ($already) {
-            $error = 'Pokémon ya está en un equipo';
-
-            if ($request->wantsJson()) {
-                return response()->json(['error' => $error], 422);
-            }
-
-            return redirect()->back()->with('error', $error);
+            return $this->responderError($request, 'Pokémon ya está en un equipo');
         }
 
         $member = TeamMember::create([
@@ -162,13 +139,7 @@ class TeamController extends Controller
         abort_unless($member->team?->user_id === Auth::id(), 404);
 
         if ($member->team?->isExploring()) {
-            $error = 'No se puede modificar un equipo con exploraciones activas';
-
-            if ($request->wantsJson()) {
-                return response()->json(['error' => $error], 422);
-            }
-
-            return redirect()->back()->with('error', $error);
+            return $this->responderError($request, 'No se puede modificar un equipo con exploraciones activas');
         }
 
         $member->delete();
@@ -216,13 +187,7 @@ class TeamController extends Controller
         abort_unless($member->team?->user_id === Auth::id(), 404);
 
         if ($member->team?->isExploring()) {
-            $error = 'No se puede modificar un equipo con exploraciones activas';
-
-            if ($request->wantsJson()) {
-                return response()->json(['error' => $error], 422);
-            }
-
-            return redirect()->back()->with('error', $error);
+            return $this->responderError($request, 'No se puede modificar un equipo con exploraciones activas');
         }
 
         $data = $request->validate([
@@ -241,5 +206,17 @@ class TeamController extends Controller
         }
 
         return redirect()->back();
+    }
+
+    /**
+     * Respuesta de error compartida: JSON 422 para API, flash 'error' + back para web.
+     */
+    private function responderError(Request $request, string $error): RedirectResponse|JsonResponse
+    {
+        if ($request->wantsJson()) {
+            return response()->json(['error' => $error], 422);
+        }
+
+        return redirect()->back()->with('error', $error);
     }
 }

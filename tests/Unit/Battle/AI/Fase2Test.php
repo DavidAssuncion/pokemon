@@ -16,6 +16,7 @@ use Src\Battle\Domain\AI\SelectorAccionIA;
 use Src\Battle\Domain\AI\SimuladorAccionIA;
 use Src\Battle\Domain\Chain\CadenaDanio;
 use Src\Battle\Domain\Combatiente;
+use Src\Battle\Domain\Enums\Bando;
 use Src\Battle\Domain\Enums\CategoriaMovimiento;
 use Src\Battle\Domain\EquipoBatalla;
 use Src\Battle\Domain\MovimientoBatalla;
@@ -168,10 +169,10 @@ class Fase2Test extends TestCase
         $battle = $this->batallaCon([$aliado], [$enemigo]);
         $actorQueActuo = $this->combatiente(id: 'a2', posicion: Posicion::RETAGUARDIA);
 
-        $respuestas = $respuestaRival->generarRespuestas($battle, $actorQueActuo, 'team1');
+        $respuestas = $respuestaRival->generarRespuestas($battle, $actorQueActuo, Bando::UNO);
 
-        $this->assertNotEmpty($respuestas);
-        $this->assertLessThanOrEqual(3, count($respuestas));
+        $this->assertFalse($respuestas->isEmpty());
+        $this->assertLessThanOrEqual(3, $respuestas->count());
     }
 
     public function test_respuesta_rival_vacia_si_no_hay_enemigos(): void
@@ -183,9 +184,9 @@ class Fase2Test extends TestCase
         $battle = $this->batallaCon([$aliado], []);
         $actorQueActuo = $this->combatiente(id: 'a2', posicion: Posicion::RETAGUARDIA);
 
-        $respuestas = $respuestaRival->generarRespuestas($battle, $actorQueActuo, 'team1');
+        $respuestas = $respuestaRival->generarRespuestas($battle, $actorQueActuo, Bando::UNO);
 
-        $this->assertSame([], $respuestas);
+        $this->assertTrue($respuestas->isEmpty());
     }
 
     // ─── Lookahead ────────────────────────────────────────
@@ -345,7 +346,6 @@ class Fase2Test extends TestCase
             move: $movimiento instanceof MovimientoBatalla
                 ? $movimiento
                 : new MovimientoBatalla('Placaje', 40, \Src\Shared\Tipos\TipoPokemon::NORMAL, CategoriaMovimiento::FISICO),
-            fromPosition: $atacante->posicion(),
             defenderTeamHasVanguard: false,
             weather: \Src\Battle\Domain\Enums\TipoClima::NONE,
         );

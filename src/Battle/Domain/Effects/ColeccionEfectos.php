@@ -22,12 +22,25 @@ class ColeccionEfectos
         return $this->effects;
     }
 
+    /**
+     * Efectos marcados como únicos, en orden de registro.
+     *
+     * Equivalencia exacta con el filtrado previo (array_filter + array_values):
+     * mismo orden y mismo reindexado (append secuencial).
+     *
+     * @return InterfazEfecto[]
+     */
     public function unicos(): array
     {
-        return array_values(array_filter(
-            $this->effects,
-            fn (InterfazEfecto $e) => $e->esUnico()
-        ));
+        $resultado = [];
+
+        foreach ($this->effects as $e) {
+            if ($e->esUnico()) {
+                $resultado[] = $e;
+            }
+        }
+
+        return $resultado;
     }
 
     public function find(string $clave): ?InterfazEfecto

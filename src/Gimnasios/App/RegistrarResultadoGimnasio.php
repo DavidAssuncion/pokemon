@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Src\Gimnasios\App;
 
+use Src\Gimnasios\Domain\DataTransferObjects\ResultadoGimnasio;
 use Src\Gimnasios\Domain\Repositories\GymProgressRepositoryInterface;
 
 /**
@@ -17,9 +18,6 @@ final class RegistrarResultadoGimnasio
     ) {
     }
 
-    /**
-     * @return array{avance: bool, completado: bool, medalla: string|null}
-     */
     public function registrar(
         string $gymId,
         int $etapaCompletada,
@@ -27,9 +25,9 @@ final class RegistrarResultadoGimnasio
         bool $won,
         int $authUserId,
         ?string $nombreMedalla = null,
-    ): array {
+    ): ResultadoGimnasio {
         if (! $won || $userId !== $authUserId) {
-            return ['avance' => false, 'completado' => false, 'medalla' => null];
+            return new ResultadoGimnasio(avance: false, completado: false, medalla: null);
         }
 
         $this->repositorio->registrarVictoria($userId, $gymId, $etapaCompletada);
@@ -37,6 +35,6 @@ final class RegistrarResultadoGimnasio
         $completado = $etapaCompletada + 1 >= 5;
         $medalla = $completado ? $nombreMedalla : null;
 
-        return ['avance' => true, 'completado' => $completado, 'medalla' => $medalla];
+        return new ResultadoGimnasio(avance: true, completado: $completado, medalla: $medalla);
     }
 }

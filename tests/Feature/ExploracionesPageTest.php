@@ -8,7 +8,6 @@ use App\Models\ExploracionActiva;
 use App\Models\Habitat;
 use App\Models\Pokemon;
 use App\Models\Province;
-use App\Models\Team;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -38,13 +37,12 @@ class ExploracionesPageTest extends TestCase
     {
         $province = Province::create(['name' => 'Kanto']);
         $habitat = Habitat::create(['name' => 'Bosque', 'province_id' => $province->id]);
-        $team = Team::create(['name' => 'Equipo Test', 'user_id' => auth()->id()]);
+        $reclutado = $this->crearReclutado();
 
         return ExploracionActiva::create(array_merge([
-            'user_id' => auth()->id(),
-            'equipo_id' => $team->id,
-            'habitat_id' => $habitat->id,
             'user_id' => $this->usuario->id,
+            'reclutado_id' => $reclutado->id,
+            'habitat_id' => $habitat->id,
             'nivel' => 1,
             'duracion_horas' => 4,
             'hora_limite' => null,
@@ -54,6 +52,29 @@ class ExploracionesPageTest extends TestCase
             'llegada_destino' => null,
             'regreso' => null,
         ], $atributos));
+    }
+
+    /**
+     * Crea un reclutado individual ("equipo" de la expedición tras RF-B/RFC).
+     * El nombre 'Equipo Test' preserva las aserciones históricas que leen el
+     * campo equipo de las tarjetas de expedición.
+     */
+    private function crearReclutado(): \App\Models\Reclutado
+    {
+        $pokemon = Pokemon::firstOrCreate(['id' => 9001], [
+            'name' => 'recluta-9001',
+            'species_id' => 1,
+            'capture_rate' => 45,
+            'base_experience' => 64,
+            'height' => 7,
+            'weight' => 69,
+            'evolution_chain_id' => 51,
+        ]);
+
+        return \App\Models\Reclutado::firstOrCreate(
+            ['pokemon_id' => $pokemon->id, 'user_id' => $this->usuario->id],
+            ['nombre' => 'Equipo Test', 'exp' => ['total' => 0], 'es_shiny' => false, 'obj_equipados' => [], 'movimientos' => []],
+        );
     }
 
     /**
@@ -289,10 +310,10 @@ class ExploracionesPageTest extends TestCase
         // debe representar HOY 12:50 en Madrid (UTC+2 en verano → 10:50Z).
         $province = Province::create(['name' => 'Kanto']);
         $habitat = Habitat::create(['name' => 'Bosque', 'province_id' => $province->id]);
-        $team = Team::create(['name' => 'Equipo Test', 'user_id' => $this->usuario->id]);
+        $reclutado = $this->crearReclutado();
 
         $this->post('/exploraciones', [
-            'team_id' => $team->id,
+            'reclutado_id' => $reclutado->id,
             'habitat_id' => $habitat->id,
             'level' => 1,
             'return_time' => '12:50',

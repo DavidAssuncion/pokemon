@@ -9,6 +9,7 @@ use Src\Battle\Domain\AI\SelectorAccionIA;
 use Src\Battle\Domain\Chain\CadenaDanio;
 use Src\Battle\Domain\Enums\TipoClima;
 use Src\Battle\Domain\Observer\SujetoBatalla;
+use Src\Battle\Domain\ValueObjects\BattleLog;
 use Src\Battle\Presentation\DTOAccionBatalla;
 
 class AgregadoBatalla
@@ -19,8 +20,7 @@ class AgregadoBatalla
 
     private SujetoBatalla $subject;
 
-    /** @var string[] */
-    private array $log = [];
+    private BattleLog $log;
 
     private ?DTOAccionBatalla $pendingAction = null;
 
@@ -39,6 +39,7 @@ class AgregadoBatalla
         $this->turnManager = new GestorTurnos($team1, $team2);
         $this->damageChain = new CadenaDanio();
         $this->subject = new SujetoBatalla();
+        $this->log = BattleLog::vacia();
     }
 
     public function __clone(): void
@@ -67,10 +68,7 @@ class AgregadoBatalla
         return $this->subject;
     }
 
-    /**
-     * @return string[]
-     */
-    public function log(): array
+    public function log(): BattleLog
     {
         return $this->log;
     }
@@ -114,12 +112,12 @@ class AgregadoBatalla
 
     public function agregarLog(string $entry): void
     {
-        $this->log[] = $entry;
+        $this->log = $this->log->agregar($entry);
     }
 
     public function limpiarLog(): void
     {
-        $this->log = [];
+        $this->log = $this->log->limpiar();
     }
 
     /**
@@ -165,11 +163,7 @@ class AgregadoBatalla
             $dañoClima = $this->getCalculadorClima()->calcular($c, $this->weather);
             if ($dañoClima > 0) {
                 $c->setHpActual(max(0, $c->hpActual() - $dañoClima));
-                $climaLabel = match ($this->weather) {
-                    TipoClima::GRANIZO => 'granizo',
-                    TipoClima::TORMENTA_ARENA => 'tormenta de arena',
-                    default => 'clima',
-                };
+                $climaLabel = $this->weather->label();
                 $this->agregarLog("{$c->nombre()} sufre {$dañoClima} de daño por {$climaLabel}");
                 if (! $c->estaVivo()) {
                     $this->agregarLog("¡{$c->nombre()} se ha debilitado por {$climaLabel}!");
@@ -178,7 +172,7 @@ class AgregadoBatalla
         }
     }
 
-    public function ejecutarBatalla(): array
+    public function ejecutarBatalla(): BattleLog
     {
         $this->agregarLog('¡Comienza la batalla!');
 
@@ -230,7 +224,6 @@ class AgregadoBatalla
             attacker: $actor,
             defender: $objetivo,
             move: $movimiento,
-            fromPosition: $actor->posicion(),
             defenderTeamHasVanguard: $defenderTeamHasVanguard,
             weather: $this->weather,
         );

@@ -15,8 +15,8 @@ use Src\Battle\Domain\Posicion;
 use Src\CombateEntrenadores\App\MapeadorPokemonBatalla;
 use Src\CombateEntrenadores\Domain\GeneradorMovimientosTipo;
 use Src\Gimnasios\App\GeneradorPokemonGimnasio;
-use Src\Gimnasios\Domain\Collections\IntCollection;
 use Src\Gimnasios\Domain\DataTransferObjects\EquipoEtapaGimnasio;
+use Src\Shared\Collections\IntCollection;
 use Tests\TestCase;
 
 class GeneradorPokemonGimnasioTest extends TestCase

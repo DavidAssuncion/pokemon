@@ -8,10 +8,11 @@ use App\Enums\StatEnum;
 use App\Models\ExploracionActiva;
 use App\Models\Habitat;
 use App\Models\Pokemon;
-use Carbon\Carbon;
 use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Collection as BaseCollection;
+use Src\Exploraciones\Domain\CalculadorFinExploracion;
+use Src\Exploraciones\Domain\CalculadorVueltaExploracion;
 
 /**
  * Métodos de transformación y presentación de exploraciones para la vista index.
@@ -271,30 +272,16 @@ final class PresentadorExploraciones
      */
     public function minLvlDelHabitat(?Habitat $habitat, int $nivel): ?int
     {
-        $minLvl = $habitat?->getAttribute('min_lvl_'.$nivel);
-
-        return $minLvl !== null ? (int) $minLvl : null;
+        return $habitat?->minLvlParaNivel($nivel);
     }
 
     public function finExploracion(ExploracionActiva $exp, CarbonInterface $inicio): ?CarbonInterface
     {
-        if ($exp->hora_limite !== null) {
-            return Carbon::today()->setTimeFromTimeString($exp->hora_limite);
-        }
-
-        if ($exp->duracion_horas !== null) {
-            return $inicio->copy()->addHours($exp->duracion_horas);
-        }
-
-        return null;
+        return CalculadorFinExploracion::calcular($exp->hora_limite, $exp->duracion_horas, $inicio);
     }
 
     public function inicioVuelta(CarbonInterface $inicio, ?CarbonInterface $fin): ?CarbonInterface
     {
-        if ($fin === null) {
-            return null;
-        }
-
-        return $fin->copy()->subMinutes(intdiv((int) abs($fin->diffInMinutes($inicio)), 4));
+        return CalculadorVueltaExploracion::inicioVuelta($inicio, $fin);
     }
 }

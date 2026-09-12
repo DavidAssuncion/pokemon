@@ -13,6 +13,7 @@ use App\Models\Reclutado;
 use App\Models\Team;
 use App\Models\TeamMember;
 use App\Models\User;
+use Database\Seeders\GymSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
@@ -20,6 +21,12 @@ use Tests\TestCase;
 class GimnasioApiTest extends TestCase
 {
     use RefreshDatabase;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->seed(GymSeeder::class);
+    }
 
     #[Test]
     public function test_index_lista_los_18_gimnasios_con_estado(): void

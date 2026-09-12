@@ -11,6 +11,7 @@ use Src\Battle\Domain\DatosPokemonBatalla;
 use Src\Battle\Domain\EquipoBatalla;
 use Src\Battle\Domain\Posicion;
 use Src\CombateEntrenadores\App\MapeadorPokemonBatalla;
+use Src\Exploraciones\Domain\ValueObjects\ResultadoBatallaExploracion;
 use Src\Shared\Domain\NivelHelper;
 
 /**
@@ -33,14 +34,14 @@ class CombateExploracion
      * @param  array{hp: float, barrera_fisica: float, barrera_especial: float}|null  $estadoInicial
      *        Estado inicial del explorador (hp/barreras) para poder reanudar
      *        combates secuenciales (emboscada). null = comienza al 100 %.
-     * @return array{victoria: bool, hp_final: float, barrera_fisica_final: float, barrera_especial_final: float, log: array, hp_max: float, barrera_fisica_max: float, barrera_especial_max: float}
      */
     public function combatir(
         Reclutado $reclutado,
         Pokemon $salvaje,
         int $nivelRival,
         ?array $estadoInicial = null,
-    ): array {
+        float $modificadorDanio = 1.0,
+    ): ResultadoBatallaExploracion {
         $reclutado->loadMissing('pokemon.stats', 'pokemon.types');
 
         $nivelPokemon = NivelHelper::nivelDesdeExperiencia($reclutado->exp->total());
@@ -65,7 +66,7 @@ class CombateExploracion
             nivel: $nivelRival,
         );
 
-        return $this->combatirDatos($explorador, $salvajeDatos, $estadoInicial);
+        return $this->combatirDatos($explorador, $salvajeDatos, $estadoInicial, $modificadorDanio);
     }
 
     /**
@@ -73,22 +74,29 @@ class CombateExploracion
      * Testeable en unit tests sin BD.
      *
      * @param  array{hp: float, barrera_fisica: float, barrera_especial: float}|null  $estadoInicial
-     * @return array{victoria: bool, hp_final: float, barrera_fisica_final: float, barrera_especial_final: float, log: array, hp_max: float, barrera_fisica_max: float, barrera_especial_max: float}
      */
     public function combatirDatos(
         DatosPokemonBatalla $explorador,
         DatosPokemonBatalla $salvaje,
         ?array $estadoInicial = null,
-    ): array {
+        float $modificadorDanio = 1.0,
+    ): ResultadoBatallaExploracion {
         $team1 = EquipoBatalla::fromData([$explorador], 'Explorador');
         $team2 = EquipoBatalla::fromData([$salvaje], 'Salvaje');
 
         // Aplicar estado inicial si se proporciona (para combates secuenciales)
-        $combatiente = $team1->combatants()[0];
+        $combatiente = $team1->combatientesCollection()->primero();
+        if ($combatiente === null) {
+            throw new \LogicException('El combate 1v1 requiere un explorador en el equipo.');
+        }
         if ($estadoInicial !== null) {
             $combatiente->setHpActual((float) ($estadoInicial['hp'] ?? $combatiente->hpActual()));
             $combatiente->setDefensaHpActual((float) ($estadoInicial['barrera_fisica'] ?? $combatiente->defensaHpActual()));
             $combatiente->setDefensaEspHpActual((float) ($estadoInicial['barrera_especial'] ?? $combatiente->defensaEspHpActual()));
+        }
+
+        if ($modificadorDanio !== 1.0) {
+            $combatiente->setBonificadorDanio($modificadorDanio);
         }
 
         $batalla = new AgregadoBatalla($team1, $team2);
@@ -99,15 +107,15 @@ class CombateExploracion
         $barreraFisicaMax = $combatiente->pokemon()->battleStats()->defenseHp;
         $barreraEspecialMax = $combatiente->pokemon()->battleStats()->spDefenseHp;
 
-        return [
-            'victoria' => $team2->todosDebilitados(),
-            'hp_final' => $combatiente->hpActual(),
-            'barrera_fisica_final' => $combatiente->defensaHpActual(),
-            'barrera_especial_final' => $combatiente->defensaEspHpActual(),
-            'hp_max' => $hpMax,
-            'barrera_fisica_max' => $barreraFisicaMax,
-            'barrera_especial_max' => $barreraEspecialMax,
-            'log' => $log,
-        ];
+        return new ResultadoBatallaExploracion(
+            victoria: $team2->todosDebilitados(),
+            hpFinal: $combatiente->hpActual(),
+            barreraFisicaFinal: $combatiente->defensaHpActual(),
+            barreraEspecialFinal: $combatiente->defensaEspHpActual(),
+            hpMax: $hpMax,
+            barreraFisicaMax: $barreraFisicaMax,
+            barreraEspecialMax: $barreraEspecialMax,
+            log: $log,
+        );
     }
 }

@@ -55,8 +55,8 @@ class GestorTurnosTest extends TestCase
     public function test_start_new_round_acumula_velocidad_y_resetea_veces(): void
     {
         $gestor = $this->gestorConVarios();
-        $a1 = $gestor->allCombatants()[0];
-        $a2 = $gestor->allCombatants()[1];
+        $a1 = $gestor->allCombatants()->all()[0];
+        $a2 = $gestor->allCombatants()->all()[1];
 
         // Simular que ya había actuado
         $a1->setVecesActuadoEstaRonda(3);
@@ -128,7 +128,7 @@ class GestorTurnosTest extends TestCase
 
         // Matar a todos los de team2 (T2)
         foreach ($gestor->allCombatants() as $c) {
-            if ($c === $gestor->allCombatants()[0] || $c === $gestor->allCombatants()[1]) {
+            if ($c === $gestor->allCombatants()->all()[0] || $c === $gestor->allCombatants()->all()[1]) {
                 continue; // team1
             }
             $c->setHpActual(0);
@@ -154,12 +154,12 @@ class GestorTurnosTest extends TestCase
         $this->assertCount(3, $gestor->combatientesVivos());
 
         // Matar a a2
-        $a2 = $gestor->allCombatants()[1];
+        $a2 = $gestor->allCombatants()->all()[1];
         $a2->setHpActual(0);
 
         $vivos = $gestor->combatientesVivos();
         $this->assertCount(2, $vivos);
-        $ids = array_map(fn ($c) => $c->id(), $vivos);
+        $ids = array_map(fn ($c) => $c->id(), $vivos->all());
         $this->assertNotContains('a2', $ids);
     }
 
@@ -188,7 +188,7 @@ class GestorTurnosTest extends TestCase
     public function test_consume_action_reduce_por_1_cuando_menor_velocidad_es_0(): void
     {
         $gestor = $this->gestorConVarios();
-        $a1 = $gestor->allCombatants()[0];
+        $a1 = $gestor->allCombatants()->all()[0];
         $a1->setVelocidadAcumulada(50);
 
         // Matar a todos (incluido a1) → menorVelocidadEntreVivos = 0 → reduce por 1

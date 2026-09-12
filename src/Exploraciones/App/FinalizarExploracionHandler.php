@@ -7,12 +7,12 @@ namespace Src\Exploraciones\App;
 use App\Jobs\ActualizarPokedexJob;
 use App\Models\ExploracionActiva;
 use App\Models\Pokemon;
-use Carbon\Carbon;
-use Carbon\CarbonInterface;
+use App\Support\CadenasEvolutivas;
 use Closure;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Collection as BaseCollection;
 use LogicException;
+use Src\Exploraciones\Domain\CalculadorFinExploracion;
 use Src\Exploraciones\Domain\CalculadorRecompensas;
 use Src\Exploraciones\Domain\EvaluadorExploracion;
 use Src\Exploraciones\Domain\Recompensas\PokemonDerrotado;
@@ -21,7 +21,10 @@ use Src\Exploraciones\Domain\Recompensas\RecompensaEv;
 use Src\Exploraciones\Domain\Recompensas\RecompensaFamilia;
 use Src\Exploraciones\Domain\Recompensas\RecompensaTipo;
 use Src\Exploraciones\Domain\Recompensas\ResultadoRecompensas;
-use Src\Exploraciones\Domain\RolExploracion;
+use Src\Exploraciones\Domain\ValueObjects\ColeccionEventosExploracion;
+use Src\Exploraciones\Domain\ValueObjects\EventoExploracion;
+use Src\Exploraciones\Presentation\DTOIncidentesExploracion;
+use Src\Exploraciones\Presentation\DTOObjetoPerdido;
 use Src\Exploraciones\Presentation\TransformadorResultadoExploracion;
 use Src\Shared\Bus\Command;
 use Src\Shared\Bus\CommandHandler;
@@ -36,8 +39,8 @@ use Src\Shared\Domain\ProbabilidadCaptura;
  * resolucion = victoria); avistados = todo evento con pokemon_id(s).
  * RF-08/RF-09: categoría final + multiplicador; retirada conserva lo obtenido.
  *
- * @todo Excepción temporal a la regla de dependencias: src/ importa
- *       App\Models/App\Jobs/Illuminate (deuda WIP). Ticket v2.
+ * La capa App/ usa Eloquent (App\Models) e Illuminate directamente por
+ * convención del proyecto (la regla DDD solo exige Domain puro).
  */
 final class FinalizarExploracionHandler implements CommandHandler
 {
@@ -75,16 +78,19 @@ final class FinalizarExploracionHandler implements CommandHandler
         $eventos = $exploracion->eventos ?? collect();
         /** @var list<array<string, mixed>> $bitacora */
         $bitacora = $eventos->get('bitacora', []);
+        $bitacoraEventos = ColeccionEventosExploracion::desdeArray($bitacora);
 
-        $idsDerrotados = $this->idsDerrotados($bitacora);
+        $idsDerrotados = $this->idsDerrotados($bitacoraEventos);
         $pokemons = $this->cargarPokemonsDerrotados($idsDerrotados);
-        $miembrosPorCadena = $this->cargarMiembrosDeCadenas($pokemons);
+        $miembrosPorCadena = CadenasEvolutivas::miembrosDe(
+            $pokemons->pluck('evolution_chain_id')
+        );
         $derrotados = NormalizadorPokemonDerrotado::normalizar(
             $this->expandirDerrotados($pokemons, $idsDerrotados),
             $miembrosPorCadena,
         );
 
-        $categoria = EvaluadorExploracion::categoriaFinal($bitacora);
+        $categoria = EvaluadorExploracion::categoriaFinalDeEventos($bitacoraEventos);
         $multiplicador = EvaluadorExploracion::multiplicador($categoria);
 
         $this->repartirRecompensas(
@@ -137,15 +143,19 @@ final class FinalizarExploracionHandler implements CommandHandler
             $multiplicador,
         );
 
-        // Hallazgos (D8): caramelos de familia/EV/tipo de los eventos hallazgo.
-        /** @var BaseCollection<int, array<string, mixed>> $hallazgos */
-        $hallazgos = collect($bitacora)
-            ->filter(fn (array $evento): bool => ($evento['tipo'] ?? '') === 'hallazgo')
-            ->values();
-        $caramelosHallazgos = $this->calculador->calcularHallazgos(
+        // Hallazgos (D8): caramelos de familia/EV/tipo de los eventos hallazgo,
+        // más el hallazgo equivalente de cada emboscada evitada. Rango
+        // Recolector: cada hallazgo rinde ×(1 + bonus) caramelos.
+        $bitacoraEventos = ColeccionEventosExploracion::desdeArray($bitacora);
+        $hallazgos = new ColeccionEventosExploracion([
+            ...$bitacoraEventos->filter(fn (EventoExploracion $evento): bool => $evento->esHallazgo())->toList(),
+            ...$this->hallazgosEmboscadasEvitadasDe($bitacoraEventos),
+        ]);
+        $caramelosHallazgos = $this->calculador->calcularHallazgosDeEventos(
             $hallazgos,
-            $this->chainPorPokemon($hallazgos, $pokemons),
+            $this->chainPorPokemonDeEventos($hallazgos, $pokemons),
             $this->multiplicadorCaramelosEquipo($exploracion, $multiplicador),
+            $this->bonusCaramelosRecoleccion($exploracion),
         );
         $recompensas = $recompensas->sumarHallazgos(
             $caramelosHallazgos['caramelosFamilia'],
@@ -158,11 +168,14 @@ final class FinalizarExploracionHandler implements CommandHandler
         $objetosPerdidos = $this->objetosPerdidos($bitacora, $eventos, $recompensas);
         if ($objetosPerdidos !== []) {
             $recompensas = $this->restarPerdidas($recompensas, $objetosPerdidos);
-            $eventos->put('objetos_perdidos', $objetosPerdidos);
+            $eventos->put('objetos_perdidos', array_map(
+                fn (DTOObjetoPerdido $objeto): array => $objeto->toArray(),
+                $objetosPerdidos,
+            ));
         }
 
         $this->persistir->persistir($recompensas, $exploracion->reclutado, $usuario);
-        $this->despacharAvistados($this->idsAvistados($bitacora), $exploracion->user_id);
+        $this->despacharAvistados($this->idsAvistadosDeEventos($bitacoraEventos), $exploracion->user_id);
 
         $tiempoPerdido = (int) $eventos->get('tiempo_perdido', 0);
         $this->registrarResultado(
@@ -185,18 +198,17 @@ final class FinalizarExploracionHandler implements CommandHandler
      * IDs de pokémon derrotados: solo eventos con resolución victoria (o sin
      * resolución, retrocompat RF-07), expandidos por pokemon_id/pokemon_ids.
      *
-     * @param  list<array<string, mixed>>  $bitacora
      * @return list<int>
      */
-    private function idsDerrotados(array $bitacora): array
+    private function idsDerrotados(ColeccionEventosExploracion $bitacora): array
     {
         $ids = [];
         foreach ($bitacora as $evento) {
-            if (! EvaluadorExploracion::esVictoria($evento)) {
+            if (! $evento->esVictoria()) {
                 continue;
             }
 
-            foreach (EvaluadorExploracion::pokemonIdsDelEvento($evento) as $id) {
+            foreach ($evento->pokemonIds()->all() as $id) {
                 $ids[] = $id;
             }
         }
@@ -208,18 +220,17 @@ final class FinalizarExploracionHandler implements CommandHandler
      * IDs de pokémon avistados: todo evento con pokemon_id(s) (encuentro,
      * emboscada, huida y legacy 'pokemon') → ActualizarPokedexJob AVISTADO.
      *
-     * @param  list<array<string, mixed>>  $bitacora
      * @return list<int>
      */
-    private function idsAvistados(array $bitacora): array
+    private function idsAvistadosDeEventos(ColeccionEventosExploracion $bitacora): array
     {
         $ids = [];
         foreach ($bitacora as $evento) {
-            if (! EvaluadorExploracion::esAvistamiento($evento)) {
+            if (! $evento->esAvistamiento()) {
                 continue;
             }
 
-            foreach (EvaluadorExploracion::pokemonIdsDelEvento($evento) as $id) {
+            foreach ($evento->pokemonIds()->all() as $id) {
                 $ids[] = $id;
             }
         }
@@ -246,34 +257,6 @@ final class FinalizarExploracionHandler implements CommandHandler
     }
 
     /**
-     * Mapa de TODOS los miembros de las cadenas implicadas, keyed por
-     * evolution_chain_id (columna). Sustituye a la antigua relación de la tabla
-     * evolution_chains (eliminada): incluye también los miembros NO derrotados
-     * para preservar fase y base de familia.
-     *
-     * @param  Collection<int, Pokemon>  $derrotados  keyBy id
-     * @return array<int, Collection<int, Pokemon>>  keyed por evolution_chain_id
-     */
-    private function cargarMiembrosDeCadenas(Collection $derrotados): array
-    {
-        $chainIds = $derrotados
-            ->pluck('evolution_chain_id')
-            ->filter()
-            ->map(fn (mixed $id): int => (int) $id)
-            ->unique()
-            ->values();
-
-        if ($chainIds->isEmpty()) {
-            return [];
-        }
-
-        $query = Pokemon::query();
-        $query->getQuery()->whereIn('evolution_chain_id', $chainIds);
-
-        return $query->get(['id', 'name', 'species_id', 'evolution_chain_id'])->groupBy('evolution_chain_id')->all();
-    }
-
-    /**
      * Expande los ids de la bitácora a una entrada por derrota, descartando
      * ids sin pokémon cargado (no deberían ocurrir: la bitácora viene del pool).
      *
@@ -293,21 +276,18 @@ final class FinalizarExploracionHandler implements CommandHandler
      * Mapa pokemon_id → evolution_chain_id para resolver los caramelos de
      * familia de los hallazgos (pueden referenciar pokémon NO derrotados).
      *
-     * @param  BaseCollection<int, array<string, mixed>>  $hallazgos
      * @param  Collection<int, Pokemon>  $pokemons  keyBy id
      * @return array<int, int>
      */
-    private function chainPorPokemon(BaseCollection $hallazgos, Collection $pokemons): array
+    private function chainPorPokemonDeEventos(ColeccionEventosExploracion $hallazgos, Collection $pokemons): array
     {
         $resultado = [];
         foreach ($pokemons as $pokemon) {
             $resultado[$pokemon->id] = $pokemon->evolution_chain_id;
         }
 
-        $faltan = $hallazgos
-            ->pluck('pokemon_id')
-            ->map(fn (mixed $id): int => (int) $id)
-            ->filter(fn (int $id): bool => $id > 0 && ! array_key_exists($id, $resultado))
+        $faltan = collect($hallazgos->pluck(fn (EventoExploracion $evento): ?int => $evento->pokemonId))
+            ->filter(fn (?int $id): bool => $id !== null && $id > 0 && ! array_key_exists($id, $resultado))
             ->unique()
             ->values();
 
@@ -324,23 +304,75 @@ final class FinalizarExploracionHandler implements CommandHandler
     }
 
     /**
+     * Cada emboscada evitada produce un hallazgo equivalente de 1 caramelo de
+     * familia del primer pokémon implicado. Además cuenta como victoria en
+     * idsDerrotados (esVictoria): doble premio intencional según spec.
+     *
+     * @return list<EventoExploracion>
+     */
+    private function hallazgosEmboscadasEvitadasDe(ColeccionEventosExploracion $bitacora): array
+    {
+        $hallazgos = [];
+        foreach ($bitacora as $evento) {
+            if ($evento->esEmboscadaEvitada()) {
+                $ids = $evento->pokemonIds()->all();
+                if ($ids !== []) {
+                    $hallazgos[] = $this->hallazgoDeEmboscadaEvitada($ids[0]);
+                }
+            }
+        }
+
+        return $hallazgos;
+    }
+
+    /**
+     * Hallazgo equivalente de una emboscada evitada: 1 caramelo de familia del
+     * primer pokémon implicado (origen 'emboscada_evitada').
+     */
+    private function hallazgoDeEmboscadaEvitada(int $pokemonId): EventoExploracion
+    {
+        return EventoExploracion::desdeArray([
+            'tipo' => 'hallazgo',
+            'subtype' => 'caramelo_familia',
+            'pokemon_id' => $pokemonId,
+            'cantidad' => 1,
+            'origen' => 'emboscada_evitada',
+        ]);
+    }
+
+    /**
      * Multiplicador de caramelos de hallazgo: categoría × rol Recolector (+50 %)
-     * × sinergia (prospección/recolección segura, etc.). La exploración
-     * INDIVIDUAL (por reclutado) no tiene roles de equipo: se conserva la
-     * multiplicación por el rol del miembro si hubiera team histórico.
+     * × sinergia (prospección/recolección segura, etc.). RFC: el rol se lee del
+     * reclutado individual ($reclutado->rol(), columna behavior propia), ya no
+     * de team_members.behavior, por lo que aplica también sin equipo.
      */
     private function multiplicadorCaramelosEquipo(ExploracionActiva $exploracion, float $multiplicadorCategoria): float
     {
         $reclutado = $exploracion->reclutado;
-        if ($reclutado === null || $reclutado->teamMember === null) {
+        if ($reclutado === null) {
             return $multiplicadorCategoria;
         }
 
-        $multiplicador = $multiplicadorCategoria;
-        $rol = RolExploracion::tryFrom($reclutado->teamMember->behavior ?? '') ?? RolExploracion::COMBATIENTE;
-        $multiplicador *= $rol->multiplicadorCaramelosHallazgo();
+        return $multiplicadorCategoria * $reclutado->rol()->multiplicadorCaramelosHallazgo();
+    }
 
-        return $multiplicador;
+    /**
+     * Bonus de caramelos por recolección del rango Recolector del reclutado
+     * (0/1/2/3 según dificultad del hábitat). Sin reclutado/usuario → 0.
+     */
+    private function bonusCaramelosRecoleccion(ExploracionActiva $exploracion): int
+    {
+        $reclutado = $exploracion->reclutado;
+        $usuario = $exploracion->user;
+
+        if ($reclutado === null || $usuario === null) {
+            return 0;
+        }
+
+        $dificultad = $exploracion->habitat?->minLvlParaNivel($exploracion->nivel)
+            ?? EvaluadorExploracion::dificultad('normal', (int) ($exploracion->habitat?->peligro ?? 1));
+
+        return FabricaCapacidadesStats::desdeReclutado($reclutado, $usuario)->bonusCaramelosRecoleccion($dificultad);
     }
 
     /**
@@ -350,7 +382,7 @@ final class FinalizarExploracionHandler implements CommandHandler
     private function duracionReal(ExploracionActiva $exploracion, int $tiempoPerdido): int
     {
         $inicio = $exploracion->inicio_exploracion?->copy() ?? $exploracion->created_at?->copy() ?? now();
-        $fin = $this->finExploracion($exploracion, $inicio);
+        $fin = CalculadorFinExploracion::calcular($exploracion->hora_limite, $exploracion->duracion_horas, $inicio);
 
         if ($fin === null) {
             return 0;
@@ -363,9 +395,8 @@ final class FinalizarExploracionHandler implements CommandHandler
 
     /**
      * @param  list<array<string, mixed>>  $bitacora
-     * @return array{encuentros: int, victorias: int, huidas: int, emboscadas: int, contratiempos: int}
      */
-    private function incidentes(array $bitacora): array
+    private function incidentes(array $bitacora): DTOIncidentesExploracion
     {
         $encuentros = 0;
         $victorias = 0;
@@ -391,13 +422,13 @@ final class FinalizarExploracionHandler implements CommandHandler
             }
         }
 
-        return [
-            'encuentros' => $encuentros,
-            'victorias' => $victorias,
-            'huidas' => $huidas,
-            'emboscadas' => $emboscadas,
-            'contratiempos' => $contratiempos,
-        ];
+        return new DTOIncidentesExploracion(
+            encuentros: $encuentros,
+            victorias: $victorias,
+            huidas: $huidas,
+            emboscadas: $emboscadas,
+            contratiempos: $contratiempos,
+        );
     }
 
     /**
@@ -437,7 +468,6 @@ final class FinalizarExploracionHandler implements CommandHandler
      * @param  array<int, Collection<int, Pokemon>>  $miembrosPorCadena
      * @param  list<int>  $idsDerrotados
      * @param  BaseCollection<string, mixed>  $eventos
-     * @param  array{encuentros: int, victorias: int, huidas: int, emboscadas: int, contratiempos: int}  $incidentes
      */
     private function registrarResultado(
         ExploracionActiva $exploracion,
@@ -448,7 +478,7 @@ final class FinalizarExploracionHandler implements CommandHandler
         string $categoria,
         int $durationReal,
         int $tiempoPerdido,
-        array $incidentes,
+        DTOIncidentesExploracion $incidentes,
         BaseCollection $eventos,
     ): void {
         $eventos->put('derrotados', $idsDerrotados);
@@ -459,7 +489,7 @@ final class FinalizarExploracionHandler implements CommandHandler
             categoria: $categoria,
             durationReal: $durationReal,
             tiempoPerdido: $tiempoPerdido,
-            incidentes: $incidentes,
+            incidentes: $incidentes->toArray(),
         ));
 
         $exploracion->eventos = $eventos;
@@ -493,7 +523,7 @@ final class FinalizarExploracionHandler implements CommandHandler
      *
      * @param  list<array<string, mixed>>  $bitacora
      * @param  BaseCollection<string, mixed>  $eventos
-     * @return list<array{tipo: string, id: int|string, label: string|null, cantidad_perdida: int}>
+     * @return list<DTOObjetoPerdido>
      */
     private function objetosPerdidos(array $bitacora, BaseCollection $eventos, ResultadoRecompensas $recompensas): array
     {
@@ -508,12 +538,12 @@ final class FinalizarExploracionHandler implements CommandHandler
             if ($perdida <= 0) {
                 continue;
             }
-            $perdidas[] = [
-                'tipo' => 'familia',
-                'id' => $recompensa->evolutionChainId,
-                'label' => null,
-                'cantidad_perdida' => $perdida,
-            ];
+            $perdidas[] = new DTOObjetoPerdido(
+                tipo: 'familia',
+                id: $recompensa->evolutionChainId,
+                label: null,
+                cantidad_perdida: $perdida,
+            );
         }
 
         foreach ($recompensas->caramelosEv as $recompensa) {
@@ -521,12 +551,12 @@ final class FinalizarExploracionHandler implements CommandHandler
             if ($perdida <= 0) {
                 continue;
             }
-            $perdidas[] = [
-                'tipo' => 'ev',
-                'id' => $recompensa->stat,
-                'label' => null,
-                'cantidad_perdida' => $perdida,
-            ];
+            $perdidas[] = new DTOObjetoPerdido(
+                tipo: 'ev',
+                id: $recompensa->stat,
+                label: null,
+                cantidad_perdida: $perdida,
+            );
         }
 
         foreach ($recompensas->caramelosTipo as $recompensa) {
@@ -534,12 +564,12 @@ final class FinalizarExploracionHandler implements CommandHandler
             if ($perdida <= 0) {
                 continue;
             }
-            $perdidas[] = [
-                'tipo' => 'tipo',
-                'id' => $recompensa->slug(),
-                'label' => $recompensa->tipo,
-                'cantidad_perdida' => $perdida,
-            ];
+            $perdidas[] = new DTOObjetoPerdido(
+                tipo: 'tipo',
+                id: $recompensa->slug(),
+                label: $recompensa->tipo,
+                cantidad_perdida: $perdida,
+            );
         }
 
         foreach ($recompensas->capturas as $recompensa) {
@@ -547,12 +577,12 @@ final class FinalizarExploracionHandler implements CommandHandler
             if ($perdida <= 0) {
                 continue;
             }
-            $perdidas[] = [
-                'tipo' => 'captura',
-                'id' => $recompensa->pokemonId,
-                'label' => null,
-                'cantidad_perdida' => $perdida,
-            ];
+            $perdidas[] = new DTOObjetoPerdido(
+                tipo: 'captura',
+                id: $recompensa->pokemonId,
+                label: null,
+                cantidad_perdida: $perdida,
+            );
         }
 
         return $perdidas;
@@ -562,13 +592,13 @@ final class FinalizarExploracionHandler implements CommandHandler
      * Resta las pérdidas de las recompensas finales, devolviendo una nueva
      * instancia de ResultadoRecompensas con cantidades reducidas.
      *
-     * @param  list<array{tipo: string, id: int|string, label: string|null, cantidad_perdida: int}>  $perdidas
+     * @param  list<DTOObjetoPerdido>  $perdidas
      */
     private function restarPerdidas(ResultadoRecompensas $recompensas, array $perdidas): ResultadoRecompensas
     {
         $mapaPerdidas = [];
         foreach ($perdidas as $p) {
-            $mapaPerdidas[$p['tipo']][(string) $p['id']] = $p['cantidad_perdida'];
+            $mapaPerdidas[$p->tipo][(string) $p->id] = $p->cantidad_perdida;
         }
 
         $reducir = function (int $cantidad, int|string $clave, string $tipo) use ($mapaPerdidas): int {
@@ -606,18 +636,5 @@ final class FinalizarExploracionHandler implements CommandHandler
             expPorMiembro: $recompensas->expPorMiembro,
             expTipoPorMiembro: $recompensas->expTipoPorMiembro,
         );
-    }
-
-    private function finExploracion(ExploracionActiva $exploracion, CarbonInterface $inicio): ?CarbonInterface
-    {
-        if ($exploracion->hora_limite !== null) {
-            return Carbon::today()->setTimeFromTimeString($exploracion->hora_limite);
-        }
-
-        if ($exploracion->duracion_horas !== null) {
-            return $inicio->copy()->addHours($exploracion->duracion_horas);
-        }
-
-        return null;
     }
 }

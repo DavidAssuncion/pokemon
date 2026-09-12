@@ -41,7 +41,6 @@ class CalculadoraDanioIA
             attacker: $atacante,
             defender: $defensor,
             move: $movimiento,
-            fromPosition: $atacante->posicion(),
             defenderTeamHasVanguard: $this->obtenerDefensorTieneVanguardia($atacante, $defensor, $batalla),
             weather: $batalla->weather(),
         );

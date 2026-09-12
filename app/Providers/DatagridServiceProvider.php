@@ -9,6 +9,8 @@ use App\Datagrid\DatagridRegistry;
 use App\Datagrid\RelationFilter;
 use App\Enums\StatEnum;
 use App\Enums\TipoEnum;
+use App\Models\Gym;
+use App\Models\GymStage;
 use App\Models\Habitat;
 use App\Models\Pokedex;
 use App\Models\Pokemon;
@@ -159,7 +161,45 @@ final class DatagridServiceProvider extends ServiceProvider
             visible: ['id', 'name'],
         ));
 
+        $registry->register('gym', new DatagridDefinition(
+            model: Gym::class,
+            searchable: ['slug', 'medalla'],
+            filterable: ['id' => 'id', 'slug' => 'slug', 'medalla' => 'medalla', 'tipo' => 'tipo', 'nivel_minimo' => 'nivel_minimo'],
+            sortable: ['id' => 'id', 'slug' => 'slug', 'medalla' => 'medalla', 'tipo' => 'tipo', 'nivel_minimo' => 'nivel_minimo'],
+            with: ['stages'],
+            visible: ['id', 'slug', 'medalla', 'tipo', 'nivel_minimo'],
+            detail: function (Model $model): array {
+                $gym = $this->requireGym($model);
+                $gym->loadMissing('stages');
+
+                return [
+                    'id' => $gym->id,
+                    'slug' => $gym->slug,
+                    'medalla' => $gym->medalla,
+                    'tipo' => $gym->tipo,
+                    'nivel_minimo' => $gym->nivel_minimo,
+                    'etapas' => $gym->stages->mapWithKeys(
+                        fn (GymStage $stage): array => [
+                            $stage->etapa => [
+                                'vanguardia' => $stage->vanguardia,
+                                'retaguardia' => $stage->retaguardia,
+                            ],
+                        ],
+                    )->all(),
+                ];
+            },
+        ));
+
         return $registry;
+    }
+
+    private function requireGym(Model $model): Gym
+    {
+        if (! $model instanceof Gym) {
+            throw new LogicException(sprintf('Datagrid gym detail resolver require a Gym model, got %s.', $model::class));
+        }
+
+        return $model;
     }
 
     private function requirePokemon(Model $model): Pokemon

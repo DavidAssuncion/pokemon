@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Src\CombateEntrenadores\Domain;
 
+use Src\Pokemon\Domain\Stats\DatosStats;
+
 /**
  * Clasifica un pokémon como defensivo (vanguardia) u ofensivo (retaguardia)
  * según la comparación de sus stats ofensivos vs defensivos.
@@ -13,13 +15,10 @@ namespace Src\CombateEntrenadores\Domain;
  */
 class ClasificadorPosicion
 {
-    /**
-     * @param  array{atk: int, spAtk: int, def: int, spDef: int}  $stats
-     */
-    public function esDefensivo(array $stats): bool
+    public function esDefensivo(DatosStats $stats): bool
     {
-        $ofensivo = $stats['atk'] + $stats['spAtk'];
-        $defensivo = $stats['def'] + $stats['spDef'];
+        $ofensivo = $stats->atk + $stats->spAtk;
+        $defensivo = $stats->def + $stats->spDef;
 
         return $defensivo >= $ofensivo;
     }

@@ -43,7 +43,6 @@ class SimuladorAccionIA
             attacker: $atacante,
             defender: $defensor,
             move: $accion->move,
-            fromPosition: $atacante->posicion(),
             defenderTeamHasVanguard: $accion->defenderTeamHasVanguard,
             weather: $accion->weather,
         );
@@ -73,12 +72,12 @@ class SimuladorAccionIA
 
     private function encontrarCombatiente(AgregadoBatalla $batalla, string $id): ?Combatiente
     {
-        foreach ($batalla->team1->combatientesVivos() as $c) {
+        foreach ($batalla->team1->combatientesCollection()->vivos() as $c) {
             if ($c->id() === $id) {
                 return $c;
             }
         }
-        foreach ($batalla->team2->combatientesVivos() as $c) {
+        foreach ($batalla->team2->combatientesCollection()->vivos() as $c) {
             if ($c->id() === $id) {
                 return $c;
             }

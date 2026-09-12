@@ -312,7 +312,7 @@ class ExploracionesIndividualEndpointsTest extends TestCase
     }
 
     #[Test]
-    public function test_store_individual_rechaza_si_equipo_del_reclutado_esta_explorando(): void
+    public function test_store_individual_permite_si_otro_miembro_del_equipo_esta_explorando(): void
     {
         $habitat = $this->crearHabitat(1);
         $pokemon = $this->crearPokemonConStats(1, ['hp' => 100, 'atk' => 80, 'def' => 70, 'spAtk' => 90, 'spDef' => 60, 'speed' => 50], TipoEnum::NORMAL);
@@ -333,13 +333,22 @@ class ExploracionesIndividualEndpointsTest extends TestCase
             'indefinido' => false,
         ]);
 
+        // RF-B: el envío individual NO debe bloquearse porque otro miembro del
+        // equipo esté explorando; solo bloquea el propio reclutado.
         $response = $this->postJson('/api/exploraciones/store-individual', [
             'reclutado_id' => $reclutado->id,
             'habitat_id' => $habitat->id,
             'level' => 1,
         ]);
 
-        $response->assertStatus(422)
-            ->assertJson(['message' => 'El equipo del reclutado está en una exploración activa.']);
+        $response->assertStatus(201)
+            ->assertJson(['ok' => true]);
+
+        $this->assertDatabaseHas('exploraciones_activas', [
+            'user_id' => $this->usuario->id,
+            'reclutado_id' => $reclutado->id,
+            'habitat_id' => $habitat->id,
+            'nivel' => 1,
+        ]);
     }
 }

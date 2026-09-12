@@ -9,7 +9,10 @@ use Src\Battle\Domain\AgregadoBatalla;
 use Src\Battle\Domain\AI\ValueObjects\EvaluacionAccion;
 use Src\Battle\Domain\AI\ValueObjects\ResultadoDecision;
 use Src\Battle\Domain\Chain\CadenaDanio;
+use Src\Battle\Domain\Collections\AccionesPosiblesCollection;
+use Src\Battle\Domain\Collections\CombatientesCollection;
 use Src\Battle\Domain\Combatiente;
+use Src\Battle\Domain\Enums\Bando;
 use Src\Battle\Domain\Enums\CategoriaMovimiento;
 use Src\Battle\Domain\MovimientoBatalla;
 use Src\Shared\Tipos\TipoPokemon;
@@ -64,12 +67,9 @@ class SelectorAccionIA
 
         $acciones = $this->generarAccionesCandidatas($contexto);
 
-        $evaluaciones = array_map(
+        $evaluaciones = $acciones->map(
             fn (AccionBatalla $accion) => $this->evaluadorAccion->evaluar($contexto, $amenazas, $accion),
-            $acciones,
         );
-
-        $evaluaciones = array_values($evaluaciones);
 
         $mejor = $this->seleccionarSegunDificultad($evaluaciones, $dificultad);
 
@@ -93,7 +93,7 @@ class SelectorAccionIA
             ? $battle->team2
             : $battle->team1;
 
-        if (count($equipoEnemigo->combatientesVivos()) === 0) {
+        if ($equipoEnemigo->combatientesCollection()->vivos()->isEmpty()) {
             return null;
         }
 
@@ -108,7 +108,7 @@ class SelectorAccionIA
     public function elegirMejorMovimiento(Combatiente $attacker, Combatiente $defender): ?MovimientoBatalla
     {
         if ($attacker->pokemon()->moves()->isEmpty()) {
-            return new MovimientoBatalla('Placaje', 40, TipoPokemon::NORMAL, CategoriaMovimiento::FISICO);
+            return self::movimientoBase();
         }
 
         $best = null;
@@ -153,12 +153,11 @@ class SelectorAccionIA
         $equipoActor = $esTeam1 ? $battle->team1 : $battle->team2;
         $equipoEnemigo = $esTeam1 ? $battle->team2 : $battle->team1;
 
-        $aliados = array_values(array_filter(
-            $equipoActor->combatientesVivos(),
+        $aliados = $equipoActor->combatientesCollection()->vivos()->filter(
             fn (Combatiente $c) => $c->id() !== $actor->id()
-        ));
+        );
 
-        $enemigos = array_values($equipoEnemigo->combatientesVivos());
+        $enemigos = $equipoEnemigo->combatientesCollection()->vivos();
 
         return new ContextoDecisionIA(
             battle: $battle,
@@ -168,7 +167,7 @@ class SelectorAccionIA
             enemigos: $enemigos,
             turno: 0,
             memoria: $this->memoria,
-            equipoActor: $esTeam1 ? 'team1' : 'team2',
+            equipoActor: $esTeam1 ? Bando::UNO : Bando::DOS,
         );
     }
 
@@ -178,12 +177,10 @@ class SelectorAccionIA
      * Genera acciones candidatas respetando la restricción de posición del juego:
      * - Vanguardia solo puede atacar vanguardia enemiga.
      * - Retaguardia puede atacar a cualquier enemigo vivo.
-     *
-     * @return AccionBatalla[]
      */
-    private function generarAccionesCandidatas(ContextoDecisionIA $contexto): array
+    private function generarAccionesCandidatas(ContextoDecisionIA $contexto): AccionesPosiblesCollection
     {
-        $acciones = [];
+        $acciones = new AccionesPosiblesCollection();
         $actor = $contexto->actor;
         $battle = $contexto->battle;
 
@@ -202,14 +199,13 @@ class SelectorAccionIA
             }
 
             foreach ($enemigosLegales as $enemigo) {
-                $acciones[] = new AccionBatalla(
+                $acciones->add(new AccionBatalla(
                     attacker: $actor,
                     defender: $enemigo,
                     move: $movimiento,
-                    fromPosition: $actor->posicion(),
                     defenderTeamHasVanguard: $defenderTeamHasVanguard,
                     weather: $battle->weather(),
-                );
+                ));
             }
         }
 
@@ -220,17 +216,13 @@ class SelectorAccionIA
      * Filtra enemigos según la restricción de posición:
      * - Actor en vanguardia → solo vanguardia enemiga.
      * - Actor en retaguardia → cualquier enemigo vivo.
-     *
-     * @param  Combatiente[]  $enemigos
-     * @return Combatiente[]
      */
-    private function filtrarEnemigosPorPosicion(array $enemigos, Combatiente $actor): array
+    private function filtrarEnemigosPorPosicion(CombatientesCollection $enemigos, Combatiente $actor): CombatientesCollection
     {
         if ($actor->estaEnVanguardia()) {
-            return array_values(array_filter(
-                $enemigos,
+            return $enemigos->filter(
                 fn (Combatiente $e) => $e->estaEnVanguardia()
-            ));
+            );
         }
 
         return $enemigos;
@@ -270,22 +262,29 @@ class SelectorAccionIA
 
     // ─── Fallback ──────────────────────────────────────────
 
+    /**
+     * Movimiento por defecto cuando el pokémon no tiene movimientos.
+     */
+    private static function movimientoBase(): MovimientoBatalla
+    {
+        return new MovimientoBatalla('Placaje', 40, TipoPokemon::NORMAL, CategoriaMovimiento::FISICO);
+    }
+
     private function accionFallback(ContextoDecisionIA $contexto): EvaluacionAccion
     {
         $actor = $contexto->actor;
-        $enemigo = $contexto->enemigos[0] ?? null;
+        $enemigo = $contexto->enemigos->first();
 
         if ($enemigo === null) {
             throw new \LogicException('No hay enemigos vivos para la IA');
         }
 
-        $movimiento = new MovimientoBatalla('Placaje', 40, TipoPokemon::NORMAL, CategoriaMovimiento::FISICO);
+        $movimiento = self::movimientoBase();
 
         $accion = new AccionBatalla(
             attacker: $actor,
             defender: $enemigo,
             move: $movimiento,
-            fromPosition: $actor->posicion(),
             defenderTeamHasVanguard: false,
             weather: $contexto->battle->weather(),
         );

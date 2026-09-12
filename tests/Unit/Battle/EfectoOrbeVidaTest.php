@@ -11,7 +11,6 @@ use Src\Battle\Domain\Effects\EfectoOrbeVida;
 use Src\Battle\Domain\Enums\CategoriaMovimiento;
 use Src\Battle\Domain\Enums\TipoClima;
 use Src\Battle\Domain\MovimientoBatalla;
-use Src\Battle\Domain\Posicion;
 use Src\Shared\Tipos\TipoPokemon;
 
 /**
@@ -50,7 +49,6 @@ class EfectoOrbeVidaTest extends TestCase
             attacker: $atacante,
             defender: $defensor,
             move: new MovimientoBatalla('Golpe', 50, TipoPokemon::NORMAL, CategoriaMovimiento::FISICO),
-            fromPosition: Posicion::VANGUARDIA,
             defenderTeamHasVanguard: false,
             weather: TipoClima::NONE,
         );
@@ -87,8 +85,8 @@ class EfectoOrbeVidaTest extends TestCase
 
         // Recoil = 10% del HP máximo
         $this->assertSame($hpInicial - max(1, $maxHp * 0.10), $atacante->hpActual());
-        $this->assertNotEmpty($battle->log());
-        $this->assertStringContainsString('Orbe Vida', implode(' ', $battle->log()));
+        $this->assertTrue($battle->log()->tieneContenido());
+        $this->assertStringContainsString('Orbe Vida', implode(' ', $battle->log()->entries()));
     }
 
     public function test_orbe_vida_no_activa_recoil_si_atacante_muerto(): void
@@ -115,7 +113,7 @@ class EfectoOrbeVidaTest extends TestCase
         $atacante->dispararDanioInfligido($defensor, 50.0, $battle);
 
         $this->assertSame(0.0, $atacante->hpActual());
-        $this->assertEmpty($battle->log());
+        $this->assertFalse($battle->log()->tieneContenido());
     }
 
     public function test_orbe_vida_no_activa_recoil_si_dano_cero(): void
@@ -145,6 +143,6 @@ class EfectoOrbeVidaTest extends TestCase
 
         $this->assertSame($hpInicial, $atacante->hpActual());
         $this->assertSame($maxHp, $atacante->hpActual());
-        $this->assertEmpty($battle->log());
+        $this->assertFalse($battle->log()->tieneContenido());
     }
 }
