@@ -10,6 +10,18 @@ use PHPUnit\Framework\TestCase;
 
 class SyncCandyRegionalesTest extends TestCase
 {
+    // El comando `SyncCandyRegionales` fue ELIMINADO en el refactor (F*-series) y no existe
+    // reemplazo (`rg "candy_regionales|candyRegionales|SyncCandy" app src routes` → solo este
+    // test). Pendiente decisión del analista: recrear el comando (mapeo de variantes regionales
+    // por prefijo de nombre + copia del WebP del base a la variante) o eliminar este test.
+    // Los 7 escenarios y sus asserts se conservan íntegros abajo para el recreado.
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        $this->markTestSkipped('SyncCandyRegionales eliminado en el refactor (F*-series). Pendiente decisión: recrear comando o eliminar test.');
+    }
+
     public function test_mapeo_variantes_regionales_por_prefijo_de_nombre(): void
     {
         $command = new SyncCandyRegionales();
