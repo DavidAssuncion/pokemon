@@ -54,50 +54,31 @@ final class ClasificadorOfensivaDefensiva
 
         if ($numVan === 0) {
             // Todos RET → mover al de mayor defensiva (def + spDef + hp) a VAN
-            $idx = $this->indiceMayorDefensiva($statsPorSlot);
-            $posiciones[$idx] = Posicion::VANGUARDIA;
+            $posiciones[$this->indiceMayorValor(
+                $statsPorSlot,
+                static fn (DatosStats $stats): int => $stats->def + $stats->spDef + $stats->hp,
+            )] = Posicion::VANGUARDIA;
         } elseif ($numVan === $total) {
             // Todos VAN → mover al de mayor ofensiva (atk + speed) a RET
-            $idx = $this->indiceMayorOfensiva($statsPorSlot);
-            $posiciones[$idx] = Posicion::RETAGUARDIA;
+            $posiciones[$this->indiceMayorValor(
+                $statsPorSlot,
+                static fn (DatosStats $stats): int => $stats->atk + $stats->speed,
+            )] = Posicion::RETAGUARDIA;
         }
 
         return $posiciones;
     }
 
     /**
-     * @param  list<DatosStats>  $statsPorSlot
+     * Índice del primer slot con el mayor valor (determinista en empates).
+     *
+     * @param  non-empty-list<DatosStats>  $statsPorSlot
+     * @param  callable(DatosStats): int  $valor
      */
-    private function indiceMayorOfensiva(array $statsPorSlot): int
+    private function indiceMayorValor(array $statsPorSlot, callable $valor): int
     {
-        $mejorIdx = 0;
-        $mejorVal = 0;
-        foreach ($statsPorSlot as $i => $stats) {
-            $val = $stats->atk + $stats->speed;
-            if ($val > $mejorVal) {
-                $mejorVal = $val;
-                $mejorIdx = $i;
-            }
-        }
+        $valores = array_map($valor, $statsPorSlot);
 
-        return $mejorIdx;
-    }
-
-    /**
-     * @param  list<DatosStats>  $statsPorSlot
-     */
-    private function indiceMayorDefensiva(array $statsPorSlot): int
-    {
-        $mejorIdx = 0;
-        $mejorVal = 0;
-        foreach ($statsPorSlot as $i => $stats) {
-            $val = $stats->def + $stats->spDef + $stats->hp;
-            if ($val > $mejorVal) {
-                $mejorVal = $val;
-                $mejorIdx = $i;
-            }
-        }
-
-        return $mejorIdx;
+        return (int) array_search(max($valores), $valores, true);
     }
 }

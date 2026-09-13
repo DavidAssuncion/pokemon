@@ -97,11 +97,14 @@ class OtorgarRecompensasRutaTest extends TestCase
         $registrar = new RegistrarResultadoRuta(
             new OtorgarRecompensasRuta(new CalculadorRecompensas(), $persistir),
         );
+        // El rival existe en el catálogo: si la derrota llegara al otorgador,
+        // otorgaría recompensas (y el test fallaría).
+        $pokemon = $this->crearPokemonRival(50);
 
         $resultado = $registrar->registrar(
             userId: (int) $this->user->id,
             teamId: (int) $this->team->id,
-            speciesIdsRival: [50],
+            speciesIdsRival: [(int) $pokemon->id],
             won: false,
         );
 

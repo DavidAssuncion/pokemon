@@ -1,0 +1,11 @@
+{
+    "$schema": "vendor/infection/infection/resources/schema.json",
+    "source": {
+        "directories": [
+            "src/CombateRuta"
+        ]
+    },
+    "mutators": {
+        "@default": true
+    }
+}
