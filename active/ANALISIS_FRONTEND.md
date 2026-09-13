@@ -208,3 +208,138 @@ Prioridad: alta (contrato backend en paralelo)
 - `test_admin_view_edit_fields_are_present` línea 56-57: `vanguardia_species_id` / `retaguardia_species_id` → desaparecieron del parse de carga.
 - `test_admin_view_edit_fields_are_present` línea 58: `method: 'PATCH'` → ahora es `PUT`.
   Estos tests requieren actualización por QA/Backend (no tocar por orden vigente).
+
+---
+
+## Combate de Ruta 5v5 — escalado global a 5v5 + modo ruta por defecto (2026-09-13)
+
+Rol: Frontend (Blade + Alpine.js + Tailwind 4). Base: backend commiteado en `0195b04`
+(combate ruta 5v5, formación persistida, gimnasios escalados; suite 1058 PASS).
+Constraint: NO tocar `src/` ni `app/` de backend; solo vistas + Alpine + estilos.
+
+### Contratos verificados (fuente)
+
+- `GET /api/habitats/{habitat}/ruta/rivales?nivel=N` → `{rivales: [{id, nombre, posicion, species_id, nivel}]}`.
+  `nivel` clamped 1-3 (`max(1,min(3,$nivel))`). Pool vacío → `rivales: []`.
+- `POST /api/habitats/{habitat}/ruta/iniciar` → body `{team_id, formacion?, nivel?}`;
+  `formacion` es `sometimes|array`, `formacion.*` ∈ {vanguardia, retaguardia} → **`{}` aceptado**
+  (= usa formación persistida del backend). Respuesta `{battle_id, redirect}`.
+- `ViolacionReglaNegocio` → 422 `{message}` (renderable en `bootstrap/app.php`).
+  `IniciarCombateRuta` lanza `'El equipo de ruta debe tener exactamente 5 miembros.'` y
+  `'No hay Pokémon salvajes disponibles en esta ruta para tu nivel.'`.
+- `PATCH /teams/{team}/formacion` (`routes/player.php:43`) → body `{formacion: {slot: pos}}`;
+  respuesta `{team: {id, formacion}}`; 404 equipo ajeno; en exploración → 422 `{error}` vía
+  `TeamController::responderError`.
+- `$teams` de la vista hábitat (`ObtenerEquipos` → `TeamAggregate`) NO expone `formacion`
+  (solo id/name/members). `PlayerController::equipos()` tampoco → la vista equipos no puede
+  pre-poblar la formación persistida en carga inicial; se puebla tras el primer PATCH local.
+
+### Qué tocar
+
+1. `resources/views/habitats/show.blade.php`:
+   - `modo: 'pokemon'` (línea 1081) → `modo: 'ruta'` (default). Persistencia del estado:
+     la vuelta del combate recarga la página y el default sigue siendo 'ruta'.
+   - Botones izquierda: quitar enlace "Favoritos" (líneas 51-62); añadir botón "Combate de ruta"
+     (arriba, activo si `modo === 'ruta'`); añadir botón "Exploraciones" debajo de "Entrenadores"
+     (activo si `modo === 'pokemon'`); respetar `$bloqueadoConstruccion`.
+   - `toggleEntrenadores()` → toggle entre 'entrenadores' y 'ruta' (NO a 'pokemon');
+     nuevo `toggleExploraciones()` entre 'pokemon' y 'ruta'; nuevo `setModoRuta()`.
+   - Nuevo **Ruta Panel** (x-show `modo === 'ruta'`): nota obligatoria "Combate 5v5 contra
+     pokémon salvajes. Sin límite diario. Al ganar puedes capturar.", selector nivel 1-3
+     (`rutaNivel`), preview de 5 rivales (loading/error/empty/success; `isSighted(species_id)`),
+     aviso empty "No hay Pokémon salvajes disponibles...". CTA "Combate de Ruta"
+     (`openRutaFormacionPopup`) deshabilitado sin equipo o sin rivales.
+   - Panel Equipos: `x-show="modo === 'entrenadores' || modo === 'ruta'"`.
+   - Niveles Panel: `x-show="modo === 'pokemon' || modo === 'entrenadores'"` (oculto en ruta).
+   - Botón "Iniciar Exploración": `x-show="modo === 'pokemon'"` (oculto en ruta).
+   - Popup formación (661-715): `formacionContexto` ('entrenadores'|'ruta').
+     Entrenadores: inicializa todos 'vanguardia' (existente). Ruta: `formacion = {}` →
+     backend usa persistida; chip "⚙️ Automática" cuando slot sin elegir. Error 422 inline
+     (`rutaCombatError`) en el popup, sin redirigir (requisito).
+   - `confirmarCombate()` → branch: ruta → `confirmarCombateRuta()` (POST iniciar);
+     entrenadores → flujo existente.
+   - Team cards preview (línea 287): `@for($i=0;$i<3;$i++)` → 5 slots en `grid grid-cols-5`
+     (imágenes `w-full h-14` en vez de `w-24 h-24` para no desbordar).
+   - `selectTeam()`: `checkAndOpenModal()` solo si `modo === 'pokemon'` (evita re-abrir el
+     modal de exploración con favorito previamente seleccionado).
+   - `init()`: `cargarRivalesRuta()` al cargar (modo ruta por defecto).
+   - Estados Alpine nuevos: `rutaNivel`, `rutaRivales`, `rutaRivalesLoading`, `rutaRivalesError`,
+     `rutaCombatiendo`, `rutaCombatError`, `formacionContexto` + `cargarRivalesRuta()`,
+     `selectRutaNivel()`, `openRutaFormacionPopup()`, `confirmarCombateRuta()`.
+   - No crear archivos Blade nuevos (todo en secciones dentro de `show.blade.php`).
+
+2. `resources/views/equipos/index.blade.php`:
+   - Slots 3 → 5: `slot in [1,2,3]` (línea 342) y `addToTeam` emptySlot `[1,2,3]` (línea 1534).
+   - Badge INVÁLIDO `team.members.length < 3` (línea 310): regla de producto, SE MANTIENE.
+   - `composicionBadge` (línea 1427): solo para 3 miembros → null; SE MANTIENE (documentado).
+   - Editor de formación por tarjeta de equipo: toggle vanguardia/retaguardia por slot
+     (2 botones), estado `formacionDraft` (por teamId), `formacionDe(team, slot)` =
+     draft ?? `team.formacion?.[slot]` ?? 'vanguardia', botón "Guardar formación" → PATCH,
+     feedback inline (error/success); deshabilitado en exploración.
+   - Estado Alpine nuevo en `favoritosApp()`: `formacionDraft`, `formacionSavingTeamId`,
+     `formacionSaveError`, `formacionSaveSuccess` + `formacionDe()`, `setFormacionSlot()`,
+     `guardarFormacion()`.
+
+3. Partials de combate (`battle-field`, `turn-bar`, `moves-panel`, `_pokemon-card`): verificados
+   dinámicos (`@foreach` por posicion / turnQueue) — **sin cambios**; ya soportan 5v5.
+
+### Estados UI cubiertos
+
+- Rivales: loading (spinner), error (aviso), empty (pool vacío → aviso), success (grid 5).
+- Popup ruta: 422 inline (`rutaCombatError`), botón deshabilitado mientras `rutaCombatiendo`.
+- Equipos: formación sin cambios → guardar deshabilitado; exploración activa → editor disabled.
+- `bloqueadoConstruccion` → todos los botones de construcción (incluido ruta) disabled.
+
+### Riesgos / decisiones
+
+- Widget "⚙️ Automática" solo en contexto ruta; entrenadores conserva su comportamiento.
+- `isSighted(rival.species_id)` reutiliza el helper existente (misma lógica que niveles).
+- Widget toggle del popup: `toggleFormacionSlot()` desde undefined → 'vanguardia' (sin
+  ciclo automática↔vanguardia; decisión aceptada).
+- Nota: `docs/context.md` desactualizado (describe 3v3); NO se toca (constraint).
+
+### Verificación
+
+- `npm run build` (clases Tailwind nuevas: grid-cols-5, chips formación, etc.).
+- `php -l` / `php artisan view:cache` (Blade compila).
+- Tests: ampliar `FrontendHabitatModalTest` (ruta panel + nota + popup ruta) y
+  `EquiposViewTest` (5 slots + formation editor strings). Suite completa al final.
+
+## ✅ Verificación final (2026-09-13)
+
+- `php artisan view:cache` OK (plantillas compilan).
+- `FrontendHabitatModalTest` + `EquiposViewTest`: 9/9 pass (79 asserts) — incluye
+  `test_habitat_defaults_to_ruta_mode_with_ruta_panel`, `test_habitat_team_cards_render_five_slots`
+  y `test_equipos_renders_five_slots_and_formation_editor`.
+- Suite completa: **1061 passed, 7 skipped, 0 failed** (sin regresiones).
+- `vendor/bin/pint --dirty` OK (solo EOF en `EquiposViewTest`).
+- `npm run build` OK (Tailwind compilado, `combate-*.css` regenerado).
+- Pendiente manual en navegador: popup de ruta, editor de formación, chips 5v5.
+
+## 🧾 Trazabilidad aplicada (2026-09-13)
+
+1. `resources/views/habitats/show.blade.php`:
+   - Panel izquierdo: se elimina el enlace Favoritos; se añaden "Combate de ruta"
+     (activo por defecto, `modo: 'ruta'`, ring `bg-blue-600`) y "Exploraciones" (icono).
+   - Panel ruta 5v5 (nota obligatoria, badge, selector de nivel, aviso pool vacío,
+     CTA sin formación, preview rivales 5 columnas, no-pool).
+   - Popup de formación contextual (`formacionContexto` 'ruta'|'entrenadores'|'pokémon') con
+     widget "⚙️ Automática" cuando el slot usa la formación persistida; `confirmarCombateRuta()`
+     con error 422 inline (`rutaCombatError`) sin redirigir tras éxito.
+   - Tarjetas de equipo a 5 slots (`@for 0..5`, `grid grid-cols-5`).
+2. `resources/views/equipos/index.blade.php`:
+   - Slots 3 → 5 (`slot in [1,2,3,4,5]`) en grid y `addToTeam` (busca hueco 1..5).
+   - Editor de formación persistente por tarjeta: draft local `formacionDraft`
+     (draft > `team.formacion` > 'vanguardia'), toggle vanguardia/retaguardia por slot,
+     "Guardar formación" → `PATCH /teams/{team}/formacion` (contrato `{team:{id, formacion}}`),
+     feedback inline ok/error, deshabilitado en exploración activa.
+3. Tests nuevos en `FrontendHabitatModalTest` y `EquiposViewTest` (ver IA arriba).
+
+## Riesgos/notas abiertas
+
+- `PATCH /teams/{id}/formacion` puede devolver 422 sin `error` para equipos ajenos/inactivos
+  (RespuestaApi sin responderError) → la UI mostraría el mensaje genérico. El editor solo opera
+  sobre equipos propios desde `/equipos`, así que el caso realista no se dispara.
+- La formación guardada se refleja en el hábitat si el backend expone `team.formacion` en su API
+  de equipos/rivales; el primer PATCH cierra el `{formacion: {}}` pendiente.
+- `docs/context.md` sigue describiendo 3v3 (constraint: no se toca).

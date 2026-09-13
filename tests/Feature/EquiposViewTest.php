@@ -137,4 +137,30 @@ class EquiposViewTest extends TestCase
         $response->assertSee('Este Pokémon no tiene evolución.', false);
         $response->assertSee('No hay información de evolución disponible.', false);
     }
+
+    /**
+     * Equipos escala a 5 slots y expone el editor de formación persistente
+     * (toggle vanguardia/retaguardia + PATCH /teams/{team}/formacion).
+     */
+    public function test_equipos_renders_five_slots_and_formation_editor(): void
+    {
+        $response = $this->get('/equipos');
+
+        $response->assertOk();
+        // Grid de slots del equipo a 5
+        $response->assertSee('slot in [1,2,3,4,5]', false);
+        // addToTeam busca el primer slot vacío en 1..5
+        $response->assertSee('[1,2,3,4,5].find(s => !team.members.some(m => m.slot === s))', false);
+        // Editor de formación persistente
+        $response->assertSee('Formación de combate', false);
+        $response->assertSee('formacionDe(team, slot)', false);
+        $response->assertSee('setFormacionSlot(team, slot', false);
+        $response->assertSee('guardarFormacion(team)', false);
+        // Contrato del PATCH: /teams/{team}/formacion
+        $response->assertSee("'/teams/' + team.id + '/formacion'", false);
+        $response->assertSee("method: 'PATCH'", false);
+        // Feedback inline de guardado
+        $response->assertSee('formacionSaveError', false);
+        $response->assertSee('✓ Formación guardada', false);
+    }
 }

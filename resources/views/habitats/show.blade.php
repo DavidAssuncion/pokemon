@@ -48,18 +48,21 @@
                     $bloqueadoConstruccion = $exploracionesActivas && $exploracionesActivas->count() > 0;
                 @endphp
                 <div class="space-y-3">
-                    <!-- Favoritos (acceso rápido a la vista /equipos) -->
-                    <a
-                        href="/equipos"
-                        class="w-full px-4 py-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-sm font-medium text-gray-700 dark:text-gray-300 transition-colors flex items-center gap-3 hover:bg-yellow-50 dark:hover:bg-yellow-900/20 hover:border-yellow-300 dark:hover:border-yellow-700"
+                    <!-- Combate de Ruta (modo por defecto) -->
+                    <button
+                        @click="{{ $bloqueadoConstruccion ? '' : 'setModoRuta()' }}"
+                        {{ $bloqueadoConstruccion ? 'disabled' : '' }}
+                        @if($bloqueadoConstruccion) title="No disponible durante exploraciones activas" @endif
+                        class="{{ $constructionButtonClass }} {{ $bloqueadoConstruccion ? 'opacity-50 cursor-not-allowed' : '' }}"
+                        :class="modo === 'ruta' ? 'ring-2 ring-blue-400 border-blue-400 dark:border-blue-600 bg-blue-50 dark:bg-blue-900/20' : 'hover:bg-gray-50 dark:hover:bg-gray-700'"
                     >
                         <span class="w-8 shrink-0 flex justify-center">
-                            <svg class="w-6 h-6 text-yellow-500" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                                <path d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.196-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"/>
+                            <svg class="w-6 h-6 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
                             </svg>
                         </span>
-                        <span class="flex-1 text-sm text-left font-medium text-gray-700 dark:text-gray-300">Favoritos</span>
-                    </a>
+                        <span class="flex-1 text-sm text-left font-medium text-gray-700 dark:text-gray-300">Combate de ruta</span>
+                    </button>
                     <button
                         @click="{{ $bloqueadoConstruccion ? '' : "alert('Función próximamente')" }}"
                         {{ $bloqueadoConstruccion ? 'disabled' : '' }}
@@ -75,12 +78,27 @@
                         @click="{{ $bloqueadoConstruccion ? '' : "toggleEntrenadores()" }}"
                         {{ $bloqueadoConstruccion ? 'disabled' : '' }}
                         @if($bloqueadoConstruccion) title="No disponible durante exploraciones activas" @endif
-                        class="{{ $constructionButtonClass }} {{ $bloqueadoConstruccion ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-50 dark:hover:bg-gray-700' }}"
+                        class="{{ $constructionButtonClass }} {{ $bloqueadoConstruccion ? 'opacity-50 cursor-not-allowed' : '' }}"
+                        :class="modo === 'entrenadores' ? 'ring-2 ring-blue-400 border-blue-400 dark:border-blue-600 bg-blue-50 dark:bg-blue-900/20' : 'hover:bg-gray-50 dark:hover:bg-gray-700'"
                     >
                         <span class="w-8 shrink-0 flex justify-center">
                             <img src="/images/misc/trainer.webp" loading="lazy" decoding="async" class="w-8 h-8 object-contain" alt="Entrenadores">
                         </span>
                         <span class="flex-1 text-sm text-left font-medium text-gray-700 dark:text-gray-300">Entrenadores</span>
+                    </button>
+                    <button
+                        @click="{{ $bloqueadoConstruccion ? '' : "toggleExploraciones()" }}"
+                        {{ $bloqueadoConstruccion ? 'disabled' : '' }}
+                        @if($bloqueadoConstruccion) title="No disponible durante exploraciones activas" @endif
+                        class="{{ $constructionButtonClass }} {{ $bloqueadoConstruccion ? 'opacity-50 cursor-not-allowed' : '' }}"
+                        :class="modo === 'pokemon' ? 'ring-2 ring-blue-400 border-blue-400 dark:border-blue-600 bg-blue-50 dark:bg-blue-900/20' : 'hover:bg-gray-50 dark:hover:bg-gray-700'"
+                    >
+                        <span class="w-8 shrink-0 flex justify-center">
+                            <svg class="w-6 h-6 text-yellow-500" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                                <path d="M10 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 004 14h12a1 1 0 00.707-1.707L16 11.586V8a6 6 0 00-6-6z"/>
+                            </svg>
+                        </span>
+                        <span class="flex-1 text-sm text-left font-medium text-gray-700 dark:text-gray-300">Exploraciones</span>
                     </button>
                     <button
                         @click="{{ $bloqueadoConstruccion ? '' : 'openMazmorraModal()' }}"
@@ -154,6 +172,83 @@
                     </div>
                 </div>
                 @endif
+
+                <!-- Ruta Panel (combate 5v5 contra salvajes; modo por defecto) -->
+                <div class="{{ $cardPanelClass }}" x-show="modo === 'ruta'">
+                    <div class="p-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between flex-wrap gap-2">
+                        <h3 class="text-sm font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                            <svg class="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                            </svg>
+                            Combate de Ruta
+                        </h3>
+                        <span class="px-2 py-0.5 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 text-[10px] font-bold rounded-full uppercase">5v5</span>
+                    </div>
+                    <div class="p-4 space-y-4">
+                        <!-- Nota obligatoria -->
+                        <div class="px-3 py-2 rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 text-xs text-blue-800 dark:text-blue-300" role="status">
+                            ⚔️ Combate 5v5 contra pokémon salvajes. Sin límite diario. Al ganar puedes capturar.
+                        </div>
+
+                        <!-- Selector de nivel -->
+                        <div>
+                            <p class="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">Nivel de la ruta</p>
+                            <div class="grid grid-cols-3 gap-2">
+                                <template x-for="lvl in [1,2,3]" :key="'ruta-nivel-' + lvl">
+                                    <button
+                                        @click="selectRutaNivel(lvl)"
+                                        :class="rutaNivel === lvl
+                                            ? 'border-red-500 dark:border-red-400 bg-red-50 dark:bg-red-900/20'
+                                            : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'"
+                                        class="w-full px-4 py-3 rounded-xl border-2 text-left transition-all"
+                                        :aria-label="'Nivel de ruta ' + lvl"
+                                    >
+                                        <span class="text-sm font-semibold text-gray-900 dark:text-white" x-text="'Nivel ' + lvl"></span>
+                                    </button>
+                                </template>
+                            </div>
+                        </div>
+
+                        <!-- Previsualización de rivales -->
+                        <div>
+                            <p class="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">Rivales salvajes</p>
+                            <div x-show="rutaRivalesLoading" x-cloak role="status" class="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
+                                <svg class="w-4 h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                                </svg>
+                                Cargando rivales...
+                            </div>
+                            <div x-show="rutaRivalesError" x-cloak role="alert" class="text-sm text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg px-3 py-2">
+                                <span x-text="rutaRivalesError"></span>
+                            </div>
+                            <div x-show="!rutaRivalesLoading && !rutaRivalesError && rutaRivales.length === 0" x-cloak role="status" class="text-sm text-gray-500 dark:text-gray-400 px-3 py-4 text-center">
+                                No hay Pokémon salvajes disponibles en esta ruta para tu nivel.
+                            </div>
+                            <div x-show="!rutaRivalesLoading && rutaRivales.length > 0" x-cloak class="grid grid-cols-5 gap-2">
+                                <template x-for="rival in rutaRivales" :key="'rival-' + rival.id">
+                                    <div class="text-center min-w-0">
+                                        <template x-if="!isSighted(rival.species_id)">
+                                            <img src="/images/misc/unknown.webp" alt="?" class="w-full h-16 object-contain mx-auto">
+                                        </template>
+                                        <template x-if="isSighted(rival.species_id)">
+                                            <img :src="'/images/iconos_webp/' + rival.species_id + '.webp'" loading="lazy" decoding="async" :alt="rival.nombre" class="w-full h-16 object-contain mx-auto" onerror="this.style.display='none'">
+                                        </template>
+                                        <p class="text-[10px] text-gray-500 dark:text-gray-400 truncate mt-0.5" x-text="rival.nombre"></p>
+                                        <p class="text-[10px] text-gray-400 dark:text-gray-500" x-text="'Nv ' + rival.nivel"></p>
+                                        <p class="text-[10px] font-semibold text-red-500 dark:text-red-400 capitalize" x-text="rival.posicion"></p>
+                                    </div>
+                                </template>
+                            </div>
+                        </div>
+
+                        <!-- Recordatorio de selección de equipo -->
+                        <p class="text-xs text-gray-500 dark:text-gray-400">
+                            Selecciona un equipo aquí abajo para el combate. El equipo debe tener
+                            <strong class="text-gray-700 dark:text-gray-300">5 miembros</strong> y puedes
+                            ajustar su formación al iniciar.
+                        </p>
+                    </div>
+                </div>
 
                 <!-- Favoritos Panel (exploración individual; modo pokémon) -->
                 <div class="{{ $cardPanelClass }}" x-show="modo === 'pokemon'" x-cloak>
@@ -238,8 +333,8 @@
                     </div>
                 </div>
 
-                <!-- Teams Panel: 3-column grid of team cards (modo entrenadores) -->
-                <div class="{{ $cardPanelClass }}" x-show="modo === 'entrenadores'" x-cloak>
+                <!-- Teams Panel: 3-column grid of team cards (modo entrenadores / ruta) -->
+                <div class="{{ $cardPanelClass }}" x-show="modo === 'entrenadores' || modo === 'ruta'" x-cloak>
                     <div class="p-4 border-b border-gray-200 dark:border-gray-700">
                         <h3 class="text-sm font-semibold text-gray-900 dark:text-white">Equipos</h3>
                     </div>
@@ -283,17 +378,17 @@
                                     🔒 En exploración ({{ $equipoEnExploracion['habitat_name'] }})
                                 </p>
                                 @endif
-                                <div class="flex flex-wrap gap-2">
-                                    @for($i = 0; $i < 3; $i++)
+                                <div class="grid grid-cols-5 gap-1">
+                                    @for($i = 0; $i < 5; $i++)
                                         @if(isset($team->members[$i]))
-                                            <div class="flex-1 text-center">
+                                            <div class="text-center min-w-0">
                                                 <img
                                                     src="/images/iconos_webp/{{ $team->members[$i]->reclutado->pokemon_id }}.webp"
                                                     loading="lazy"
                                                     decoding="async"
                                                     alt="{{ $team->members[$i]->reclutado->nombre ?? '' }}"
                                                     title="{{ $team->members[$i]->reclutado->nombre ?? '' }}"
-                                                    class="w-24 h-24 object-contain mx-auto"
+                                                    class="w-full h-14 object-contain mx-auto"
                                                     onerror="this.style.display='none'"
                                                 >
                                                 <p class="text-[10px] text-gray-500 dark:text-gray-400 truncate mt-0.5">
@@ -301,8 +396,8 @@
                                                 </p>
                                             </div>
                                         @else
-                                            <div class="flex-1 text-center">
-                                                <div class="w-24 h-24 mx-auto rounded border-2 border-dashed border-gray-300 dark:border-gray-600"></div>
+                                            <div class="text-center min-w-0">
+                                                <div class="w-full h-14 mx-auto rounded border-2 border-dashed border-gray-300 dark:border-gray-600"></div>
                                                 <p class="text-[10px] text-gray-400 dark:text-gray-500 mt-0.5">Vacío</p>
                                             </div>
                                         @endif
@@ -321,8 +416,8 @@
                     </div>
                 </div>
 
-                <!-- Niveles Panel: 3 clickable level rows -->
-                <div class="{{ $cardPanelClass }}">
+                <!-- Niveles Panel: 3 clickable level rows (pokémon / entrenadores; oculto en modo ruta) -->
+                <div class="{{ $cardPanelClass }}" x-show="modo === 'pokemon' || modo === 'entrenadores'" x-cloak>
                     <div class="p-4 border-b border-gray-200 dark:border-gray-700">
                         <h3 class="text-sm font-semibold text-gray-900 dark:text-white">Niveles</h3>
                     </div>
@@ -425,11 +520,22 @@
 
                 <!-- Exploration Button (fallback; modal auto-opens when team + level are selected) -->
                 <button
+                    x-show="modo === 'pokemon'"
+                    x-cloak
                     @click="checkAndOpenModal()"
                     :disabled="!canStartExploration"
                     class="w-full px-4 py-3 bg-green-600 text-white rounded-xl text-sm font-bold transition-all hover:bg-green-700 disabled:bg-gray-300 dark:disabled:bg-gray-700 disabled:text-gray-500 dark:disabled:text-gray-500 disabled:cursor-not-allowed uppercase tracking-wide"
                 >
                     Iniciar Exploración
+                </button>
+                <button
+                    x-show="modo === 'ruta'"
+                    x-cloak
+                    @click="openRutaFormacionPopup()"
+                    :disabled="!selectedTeamId || rutaRivalesLoading || rutaRivales.length === 0"
+                    class="w-full px-4 py-3 bg-red-600 text-white rounded-xl text-sm font-bold transition-all hover:bg-red-700 disabled:bg-gray-300 dark:disabled:bg-gray-700 disabled:text-gray-500 dark:disabled:text-gray-500 disabled:cursor-not-allowed uppercase tracking-wide"
+                >
+                    ⚔️ Combate de Ruta
                 </button>
                 <button
                     x-show="modo === 'entrenadores'"
@@ -658,15 +764,20 @@
         </div>
     </template>
 
-    <!-- Formacion Modal (Entrenadores) -->
+    <!-- Formacion Modal (Entrenadores / Ruta) -->
     <template x-if="showFormacionPopup">
         <div class="fixed inset-0 z-50 flex items-center justify-center p-4" @keydown.escape.window="closeFormacionPopup()">
             <div class="absolute inset-0 bg-black/60" @click="closeFormacionPopup()"></div>
             <div class="relative bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-md p-6">
-                <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-4">Configurar Formación</h3>
+                <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-4" x-text="formacionContexto === 'ruta' ? 'Combate de Ruta · Configurar Formación' : 'Configurar Formación'"></h3>
                 <p class="text-sm text-gray-600 dark:text-gray-300 mb-4">
                     Ajusta la posición de cada pokémon antes del combate.
                 </p>
+
+                <!-- Error 422 inline (ruta: sin redirigir) -->
+                <div x-show="rutaCombatError" x-cloak role="alert" class="mb-4 text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg px-3 py-2">
+                    <span x-text="rutaCombatError"></span>
+                </div>
 
                 <!-- Miembros del equipo con toggle -->
                 <div class="space-y-3 mb-6">
@@ -683,9 +794,13 @@
                                 @click="toggleFormacionSlot(miembro.slot)"
                                 :class="formacion[miembro.slot] === 'vanguardia'
                                     ? 'bg-blue-600 text-white border-blue-600'
-                                    : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600'"
+                                    : (formacionContexto === 'ruta' && !formacion[miembro.slot]
+                                        ? 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 border-gray-300 dark:border-gray-600 border-dashed'
+                                        : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600')"
                                 class="px-3 py-1.5 rounded-lg text-xs font-bold border transition-colors"
-                                x-text="(formacion[miembro.slot] === 'vanguardia' ? '🛡️ Vanguardia' : '⚔️ Retaguardia')"
+                                x-text="formacion[miembro.slot] === 'vanguardia'
+                                    ? '🛡️ Vanguardia'
+                                    : (formacionContexto === 'ruta' && !formacion[miembro.slot] ? '⚙️ Automática' : '⚔️ Retaguardia')"
                             ></button>
                         </div>
                     </template>
@@ -704,11 +819,14 @@
                     </button>
                     <button
                         @click="confirmarCombate()"
-                        :disabled="!selectedTeamId || !selectedTrainer"
+                        :disabled="formacionContexto === 'ruta'
+                            ? (!selectedTeamId || rutaCombatiendo)
+                            : (!selectedTeamId || !selectedTrainer)"
                         class="flex-1 px-4 py-2.5 bg-red-600 text-white rounded-lg text-sm font-bold hover:bg-red-700 transition-colors disabled:bg-gray-300 dark:disabled:bg-gray-700 disabled:text-gray-500 dark:disabled:text-gray-500 disabled:cursor-not-allowed"
-                    >
-                        ¡Combatir!
-                    </button>
+                        x-text="formacionContexto === 'ruta'
+                            ? (rutaCombatiendo ? 'Iniciando combate...' : '⚔️ ¡Combatir! (Ruta 5v5)')
+                            : '¡Combatir!'"
+                    ></button>
                 </div>
             </div>
         </div>
@@ -1078,12 +1196,21 @@ function habitatShow() {
         avisoNivel: '',
 
         // ─── Entrenadores mode ────────────────────────────
-        modo: 'pokemon',
+        modo: 'ruta',
         trainers: null,
         trainersLoading: false,
         selectedTrainer: null,
         showFormacionPopup: false,
         formacion: {},
+        formacionContexto: 'entrenadores',
+
+        // ─── Ruta mode (combate 5v5; default) ─────────────
+        rutaNivel: 1,
+        rutaRivales: [],
+        rutaRivalesLoading: false,
+        rutaRivalesError: '',
+        rutaCombatiendo: false,
+        rutaCombatError: '',
 
         get selectedTeamMembers() {
             if (!this.selectedTeamId || !this.teams) return [];
@@ -1094,7 +1221,7 @@ function habitatShow() {
 
         async toggleEntrenadores() {
             if (this.modo === 'entrenadores') {
-                this.modo = 'pokemon';
+                this.modo = 'ruta';
                 this.selectedTrainer = null;
                 this.selectedLevel = null;
                 return;
@@ -1103,6 +1230,64 @@ function habitatShow() {
             this.selectedLevel = null;
             this.selectedTrainer = null;
             await this.loadTrainers();
+        },
+
+        // Exploraciones (modo individual = pokemon). Toggle: vuelve al modo por defecto ruta.
+        toggleExploraciones() {
+            if (this.modo === 'pokemon') {
+                this.modo = 'ruta';
+                this.selectedLevel = null;
+                return;
+            }
+            this.modo = 'pokemon';
+            this.selectedLevel = null;
+            this.cargarFavoritos();
+        },
+
+        // Vuelta explícita al modo por defecto (botón "Combate de ruta").
+        setModoRuta() {
+            this.modo = 'ruta';
+            this.selectedTrainer = null;
+            this.selectedLevel = null;
+            this.cargarRivalesRuta();
+        },
+
+        async cargarRivalesRuta() {
+            this.rutaRivalesLoading = true;
+            this.rutaRivalesError = '';
+            try {
+                const response = await fetch('/api/habitats/{{ $habitat['id'] }}/ruta/rivales?nivel=' + this.rutaNivel, {
+                    headers: { 'Accept': 'application/json' },
+                });
+                if (!response.ok) throw new Error('Error al cargar los rivales');
+                const data = await response.json();
+                this.rutaRivales = (data && data.rivales) || [];
+            } catch (e) {
+                console.error('Error loading rivales de ruta:', e);
+                this.rutaRivalesError = 'No se pudieron cargar los rivales de esta ruta.';
+                this.rutaRivales = [];
+            } finally {
+                this.rutaRivalesLoading = false;
+            }
+        },
+
+        selectRutaNivel(nivel) {
+            this.rutaNivel = nivel;
+            this.rutaCombatError = '';
+            this.cargarRivalesRuta();
+        },
+
+        openRutaFormacionPopup() {
+            if (!this.selectedTeamId) {
+                return;
+            }
+            this.formacionContexto = 'ruta';
+            this.selectedTrainer = null;
+            // Formación vacía: el backend aplica la formación persistida; si el usuario
+            // elige posiciones se envían explícitamente (chips "⚙️ Automática").
+            this.formacion = {};
+            this.rutaCombatError = '';
+            this.showFormacionPopup = true;
         },
 
         async loadTrainers() {
@@ -1128,6 +1313,8 @@ function habitatShow() {
             if (!trainer || !trainer.desbloqueado) return;
             this.selectedLevel = level;
             this.selectedTrainer = trainer;
+            this.formacionContexto = 'entrenadores';
+            this.rutaCombatError = '';
             // Inicializar toggles (todos vanguardia por defecto)
             this.formacion = {};
             const team = this.teams.find(t => t.id === this.selectedTeamId);
@@ -1143,6 +1330,7 @@ function habitatShow() {
             if (!this.selectedTeamId || !this.selectedTrainer) {
                 return;
             }
+            this.formacionContexto = 'entrenadores';
             if (Object.keys(this.formacion).length === 0) {
                 this.formacion = {};
                 const team = this.teams.find(t => t.id === this.selectedTeamId);
@@ -1162,9 +1350,14 @@ function habitatShow() {
         closeFormacionPopup() {
             this.showFormacionPopup = false;
             this.selectedTrainer = null;
+            this.rutaCombatError = '';
         },
 
         async confirmarCombate() {
+            if (this.formacionContexto === 'ruta') {
+                await this.confirmarCombateRuta();
+                return;
+            }
             if (!this.selectedTeamId || !this.selectedLevel || !this.selectedTrainer) return;
             try {
                 const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || '';
@@ -1190,6 +1383,42 @@ function habitatShow() {
                 window.location.href = data.redirect || '/combate?battle_id=' + data.battle_id;
             } catch (e) {
                 alert('Error al iniciar combate: ' + e.message);
+            }
+        },
+
+        async confirmarCombateRuta() {
+            if (!this.selectedTeamId || this.rutaCombatiendo) return;
+            this.rutaCombatiendo = true;
+            this.rutaCombatError = '';
+            try {
+                const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || '';
+                const response = await fetch('/api/habitats/{{ $habitat['id'] }}/ruta/iniciar', {
+                    method: 'POST',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': csrfToken,
+                    },
+                    body: JSON.stringify({
+                        team_id: this.selectedTeamId,
+                        nivel: this.rutaNivel,
+                        formacion: this.formacion,
+                    }),
+                });
+                if (!response.ok) {
+                    // 422 (equipo ≠5, pool vacío...) → error inline en el popup, sin redirigir.
+                    const err = await response.json().catch(() => ({}));
+                    this.rutaCombatError = err.message || err.error || 'No se pudo iniciar el combate de ruta.';
+                    return;
+                }
+                const data = await response.json();
+                this.showFormacionPopup = false;
+                window.location.href = data.redirect || '/combate?battle_id=' + data.battle_id;
+            } catch (e) {
+                console.error('Error iniciando combate de ruta:', e);
+                this.rutaCombatError = 'Error al iniciar combate: ' + e.message;
+            } finally {
+                this.rutaCombatiendo = false;
             }
         },
 
@@ -1344,6 +1573,8 @@ function habitatShow() {
             // Cargar favoritos para la exploración individual. Tolerante: si el
             // endpoint aún no está disponible, se muestra el estado vacío/error.
             this.cargarFavoritos();
+            // Modo por defecto = Combate de Ruta: precargar rivales del nivel 1.
+            this.cargarRivalesRuta();
         },
 
         async cargarFavoritos() {
@@ -1499,7 +1730,9 @@ function habitatShow() {
             }
             this.selectedTeamId = id;
             this.selectedTeamName = name;
-            this.checkAndOpenModal();
+            if (this.modo === 'pokemon') {
+                this.checkAndOpenModal();
+            }
         },
 
         selectLevel(level) {

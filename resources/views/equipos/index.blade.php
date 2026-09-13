@@ -338,9 +338,9 @@
                             </div>
                             <!-- Team members -->
                             <div class="p-3">
-                                <div class="flex gap-2">
-                                    <template x-for="slot in [1,2,3]" :key="'slot-'+team.id+'-'+slot">
-                                        <div class="flex-1 text-center">
+                                <div class="grid grid-cols-5 gap-1">
+                                    <template x-for="slot in [1,2,3,4,5]" :key="'slot-'+team.id+'-'+slot">
+                                        <div class="text-center min-w-0">
                                             <template x-if="getMember(team, slot)">
                                                 <div class="relative">
                                                     <img
@@ -349,7 +349,7 @@
                                                         decoding="async"
                                                         :alt="getMember(team, slot).nombre"
                                                         :title="getMember(team, slot).nombre"
-                                                        class="w-24 h-24 object-contain mx-auto"
+                                                        class="w-full h-16 object-contain mx-auto"
                                                         onerror="this.style.display='none'"
                                                     >
                                                     <button
@@ -378,7 +378,7 @@
                                             </template>
                                             <template x-if="!getMember(team, slot)">
                                                 <div>
-                                                    <div class="w-24 h-24 mx-auto rounded border-2 border-dashed border-gray-300 dark:border-gray-600 flex items-center justify-center">
+                                                    <div class="w-full h-16 mx-auto rounded border-2 border-dashed border-gray-300 dark:border-gray-600 flex items-center justify-center">
                                                         <span class="text-gray-300 dark:text-gray-600 text-lg">+</span>
                                                     </div>
                                                     <p class="text-[10px] text-gray-400 dark:text-gray-500 mt-0.5">Slot <span x-text="slot"></span></p>
@@ -387,6 +387,49 @@
                                         </div>
                                     </template>
                                 </div>
+                            </div>
+                            <!-- Formación de combate (vanguardia/retaguardia persistida) -->
+                            <div class="px-3 pb-3">
+                                <div class="flex items-center justify-between mb-2">
+                                    <span class="text-[10px] font-bold uppercase tracking-wide text-gray-500 dark:text-gray-400">Formación de combate</span>
+                                    <span class="text-[10px] text-gray-400 dark:text-gray-500">Vanguardia · Retaguardia</span>
+                                </div>
+                                <div class="space-y-1.5">
+                                    <template x-for="slot in [1,2,3,4,5]" :key="'form-slot-'+team.id+'-'+slot">
+                                        <template x-if="getTeamMember(team, slot)">
+                                            <div class="flex items-center justify-between gap-2 px-2 py-1.5 bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700 rounded-lg">
+                                                <span class="text-[10px] text-gray-600 dark:text-gray-400 truncate" x-text="'Slot ' + slot + ' · ' + getMember(team, slot).nombre"></span>
+                                                <div class="flex gap-1 shrink-0">
+                                                    <button
+                                                        @click="setFormacionSlot(team, slot, 'vanguardia')"
+                                                        :disabled="isInExploration(team.id)"
+                                                        :class="formacionDe(team, slot) === 'vanguardia' ? 'bg-blue-600 text-white border-blue-600' : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600'"
+                                                        class="px-2 py-0.5 rounded text-[10px] font-bold border transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                                                    >🛡️ Vanguardia</button>
+                                                    <button
+                                                        @click="setFormacionSlot(team, slot, 'retaguardia')"
+                                                        :disabled="isInExploration(team.id)"
+                                                        :class="formacionDe(team, slot) === 'retaguardia' ? 'bg-red-600 text-white border-red-600' : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600'"
+                                                        class="px-2 py-0.5 rounded text-[10px] font-bold border transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                                                    >⚔️ Retaguardia</button>
+                                                </div>
+                                            </div>
+                                        </template>
+                                    </template>
+                                    <template x-if="!team.members || team.members.length === 0">
+                                        <p class="text-[10px] text-gray-400 dark:text-gray-500 text-center py-1">Añade miembros para configurar la formación</p>
+                                    </template>
+                                </div>
+                                <div class="flex items-center gap-2 mt-2">
+                                    <button
+                                        @click="guardarFormacion(team)"
+                                        :disabled="isInExploration(team.id) || formacionSavingTeamId === team.id"
+                                        class="flex-1 px-3 py-1.5 bg-gray-800 dark:bg-gray-200 text-white dark:text-gray-900 rounded-lg text-[10px] font-bold uppercase tracking-wide hover:bg-gray-900 dark:hover:bg-white transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                                        x-text="formacionSavingTeamId === team.id ? 'Guardando...' : 'Guardar formación'"
+                                    ></button>
+                                </div>
+                                <div x-show="formacionSaveError" x-cloak role="alert" class="mt-1 text-[10px] text-red-600 dark:text-red-400" x-text="formacionSaveError"></div>
+                                <div x-show="formacionSaveSuccess" x-cloak role="status" class="mt-1 text-[10px] text-green-600 dark:text-green-400" x-text="formacionSaveSuccess"></div>
                             </div>
                         </div>
                     </template>
@@ -1054,6 +1097,15 @@ function favoritosApp() {
         teamPokemonIds: @json($teamIds ?? []),
         equiposEnExploracion: @json($equiposEnExploracion ?? []),
 
+        // ─── Formación persistente (combate 5v5) ───────────────────────────
+        // Draft local por equipo: {teamId: {slot: 'vanguardia'|'retaguardia'}}.
+        // La formación persistida del backend (team.formacion) recién se conoce
+        // tras el primer PATCH; el draft tiene prioridad sobre ella.
+        formacionDraft: {},
+        formacionSavingTeamId: null,
+        formacionSaveError: '',
+        formacionSaveSuccess: '',
+
         // ─── UI: Tabs ──────────────────────────────────────────────────────
         activeTab: 'favoritos',
 
@@ -1531,7 +1583,7 @@ function favoritosApp() {
         },
 
         async addToTeam(pokemon, team) {
-            const emptySlot = [1,2,3].find(s => !team.members.some(m => m.slot === s));
+            const emptySlot = [1,2,3,4,5].find(s => !team.members.some(m => m.slot === s));
             if (!emptySlot) {
                 alert('Este equipo está lleno');
                 return;
@@ -1637,6 +1689,68 @@ function favoritosApp() {
             if (!member) return 'VANGUARDIA';
             // RFC: el rol vive ahora en reclutados.behavior; fallback al legado team_members.behavior.
             return member.reclutado?.behavior || member.behavior || 'VANGUARDIA';
+        },
+
+        // ─── Formación persistente (combate 5v5) ─────────────────────────────
+
+        /** Posición actual del slot: draft local > formación persistida > 'vanguardia'. */
+        formacionDe(team, slot) {
+            return this.formacionDraft[team.id]?.[slot]
+                || team.formacion?.[slot]
+                || 'vanguardia';
+        },
+
+        setFormacionSlot(team, slot, posicion) {
+            if (this.isInExploration(team.id)) return;
+            if (!this.formacionDraft[team.id]) this.formacionDraft[team.id] = {};
+            this.formacionDraft[team.id][slot] = posicion;
+            this.formacionSaveError = '';
+            this.formacionSaveSuccess = '';
+        },
+
+        async guardarFormacion(team) {
+            if (this.isInExploration(team.id)) {
+                alert('No se puede modificar un equipo con exploraciones activas');
+                return;
+            }
+            const draft = this.formacionDraft[team.id] || {};
+            if (Object.keys(draft).length === 0) {
+                alert('No hay cambios en la formación para guardar.');
+                return;
+            }
+            this.formacionSavingTeamId = team.id;
+            this.formacionSaveError = '';
+            this.formacionSaveSuccess = '';
+            try {
+                const response = await fetch('/teams/' + team.id + '/formacion', {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '',
+                        'Accept': 'application/json',
+                    },
+                    body: JSON.stringify({ formacion: draft }),
+                });
+                const data = await response.json().catch(() => ({}));
+                if (!response.ok) {
+                    this.formacionSaveError = data.error || data.message || 'No se pudo guardar la formación.';
+                    return;
+                }
+                if (data.team) {
+                    // Contrato: { team: { id, formacion: {slot: pos} } }.
+                    this.formacionDraft[team.id] = {};
+                    team.formacion = data.team.formacion || {};
+                    this.formacionSaveSuccess = '✓ Formación guardada';
+                    setTimeout(() => {
+                        this.formacionSaveSuccess = '';
+                    }, 3000);
+                }
+            } catch (err) {
+                console.error('Error saving formation:', err);
+                this.formacionSaveError = 'Error de conexión al guardar la formación.';
+            } finally {
+                this.formacionSavingTeamId = null;
+            }
         },
 
         // ═══════════════════════════════════════════════════════════════════════

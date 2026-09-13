@@ -71,4 +71,59 @@ class FrontendHabitatModalTest extends TestCase
         $view->assertSee('preview.rol || preview.rol_sugerido', false);
         $view->assertSee('preview.rol_sugerido', false);
     }
+
+    /**
+     * El combate de ruta 5v5 es el modo por defecto: panel ruta con nota obligatoria,
+     * selector de nivel, preview de rivales y popup de formación con estado "Automática".
+     */
+    public function test_habitat_defaults_to_ruta_mode_with_ruta_panel(): void
+    {
+        $view = $this->view('habitats.show', $this->data());
+
+        // Modo por defecto = ruta
+        $view->assertSee("modo: 'ruta'", false);
+        // Nota visible obligatoria
+        $view->assertSee('Combate 5v5 contra pokémon salvajes. Sin límite diario. Al ganar puedes capturar.', false);
+        // Panel ruta (badge 5v5 + selector de nivel)
+        $view->assertSee('Combate de Ruta', false);
+        $view->assertSee('selectRutaNivel(lvl)', false);
+        // Fetch de rivales por nivel
+        $view->assertSee('/ruta/rivales?nivel=', false);
+        // Aviso de pool vacío
+        $view->assertSee('No hay Pokémon salvajes disponibles en esta ruta para tu nivel.', false);
+        // CTA de ruta
+        $view->assertSee('openRutaFormacionPopup()', false);
+        // POST iniciar (5v5)
+        $view->assertSee('/ruta/iniciar', false);
+        // Popup contextual de ruta con chip "Automática" (usa formación persistida)
+        $view->assertSee('Combate de Ruta · Configurar Formación', false);
+        $view->assertSee("'⚙️ Automática'", false);
+        // Error 422 inline en el popup (sin redirigir)
+        $view->assertSee('rutaCombatError', false);
+        // Botones: sin acceso directo a /equipos (el enlace "Favoritos" se elimina);
+        // Exploraciones abre el modo pokémon
+        $view->assertDontSee('>Favoritos</span>', false);
+        $view->assertSee('toggleExploraciones()', false);
+    }
+
+    /**
+     * El escalado 5v5 llega a las tarjetas de equipo: grid de 5 slots y, con un
+     * equipo sin miembros, se renderizan exactamente 5 placeholders "Vacío".
+     */
+    public function test_habitat_team_cards_render_five_slots(): void
+    {
+        $team = (object) [
+            'id' => 1,
+            'name' => 'Equipo Ruta',
+            'members' => [],
+        ];
+
+        $testView = $this->view('habitats.show', $this->data([
+            'teams' => new Collection([$team]),
+        ]));
+        $html = (string) $testView;
+
+        $this->assertStringContainsString('grid grid-cols-5', $html);
+        $this->assertSame(5, substr_count($html, '>Vacío</p>'));
+    }
 }
