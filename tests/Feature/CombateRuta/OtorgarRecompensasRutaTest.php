@@ -55,7 +55,6 @@ class OtorgarRecompensasRutaTest extends TestCase
             userId: (int) $this->user->id,
             teamId: (int) $this->team->id,
             speciesIdsRival: [(int) $pokemon->id],
-            nivelRival: 10,
             aleatorio: fn (): float => 0.05,
         );
 
@@ -82,7 +81,6 @@ class OtorgarRecompensasRutaTest extends TestCase
             userId: (int) $this->user->id,
             teamId: (int) $this->team->id,
             speciesIdsRival: [(int) $pokemon->id],
-            nivelRival: 10,
             aleatorio: fn (): float => 0.5,
         );
 
@@ -104,7 +102,6 @@ class OtorgarRecompensasRutaTest extends TestCase
             userId: (int) $this->user->id,
             teamId: (int) $this->team->id,
             speciesIdsRival: [50],
-            nivelRival: 10,
             won: false,
         );
 
@@ -128,7 +125,6 @@ class OtorgarRecompensasRutaTest extends TestCase
             userId: (int) $this->user->id,
             teamId: (int) $this->team->id,
             speciesIdsRival: [54],
-            nivelRival: 10,
             won: true,
             aleatorio: fn (): float => 0.05,
         );

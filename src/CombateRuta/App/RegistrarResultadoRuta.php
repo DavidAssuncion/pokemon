@@ -27,7 +27,6 @@ final class RegistrarResultadoRuta
         int $userId,
         int $teamId,
         array $speciesIdsRival,
-        int $nivelRival,
         bool $won,
         ?callable $aleatorio = null,
     ): ?ResultadoRuta {
@@ -39,7 +38,6 @@ final class RegistrarResultadoRuta
             userId: $userId,
             teamId: $teamId,
             speciesIdsRival: $speciesIdsRival,
-            nivelRival: $nivelRival,
             aleatorio: $aleatorio,
         );
     }

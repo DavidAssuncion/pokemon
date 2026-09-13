@@ -191,7 +191,6 @@ final class PresentadorResultadoBatalla
         $habitatId = (int) ($meta['habitat_id'] ?? 0);
         $userId = (int) ($meta['user_id'] ?? 0);
         $teamId = (int) ($meta['team_id'] ?? 0);
-        $nivelRival = (int) ($meta['nivel'] ?? 0);
         $won = ! $battle->team1->todosDebilitados();
 
         $speciesRival = $battle->team2->combatientesCollection()->map(
@@ -202,7 +201,6 @@ final class PresentadorResultadoBatalla
             userId: $userId,
             teamId: $teamId,
             speciesIdsRival: $speciesRival,
-            nivelRival: $nivelRival,
             won: $won,
         );
 

@@ -46,7 +46,6 @@ final class OtorgarRecompensasRuta
         int $userId,
         int $teamId,
         array $speciesIdsRival,
-        int $nivelRival,
         ?callable $aleatorio = null,
     ): ?ResultadoRuta {
         $usuario = User::find($userId);
