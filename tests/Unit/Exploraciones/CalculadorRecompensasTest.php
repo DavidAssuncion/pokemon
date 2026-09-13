@@ -227,10 +227,10 @@ class CalculadorRecompensasTest extends TestCase
         $this->assertSame($esperado, $resultado->expTotal);
     }
 
-    public function test_exp_por_miembro_reparte_el_80_entre_tres(): void
+    public function test_exp_por_miembro_reparte_el_80_entre_cinco(): void
     {
-        // D3: cada integrante += floor((T×0.8)/3) por derrota.
-        // T(64, 5) = 64 → floor(51.2/3) = 17; T(62, 5) = 62 → floor(49.6/3) = 16.
+        // D3: cada integrante += floor((T×0.8)/5) por derrota.
+        // T(64, 5) = 64 → floor(51.2/5) = 10; T(62, 5) = 62 → floor(49.6/5) = 9.
         $derrotados = collect([
             $this->derrotado(id: 1, baseExperience: 64),
             $this->derrotado(id: 2, baseExperience: 62),
@@ -238,7 +238,7 @@ class CalculadorRecompensasTest extends TestCase
 
         $resultado = $this->calculador->calcular($derrotados, fn (): bool => false, 5);
 
-        $this->assertSame(17 + 16, $resultado->expPorMiembro);
+        $this->assertSame(10 + 9, $resultado->expPorMiembro);
     }
 
     public function test_multiplicador_de_categoria_se_aplica_a_exp_y_caramelos(): void
@@ -250,9 +250,9 @@ class CalculadorRecompensasTest extends TestCase
 
         $resultado = $this->calculador->calcular($derrotados, fn (): bool => false, 100, 0.7);
 
-        // T = 10000 → expTotal 7000; expPorMiembro floor(floor(10000×0.8/3)×0.7) = floor(2666×0.7) = 1866.
+        // T = 10000 → expTotal 7000; expPorMiembro floor(floor(10000×0.8/5)×0.7) = floor(1600×0.7) = 1120.
         $this->assertSame(7000, $resultado->expTotal);
-        $this->assertSame(1866, $resultado->expPorMiembro);
+        $this->assertSame(1120, $resultado->expPorMiembro);
 
         // Caramelo familia: 1 (fase 1) × 0.7 → 0 (floor 0.7).
         $this->assertSame(0, $resultado->caramelosFamilia->sum('cantidad'));
@@ -351,8 +351,8 @@ class CalculadorRecompensasTest extends TestCase
     public function test_calcular_incluye_exp_tipo_por_miembro(): void
     {
         // exp = expDerrota(500, 100) = intdiv(50000, 5) = 10000.
-        // Doble tipo → intdiv(10000, 2) = 5000 → por miembro floor(5000×0.8/3) = 1333.
-        // Tipo único → 10000 → por miembro floor(10000×0.8/3) = 2666.
+        // Doble tipo → intdiv(10000, 2) = 5000 → por miembro floor(5000×0.8/5) = 800.
+        // Tipo único → 10000 → por miembro floor(10000×0.8/5) = 1600.
         $derrotados = collect([
             $this->derrotado(id: 1, baseExperience: 500, tipos: ['Eléctrico', 'Fuego']),
             $this->derrotado(id: 2, baseExperience: 500, tipos: ['Fuego']),
@@ -360,8 +360,8 @@ class CalculadorRecompensasTest extends TestCase
 
         $resultado = $this->calculador->calcular($derrotados, fn (): bool => false, 100);
 
-        $this->assertSame(1333, $resultado->expTipoPorMiembro['Eléctrico']);
-        $this->assertSame(3999, $resultado->expTipoPorMiembro['Fuego']);
+        $this->assertSame(800, $resultado->expTipoPorMiembro['Eléctrico']);
+        $this->assertSame(2400, $resultado->expTipoPorMiembro['Fuego']);
     }
 
     public function test_calcular_exp_tipo_por_miembro_aplica_multiplicador(): void
@@ -372,8 +372,8 @@ class CalculadorRecompensasTest extends TestCase
 
         $resultado = $this->calculador->calcular($derrotados, fn (): bool => false, 100, 2.0);
 
-        // floor(2666 × 2.0) = 5332.
-        $this->assertSame(5332, $resultado->expTipoPorMiembro['Fuego']);
+        // floor(1600 × 2.0) = 3200.
+        $this->assertSame(3200, $resultado->expTipoPorMiembro['Fuego']);
     }
 
     public function test_calcular_exp_tipo_por_miembro_ignora_pokemon_sin_tipos(): void

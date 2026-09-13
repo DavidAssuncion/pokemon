@@ -11,6 +11,7 @@ use App\Models\PokemonStat;
 use App\Models\PokemonType;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\Test;
+use Src\Battle\Domain\DatosPokemonBatalla;
 use Src\Battle\Domain\Posicion;
 use Src\CombateEntrenadores\App\MapeadorPokemonBatalla;
 use Src\CombateEntrenadores\Domain\GeneradorMovimientosTipo;
@@ -44,7 +45,8 @@ class GeneradorPokemonGimnasioTest extends TestCase
             retaguardia: new IntCollection([]),
         ), 50, 64, 64);
 
-        $this->assertCount(1, $equipo);
+        // Escalado 5v5: un DTO de 1 solo combatiente se repite cíclicamente hasta 5.
+        $this->assertCount(5, $equipo);
         $evs = $equipo[0]->evs;
         $this->assertSame(64.0, $evs->hp);
         $this->assertSame(64.0, $evs->attack);
@@ -66,7 +68,7 @@ class GeneradorPokemonGimnasioTest extends TestCase
             retaguardia: new IntCollection([]),
         ), 50, 128, 64);
 
-        $this->assertCount(1, $equipo);
+        $this->assertCount(5, $equipo);
         $evs = $equipo[0]->evs;
         $this->assertSame(64.0, $evs->hp);
         $this->assertSame(128.0, $evs->attack);
@@ -86,7 +88,7 @@ class GeneradorPokemonGimnasioTest extends TestCase
             retaguardia: new IntCollection([]),
         ), 50, 0, 0);
 
-        $this->assertCount(1, $equipo);
+        $this->assertCount(5, $equipo);
         $evs = $equipo[0]->evs;
         $this->assertSame(0.0, $evs->hp);
         $this->assertSame(0.0, $evs->attack);
@@ -103,15 +105,22 @@ class GeneradorPokemonGimnasioTest extends TestCase
         $this->crearPokemon(266, ['hp' => 50, 'atk' => 60, 'def' => 50, 'spAtk' => 60, 'spDef' => 50, 'speed' => 55]);
         $this->crearPokemon(900, ['hp' => 50, 'atk' => 60, 'def' => 50, 'spAtk' => 60, 'spDef' => 50, 'speed' => 55]);
 
+        // Escalado 5v5: [V1,V2,R1] → [V1,V2,R1,V1,V2] = 3 vanguardia + 2 retaguardia.
         $equipo = $this->generador->generar(new EquipoEtapaGimnasio(
             vanguardia: new IntCollection([268, 266]),
             retaguardia: new IntCollection([900]),
         ), 50);
 
-        $this->assertCount(3, $equipo);
+        $this->assertCount(5, $equipo);
         $this->assertSame(Posicion::VANGUARDIA, $equipo[0]->posicion);
         $this->assertSame(Posicion::VANGUARDIA, $equipo[1]->posicion);
         $this->assertSame(Posicion::RETAGUARDIA, $equipo[2]->posicion);
+        $this->assertSame(Posicion::VANGUARDIA, $equipo[3]->posicion);
+        $this->assertSame(Posicion::VANGUARDIA, $equipo[4]->posicion);
+        $this->assertSame([268, 266, 900, 268, 266], array_map(
+            fn (DatosPokemonBatalla $p): int => $p->speciesId,
+            $equipo,
+        ));
     }
 
     #[Test]
@@ -120,17 +129,22 @@ class GeneradorPokemonGimnasioTest extends TestCase
         $this->crearPokemon(338, ['hp' => 50, 'atk' => 60, 'def' => 50, 'spAtk' => 60, 'spDef' => 50, 'speed' => 55]);
         $this->crearPokemon(464, ['hp' => 50, 'atk' => 60, 'def' => 50, 'spAtk' => 60, 'spDef' => 50, 'speed' => 55]);
 
+        // Escalado 5v5: [V,R1,R2] → [V,R1,R2,V,R1] = 2 vanguardia + 3 retaguardia.
         $equipo = $this->generador->generar(new EquipoEtapaGimnasio(
             vanguardia: new IntCollection([338]),
             retaguardia: new IntCollection([464, 464]),
         ), 50);
 
-        $this->assertCount(3, $equipo);
+        $this->assertCount(5, $equipo);
         $this->assertSame(Posicion::VANGUARDIA, $equipo[0]->posicion);
         $this->assertSame(Posicion::RETAGUARDIA, $equipo[1]->posicion);
         $this->assertSame(Posicion::RETAGUARDIA, $equipo[2]->posicion);
-        $this->assertSame(464, $equipo[1]->speciesId);
-        $this->assertSame(464, $equipo[2]->speciesId);
+        $this->assertSame(Posicion::VANGUARDIA, $equipo[3]->posicion);
+        $this->assertSame(Posicion::RETAGUARDIA, $equipo[4]->posicion);
+        $this->assertSame([338, 464, 464, 338, 464], array_map(
+            fn (DatosPokemonBatalla $p): int => $p->speciesId,
+            $equipo,
+        ));
     }
 
     #[Test]
@@ -140,16 +154,22 @@ class GeneradorPokemonGimnasioTest extends TestCase
         $this->crearPokemon(461, ['hp' => 50, 'atk' => 60, 'def' => 50, 'spAtk' => 60, 'spDef' => 50, 'speed' => 55]);
         $this->crearPokemon(861, ['hp' => 50, 'atk' => 60, 'def' => 50, 'spAtk' => 60, 'spDef' => 50, 'speed' => 55]);
 
+        // Escalado 5v5: [V,R1,R2,R3] → [V,R1,R2,R3,V] = 2 vanguardia + 3 retaguardia.
         $equipo = $this->generador->generar(new EquipoEtapaGimnasio(
             vanguardia: new IntCollection([560]),
             retaguardia: new IntCollection([461, 861, 461]),
         ), 50);
 
-        $this->assertCount(4, $equipo);
+        $this->assertCount(5, $equipo);
         $this->assertSame(Posicion::VANGUARDIA, $equipo[0]->posicion);
         $this->assertSame(Posicion::RETAGUARDIA, $equipo[1]->posicion);
         $this->assertSame(Posicion::RETAGUARDIA, $equipo[2]->posicion);
         $this->assertSame(Posicion::RETAGUARDIA, $equipo[3]->posicion);
+        $this->assertSame(Posicion::VANGUARDIA, $equipo[4]->posicion);
+        $this->assertSame([560, 461, 861, 461, 560], array_map(
+            fn (DatosPokemonBatalla $p): int => $p->speciesId,
+            $equipo,
+        ));
     }
 
     #[Test]
@@ -158,17 +178,22 @@ class GeneradorPokemonGimnasioTest extends TestCase
         $this->crearPokemon(488, ['hp' => 50, 'atk' => 60, 'def' => 50, 'spAtk' => 60, 'spDef' => 50, 'speed' => 55]);
         $this->crearPokemon(150, ['hp' => 50, 'atk' => 60, 'def' => 50, 'spAtk' => 60, 'spDef' => 50, 'speed' => 55]);
 
-        // 10002 (deoxys-defense) no existe en BD → se omite, quedan 488 y 150
+        // 10002 (deoxys-defense) no existe en BD → se omite; el roster [488(V),150(R)] escala a 5.
         $equipo = $this->generador->generar(new EquipoEtapaGimnasio(
             vanguardia: new IntCollection([488, 10002]),
             retaguardia: new IntCollection([150]),
         ), 50);
 
-        $this->assertCount(2, $equipo);
-        $this->assertSame(488, $equipo[0]->speciesId);
+        $this->assertCount(5, $equipo);
+        $this->assertSame([488, 150, 488, 150, 488], array_map(
+            fn (DatosPokemonBatalla $p): int => $p->speciesId,
+            $equipo,
+        ));
         $this->assertSame(Posicion::VANGUARDIA, $equipo[0]->posicion);
-        $this->assertSame(150, $equipo[1]->speciesId);
         $this->assertSame(Posicion::RETAGUARDIA, $equipo[1]->posicion);
+        $this->assertSame(Posicion::VANGUARDIA, $equipo[2]->posicion);
+        $this->assertSame(Posicion::RETAGUARDIA, $equipo[3]->posicion);
+        $this->assertSame(Posicion::VANGUARDIA, $equipo[4]->posicion);
     }
 
     /**

@@ -79,6 +79,10 @@ final class GeneradorPokemonGimnasio
      * su posición. Permite duplicados (cada id del catálogo genera un
      * combatiente); si una especie no existe en BD, se omite.
      *
+     * Escalado 5v5: si el roster resultante tiene menos de 5 combatientes, se
+     * repite cíclicamente hasta llegar a 5 (el catálogo siempre conserva ambos
+     * bandos → la formación escalada mantiene vanguardia y retaguardia).
+     *
      * @return list<array{Posicion, Pokemon}>
      */
     private function porPosicion(EquipoEtapaGimnasio $equipo): array
@@ -94,7 +98,31 @@ final class GeneradorPokemonGimnasio
             }
         }
 
-        return $resultado;
+        return $this->escalarACinco($resultado);
+    }
+
+    /**
+     * Repite cíclicamente el roster hasta tener exactamente 5 combatientes
+     * (cada ciclo respeta el orden vanguardia → retaguardia original).
+     *
+     * @param  list<array{Posicion, Pokemon}>  $roster
+     * @return list<array{Posicion, Pokemon}>
+     */
+    private function escalarACinco(array $roster): array
+    {
+        if (count($roster) >= 5) {
+            return $roster;
+        }
+
+        $tamaño = count($roster);
+        $indice = $tamaño;
+
+        while (count($roster) < 5) {
+            $roster[] = $roster[$indice % $tamaño];
+            $indice++;
+        }
+
+        return $roster;
     }
 
     /**

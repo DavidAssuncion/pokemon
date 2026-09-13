@@ -4,25 +4,31 @@ declare(strict_types=1);
 
 namespace Src\CombateEntrenadores\App;
 
+use App\Models\Pokemon;
 use App\Models\Team;
 use Src\Battle\Domain\DatosPokemonBatalla;
 use Src\Battle\Domain\Posicion;
-use Src\CombateEntrenadores\Domain\ClasificadorPosicion;
+use Src\CombateRuta\Domain\ClasificadorOfensivaDefensiva;
 
 /**
  * Construye el equipo de batalla del jugador a partir de un Team de la BD,
- * aplicando la formación (vanguardia/retaguardia) elegida en el popup.
+ * aplicando la formación de combate (vanguardia/retaguardia).
+ *
+ * Prioridad de posición por slot: popup del modal > formación persistida en
+ * el Team (columna formacion) > clasificación automática por stats con
+ * ClasificadorOfensivaDefensiva (ofensiva = atk + speed > defensiva =
+ * def + spDef + hp → retaguardia; empate → vanguardia).
  */
 class ConstruirEquipoJugador
 {
     public function __construct(
         private readonly MapeadorPokemonBatalla $mapeador,
-        private readonly ClasificadorPosicion $clasificador,
+        private readonly ClasificadorOfensivaDefensiva $clasificador,
     ) {
     }
 
     /**
-     * @param  array<int, string>  $formacion  posición por slot: [slot => 'vanguardia'|'retaguardia']
+     * @param  array<int, string>  $formacion  posición por slot del popup: [slot => 'vanguardia'|'retaguardia']
      * @param  int|null  $nivel  nivel del jugador (para escalar stats en gimnasios); null = stats base (entrenadores hábitat)
      * @return list<DatosPokemonBatalla>
      */
@@ -31,6 +37,9 @@ class ConstruirEquipoJugador
         $combatientes = [];
 
         $miembros = $equipo->members->sortBy('slot')->values();
+
+        /** @var array<int, string> $formacionPersistida */
+        $formacionPersistida = $equipo->getAttribute('formacion') ?? [];
 
         foreach ($miembros as $miembro) {
             $reclutado = $miembro->reclutado;
@@ -41,7 +50,7 @@ class ConstruirEquipoJugador
             }
 
             $slot = (int) $miembro->slot;
-            $posicion = $this->posicionPara($slot, $formacion, $pokemon, $nivel);
+            $posicion = $this->posicionPara($slot, $formacion, $formacionPersistida, $pokemon);
 
             $combatientes[] = $this->mapeador->desdePokemon(
                 pokemon: $pokemon,
@@ -57,14 +66,16 @@ class ConstruirEquipoJugador
     }
 
     /**
-     * Posición para un slot: la elegida por el usuario si existe; si no, la
-     * clasificación por stats (defensivo → vanguardia, ofensivo → retaguardia).
-     * Se usan stats base: el ratio atk+spAtk vs def+spDef es el mismo a
-     * cualquier nivel.
+     * Posición de un slot: la del popup si existe; si no, la persistida en el
+     * Team; si no, la clasificación por stats (se usan stats base: el ratio
+     * ofensiva/defensiva es el mismo a cualquier nivel).
+     *
+     * @param  array<int, string>  $formacion
+     * @param  array<int, string>  $formacionPersistida
      */
-    private function posicionPara(int $slot, array $formacion, mixed $pokemon, ?int $nivel): Posicion
+    private function posicionPara(int $slot, array $formacion, array $formacionPersistida, Pokemon $pokemon): Posicion
     {
-        $elegida = $formacion[$slot] ?? null;
+        $elegida = $formacion[$slot] ?? $formacionPersistida[$slot] ?? null;
 
         if ($elegida !== null && in_array($elegida, ['vanguardia', 'retaguardia'], true)) {
             return Posicion::from($elegida);
@@ -72,8 +83,8 @@ class ConstruirEquipoJugador
 
         $stats = $this->mapeador->statsDe($pokemon);
 
-        return $this->clasificador->esDefensivo($stats)
-            ? Posicion::VANGUARDIA
-            : Posicion::RETAGUARDIA;
+        return $this->clasificador->esOfensivo($stats)
+            ? Posicion::RETAGUARDIA
+            : Posicion::VANGUARDIA;
     }
 }

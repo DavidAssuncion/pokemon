@@ -12,6 +12,7 @@ use Src\Battle\Domain\Combatiente;
 use Src\CombateEntrenadores\App\OtorgarRecompensasEntrenador;
 use Src\CombateEntrenadores\App\RegistrarResultadoEntrenador;
 use Src\CombateEntrenadores\Domain\DataTransferObjects\DatosModalVictoria;
+use Src\CombateRuta\App\RegistrarResultadoRuta;
 use Src\Gimnasios\App\RegistrarResultadoGimnasio;
 use Src\Gimnasios\Domain\CatalogoGimnasios;
 use Src\Mazmorras\App\RegistrarResultadoMazmorra;
@@ -47,6 +48,7 @@ final class PresentadorResultadoBatalla
         $resultado = match ($tipo) {
             'gimnasio' => self::procesarGimnasio($battle, $meta),
             'mazmorra' => self::procesarMazmorra($battle, $meta),
+            'ruta' => self::procesarRuta($battle, $meta),
             default => self::procesarEntrenador($battle, $meta),
         };
 
@@ -176,6 +178,39 @@ final class PresentadorResultadoBatalla
         }
 
         return ['log' => $log, 'rewards' => [], 'habitatId' => 0];
+    }
+
+    /**
+     * Combate de ruta (pokémon salvajes): sin log ni bloqueo; la victoria
+     * devuelve el modal con recompensas y capturas.
+     *
+     * @param  array<string, mixed>  $meta
+     */
+    private static function procesarRuta(AgregadoBatalla $battle, array $meta): array
+    {
+        $habitatId = (int) ($meta['habitat_id'] ?? 0);
+        $userId = (int) ($meta['user_id'] ?? 0);
+        $teamId = (int) ($meta['team_id'] ?? 0);
+        $nivelRival = (int) ($meta['nivel'] ?? 0);
+        $won = ! $battle->team1->todosDebilitados();
+
+        $speciesRival = $battle->team2->combatientesCollection()->map(
+            fn (Combatiente $c): int => $c->speciesId(),
+        );
+
+        $resultado = app(RegistrarResultadoRuta::class)->registrar(
+            userId: $userId,
+            teamId: $teamId,
+            speciesIdsRival: $speciesRival,
+            nivelRival: $nivelRival,
+            won: $won,
+        );
+
+        return [
+            'log' => [],
+            'rewards' => $resultado !== null ? $resultado->aArray() : [],
+            'habitatId' => $habitatId,
+        ];
     }
 
     /**

@@ -68,10 +68,12 @@ class PlayerController extends Controller
             $members = $team->members->sortBy('slot')->values();
 
             $sinergia = null;
-            if ($members->count() === 3) {
+            if ($members->count() >= 3) {
                 // RFC: la sinergia del equipo se calcula con los roles
                 // INDIVIDUALES de los reclutados miembro (reclutado->rol()),
                 // no con team_members.behavior.
+                // Equipos de 4-5: la tabla solo cubre pares/tríos → null
+                // (no mostrar sinergia), aceptable.
                 $roles = $members->map(
                     fn (TeamMember $m): RolExploracion => $m->reclutado?->rol() ?? RolExploracion::COMBATIENTE
                 )->all();

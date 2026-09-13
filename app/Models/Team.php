@@ -17,7 +17,18 @@ class Team extends Model
     protected $fillable = [
         'user_id',
         'name',
+        'formacion',
     ];
+
+    /**
+     * @return array<string, string>
+     */
+    protected function casts(): array
+    {
+        return [
+            'formacion' => 'array',
+        ];
+    }
 
     /**
      * @return HasMany<TeamMember, $this>

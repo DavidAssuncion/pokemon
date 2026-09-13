@@ -152,6 +152,38 @@ class TeamController extends Controller
     }
 
     /**
+     * Actualiza la formación persistida del equipo (PATCH /teams/{team}/formacion).
+     *
+     * Contrato: { formacion: { slot: 'vanguardia'|'retaguardia', ... } }; sin slots
+     * se limpia → vuelve a la clasificación automática por stats.
+     */
+    public function updateFormacion(Request $request, Team $team): RedirectResponse|JsonResponse
+    {
+        // Route-model binding + global scope de Team: 404 para equipos ajenos.
+        if ($team->isExploring()) {
+            return $this->responderError($request, 'No se puede modificar un equipo con exploraciones activas');
+        }
+
+        $data = $request->validate([
+            'formacion' => 'sometimes|array',
+            'formacion.*' => 'in:vanguardia,retaguardia',
+        ]);
+
+        $team->update(['formacion' => $data['formacion'] ?? null]);
+
+        if ($request->wantsJson()) {
+            return response()->json([
+                'team' => [
+                    'id' => $team->id,
+                    'formacion' => $team->formacion ?? [],
+                ],
+            ]);
+        }
+
+        return redirect()->back();
+    }
+
+    /**
      * Actualiza el behavior de un miembro (PATCH /teams/member/{member}/role).
      *
      * Usa route-model binding (TeamMember). Anti-IDOR y exploración activa.

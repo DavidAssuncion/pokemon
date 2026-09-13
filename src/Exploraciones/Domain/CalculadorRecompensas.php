@@ -28,6 +28,11 @@ use Src\Shared\Tipos\TipoPokemon;
 final class CalculadorRecompensas
 {
     /**
+     * Miembros del equipo de combate (5v5): divisor del reparto del 80 % de la
+     * EXP entre cada integrante.
+     */
+    public const MIEMBROS_EQUIPO = 5;
+    /**
      * @param  Collection<int, PokemonDerrotado>  $derrotados
      * @param  callable(PokemonDerrotado):bool  $aleatorioCaptura  Decide si el
      *                                                              derrotado se captura.
@@ -312,8 +317,8 @@ final class CalculadorRecompensas
     }
 
     /**
-     * EXP por integrante (D3): cada miembro del equipo recibe floor((T×0.8)/3)
-     * por cada derrota (reparto 80 % entre 3).
+     * EXP por integrante (D3): cada miembro del equipo recibe floor((T×0.8)/5)
+     * por cada derrota (reparto 80 % entre MIEMBROS_EQUIPO).
      *
      * @param  Collection<int, PokemonDerrotado>  $derrotados
      */
@@ -323,7 +328,7 @@ final class CalculadorRecompensas
 
         foreach ($derrotados as $pokemon) {
             $exp = NivelHelper::expDerrota($pokemon->baseExperience, $nivelSalvaje);
-            $total += (int) floor($exp * 0.8 / 3);
+            $total += (int) floor($exp * 0.8 / self::MIEMBROS_EQUIPO);
         }
 
         return max(0, (int) floor($total * $multiplicador));
@@ -331,7 +336,7 @@ final class CalculadorRecompensas
 
     /**
      * EXP de tipo por miembro: reparto de la EXP tipada igual que
-     * calcularExpPorMiembro (floor(exp×0.8/3) por derrota), pero DESPUÉS del
+     * calcularExpPorMiembro (floor(exp×0.8/5) por derrota), pero DESPUÉS del
      * reparto por tipo (1 tipo → 100 %, 2 tipos → 50/50). Se acumula por tipo,
      * se aplica el multiplicador con floor y se filtra exp > 0.
      *
@@ -347,7 +352,7 @@ final class CalculadorRecompensas
             if ($numTipos === 0) {
                 continue;
             }
-            $expMiembro = (int) floor(($numTipos === 1 ? $exp : intdiv($exp, 2)) * 0.8 / 3);
+            $expMiembro = (int) floor(($numTipos === 1 ? $exp : intdiv($exp, 2)) * 0.8 / self::MIEMBROS_EQUIPO);
             foreach ($pokemon->tipos as $tipo) {
                 $expTipo[$tipo] = ($expTipo[$tipo] ?? 0) + $expMiembro;
             }
