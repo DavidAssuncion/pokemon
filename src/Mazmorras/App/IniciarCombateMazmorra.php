@@ -63,26 +63,22 @@ final class IniciarCombateMazmorra
 
         $datosJugador = $this->construirEquipoJugador->desdeEquipo($equipo, $formacion, $nivelJugador);
 
-        $team1 = EquipoBatalla::fromData($datosJugador, $equipo->name);
-        $team2 = EquipoBatalla::fromData([$jefe], 'Jefe del piso '.$piso);
-
-        $batalla = new AgregadoBatalla($team1, $team2);
-        $batalla->triggerBattleStartEffects();
-
-        $battleId = 'battle_mazmorra_'.uniqid();
-
-        $this->battleSession->guardar($battleId, $batalla);
-        $this->battleSession->guardarMeta($battleId, [
-            'tipo' => 'mazmorra',
-            'habitat_id' => $habitatId,
-            'floor' => $piso,
-            'boss_species_id' => $speciesId,
-            'nivel_rival' => $nivelJugador,
-            'user_id' => $userId,
-            'team_id' => $teamId,
-        ]);
-
-        return $battleId;
+        return $this->creadorBatalla->crearYGuardar(
+            datosJugador: $datosJugador,
+            nombreJugador: $equipo->name,
+            datosRival: [$jefe],
+            nombreRival: 'Jefe del piso '.$piso,
+            prefijoId: 'mazmorra',
+            meta: [
+                'tipo' => 'mazmorra',
+                'habitat_id' => $habitatId,
+                'floor' => $piso,
+                'boss_species_id' => $speciesId,
+                'nivel_rival' => $nivelJugador,
+                'user_id' => $userId,
+                'team_id' => $teamId,
+            ],
+        );
     }
 
     private function validar(?ConfiguracionMazmorra $config, int $piso, int $userId, int $habitatId): void
