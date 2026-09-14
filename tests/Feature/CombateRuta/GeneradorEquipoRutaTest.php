@@ -117,6 +117,19 @@ class GeneradorEquipoRutaTest extends TestCase
     }
 
     #[Test]
+    public function devuelve_lista_vacia_cuando_el_pool_del_nivel_esta_vacio(): void
+    {
+        $habitat = $this->crearHabitat('Ruta 4B');
+        // El pool solo existe en nivel 2; se pide nivel 1 → sin rivales.
+        $this->crearPokemon(902, $habitat);
+        $habitat->pokemon()->updateExistingPivot(902, ['level' => 2]);
+
+        $equipo = $this->crearGenerador()->generar((int) $habitat->id, 1, nivelRival: 12);
+
+        $this->assertSame([], $equipo);
+    }
+
+    #[Test]
     public function pondera_con_divisor_1_cuando_el_hatch_es_nulo_o_cero(): void
     {
         $habitat = $this->crearHabitat('Ruta 5');

@@ -137,6 +137,27 @@ class OtorgarRecompensasRutaTest extends TestCase
         $this->assertGreaterThan(0, $resultado->expTotal);
     }
 
+    #[Test]
+    public function ids_invalidos_y_duplicados_se_sanean_antes_de_otorgar(): void
+    {
+        $persistir = $this->createMock(PersistirRecompensas::class);
+        $persistir->expects($this->once())->method('persistir');
+
+        $otorgar = new OtorgarRecompensasRuta(new CalculadorRecompensas(), $persistir);
+        $pokemon = $this->crearPokemonRival(55);
+
+        // Duplicado + id inválido (0): solo el id válido cuenta una vez.
+        $resultado = $otorgar->otorgar(
+            userId: (int) $this->user->id,
+            teamId: (int) $this->team->id,
+            speciesIdsRival: [(int) $pokemon->id, (int) $pokemon->id, 0],
+            aleatorio: fn (): float => 0.05,
+        );
+
+        $this->assertInstanceOf(ResultadoRuta::class, $resultado);
+        $this->assertSame(1, $resultado->capturas->count());
+    }
+
     private function crearPokemonRival(int $speciesId): Pokemon
     {
         $pokemon = Pokemon::create([

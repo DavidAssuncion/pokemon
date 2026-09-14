@@ -75,6 +75,13 @@ class CombateRutaControllerTest extends TestCase
     }
 
     #[Test]
+    public function iniciar_sin_team_id_rechaza(): void
+    {
+        $this->postJson("/api/habitats/{$this->habitat->id}/ruta/iniciar", [])
+            ->assertUnprocessable();
+    }
+
+    #[Test]
     public function rivales_del_panel_devuelve_cinco_salvajes(): void
     {
         $response = $this->getJson("/api/habitats/{$this->habitat->id}/ruta/rivales");
@@ -85,7 +92,23 @@ class CombateRutaControllerTest extends TestCase
             $this->assertArrayHasKey('id', $rival);
             $this->assertArrayHasKey('nombre', $rival);
             $this->assertArrayHasKey('posicion', $rival);
+            $this->assertArrayHasKey('species_id', $rival);
+            $this->assertArrayHasKey('nivel', $rival);
         }
+    }
+
+    #[Test]
+    public function rivales_recorta_el_nivel_al_rango_1_3(): void
+    {
+        // nivel 0 → clamp a 1 (pool del nivel 1 existe → 5 rivales).
+        $this->getJson("/api/habitats/{$this->habitat->id}/ruta/rivales?nivel=0")
+            ->assertOk()
+            ->assertJsonCount(5, 'rivales');
+
+        // nivel 99 → clamp a 3 (sin pool en el nivel 3 → lista vacía).
+        $this->getJson("/api/habitats/{$this->habitat->id}/ruta/rivales?nivel=99")
+            ->assertOk()
+            ->assertJsonCount(0, 'rivales');
     }
 
     private function crearHabitat(string $nombre): Habitat
