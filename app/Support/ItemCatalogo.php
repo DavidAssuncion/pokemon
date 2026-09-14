@@ -7,6 +7,9 @@ namespace App\Support;
 use App\Enums\StatEnum;
 use App\Enums\TipoEnum;
 use App\Models\Pokemon;
+use Src\CombateEntrenadores\Domain\Collections\ItemCarameloCollection;
+use Src\CombateEntrenadores\Domain\DataTransferObjects\ItemCaramelo;
+use Src\Exploraciones\Domain\Recompensas\ResultadoRecompensas;
 use Src\Shared\Domain\SlugTipo;
 
 /**
@@ -33,6 +36,44 @@ final class ItemCatalogo
     public static function keyTipo(string $tipo): string
     {
         return 'tipo:'.SlugTipo::de($tipo);
+    }
+
+    /**
+     * Convierte un ResultadoRecompensas en una ItemCarameloCollection listo
+     * para el modal de victoria (familia vía ItemCatalogo, EV vía ItemCatalogo,
+     * tipo vía slug directo).
+     */
+    public static function caramelosDeRecompensas(ResultadoRecompensas $recompensas): ItemCarameloCollection
+    {
+        $caramelos = new ItemCarameloCollection();
+
+        foreach ($recompensas->caramelosFamilia as $recompensa) {
+            $resuelto = self::resolve(self::keyFamilia($recompensa->evolutionChainId));
+            $caramelos->add(new ItemCaramelo(
+                nombre: $resuelto['nombre'],
+                imagen: $resuelto['imagen'],
+                cantidad: $recompensa->cantidad,
+            ));
+        }
+
+        foreach ($recompensas->caramelosEv as $recompensa) {
+            $resuelto = self::resolve(self::keyEv($recompensa->stat));
+            $caramelos->add(new ItemCaramelo(
+                nombre: $resuelto['nombre'],
+                imagen: $resuelto['imagen'],
+                cantidad: $recompensa->cantidad,
+            ));
+        }
+
+        foreach ($recompensas->caramelosTipo as $recompensa) {
+            $caramelos->add(new ItemCaramelo(
+                nombre: $recompensa->tipo,
+                imagen: '/images/candy_type/'.$recompensa->slug().'.webp',
+                cantidad: $recompensa->cantidad,
+            ));
+        }
+
+        return $caramelos;
     }
 
     /**

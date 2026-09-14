@@ -10,9 +10,7 @@ use App\Models\Team;
 use App\Models\User;
 use App\Support\CadenasEvolutivas;
 use App\Support\ItemCatalogo;
-use Src\CombateEntrenadores\Domain\Collections\ItemCarameloCollection;
 use Src\CombateEntrenadores\Domain\DataTransferObjects\DatosModalVictoria;
-use Src\CombateEntrenadores\Domain\DataTransferObjects\ItemCaramelo;
 use Src\Exploraciones\App\NormalizadorPokemonDerrotado;
 use Src\Exploraciones\App\PersistirRecompensas;
 use Src\Exploraciones\Domain\CalculadorRecompensas;
@@ -111,38 +109,10 @@ final class OtorgarRecompensasEntrenador
      */
     private function aDatosModal(ResultadoRecompensas $recompensas): DatosModalVictoria
     {
-        $caramelos = new ItemCarameloCollection();
-
-        foreach ($recompensas->caramelosFamilia as $recompensa) {
-            $resuelto = ItemCatalogo::resolve(ItemCatalogo::keyFamilia($recompensa->evolutionChainId));
-            $caramelos->add(new ItemCaramelo(
-                nombre: $resuelto['nombre'],
-                imagen: $resuelto['imagen'],
-                cantidad: $recompensa->cantidad,
-            ));
-        }
-
-        foreach ($recompensas->caramelosEv as $recompensa) {
-            $resuelto = ItemCatalogo::resolve(ItemCatalogo::keyEv($recompensa->stat));
-            $caramelos->add(new ItemCaramelo(
-                nombre: $resuelto['nombre'],
-                imagen: $resuelto['imagen'],
-                cantidad: $recompensa->cantidad,
-            ));
-        }
-
-        foreach ($recompensas->caramelosTipo as $recompensa) {
-            $caramelos->add(new ItemCaramelo(
-                nombre: $recompensa->tipo,
-                imagen: '/images/candy_type/'.$recompensa->slug().'.webp',
-                cantidad: $recompensa->cantidad,
-            ));
-        }
-
         return new DatosModalVictoria(
             expTotal: $recompensas->expTotal,
             expMiembro: $recompensas->expPorMiembro,
-            caramelos: $caramelos,
+            caramelos: ItemCatalogo::caramelosDeRecompensas($recompensas),
         );
     }
 }

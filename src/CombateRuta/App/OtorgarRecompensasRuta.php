@@ -12,7 +12,6 @@ use App\Support\CadenasEvolutivas;
 use App\Support\ItemCatalogo;
 use Random\Randomizer;
 use Src\CombateEntrenadores\Domain\Collections\ItemCarameloCollection;
-use Src\CombateEntrenadores\Domain\DataTransferObjects\ItemCaramelo;
 use Src\CombateRuta\Domain\DataTransferObjects\ResultadoRuta;
 use Src\Exploraciones\App\NormalizadorPokemonDerrotado;
 use Src\Exploraciones\App\PersistirRecompensas;
@@ -131,34 +130,6 @@ final class OtorgarRecompensasRuta
 
     private function caramelosDe(ResultadoRecompensas $recompensas): ItemCarameloCollection
     {
-        $caramelos = new ItemCarameloCollection();
-
-        foreach ($recompensas->caramelosFamilia as $recompensa) {
-            $resuelto = ItemCatalogo::resolve(ItemCatalogo::keyFamilia($recompensa->evolutionChainId));
-            $caramelos->add(new ItemCaramelo(
-                nombre: $resuelto['nombre'],
-                imagen: $resuelto['imagen'],
-                cantidad: $recompensa->cantidad,
-            ));
-        }
-
-        foreach ($recompensas->caramelosEv as $recompensa) {
-            $resuelto = ItemCatalogo::resolve(ItemCatalogo::keyEv($recompensa->stat));
-            $caramelos->add(new ItemCaramelo(
-                nombre: $resuelto['nombre'],
-                imagen: $resuelto['imagen'],
-                cantidad: $recompensa->cantidad,
-            ));
-        }
-
-        foreach ($recompensas->caramelosTipo as $recompensa) {
-            $caramelos->add(new ItemCaramelo(
-                nombre: $recompensa->tipo,
-                imagen: '/images/candy_type/'.$recompensa->slug().'.webp',
-                cantidad: $recompensa->cantidad,
-            ));
-        }
-
-        return $caramelos;
+        return ItemCatalogo::caramelosDeRecompensas($recompensas);
     }
 }
