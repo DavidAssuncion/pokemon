@@ -8,6 +8,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 use Src\Battle\Domain\DatosPokemonBatalla;
 use Src\CombateRuta\App\GeneradorEquipoRuta;
@@ -49,12 +50,14 @@ final class CombateRutaController extends Controller
 
     public function iniciar(int $habitat, Request $request): JsonResponse
     {
-        $data = $request->validate([
+        $validator = Validator::make($request->all(), [
             'team_id' => ['required', 'integer', Rule::exists('teams', 'id')->where('user_id', Auth::id())],
             'formacion' => 'sometimes|array',
             'formacion.*' => 'in:vanguardia,retaguardia',
             'nivel' => 'sometimes|integer|min:1|max:3',
         ]);
+
+        $data = $validator->validated();
 
         $user = Auth::user();
         $nivel = (int) ($data['nivel'] ?? 1);
