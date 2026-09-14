@@ -6,7 +6,23 @@
 - PSR-4 autoloading: `App\` → `app/`, `Src\` → `src/`.
 - Sigue el estilo de Laravel Pint (PSR-12).
 - Sin comentarios triviales. El código debe ser autoexplicativo.
-- Prohibido trabajar con arrays. Todas las estructuras de datos deben ser DTOs, DTOCollection, o clases tipadas. No se pueden usar arrays
+- Prohibido trabajar con arrays. Ninguna capa devuelve `array` como contrato: usar DTOs readonly, `DTOCollection`, Collections tipadas (`Src\Shared\Domain\Collection`), Value Objects o Enums. Única excepción tolerada: `toArray()` interno requerido por Eloquent para persistencia.
+
+## Tipado y datos
+
+- `declare(strict_types=1)` y tipos completos en parámetros y retornos.
+- Prohibido devolver `array` como contrato entre capas, métodos públicos, casos de uso, repositorios, controladores o APIs.
+- Usar DTOs readonly, `DTOCollection` y Collections tipadas (`Src\Shared\Domain\Collection`).
+- Usar Enums y Value Objects para primitivas cerradas.
+- Propiedades `private`/`readonly` con getters tipados.
+- Única excepción tolerada: `toArray()` interno requerido por Eloquent para persistencia; nunca como contrato público.
+
+## DRY y reutilización
+
+- Buscar reutilización en el módulo y en `src/Shared` antes de crear código nuevo.
+- Código reutilizable por un módulo vive en ese módulo.
+- Código que puede repetirse entre módulos vive en `src/Shared` (o `app/` si es infraestructura Laravel transversal).
+- No duplicar bloques de más de 5 líneas.
 
 ## Nombrado
 
@@ -153,7 +169,8 @@ app/
 
 ## Tests
 
-- PHPUnit con `tests/Unit/` y `tests/Feature/`.
+- El testing se difiere al cierre del módulo completo y NO se ejecuta durante el desarrollo normal.
+- Cuando se ejecute: PHPUnit con `tests/Unit/` y `tests/Feature/`.
 - Base de datos SQLite en memoria para tests (`:memory:`).
 - Sin framework específico de testing adicional.
 

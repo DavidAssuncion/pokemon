@@ -175,3 +175,55 @@ hasta llegar a 5. Esto:
 - **SinergiaEquipo con 5 roles**: la clave tendria 5 chars, no encontrará match → null.
   Aceptable, pero notificar al frontend que la sinergia de 5 es null.
 - **Migración formacion**: si el frontend aún no consume el endpoint, no afecta.
+
+---
+
+# ANALISIS_BACKEND — Contrato del modal de victoria de Ruta (caramelos por grupo)
+
+## Objetivo
+
+Cambiar el contrato de `ResultadoRuta::aArray()` para que el modal de victoria del
+combate de ruta consuma `caramelos_familia`, `caramelos_ev` y `caramelos_tipo` (shape
+`{src, alt, cantidad, nombre}` como el partial `exploraciones/_caramelo.blade.php`),
+eliminando la clave plana `caramelos`. Marcar como DEPRECATED el endpoint
+`GET /ruta/rivales`. Sin tests (decisión explícita del usuario).
+
+## Archivos afectados
+
+- `src/CombateRuta/Domain/DataTransferObjects/ResultadoRuta.php` — nuevo contrato.
+- `src/CombateRuta/App/OtorgarRecompensasRuta.php` — construye los 3 grupos vía
+  `ItemCatalogo::resolve()` con las claves canónicas (`familia:{chainId}`, `ev:{stat}`,
+  `tipo:{slug}`); elimina el aplanado `ItemCatalogo::caramelosDeRecompensas` (que NO se
+  borra: sigue en uso por `OtorgarRecompensasEntrenador`).
+- `src/CombateRuta/Infra/Controllers/CombateRutaController.php` — comentario
+  `// DEPRECATED:` en `rivales()` (sin cambiar comportamiento).
+
+## Tests
+
+Ninguno: el usuario decidió no crear ni actualizar tests en esta iteración.
+
+## Diseño
+
+- `ResultadoRuta` pasa a ser un DTO inmutable `readonly` con promoción de constructor:
+  `victoria`, `expTotal`, `expMiembro`, `caramelosFamilia`, `caramelosEv`,
+  `caramelosTipo` (listas de arrays `{src: string, alt: string, cantidad: int,
+  nombre: string|null}`) y `capturas` (igual que hoy). `aArray()` devuelve las claves
+  `exp_total`, `exp_miembro`, `caramelos_familia`, `caramelos_ev`, `caramelos_tipo`,
+  `capturas` (sin `caramelos`).
+- `OtorgarRecompensasRuta` resuelve cada caramelo con `ItemCatalogo::resolve()`:
+  `src` = `imagen`; `alt` = `nombre`; para EV `nombre` = `StatEnum::fromId()->label()`
+  (null si el stat no aplica); para tipo `nombre` = el label de tipo.
+- `candyFallback` y los assets (`candy_pokemon/{id}.webp`, `candy_ev/{slug}.webp`,
+  `candy_type/{slug}.webp`) ya existen; la vista nueva los consumirá igual que
+  exploraciones.
+
+## Riesgos
+
+- La vista `combate.blade.php` aún lee `rewards['caramelos']` (lista plana); el
+  rediseño del modal es tarea del Frontend, por lo que el modal quedará sin caramelos
+  hasta ese cambio (cambio coordinado).
+- Tests existentes que fijan el contrato viejo (`OtorgarRecompensasRutaTest`,
+  `PresentadorRutaTest`) quedarán desactualizados hasta una iteración de tests; no se
+  tocan por decisión del usuario.
+- `ItemCatalogo::caramelosDeRecompensas` sigue siendo usada por CombateEntrenadores →
+  no se modifica.

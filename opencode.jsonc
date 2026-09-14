@@ -3,18 +3,18 @@
   "default_agent": "analista",
   "agent": {
     "analista": {
-      "description": "Analista: transforma ideas en especificación. No codea.",
+      "description": "Analista: transforma ideas en especificación. No codea. Al cerrar el flujo pregunta por testing específico.",
       "mode": "primary",
       "prompt": "{file:./docs/agents/analista.md}",
       "permission": { "edit": "deny", "bash": "deny" }
     },
     "backend": {
-      "description": "Backend Laravel: implementa con TDD. Análisis previo obligatorio.",
+      "description": "Backend Laravel: implementa código tipado (DTOs/Collections), sin ejecutar tests. Análisis previo obligatorio.",
       "mode": "subagent",
       "prompt": "{file:./docs/agents/backend.md}"
     },
     "frontend": {
-      "description": "Frontend Blade: implementa UI. Análisis previo obligatorio.",
+      "description": "Frontend Blade: implementa UI sin ejecutar tests. Análisis previo obligatorio.",
       "mode": "subagent",
       "prompt": "{file:./docs/agents/frontend.md}"
     },

@@ -1,6 +1,6 @@
 # Workflow de Orquestación (Swarm-Forge Adaptado)
 
-Pipeline 7-agentes: Analista → Coder → QA → Cleaner → Arquitecto → Hardener → Bibliotecario.
+Pipeline 7-agentes: Analista → Coder → QA → Cleaner → Arquitecto → Hardener → Bibliotecario. El testing está diferido al cierre del módulo completo: no se ejecuta durante el desarrollo normal.
 
 ---
 
@@ -9,10 +9,10 @@ Pipeline 7-agentes: Analista → Coder → QA → Cleaner → Arquitecto → Har
 ```mermaid
 flowchart LR
     A[Analista] -->|Spec + Handoff| B[Coder<br/>Backend/Frontend]
-    B -->|Commit + Tests| C[QA]
+    B -->|Commit| C[QA]
     C -->|Pass| D[Cleaner]
     C -->|Fail| B
-    D -->|Refactor + Tests| E[Arquitecto]
+    D -->|Refactor| E[Arquitecto]
     E -->|Pass| F[Hardener]
     E -->|Fail| D
     F -->|Hardened| G[Bibliotecario]
@@ -26,12 +26,12 @@ flowchart LR
 
 | Rol | Agente | Entrada | Salida (Handoff) |
 |-----|--------|---------|------------------|
-| **Analista** | `@analista` | Idea usuario | Spec funcional + `task:` name + `priority` |
-| **Coder** | `@backend` + `@frontend` | Spec + RESUMEN_TAREA | Commit (10 chars), tests, `active/ANALISIS_*.md` |
-| **QA** | `@qa` | Commit + Tests | PASS → Cleaner | FAIL → Coder (commit, hash, líneas) |
-| **Cleaner** | `@cleaner` | Código + Tests | Refactor commits, PHPStan/Infection clean |
+| **Analista** | `@analista` | Idea usuario | Spec funcional + `task:` name + `priority` + comportamientos a testear (testing diferido) |
+| **Coder** | `@backend` + `@frontend` | Spec + RESUMEN_TAREA | Commit (10 chars), `active/ANALISIS_*.md` (sin ejecutar tests) |
+| **QA** | `@qa` | Commit | PASS → Cleaner | FAIL → Coder (commit, hash, líneas) |
+| **Cleaner** | `@cleaner` | Código | Refactor commits, PHPStan clean (sin testing) |
 | **Arquitecto** | `@arquitecto` | Código post-Cleaner | APROBADO → Hardener | RECHAZADO → Cleaner (archivo:línea) |
-| **Hardener** | `@hardener` | Código post-Arquitecto | 100% mutation killed, PHPStan L8, CRAP<10 |
+| **Hardener** | `@hardener` | Código post-Arquitecto | PHPStan L8, CRAP<10, tipado/DRY (sin testing) |
 | **Bibliotecario** | `@bibliotecario` | Código endurecido | Docs actualizadas, RESUMEN_TAREA eliminado |
 
 ---
@@ -61,7 +61,7 @@ commit: a1b2c3d4e5
 - `task:` nombre estable, corto, sin espacios (kebab-case).
 - `commit:` exactamente 10 chars hex, resuelve a 1 commit.
 - `priority:` 10 (bajo) a 90 (crítico).
-- QA valida handoff ANTES de ejecutar tests.
+- QA valida handoff ANTES de la revisión estática.
 
 ---
 
@@ -75,11 +75,12 @@ commit: a1b2c3d4e5
 1. Analiza petición.
 2. Lee contextos: `docs/context.md`, `docs/architecture.md`, `docs/conventions.md`, `src/<modulo>/context.md`.
 3. Detecta: requisitos implícitos, ambigüedades, riesgos, edge cases, mejoras.
-4. Genera especificación: Objetivo, Alcance, Requisitos, Edge Cases, Riesgos, Mejoras, Módulos Afectados.
+4. Genera especificación: Objetivo, Alcance, Requisitos, Edge Cases, Riesgos, Mejoras, Módulos Afectados, Comportamientos a cubrir en el testing futuro.
+5. Al terminar todo el flujo, preguntar al usuario si desea testing específico para la implementación.
 
 **Entrega:** Handoff a Coder con `task:`, `priority:`, spec completa.
 
-**Restricción:** Cero código.
+**Restricción:** Cero código. No ejecuta testing (testing diferido).
 
 ---
 
@@ -88,36 +89,36 @@ commit: a1b2c3d4e5
 **Inicio:** Recibe spec + handoff del Analista.
 
 **OBLIGATORIO - Análisis Previo (antes de codear):**
-- Backend: `active/ANALISIS_BACKEND.md` — archivos, tests, DTOs, enums, interfaces, riesgos.
-- Frontend: `active/ANALISIS_FRONTEND.md` — vistas, componentes, DTOs Wireable, tests Dusk, estados UI, riesgos.
+- Backend: `active/ANALISIS_BACKEND.md` — archivos, DTOs, enums, interfaces, comportamientos a cubrir en el testing futuro, riesgos.
+- Frontend: `active/ANALISIS_FRONTEND.md` — vistas, componentes, DTOs consumidos, comportamientos a cubrir en el testing futuro, estados UI, riesgos.
 
 **Hace:**
-1. TDD: test rojo → verde → refactor.
-2. Tests: Unit (Domain), Feature (Use Cases), Acceptance (E2E/Dusk).
+1. Implementa código tipado (sin arrays; DTOs/Collections).
+2. DRY por módulo y `src/Shared`.
 3. DTOs readonly en fronteras, Enums/Value Objects para primitivas.
-4. Ejecuta: `php artisan test --compact` + `vendor/bin/phpstan analyse` + `vendor/bin/infection --min-msi=80`.
+4. Escribe análisis previo con los comportamientos a cubrir en el testing futuro.
+5. Aplica formato: `vendor/bin/pint --dirty --format agent`.
 
-**Entrega:** Handoff a QA con `commit:` (10 chars), tests verdes, análisis previo escrito.
+**Entrega:** Handoff a QA con `commit:` (10 chars), análisis previo escrito con comportamientos a testear.
 
-**Restricción:** No codear sin análisis previo escrito. TDD obligatorio.
+**Restricción:** No codear sin análisis previo. Testing diferido. No ejecutar tests.
 
 ---
 
 ### Fase 3: QA (`@qa`)
 
-**Inicio:** Recibe commit + tests del Coder.
+**Inicio:** Recibe commit del Coder.
 
 **Hace:**
 1. Valida handoff: commit 10 chars, task name, priority.
-2. Ejecuta suite completa: `php artisan test --compact`.
-3. Verifica edge cases del Analista/Arquitecto.
-4. Verifica coverage ≥ 80% (mutation score ≥ 80%).
-5. Si FAIL: nota a Coder con commit hash, archivo:línea, test fallado.
-6. Si PASS: handoff a Cleaner.
+2. Revisión estática: edge cases por lectura, tipado, DTOs, Collections, DRY y handoff.
+3. Verifica edge cases del Analista/Arquitecto (por lectura, sin ejecutar tests).
+4. Si FAIL: nota a Coder con commit hash, archivo:línea.
+5. Si PASS: handoff a Cleaner.
 
-**Entrega:** PASS/FAIL + reporte + handoff.
+**Entrega:** PASS/FAIL + reporte de revisión estática + handoff.
 
-**Restricción:** Solo valida. No toca código. Bloquea sin piedad.
+**Restricción:** Solo valida. No toca código. No ejecutar testing (diferido). Bloquea sin piedad.
 
 ---
 
@@ -126,18 +127,17 @@ commit: a1b2c3d4e5
 **Inicio:** Código validado por QA.
 
 **Hace:**
-1. PHPStan level 6+.
-2. Infection (mutation testing) — detecta mutantes supervivientes.
-3. Code smells: god classes, feature envy, data clumps, shotgun surgery, primitive obsession.
-4. DRY: elimina duplicación >5 líneas.
-5. CRAP score < 10 por método.
-6. Encapsulamiento: private/readonly, getters, colecciones tipadas.
+1. PHPStan level 6+ (análisis estático).
+2. Code smells: god classes, feature envy, data clumps, shotgun surgery, primitive obsession.
+3. DRY: elimina duplicación >5 líneas.
+4. CRAP score < 10 por método.
+5. Encapsulamiento: private/readonly, getters, colecciones tipadas.
 6. Refactor en commits atómicos ("refactor: ...").
-7. Verifica tests siguen verdes.
+7. Verifica por lectura/diff que el comportamiento no cambia (sin ejecutar tests).
 
 **Entrega:** Handoff a Arquitecto con commit hash.
 
-**Restricción:** Cero cambio de comportamiento. Cero features. Commits atómicos revertibles.
+**Restricción:** Cero cambio de comportamiento. Cero features. No ejecuta testing (diferido). Commits atómicos revertibles.
 
 ---
 
@@ -151,14 +151,14 @@ commit: a1b2c3d4e5
 3. Enums/Value Objects para primitivas cerradas.
 4. DTOs readonly en fronteras (3+ params).
 5. Propiedades private/readonly, getters tipados, colecciones tipadas.
-6. Property tests en Domain (invariantes).
+6. Tipado y DRY: sin arrays públicos, DTOs/Collections tipadas, sin duplicación >5 líneas.
 7. Sin god classes (>200 líneas / >5 responsabilidades).
 8. Sin dependencias circulares.
 9. Violaciones conocidas resueltas (TeamSrv, ReclutamientoSrv, BattleSrv, etc.).
 
 **Entrega:** APROBADO → Hardener | RECHAZADO → Cleaner (archivo:línea, regla, fix sugerido).
 
-**Restricción:** No codea. Feedback accionable: archivo, línea, regla, fix.
+**Restricción:** No codea. No ejecuta testing (diferido al cierre del módulo). Feedback accionable: archivo, línea, regla, fix.
 
 ---
 
@@ -167,22 +167,21 @@ commit: a1b2c3d4e5
 **Inicio:** Código aprobado por Arquitecto.
 
 **Hace:**
-1. Infection: **100% mutation score** (todos mutantes muertos).
-2. PHPStan **level 8+** (strict).
-3. CRAP score < 10 en TODOS los métodos.
-4. DRY: 0 duplicación >5 líneas.
-5. Language mutation: `declare(strict_types=1)`, types completos, readonly, enums.
-6. Soft Gherkin mutation: mutar specs → tests deben fallar.
+1. PHPStan **level 8+** (strict).
+2. CRAP score < 10 en TODOS los métodos.
+3. DRY: 0 duplicación >5 líneas.
+4. Language mutation: `declare(strict_types=1)`, types completos, readonly, enums.
+5. Sin arrays públicos: DTOs, DTOCollection y Collections tipadas.
 
-**Entrega:** PASS → Bibliotecario | FAIL → Cleaner/Coder (commit, hash, métrica fallada).
+**Entrega:** PASS → Bibliotecario | FAIL → Cleaner/Coder (commit, hash, métrica de código fallada).
 
-**Restricción:** No cambia comportamiento. Bloquea si métricas no cumplen. Última barrera.
+**Restricción:** No cambia comportamiento. No ejecuta testing (diferido). Bloquea si las métricas de código no cumplen. Última barrera.
 
 ---
 
 ### Fase 7: Bibliotecario (`@bibliotecario`)
 
-**Inicio:** Código endurecido, tests verdes, métricas OK.
+**Inicio:** Código endurecido, métricas de código OK (testing diferido al cierre del módulo).
 
 **Hace:**
 1. Lee `active/RESUMEN_TAREA.md`.
@@ -207,14 +206,16 @@ commit: a1b2c3d4e5
 
 ## Métricas de Calidad (No Negociables)
 
+El testing (coverage y mutation score) NO forma parte del flujo normal: se difiere al cierre del módulo completo.
+
 | Métrica | Objetivo | Fase |
 |---------|----------|------|
-| Test Coverage | ≥ 80% | Coder |
-| Mutation Score (MSI) | ≥ 80% | Coder → 100% Hardener |
 | PHPStan Level | 6+ (Coder) → 8 (Hardener) | Coder → Hardener |
 | CRAP Score | < 10/método | Cleaner → Hardener |
 | DRY | 0 duplicación >5 líneas | Cleaner → Hardener |
+| Sin arrays públicos | 100% (DTOs/Collections) | Coder → Hardener |
 | Handoff Validity | 100% | QA |
+| Test Coverage / Mutation Score | Diferido al cierre del módulo | Fase de testing posterior |
 
 ---
 
@@ -223,12 +224,13 @@ commit: a1b2c3d4e5
 ```
 Usuario: "Sistema de evolución Pokémon"
   → @analista (spec + handoff task:evolucion-pokemon priority:50)
-    → @backend + @frontend (ANALISIS_*.md → TDD → commit a1b2c3d4e5)
-      → @qa (tests + edge cases → PASS handoff task:evolucion-pokemon commit:a1b2c3d4e5)
-        → @cleaner (refactor → PHPStan L6 + Infection 80% → commit f6g7h8i9j0)
+    → @backend + @frontend (ANALISIS_*.md con comportamientos a testear → commit a1b2c3d4e5)
+      → @qa (revisión estática + edge cases → PASS handoff task:evolucion-pokemon commit:a1b2c3d4e5)
+        → @cleaner (refactor → PHPStan L6 + DRY → commit f6g7h8i9j0)
           → @arquitecto (review → APROBADO handoff commit:f6g7h8i9j0)
-            → @hardener (100% mutation + PHPStan L8 + CRAP<10 → commit k1l2m3n4o5)
+            → @hardener (PHPStan L8 + CRAP<10 + sin arrays → commit k1l2m3n4o5)
               → @bibliotecario (docs → elimina active/ → ✅ Done)
+                → @analista (testing diferido: pregunta al usuario si desea testing específico)
 ```
 
 ---
@@ -239,3 +241,5 @@ Usuario: "Sistema de evolución Pokémon"
 - Contextos módulo (`src/<modulo>/context.md`) se crean bajo demanda.
 - Tareas triviales (typo, config): saltar fases a criterio, pero **QA + Hardener siempre**.
 - Si cualquier fase FAIL: vuelta atrás con commit hash y ubicación exacta. No "arreglar sobre la marcha".
+- El testing se ejecuta en una fase posterior sobre el módulo completo, nunca durante el desarrollo normal.
+- Al cierre del flujo, el Analista pregunta al usuario si desea testing específico para la implementación.

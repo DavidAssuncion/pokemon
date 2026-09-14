@@ -1,5 +1,7 @@
 # PHPUnit Skill Reference
 
+> Nota: el testing se difiere al cierre del módulo completo. NO ejecutar estos comandos durante el desarrollo normal; se usan en la fase de testing del módulo.
+
 ## Config
 
 - `phpunit.xml` — Unit (tests/Unit), Feature (tests/Feature)

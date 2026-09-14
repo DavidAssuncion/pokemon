@@ -173,16 +173,12 @@ This project has domain-specific skills available in `**/skills/**`. You MUST ac
 
 - This application uses PHPUnit for testing. All tests must be written as PHPUnit classes. Use `php artisan make:test --phpunit {name}` to create a new test.
 - If you see a test using "Pest", convert it to PHPUnit.
-- Every time a test has been updated, run that singular test.
-- When the tests relating to your feature are passing, ask the user if they would like to also run the entire test suite to make sure everything is still passing.
+- En este proyecto el testing se difiere al cierre del módulo completo: NO ejecutar tests durante el desarrollo normal. Al terminar el flujo completo, el Analista pregunta si se desea testing específico para la implementación. Cuando se ejecute testing: PHPUnit con `tests/Unit/` y `tests/Feature/`; SQLite en memoria. No eliminar tests existentes sin aprobación.
 - Tests should cover all happy paths, failure paths, and edge cases.
 - You must not remove any tests or test files from the tests directory without approval. These are not temporary or helper files; these are core to the application.
 
 ## Running Tests
 
-- Run the minimal number of tests, using an appropriate filter, before finalizing.
-- To run all tests: `php artisan test --compact`.
-- To run all tests in a file: `php artisan test --compact tests/Feature/ExampleTest.php`.
-- To filter on a particular test name: `php artisan test --compact --filter=testName` (recommended after making a change to a related file).
+- En este proyecto el testing se difiere al cierre del módulo completo: NO ejecutar tests durante el desarrollo normal. Al terminar el flujo completo, el Analista pregunta si se desea testing específico para la implementación. Cuando se ejecute testing: PHPUnit con `tests/Unit/` y `tests/Feature/`; SQLite en memoria. No eliminar tests existentes sin aprobación.
 
 </laravel-boost-guidelines>

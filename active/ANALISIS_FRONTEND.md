@@ -1,3 +1,41 @@
+# ANÁLISIS FRONTEND — Ajustes UI: formación en equipos, hábitat sin preview, popup nunca automático, rewards ruta
+
+Fecha: 2026-09-14
+Rol: Frontend (Blade + Alpine.js + Tailwind 4). Solo UI: NO tests, NO backend.
+
+## Contexto / fuentes leídas
+- `active/RESUMEN_TAREA.md`, `docs/conventions.md`, `.ai/rules/index.md` (sin reglas de glob para `resources/views/**`).
+- `src/CombateRuta/context.md` — contrato de ruta (formación popup > `teams.formacion` > automática; rewards `ResultadoRuta::aArray()`).
+- `resources/views/equipos/index.blade.php` — Alpine `favoritosApp()`, select rol por miembro, editor formación persistente (`formacionDe`/`setFormacionSlot`/`guardarFormacion`), tabs Equipos/Favoritos, modal favoritos.
+- `resources/views/habitats/show.blade.php` — Alpine `habitatShow()`, Ruta Panel con preview (`cargarRivalesRuta`), Teams Panel, Niveles Panel (pokémon/entrenadores), popup formación con chip "⚙️ Automática".
+- `resources/views/exploraciones/index.blade.php` (~264-415) + `exploraciones/_caramelo.blade.php` — patrón de recompensas de ruta a replicar en modal Livewire.
+- `resources/views/livewire/combate.blade.php` — modal victoria Bootstrap con `rewards` plano (`caramelos`, `medalla`).
+
+## Qué tocar (3 ficheros)
+1. `resources/views/equipos/index.blade.php`:
+   - Quitar tab "Favoritos" (barra de tabs + bloque ~44-238 + modal ~640-698). Título "Equipos". `activeTab` por defecto 'equipos' → se elimina el estado (barra y wrappers fuera).
+   - Sustituir `<select>` de rol por miembro por radio Vanguardia/Retaguardia (mini-botones, mismo criterio visual que bloques de formación). Marcar `// DEPRECATED:` `updateMemberRole` y `rolInicialDe` (ruta `/api/reclutado/{id}/rol` ya no se llama; endpoint se conserva).
+   - Eliminar bloque inferior "Formación de combate" (redundante), conservando "Guardar formación" + `formacionSaveError`/`formacionSaveSuccess` reubicados bajo el grid de miembros.
+   - Alpine: eliminar estado/lógica de favoritos (`favoritos`, `noFavoritos`, `allGestionables`, `availablePokemonsFav`, `togglingFavoritoId`, `showFavoritosModal`, `toggleFavorito`, `open/closeFavoritosModal`, normalize `r.favorito`).
+
+2. `resources/views/habitats/show.blade.php`:
+   - Mover Teams Panel antes del Ruta Panel (equipos arriba en ruta/entrenadores).
+   - Niveles Panel visible también en `modo === 'ruta'`: mismas tarjetas (gating `min_lvl`, conteo, visto/desconocido); click setea `rutaNivel` vía `selectRutaNivel(level)` SIN fetch (se conserva `rutaNivel` separado de `selectedLevel`; CTA y `confirmarCombateRuta` ya usan `rutaNivel`).
+   - Ruta Panel: quitar mini-selector de niveles + "Rivales salvajes"/preview; conservar cabecera 5v5 y nota azul. Eliminar Alpine `rutaRivales`, `rutaRivalesLoading`, `rutaRivalesError`, `cargarRivalesRuta()` y sus llamadas (init/setModoRuta/selectRutaNivel). CTA `:disabled="!selectedTeamId"`.
+
+3. `resources/views/livewire/combate.blade.php`:
+   - Rama ruta (`!empty($rewards['caramelos_familia'])`): recompensas estilo exploraciones (`_caramelo` por grupo familia/EV/tipo con `src/alt/cantidad/nombre` ya del backend), grid Tailwind `bg-gray-50 dark:bg-gray-900/50 rounded-lg p-3` + `<hr>`, tarjeta "Capturados" si `capturas`, EXP intactas, `@php $candyFallback…` al inicio. Rama else (entrenador/gimnasio/medalla) se mantiene.
+
+## Estados UI cubiertos
+- Equipos: loading/error de guardado formación, disabled en exploración, equipo vacío, slots vacíos.
+- Hábitat: niveles bloqueados (`min_lvl`), popup formación siempre poblado (5 slots), ruta sin preview (sin estados de carga de rivales que eliminar).
+- Combate: victoria ruta con/sin capturas, con grupos parciales de caramelos; victoria entrenador/gimnasio con medalla.
+
+## Riesgos / decisiones
+- `rutaNivel` se mantiene como estado separado (no se unifica con `selectedLevel`) para no tocar `confirmarCombateRuta` ni el CTA; `selectRutaNivel(level)` deja de hacer fetch.
+- Popup formación: helper `formacionInicialDe(teamId)` (persistida > 'vanguardia') usado por `openRutaFormacionPopup`, `selectTrainer` y `openFormacionPopup`; se elimina el chip "⚙️ Automática" y el estilo dashed. `confirmarCombate` ya envía `formacion` completa en ambas ramas; con la inicialización nueva nunca habrá slots vacíos → backend nunca aplica clasificación automática.
+- Barra de tabs de equipos: se elimina por completo (contenido directo), opción más limpia.
+- Favoritos del HÁBITAT (exploración individual) se conservan intactos en `habitats/show.blade.php`.
 # ANÁLISIS FRONTEND — Gestión-Admin de Gymnasios + Mazmorras + CP en reclutados
 
 Fecha: 2026-09-05
@@ -343,3 +381,51 @@ Constraint: NO tocar `src/` ni `app/` de backend; solo vistas + Alpine + estilos
 - La formación guardada se refleja en el hábitat si el backend expone `team.formacion` en su API
   de equipos/rivales; el primer PATCH cierra el `{formacion: {}}` pendiente.
 - `docs/context.md` sigue describiendo 3v3 (constraint: no se toca).
+
+---
+
+# ANÁLISIS FRONTEND — Refactor de gimnasios (eliminar lógica de dominio duplicada + medalla)
+
+Fecha: 2026-09-14
+Rol: Frontend (Blade + Alpine.js + Tailwind 4). Solo UI: NO tests (indicación explícita del brief).
+
+## Contexto / fuentes leídas
+- `docs/context.md`, `docs/architecture.md`, `docs/conventions.md`, `active/RESUMEN_TAREA.md`.
+- `.ai/rules/index.md` (sin reglas de glob para `resources/views/**`) + `grep` de keywords (blade/view/gimnasio/medalla/tipoBadge): sin coincidencias relevantes.
+- `src/Gimnasios/context.md` — catálogo, contrato público.
+- `src/Shared/UI/TipoBadges.php` — `MAP` (int→[label, tailwind]) y `DEFAULT` (single source of truth).
+- `src/Shared/Tipos/TipoPokemon.php` — `label()` (nombre ES) y `slug()` (`strtolower($this->name)`: `bicho`, `lucha`, `electrico`, `psiquico`…).
+- `src/Gimnasios/Domain/DataTransferObjects/{GimnasioResumen,DetalleGimnasio}.php` — `toArray()` con `tipo_nombre` + `tipo_slug`.
+- `src/Gimnasios/Infra/Controllers/GimnasioController.php` — endpoints públicos `/api/gimnasios` y `/api/gimnasios/{gym}`.
+- `public/images/medallas/` — 19 assets por **slug** (`normal.webp`, `electrico.webp`, `psiquico.webp`…), sin `0.webp`; el nombre de la medalla NO coincide con el archivo.
+- Las 3 vistas `resources/views/gimnasios/{index,show,admin}.blade.php`.
+
+## Qué tocar (3 ficheros, sin crear componentes nuevos)
+1. `index.blade.php`: sustituir el `@php` inline (líneas 6-29) por `\Src\Shared\UI\TipoBadges::MAP` / `::DEFAULT`; corregir la medalla a `gym.tipo_slug` con `onerror`; badge de tipo `x-text="gym.tipo_nombre"`.
+2. `show.blade.php`: mismo `@php` + `$cardPanelClass`; misma corrección de medalla (tamaño `text-4xl`); mismo badge.
+3. `admin.blade.php`: mismo `@php` + `$cardPanelClass`; medalla emoji 🏅 (sin cambio); `<select>` usa `tipoBadges` (sin cambio); badge de card con `gym.tipo_nombre`.
+
+## DTOs/API consumidos
+- `GET /api/gimnasios` → `GimnasioResumen::toArray()` (incluye `tipo`, `tipo_nombre`, `tipo_slug`).
+- `GET /api/gimnasios/{slug}` → `DetalleGimnasio::toArray()` (incluye `tipo`, `tipo_nombre`, `tipo_slug`, `etapas`).
+- `GET /api/admin/gyms` y `/api/admin/gyms/{slug}` → `AdminGymController::serializar()` (**NO** incluye `tipo_nombre`/`tipo_slug`; solo `tipo` int).
+
+## Estados UI a preservar
+- Loading, error, empty y success ya existen en las 3 vistas; el refactor no los altera.
+- Imagen de medalla: `onerror="this.style.display='none'"` (mismo patrón anti-loop del proyecto) evita icono roto si el slug no tuviera asset.
+- `tipoBadge()` se mantiene para el color (`:class`) y como fallback de texto.
+
+## Riesgos / desvío justificado
+- **Discrepancia de contrato (P1)**: el brief pide `x-text="gym.tipo_nombre"` en la card del **admin**, pero `/api/admin/gyms` no expone `tipo_nombre`. Aplicarlo literal dejaría el badge **vacío** (regresión visible). Desvío mínimo y justificado: `x-text="gym.tipo_nombre || tipoBadge(gym.tipo)[0]"` — usa el campo nuevo cuando exista y conserva el texto actual mientras el backend no lo añada. El `<select>` y `tipoBadge(detail.tipo)` siguen igual.
+- La medalla depende del slug del tipo (no del nombre): el backend ya lo entrega en el contrato público; no se duplica lógica de mapeo en Blade.
+
+## Tests
+- No se crean tests (indicación explícita del brief). Verificación: `npm run build`, `php artisan view:cache`, greps de `gym->medalla` y de arrays inline `$tipoBadges = [`.
+
+## Verificación final (2026-09-14)
+- `npm run build` OK (`app-BWbftYQV.css` + `app-CfKhHCJo.js` generados, 63 módulos).
+- `php artisan view:cache` OK (las 3 plantillas compilan; `TipoBadges` resuelve).
+- `grep -rn 'gym->medalla' resources/views/gimnasios/` → 0 resultados.
+- `grep -rn '$tipoBadges = [' resources/views/gimnasios/` → 0 resultados.
+- Tests existentes (no nuevos): `GimnasioAdminViewTest` + `GimnasioApiTest` → 20 passed (202 assertions).
+- Pendiente (deuda backend, fuera de alcance Frontend): añadir `tipo_nombre`/`tipo_slug` a `AdminGymController::serializar()`; mientras, el badge admin usa el fallback `gym.tipo_nombre || tipoBadge(gym.tipo)[0]`.
