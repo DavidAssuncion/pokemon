@@ -18,7 +18,7 @@ use PHPUnit\Framework\Attributes\Test;
 use Src\Battle\Domain\Posicion;
 use Src\CombateEntrenadores\App\ConstruirEquipoJugador;
 use Src\CombateEntrenadores\App\MapeadorPokemonBatalla;
-use Src\CombateRuta\Domain\ClasificadorOfensivaDefensiva;
+use Src\Shared\Domain\ClasificadorOfensivaDefensiva;
 use Tests\TestCase;
 
 class ConstruirEquipoJugadorTest extends TestCase

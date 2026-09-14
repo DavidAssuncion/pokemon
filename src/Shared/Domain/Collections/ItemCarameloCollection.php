@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace Src\CombateEntrenadores\Domain\Collections;
+namespace Src\Shared\Domain\Collections;
 
-use Src\CombateEntrenadores\Domain\DataTransferObjects\ItemCaramelo;
 use Src\Shared\Domain\Collection;
+use Src\Shared\Domain\DataTransferObjects\ItemCaramelo;
 
 /**
  * Colección tipada de caramelos del modal de victoria.

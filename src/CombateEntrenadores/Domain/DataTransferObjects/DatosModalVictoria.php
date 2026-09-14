@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Src\CombateEntrenadores\Domain\DataTransferObjects;
 
-use Src\CombateEntrenadores\Domain\Collections\ItemCarameloCollection;
+use Src\Shared\Domain\Collections\ItemCarameloCollection;
 
 /**
  * Datos de presentación del modal de victoria

@@ -16,7 +16,7 @@ use Src\Battle\Domain\Posicion;
 use Src\CombateEntrenadores\App\MapeadorPokemonBatalla;
 use Src\CombateEntrenadores\Domain\GeneradorMovimientosTipo;
 use Src\CombateRuta\App\GeneradorEquipoRuta;
-use Src\CombateRuta\Domain\ClasificadorOfensivaDefensiva;
+use Src\Shared\Domain\ClasificadorOfensivaDefensiva;
 use Tests\TestCase;
 
 class GeneradorEquipoRutaTest extends TestCase

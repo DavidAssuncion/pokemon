@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Src\CombateEntrenadores\Domain\DataTransferObjects;
+namespace Src\Shared\Domain\DataTransferObjects;
 
 /**
  * Un caramelo del modal de victoria (familia/EV/tipo resuelto por ItemCatalogo).

@@ -7,9 +7,9 @@ namespace App\Support;
 use App\Enums\StatEnum;
 use App\Enums\TipoEnum;
 use App\Models\Pokemon;
-use Src\CombateEntrenadores\Domain\Collections\ItemCarameloCollection;
-use Src\CombateEntrenadores\Domain\DataTransferObjects\ItemCaramelo;
 use Src\Exploraciones\Domain\Recompensas\ResultadoRecompensas;
+use Src\Shared\Domain\Collections\ItemCarameloCollection;
+use Src\Shared\Domain\DataTransferObjects\ItemCaramelo;
 use Src\Shared\Domain\SlugTipo;
 
 /**

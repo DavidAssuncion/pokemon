@@ -61,8 +61,8 @@ class OtorgarRecompensasRutaTest extends TestCase
         $this->assertInstanceOf(ResultadoRuta::class, $resultado);
         $this->assertTrue($resultado->victoria);
         $this->assertGreaterThan(0, $resultado->expTotal);
-        $this->assertSame(1, $resultado->capturas->count());
-        $this->assertSame((int) $pokemon->id, $resultado->capturas->first()->pokemonId);
+        $this->assertCount(1, $resultado->capturas);
+        $this->assertSame((int) $pokemon->id, $resultado->capturas[0]->pokemonId);
 
         Bus::assertDispatched(ActualizarPokedexJob::class, 1);
     }
@@ -85,7 +85,7 @@ class OtorgarRecompensasRutaTest extends TestCase
         );
 
         $this->assertInstanceOf(ResultadoRuta::class, $resultado);
-        $this->assertSame(0, $resultado->capturas->count());
+        $this->assertCount(0, $resultado->capturas);
     }
 
     #[Test]
@@ -155,7 +155,7 @@ class OtorgarRecompensasRutaTest extends TestCase
         );
 
         $this->assertInstanceOf(ResultadoRuta::class, $resultado);
-        $this->assertSame(1, $resultado->capturas->count());
+        $this->assertCount(1, $resultado->capturas);
     }
 
     private function crearPokemonRival(int $speciesId): Pokemon

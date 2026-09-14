@@ -4,10 +4,9 @@ declare(strict_types=1);
 
 namespace Src\CombateRuta\Domain\DataTransferObjects;
 
-use Illuminate\Support\Collection;
-use Src\CombateEntrenadores\Domain\Collections\ItemCarameloCollection;
-use Src\CombateEntrenadores\Domain\DataTransferObjects\ItemCaramelo;
 use Src\Exploraciones\Domain\Recompensas\RecompensaCaptura;
+use Src\Shared\Domain\Collections\ItemCarameloCollection;
+use Src\Shared\Domain\DataTransferObjects\ItemCaramelo;
 
 /**
  * Resultado de un combate de ruta: la victoria devuelve las recompensas al
@@ -20,24 +19,24 @@ final readonly class ResultadoRuta
 {
     public ItemCarameloCollection $caramelos;
 
-    /** @var Collection<int, RecompensaCaptura> */
-    public Collection $capturas;
+    /** @var list<RecompensaCaptura> */
+    public array $capturas;
 
     /**
      * @param  ItemCarameloCollection|array<int, ItemCaramelo>  $caramelos
-     * @param  Collection<int, RecompensaCaptura>|array<int, RecompensaCaptura>  $capturas
+     * @param  list<RecompensaCaptura>  $capturas
      */
     public function __construct(
         public readonly bool $victoria,
         public readonly int $expTotal,
         public readonly int $expMiembro,
         ItemCarameloCollection|array $caramelos,
-        Collection|array $capturas,
+        array $capturas,
     ) {
         $this->caramelos = $caramelos instanceof ItemCarameloCollection
             ? $caramelos
             : new ItemCarameloCollection($caramelos);
-        $this->capturas = $capturas instanceof Collection ? $capturas : collect($capturas);
+        $this->capturas = $capturas;
     }
 
     /**
@@ -62,13 +61,13 @@ final readonly class ResultadoRuta
                     'cantidad' => $caramelo->cantidad,
                 ],
             ),
-            'capturas' => $this->capturas
-                ->map(fn (RecompensaCaptura $captura): array => [
+            'capturas' => array_map(
+                fn (RecompensaCaptura $captura): array => [
                     'pokemon_id' => $captura->pokemonId,
                     'cantidad' => $captura->cantidad,
-                ])
-                ->values()
-                ->all(),
+                ],
+                $this->capturas,
+            ),
         ];
     }
 }

@@ -11,13 +11,13 @@ use App\Models\User;
 use App\Support\CadenasEvolutivas;
 use App\Support\ItemCatalogo;
 use Random\Randomizer;
-use Src\CombateEntrenadores\Domain\Collections\ItemCarameloCollection;
 use Src\CombateRuta\Domain\DataTransferObjects\ResultadoRuta;
 use Src\Exploraciones\App\NormalizadorPokemonDerrotado;
 use Src\Exploraciones\App\PersistirRecompensas;
 use Src\Exploraciones\Domain\CalculadorRecompensas;
 use Src\Exploraciones\Domain\Recompensas\PokemonDerrotado;
 use Src\Exploraciones\Domain\Recompensas\ResultadoRecompensas;
+use Src\Shared\Domain\Collections\ItemCarameloCollection;
 use Src\Shared\Domain\ProbabilidadCaptura;
 
 /**
@@ -90,7 +90,7 @@ final class OtorgarRecompensasRuta
             expTotal: $recompensas->expTotal,
             expMiembro: $recompensas->expPorMiembro,
             caramelos: $this->caramelosDe($recompensas),
-            capturas: $recompensas->capturas,
+            capturas: $recompensas->capturas->all(),
         );
     }
 

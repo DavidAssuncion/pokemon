@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Src\CombateRuta\Domain;
+namespace Src\Shared\Domain;
 
 use Src\Battle\Domain\Posicion;
 use Src\Pokemon\Domain\Stats\DatosStats;

@@ -8,7 +8,7 @@ use App\Models\Pokemon;
 use App\Models\Team;
 use Src\Battle\Domain\DatosPokemonBatalla;
 use Src\Battle\Domain\Posicion;
-use Src\CombateRuta\Domain\ClasificadorOfensivaDefensiva;
+use Src\Shared\Domain\ClasificadorOfensivaDefensiva;
 
 /**
  * Construye el equipo de batalla del jugador a partir de un Team de la BD,

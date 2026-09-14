@@ -7,8 +7,8 @@ namespace Tests\Unit\CombateRuta\Domain;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Src\Battle\Domain\Posicion;
-use Src\CombateRuta\Domain\ClasificadorOfensivaDefensiva;
 use Src\Pokemon\Domain\Stats\DatosStats;
+use Src\Shared\Domain\ClasificadorOfensivaDefensiva;
 
 class ClasificadorOfensivaDefensivaTest extends TestCase
 {

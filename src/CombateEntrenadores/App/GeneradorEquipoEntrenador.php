@@ -9,10 +9,10 @@ use App\Models\Pokemon;
 use Random\Engine\Mt19937;
 use Random\Randomizer;
 use Src\Battle\Domain\DatosPokemonBatalla;
-use Src\CombateRuta\Domain\ClasificadorOfensivaDefensiva;
 use Src\Exploraciones\Domain\ValueObjects\ColeccionPoolPonderado;
 use Src\Exploraciones\Domain\ValueObjects\PoolHabitat;
 use Src\Pokemon\Domain\Stats\DatosStats;
+use Src\Shared\Domain\ClasificadorOfensivaDefensiva;
 
 /**
  * Genera el equipo de un entrenador a partir del pool de un hábitat y nivel.

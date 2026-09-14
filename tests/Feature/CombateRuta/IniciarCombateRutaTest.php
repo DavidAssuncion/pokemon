@@ -23,7 +23,7 @@ use Src\CombateEntrenadores\App\MapeadorPokemonBatalla;
 use Src\CombateEntrenadores\Domain\GeneradorMovimientosTipo;
 use Src\CombateRuta\App\GeneradorEquipoRuta;
 use Src\CombateRuta\App\IniciarCombateRuta;
-use Src\CombateRuta\Domain\ClasificadorOfensivaDefensiva;
+use Src\Shared\Domain\ClasificadorOfensivaDefensiva;
 use Src\Shared\Domain\Exceptions\ViolacionReglaNegocio;
 use Tests\TestCase;
 

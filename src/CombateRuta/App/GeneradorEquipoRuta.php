@@ -9,10 +9,10 @@ use App\Models\Pokemon;
 use Random\Randomizer;
 use Src\Battle\Domain\DatosPokemonBatalla;
 use Src\CombateEntrenadores\App\MapeadorPokemonBatalla;
-use Src\CombateRuta\Domain\ClasificadorOfensivaDefensiva;
 use Src\Exploraciones\Domain\ValueObjects\ColeccionPoolPonderado;
 use Src\Exploraciones\Domain\ValueObjects\PoolHabitat;
 use Src\Pokemon\Domain\Stats\DatosStats;
+use Src\Shared\Domain\ClasificadorOfensivaDefensiva;
 
 /**
  * Genera el equipo rival de un combate de ruta (5 pokémon salvajes) a partir
