@@ -5,9 +5,7 @@ declare(strict_types=1);
 namespace Src\CombateRuta\App;
 
 use App\Models\Team;
-use App\Support\BattleSessionService;
-use Src\Battle\Domain\AgregadoBatalla;
-use Src\Battle\Domain\EquipoBatalla;
+use App\Support\CreadorBatallaSesion;
 use Src\CombateEntrenadores\App\ConstruirEquipoJugador;
 use Src\Shared\Domain\Exceptions\ViolacionReglaNegocio;
 
@@ -24,7 +22,7 @@ final class IniciarCombateRuta
     public function __construct(
         private readonly GeneradorEquipoRuta $generadorEquipo,
         private readonly ConstruirEquipoJugador $construirEquipoJugador,
-        private readonly BattleSessionService $battleSession,
+        private readonly CreadorBatallaSesion $creadorBatalla,
     ) {
     }
 
@@ -53,23 +51,19 @@ final class IniciarCombateRuta
             throw new ViolacionReglaNegocio('No hay Pokémon salvajes disponibles en esta ruta para tu nivel.');
         }
 
-        $team1 = EquipoBatalla::fromData($datosJugador, $equipo->name);
-        $team2 = EquipoBatalla::fromData($datosRival, 'Pokémon salvajes');
-
-        $batalla = new AgregadoBatalla($team1, $team2);
-        $batalla->triggerBattleStartEffects();
-
-        $battleId = 'battle_ruta_'.uniqid();
-
-        $this->battleSession->guardar($battleId, $batalla);
-        $this->battleSession->guardarMeta($battleId, [
-            'tipo' => 'ruta',
-            'habitat_id' => $habitatId,
-            'nivel' => $nivel,
-            'user_id' => $userId,
-            'team_id' => $teamId,
-        ]);
-
-        return $battleId;
+        return $this->creadorBatalla->crearYGuardar(
+            datosJugador: $datosJugador,
+            nombreJugador: $equipo->name,
+            datosRival: $datosRival,
+            nombreRival: 'Pokémon salvajes',
+            prefijoId: 'ruta',
+            meta: [
+                'tipo' => 'ruta',
+                'habitat_id' => $habitatId,
+                'nivel' => $nivel,
+                'user_id' => $userId,
+                'team_id' => $teamId,
+            ],
+        );
     }
 }

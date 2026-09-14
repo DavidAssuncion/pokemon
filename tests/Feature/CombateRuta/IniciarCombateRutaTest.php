@@ -14,6 +14,7 @@ use App\Models\Team;
 use App\Models\TeamMember;
 use App\Models\User;
 use App\Support\BattleSessionService;
+use App\Support\CreadorBatallaSesion;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\Test;
 use Src\Battle\Domain\AgregadoBatalla;
@@ -149,7 +150,7 @@ class IniciarCombateRutaTest extends TestCase
         return new IniciarCombateRuta(
             new GeneradorEquipoRuta($mapeador, $clasificador),
             new ConstruirEquipoJugador($mapeador, $clasificador),
-            app(BattleSessionService::class),
+            app(CreadorBatallaSesion::class),
         );
     }
 

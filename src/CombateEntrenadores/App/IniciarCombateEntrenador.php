@@ -5,9 +5,7 @@ declare(strict_types=1);
 namespace Src\CombateEntrenadores\App;
 
 use App\Models\Team;
-use App\Support\BattleSessionService;
-use Src\Battle\Domain\AgregadoBatalla;
-use Src\Battle\Domain\EquipoBatalla;
+use App\Support\CreadorBatallaSesion;
 use Src\CombateEntrenadores\Domain\Exceptions\EntrenadorDerrotadoHoy;
 use Src\CombateEntrenadores\Domain\Repositories\EntrenadorLogRepositoryInterface;
 
@@ -23,7 +21,7 @@ class IniciarCombateEntrenador
         private readonly GeneradorEquipoEntrenador $generadorEquipo,
         private readonly ConstruirEquipoJugador $construirEquipoJugador,
         private readonly EntrenadorLogRepositoryInterface $logRepository,
-        private readonly BattleSessionService $battleSession,
+        private readonly CreadorBatallaSesion $creadorBatalla,
     ) {
     }
 
@@ -53,24 +51,20 @@ class IniciarCombateEntrenador
 
         $datosRival = $this->generadorEquipo->generar($habitatId, $nivel, $trainerIndex, $fecha, $nivelRival);
 
-        $team1 = EquipoBatalla::fromData($datosJugador, $equipo->name);
-        $team2 = EquipoBatalla::fromData($datosRival, "Entrenador Nivel {$nivel}");
-
-        $batalla = new AgregadoBatalla($team1, $team2);
-        $batalla->triggerBattleStartEffects();
-
-        $battleId = 'battle_entrenador_'.uniqid();
-
-        $this->battleSession->guardar($battleId, $batalla);
-        $this->battleSession->guardarMeta($battleId, [
-            'habitat_id' => $habitatId,
-            'nivel' => $nivel,
-            'trainer_index' => $trainerIndex,
-            'user_id' => $userId,
-            'team_id' => $teamId,
-            'fecha' => $fecha,
-        ]);
-
-        return $battleId;
+        return $this->creadorBatalla->crearYGuardar(
+            datosJugador: $datosJugador,
+            nombreJugador: $equipo->name,
+            datosRival: $datosRival,
+            nombreRival: "Entrenador Nivel {$nivel}",
+            prefijoId: 'entrenador',
+            meta: [
+                'habitat_id' => $habitatId,
+                'nivel' => $nivel,
+                'trainer_index' => $trainerIndex,
+                'user_id' => $userId,
+                'team_id' => $teamId,
+                'fecha' => $fecha,
+            ],
+        );
     }
 }

@@ -5,9 +5,7 @@ declare(strict_types=1);
 namespace Src\Gimnasios\App;
 
 use App\Models\Team;
-use App\Support\BattleSessionService;
-use Src\Battle\Domain\AgregadoBatalla;
-use Src\Battle\Domain\EquipoBatalla;
+use App\Support\CreadorBatallaSesion;
 use Src\CombateEntrenadores\App\ConstruirEquipoJugador;
 use Src\Gimnasios\Domain\EvsRangoEntrenador;
 use Src\Gimnasios\Domain\Exceptions\GimnasioBloqueado;
@@ -31,7 +29,7 @@ final class IniciarCombateGimnasio
         private readonly EscaladorNivelRival $escalador,
         private readonly GeneradorPokemonGimnasio $generador,
         private readonly ConstruirEquipoJugador $construirEquipoJugador,
-        private readonly BattleSessionService $battleSession,
+        private readonly CreadorBatallaSesion $creadorBatalla,
     ) {
     }
 
@@ -74,24 +72,20 @@ final class IniciarCombateGimnasio
             ? $this->generador->generar($equipoEtapa, $nivelRival, $evPrincipal, $evResto)
             : [];
 
-        $team1 = EquipoBatalla::fromData($datosJugador, $equipo->name);
-        $team2 = EquipoBatalla::fromData($datosRival, $gimnasio->nombreEtapa($etapa));
-
-        $batalla = new AgregadoBatalla($team1, $team2);
-        $batalla->triggerBattleStartEffects();
-
-        $battleId = 'battle_gimnasio_'.uniqid();
-
-        $this->battleSession->guardar($battleId, $batalla);
-        $this->battleSession->guardarMeta($battleId, [
-            'tipo' => 'gimnasio',
-            'gym_id' => $gymSlug,
-            'stage' => $etapa,
-            'nivel_rival' => $nivelRival,
-            'user_id' => $userId,
-            'team_id' => $teamId,
-        ]);
-
-        return $battleId;
+        return $this->creadorBatalla->crearYGuardar(
+            datosJugador: $datosJugador,
+            nombreJugador: $equipo->name,
+            datosRival: $datosRival,
+            nombreRival: $gimnasio->nombreEtapa($etapa),
+            prefijoId: 'gimnasio',
+            meta: [
+                'tipo' => 'gimnasio',
+                'gym_id' => $gymSlug,
+                'stage' => $etapa,
+                'nivel_rival' => $nivelRival,
+                'user_id' => $userId,
+                'team_id' => $teamId,
+            ],
+        );
     }
 }

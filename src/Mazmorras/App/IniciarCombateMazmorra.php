@@ -6,9 +6,7 @@ namespace Src\Mazmorras\App;
 
 use App\Models\Habitat;
 use App\Models\Team;
-use App\Support\BattleSessionService;
-use Src\Battle\Domain\AgregadoBatalla;
-use Src\Battle\Domain\EquipoBatalla;
+use App\Support\CreadorBatallaSesion;
 use Src\CombateEntrenadores\App\ConstruirEquipoJugador;
 use Src\Mazmorras\Domain\ConfiguracionMazmorra;
 use Src\Mazmorras\Domain\Repositories\DungeonProgresoRepositoryInterface;
@@ -29,7 +27,7 @@ final class IniciarCombateMazmorra
         private readonly DungeonProgresoRepositoryInterface $repositorio,
         private readonly GeneradorJefeMazmorra $generadorJefe,
         private readonly ConstruirEquipoJugador $construirEquipoJugador,
-        private readonly BattleSessionService $battleSession,
+        private readonly CreadorBatallaSesion $creadorBatalla,
     ) {
     }
 
