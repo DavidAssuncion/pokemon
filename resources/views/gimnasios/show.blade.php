@@ -4,28 +4,8 @@
 
 @section('content')
 @php
-    // Mapeo tipo (int de TipoPokemon) → nombre en español + clases de badge (compartido con index).
-    $tipoBadges = [
-        1  => ['Normal',  'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300'],
-        2  => ['Lucha',   'bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400'],
-        3  => ['Volador', 'bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-400'],
-        4  => ['Veneno',  'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400'],
-        5  => ['Tierra',  'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400'],
-        6  => ['Roca',    'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400'],
-        7  => ['Bicho',   'bg-lime-100 dark:bg-lime-900/30 text-lime-700 dark:text-lime-400'],
-        8  => ['Fantasma','bg-violet-100 dark:bg-violet-900/30 text-violet-700 dark:text-violet-400'],
-        9  => ['Acero',   'bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300'],
-        10 => ['Fuego',   'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400'],
-        11 => ['Agua',    'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400'],
-        12 => ['Planta',  'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400'],
-        13 => ['Eléctrico','bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400'],
-        14 => ['Psíquico','bg-pink-100 dark:bg-pink-900/30 text-pink-700 dark:text-pink-400'],
-        15 => ['Hielo',   'bg-cyan-100 dark:bg-cyan-900/30 text-cyan-700 dark:text-cyan-400'],
-        16 => ['Dragón',  'bg-teal-100 dark:bg-teal-900/30 text-teal-700 dark:text-teal-400'],
-        17 => ['Siniestro','bg-zinc-800 dark:bg-gray-600 text-white'],
-        18 => ['Hada',    'bg-rose-100 dark:bg-rose-900/30 text-rose-700 dark:text-rose-400'],
-    ];
-    $defaultBadge = ['Desconocido', 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300'];
+    $tipoBadges = \Src\Shared\UI\TipoBadges::MAP;
+    $defaultBadge = \Src\Shared\UI\TipoBadges::DEFAULT;
     $cardPanelClass = 'bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden';
 @endphp
 
@@ -60,13 +40,13 @@
                     <div class="p-5">
                         <div class="flex flex-wrap items-start justify-between gap-4">
                             <div class="flex items-center gap-3 min-w-0">
-                                <span class="text-4xl shrink-0" aria-hidden="true">🏅</span>
+                                <span class="text-4xl shrink-0" aria-hidden="true"><img :src="'images/medallas/' + gym.tipo_slug + '.webp'" :alt="gym.tipo_medalla" onerror="this.style.display='none'"></span>
                                 <div class="min-w-0">
-                                    <h1 class="text-xl font-bold text-gray-900 dark:text-white truncate" x-text="gym.medalla"></h1>
-                                    <div class="flex flex-wrap items-center gap-2 mt-1">
-                                        <span class="px-2 py-0.5 text-[10px] font-bold rounded-full uppercase"
-                                              :class="tipoBadge(gym.tipo)[1]"
-                                              x-text="tipoBadge(gym.tipo)[0]"></span>
+                                    <h1 class="text-xl font-bold text-gray-900 dark:text-white truncate" x-text="gym.tipo_medalla"></h1>
+                                    <span class="px-2 py-0.5 text-[10px] font-bold rounded-full uppercase text-white inline-block"
+                                          :style="'background-color:' + gym.tipo_color"
+                                          x-text="gym.tipo_nombre"></span>
+                                    <div class="flex flex-wrap items-center gap-2 mt-4">
                                         <span class="text-xs text-gray-500 dark:text-gray-400">
                                             Nivel mínimo: <strong x-text="'Nv ' + gym.nivel_minimo"></strong>
                                         </span>
@@ -173,7 +153,7 @@
                 <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-4">Configurar Formación</h3>
                 <p class="text-sm text-gray-600 dark:text-gray-300 mb-4">
                     Selecciona un equipo y ajusta la posición de cada pokémon antes del combate contra
-                    <strong class="text-gray-900 dark:text-white" x-text="gym ? gym.medalla : ''"></strong>.
+                    <strong class="text-gray-900 dark:text-white" x-text="gym ? gym.tipo_medalla : ''"></strong>.
                 </p>
 
                 {{-- Error del popup --}}
@@ -343,13 +323,19 @@ function gimnasioShow(slug) {
         selectTeam(id, name) {
             this.selectedTeamId = id;
             this.selectedTeamName = name;
-            this.formacion = {};
-            const team = this.teams.find(t => t.id === id);
-            if (team && team.members) {
-                team.members.forEach(m => {
-                    this.formacion[m.slot] = 'vanguardia';
-                });
-            }
+            this.formacion = this.formacionInicialDe(id);
+        },
+
+        formacionInicialDe(teamId) {
+            const team = this.teams.find(t => t.id === teamId);
+            const persistida = team && team.formacion ? team.formacion : {};
+            return {
+                1: persistida[1] || 'vanguardia',
+                2: persistida[2] || 'vanguardia',
+                3: persistida[3] || 'vanguardia',
+                4: persistida[4] || 'vanguardia',
+                5: persistida[5] || 'vanguardia',
+            };
         },
 
         toggleFormacionSlot(slot) {

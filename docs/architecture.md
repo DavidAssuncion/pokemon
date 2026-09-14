@@ -32,7 +32,8 @@ desaparece como destino y migra a DTOs en Domain.
 │  Repos · Factories · Requests · routes.php  │
 │  (destino: NADA de esto vive en app/)       │
 │  Battle · Pokemon · Habitats · Equipos      │
-│  Reclutamiento · Crud · Shared              │
+│  Reclutamiento · Exploraciones · Crud       │
+│  Shared · CombateEntrenadores · CombateRuta │
 ├─────────────────────────────────────────────┤
 │  Estado actual: Controllers/Models/Livewire │
 │  aún en app/; migran por módulo (strangler)│
@@ -187,6 +188,34 @@ Módulo que integra el combate PvE contra entrenadores dentro de los hábitats (
 | `Infra/` | Persistencia/HTTP | `EloquentEntrenadorLogRepository` (upsert en `trainer_combat_log`), `Controllers/EntrenadorController` (GET listado, POST combatir), `routes.php` (placeholder; rutas reales en `routes/entrenadores.php`) |
 
 Reglas de negocio clave: límite diario 3×3=9 combates por hábitat; `won=true` bloquea al entrenador ese día (upsert con unique `(user_id, habitat_id, level, trainer_index, fought_at)`); perder es repetible; rival determinista por día; sin capturas (no recluta rivales). Documentación exhaustiva: `docs/combate_entrenadores.md` y `src/CombateEntrenadores/context.md`.
+
+### CombateRuta (`src/CombateRuta/`)
+
+Módulo del **combate de ruta 5v5** (2026-09-13): PvE contra 5 pokémon salvajes del pool de un
+hábitat desde `/habitats/{id}` (modo "Ruta", el modo por defecto del hábitat). Sigue la convención
+DDD por módulos y **reutiliza el motor de batalla** (`src/Battle/Domain/`) y las recompensas de
+`Exploraciones`.
+
+| Carpeta | Propósito | Archivos clave |
+|---|---|---|
+| `Domain/DataTransferObjects/` | DTO de presentación | `ResultadoRuta` (victoria/exp/caramelos/capturas; `aArray()` = contrato snake_case del modal) |
+| `App/` | Casos de uso | `GeneradorEquipoRuta` (5 salvajes por selección ponderada CON reemplazo `capture_rate/hatch` desde el pool del hábitat y nivel; aleatorio inyectable), `IniciarCombateRuta` (valida equipo 5v5, crea batalla y meta `tipo=ruta`), `RegistrarResultadoRuta`, `OtorgarRecompensasRuta` (multiplicador 1.0 + capturas cap-25 + avistados) |
+| `Infra/Controllers/` | HTTP | `CombateRutaController` (GET rivales del panel, POST iniciar → `battle_id` + redirect) |
+
+Reglas de negocio clave: el equipo del jugador debe tener **exactamente 5 miembros**
+(`ViolacionReglaNegocio`); **sin límite diario ni log** (`trainer_combat_log` no aplica);
+la victoria otorga recompensas ×1.0 y **capturas** (`ProbabilidadCaptura` cap-25) + avistados;
+el rival **varía en cada combate** (sin semilla). Endpoints en `routes/ruta.php`:
+
+```
+GET  /api/habitats/{habitat}/ruta/rivales?nivel=1-3
+POST /api/habitats/{habitat}/ruta/iniciar   body: {team_id, formacion?, nivel?}
+```
+
+Hardening compartido: `ClasificadorOfensivaDefensiva`, `ProbabilidadCaptura`,
+`EscaladorNivelRival` en `src/Shared/Domain/`; `CreadorBatallaSesion` (`app/Support`) unifica la
+creación de batallas 5v5 de Ruta/Entrenador/Gimnasio/Mazmorra (DRY). Documentación exhaustiva:
+`src/CombateRuta/context.md`.
 
 ### Crud (`src/Crud/`)
 
@@ -344,7 +373,7 @@ En el **destino** (ver `docs/ddd.md`), Controllers, Models Eloquent y Livewire v
 ## Base de datos
 
 PostgreSQL en el entorno de ejecución (Docker); los tests usan SQLite en memoria (`:memory:`).
-32 migraciones. Esquema relacional:
+56 migraciones. Esquema relacional:
 
 ```
 provinces ──→ habitats ──→ pokemon_habitat ──→ pokemon ──→ pokemon_stats
@@ -355,6 +384,10 @@ provinces ──→ habitats ──→ pokemon_habitat ──→ pokemon ──�
 
 pokemon ──→ reclutados ──→ team_members ──→ teams
                        ──→ exploraciones_activas
+
+teams: equipos de 5 miembros; columna `formacion` (JSON nullable, migración
+2026_09_13_195001) con la posición por slot (vanguardia/retaguardia) para los
+combates 5v5 (prioridad: popup > persistida > clasificación automática).
 
 users ──→ trainer_combat_log ──→ habitats
                                   (level, trainer_index, won, fought_at)

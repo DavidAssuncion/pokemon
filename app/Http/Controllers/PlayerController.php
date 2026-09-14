@@ -83,6 +83,7 @@ class PlayerController extends Controller
             return [
                 'id' => $team->id,
                 'name' => $team->name,
+                'formacion' => $team->formacion ?? [],
                 'members' => $members->map(function (TeamMember $m): array {
                     return [
                         'id' => $m->id,

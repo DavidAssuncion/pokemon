@@ -29,6 +29,10 @@ y las recompensas dobles de `CombateEntrenadores`.
 - **Progresión secuencial**: `gym_progress.current_stage` (1-5). Solo se puede combatir la etapa
   actual; ganar → +1; perder → repetible; 5 = completado para siempre.
 - **Anti-IDOR**: `RegistrarResultadoGimnasio` solo persiste si `won` y `userId === authUserId`.
+- **Presentación de tipos**: el color/label de los badges de tipo se centraliza en
+  `Src\Shared\UI\TipoBadges` (capa de presentación, `MAP` + `DEFAULT`); `TipoPokemon::slug()` es la
+  fuente del slug de assets (`/images/type/{slug}.webp`, `/images/medallas/{slug}.webp`). La API
+  expone `tipo_nombre` y `tipo_slug` junto a `tipo`.
 - **Recompensas**: reutiliza `OtorgarRecompensasEntrenador` (×2.0 + `ActualizarPokedexJob`
   AVISTADO por rival). Si se derrota al líder (etapa 4), añade la medalla al modal.
 - **Persistencia en sesión**: batalla serializada con prefijo `v{version}|` + metadatos

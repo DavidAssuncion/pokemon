@@ -173,80 +173,86 @@
                 </div>
                 @endif
 
-                <!-- Ruta Panel (combate 5v5 contra salvajes; modo por defecto) -->
-                <div class="{{ $cardPanelClass }}" x-show="modo === 'ruta'">
-                    <div class="p-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between flex-wrap gap-2">
-                        <h3 class="text-sm font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-                            <svg class="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
-                            </svg>
-                            Combate de Ruta
-                        </h3>
-                        <span class="px-2 py-0.5 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 text-[10px] font-bold rounded-full uppercase">5v5</span>
+                <!-- Teams Panel: 3-column grid of team cards (modo entrenadores / ruta) -->
+                <div class="{{ $cardPanelClass }}" x-show="modo === 'entrenadores' || modo === 'ruta'" x-cloak>
+                    <div class="p-4 border-b border-gray-200 dark:border-gray-700">
+                        <h3 class="text-sm font-semibold text-gray-900 dark:text-white">Equipos</h3>
                     </div>
-                    <div class="p-4 space-y-4">
-                        <!-- Nota obligatoria -->
-                        <div class="px-3 py-2 rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 text-xs text-blue-800 dark:text-blue-300" role="status">
-                            ⚔️ Combate 5v5 contra pokémon salvajes. Sin límite diario. Al ganar puedes capturar.
-                        </div>
-
-                        <!-- Selector de nivel -->
-                        <div>
-                            <p class="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">Nivel de la ruta</p>
-                            <div class="grid grid-cols-3 gap-2">
-                                <template x-for="lvl in [1,2,3]" :key="'ruta-nivel-' + lvl">
-                                    <button
-                                        @click="selectRutaNivel(lvl)"
-                                        :class="rutaNivel === lvl
-                                            ? 'border-red-500 dark:border-red-400 bg-red-50 dark:bg-red-900/20'
-                                            : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'"
-                                        class="w-full px-4 py-3 rounded-xl border-2 text-left transition-all"
-                                        :aria-label="'Nivel de ruta ' + lvl"
-                                    >
-                                        <span class="text-sm font-semibold text-gray-900 dark:text-white" x-text="'Nivel ' + lvl"></span>
-                                    </button>
-                                </template>
+                    <div class="p-4">
+                        <div class="grid sm:grid-cols-3 gap-3">
+                            @forelse($teams as $team)
+                            @php
+                                $equipoEnExploracion = $equiposEnExploracion->firstWhere('equipo_id', $team->id);
+                                $bloqueado = $equipoEnExploracion !== null;
+                            @endphp
+                            <div
+                                class="rounded-lg p-3 border-2 transition-all {{ $bloqueado ? 'bg-gray-100 dark:bg-gray-900/30 border-gray-200 dark:border-gray-700 opacity-60 cursor-not-allowed' : 'bg-gray-50 dark:bg-gray-900/50 cursor-pointer hover:border-gray-300 dark:hover:border-gray-600' }}"
+                                :class="{{ $bloqueado ? 'false' : "selectedTeamId === {$team->id} ? 'border-blue-500 dark:border-blue-400 ring-1 ring-blue-200 dark:ring-blue-800' : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'" }}"
+                                @if(!$bloqueado)
+                                @click="selectTeam({{ $team->id }}, $el.dataset.teamName)"
+                                role="button"
+                                tabindex="0"
+                                @keydown.space.prevent="selectTeam({{ $team->id }}, $el.dataset.teamName)"
+                                @keydown.enter.prevent="selectTeam({{ $team->id }}, $el.dataset.teamName)"
+                                @endif
+                                data-team-name="{{ $team->name }}"
+                                aria-label="{{ $bloqueado ? 'Equipo en exploración' : 'Seleccionar equipo ' . $team->name }}"
+                            >
+                                <div class="flex items-center justify-between mb-2">
+                                    <span class="text-sm font-medium text-gray-900 dark:text-white flex items-center gap-1.5">
+                                        @if($bloqueado)
+                                            <svg class="w-3.5 h-3.5 text-gray-500 dark:text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                                                <path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd"/>
+                                            </svg>
+                                        @endif
+                                        {{ $team->name }}
+                                    </span>
+                                    @if($bloqueado)
+                                        <span class="px-2 py-0.5 bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400 text-[10px] font-bold rounded-full uppercase">
+                                            En exploración
+                                        </span>
+                                    @endif
+                                </div>
+                                @if($bloqueado)
+                                <p class="text-[10px] text-gray-500 dark:text-gray-400 mt-1">
+                                    🔒 En exploración ({{ $equipoEnExploracion['habitat_name'] }})
+                                </p>
+                                @endif
+                                <div class="grid grid-cols-5 gap-1">
+                                    @for($i = 0; $i < 5; $i++)
+                                        @if(isset($team->members[$i]))
+                                            <div class="text-center min-w-0">
+                                                <img
+                                                    src="/images/iconos_webp/{{ $team->members[$i]->reclutado->pokemon_id }}.webp"
+                                                    loading="lazy"
+                                                    decoding="async"
+                                                    alt="{{ $team->members[$i]->reclutado->nombre ?? '' }}"
+                                                    title="{{ $team->members[$i]->reclutado->nombre ?? '' }}"
+                                                    class="w-full h-14 object-contain mx-auto"
+                                                    onerror="this.style.display='none'"
+                                                >
+                                                <p class="text-[10px] text-gray-500 dark:text-gray-400 truncate mt-0.5">
+                                                    {{ $team->members[$i]->reclutado->nombre ?? '---' }}
+                                                </p>
+                                            </div>
+                                        @else
+                                            <div class="text-center min-w-0">
+                                                <div class="w-full h-14 mx-auto rounded border-2 border-dashed border-gray-300 dark:border-gray-600"></div>
+                                                <p class="text-[10px] text-gray-400 dark:text-gray-500 mt-0.5">Vacío</p>
+                                            </div>
+                                        @endif
+                                    @endfor
+                                </div>
                             </div>
-                        </div>
-
-                        <!-- Previsualización de rivales -->
-                        <div>
-                            <p class="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">Rivales salvajes</p>
-                            <div x-show="rutaRivalesLoading" x-cloak role="status" class="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
-                                <svg class="w-4 h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                            @empty
+                            <div class="sm:col-span-3 text-center py-8">
+                                <svg class="w-12 h-12 mx-auto text-gray-300 dark:text-gray-600 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
                                 </svg>
-                                Cargando rivales...
+                                <p class="text-sm text-gray-500 dark:text-gray-400">No hay equipos creados</p>
                             </div>
-                            <div x-show="rutaRivalesError" x-cloak role="alert" class="text-sm text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg px-3 py-2">
-                                <span x-text="rutaRivalesError"></span>
-                            </div>
-                            <div x-show="!rutaRivalesLoading && !rutaRivalesError && rutaRivales.length === 0" x-cloak role="status" class="text-sm text-gray-500 dark:text-gray-400 px-3 py-4 text-center">
-                                No hay Pokémon salvajes disponibles en esta ruta para tu nivel.
-                            </div>
-                            <div x-show="!rutaRivalesLoading && rutaRivales.length > 0" x-cloak class="grid grid-cols-5 gap-2">
-                                <template x-for="rival in rutaRivales" :key="'rival-' + rival.id">
-                                    <div class="text-center min-w-0">
-                                        <template x-if="!isSighted(rival.species_id)">
-                                            <img src="/images/misc/unknown.webp" alt="?" class="w-full h-16 object-contain mx-auto">
-                                        </template>
-                                        <template x-if="isSighted(rival.species_id)">
-                                            <img :src="'/images/iconos_webp/' + rival.species_id + '.webp'" loading="lazy" decoding="async" :alt="rival.nombre" class="w-full h-16 object-contain mx-auto" onerror="this.style.display='none'">
-                                        </template>
-                                        <p class="text-[10px] text-gray-500 dark:text-gray-400 truncate mt-0.5" x-text="rival.nombre"></p>
-                                        <p class="text-[10px] text-gray-400 dark:text-gray-500" x-text="'Nv ' + rival.nivel"></p>
-                                        <p class="text-[10px] font-semibold text-red-500 dark:text-red-400 capitalize" x-text="rival.posicion"></p>
-                                    </div>
-                                </template>
-                            </div>
+                            @endforelse
                         </div>
-
-                        <!-- Recordatorio de selección de equipo -->
-                        <p class="text-xs text-gray-500 dark:text-gray-400">
-                            Selecciona un equipo aquí abajo para el combate. El equipo debe tener
-                            <strong class="text-gray-700 dark:text-gray-300">5 miembros</strong> y puedes
-                            ajustar su formación al iniciar.
-                        </p>
                     </div>
                 </div>
 
@@ -333,98 +339,15 @@
                     </div>
                 </div>
 
-                <!-- Teams Panel: 3-column grid of team cards (modo entrenadores / ruta) -->
-                <div class="{{ $cardPanelClass }}" x-show="modo === 'entrenadores' || modo === 'ruta'" x-cloak>
-                    <div class="p-4 border-b border-gray-200 dark:border-gray-700">
-                        <h3 class="text-sm font-semibold text-gray-900 dark:text-white">Equipos</h3>
-                    </div>
-                    <div class="p-4">
-                        <div class="grid sm:grid-cols-3 gap-3">
-                            @forelse($teams as $team)
-                            @php
-                                $equipoEnExploracion = $equiposEnExploracion->firstWhere('equipo_id', $team->id);
-                                $bloqueado = $equipoEnExploracion !== null;
-                            @endphp
-                            <div
-                                class="rounded-lg p-3 border-2 transition-all {{ $bloqueado ? 'bg-gray-100 dark:bg-gray-900/30 border-gray-200 dark:border-gray-700 opacity-60 cursor-not-allowed' : 'bg-gray-50 dark:bg-gray-900/50 cursor-pointer hover:border-gray-300 dark:hover:border-gray-600' }}"
-                                :class="{{ $bloqueado ? 'false' : "selectedTeamId === {$team->id} ? 'border-blue-500 dark:border-blue-400 ring-1 ring-blue-200 dark:ring-blue-800' : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'" }}"
-                                @if(!$bloqueado)
-                                @click="selectTeam({{ $team->id }}, $el.dataset.teamName)"
-                                role="button"
-                                tabindex="0"
-                                @keydown.space.prevent="selectTeam({{ $team->id }}, $el.dataset.teamName)"
-                                @keydown.enter.prevent="selectTeam({{ $team->id }}, $el.dataset.teamName)"
-                                @endif
-                                data-team-name="{{ $team->name }}"
-                                aria-label="{{ $bloqueado ? 'Equipo en exploración' : 'Seleccionar equipo ' . $team->name }}"
-                            >
-                                <div class="flex items-center justify-between mb-2">
-                                    <span class="text-sm font-medium text-gray-900 dark:text-white flex items-center gap-1.5">
-                                        @if($bloqueado)
-                                            <svg class="w-3.5 h-3.5 text-gray-500 dark:text-gray-400" fill="currentColor" viewBox="0 0 20 20">
-                                                <path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd"/>
-                                            </svg>
-                                        @endif
-                                        {{ $team->name }}
-                                    </span>
-                                    @if($bloqueado)
-                                        <span class="px-2 py-0.5 bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400 text-[10px] font-bold rounded-full uppercase">
-                                            En exploración
-                                        </span>
-                                    @endif
-                                </div>
-                                @if($bloqueado)
-                                <p class="text-[10px] text-gray-500 dark:text-gray-400 mt-1">
-                                    🔒 En exploración ({{ $equipoEnExploracion['habitat_name'] }})
-                                </p>
-                                @endif
-                                <div class="grid grid-cols-5 gap-1">
-                                    @for($i = 0; $i < 5; $i++)
-                                        @if(isset($team->members[$i]))
-                                            <div class="text-center min-w-0">
-                                                <img
-                                                    src="/images/iconos_webp/{{ $team->members[$i]->reclutado->pokemon_id }}.webp"
-                                                    loading="lazy"
-                                                    decoding="async"
-                                                    alt="{{ $team->members[$i]->reclutado->nombre ?? '' }}"
-                                                    title="{{ $team->members[$i]->reclutado->nombre ?? '' }}"
-                                                    class="w-full h-14 object-contain mx-auto"
-                                                    onerror="this.style.display='none'"
-                                                >
-                                                <p class="text-[10px] text-gray-500 dark:text-gray-400 truncate mt-0.5">
-                                                    {{ $team->members[$i]->reclutado->nombre ?? '---' }}
-                                                </p>
-                                            </div>
-                                        @else
-                                            <div class="text-center min-w-0">
-                                                <div class="w-full h-14 mx-auto rounded border-2 border-dashed border-gray-300 dark:border-gray-600"></div>
-                                                <p class="text-[10px] text-gray-400 dark:text-gray-500 mt-0.5">Vacío</p>
-                                            </div>
-                                        @endif
-                                    @endfor
-                                </div>
-                            </div>
-                            @empty
-                            <div class="sm:col-span-3 text-center py-8">
-                                <svg class="w-12 h-12 mx-auto text-gray-300 dark:text-gray-600 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
-                                </svg>
-                                <p class="text-sm text-gray-500 dark:text-gray-400">No hay equipos creados</p>
-                            </div>
-                            @endforelse
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Niveles Panel: 3 clickable level rows (pokémon / entrenadores; oculto en modo ruta) -->
-                <div class="{{ $cardPanelClass }}" x-show="modo === 'pokemon' || modo === 'entrenadores'" x-cloak>
+                <!-- Niveles Panel: 3 clickable level rows (ruta = sin fetch; pokémon / entrenadores) -->
+                <div class="{{ $cardPanelClass }}" x-show="modo === 'ruta' || modo === 'pokemon' || modo === 'entrenadores'" x-cloak>
                     <div class="p-4 border-b border-gray-200 dark:border-gray-700">
                         <h3 class="text-sm font-semibold text-gray-900 dark:text-white">Niveles</h3>
                     </div>
                     <div class="p-4 space-y-3">
-                        <!-- MODO POKÉMON -->
-                        <div x-show="modo === 'pokemon'">
-                            <p x-show="avisoNivel" x-cloak x-text="avisoNivel" role="status"
+                        <!-- MODO POKÉMON / RUTA -->
+                        <div x-show="modo === 'pokemon' || modo === 'ruta'">
+                            <p x-show="avisoNivel && modo === 'pokemon'" x-cloak x-text="avisoNivel" role="status"
                                class="text-xs text-orange-700 dark:text-orange-300 bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg px-3 py-2"></p>
                             @foreach([1,2,3] as $level)
                             @php
@@ -432,19 +355,24 @@
                                 $bloqueadoNivel = $minLvl !== null && ($nivelJugador ?? 1) < $minLvl;
                             @endphp
                             <button
-                                @click="selectLevel({{ $level }})"
-                                {{ $bloqueadoNivel ? 'disabled' : '' }}
-                                @if($bloqueadoNivel) title="Requiere Nv {{ $minLvl }}" aria-disabled="true" @endif
-                                :class="selectedLevel === {{ $level }}
-                                    ? 'border-blue-500 dark:border-blue-400 bg-blue-50 dark:bg-blue-900/20'
-                                    : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'"
-                                class="w-full p-4 rounded-xl border-2 text-left transition-all {{ $bloqueadoNivel ? 'opacity-60 cursor-not-allowed border-dashed' : '' }}"
+                                @click="modo === 'ruta' ? selectRutaNivel({{ $level }}) : selectLevel({{ $level }})"
+                                :disabled="modo === 'pokemon' && {{ $bloqueadoNivel ? 'true' : 'false' }}"
+                                @if($bloqueadoNivel) title="Requiere Nv {{ $minLvl }}" @endif
+                                :class="[
+                                    (modo === 'ruta' ? rutaNivel : selectedLevel) === {{ $level }}
+                                        ? 'border-blue-500 dark:border-blue-400 bg-blue-50 dark:bg-blue-900/20'
+                                        : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600',
+                                    modo === 'pokemon' && {{ $bloqueadoNivel ? 'true' : 'false' }}
+                                        ? 'opacity-60 cursor-not-allowed border-dashed'
+                                        : ''
+                                ]"
+                                class="w-full p-4 rounded-xl border-2 text-left transition-all"
                                 aria-label="Nivel {{ $level }}"
                             >
                                 <div class="flex items-center justify-between mb-2">
                                     <span class="text-sm font-semibold text-gray-900 dark:text-white flex items-center gap-1.5">
                                         @if($bloqueadoNivel)
-                                            <svg class="w-3.5 h-3.5 text-orange-500" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                                            <svg x-show="modo === 'pokemon'" x-cloak class="w-3.5 h-3.5 text-orange-500" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
                                                 <path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd"/>
                                             </svg>
                                         @endif
@@ -452,7 +380,7 @@
                                     </span>
                                     <span class="flex items-center gap-2">
                                         @if($bloqueadoNivel)
-                                            <span class="px-2 py-0.5 bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400 text-[10px] font-bold rounded-full">
+                                            <span x-show="modo === 'pokemon'" x-cloak class="px-2 py-0.5 bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400 text-[10px] font-bold rounded-full">
                                                 Requiere Nv {{ $minLvl }}
                                             </span>
                                         @endif
@@ -532,7 +460,7 @@
                     x-show="modo === 'ruta'"
                     x-cloak
                     @click="openRutaFormacionPopup()"
-                    :disabled="!selectedTeamId || rutaRivalesLoading || rutaRivales.length === 0"
+                    :disabled="!selectedTeamId"
                     class="w-full px-4 py-3 bg-red-600 text-white rounded-xl text-sm font-bold transition-all hover:bg-red-700 disabled:bg-gray-300 dark:disabled:bg-gray-700 disabled:text-gray-500 dark:disabled:text-gray-500 disabled:cursor-not-allowed uppercase tracking-wide"
                 >
                     ⚔️ Combate de Ruta
@@ -794,13 +722,9 @@
                                 @click="toggleFormacionSlot(miembro.slot)"
                                 :class="formacion[miembro.slot] === 'vanguardia'
                                     ? 'bg-blue-600 text-white border-blue-600'
-                                    : (formacionContexto === 'ruta' && !formacion[miembro.slot]
-                                        ? 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 border-gray-300 dark:border-gray-600 border-dashed'
-                                        : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600')"
+                                    : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600'"
                                 class="px-3 py-1.5 rounded-lg text-xs font-bold border transition-colors"
-                                x-text="formacion[miembro.slot] === 'vanguardia'
-                                    ? '🛡️ Vanguardia'
-                                    : (formacionContexto === 'ruta' && !formacion[miembro.slot] ? '⚙️ Automática' : '⚔️ Retaguardia')"
+                                x-text="formacion[miembro.slot] === 'vanguardia' ? '🛡️ Vanguardia' : '⚔️ Retaguardia'"
                             ></button>
                         </div>
                     </template>
@@ -1206,9 +1130,6 @@ function habitatShow() {
 
         // ─── Ruta mode (combate 5v5; default) ─────────────
         rutaNivel: 1,
-        rutaRivales: [],
-        rutaRivalesLoading: false,
-        rutaRivalesError: '',
         rutaCombatiendo: false,
         rutaCombatError: '',
 
@@ -1249,32 +1170,11 @@ function habitatShow() {
             this.modo = 'ruta';
             this.selectedTrainer = null;
             this.selectedLevel = null;
-            this.cargarRivalesRuta();
-        },
-
-        async cargarRivalesRuta() {
-            this.rutaRivalesLoading = true;
-            this.rutaRivalesError = '';
-            try {
-                const response = await fetch('/api/habitats/{{ $habitat['id'] }}/ruta/rivales?nivel=' + this.rutaNivel, {
-                    headers: { 'Accept': 'application/json' },
-                });
-                if (!response.ok) throw new Error('Error al cargar los rivales');
-                const data = await response.json();
-                this.rutaRivales = (data && data.rivales) || [];
-            } catch (e) {
-                console.error('Error loading rivales de ruta:', e);
-                this.rutaRivalesError = 'No se pudieron cargar los rivales de esta ruta.';
-                this.rutaRivales = [];
-            } finally {
-                this.rutaRivalesLoading = false;
-            }
         },
 
         selectRutaNivel(nivel) {
             this.rutaNivel = nivel;
             this.rutaCombatError = '';
-            this.cargarRivalesRuta();
         },
 
         openRutaFormacionPopup() {
@@ -1283,9 +1183,9 @@ function habitatShow() {
             }
             this.formacionContexto = 'ruta';
             this.selectedTrainer = null;
-            // Formación vacía: el backend aplica la formación persistida; si el usuario
-            // elige posiciones se envían explícitamente (chips "⚙️ Automática").
-            this.formacion = {};
+            // Formación completa (5 slots): la persistida del backend o 'vanguardia'
+            // por defecto. Se envía explícitamente; el backend nunca auto-clasifica.
+            this.formacion = this.formacionInicialDe(this.selectedTeamId);
             this.rutaCombatError = '';
             this.showFormacionPopup = true;
         },
@@ -1315,14 +1215,8 @@ function habitatShow() {
             this.selectedTrainer = trainer;
             this.formacionContexto = 'entrenadores';
             this.rutaCombatError = '';
-            // Inicializar toggles (todos vanguardia por defecto)
-            this.formacion = {};
-            const team = this.teams.find(t => t.id === this.selectedTeamId);
-            if (team && team.members) {
-                team.members.forEach(m => {
-                    this.formacion[m.slot] = 'vanguardia';
-                });
-            }
+            // Formación completa (5 slots) desde la persistida del equipo.
+            this.formacion = this.formacionInicialDe(this.selectedTeamId);
             this.showFormacionPopup = true;
         },
 
@@ -1331,16 +1225,21 @@ function habitatShow() {
                 return;
             }
             this.formacionContexto = 'entrenadores';
-            if (Object.keys(this.formacion).length === 0) {
-                this.formacion = {};
-                const team = this.teams.find(t => t.id === this.selectedTeamId);
-                if (team && team.members) {
-                    team.members.forEach(m => {
-                        this.formacion[m.slot] = 'vanguardia';
-                    });
-                }
-            }
+            this.formacion = this.formacionInicialDe(this.selectedTeamId);
             this.showFormacionPopup = true;
+        },
+
+        /** Formación inicial para un equipo: formación persistida o 'vanguardia'. */
+        formacionInicialDe(teamId) {
+            const team = this.teams.find(t => t.id === teamId);
+            const persistida = team && team.formacion ? team.formacion : {};
+            return {
+                1: persistida[1] || 'vanguardia',
+                2: persistida[2] || 'vanguardia',
+                3: persistida[3] || 'vanguardia',
+                4: persistida[4] || 'vanguardia',
+                5: persistida[5] || 'vanguardia',
+            };
         },
 
         toggleFormacionSlot(slot) {
@@ -1573,8 +1472,6 @@ function habitatShow() {
             // Cargar favoritos para la exploración individual. Tolerante: si el
             // endpoint aún no está disponible, se muestra el estado vacío/error.
             this.cargarFavoritos();
-            // Modo por defecto = Combate de Ruta: precargar rivales del nivel 1.
-            this.cargarRivalesRuta();
         },
 
         async cargarFavoritos() {

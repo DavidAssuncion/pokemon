@@ -159,4 +159,4 @@ app/
 
 ## Versionado de sesión
 
-Las batallas serializadas en sesión incluyen un prefijo de versión: `v{numero}|{serializado}`. Al cambiar la estructura de `AgregadoBatalla` o `Combatiente`, incrementar `SESSION_VERSION` en `Combate.php` y añadir lógica de migración.
+Las batallas serializadas en sesión incluyen un prefijo de versión: `v{numero}|{serializado}`. Al cambiar la estructura de `AgregadoBatalla` o `Combatiente`, incrementar `SESSION_VERSION` en `app/Support/BattleSessionService.php` (best-effort: las versiones antiguas se descartan) y añadir lógica de migración si aplica.

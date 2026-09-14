@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Src\CombateRuta\App;
 
+use App\Enums\StatEnum;
 use App\Jobs\ActualizarPokedexJob;
 use App\Models\Pokemon;
 use App\Models\Team;
@@ -16,8 +17,10 @@ use Src\Exploraciones\App\NormalizadorPokemonDerrotado;
 use Src\Exploraciones\App\PersistirRecompensas;
 use Src\Exploraciones\Domain\CalculadorRecompensas;
 use Src\Exploraciones\Domain\Recompensas\PokemonDerrotado;
+use Src\Exploraciones\Domain\Recompensas\RecompensaEv;
+use Src\Exploraciones\Domain\Recompensas\RecompensaFamilia;
+use Src\Exploraciones\Domain\Recompensas\RecompensaTipo;
 use Src\Exploraciones\Domain\Recompensas\ResultadoRecompensas;
-use Src\Shared\Domain\Collections\ItemCarameloCollection;
 use Src\Shared\Domain\ProbabilidadCaptura;
 
 /**
@@ -54,14 +57,17 @@ final class OtorgarRecompensasRuta
             return null;
         }
 
-        $ids = array_values(array_unique(array_filter(
+        $soloIds = array_values(array_filter(
             $speciesIdsRival,
             static fn (int $id): bool => $id > 0
-        )));
+        ));
 
-        if ($ids === []) {
+        if ($soloIds === []) {
             return null;
         }
+
+        // Para la query, cadenas evolutivas y avistados: una entrada por especie.
+        $ids = array_values(array_unique($soloIds));
 
         $pokemons = Pokemon::query()->with('stats', 'types');
         $pokemons->getQuery()->whereIn('id', $ids);
@@ -72,7 +78,17 @@ final class OtorgarRecompensasRuta
         }
 
         $miembrosPorCadena = CadenasEvolutivas::miembrosDe($pokemons->pluck('evolution_chain_id'));
-        $derrotados = NormalizadorPokemonDerrotado::normalizar($pokemons, $miembrosPorCadena);
+
+        // Una entrada por slot derrotado (conservando duplicados: 4× Magikarp = 4 entradas).
+        $porSlot = collect($soloIds)
+            ->map(fn (int $id): ?Pokemon => $pokemons->get($id))
+            ->filter();
+
+        if ($porSlot->isEmpty()) {
+            return null;
+        }
+
+        $derrotados = NormalizadorPokemonDerrotado::normalizar($porSlot, $miembrosPorCadena);
 
         $recompensas = $this->calculador->calcular(
             $derrotados,
@@ -89,7 +105,9 @@ final class OtorgarRecompensasRuta
             victoria: true,
             expTotal: $recompensas->expTotal,
             expMiembro: $recompensas->expPorMiembro,
-            caramelos: $this->caramelosDe($recompensas),
+            caramelosFamilia: $this->caramelosFamiliaDe($recompensas),
+            caramelosEv: $this->caramelosEvDe($recompensas),
+            caramelosTipo: $this->caramelosTipoDe($recompensas),
             capturas: $recompensas->capturas->all(),
         );
     }
@@ -128,8 +146,71 @@ final class OtorgarRecompensasRuta
         }
     }
 
-    private function caramelosDe(ResultadoRecompensas $recompensas): ItemCarameloCollection
+    /**
+     * Caramelos de familia agrupados al shape del modal
+     * ({src, alt, cantidad, nombre}), resolviendo la clave canónica
+     * `familia:{evolutionChainId}` con ItemCatalogo.
+     *
+     * @return list<array{src: string, alt: string, cantidad: int, nombre: string|null}>
+     */
+    private function caramelosFamiliaDe(ResultadoRecompensas $recompensas): array
     {
-        return ItemCatalogo::caramelosDeRecompensas($recompensas);
+        return $recompensas->caramelosFamilia
+            ->map(function (RecompensaFamilia $recompensa): array {
+                $resuelto = ItemCatalogo::resolve(ItemCatalogo::keyFamilia($recompensa->evolutionChainId));
+
+                return $this->itemModal($resuelto, $recompensa->cantidad, $resuelto['nombre']);
+            })
+            ->values()
+            ->all();
+    }
+
+    /**
+     * Caramelos EV agrupados al shape del modal; `nombre` es el label del stat
+     * (StatEnum), null si el stat no aplica.
+     *
+     * @return list<array{src: string, alt: string, cantidad: int, nombre: string|null}>
+     */
+    private function caramelosEvDe(ResultadoRecompensas $recompensas): array
+    {
+        return $recompensas->caramelosEv
+            ->map(function (RecompensaEv $recompensa): array {
+                $resuelto = ItemCatalogo::resolve(ItemCatalogo::keyEv($recompensa->stat));
+
+                return $this->itemModal($resuelto, $recompensa->cantidad, StatEnum::fromId($recompensa->stat)?->label());
+            })
+            ->values()
+            ->all();
+    }
+
+    /**
+     * Caramelos de tipo agrupados al shape del modal; `nombre` es el label del tipo.
+     *
+     * @return list<array{src: string, alt: string, cantidad: int, nombre: string|null}>
+     */
+    private function caramelosTipoDe(ResultadoRecompensas $recompensas): array
+    {
+        return $recompensas->caramelosTipo
+            ->map(fn (RecompensaTipo $recompensa): array => $this->itemModal(
+                ItemCatalogo::resolve(ItemCatalogo::keyTipo($recompensa->tipo)),
+                $recompensa->cantidad,
+                $recompensa->tipo,
+            ))
+            ->values()
+            ->all();
+    }
+
+    /**
+     * @param  array{nombre: string, imagen: string, categoria: string}  $resuelto
+     * @return array{src: string, alt: string, cantidad: int, nombre: string|null}
+     */
+    private function itemModal(array $resuelto, int $cantidad, ?string $nombre): array
+    {
+        return [
+            'src' => $resuelto['imagen'],
+            'alt' => $resuelto['nombre'],
+            'cantidad' => $cantidad,
+            'nombre' => $nombre,
+        ];
     }
 }

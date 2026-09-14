@@ -142,6 +142,10 @@ class AdminGymController extends Controller
             'slug' => $gimnasio->slug,
             'medalla' => $gimnasio->medalla,
             'tipo' => $gimnasio->tipo->value,
+            'tipo_nombre' => $gimnasio->tipo->label(),
+            'tipo_slug' => $gimnasio->tipo->slug(),
+            'tipo_medalla' => $gimnasio->tipo->medalla(),
+            'tipo_color' => $gimnasio->tipo->color(),
             'nivel_minimo' => $gimnasio->nivelMinimo,
             'etapas' => $etapas,
         ];

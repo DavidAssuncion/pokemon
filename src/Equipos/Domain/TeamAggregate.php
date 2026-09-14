@@ -16,6 +16,7 @@ class TeamAggregate
         public readonly string $name,
         public readonly int $userId,
         public readonly array $members = [],
+        public readonly array $formacion = [],
     ) {
     }
 }

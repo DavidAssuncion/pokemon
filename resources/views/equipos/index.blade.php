@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Equipos y Favoritos')
+@section('title', 'Equipos')
 
 @section('content')
 @php
@@ -9,238 +9,13 @@
 <div x-data="favoritosApp()" x-init="init()">
     <!-- Header -->
     <div class="mb-6">
-        <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Equipos y Favoritos</h1>
-        <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Gestiona tus equipos de combate y Pokémon favoritos</p>
-    </div>
-
-    <!-- Tabs -->
-    <div class="flex gap-1 mb-6 bg-gray-100 dark:bg-gray-900/50 rounded-lg p-1 w-fit">
-        <button
-            @click="activeTab = 'favoritos'"
-            class="px-4 py-2 rounded-md text-sm font-medium transition-colors"
-            :class="activeTab === 'favoritos'
-                ? 'bg-white dark:bg-gray-800 text-gray-900 dark:text-white shadow-sm'
-                : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'"
-        >
-            <span class="flex items-center gap-2">
-                <svg class="w-4 h-4 text-yellow-500" fill="currentColor" viewBox="0 0 24 24"><path d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.196-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"/></svg>
-                Favoritos
-            </span>
-        </button>
-        <button
-            @click="activeTab = 'equipos'"
-            class="px-4 py-2 rounded-md text-sm font-medium transition-colors"
-            :class="activeTab === 'equipos'
-                ? 'bg-white dark:bg-gray-800 text-gray-900 dark:text-white shadow-sm'
-                : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'"
-        >
-            <span class="flex items-center gap-2">
-                <svg class="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-                Equipos
-            </span>
-        </button>
+        <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Equipos</h1>
+        <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Gestiona tus equipos de combate</p>
     </div>
 
     <!-- ═══════════════════════════════════════════════════════════════════ -->
-    <!-- TAB: FAVORITOS                                                     -->
+    <!-- EQUIPOS                                                            -->
     <!-- ═══════════════════════════════════════════════════════════════════ -->
-    <div x-show="activeTab === 'favoritos'" x-cloak>
-        <div class="grid lg:grid-cols-3 gap-6">
-            <!-- Left 1/3: Favoritos List -->
-            <div class="space-y-4">
-                <div class="flex items-center justify-between bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-2">
-                    <h2 class="text-sm font-bold uppercase tracking-wide text-gray-700 dark:text-gray-300">Mis Favoritos</h2>
-                    <span class="px-2 py-0.5 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 text-xs font-bold rounded-full" x-text="favoritos.length"></span>
-                </div>
-
-                <div class="space-y-3">
-                    <template x-for="pokemon in favoritos" :key="pokemon.id">
-                        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden group relative">
-                            <button @click="openDetail(pokemon)" class="w-full p-3 flex items-center gap-3 text-left">
-                                <div class="w-16 h-16 shrink-0 bg-gray-50 dark:bg-gray-900/50 rounded-lg flex items-center justify-center overflow-hidden">
-                                    <img
-                                        :src="'/images/iconos_webp/' + pokemon.pokemon_id + '.webp'"
-                                        loading="lazy"
-                                        decoding="async"
-                                        :alt="pokemon.nombre"
-                                        :title="pokemon.nombre"
-                                        class="w-full h-full object-contain"
-                                        onerror="this.style.display='none'"
-                                    >
-                                </div>
-                                <div class="flex-1 min-w-0">
-                                    <p class="text-sm font-medium text-gray-900 dark:text-white capitalize truncate" x-text="nombreDe(pokemon)"></p>
-                                    <div class="flex items-center gap-2 mt-1">
-                                        <span class="px-1.5 py-0.5 bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-400 text-[10px] font-bold rounded-full">Nv <span x-text="nivelDe(pokemon)"></span></span>
-                                        <template x-if="cpDe(pokemon) != null">
-                                            <span class="px-1.5 py-0.5 bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300 text-[10px] font-bold rounded-full" title="Poder de combate">CP <span x-text="cpDe(pokemon)"></span></span>
-                                        </template>
-                                        <template x-if="enExploracion(pokemon.id)">
-                                            <span class="px-1.5 py-0.5 bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400 text-[10px] font-bold rounded uppercase">En exploración</span>
-                                        </template>
-                                    </div>
-                                </div>
-                                <svg class="w-5 h-5 text-yellow-500 shrink-0" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                                    <path d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.196-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"/>
-                                </svg>
-                            </button>
-                            <!-- Hover action: send to explore -->
-                            <div class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent p-2 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
-                                <button
-                                    @click="openExploracionModal(pokemon)"
-                                    :disabled="enExploracion(pokemon.id)"
-                                    class="w-full px-3 py-1.5 bg-green-600 text-white rounded-lg text-xs font-bold hover:bg-green-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed pointer-events-auto"
-                                    :title="enExploracion(pokemon.id) ? 'Este Pokémon está en exploración activa' : 'Enviar a explorar'"
-                                    x-text="enExploracion(pokemon.id) ? 'En exploración' : 'Enviar a explorar'"
-                                ></button>
-                            </div>
-                        </div>
-                    </template>
-
-                    <!-- Empty favorites -->
-                    <template x-if="favoritos.length === 0">
-                        <div class="text-center py-8 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
-                            <svg class="w-12 h-12 mx-auto text-gray-300 dark:text-gray-600 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.196-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"/>
-                            </svg>
-                            <p class="text-sm text-gray-500 dark:text-gray-400 mb-3">No tienes Pokémon favoritos</p>
-                            <button
-                                @click="openFavoritosModal()"
-                                class="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors"
-                            >
-                                Gestionar favoritos
-                            </button>
-                        </div>
-                    </template>
-                </div>
-            </div>
-
-            <!-- Right 2/3: Available Pokemon (not favorites) -->
-            <div class="lg:col-span-2 space-y-6">
-                <!-- Manage button -->
-                <div class="flex justify-end">
-                    <button
-                        @click="openFavoritosModal()"
-                        class="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors flex items-center gap-2"
-                    >
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.196-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"/>
-                        </svg>
-                        Gestionar favoritos
-                    </button>
-                </div>
-
-                <!-- Search and Filter -->
-                <div class="flex flex-col sm:flex-row gap-3">
-                    <div class="relative flex-1">
-                        <input
-                            type="text"
-                            x-model="searchQuery"
-                            placeholder="Buscar por nombre o ID..."
-                            class="w-full px-4 py-2 pl-10 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
-                        >
-                        <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-                        </svg>
-                    </div>
-                    <div class="relative">
-                        <button
-                            @click="showTypeFilter = !showTypeFilter"
-                            class="px-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors flex items-center gap-2"
-                        >
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/>
-                            </svg>
-                            Tipo
-                        </button>
-                        <template x-if="showTypeFilter">
-                            <div class="absolute right-0 top-full mt-1 z-40 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-lg p-3 w-48 max-h-64 overflow-y-auto">
-                                <button
-                                    @click="typeFilter = null; showTypeFilter = false"
-                                    class="w-full text-left px-3 py-1.5 text-sm rounded hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-                                    :class="typeFilter === null ? 'text-blue-600 dark:text-blue-400 font-medium' : 'text-gray-700 dark:text-gray-300'"
-                                >
-                                    Todos
-                                </button>
-                                @foreach($tipos as $id => $nombre)
-                                <button
-                                    @click="typeFilter = '{{ $nombre }}'; showTypeFilter = false"
-                                    class="w-full text-left px-3 py-1.5 text-sm rounded hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-                                    :class="typeFilter === '{{ $nombre }}' ? 'text-blue-600 dark:text-blue-400 font-medium' : 'text-gray-700 dark:text-gray-300'"
-                                >
-                                    {{ $nombre }}
-                                </button>
-                                @endforeach
-                            </div>
-                        </template>
-                    </div>
-                </div>
-
-                <!-- Available Pokemon Grid (favoritos) -->
-                <div>
-                    <div class="flex items-center justify-between bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-2 mb-4">
-                        <h2 class="text-sm font-bold uppercase tracking-wide text-gray-700 dark:text-gray-300">Reclutados Disponibles</h2>
-                    </div>
-                    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-2">
-                        <template x-for="pokemon in availablePokemonsFav" :key="'fav-'+pokemon.id">
-                            <div class="relative bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 text-center group">
-                                <div class="w-24 h-24 mx-auto">
-                                    <img
-                                        :src="'/images/iconos_webp/' + pokemon.pokemon_id + '.webp'"
-                                        loading="lazy"
-                                        decoding="async"
-                                        :alt="pokemon.nombre"
-                                        :title="pokemon.nombre"
-                                        class="w-full h-full object-contain"
-                                        onerror="this.style.display='none'"
-                                    >
-                                </div>
-                                <p class="text-[10px] text-gray-600 dark:text-gray-400 truncate px-1 pb-1" x-text="nombreDe(pokemon)"></p>
-                                <template x-if="cpDe(pokemon) != null">
-                                    <p class="text-[10px] font-bold text-purple-600 dark:text-purple-400 leading-none" x-text="'CP ' + cpDe(pokemon)"></p>
-                                </template>
-                                <!-- Action buttons -->
-                                <div class="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2 rounded-lg">
-                                    <button
-                                        @click="toggleFavorito(pokemon)"
-                                        :disabled="togglingFavoritoId === pokemon.id"
-                                        class="w-8 h-8 bg-yellow-500 text-white rounded-full flex items-center justify-center hover:bg-yellow-600 transition-colors text-lg font-bold"
-                                        :aria-label="'Marcar ' + pokemon.nombre + ' como favorito'"
-                                        :title="'Marcar ' + pokemon.nombre + ' como favorito'"
-                                    >
-                                        ★
-                                    </button>
-                                    <button
-                                        @click="openDetail(pokemon)"
-                                        class="w-8 h-8 bg-blue-500 text-white rounded-full flex items-center justify-center hover:bg-blue-600 transition-colors"
-                                        :aria-label="'Ver detalle de ' + pokemon.nombre"
-                                        :title="'Ver detalle de ' + pokemon.nombre"
-                                    >
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
-                                        </svg>
-                                    </button>
-                                </div>
-                            </div>
-                        </template>
-
-                        <!-- Empty available -->
-                        <template x-if="availablePokemonsFav.length === 0">
-                            <div class="col-span-full text-center py-8">
-                                <p class="text-sm text-gray-400 dark:text-gray-500" x-text="searchQuery || typeFilter ? 'No se encontraron Pokémon' : 'No hay Pokémon disponibles para marcar como favoritos'"></p>
-                            </div>
-                        </template>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- ═══════════════════════════════════════════════════════════════════ -->
-    <!-- TAB: EQUIPOS                                                       -->
-    <!-- ═══════════════════════════════════════════════════════════════════ -->
-    <div x-show="activeTab === 'equipos'" x-cloak>
         <div class="grid lg:grid-cols-3 gap-6">
             <!-- Left 1/3: Teams Panel -->
             <div class="space-y-4">
@@ -347,8 +122,8 @@
                                                         :src="'/images/iconos_webp/' + getMember(team, slot).pokemon_id + '.webp'"
                                                         loading="lazy"
                                                         decoding="async"
-                                                        :alt="getMember(team, slot).nombre"
-                                                        :title="getMember(team, slot).nombre"
+                                                        :alt="nombreFormateado(getMember(team, slot))"
+                                                        :title="nombreFormateado(getMember(team, slot))"
                                                         class="w-full h-16 object-contain mx-auto"
                                                         onerror="this.style.display='none'"
                                                     >
@@ -360,20 +135,37 @@
                                                     >
                                                         ✕
                                                     </button>
-                                                    <p class="text-[10px] text-gray-500 dark:text-gray-400 truncate mt-0.5" x-text="getMember(team, slot).nombre"></p>
-                                                    <!-- Role selector -->
-                                                    <select
-                                                        :value="rolInicialDe(getTeamMember(team, slot))"
-                                                        @change="updateMemberRole(team, getTeamMember(team, slot), $event.target.value)"
-                                                        :disabled="isInExploration(team.id)"
-                                                        class="mt-1 w-full max-w-[6.5rem] mx-auto block px-1 py-0.5 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded text-[10px] text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:opacity-40 disabled:cursor-not-allowed"
-                                                        :aria-label="'Rol de ' + getMember(team, slot).nombre"
-                                                    >
-                                                        <option value="VANGUARDIA">Vanguardia</option>
-                                                        <option value="COMBATIENTE">Combatiente</option>
-                                                        <option value="RECOLECTOR">Recolector</option>
-                                                        <option value="RASTREADOR">Rastreador</option>
-                                                    </select>
+                                                    <!-- Nombre del Pokémon -->
+                                                    <p class="text-[10px] leading-tight text-gray-500 dark:text-gray-400 mt-0.5" x-text="nombreFormateado(getMember(team, slot))"></p>
+                                                    <!-- Formación: iconos seleccionables -->
+                                                     <div class="flex flex-row items-center justify-center gap-1">
+                                                        <button
+                                                            @click="setFormacionSlot(team, slot, 'vanguardia')"
+                                                            :disabled="isInExploration(team.id)"
+                                                            :class="formacionDe(team, slot) === 'vanguardia' ? 'bg-blue-600/15 dark:bg-blue-500/20 border-blue-500 text-blue-600 dark:text-blue-400' : 'border-transparent text-gray-400 dark:text-gray-600 hover:text-gray-600 dark:hover:text-gray-400 opacity-70'"
+                                                            class="rounded px-1.5 py-0.5 border transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                                                            :aria-label="'Posición vanguardia de ' + nombreFormateado(getMember(team, slot))"
+                                                            :aria-pressed="formacionDe(team, slot) === 'vanguardia'"
+                                                            :title="'Posición vanguardia de ' + nombreFormateado(getMember(team, slot))"
+                                                        >
+                                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                                                <path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 01-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 011-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 011.52 0C14.51 3.81 17 5 19 5a1 1 0 011 1z"/>
+                                                            </svg>
+                                                        </button>
+                                                        <button
+                                                            @click="setFormacionSlot(team, slot, 'retaguardia')"
+                                                            :disabled="isInExploration(team.id)"
+                                                            :class="formacionDe(team, slot) === 'retaguardia' ? 'bg-red-600/15 dark:bg-red-500/20 border-red-500 text-red-600 dark:text-red-400' : 'border-transparent text-gray-400 dark:text-gray-600 hover:text-gray-600 dark:hover:text-gray-400 opacity-70'"
+                                                            class="rounded px-1.5 py-0.5 border transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                                                            :aria-label="'Posición retaguardia de ' + nombreFormateado(getMember(team, slot))"
+                                                            :aria-pressed="formacionDe(team, slot) === 'retaguardia'"
+                                                            :title="'Posición retaguardia de ' + nombreFormateado(getMember(team, slot))"
+                                                        >
+                                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                                                <path d="M14.5 17.5L3 6V3h3l11.5 11.5M13 19l6-6M16 16l4 4M19 21l2-2"/>
+                                                            </svg>
+                                                        </button>
+                                                    </div>
                                                 </div>
                                             </template>
                                             <template x-if="!getMember(team, slot)">
@@ -388,39 +180,9 @@
                                     </template>
                                 </div>
                             </div>
-                            <!-- Formación de combate (vanguardia/retaguardia persistida) -->
+                            <!-- Guardar formación -->
                             <div class="px-3 pb-3">
-                                <div class="flex items-center justify-between mb-2">
-                                    <span class="text-[10px] font-bold uppercase tracking-wide text-gray-500 dark:text-gray-400">Formación de combate</span>
-                                    <span class="text-[10px] text-gray-400 dark:text-gray-500">Vanguardia · Retaguardia</span>
-                                </div>
-                                <div class="space-y-1.5">
-                                    <template x-for="slot in [1,2,3,4,5]" :key="'form-slot-'+team.id+'-'+slot">
-                                        <template x-if="getTeamMember(team, slot)">
-                                            <div class="flex items-center justify-between gap-2 px-2 py-1.5 bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700 rounded-lg">
-                                                <span class="text-[10px] text-gray-600 dark:text-gray-400 truncate" x-text="'Slot ' + slot + ' · ' + getMember(team, slot).nombre"></span>
-                                                <div class="flex gap-1 shrink-0">
-                                                    <button
-                                                        @click="setFormacionSlot(team, slot, 'vanguardia')"
-                                                        :disabled="isInExploration(team.id)"
-                                                        :class="formacionDe(team, slot) === 'vanguardia' ? 'bg-blue-600 text-white border-blue-600' : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600'"
-                                                        class="px-2 py-0.5 rounded text-[10px] font-bold border transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-                                                    >🛡️ Vanguardia</button>
-                                                    <button
-                                                        @click="setFormacionSlot(team, slot, 'retaguardia')"
-                                                        :disabled="isInExploration(team.id)"
-                                                        :class="formacionDe(team, slot) === 'retaguardia' ? 'bg-red-600 text-white border-red-600' : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600'"
-                                                        class="px-2 py-0.5 rounded text-[10px] font-bold border transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-                                                    >⚔️ Retaguardia</button>
-                                                </div>
-                                            </div>
-                                        </template>
-                                    </template>
-                                    <template x-if="!team.members || team.members.length === 0">
-                                        <p class="text-[10px] text-gray-400 dark:text-gray-500 text-center py-1">Añade miembros para configurar la formación</p>
-                                    </template>
-                                </div>
-                                <div class="flex items-center gap-2 mt-2">
+                                <div class="flex items-center gap-2">
                                     <button
                                         @click="guardarFormacion(team)"
                                         :disabled="isInExploration(team.id) || formacionSavingTeamId === team.id"
@@ -630,72 +392,10 @@
                 </div>
             </div>
         </div>
-    </div>
 
     <!-- ═══════════════════════════════════════════════════════════════════ -->
-    <!-- MODALS (shared between tabs)                                       -->
+    <!-- MODALS                                                              -->
     <!-- ═══════════════════════════════════════════════════════════════════ -->
-
-    <!-- Favorites Management Modal -->
-    <template x-if="showFavoritosModal">
-        <div class="fixed inset-0 z-50 flex items-center justify-center p-4" @keydown.escape.window="closeFavoritosModal()">
-            <div class="absolute inset-0 bg-black/60" @click="closeFavoritosModal()"></div>
-            <div class="relative bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-2xl max-h-[85vh] overflow-hidden flex flex-col">
-                <!-- Header -->
-                <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-700">
-                    <h3 class="text-lg font-bold text-gray-900 dark:text-white">Gestionar Favoritos</h3>
-                    <button @click="closeFavoritosModal()" class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400" aria-label="Cerrar">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-                    </button>
-                </div>
-                <!-- Content: scrollable grid of all reclutados (not in exploration), each with star toggle -->
-                <div class="flex-1 overflow-y-auto p-6">
-                    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-                        <template x-for="pokemon in allGestionables" :key="'mgmt-'+pokemon.id">
-                            <div
-                                class="relative bg-white dark:bg-gray-800 rounded-lg shadow-sm border text-center p-2 transition-all cursor-pointer"
-                                :class="pokemon.favorito
-                                    ? 'border-yellow-500 dark:border-yellow-400 ring-1 ring-yellow-500/30'
-                                    : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'"
-                                @click="toggleFavorito(pokemon)"
-                            >
-                                <div class="w-16 h-16 mx-auto">
-                                    <img
-                                        :src="'/images/iconos_webp/' + pokemon.pokemon_id + '.webp'"
-                                        loading="lazy"
-                                        decoding="async"
-                                        :alt="pokemon.nombre"
-                                        class="w-full h-full object-contain"
-                                        onerror="this.style.display='none'"
-                                    >
-                                </div>
-                                <p class="text-[10px] text-gray-600 dark:text-gray-400 truncate mt-1" x-text="nombreDe(pokemon)"></p>
-                                <template x-if="cpDe(pokemon) != null">
-                                    <p class="text-[10px] font-bold text-purple-600 dark:text-purple-400 leading-none" x-text="'CP ' + cpDe(pokemon)"></p>
-                                </template>
-                                <div class="mt-1">
-                                    <template x-if="pokemon.favorito">
-                                        <span class="inline-flex items-center gap-1 px-1.5 py-0.5 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 text-[10px] font-bold rounded-full">
-                                            <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
-                                            Favorito
-                                        </span>
-                                    </template>
-                                    <template x-if="!pokemon.favorito">
-                                        <span class="text-[10px] text-gray-400 dark:text-gray-500">Click para marcar</span>
-                                    </template>
-                                </div>
-                            </div>
-                        </template>
-                    </div>
-                    <template x-if="allGestionables.length === 0">
-                        <div class="text-center py-12 text-gray-500 dark:text-gray-400">
-                            <p>No hay Pokémon disponibles para gestionar</p>
-                        </div>
-                    </template>
-                </div>
-            </div>
-        </div>
-    </template>
 
     <!-- Exploration Modal (individual) -->
     <template x-if="showExploracionModal">
@@ -1106,17 +806,12 @@ function favoritosApp() {
         formacionSaveError: '',
         formacionSaveSuccess: '',
 
-        // ─── UI: Tabs ──────────────────────────────────────────────────────
-        activeTab: 'favoritos',
-
-        // ─── UI: Favoritos ─────────────────────────────────────────────────
+        // ─── UI: Equipos ───────────────────────────────────────────────────
+        // ─── UI: Buscar/filtro ─────────────────────────────────────────────
         searchQuery: '',
         typeFilter: null,
         showTypeFilter: false,
-        togglingFavoritoId: null,
-        showFavoritosModal: false,
 
-        // ─── UI: Equipos ───────────────────────────────────────────────────
         selectedTeamId: null,
         showNewTeamForm: false,
         newTeamName: '',
@@ -1152,37 +847,6 @@ function favoritosApp() {
         // ═══════════════════════════════════════════════════════════════════════
         // COMPUTED GETTERS
         // ═══════════════════════════════════════════════════════════════════════
-
-        get favoritos() {
-            return this.reclutados.filter(r => r.favorito === true);
-        },
-
-        get noFavoritos() {
-            return this.reclutados.filter(r => !r.favorito);
-        },
-
-        get allGestionables() {
-            return this.reclutados.filter(r => !this.enExploracion(r.id));
-        },
-
-        /** Favoritos tab: non-favorited reclutados with search/type filter */
-        get availablePokemonsFav() {
-            let result = this.noFavoritos;
-            if (this.searchQuery.trim()) {
-                const q = this.searchQuery.toLowerCase().trim();
-                result = result.filter(r =>
-                    r.nombre.toLowerCase().includes(q) ||
-                    String(r.pokemon_id).includes(q)
-                );
-            }
-            if (this.typeFilter) {
-                result = result.filter(r =>
-                    r.pokemon && r.pokemon.types &&
-                    r.pokemon.types.some(t => t.tipo_nombre === this.typeFilter)
-                );
-            }
-            return result;
-        },
 
         /** Equipos tab: reclutados not assigned to any team */
         get availablePokemonsTeams() {
@@ -1221,10 +885,6 @@ function favoritosApp() {
         // ═══════════════════════════════════════════════════════════════════════
 
         init() {
-            this.reclutados.forEach(r => {
-                if (typeof r.favorito !== 'boolean') r.favorito = false;
-            });
-
             document.addEventListener('click', (e) => {
                 if (!e.target.closest('[x-data]')?.contains(e.target)) {
                     this.showTypeFilter = false;
@@ -1270,6 +930,15 @@ function favoritosApp() {
             let nombre = pokemon.nombre;
             if (!nombre && pokemon.pokemon && pokemon.pokemon.name) nombre = pokemon.pokemon.name;
             return String(nombre || '').charAt(0).toUpperCase() + String(nombre || '').slice(1);
+        },
+
+        /** Nombre legible: quita guiones y capitaliza cada palabra ("raticate-alola" → "Raticate Alola"). */
+        nombreFormateado(pokemon) {
+            if (!pokemon) return '';
+            let raw = pokemon.nombre;
+            if (!raw && pokemon.pokemon && pokemon.pokemon.name) raw = pokemon.pokemon.name;
+            raw = String(raw || '').replace(/-/g, ' ');
+            return raw.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
         },
 
         expParaNivel(nivel) {
@@ -1418,57 +1087,12 @@ function favoritosApp() {
         },
 
         // ═══════════════════════════════════════════════════════════════════════
-        // FAVORITOS LOGIC
-        // ═══════════════════════════════════════════════════════════════════════
-
-        async toggleFavorito(pokemon) {
-            if (this.togglingFavoritoId === pokemon.id) return;
-            this.togglingFavoritoId = pokemon.id;
-            try {
-                const response = await fetch('/api/reclutados/' + pokemon.id + '/toggle-favorito', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '',
-                        'Accept': 'application/json',
-                    },
-                    body: JSON.stringify({ habitat_id: null }),
-                });
-                if (response.ok) {
-                    const data = await response.json();
-                    pokemon.favorito = !!data.favorito;
-                } else {
-                    const data = await response.json().catch(() => ({}));
-                    console.warn('toggle favorito falló:', data.message || response.status);
-                    alert(data.message || 'No se pudo actualizar el favorito.');
-                }
-            } catch (err) {
-                console.error('Error toggling favorito:', err);
-                alert('Error de conexión al actualizar el favorito.');
-            } finally {
-                this.togglingFavoritoId = null;
-            }
-        },
-
-        openFavoritosModal() {
-            this.showFavoritosModal = true;
-        },
-
-        closeFavoritosModal() {
-            this.showFavoritosModal = false;
-        },
-
-        // ═══════════════════════════════════════════════════════════════════════
         // EQUIPOS LOGIC
         // ═══════════════════════════════════════════════════════════════════════
 
         getMember(team, slot) {
             const member = team.members.find(m => m.slot === slot);
             return member ? member.reclutado : null;
-        },
-
-        getTeamMember(team, slot) {
-            return team.members.find(m => m.slot === slot) || null;
         },
 
         getTeamName(teamId) {
@@ -1658,7 +1282,12 @@ function favoritosApp() {
             }
         },
 
+        // ─── DEPRECATED: funciones de favoritos (UI eliminada; backend conservado) ─
+        // toggleFavorito, openFavoritosModal, closeFavoritosModal eliminadas.
+
         async updateMemberRole(team, member, behavior) {
+            // DEPRECATED: reemplazado por radios de formación vanguardia/retaguardia.
+            // Se conserva por si código legacy lo llama; puede eliminarse en limpieza futura.
             if (!member || !behavior) return;
             const reclutadoId = member.reclutado?.id ?? member.pokemon_id;
             if (!reclutadoId) return;
@@ -1673,7 +1302,6 @@ function favoritosApp() {
                     body: JSON.stringify({ behavior }),
                 });
                 if (response.ok) {
-                    // El backend sincroniza team_members; refresco completo para lectura limpia.
                     location.reload();
                 } else {
                     const body = await response.json().catch(() => ({}));
@@ -1686,8 +1314,9 @@ function favoritosApp() {
         },
 
         rolInicialDe(member) {
+            // DEPRECATED: reemplazado por formacionDe(team, slot).
+            // Se conserva por si código legacy lo llama; puede eliminarse en limpieza futura.
             if (!member) return 'VANGUARDIA';
-            // RFC: el rol vive ahora en reclutados.behavior; fallback al legado team_members.behavior.
             return member.reclutado?.behavior || member.behavior || 'VANGUARDIA';
         },
 
@@ -1713,8 +1342,14 @@ function favoritosApp() {
                 alert('No se puede modificar un equipo con exploraciones activas');
                 return;
             }
+            const base = team.formacion || {};
             const draft = this.formacionDraft[team.id] || {};
-            if (Object.keys(draft).length === 0) {
+            const formacionCompleta = {};
+            for (let slot = 1; slot <= 5; slot++) {
+                if (!this.getMember(team, slot)) continue;
+                formacionCompleta[slot] = draft[slot] || base[slot] || 'vanguardia';
+            }
+            if (Object.keys(formacionCompleta).length === 0) {
                 alert('No hay cambios en la formación para guardar.');
                 return;
             }
@@ -1729,7 +1364,7 @@ function favoritosApp() {
                         'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '',
                         'Accept': 'application/json',
                     },
-                    body: JSON.stringify({ formacion: draft }),
+                    body: JSON.stringify({ formacion: formacionCompleta }),
                 });
                 const data = await response.json().catch(() => ({}));
                 if (!response.ok) {

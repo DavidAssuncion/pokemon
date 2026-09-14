@@ -20,6 +20,10 @@ final readonly class DetalleGimnasio
         public readonly string $slug,
         public readonly string $medalla,
         public readonly TipoPokemon $tipo,
+        public readonly string $tipoNombre,
+        public readonly string $tipoSlug,
+        public readonly string $tipoMedalla,
+        public readonly string $tipoColor,
         public readonly int $nivelMinimo,
         public readonly int $nivelJugador,
         public readonly int $etapaActual,
@@ -31,7 +35,7 @@ final readonly class DetalleGimnasio
     /**
      * Frontera — shape exacto del contrato previo (claves snake_case).
      *
-     * @return array{slug: string, medalla: string, tipo: int, nivel_minimo: int, nivel_jugador: int, etapa_actual: int, estado: string, etapas: list<array{etapa: int, nombre: string}>}
+     * @return array{slug: string, medalla: string, tipo: int, tipo_nombre: string, tipo_slug: string, tipo_medalla: string, tipo_color: string, nivel_minimo: int, nivel_jugador: int, etapa_actual: int, estado: string, etapas: list<array{etapa: int, nombre: string}>}
      *
      * @deprecated Usar las propiedades tipadas.
      */
@@ -41,6 +45,10 @@ final readonly class DetalleGimnasio
             'slug' => $this->slug,
             'medalla' => $this->medalla,
             'tipo' => $this->tipo->value,
+            'tipo_nombre' => $this->tipoNombre,
+            'tipo_slug' => $this->tipoSlug,
+            'tipo_medalla' => $this->tipoMedalla,
+            'tipo_color' => $this->tipoColor,
             'nivel_minimo' => $this->nivelMinimo,
             'nivel_jugador' => $this->nivelJugador,
             'etapa_actual' => $this->etapaActual,

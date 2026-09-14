@@ -17,7 +17,7 @@ final class GimnasioResumenCollection extends Collection
     /**
      * Frontera — serializa cada resumen al shape del contrato previo.
      *
-     * @return list<array{slug: string, medalla: string, tipo: int, nivel_minimo: int, nivel_jugador: int, etapa_actual: int, estado: string}>
+     * @return list<array{slug: string, medalla: string, tipo: int, tipo_nombre: string, tipo_slug: string, tipo_medalla: string, tipo_color: string, nivel_minimo: int, nivel_jugador: int, etapa_actual: int, estado: string}>
      *
      * @deprecated Usar las propiedades tipadas.
      */

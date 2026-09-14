@@ -32,7 +32,10 @@ class ReclutamientoController extends Controller
                 'user_id' => auth()->id(),
                 'pokemon_id' => $reclutable->pokemon_id,
                 'nombre' => null, // default: uses pokemon name in UI
-                'exp' => null,
+                'exp' => [
+                    'total' => 1500,
+                    'tipos' => [],
+                ],
                 'es_shiny' => false,
                 'obj_equipados' => null,
                 'movimientos' => null,

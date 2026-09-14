@@ -6,3 +6,8 @@
 .dark { color-scheme: dark; }
 .dark body { background-color: #111827 !important; color: #f9fafb; }
 .dark header, .dark main { color: inherit; }
+
+/* Icono de medalla de gimnasio */
+.medalla-icon {
+    width: 96px;
+}

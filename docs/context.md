@@ -2,16 +2,16 @@
 
 ## Resumen
 
-Pokemon Battle Game es un juego de combate por turnos 3v3 con sistema de clima, objetos equipables y habilidades. Implementado como aplicación web Laravel 12 con arquitectura híbrida: `app/` (Laravel estándar) + `src/` (DDD/Hexagonal). El frontend usa Livewire 3 + Alpine.js + Tailwind CSS.
+Pokemon Battle Game es un juego de combate por turnos (5v5 tras el escalado global de 2026-09-13) con sistema de clima, objetos equipables y habilidades. Implementado como aplicación web Laravel 12 con arquitectura híbrida: `app/` (Laravel estándar) + `src/` (DDD/Hexagonal). El frontend usa Livewire 3 + Alpine.js + Tailwind CSS.
 
 ## Estado actual
 
 El proyecto tiene funcionalidad base estable:
 
-- **Batalla 3v3 funcional** — con datos mock. Incluye turnos por velocidad acumulada, posiciones (vanguardia/retaguardia), daño con cadena de responsabilidad (7 manejadores), clima (sequía, diluvio, niebla, granizo, tormenta arena, turbulencias), efectos de habilidad y objetos (Strategy), estados (quemadura, veneno, parálisis, sueño, congelación, confusión), estadísticas con etapas (-6 a +6), STAB, efectividad de tipos (TypeChart 18×18), golpes críticos 6.25%, barreras duales (defensa física/especial), animaciones vía Alpine.js. Ruta `/combate` activa dentro de `auth`. ~176+ tests de Battle.
+- **Batalla 5v5 funcional (escalado global)** — con datos mock. El motor de batalla se escaló de 3v3 a 5v5 (equipos de 5, formación vanguardia/retaguardia por slot); aplica a los modos con equipos del jugador, incluyendo **gimnasios 5v5** y el combate de ruta. Incluye turnos por velocidad acumulada, posiciones (vanguardia/retaguardia), daño con cadena de responsabilidad (7 manejadores), clima (sequía, diluvio, niebla, granizo, tormenta arena, turbulencias), efectos de habilidad y objetos (Strategy), estados (quemadura, veneno, parálisis, sueño, congelación, confusión), estadísticas con etapas (-6 a +6), STAB, efectividad de tipos (TypeChart 18×18), golpes críticos 6.25%, barreras duales (defensa física/especial), animaciones vía Alpine.js. Ruta `/combate` activa dentro de `auth`. ~176+ tests de Battle.
 - **Catálogo de provincias y hábitats** — con seeders, vistas y API.
 - **CRUD administrativo** — 13 módulos con vistas Blade (habilidades, evoluciones, tipos, stats, pokémon, provincias, hábitats, reclutados, equipos, exploraciones activas).
-- **Reclutamiento y equipos** — captura de pokémon, formación de equipos de 3.
+- **Reclutamiento y equipos** — captura de pokémon, formación de equipos de 5 miembros con posición por slot. El equipo se forma con la columna `teams.formacion` (JSON nullable, prioridad: popup > persistida > clasificación automática por stats).
 - **Datagrid JSON API** — subsistema de consulta de solo lectura (`app/Datagrid/`) con whitelist por modelo: `GET /datagrid/{model}` y `GET /datagrid/{model}/{id}/detalle`. Usado por la Pokédex y disponible para cualquier modelo registrado (pokemon, pokedex, reclutado, team, habitat, province).
 - **Pokédex asíncrona** — pestañas server-side (Vistos/No vistos/Atrapados), filtros de tipo y esfuerzo (EV), búsqueda con debounce, scroll infinito y modal de detalle bajo demanda.
 - **Iconos WebP** — 1032 iconos servidos como WebP desde `public/images/iconos_webp/` (generados con cwebp 1.3.2 `-q 80`, alfa preservado, −37 % de peso: 5,7 MiB → 3,6 MiB, 1032/1032 más ligeros; ~97 % menos que los PNG originales de 188 MB). Los PNG de `public/images/iconos/` se conservan como fuente y fallback, pero **no están versionados en este entorno de desarrollo** (solo queda `.htaccess`); los WebP de `iconos_webp/` son la fuente efectivamente servida (cache immutable) y se regeneran con `php artisan iconos:optimize-webp`.
@@ -22,6 +22,7 @@ El proyecto tiene funcionalidad base estable:
 - **Módulo de combate corregido y refactorizado (2026-08-30)** — 6 bugs de runtime que accedían a propiedades privadas de `PokemonEntity` (`$moves`, `$tiposCollection`) en lugar de sus getters (`moves()`, `tiposCollection()`): 2 en `AgregadoBatalla`, 4 en `Combate`. Ruta `/combate` reactivada (estaba comentada) dentro de `auth`, enlace "Combate" en el nav, weather banner corregido (comparaba valores ingleses con el enum español `TipoClima`). Refactor Cleaner: eliminados `BattleAggregate` (@deprecated, duplicado de `AgregadoBatalla`), `EfectoInvocadorTormentaArena` (reemplazado por `EfectoInvocadorClima` genérico con `TipoClima::TORMENTA_ARENA`), `src/Battle/App/` (casos de uso deprecados `IniciarBatalla`/`BattleSrv`); `FabricaEfectos` pasó de estática a instancia inyectable (singleton en `BattleEffectServiceProvider`, inyectada en `EquipoBatalla::fromData()` y `FabricaBatallaMock`); `DTOAccionBatalla::$move` tipado como `DTOMovimientoBatalla` (antes `array`).
 - **Refactor de diseño del módulo Battle (misma fecha, commits f9f2b19/8ae08ed/105bed9)** — 3 problemas resueltos: (1) `ManejadorOrbeVida` eliminado y reemplazado por `ManejadorObjetosEquipados` (manejador genérico de la cadena de daño con mapa `['life_orb' => 1.30]`, extensible); (2) Tyranitar corregido a ROCA/SINIESTRO en el mock (ya no sufre su propia tormenta arena) y `CalculadorDañoClima` extraído de `AgregadoBatalla` como servicio (`calcular(Combatiente, TipoClima): float`, granizo 6.25% a no-HIELO, tormenta arena 6.25% a no-ROCA/TIERRA/ACERO); (3) `SelectorAccionIA` extraído de `AgregadoBatalla` (objetivo + mejor movimiento), que conserva la API pública `elegirObjetivoPara`/`elegirMejorMovimiento` como delegación. `AgregadoBatalla` pasó de 327 a ~255 líneas; los servicios se instancian con lazy getters nullable (`??=`) para no romper la serialización de sesión. `SESSION_VERSION` 3 → 4. Tests: 140 de Battle verdes (362 assertions); suite completa 533 passed / 1 failed pre-existente (`ServicioCapturaTest` ajeno); Infection `src/Battle` al ~80% de código cubierto. QA PASS y Arquitecto APROBADO con deuda documentada (ver Pendientes conocidos y `src/Battle/context.md`).
 - **Combate contra Entrenadores en Hábitats (2026-09-01)** — nuevo módulo `src/CombateEntrenadores/` (DDD Domain/App/Infra): desde `/habitats/{id}` el jugador conmuta a modo "Entrenadores" (Alpine `habitatShow()`), selecciona equipo y rival (3 entrenadores por nivel × 3 niveles), configura formación vanguardia/retaguardia en un popup e inicia un combate que reutiliza el motor `src/Battle/` (sesión bajo `battle_id`). Rival generado de forma determinista por día (semilla `crc32(habitat|nivel|entrenador|fecha)`); movimientos sintéticos por tipo (sin ataques reales). Límite diario: 9 combates por hábitat (tabla `trainer_combat_log` con unique `(user_id, habitat_id, level, trainer_index, fought_at)`); `won=true` bloquea al entrenador ese día, perder es repetible. Al ganar: recompensas DOBLES (reutiliza `CalculadorRecompensas` ×2.0, `PersistirRecompensas`) + `ActualizarPokedexJob` (AVISTADO) por rival. Sin capturas. API: `GET/POST /api/habitats/{id}/entrenadores[...]` (rutas en `routes/entrenadores.php`). Detalle técnico en `docs/combate_entrenadores.md` y `src/CombateEntrenadores/context.md`. Módulos afectados: CombateEntrenadores (nuevo), Battle (motor reutilizado), Exploraciones (recompensas), Shared (excepciones/tipos), `app/Livewire/Combate` (fin de batalla → registrar resultado + recompensas + modal de victoria).
+- **Combate de Ruta 5v5 (2026-09-13)** — nuevo módulo `src/CombateRuta/` (DDD Domain/App/Infra). Desde `/habitats/{id}` el jugador usa el modo "Ruta" (modo por defecto del hábitat), elige nivel (1-3) y equipo de 5 miembros y combate contra 5 pokémon salvajes generados del pool del hábitat con **selección ponderada CON reemplazo** (peso = `capture_rate/hatch`, misma fórmula que `PoolHabitat::ponderado`; cada tirada independiente → rival distinto en cada combate, sin semilla). Formación rival determinista con `ClasificadorOfensivaDefensiva`; formación del jugador: popup > persistida en `teams.formacion` > clasificación automática. **Sin límite diario ni log** (`trainer_combat_log` no aplica) y **capturas habilitadas** al ganar (`ProbabilidadCaptura` cap-25, roll inyectable). Recompensas con multiplicador 1.0 (misma fórmula de exploración; el entrenador usa ×2.0), EXP a cuenta + por miembro, caramelos familia/EV/tipo y `ActualizarPokedexJob` (AVISTADO) por rival. API: `GET/POST /api/habitats/{id}/ruta/rivales|iniciar` (`routes/ruta.php`); el fin de batalla lo resuelve `PresentadorResultadoBatalla` (tipo `ruta` en los metadatos de sesión). Detalle en `src/CombateRuta/context.md`. Módulos afectados: CombateRuta (nuevo), Battle (motor escalado a 5v5), Equipos (5 miembros + `formacion`), Exploraciones (recompensas), Shared (hardening Domain), `app/Livewire` (presentador).
 
 ## Decisiones arquitectónicas clave
 
@@ -42,7 +43,7 @@ Ver `docs/architecture.md` para la descripción detallada de cada módulo.
 
 ## Sistema de combate
 
-- **3v3 por turnos**: Cada equipo tiene 3 pokémon en posiciones de vanguardia (1-2) y retaguardia (1). Agregado raíz `AgregadoBatalla` (manual y automática comparten `ServicioEjecucionBatalla`).
+- **5v5 por turnos** (escalado global 2026-09-13): cada equipo tiene 5 pokémon con posición vanguardia/retaguardia (el motor no fija tamaños; la formación la deciden la vista o la clasificación automática por stats — `ClasificadorOfensivaDefensiva`). Agregado raíz `AgregadoBatalla` (manual y automática comparten `ServicioEjecucionBatalla`).
 - **Velocidad acumulada**: Cada ronda se acumula `velocidad` al contador. El que más velocidad acumulada tiene actúa primero (`GestorTurnos::getNextActor`).
 - **Daño**: Fórmula base estilo Pokémon (nivel 50) × efectividad × STAB × crítico × posición × clima × objetos, vía `CadenaDanio` (7 manejadores; el último, `ManejadorObjetosEquipados`, aplica el multiplicador del objeto del atacante — life_orb ×1.3).
 - **Clima**: 7 valores del enum `TipoClima` (none, sequía, diluvio, niebla, granizo, tormenta arena, turbulencias) que modifican daño en ±25%. Invocado por `EfectoInvocadorClima` (parametrizado por clima) en battle start. Al cierre de ronda, `CalculadorDañoClima` aplica 6.25% HP por granizo (a no-HIELO) y tormenta arena (a no-ROCA/TIERRA/ACERO).
@@ -50,12 +51,12 @@ Ver `docs/architecture.md` para la descripción detallada de cada módulo.
 - **Objetos**: Life Orb (×1.3 vía `ManejadorObjetosEquipados` + recoil 10%), Leftovers (1/16 HP/ronda). Registrados como efectos (Strategy) en `FabricaEfectos` (instancia inyectable, singleton en `BattleEffectServiceProvider`).
 - **Habilidades**: Perforación de armadura (10% directo), regeneración de defensa (10% barrera/ronda), invocadores de clima (tormenta arena, sequía, diluvio, etc.).
 - **Barreras duales**: cada combatiente tiene barreras de defensa física y especial que absorben daño antes que el HP (mecánica propia del juego, no estándar Pokémon). La perforación de armadura envía un % directo al HP ignorando barreras.
-- **Persistencia en sesión**: batallas serializadas en sesión con prefijo `v{version}|` (`SESSION_VERSION=4` en `Combate.php`).
+- **Persistencia en sesión**: batallas serializadas en sesión con prefijo `v{version}|` (`SESSION_VERSION=9` en `app/Support/BattleSessionService.php`, con migración best-effort de versiones antiguas).
 
 ## Base de datos
 
 PostgreSQL en el entorno de ejecución (Docker); los tests usan SQLite en memoria (`:memory:`).
-31 migraciones. Esquema principal:
+56 migraciones. Esquema principal:
 
 - `provinces` → `habitats` → `pokemon_habitat` ↔ `pokemon`
 - `pokemon` → `pokemon_stats`, `pokemon_types`, `pokemon_evolution`
@@ -65,7 +66,7 @@ PostgreSQL en el entorno de ejecución (Docker); los tests usan SQLite en memori
   columna + unique, sin FK)
 - `pokedex` (avistamientos/capturas por pokémon, 1:1 con `pokemon`)
 - `reclutados` (pokémon capturados por el jugador)
-- `teams` → `team_members` (equipos de 3)
+- `teams` → `team_members` (equipos de 5; `teams.formacion` JSON nullable con la posición por slot, migración 2026_09_13_195001)
 - `exploraciones_activas` (misiones de exploración)
 
 Seeders: provincias (8), hábitats, pokémon (151+), reclutados.
@@ -138,4 +139,11 @@ Seeders: provincias (8), hábitats, pokémon (151+), reclutados.
 - `src/Battle/Domain/` — Lógica de combate (12 archivos directos + subdirectorios: Chain 10, Effects 9, Enums 3, Observer 2, ValueObjects 2)
 - `src/Battle/Domain/Chain/` — Cadena de daño (7 manejadores + base/interface; último `ManejadorObjetosEquipados`)
 - `src/Battle/Domain/Effects/` — Sistema de efectos (9 archivos, Strategy Pattern)
+- `src/CombateRuta/context.md` — Contexto del módulo de Combate de Ruta 5v5
+- `routes/ruta.php` — Rutas del combate de ruta (`GET/POST /api/habitats/{id}/ruta/rivales|iniciar`)
+- `app/Support/CreadorBatallaSesion.php` — Creación de batallas 5v5 compartida (DRY Ruta/Entrenador/Gimnasio/Mazmorra)
+- `app/Livewire/Presenters/PresentadorResultadoBatalla.php` — Fin de batalla por tipo (entrenador, gimnasio, mazmorra, ruta)
+- `src/Shared/Domain/ClasificadorOfensivaDefensiva.php` — Clasificador determinista (ofensiva = atk+speed > defensiva = def+spDef+hp) + formación
+- `src/Shared/Domain/ProbabilidadCaptura.php` — Regla unificada de captura cap-25 (Reclutamiento/Exploraciones/Ruta)
+- `src/Shared/Domain/EscaladorNivelRival.php` — Escalado de nivel de rivales (dominio puro compartido)
 - `opencode.jsonc` — Configuración de agentes OpenCode

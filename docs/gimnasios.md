@@ -186,6 +186,8 @@ CREATE TABLE gym_progress (
     "slug": "bug",
     "medalla": "Medalla Bicho",
     "tipo": 7,
+    "tipo_nombre": "Bicho",
+    "tipo_slug": "bicho",
     "nivel_minimo": 10,
     "nivel_jugador": 20,
     "etapa_actual": 1,
@@ -208,6 +210,8 @@ ni `nivel_rival`) para no ofrecer pistas de los pokémon ni de la dificultad.
   "slug": "bug",
   "medalla": "Medalla Bicho",
   "tipo": 7,
+  "tipo_nombre": "Bicho",
+  "tipo_slug": "bicho",
   "nivel_minimo": 10,
   "nivel_jugador": 20,
   "etapa_actual": 1,
@@ -262,6 +266,13 @@ ni `nivel_rival`) para no ofrecer pistas de los pokémon ni de la dificultad.
 > Contrato de API documentado arriba. La vista espera consumir `GET /api/gimnasios` y
 > `GET /api/gimnasios/{gym}` para listado/detalle, y `POST /api/gimnasios/{gym}/combatir` para
 > iniciar combate (con `{team_id, formacion}`).
+
+**Presentación de tipos**: los colores y etiquetas de los badges de tipo se centralizan en
+`src/Shared/UI/TipoBadges.php` (`TipoBadges::MAP` y `TipoBadges::DEFAULT`), única fuente de verdad
+para las vistas `gimnasios/index`, `gimnasios/show` y `gimnasios/admin` (ya no duplican el mapa).
+La imagen de la medalla se compone en cliente a partir del slug del tipo devuelto por la API:
+`/images/medallas/{tipo_slug}.webp` (p. ej. `/images/medallas/bicho.webp`), no del nombre de la
+medalla.
 
 ### 7.1 Modal de victoria (`resources/views/livewire/combate.blade.php`)
 

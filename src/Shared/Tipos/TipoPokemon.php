@@ -57,6 +57,62 @@ enum TipoPokemon: int
         };
     }
 
+    /** Slug español del tipo (path de assets: /images/type/{slug}.webp, /images/medallas/{slug}.webp). */
+    public function slug(): string
+    {
+        return strtolower($this->name);
+    }
+
+    /** Color hexadecimal representativo del tipo. */
+    public function color(): string
+    {
+        return match ($this) {
+            self::NORMAL => '#A8A878',
+            self::LUCHA => '#C03028',
+            self::VOLADOR => '#A890F0',
+            self::VENENO => '#A040A0',
+            self::TIERRA => '#E0C068',
+            self::ROCA => '#B8A038',
+            self::BICHO => '#A8B820',
+            self::FANTASMA => '#705898',
+            self::ACERO => '#B8B8D0',
+            self::FUEGO => '#F08030',
+            self::AGUA => '#6890F0',
+            self::PLANTA => '#78C850',
+            self::ELECTRICO => '#F8D030',
+            self::PSIQUICO => '#F85888',
+            self::HIELO => '#98D8D8',
+            self::DRAGON => '#7038F8',
+            self::SINIESTRO => '#705848',
+            self::HADA => '#EE99AC',
+        };
+    }
+
+    /** Nombre específico de la medalla del gimnasio de este tipo. */
+    public function medalla(): string
+    {
+        return match ($this) {
+            self::NORMAL => 'Planicie',
+            self::LUCHA => 'Puño',
+            self::VOLADOR => 'Céfiro',
+            self::VENENO => 'Ponzoña',
+            self::TIERRA => 'Tormenta',
+            self::ROCA => 'Roca',
+            self::BICHO => 'Colmena',
+            self::FANTASMA => 'Reliquia',
+            self::ACERO => 'Mineral',
+            self::FUEGO => 'Volcan',
+            self::AGUA => 'Cascada',
+            self::PLANTA => 'Bosque',
+            self::ELECTRICO => 'Faro',
+            self::PSIQUICO => 'Mente',
+            self::HIELO => 'Carámbano',
+            self::DRAGON => 'Dragón',
+            self::SINIESTRO => 'Retorcida',
+            self::HADA => 'Bondad',
+        };
+    }
+
     public function effectiveness(PokemonEntity $pokemon): float
     {
         $multiplicador = 1.0;

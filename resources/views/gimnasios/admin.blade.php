@@ -4,28 +4,8 @@
 
 @section('content')
 @php
-    // Mapeo tipo (int de TipoPokemon) → nombre en español + clases de badge (compartido con index/show).
-    $tipoBadges = [
-        1  => ['Normal',  'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300'],
-        2  => ['Lucha',   'bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400'],
-        3  => ['Volador', 'bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-400'],
-        4  => ['Veneno',  'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400'],
-        5  => ['Tierra',  'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400'],
-        6  => ['Roca',    'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400'],
-        7  => ['Bicho',   'bg-lime-100 dark:bg-lime-900/30 text-lime-700 dark:text-lime-400'],
-        8  => ['Fantasma','bg-violet-100 dark:bg-violet-900/30 text-violet-700 dark:text-violet-400'],
-        9  => ['Acero',   'bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300'],
-        10 => ['Fuego',   'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400'],
-        11 => ['Agua',    'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400'],
-        12 => ['Planta',  'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400'],
-        13 => ['Eléctrico','bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400'],
-        14 => ['Psíquico','bg-pink-100 dark:bg-pink-900/30 text-pink-700 dark:text-pink-400'],
-        15 => ['Hielo',   'bg-cyan-100 dark:bg-cyan-900/30 text-cyan-700 dark:text-cyan-400'],
-        16 => ['Dragón',  'bg-teal-100 dark:bg-teal-900/30 text-teal-700 dark:text-teal-400'],
-        17 => ['Siniestro','bg-zinc-800 dark:bg-gray-600 text-white'],
-        18 => ['Hada',    'bg-rose-100 dark:bg-rose-900/30 text-rose-700 dark:text-rose-400'],
-    ];
-    $defaultBadge = ['Desconocido', 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300'];
+    $tipoBadges = \Src\Shared\UI\TipoBadges::MAP;
+    $defaultBadge = \Src\Shared\UI\TipoBadges::DEFAULT;
     $cardPanelClass = 'bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden';
 @endphp
 
@@ -93,18 +73,18 @@
                                 type="button"
                                 @click="openGymDetail(gym)"
                                 class="group {{ $cardPanelClass }} p-4 flex items-start justify-between gap-3 text-left hover:border-blue-300 dark:hover:border-blue-600 hover:shadow-md transition-all"
-                                :aria-label="'Gestionar ' + gym.medalla"
-                                :title="'Gestionar ' + gym.medalla"
+                                :aria-label="'Gestionar ' + gym.tipo_medalla"
+                                :title="'Gestionar ' + gym.tipo_medalla"
                             >
                                 <div class="flex items-center gap-3 min-w-0">
                                     <span class="text-3xl shrink-0" aria-hidden="true">🏅</span>
                                     <div class="min-w-0">
-                                        <p class="text-sm font-bold text-gray-900 dark:text-white truncate" x-text="gym.medalla"></p>
+                                        <p class="text-sm font-bold text-gray-900 dark:text-white truncate" x-text="gym.tipo_medalla"></p>
                                         <p class="text-xs text-gray-500 dark:text-gray-400" x-text="'Slug: ' + gym.slug"></p>
                                         <div class="flex flex-wrap items-center gap-2 mt-1.5">
-                                            <span class="px-2 py-0.5 text-[10px] font-bold rounded-full uppercase"
-                                                  :class="tipoBadge(gym.tipo)[1]"
-                                                  x-text="tipoBadge(gym.tipo)[0]"></span>
+                                            <span class="px-2 py-0.5 text-[10px] font-bold rounded-full uppercase text-white"
+                                                  :style="'background-color:' + gym.tipo_color"
+                                                  x-text="gym.tipo_nombre || tipoBadge(gym.tipo)[0]"></span>
                                             <span class="text-[10px] text-gray-500 dark:text-gray-400" x-text="'Niv mín ' + gym.nivel_minimo"></span>
                                         </div>
                                     </div>
@@ -126,7 +106,7 @@
             <div class="absolute inset-0 bg-black/60" @click="closeDetailModal()"></div>
             <div class="relative bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
                 <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-700">
-                    <h2 class="text-lg font-bold text-gray-900 dark:text-white capitalize" x-text="detail ? detail.medalla : ''"></h2>
+                    <h2 class="text-lg font-bold text-gray-900 dark:text-white capitalize" x-text="detail ? detail.tipo_medalla : ''"></h2>
                     <button @click="closeDetailModal()" class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400" aria-label="Cerrar">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
                     </button>
@@ -148,7 +128,7 @@
                             {{-- Datos editables --}}
                             <section class="space-y-3" aria-labelledby="datos-gym-heading">
                                 <h3 id="datos-gym-heading" class="text-xs font-bold uppercase tracking-wide text-gray-700 dark:text-gray-300">Datos del gimnasio</h3>
-                                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                                     <div>
                                         <label class="block text-[10px] font-medium text-gray-500 dark:text-gray-400 mb-1" for="edit-medalla">Medalla</label>
                                         <input id="edit-medalla" type="text" x-model="form.medalla"

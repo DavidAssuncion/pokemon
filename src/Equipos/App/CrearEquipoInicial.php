@@ -110,7 +110,10 @@ final class CrearEquipoInicial
                     'user_id' => $userId,
                     'nombre' => $nombre,
                     'pokemon_id' => $pokemonId,
-                    'exp' => [],
+                    'exp' => [
+                        'total' => 1500,
+                        'tipos' => [],
+                    ],
                     'es_shiny' => false,
                     'obj_equipados' => [],
                     'movimientos' => [],

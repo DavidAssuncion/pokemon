@@ -27,6 +27,11 @@ final class CombateRutaController extends Controller
     ) {
     }
 
+    // DEPRECATED: el frontend deja de consumir la preview del encuentro (GET /ruta/rivales).
+    /**
+     * @deprecated El frontend ya no consume la preview del encuentro; el endpoint
+     *             se mantiene sin cambios hasta su eliminación.
+     */
     public function rivales(int $habitat, Request $request): JsonResponse
     {
         $nivel = $request->integer('nivel', 1);

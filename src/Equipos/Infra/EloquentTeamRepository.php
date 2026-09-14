@@ -36,7 +36,7 @@ class EloquentTeamRepository implements TeamRepositoryInterface
         DB::transaction(function () use ($team): void {
             $eloquent = Team::updateOrCreate(
                 ['id' => $team->id],
-                ['name' => $team->name, 'user_id' => $team->userId],
+                ['name' => $team->name, 'user_id' => $team->userId, 'formacion' => $team->formacion],
             );
 
             $this->sincronizarMiembros($eloquent, $team->members);
@@ -78,6 +78,7 @@ class EloquentTeamRepository implements TeamRepositoryInterface
             name: $team->name,
             userId: $team->user_id,
             members: $team->members->all(),
+            formacion: $team->formacion ?? [],
         );
     }
 }
