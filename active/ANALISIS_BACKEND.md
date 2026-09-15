@@ -1,125 +1,107 @@
-# ANÁLISIS BACKEND — IVs, Shiny, Huevos, EVs, Rival IVs
+# ANÁLISIS BACKEND — Correcciones QA del módulo Huevos + CP + Ruta
 
 Fecha: 2026-09-15
-Rol: Backend (Laravel / PHP 8.4). Contrato: `active/ANALISIS_FRONTEND.md` (sección IVs/EVs/huevos/shiny).
+Rol: Backend (Laravel / PHP 8.4).
+Origen: QA bloqueó el commit `79b7e45b2783` con 2 desviaciones de contrato (B1, B2) y 4 observaciones a corregir (O1, O2, O3, O6), todas aceptadas por el Analista.
 
 ## Objetivo
 
-Implementar per-stat IVs (0–15 ×4 into base stats/CP), shiny wild encounters (1/2048, 15/15/15 IVs, guaranteed capture), módulo huevos (2 same species, min 10/10/10 IVs, 1/512 shiny, capture-rate-based times), EV candies vía `POST /reclutado/{id}/dar-evs`, e IVs de rivales por dificultad.
+1. **B1** — Cumplir el contrato de tiempos de huevo confirmado por el cliente:
+   - Puesta: `horas = 255 / capture_rate` (sin clamp ni ×2).
+   - Eclosión: `horas = ceil(hatch / 15)` (DIVISOR_HATCH=15), usando el `hatch` de la especie.
+   - `GET /api/huevos` devuelve la respuesta en **una única unidad (horas, float)**: `tiempo_total_horas`, `tiempo_restante` y `progreso` (0-100), documentado en el contrato del response.
+2. **B2** — CP del reclutado al **nivel del usuario** (`auth()->user()->nivel()`) y con los **EV reales** del reclutado como 2º argumento de `CalculadorCP::calcular`; propagar `nivelUsuario` opcional desde `serializar()` a `cpDe()` y desde los callers.
+3. **O1** — Semántica de límites: máx. 1 huevo en GESTANDO y máx. 1 en INCUBANDO (2 huevos activos de distinto estado pueden convivir) + máx. 1 huevo activo por familia → columna `huevos.evolution_chain_id` (índice, sin FK estricta).
+4. **O2** — Requisito de pareja por **familia** (`evolution_chain_id`), no por especie: ≥2 reclutados DISTINTOS de la misma cadena; dedupe por familia en el listado; especies distintas de la misma cadena OK.
+5. **O3** — Propagar `es_shiny` al modal de capturas de ruta: `RecompensaCaptura::$esShiny`, `OtorgarRecompensasRuta` con `esShiny: true` en el slot shiny y `ResultadoRuta::aArray()` con clave `es_shiny`.
+6. **O6** — Key case consistente: `Combatiente::aArrayVista()` emite `es_shiny` (snake) en lugar de `esShiny`.
+
+NOTA: el frontend ya consume `tiempo_restante` como horas (`formatearDuracion`) y ya soporta `es_shiny` en cards (`_pokemon-card.blade.php` y `combate.blade.php`); el backend se alinea con ambas lecturas.
 
 ## Archivos afectados
 
-### Nuevos
-- `src/Shared/Domain/ProbabilidadesShiny.php`
-- `src/Shared/Domain/DistribuidorStatsValor.php`
-- `src/Shared/Domain/IvsRangoEntrenador.php`
-- `src/Pokemon/Domain/Stats/GeneradorIvs.php`
-- `app/Models/Casts/StatsReclutado.php`
-- `app/Models/Huevo.php`
-- `app/Support/CrearReclutado.php`
-- `src/Huevos/Domain/EstadoHuevo.php`
-- `src/Huevos/Domain/CalculadorTiemposHuevo.php`
-- `src/Huevos/Domain/CalculadorEstadoHuevo.php`
-- `src/Huevos/App/CrearHuevo.php`
-- `src/Huevos/App/EclosionarHuevo.php`
-- `src/Huevos/App/ListarHuevos.php`
-- `src/Huevos/Infra/Controllers/HuevoController.php`
-- `routes/huevos.php`
-- `database/migrations/2026_09_15_000001_add_ivs_evs_to_reclutados_table.php`
-- `database/migrations/2026_09_15_000002_create_huevos_table.php`
-
 ### Modificados
-- `src/Pokemon/Domain/Stats/StatsValue.php` — add `desdeArray()`, `toArray()`, `conStat()`
-- `src/Pokemon/Domain/Stats/BattleStats.php` — 4th ctor param `?StatsValue $ivs`, per-stat IVs
-- `src/Battle/Domain/DatosPokemonBatalla.php` — add promoted `?StatsValue $ivs = null`
-- `src/Battle/Domain/EquipoBatalla.php` — pass `$member->ivs` to BattleStats
-- `src/Battle/Domain/Combatiente.php` — shiny icon `/shiny/{id}_s.webp`, add `es_shiny` to aArrayVista
-- `src/CombateEntrenadores/App/MapeadorPokemonBatalla.php` — add `?StatsValue $ivs = null`
-- `src/CombateEntrenadores/App/ConstruirEquipoJugador.php` — pass evs + ivs
-- `src/CombateEntrenadores/App/GeneradorEquipoEntrenador.php` — add ivPrincipal/ivResto params
-- `src/CombateEntrenadores/App/IniciarCombateEntrenador.php` — compute IVs by nivel
-- `src/Gimnasios/Domain/EvsRangoEntrenador.php` — delegate to DistribuidorStatsValor
-- `src/Gimnasios/App/GeneradorPokemonGimnasio.php` — add ivPrincipal/ivResto params
-- `src/Gimnasios/App/IniciarCombateGimnasio.php` — pass IVs by stage
-- `src/CombateRuta/App/GeneradorEquipoRuta.php` — shiny roll + random IVs per slot
-- `src/CombateRuta/App/OtorgarRecompensasRuta.php` — shiny partition + direct recruit
-- `src/CombateRuta/App/RegistrarResultadoRuta.php` — shinySlots param
-- `app/Livewire/Presenters/PresentadorResultadoBatalla.php` — pass shinySlots
-- `app/Models/Reclutado.php` — add ivs/evs to fillable + casts
-- `app/Support/ReclutadoSerializer.php` — add ivs/evs/habilidades + fix cpDe
-- `app/Http/Controllers/ReclutamientoController.php` — use CrearReclutado
-- `app/Http/Controllers/ReclutadoController.php` — add darEvs
-- `routes/player.php` — add dar-evs route
-- `routes/web.php` — require huevos.php
+- `src/Huevos/Domain/CalculadorTiemposHuevo.php` — fórmulas nuevas (255/cr, ceil(hatch/15), suma en horas).
+- `src/Huevos/Domain/CalculadorEstadoHuevo.php` — recibe `hatch`, estados por horas float, `restante_horas`.
+- `src/Huevos/App/ListarHuevos.php` — serializa con horas float + `progreso`, `disponibles` por familia (≥2 individuos + dedupe + sin huevo activo por familia + hatch no nulo), `limites` con hatch.
+- `src/Huevos/App/CrearHuevo.php` — requisito por familia (≥2 individuos), bloqueos GESTANDO-activa y 1-activo-por-familia, persiste `evolution_chain_id` + `hatch`.
+- `src/Huevos/App/EclosionarHuevo.php` — pasa `hatch` a `estadoDe`.
+- `src/Huevos/Infra/Controllers/HuevoController.php` — `eclosionar` serializa el nuevo reclutado con el nivel del usuario.
+- `app/Models/Huevo.php` — fillable con `hatch` + `evolution_chain_id`.
+- `app/Support/ReclutadoSerializer.php` — `serializar(?, int $nivelUsuario = null)` y `cpDe` con nivel del usuario (fallback nivel del reclutado) + EVs reales.
+- `app/Http/Controllers/PlayerController.php` — `equipos` pasa `auth()->user()?->nivel()`.
+- `app/Http/Controllers/ReclutadoController.php` — `listarTodos`/`listarFavoritos` pasan `auth()->user()?->nivel()`.
+- `src/Exploraciones/Domain/Recompensas/RecompensaCaptura.php` — `bool $esShiny = false`.
+- `src/CombateRuta/App/OtorgarRecompensasRuta.php` — captura shiny con `esShiny: true`.
+- `src/CombateRuta/Domain/DataTransferObjects/ResultadoRuta.php` — `aArray()` incluye `es_shiny`.
+- `src/Battle/Domain/Combatiente.php` — `aArrayVista()` emite `es_shiny`.
+
+### Nuevos
+- `database/migrations/2026_09_15_000003_add_hatch_and_evolution_chain_id_to_huevos_table.php` — columna `hatch` y `evolution_chain_id` (+ índice) en `huevos`.
+
+### Verificados sin cambio
+- `app/Livewire/Presenters/PresentadorResultadoBatalla.php::procesarRuta` — `rewards = $resultado->aArray()` llega directo al modal; `es_shiny` del DTO fluye (no se pierde).
+- `routes/huevos.php` / `routes/web.php` — bajo `auth`; sin cambios.
+- `resources/views/livewire/_pokemon-card.blade.php` — ya lee `$p['es_shiny']` (con fallback al icono).
 
 ## Comportamientos a cubrir en el testing futuro
 
 ### Unit
-- `ProbabilidadesShiny::esShiny()` — callable 1/max → true; callable 2/max → false.
-- `GeneradorIvs::aleatorios()` — 6 stats in [0,15]; callable override.
-- `GeneradorIvs::maximos()` — all 15.
-- `GeneradorIvs::huevo()` — all in [10,15]; callable override.
-- `BattleStats` — per-stat IVs affect formulas; no IVs → same as legacy.
-- `StatsValue::desdeArray()` — short keys, missing keys → 0, null → zeros.
-- `StatsValue::toArray()` — canonical short keys.
-- `StatsValue::conStat()` — returns new instance with one stat changed.
-- `DistribuidorStatsValor::distribuir()` — top2 → principal, rest → resto, tie-break.
-- `EvsRangoEntrenador::distribuir()` — same behavior (delegates).
-- `IvsRangoEntrenador::rangoPorNivelEntrenador()` — nivel 1→[8,6], 2→[10,8], 3→[12,10].
-- `IvsRangoEntrenador::distribuir()` — same as EvsRangoEntrenador.
-- `CalculadorTiemposHuevo::gestacionMinutos()` / `eclosionMinutos()` — CR45→160min/320min.
-- `CalculadorEstadoHuevo::estadoDe()` — GESTANDO→INCUBANDO→LISTO transitions.
-- `CrearReclutado::crear()` — creates with random IVs, dispatches PokedexJob.
-- `CrearHuevo::crear()` — validates ≥2 same species, no active eggs, rolls shiny/IVs.
-- `EclosionarHuevo::eclosionar()` — validates LISTO, marks eclosionado_en, creates reclutado.
-- `ListarHuevos::listar()` — builds huevos, disponibles, limites.
-- `CrearReclutado::crear()` for shiny — passes maximos IVs.
-- `CrearReclutado::crear()` for hatch — passes egg IVs.
+- `CalculadorTiemposHuevo::puestaHoras` — CR 255 → 1.0 h; CR 3 → 85.0 h; CR 0/negativo → 255 h (max(rate,1)).
+- `CalculadorTiemposHuevo::eclosionHoras` — hatch 15 → 1.0; hatch 30 → 2.0; hatch 1 → 1.0 (ceil); hatch 10240 → 683 h.
+- `CalculadorTiemposHuevo::sumaHoras` — puesta + eclosión.
+- `CalculadorEstadoHuevo::estadoDe` — GESTANDO con restante en horas; transición GESTANDO→INCUBANDO en `puesta_fin`; INCUBANDO→LISTO en `hatched_at`; `restante_horas` 0 en LISTO.
+- `ReclutadoSerializer::serializar` — `nivelUsuario` dado → CP con ese nivel y EVs reales (suma `evs.toArray()`); sin `nivelUsuario` → fallback nivel del reclutado (test existente `ReclutadoSerializerCPTest` conservado).
+- `RecompensaCaptura` — `esShiny` default false; captura shiny con `esShiny: true`.
+- `ResultadoRuta::aArray` — cada captura lleva `es_shiny` (bool).
+- `Combatiente::aArrayVista` — emite `es_shiny` (snake), no `esShiny`.
 
 ### Feature
-- `POST /reclutado/{id}/dar-evs` — happy path (+10 EV), 422 sin caramelos, 422 tope 255, 422 en exploración.
-- `GET /api/huevos` — huevos vacíos, disponibles, limites, estados.
-- `POST /api/huevos` — crear huevo válido, 422 sin 2 ejemplares, 422 con huevo activo.
-- `POST /api/huevos/{id}/eclosionar` — eclosionar listo, 422 no listo, 422 ajeno (404).
-- Shiny capture en ruta — partition, direct recruit, capturas combined.
-- Rival IVs — entrenador nivel 1-3, gimnasio etapa 1-3 vs 4, líder.
+- `GET /api/huevos` — `tiempo_total_horas` y `tiempo_restante` en horas (float) y `progreso` 0-100; contrato exacto del response.
+- `POST /api/huevos` — 422 con 1 solo individuo de la familia; 422 con solo 2 de distinta familia; OK con 2 individuos de distinta especie misma cadena; 422 con huevo GESTANDO activo (otra familia); OK con huevo INCUBANDO activo de otra familia (2 activos de distinto estado); 422 con huevo activo (cualquier estado) de la MISMA familia.
+- `POST /api/huevos` — 422 si la especie representativa no tiene `hatch`.
+- `POST /api/huevos/{id}/eclosionar` — el reclutado serializado trae `cp` con el nivel del usuario.
+- Equipos `/equipos` y `listarTodos`/`listarFavoritos` — `cp` calculado con `auth()->user()->nivel()` y EVs del reclutado.
+- Combate de ruta ganado con shiny — modal `capturas[].es_shiny = true` solo en el slot shiny; normales `false`.
 
 ## Diseño
 
-### IVs flow
-- `StatsValue` (6 float props) → `BattleStats` 4th param → `DatosPokemonBatalla::$ivs` → `EquipoBatalla::fromData` → `PokemonEntity::battleStats`.
-- Player IVs: `Reclutado->ivs` (StatsReclutado cast) → `ConstruirEquipoJugador` → `MapeadorPokemonBatalla::desdePokemon`.
-- Rival IVs: `IvsRangoEntrenador::distribuir()` → `GeneradorEquipoEntrenador`/`GeneradorPokemonGimnasio` → `DatosPokemonBatalla::$ivs`.
+### B1 — Tiempos (Domain puro)
+- `CalculadorTiemposHuevo`:
+  - `PUESTA_HORAS_BASE = 255`; `DIVISOR_HATCH = 15`.
+  - `puestaHoras(int $captureRate): float = 255 / max($captureRate, 1)` (int→float con widen explícito).
+  - `eclosionHoras(int $hatch): float = ceil($hatch / 15)` (float).
+  - `sumaHoras(int $captureRate, int $hatch): float = puesta + eclosión`.
+- `CalculadorEstadoHuevo::estadoDe(creadoEn, captureRate, hatch, ahora)`:
+  - `puesta_fin = created_at + puestaHoras` horas; `hatched_at = puesta_fin + eclosionHoras` horas.
+  - GESTANDO si `now < puesta_fin`; INCUBANDO si `puesta_fin <= now < hatched_at`; LISTO si `now >= hatched_at`.
+  - Devuelve `{estado, restante_horas}` (float horas, redondeado a 2 decimales para el formateo del frontend).
+- Persistencia: `huevos.hatch` snapshot (mismo criterio que `capture_rate`, para no depender del catálogo); `huevos.evolution_chain_id` para el bloqueo por familia. Read normaliza `hatch ?? 1` (tolerancia a filas legacy sin el snapshot).
 
-### Shiny flow
-- `ProbabilidadesShiny::esShiny()` with callable `fn(int $max): int`.
-- `GeneradorEquipoRuta::generar()` → per-slot shiny roll → shinySlots list.
-- `OtorgarRecompensasRuta::otorgar()` → partition derrotados by shiny → normals via CalculadorRecompensas + PersistirRecompensas; shinies via `CrearReclutado::crear(esShiny: true, ivs: GeneradorIvs::maximos())`.
-- Combined capturas = normal captures + shiny RecompensaCaptura entries.
+### O1/O2 — Límites y pareja
+- `CrearHuevo::crear`:
+  - Bloquea si existe huevo ACTIVO (sin eclosionar) de la USUARIO en GESTANDO con la misma familia → msgs distintos (gestación en curso / huevo activo de esta familia).
+  - INCUBANDO de otra familia NO bloquea (permite gestando + incubando simultáneos).
+  - Pareja: `count(Reclutado whereHas pokemon.evolution_chain_id = X) >= 2` (individuos, permitiendo especies distintas de la misma cadena).
+  - Especie del huevo: miembro de la familia con menor `species_id` (regla "primer integrante" del proyecto).
+- `ListarHuevos::disponibles`: 1 entrada por `evolution_chain_id` con ≥2 individuos, sin huevo activo de esa familia, sin representante con `hatch` null; orden por chain id.
 
-### Huevos
-- States computed on READ from `created_at` + `capture_rate` (no stored state column).
-- `gestacionMinutos = round(7200/cr)` clamped [15,240]; `eclosionMinutos = gestacion × 2`.
-- Single active egg limit (gestando/incubando/listo unhatched).
-- Egg creation is USER-INITIATED via `POST /api/huevos` (no auto-trigger).
-- Route-model binding with BelongsToUser → anti-IDOR (404 on others).
+### B2 — CP
+- `ReclutadoSerializer::serializar(Reclutado $reclutado, ?int $nivelUsuario = null)` → `cpDe($reclutado, $nivelUsuario)`.
+- `cpDe`: `$nivel = $nivelUsuario ?? NivelHelper::nivelDesdeExperiencia($reclutado->exp->total())`; `$ev = (int) floor(array_sum($reclutado->evs->toArray()))` → `CalculadorCP::calcular($stats, $ev)`.
+- Callers (equipos, listarTodos, listarFavoritos, eclosionar) pasan `auth()->user()?->nivel()`.
 
-### Dar EVs
-- `POST /reclutado/{reclutado}/dar-evs` body `{stat}` validated `in:hp,atk,def,spAtk,spDef,speed`.
-- Stat slug → StatEnum::value (1-6) for item_key; slug → StatsValue property for read/write.
-- +10 EV per candy, per-stat cap 255 (no 510 total cap — per frontend UI).
-- Response: `{success, actual, caramelos_disponibles, evs}`.
+### O3 — Shiny en capturas
+- `RecompensaCaptura(pokemonId, cantidad, esShiny = false)`; `OtorgarRecompensasRuta` crea la captura directa del slot shiny con `esShiny: true`; `ResultadoRuta::aArray()` emite `es_shiny` por captura.
 
-### DRY
-- `DistribuidorStatsValor` shared by EvsRangoEntrenador + IvsRangoEntrenador.
-- `CrearReclutado` shared by recruit, shiny capture, egg hatch.
+### O6 — snake_case
+- `Combatiente::aArrayVista()` renombra `esShiny` → `es_shiny` (consumidor `_pokemon-card.blade.php` ya lee snake).
 
 ## Riesgos
 
-- **`MapadorPokemonBatalla` does not exist**: the file is `MapeadorPokemonBatalla` (typo in plan). Actual file is correct.
-- **DefenseHp/SpDefenseHp IV source**: These pseudo-HP stats use their respective stat's IV (defense IV for defenseHp, spDef IV for spDefenseHp) — changed from uniform `$iv`.
-- **`CombatientesCollection::map()` returns `array`** (not Collection) — verified via `Src\Shared\Domain\Collection::map()` signature.
-- **Shiny icon convention**: Real files are `{id}_s.webp` (1137 files), NOT `{id}.webp`. Backend must emit `_s` URL.
-- **`StatEnum::slug()`** uses `atksp|defsp|spd` — dar-evs maps frontend slugs to StatEnum internally.
-- **Auto-egg trigger DROPPED** — egg creation is user-initiated via POST /api/huevos only.
-- **Tests deferred** per backend.md convention.
+- **Frontend `limiteExcedido()`**: `equipos/index.blade.php` deshabilita "Poner huevo" si hay un huevo INCUBANDO o LISTO (`incubacionActiva()`), mientras que el backend ahora permite crear un GESTANDO con INCUBANDO de otra familia. El ticket es de backend; la UI quedará coherente cuando el frontend consuma `limites`/estados (ticket frontend pendiente). El backend `limites` se documenta con las nuevas semánticas.
+- **Filas legacy de huevos** sin `hatch`/`evolution_chain_id` (migración aditiva nullable): lectura con `hatch ?? 1` y bloqueo por familia ignora nulos (`where evolution_chain_id = ?` no casa con null).
+- **Especies sin `hatch`**: el seeder deja `hatch` null si el `hatch_counter` está vacío; `disponibles` filtra esas familias y `CrearHuevo` las rechaza con 422 (no se puede calcular la eclosión).
+- **`Tests de ReclutadoSerializerCPTest`**: conservados — sin `nivelUsuario`, `cpDe` cae al fallback nivel del reclutado (misma expectativa que el test existente, EV=0 por defecto).
+- **Migración**: se añade con migración NUEVA (no se toca `2026_09_15_000002_create_huevos_table`) para que aplique también sobre BDs que ya tienen la tabla (patrón del bug 23503).
+- **Testing diferido** por convención del proyecto: no se ejecutan tests.

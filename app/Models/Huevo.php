@@ -11,7 +11,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
  * Huevo en gestación/incubación/eclosión. BelongsToUser → anti-IDOR por scope.
- * Estado calculado on-read (no stored state): created_at + capture_rate.
+ * Estado calculado on-read (no stored state): created_at + capture_rate + hatch.
  */
 class Huevo extends Model
 {
@@ -20,7 +20,7 @@ class Huevo extends Model
     protected $table = 'huevos';
 
     protected $fillable = [
-        'user_id', 'pokemon_id', 'capture_rate', 'es_shiny', 'ivs', 'eclosionado_en',
+        'user_id', 'pokemon_id', 'evolution_chain_id', 'capture_rate', 'hatch', 'es_shiny', 'ivs', 'eclosionado_en',
     ];
 
     protected $casts = [

@@ -48,7 +48,7 @@ final class HuevoController extends Controller
         $reclutado = $this->eclosionar->eclosionar($huevo, (int) auth()->id());
 
         return response()->json([
-            'reclutado' => ReclutadoSerializer::serializar($reclutado),
+            'reclutado' => ReclutadoSerializer::serializar($reclutado, auth()->user()?->nivel()),
         ]);
     }
 }

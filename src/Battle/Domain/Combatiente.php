@@ -349,7 +349,7 @@ class Combatiente
             'refId' => $this->id,
             'nombre' => $this->nombre,
             'icon' => $icon,
-            'esShiny' => $this->shiny,
+            'es_shiny' => $this->shiny,
             'hp' => $this->hpActual,
             'maxHp' => $this->pokemon->battleStats()->hp,
             'defHp' => $this->defensaHpActual,

@@ -106,7 +106,7 @@ class PlayerController extends Controller
         )->pluck('id')->toArray();
 
         $reclutados = $reclutadosQuery
-            ->map(fn (Reclutado $reclutado): array => ReclutadoSerializer::serializar($reclutado))
+            ->map(fn (Reclutado $reclutado): array => ReclutadoSerializer::serializar($reclutado, auth()->user()?->nivel()))
             ->values();
 
         $reclutadosEnExploracion = ExploracionActiva::whereNull('regreso')

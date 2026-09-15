@@ -6,12 +6,18 @@ namespace Src\Huevos\App;
 
 use App\Models\Huevo;
 use App\Models\Reclutado;
+use Src\Huevos\Domain\CalculadorEstadoHuevo;
+use Src\Huevos\Domain\EstadoHuevo;
 use Src\Pokemon\Domain\Stats\GeneradorIvs;
 use Src\Shared\Domain\Exceptions\ViolacionReglaNegocio;
 use Src\Shared\Domain\ProbabilidadesShiny;
 
 /**
- * Crea un huevo validando: ≥2 ejemplares de la misma especie + ≤1 huevo activo.
+ * Crea un huevo validando:
+ *  - ≥2 reclutados DISTINTOS de la misma familia (evolution_chain_id; especies
+ *    distintas de la misma cadena valen);
+ *  - máx. 1 huevo en gestación simultáneo (puede convivir con uno incubando);
+ *  - máx. 1 huevo activo (sin eclosionar) por familia.
  * Lanzado desde POST /api/huevos (user-initiated; sin auto-trigger).
  */
 final class CrearHuevo
@@ -25,26 +31,47 @@ final class CrearHuevo
         $reclutados = Reclutado::with('pokemon')
             ->where('user_id', $userId)
             ->whereHas('pokemon', fn ($q) => $q->where('evolution_chain_id', $evolutionChainId))
+            ->get()
+            ->reject(fn (Reclutado $reclutado): bool => $reclutado->pokemon === null);
+
+        if ($reclutados->count() < 2) {
+            throw new ViolacionReglaNegocio('Necesitas 2 reclutados de la misma familia para crear un huevo');
+        }
+
+        $huevosActivos = Huevo::where('user_id', $userId)
+            ->whereNull('eclosionado_en')
             ->get();
 
-        $conteoPorEspecie = $reclutados->groupBy('pokemon_id')
-            ->filter(fn ($grupo) => $grupo->count() >= 2);
+        $hayGestacionActiva = $huevosActivos->contains(
+            fn (Huevo $huevo): bool => CalculadorEstadoHuevo::estadoDe(
+                $huevo->created_at,
+                (int) $huevo->capture_rate,
+                (int) ($huevo->hatch ?? 1),
+                now(),
+            )['estado'] === EstadoHuevo::GESTANDO,
+        );
 
-        if ($conteoPorEspecie->isEmpty()) {
-            throw new ViolacionReglaNegocio('Necesitas 2 ejemplares de la misma especie para crear un huevo');
+        if ($hayGestacionActiva) {
+            throw new ViolacionReglaNegocio('Ya tienes un huevo en gestación; espera a que termine para poner otro');
         }
 
-        $activos = Huevo::where('user_id', $userId)->whereNull('eclosionado_en')->count();
+        $hayActivoEnLaFamilia = $huevosActivos->contains(
+            fn (Huevo $huevo): bool => (int) $huevo->evolution_chain_id === $evolutionChainId,
+        );
 
-        if ($activos > 0) {
-            throw new ViolacionReglaNegocio('Ya tienes un huevo en gestación o eclosión');
+        if ($hayActivoEnLaFamilia) {
+            throw new ViolacionReglaNegocio('Ya tienes un huevo activo de esta familia');
         }
 
-        $especieId = $conteoPorEspecie->keys()->sort()->first();
-        $pokemon = $reclutados->firstWhere('pokemon_id', $especieId)?->pokemon;
+        /** @var Reclutado $representante */
+        $representante = $reclutados
+            ->sortBy(fn (Reclutado $reclutado): int => $reclutado->pokemon->species_id)
+            ->first();
 
-        if ($pokemon === null) {
-            throw new ViolacionReglaNegocio('Especie no encontrada');
+        $pokemon = $representante->pokemon;
+
+        if ($pokemon === null || $pokemon->hatch === null) {
+            throw new ViolacionReglaNegocio('Esta especie no tiene datos de eclosión');
         }
 
         $shiny = ProbabilidadesShiny::esShiny(ProbabilidadesShiny::HUEVO, $aleatorioShiny);
@@ -52,8 +79,10 @@ final class CrearHuevo
 
         return Huevo::create([
             'user_id' => $userId,
-            'pokemon_id' => (int) $especieId,
-            'capture_rate' => $pokemon->capture_rate,
+            'pokemon_id' => $pokemon->id,
+            'evolution_chain_id' => (int) $pokemon->evolution_chain_id,
+            'capture_rate' => (int) $pokemon->capture_rate,
+            'hatch' => (int) $pokemon->hatch,
             'es_shiny' => $shiny,
             'ivs' => $ivs,
         ]);

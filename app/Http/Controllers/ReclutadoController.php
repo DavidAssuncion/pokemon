@@ -400,7 +400,7 @@ class ReclutadoController extends Controller
             ->withoutGlobalScope('belongsToUser')
             ->where('user_id', $userId)
             ->get()
-            ->map(fn (Favorito $favorito): array => ReclutadoSerializer::serializar($favorito->reclutado))
+            ->map(fn (Favorito $favorito): array => ReclutadoSerializer::serializar($favorito->reclutado, auth()->user()?->nivel()))
             ->values();
 
         return response()->json($reclutados);
@@ -417,7 +417,7 @@ class ReclutadoController extends Controller
     {
         $reclutados = Reclutado::with(['pokemon.types', 'pokemon.stats'])
             ->get()
-            ->map(fn (Reclutado $reclutado): array => ReclutadoSerializer::serializar($reclutado))
+            ->map(fn (Reclutado $reclutado): array => ReclutadoSerializer::serializar($reclutado, auth()->user()?->nivel()))
             ->values();
 
         return response()->json($reclutados);

@@ -5,33 +5,34 @@ declare(strict_types=1);
 namespace Src\Huevos\Domain;
 
 /**
- * Calcula tiempos de gestación y eclosión a partir del capture_rate del Pokémon base.
+ * Calcula tiempos de gestación y eclosión a partir del capture_rate y el hatch.
  *
- * fórmula:
- *   gestacion_min  = clamp(round(7200 / capture_rate), 15, 240)
- *   eclosion_min   = gestacion_min × 2
- *   total_horas    = (gestacion + eclosion) / 60
+ * Contrato aprobado por el cliente (B1):
+ *   puesta_horas    = 255 / capture_rate
+ *   eclosion_horas  = ceil(hatch / 15)   (DIVISOR_HATCH)
+ *   total_horas     = puesta_horas + eclosion_horas
+ *
+ * La respuesta del frontend trabaja en horas (float): tiempo_total_horas,
+ * tiempo_restante y progreso comparten la misma unidad.
  */
 final class CalculadorTiemposHuevo
 {
-    public const GESTACION_MIN_MINUTOS = 15;
-    public const GESTACION_MAX_MINUTOS = 240;
-    public const INCUBACION_FACTOR = 2.0;
+    public const PUESTA_HORAS_BASE = 255;
 
-    public static function gestacionMinutos(int $captureRate): int
+    public const DIVISOR_HATCH = 15;
+
+    public static function puestaHoras(int $captureRate): float
     {
-        $tasa = $captureRate > 0 ? $captureRate : 45;
-
-        return max(self::GESTACION_MIN_MINUTOS, min(self::GESTACION_MAX_MINUTOS, (int) round(7200 / $tasa)));
+        return (float) (self::PUESTA_HORAS_BASE / max($captureRate, 1));
     }
 
-    public static function eclosionMinutos(int $captureRate): int
+    public static function eclosionHoras(int $hatch): float
     {
-        return (int) round(self::gestacionMinutos($captureRate) * self::INCUBACION_FACTOR);
+        return (float) ceil($hatch / self::DIVISOR_HATCH);
     }
 
-    public static function totalMinutos(int $captureRate): int
+    public static function sumaHoras(int $captureRate, int $hatch): float
     {
-        return self::gestacionMinutos($captureRate) + self::eclosionMinutos($captureRate);
+        return self::puestaHoras($captureRate) + self::eclosionHoras($hatch);
     }
 }

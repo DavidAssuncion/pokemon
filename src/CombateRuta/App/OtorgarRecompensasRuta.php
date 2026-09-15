@@ -132,7 +132,7 @@ final class OtorgarRecompensasRuta
                 ivs: GeneradorIvs::maximos(),
                 esShiny: true,
             );
-            $capturasShiny[] = new RecompensaCaptura(pokemonId: $derrotado->id, cantidad: 1);
+            $capturasShiny[] = new RecompensaCaptura(pokemonId: $derrotado->id, cantidad: 1, esShiny: true);
         }
 
         return new ResultadoRuta(

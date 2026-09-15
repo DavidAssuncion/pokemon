@@ -21,9 +21,11 @@ use Src\Shared\Domain\NivelHelper;
 final class ReclutadoSerializer
 {
     /**
+     * @param  int|null  $nivelUsuario  Nivel del usuario autenticado (B2); si es
+     *                                  null se usa el nivel del reclutado (fallback).
      * @return array<string, mixed>
      */
-    public static function serializar(Reclutado $reclutado): array
+    public static function serializar(Reclutado $reclutado, ?int $nivelUsuario = null): array
     {
         $datos = $reclutado->toArray();
         $datos['nivel'] = NivelHelper::nivelDesdeExperiencia($reclutado->exp->total());
@@ -33,7 +35,7 @@ final class ReclutadoSerializer
         $datos['behavior'] = $reclutado->behavior;
         $datos['rol'] = $reclutado->rol()->value;
         $datos['stats'] = self::statsDe($reclutado);
-        $datos['cp'] = self::cpDe($reclutado);
+        $datos['cp'] = self::cpDe($reclutado, $nivelUsuario);
         $datos['ivs'] = $reclutado->ivs->toArray();
         $datos['evs'] = $reclutado->evs->toArray();
         // TODO: habilidad del pokémon (no existe Ability model todavía).
@@ -68,11 +70,13 @@ final class ReclutadoSerializer
     }
 
     /**
-     * Combat Power del reclutado: BattleStats a su nivel actual con EV = 0
-     * (los pokémon del jugador no tienen EVs; EV>0 es exclusivo de rivales).
-     * Si el rekado no tiene pokémon o stats, devuelve 0 (valores nunca ausentes).
+     * Combat Power del reclutado (B2): BattleStats al NIVEL DEL USUARIO con los
+     * EVs reales del reclutado como 2º argumento de CalculadorCP::calcular.
+     * Si no se recibe nivelUsuario, se cae al nivel del reclutado (fallback que
+     * mantiene el contrato de ReclutadoSerializerCPTest). Si el reclutado no
+     * tiene pokémon o stats, devuelve 0.
      */
-    private static function cpDe(Reclutado $reclutado): int
+    private static function cpDe(Reclutado $reclutado, ?int $nivelUsuario = null): int
     {
         $pokemon = $reclutado->pokemon;
         if ($pokemon === null || $pokemon->stats->isEmpty()) {
@@ -93,7 +97,7 @@ final class ReclutadoSerializer
             $base[$clave] = (int) $stat->base_stat;
         }
 
-        $nivel = NivelHelper::nivelDesdeExperiencia($reclutado->exp->total());
+        $nivel = $nivelUsuario ?? NivelHelper::nivelDesdeExperiencia($reclutado->exp->total());
         $stats = new BattleStats(
             stats: new StatsValue(
                 hp: $base['hp'],
@@ -108,7 +112,9 @@ final class ReclutadoSerializer
             ivs: $reclutado->ivs,
         );
 
-        return CalculadorCP::calcular($stats, 0);
+        $evTotal = (int) floor(array_sum($reclutado->evs->toArray()));
+
+        return CalculadorCP::calcular($stats, $evTotal);
     }
 
     /**

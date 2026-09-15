@@ -41,7 +41,7 @@ final readonly class ResultadoRuta
      *     caramelos_familia: list<array{src: string, alt: string, cantidad: int, nombre: string|null}>,
      *     caramelos_ev: list<array{src: string, alt: string, cantidad: int, nombre: string|null}>,
      *     caramelos_tipo: list<array{src: string, alt: string, cantidad: int, nombre: string|null}>,
-     *     capturas: list<array{pokemon_id: int, cantidad: int}>,
+     *     capturas: list<array{pokemon_id: int, cantidad: int, es_shiny: bool}>,
      * }
      */
     public function aArray(): array
@@ -56,6 +56,7 @@ final readonly class ResultadoRuta
                 fn (RecompensaCaptura $captura): array => [
                     'pokemon_id' => $captura->pokemonId,
                     'cantidad' => $captura->cantidad,
+                    'es_shiny' => $captura->esShiny,
                 ],
                 $this->capturas,
             ),
