@@ -210,7 +210,34 @@
 
             <!-- Right 2/3: Available Pokemon (equipos) -->
             <div class="lg:col-span-2 space-y-6">
-                <!-- Search and Filter -->
+                <!-- Section switcher: Pokémon / Huevos -->
+                <div class="flex rounded-xl bg-gray-100 dark:bg-gray-900/60 border border-gray-200 dark:border-gray-700 p-1" role="tablist" aria-label="Secciones del equipo">
+                    <button
+                        @click="cambiarSeccion('pokemon')"
+                        role="tab"
+                        :aria-selected="activeSeccion === 'pokemon'"
+                        class="flex-1 px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+                        :class="activeSeccion === 'pokemon'
+                            ? 'bg-white dark:bg-gray-800 text-blue-600 dark:text-blue-400 shadow-sm'
+                            : 'text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200'"
+                    >
+                        ⚔️ Pokémon
+                    </button>
+                    <button
+                        @click="cambiarSeccion('huevos')"
+                        role="tab"
+                        :aria-selected="activeSeccion === 'huevos'"
+                        class="flex-1 px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+                        :class="activeSeccion === 'huevos'
+                            ? 'bg-white dark:bg-gray-800 text-blue-600 dark:text-blue-400 shadow-sm'
+                            : 'text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200'"
+                    >
+                        🥚 Huevos
+                    </button>
+                </div>
+
+                <template x-if="activeSeccion === 'pokemon'">
+                    <!-- Search and Filter -->
                 <div class="flex flex-col sm:flex-row gap-3">
                     <div class="relative flex-1">
                         <input
@@ -390,6 +417,140 @@
                         </template>
                     </div>
                 </div>
+                    </template>
+
+                    <!-- ═══ Huevos (tab) ═══ -->
+                    <template x-if="activeSeccion === 'huevos'">
+                        <div class="space-y-6">
+                            <!-- Feedback de acciones huevos -->
+                            <template x-if="huevosFeedback.mensaje">
+                                <div class="px-3 py-2 rounded-lg text-xs" role="status"
+                                    :class="huevosFeedback.tipo === 'error'
+                                        ? 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400'
+                                        : 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400'"
+                                    x-text="huevosFeedback.mensaje">
+                                </div>
+                            </template>
+
+                            <!-- Límite de huevos activo -->
+                            <template x-if="limiteExcedido()">
+                                <div class="px-3 py-2 rounded-lg bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 text-xs" role="status">
+                                    ⏳ <span x-text="limiteMensaje()"></span>
+                                </div>
+                            </template>
+
+                            <!-- Loading -->
+                            <template x-if="huevosLoading">
+                                <div class="flex items-center gap-2 text-sm text-gray-400 dark:text-gray-500 py-6 justify-center" role="status">
+                                    <svg class="w-4 h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                                    </svg>
+                                    Cargando huevos...
+                                </div>
+                            </template>
+
+                            <!-- Error / módulo no disponible -->
+                            <template x-if="!huevosLoading && huevosError">
+                                <div class="text-center py-8">
+                                    <p class="text-sm text-gray-500 dark:text-gray-400 mb-3" x-text="huevosError"></p>
+                                    <button
+                                        @click="cargarHuevos(true)"
+                                        class="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors"
+                                    >
+                                        Reintentar
+                                    </button>
+                                </div>
+                            </template>
+
+                            <template x-if="!huevosLoading && !huevosError && huevosLoaded">
+                                <!-- Mis huevos -->
+                                <div>
+                                    <div class="flex items-center justify-between bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-2 mb-4">
+                                        <h2 class="text-sm font-bold uppercase tracking-wide text-gray-700 dark:text-gray-300">Mis Huevos</h2>
+                                    </div>
+                                    <template x-if="huevos.length === 0">
+                                        <div class="text-center py-6 text-sm text-gray-400 dark:text-gray-500">No tienes huevos en este momento.</div>
+                                    </template>
+                                    <template x-if="huevos.length > 0">
+                                        <div class="space-y-3">
+                                            <template x-for="huevo in huevos" :key="'huevo-'+huevo.id">
+                                                <div class="flex items-center gap-3 bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-3">
+                                                    <div class="w-12 h-12 shrink-0 flex items-center justify-center">
+                                                        <img
+                                                            :src="huevo.pokemon?.icon ? huevo.pokemon.icon : '/images/iconos_webp/' + (huevo.pokemon?.id ?? 0) + '.webp'"
+                                                            :alt="huevo.pokemon?.name ?? 'Huevo'"
+                                                            class="w-full h-full object-contain"
+                                                            loading="lazy"
+                                                            onerror="this.style.display='none'"
+                                                        >
+                                                    </div>
+                                                    <div class="flex-1 min-w-0">
+                                                        <div class="flex items-center gap-2 flex-wrap">
+                                                            <span class="text-sm font-medium text-gray-900 dark:text-white capitalize truncate" x-text="huevo.pokemon?.name ?? 'Pokémon por descubrir'"></span>
+                                                            <span class="px-1.5 py-0.5 text-[10px] font-bold rounded uppercase" :class="estadoHuevo(huevo).clase" x-text="estadoHuevo(huevo).texto"></span>
+                                                        </div>
+                                                        <div class="flex items-center gap-2 mt-1.5">
+                                                            <div class="flex-1 h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                                                                <div class="h-full bg-purple-500 rounded-full" :style="'width: ' + huevoProgreso(huevo) + '%'"></div>
+                                                            </div>
+                                                            <span class="text-[10px] text-gray-500 dark:text-gray-400 flex-shrink-0" x-text="huevoEtiquetaRestante(huevo)"></span>
+                                                        </div>
+                                                    </div>
+                                                    <template x-if="huevo.puede_eclosionar">
+                                                        <button
+                                                            @click="eclosionarHuevo(huevo)"
+                                                            :disabled="huevosActuando"
+                                                            class="shrink-0 px-3 py-1.5 bg-purple-600 text-white rounded-lg text-xs font-bold hover:bg-purple-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                                                        >
+                                                            <span x-show="huevosAccionId === huevo.id" x-cloak>Eclosionando…</span>
+                                                            <span x-show="huevosAccionId !== huevo.id">🥚 Eclosionar</span>
+                                                        </button>
+                                                    </template>
+                                                </div>
+                                            </template>
+                                        </div>
+                                    </template>
+                                </div>
+
+                                <!-- Familias disponibles -->
+                                <div>
+                                    <div class="flex items-center justify-between bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-2 mb-4">
+                                        <h2 class="text-sm font-bold uppercase tracking-wide text-gray-700 dark:text-gray-300">Familias Disponibles</h2>
+                                    </div>
+                                    <template x-if="huevosDisponibles.length === 0">
+                                        <div class="text-center py-6 text-sm text-gray-400 dark:text-gray-500">No hay huevos disponibles para incubar.</div>
+                                    </template>
+                                    <template x-if="huevosDisponibles.length > 0">
+                                        <div class="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                                            <template x-for="op in huevosDisponibles" :key="'disp-'+op.evolution_chain_id">
+                                                <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 text-center p-3">
+                                                    <div class="w-16 h-16 mx-auto">
+                                                        <img
+                                                            :src="op.pokemon?.icon ? op.pokemon.icon : '/images/iconos_webp/' + (op.pokemon?.id ?? 0) + '.webp'"
+                                                            :alt="op.pokemon?.name ?? 'Pokémon'"
+                                                            class="w-full h-full object-contain"
+                                                            loading="lazy"
+                                                            onerror="this.style.display='none'"
+                                                        >
+                                                    </div>
+                                                    <p class="text-[10px] text-gray-600 dark:text-gray-400 truncate mt-1 capitalize" x-text="op.pokemon?.name ?? 'Pokémon'"></p>
+                                                    <p class="text-[10px] text-gray-400 dark:text-gray-500" x-text="'Captura ' + (op.capture_rate ?? '—')"></p>
+                                                    <button
+                                                        @click="ponerHuevo(op.evolution_chain_id)"
+                                                        :disabled="huevosActuando || !puedePonerHuevo()"
+                                                        :title="!puedePonerHuevo() ? limiteMensaje() : 'Poner a gestar este huevo'"
+                                                        class="mt-2 w-full px-2 py-1.5 bg-green-600 text-white rounded-lg text-xs font-bold hover:bg-green-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                                                    >
+                                                        Poner huevo
+                                                    </button>
+                                                </div>
+                                            </template>
+                                        </div>
+                                    </template>
+                                </div>
+                            </template>
+                        </div>
+                    </template>
             </div>
         </div>
 
@@ -588,12 +749,14 @@
                 <div class="flex items-start gap-4 p-6 border-b border-gray-100 dark:border-gray-700">
                     <div class="w-24 h-24 shrink-0 rounded-lg bg-gray-50 dark:bg-gray-900/50 flex items-center justify-center overflow-hidden">
                         <img
-                            :src="'/images/iconos_webp/' + detailPokemon.pokemon_id + '.webp'"
+                            :src="(detailPokemon.es_shiny ? '/images/iconos_webp/shiny/' + detailPokemon.pokemon_id + '.webp' : '/images/iconos_webp/' + detailPokemon.pokemon_id + '.webp')"
                             loading="lazy"
                             decoding="async"
                             :alt="detailPokemon.nombre"
                             class="w-full h-full object-contain"
-                            onerror="this.style.display='none'"
+                            :data-pid="detailPokemon.pokemon_id"
+                            :data-intento="detailPokemon.es_shiny ? 'shiny' : 'normal'"
+                            onerror="this.onerror=null; var p=this.getAttribute('data-pid'); var i=this.getAttribute('data-intento'); if (i === 'shiny') { this.src='/images/iconos_webp/shiny/'+p+'_s.webp'; this.setAttribute('data-intento','shiny_s'); } else if (i === 'shiny_s') { this.src='/images/iconos_webp/'+p+'.webp'; this.setAttribute('data-intento','normal'); } else { this.style.display='none'; }"
                         >
                     </div>
                     <div class="flex-1 min-w-0">
@@ -653,6 +816,68 @@
                                             <div class="h-full bg-blue-500 rounded-full" :style="'width: ' + Math.min((stat.value / 255) * 100, 100) + '%'"></div>
                                         </div>
                                         <span class="text-[10px] font-medium text-gray-700 dark:text-gray-300 w-6" x-text="stat.value"></span>
+                                    </div>
+                                </template>
+                            </div>
+                        </div>
+                    </template>
+
+                    <!-- Habilidades -->
+                    <template x-if="habilidadesDe(detailPokemon).length > 0">
+                        <div>
+                            <h4 class="text-xs font-bold uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-2">Habilidades</h4>
+                            <div class="flex flex-wrap gap-1.5">
+                                <template x-for="(hab, index) in habilidadesDe(detailPokemon)" :key="index">
+                                    <span class="px-2 py-0.5 text-xs font-medium rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 capitalize" x-text="hab"></span>
+                                </template>
+                            </div>
+                        </div>
+                    </template>
+
+                    <!-- IVs -->
+                    <template x-if="detailPokemon && (detailPokemon.ivs || detailPokemon.iv)">
+                        <div>
+                            <h4 class="text-xs font-bold uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-2">Valores Individuales (IV)</h4>
+                            <div class="grid grid-cols-2 gap-x-4 gap-y-1.5">
+                                <template x-for="stat in evStats" :key="stat.key">
+                                    <div class="flex items-center justify-between">
+                                        <span class="text-[10px] text-gray-500 dark:text-gray-400" x-text="stat.label"></span>
+                                        <span class="text-xs font-bold" :class="ivValue(detailPokemon, stat.key) >= 15 ? 'text-green-600 dark:text-green-400' : 'text-gray-700 dark:text-gray-300'" x-text="ivValue(detailPokemon, stat.key) + '/15'"></span>
+                                    </div>
+                                </template>
+                            </div>
+                            <p class="text-[10px] text-gray-400 dark:text-gray-500 mt-1">Los IV perfectos (15) se muestran en verde.</p>
+                        </div>
+                    </template>
+
+                    <!-- EVs -->
+                    <template x-if="detailPokemon && (detailPokemon.evs || detailPokemon.ev)">
+                        <div>
+                            <h4 class="text-xs font-bold uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-2">Esfuerzo (EV)</h4>
+                            <template x-if="detailEvFeedback.mensaje">
+                                <div class="px-3 py-2 rounded-lg text-xs mb-2" role="status"
+                                    :class="detailEvFeedback.tipo === 'error'
+                                        ? 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400'
+                                        : 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400'"
+                                    x-text="detailEvFeedback.mensaje">
+                                </div>
+                            </template>
+                            <div class="space-y-2">
+                                <template x-for="stat in evStats" :key="'ev-'+stat.key">
+                                    <div class="flex items-center gap-2">
+                                        <span class="text-[10px] text-gray-500 dark:text-gray-400 w-20 text-right truncate" x-text="stat.label"></span>
+                                        <div class="flex-1 h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                                            <div class="h-full bg-amber-500 rounded-full" :style="'width: ' + evPct(evValue(detailPokemon, stat.key)) + '%'"></div>
+                                        </div>
+                                        <span class="text-[10px] font-medium text-gray-700 dark:text-gray-300 w-8 flex-shrink-0" x-text="evValue(detailPokemon, stat.key) + '/255'"></span>
+                                        <button
+                                            @click="darEv(stat.key)"
+                                            :disabled="!puedeDarEv(detailPokemon, stat.key)"
+                                            :title="!puedeDarEv(detailPokemon, stat.key) ? 'No puedes dar caramelos EV ahora mismo' : 'Dar un caramelo EV (+1 a ' + stat.label + ')'"
+                                            class="shrink-0 px-2 py-1 bg-amber-500 text-white rounded-md text-[10px] font-bold hover:bg-amber-600 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                                        >
+                                            🍬 <span x-text="evCandyLabel(detailPokemon, stat.key)"></span>
+                                        </button>
                                     </div>
                                 </template>
                             </div>
@@ -826,6 +1051,30 @@ function favoritosApp() {
         detailEvolucionesLoading: false,
         detailEvolucionesError: false,
         selectedEvolucionId: null,
+
+        // ─── Detail: EV feeding (caramelos EV / IVs) ─────────────────────────
+        evStats: [
+            { key: 'hp', label: 'PS' },
+            { key: 'atk', label: 'Ataque' },
+            { key: 'def', label: 'Defensa' },
+            { key: 'spAtk', label: 'Ataque Esp.' },
+            { key: 'spDef', label: 'Defensa Esp.' },
+            { key: 'speed', label: 'Velocidad' },
+        ],
+        detailEvsFeeding: false,
+        detailEvFeedback: { tipo: '', mensaje: '' },
+
+        // ─── Huevos tab ──────────────────────────────────────────────────────
+        activeSeccion: 'pokemon',
+        huevos: [],
+        huevosDisponibles: [],
+        huevosLimites: null,
+        huevosLoaded: false,
+        huevosLoading: false,
+        huevosError: '',
+        huevosActuando: false,
+        huevosAccionId: null,
+        huevosFeedback: { tipo: '', mensaje: '' },
 
         // ─── Exploration Modal ──────────────────────────────────────────────
         showExploracionModal: false,
@@ -1049,6 +1298,8 @@ function favoritosApp() {
             this.detailEvolucionesLoading = false;
             this.detailEvolucionesError = false;
             this.selectedEvolucionId = null;
+            this.detailEvFeedback = { tipo: '', mensaje: '' };
+            this.detailEvsFeeding = false;
         },
 
         async cargarEvoluciones(pokemon) {
@@ -1084,6 +1335,286 @@ function favoritosApp() {
         opcionSeleccionada() {
             if (!this.selectedEvolucionId || this.detailEvoluciones.length === 0) return null;
             return this.detailEvoluciones.find(o => o.pokemon_id === this.selectedEvolucionId) || null;
+        },
+
+        // ═══════════════════════════════════════════════════════════════════════
+        // DETAIL: IVs / EVs / HABILIDADES
+        // ═══════════════════════════════════════════════════════════════════════
+
+        /** Clave corta del backend (naming candy_ev: atksp/defsp/spd) para tolerar alias. */
+        slugCorto(key) {
+            const mapa = { hp: 'hp', atk: 'atk', def: 'def', spAtk: 'atksp', spDef: 'defsp', speed: 'spd' };
+            return mapa[key] || key;
+        },
+
+        habilidadesDe(pokemon) {
+            if (!pokemon) return [];
+            const fuente = pokemon.habilidades || pokemon.abilities || [];
+            const lista = Array.isArray(fuente) ? fuente : Object.values(fuente || {});
+            return lista.map(h => {
+                if (typeof h === 'string') return h;
+                if (h && (h.nombre || h.name)) return h.nombre || h.name;
+                return Object.values(h || {})[0] || '';
+            }).filter(Boolean);
+        },
+
+        ivsDe(pokemon) {
+            return pokemon?.ivs || pokemon?.iv || {};
+        },
+
+        ivValue(pokemon, key) {
+            const ivs = this.ivsDe(pokemon);
+            return ivs[key] ?? ivs[this.slugCorto(key)] ?? 0;
+        },
+
+        evsDe(pokemon) {
+            return pokemon?.evs || pokemon?.ev || {};
+        },
+
+        evValue(pokemon, key) {
+            const evs = this.evsDe(pokemon);
+            return evs[key] ?? evs[this.slugCorto(key)] ?? 0;
+        },
+
+        evPct(value) {
+            return Math.max(0, Math.min(100, (Number(value || 0) / 255) * 100));
+        },
+
+        evCaramelosDe(pokemon, key) {
+            const mapa = pokemon?.caramelos_ev;
+            if (!mapa) return null;
+            return mapa[key] ?? mapa[this.slugCorto(key)] ?? 0;
+        },
+
+        evCandyLabel(pokemon, key) {
+            const n = this.evCaramelosDe(pokemon, key);
+            return n === null ? '—' : 'x' + n;
+        },
+
+        puedeDarEv(pokemon, key) {
+            if (!pokemon || this._pokemonBloqueado(pokemon)) return false;
+            if (this.detailEvsFeeding) return false;
+            if (this.evValue(pokemon, key) >= 255) return false;
+            const caramelos = this.evCaramelosDe(pokemon, key);
+            if (caramelos !== null && caramelos <= 0) return false;
+            return true;
+        },
+
+        async darEv(key) {
+            const pokemon = this.detailPokemon;
+            if (!pokemon || !this.puedeDarEv(pokemon, key)) return;
+            this.detailEvsFeeding = true;
+            this.detailEvFeedback = { tipo: '', mensaje: '' };
+            try {
+                const response = await fetch('/reclutado/' + pokemon.id + '/dar-evs', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '',
+                        'Accept': 'application/json',
+                    },
+                    body: JSON.stringify({ stat: key }),
+                });
+                if (response.ok) {
+                    const data = await response.json();
+                    const nivelado = data.evs ?? data.ev ?? (data.actual !== undefined ? { [key]: data.actual } : null);
+                    if (nivelado && typeof nivelado === 'object') {
+                        const evs = { ...this.evsDe(pokemon), ...nivelado };
+                        pokemon.evs = evs;
+                    }
+                    if (data.caramelos_ev && typeof data.caramelos_ev === 'object') {
+                        pokemon.caramelos_ev = data.caramelos_ev;
+                    }
+                    const label = (this.evStats.find(s => s.key === key) || {}).label || key;
+                    this.detailEvFeedback = { tipo: 'success', mensaje: '✓ Caramelo EV entregado (' + label + ') +1' };
+                } else {
+                    let message = 'No se pudo dar el caramelo EV.';
+                    try {
+                        const data = await response.json();
+                        message = data.error || data.message || message;
+                    } catch (err) {}
+                    this.detailEvFeedback = { tipo: 'error', mensaje: '⚠️ ' + message };
+                }
+            } catch (err) {
+                console.error('Error dando caramelo EV:', err);
+                this.detailEvFeedback = { tipo: 'error', mensaje: '⚠️ Error de conexión al dar el caramelo EV.' };
+            } finally {
+                this.detailEvsFeeding = false;
+            }
+        },
+
+        // ═══════════════════════════════════════════════════════════════════════
+        // HUEVOS TAB
+        // ═══════════════════════════════════════════════════════════════════════
+
+        cambiarSeccion(seccion) {
+            if (this.activeSeccion === seccion) return;
+            this.activeSeccion = seccion;
+            if (seccion === 'huevos') {
+                this.huevosFeedback = { tipo: '', mensaje: '' };
+                this.cargarHuevos();
+            }
+        },
+
+        async cargarHuevos(force = false) {
+            if (this.huevosLoading) return;
+            if (!force && this.huevosLoaded) return;
+            this.huevosLoading = true;
+            this.huevosError = '';
+            try {
+                const response = await fetch('/api/huevos', {
+                    headers: { 'Accept': 'application/json' },
+                });
+                if (response.status === 404) {
+                    // Módulo backend aún no publicado: avisar sin romper la página.
+                    this.huevosError = 'El módulo de huevos está en preparación.';
+                    this.huevos = [];
+                    this.huevosDisponibles = [];
+                    this.huevosLimites = null;
+                    this.huevosLoaded = false;
+                    return;
+                }
+                if (!response.ok) throw new Error('No se pudieron cargar los huevos');
+                const data = await response.json();
+                this.huevos = Array.isArray(data.huevos) ? data.huevos : [];
+                this.huevosDisponibles = Array.isArray(data.disponibles) ? data.disponibles : [];
+                this.huevosLimites = data.limites || null;
+                this.huevosLoaded = true;
+            } catch (e) {
+                console.error('Error cargando huevos:', e);
+                this.huevosError = 'No se pudieron cargar los huevos.';
+                this.huevosLoaded = false;
+            } finally {
+                this.huevosLoading = false;
+            }
+        },
+
+        gestacionActiva() {
+            return this.huevos.some(h => h.estado === 'gestando');
+        },
+
+        incubacionActiva() {
+            return this.huevos.some(h => h.estado === 'incubando' || h.estado === 'listo');
+        },
+
+        limiteExcedido() {
+            return this.gestacionActiva() || this.incubacionActiva();
+        },
+
+        limiteMensaje() {
+            const gestando = this.gestacionActiva();
+            const incubando = this.incubacionActiva();
+            if (gestando && incubando) return 'Ya tienes 1 huevo gestando y 1 en incubación: completa uno antes de poner otro.';
+            if (gestando) return 'Ya tienes 1 huevo gestando: espera a que termine antes de poner otro.';
+            if (incubando) return 'Ya tienes 1 huevo incubando: espera a que eclosione antes de poner otro.';
+            return '';
+        },
+
+        puedePonerHuevo() {
+            return !this.huevosActuando && !this.limiteExcedido();
+        },
+
+        async ponerHuevo(evolutionChainId) {
+            if (!evolutionChainId || !this.puedePonerHuevo()) return;
+            this.huevosActuando = true;
+            this.huevosFeedback = { tipo: '', mensaje: '' };
+            try {
+                const response = await fetch('/api/huevos', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '',
+                        'Accept': 'application/json',
+                    },
+                    body: JSON.stringify({ evolution_chain_id: evolutionChainId }),
+                });
+                if (response.ok) {
+                    const data = await response.json();
+                    this.huevosFeedback = { tipo: 'success', mensaje: data.message || '🥚 El huevo ha empezado a gestarse.' };
+                    await this.cargarHuevos(true);
+                } else {
+                    let message = 'No se pudo poner el huevo.';
+                    try {
+                        const data = await response.json();
+                        message = data.error || data.message || message;
+                    } catch (err) {}
+                    this.huevosFeedback = { tipo: 'error', mensaje: '⚠️ ' + message };
+                }
+            } catch (err) {
+                console.error('Error poniendo huevo:', err);
+                this.huevosFeedback = { tipo: 'error', mensaje: '⚠️ Error de conexión al poner el huevo.' };
+            } finally {
+                this.huevosActuando = false;
+            }
+        },
+
+        async eclosionarHuevo(huevo) {
+            if (!huevo || !huevo.puede_eclosionar || this.huevosActuando) return;
+            this.huevosActuando = true;
+            this.huevosAccionId = huevo.id;
+            this.huevosFeedback = { tipo: '', mensaje: '' };
+            try {
+                const response = await fetch('/api/huevos/' + huevo.id + '/eclosionar', {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '',
+                        'Accept': 'application/json',
+                    },
+                });
+                if (response.ok) {
+                    const data = await response.json();
+                    const nacido = data.pokemon?.name || data.nombre || data.pokemon_name || '';
+                    this.huevosFeedback = { tipo: 'success', mensaje: '🎉 ¡Eclosionó' + (nacido ? ' un ' + nacido : '') + '!' };
+                    await this.cargarHuevos(true);
+                } else {
+                    let message = 'No se pudo eclosionar el huevo.';
+                    try {
+                        const data = await response.json();
+                        message = data.error || data.message || message;
+                    } catch (err) {}
+                    this.huevosFeedback = { tipo: 'error', mensaje: '⚠️ ' + message };
+                }
+            } catch (err) {
+                console.error('Error eclosionando huevo:', err);
+                this.huevosFeedback = { tipo: 'error', mensaje: '⚠️ Error de conexión al eclosionar el huevo.' };
+            } finally {
+                this.huevosActuando = false;
+                this.huevosAccionId = null;
+            }
+        },
+
+        huevoProgreso(huevo) {
+            const total = Number(huevo?.tiempo_total_horas || 0);
+            const restante = Number(huevo?.tiempo_restante ?? total);
+            if (total <= 0) return 0;
+            return Math.max(0, Math.min(100, ((total - restante) / total) * 100));
+        },
+
+        huevoEtiquetaRestante(huevo) {
+            if (huevo?.puede_eclosionar) return '¡Listo!';
+            return this.formatearDuracion(huevo?.tiempo_restante ?? 0);
+        },
+
+        formatearDuracion(horas) {
+            const h = Number(horas || 0);
+            if (h <= 0) return 'Listo';
+            if (h >= 24) {
+                const d = Math.floor(h / 24);
+                const rest = Math.round(h % 24);
+                return d + 'd' + (rest > 0 ? ' ' + rest + 'h' : '');
+            }
+            const hh = Math.floor(h);
+            const mm = Math.round((h - hh) * 60);
+            return (hh > 0 ? hh + 'h ' : '') + mm + 'm';
+        },
+
+        estadoHuevo(huevo) {
+            const mapa = {
+                gestando: { texto: 'Gestando', clase: 'bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-400' },
+                incubando: { texto: 'Incubando', clase: 'bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-400' },
+                listo: { texto: '¡Listo!', clase: 'bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-400' },
+            };
+            return mapa[huevo?.estado] || { texto: huevo?.estado || 'Huevo', clase: 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300' };
         },
 
         // ═══════════════════════════════════════════════════════════════════════

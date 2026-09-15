@@ -1,3 +1,73 @@
+# ANÁLISIS FRONTEND — Animación de daño, detalle con IVs/EVs/habilidades, pestaña Huevos, iconos shiny
+
+Fecha: 2026-09-15
+Rol: Frontend (Blade + Alpine.js + Tailwind 4 + CSS combate). Solo UI: NO tests, NO backend.
+Fuentes: `docs/context.md`, `docs/conventions.md`, `.ai/rules/index.md` (sin reglas para `resources/views/**`),
+`active/RESUMEN_TAREA.md`, `src/Battle/context.md`, `app/Livewire/Combate.php` (601 líneas),
+`src/Battle/Domain/Combatiente.php` (aArrayVista), `routes/player.php`, `app/Support/ReclutadoSerializer.php`,
+`equipos/index.blade.php` (1655 líneas), `_pokemon-card.blade.php`, `battle-field.blade.php`, `combate.css`.
+
+## Qué tocar (4 ficheros)
+
+1. `resources/views/livewire/_pokemon-card.blade.php` — clase `anim-hit` al defensor + badge "★ Shiny" + fallback de icono.
+2. `resources/css/combate.css` — `@keyframes` de parpadeo rojo + sacudida, transición de barra de HP, pref. reduced-motion.
+3. `resources/views/equipos/index.blade.php` — modal detalle (IVs/EVs/habilidades + botón dar-evs + icono shiny) y pestaña "🥚 Huevos".
+4. `battle-field.blade.php` — SIN cambios: `$animDefenderId` está disponible en el partial por el mismo mecanismo que
+   `$actingRefId`/`$selectedTargetRefId` (los públicos de Livewire llegan como data de vista a los `@include`).
+
+## Contrato de API asumido (contrastar con Backend)
+
+### Reclutado (serializador de /equipos)
+- Añade `ivs: {hp, atk, def, spAtk, spDef, speed}` (0–15), `evs: {hp, atk, def, spAtk, spDef, speed}` (0–255),
+  `habilidades: array` (strings u objetos `{id, nombre}`). Ya existen hoy: `es_shiny`, `cp`, `stats`, `pokemon`.
+- `POST /reclutado/{id}/dar-evs` (NUEVO, no está en `routes/player.php`) con body `{stat: 'hp'|'atk'|'def'|'spAtk'|'spDef'|'speed'}`.
+  Respuesta tolerada: `{evs}`, `{caramelos_ev}` (mapa stat→cantidad), o `{actual, caramelos_disponibles}`.
+  → 422 si sin caramelos / tope 255 (feedback inline, patrón `handleError`).
+
+### Huevos (módulo en paralelo)
+- `GET /api/huevos` → `{huevos: [...], disponibles: [...], limites: {...}}`
+  - `huevos[]`: `{id, estado: gestando|incubando|listo, tiempo_total_horas, tiempo_restante, puede_eclosionar, pokemon: {id, name, icon}}`.
+  - `disponibles[]` (familias con ≥2 ejemplares, 1/familia): `{evolution_chain_id, pokemon: {id, name, icon}, capture_rate?, hatch?}`.
+  - `limites`: `{max_gestacion, max_incubando, gestacion_activa?, incubacion_activa?}` (tolerado).
+- `POST /api/huevos` body `{evolution_chain_id}` → 201 huevo (gestación automática).
+- `POST /api/huevos/{id}/eclosionar` → eclosionar cuando `listo`.
+
+## Estados UI cubiertos
+
+- Combate: defensor recibiendo golpe (animación 600 ms dentro de la ventana de 700 ms), shiny vs normal, card debilitada
+  (`opacity-50`) no anima (solo el defensor vivo en ventana), `prefers-reduced-motion`.
+- Equipos/modal: sin IVs/EVs/habilidades (data legacy) → secciones ocultas; IV 15 resaltado; EV tope 255; sin caramelos → botón
+  deshabilitado o 422 con feedback; en exploración → bloqueado.
+- Huevos: loading (spinner), error (con Reintentar; 404 del endpoint → "módulo en preparación"), empty (sin huevos / sin familias),
+  success; límite alcanzado deshabilita "Poner huevo" con mensaje; eclosión con feedback del pokémon añadido + refetch.
+
+## Riesgos / decisiones
+
+1. **`$phase === 'animating'` no existe hoy**: `FaseCombate` solo tiene `init/player_target/player_move/battle_over`, aunque
+   `moves-panel` y `battle-field` ya comparan `'animating'` y `src/Battle/context.md` la documenta. Para no acoplar la feature a
+   un estado que el backend (en paralelo) aún no fija, la clase `anim-hit` se aplica cuando `$p['refId'] === $animDefenderId`
+   (señal precisa: `animDefenderId` solo se puebla en `setAnimState` y se limpia en `commitAction`/`resetAnimState`, exactamente la
+   ventana de animación). Es un superconjunto de la condición del brief; si el backend añade la fase 'animating' no cambia nada y
+   si no la añade la animación funciona igual. **Reportar al backend que `FaseCombate` no tiene `ANIMANDO` y que
+   `setAnimState()` no cambia `$phase`** (la dependencia de las vistas en `'animating'` para el banner quedó muerta).
+2. **Iconos shiny**: los assets reales son `/images/iconos_webp/shiny/{id}_s.webp` (1137 archivos; NO existe `{id}.webp` dentro
+   de shiny/), aunque el brief describe `/images/iconos_webp/shiny/{id}.webp`. En el modal se usa el contrato del brief como
+   primario con cadena `onerror` → `_s` → normal (así funciona hoy y sobrevive si el backend renombra). En la card de combate el
+   icono lo entrega el backend (`aArrayVista`); solo se añade badge (detecta `es_shiny` o `/shiny/` en la URL) y fallback
+   `onerror` del shiny → normal. **Reportar**: la convención real de archivos shiny es `{id}_s.webp`.
+3. **Slug de stat para dar-evs**: se usa `hp|atk|def|spAtk|spDef|speed` (keys de `ivs`/`evs`) por orden del brief. OJO: `StatEnum::slug()`
+   usa `atksp|defsp|spd` (candy_ev). El backend debe mapear en `dar-evs` al slug que use internamente. **Coordinar.**
+4. **Límites huevos**: brief dice "1 gestación + 1 eclosión" y la UI debe deshabilitar "Poner huevo" si ya hay 1 gestación **o**
+   1 eclosión. Se implementa literal (gestando / incubando / listo ocupan el pipeline); si el backend permite gestación+incubación
+   simultáneas habrá que relajar `limiteExcedido()` a solo gestación.
+5. Accessibility: `prefers-reduced-motion` desactiva sacudida y transición; botones con `aria-label`/`title`; tabs con `role="tablist"`.
+
+## Verificación (sin tests)
+- `php artisan view:cache` (Blade compila), `npm run build` (CSS combate). No se ejecuta pint: los únicos PHP sucios
+  (`src/Pokemon/Domain/Stats/BattleStats.php`, `src/Equipos/App/CrearEquipoInicial.php`) son del Backend en paralelo.
+
+---
+
 # ANÁLISIS FRONTEND — Ajustes UI: formación en equipos, hábitat sin preview, popup nunca automático, rewards ruta
 
 Fecha: 2026-09-14

@@ -9,12 +9,15 @@
     $itemIcons = ['leftovers' => '🧴', 'focus_sash' => '🎗️', 'life_orb' => '🔮'];
     $itemName = $itemNames[$p['item']] ?? $p['item'];
     $itemIcon = $itemIcons[$p['item']] ?? '📦';
+    $esShiny = ($p['es_shiny'] ?? false) || str_contains((string) ($p['icon'] ?? ''), '/shiny/');
+    $iconoNormal = preg_replace('#/shiny/(\d+)[^/]*\.webp$#', '/images/iconos_webp/$1.webp', (string) ($p['icon'] ?? ''));
+    $recibeGolpe = ($animDefenderId ?? '') !== '' && $p['refId'] === $animDefenderId;
 @endphp
-<div class="card w-100 mb-2 shadow-sm pokemon-card {{ $p['alive'] ? '' : 'opacity-50' }} {{ $p['refId'] === $actingRefId ? 'border border-warning' : '' }} {{ $p['refId'] === $selectedTargetRefId ? 'targeted-card' : '' }} {{ $selectable ? 'cursor-pointer border-primary' : '' }} {{ $blocked ? 'opacity-50 cursor-not-allowed' : '' }}"
+<div class="card w-100 mb-2 shadow-sm pokemon-card {{ $p['alive'] ? '' : 'opacity-50' }} {{ $p['refId'] === $actingRefId ? 'border border-warning' : '' }} {{ $p['refId'] === $selectedTargetRefId ? 'targeted-card' : '' }} {{ $selectable ? 'cursor-pointer border-primary' : '' }} {{ $blocked ? 'opacity-50 cursor-not-allowed' : '' }} {{ $recibeGolpe ? 'anim-hit' : '' }}"
      @if($selectable) wire:click="previewTarget({{ $team }}, {{ $idx }})" role="button" tabindex="0" @endif
      @if($p['refId'] === $animDefenderId) x-ref="defender-{{ $idx }}" @endif>
     <div class="card-body p-3 d-flex align-items-center gap-2">
-        <img src="{{ $p['icon'] }}" alt="{{ $p['nombre'] }}" class="img-fluid rounded flex-shrink-0" style="width:64px; height:64px; object-fit:contain" loading="lazy">
+        <img src="{{ $p['icon'] }}" alt="{{ $p['nombre'] }}" class="img-fluid rounded flex-shrink-0" style="width:64px; height:64px; object-fit:contain" loading="lazy" @if($esShiny) onerror="this.onerror=null; this.src='{{ $iconoNormal }}';" @endif>
         <div class="flex-grow-1 min-w-0">
             <div class="d-flex justify-content-between align-items-center gap-1">
                 <span class="fw-bold small text-truncate {{ $p['alive'] ? '' : 'text-muted' }}">{{ $p['nombre'] }}</span>
@@ -54,6 +57,9 @@
             </div>
         </div>
         <div class="flex-shrink-0 d-flex flex-column align-items-end gap-1">
+            @if($esShiny)
+                <span class="badge bg-warning text-dark" title="Shiny">★ Shiny</span>
+            @endif
             @if(!empty($p['item']))
                 <span class="badge bg-light border text-dark" title="{{ $itemName }}">{{ $itemIcon }}</span>
             @endif
