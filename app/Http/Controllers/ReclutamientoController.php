@@ -4,11 +4,10 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
-use App\Jobs\ActualizarPokedexJob;
 use App\Models\PlayerInventory;
 use App\Models\Reclutable;
-use App\Models\Reclutado;
 use App\Support\CadenasEvolutivas;
+use App\Support\CrearReclutado;
 use App\Support\ItemCatalogo;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -16,6 +15,11 @@ use Illuminate\Support\Facades\DB;
 
 class ReclutamientoController extends Controller
 {
+    public function __construct(
+        private readonly CrearReclutado $crearReclutado,
+    ) {
+    }
+
     public function recruit(Request $request): JsonResponse
     {
         $data = $request->validate([
@@ -27,21 +31,12 @@ class ReclutamientoController extends Controller
             // reclutable es de otro jugador (la regla exists no filtra por usuario).
             $reclutable = Reclutable::findOrFail($data['reclutable_id']);
 
-            // Create the recruited pokemon
-            Reclutado::create([
-                'user_id' => auth()->id(),
-                'pokemon_id' => $reclutable->pokemon_id,
-                'nombre' => null, // default: uses pokemon name in UI
-                'exp' => [
-                    'total' => 1500,
-                    'tipos' => [],
-                ],
-                'es_shiny' => false,
-                'obj_equipados' => null,
-                'movimientos' => null,
-            ]);
+            $userId = (int) auth()->id();
 
-            ActualizarPokedexJob::dispatch(auth()->id(), $reclutable->pokemon_id, 'RECLUTADO');
+            $this->crearReclutado->crear(
+                userId: $userId,
+                pokemonId: $reclutable->pokemon_id,
+            );
 
             if ($reclutable->cantidad > 1) {
                 $reclutable->decrement('cantidad');

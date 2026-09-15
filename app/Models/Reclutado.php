@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\Models\Casts\ExpReclutado;
+use App\Models\Casts\StatsReclutado;
 use App\Models\Concerns\BelongsToUser;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -20,6 +21,7 @@ class Reclutado extends Model
 
     protected $fillable = [
         'user_id', 'nombre', 'pokemon_id', 'exp', 'es_shiny', 'obj_equipados', 'movimientos', 'behavior',
+        'ivs', 'evs',
     ];
 
     protected $casts = [
@@ -28,6 +30,8 @@ class Reclutado extends Model
         'movimientos' => 'array',
         'es_shiny' => 'boolean',
         'behavior' => 'string',
+        'ivs' => StatsReclutado::class,
+        'evs' => StatsReclutado::class,
     ];
 
     /**

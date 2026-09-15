@@ -45,6 +45,7 @@ Route::patch('/teams/{team}/formacion', [TeamController::class, 'updateFormacion
 // Reclutado detail: type candy feeding + evolution + release
 Route::get('/reclutado/{reclutado}', [ReclutadoController::class, 'show']);
 Route::post('/reclutado/{reclutado}/dar-caramelo', [ReclutadoController::class, 'darCaramelo']);
+Route::post('/reclutado/{reclutado}/dar-evs', [ReclutadoController::class, 'darEvs']);
 Route::post('/reclutado/{reclutado}/evolucionar', [ReclutadoController::class, 'evolucionar']);
 Route::delete('/reclutado/{reclutado}', [ReclutadoController::class, 'destroy']);
 

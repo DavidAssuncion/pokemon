@@ -121,7 +121,7 @@ class EquipoBatalla
             $tipos = new TiposCollection($member->tipos);
 
             $precomputedBattleStats = $member->nivel !== null
-                ? new BattleStats($stats, $evs, $member->nivel)
+                ? new BattleStats($stats, $evs, $member->nivel, $member->ivs)
                 : null;
 
             $pokemon = new PokemonEntity(

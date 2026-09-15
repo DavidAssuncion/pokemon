@@ -59,6 +59,8 @@ class ConstruirEquipoJugador
                 posicion: $posicion,
                 shiny: (bool) $reclutado->es_shiny,
                 nivel: $nivel,
+                evs: $reclutado->evs,
+                ivs: $reclutado->ivs,
             );
         }
 

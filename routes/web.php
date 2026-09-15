@@ -45,6 +45,7 @@ Route::middleware('auth')->group(function (): void {
     require __DIR__.'/entrenadores.php';
     require __DIR__.'/gimnasios.php';
     require __DIR__.'/mazmorras.php';
+    require __DIR__.'/huevos.php';
     require __DIR__.'/ruta.php';
     // require __DIR__ . '/../src/Crud/routes.php';
 });

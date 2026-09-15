@@ -13,6 +13,7 @@ use Src\Exploraciones\Domain\ValueObjects\ColeccionPoolPonderado;
 use Src\Exploraciones\Domain\ValueObjects\PoolHabitat;
 use Src\Pokemon\Domain\Stats\DatosStats;
 use Src\Shared\Domain\ClasificadorOfensivaDefensiva;
+use Src\Shared\Domain\IvsRangoEntrenador;
 
 /**
  * Genera el equipo de un entrenador a partir del pool de un hábitat y nivel.
@@ -39,8 +40,16 @@ class GeneradorEquipoEntrenador
      *                                         repetición ponderada (tests lo fijan).
      * @return list<DatosPokemonBatalla>
      */
-    public function generar(int $habitatId, int $nivel, int $entrenadorIndex, string $fecha, ?int $nivelRival = null, ?callable $aleatorio = null): array
-    {
+    public function generar(
+        int $habitatId,
+        int $nivel,
+        int $entrenadorIndex,
+        string $fecha,
+        ?int $nivelRival = null,
+        int $ivPrincipal = 0,
+        int $ivResto = 0,
+        ?callable $aleatorio = null,
+    ): array {
         $pool = $this->poolDelHabitat($habitatId, $nivel);
         if ($pool === []) {
             return [];
@@ -63,6 +72,7 @@ class GeneradorEquipoEntrenador
                 nombre: $pokemon->name,
                 posicion: $posiciones[$i],
                 nivel: $nivelRival,
+                ivs: IvsRangoEntrenador::distribuir($ivPrincipal, $ivResto, $stats[$i]),
             );
         }
 

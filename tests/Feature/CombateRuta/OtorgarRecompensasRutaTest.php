@@ -14,6 +14,7 @@ use App\Models\Reclutado;
 use App\Models\Team;
 use App\Models\TeamMember;
 use App\Models\User;
+use App\Support\CrearReclutado;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Bus;
 use PHPUnit\Framework\Attributes\Test;
@@ -47,7 +48,7 @@ class OtorgarRecompensasRutaTest extends TestCase
         $persistir = $this->createMock(PersistirRecompensas::class);
         $persistir->expects($this->once())->method('persistir');
 
-        $otorgar = new OtorgarRecompensasRuta(new CalculadorRecompensas(), $persistir);
+        $otorgar = new OtorgarRecompensasRuta(new CalculadorRecompensas(), $persistir, new CrearReclutado());
         $pokemon = $this->crearPokemonRival(50);
 
         // ProbabilidadCaptura: chance = min(50,25)/255 ≈ 0.098; 0.05 ≤ 0.098 → captura.
@@ -73,7 +74,7 @@ class OtorgarRecompensasRutaTest extends TestCase
         $persistir = $this->createMock(PersistirRecompensas::class);
         $persistir->expects($this->once())->method('persistir');
 
-        $otorgar = new OtorgarRecompensasRuta(new CalculadorRecompensas(), $persistir);
+        $otorgar = new OtorgarRecompensasRuta(new CalculadorRecompensas(), $persistir, new CrearReclutado());
         $pokemon = $this->crearPokemonRival(53);
 
         // 0.5 > 0.098 → no captura.
@@ -95,7 +96,7 @@ class OtorgarRecompensasRutaTest extends TestCase
         $persistir->expects($this->never())->method('persistir');
 
         $registrar = new RegistrarResultadoRuta(
-            new OtorgarRecompensasRuta(new CalculadorRecompensas(), $persistir),
+            new OtorgarRecompensasRuta(new CalculadorRecompensas(), $persistir, new CrearReclutado()),
         );
         // El rival existe en el catálogo: si la derrota llegara al otorgador,
         // otorgaría recompensas (y el test fallaría).
@@ -120,7 +121,7 @@ class OtorgarRecompensasRutaTest extends TestCase
         $persistir->expects($this->once())->method('persistir');
 
         $registrar = new RegistrarResultadoRuta(
-            new OtorgarRecompensasRuta(new CalculadorRecompensas(), $persistir),
+            new OtorgarRecompensasRuta(new CalculadorRecompensas(), $persistir, new CrearReclutado()),
         );
         $this->crearPokemonRival(54);
 
@@ -143,7 +144,7 @@ class OtorgarRecompensasRutaTest extends TestCase
         $persistir = $this->createMock(PersistirRecompensas::class);
         $persistir->expects($this->once())->method('persistir');
 
-        $otorgar = new OtorgarRecompensasRuta(new CalculadorRecompensas(), $persistir);
+        $otorgar = new OtorgarRecompensasRuta(new CalculadorRecompensas(), $persistir, new CrearReclutado());
         $pokemon = $this->crearPokemonRival(55);
 
         // Duplicado + id inválido (0): solo el id válido cuenta una vez.

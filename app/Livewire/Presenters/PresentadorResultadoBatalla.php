@@ -196,12 +196,17 @@ final class PresentadorResultadoBatalla
         $speciesRival = $battle->team2->combatientesCollection()->map(
             fn (Combatiente $c): int => $c->speciesId(),
         );
+        // Mismo orden y claves que $speciesRival: el índice del slot indica si es shiny.
+        $shinyRival = $battle->team2->combatientesCollection()->map(
+            fn (Combatiente $c): bool => $c->shiny(),
+        );
 
         $resultado = app(RegistrarResultadoRuta::class)->registrar(
             userId: $userId,
             teamId: $teamId,
             speciesIdsRival: $speciesRival,
             won: $won,
+            shinySlots: $shinyRival,
         );
 
         return [

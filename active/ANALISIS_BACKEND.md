@@ -1,229 +1,125 @@
-# ANALISIS_BACKEND — Combate de Ruta 5v5 y escalado global a 5v5
+# ANÁLISIS BACKEND — IVs, Shiny, Huevos, EVs, Rival IVs
+
+Fecha: 2026-09-15
+Rol: Backend (Laravel / PHP 8.4). Contrato: `active/ANALISIS_FRONTEND.md` (sección IVs/EVs/huevos/shiny).
 
 ## Objetivo
 
-Implementar combate de ruta 5v5 (pokemon salvajes), nuevo clasificador de posición
-ofensiva/defensiva determinista, escalar entrenadores a 5 especies, divisor de recompensas
-/3 → /5, escalar gimnasios a 5 por etapa, formación persistente del equipo y manejo de
-roles deprecados.
+Implementar per-stat IVs (0–15 ×4 into base stats/CP), shiny wild encounters (1/2048, 15/15/15 IVs, guaranteed capture), módulo huevos (2 same species, min 10/10/10 IVs, 1/512 shiny, capture-rate-based times), EV candies vía `POST /reclutado/{id}/dar-evs`, e IVs de rivales por dificultad.
 
 ## Archivos afectados
 
-### Nuevos (módulo `src/CombateRuta/`)
+### Nuevos
+- `src/Shared/Domain/ProbabilidadesShiny.php`
+- `src/Shared/Domain/DistribuidorStatsValor.php`
+- `src/Shared/Domain/IvsRangoEntrenador.php`
+- `src/Pokemon/Domain/Stats/GeneradorIvs.php`
+- `app/Models/Casts/StatsReclutado.php`
+- `app/Models/Huevo.php`
+- `app/Support/CrearReclutado.php`
+- `src/Huevos/Domain/EstadoHuevo.php`
+- `src/Huevos/Domain/CalculadorTiemposHuevo.php`
+- `src/Huevos/Domain/CalculadorEstadoHuevo.php`
+- `src/Huevos/App/CrearHuevo.php`
+- `src/Huevos/App/EclosionarHuevo.php`
+- `src/Huevos/App/ListarHuevos.php`
+- `src/Huevos/Infra/Controllers/HuevoController.php`
+- `routes/huevos.php`
+- `database/migrations/2026_09_15_000001_add_ivs_evs_to_reclutados_table.php`
+- `database/migrations/2026_09_15_000002_create_huevos_table.php`
 
-- `src/CombateRuta/Domain/ClasificadorOfensivaDefensiva.php` — nuevo clasificador con
-  `esOfensivo(DatosStats): bool` + `generarFormacion(list<DatosStats>): array` determinista
-  (sin `random_int`). Fórmula: `ofensiva = atk + speed; defensiva = def + spDef + hp`.
-  Edge case: si los 5 quedan en el mismo bando → mueve el de mayor valor de stat contraria.
-- `src/CombateRuta/Domain/DataTransferObjects/ResultadoRuta.php` — DTO del resultado
-  (victoria, capturas, recompensas).
-- `src/CombateRuta/App/GeneradorEquipoRuta.php` — genera 5 pokemon del pool del hábitat con
-  selección ponderada CON reemplazo (capture_rate/hatch), cada slot independiente.
-- `src/CombateRuta/App/IniciarCombateRuta.php` — valida team 5 miembros, genera rival vía
-  GeneradorEquipoRuta, crea AgregadoBatalla y guarda sesión con meta `['tipo' => 'ruta', ...]`.
-  Sin límite diario, sin log.
-- `src/CombateRuta/App/RegistrarResultadoRuta.php` — procesa resultado (sin log, sin bloqueo),
-  devuelve datos modal.
-- `src/CombateRuta/App/OtorgarRecompensasRuta.php` — win: CalculadorRecompensas ×1.0
-  (sin el ×2 del entrenador) + PersistirRecompensas (con capturas) + ActualizarPokedexJob
-  AVISTADO por cada rival.
-- `src/CombateRuta/Infra/Controllers/CombateRutaController.php` — GET `/api/habitats/{id}/ruta/rivales`
-  y POST `/api/habitats/{id}/ruta/iniciar`. Patrón idéntico a EntrenadorController.
-- `routes/ruta.php` — rutas del módulo.
+### Modificados
+- `src/Pokemon/Domain/Stats/StatsValue.php` — add `desdeArray()`, `toArray()`, `conStat()`
+- `src/Pokemon/Domain/Stats/BattleStats.php` — 4th ctor param `?StatsValue $ivs`, per-stat IVs
+- `src/Battle/Domain/DatosPokemonBatalla.php` — add promoted `?StatsValue $ivs = null`
+- `src/Battle/Domain/EquipoBatalla.php` — pass `$member->ivs` to BattleStats
+- `src/Battle/Domain/Combatiente.php` — shiny icon `/shiny/{id}_s.webp`, add `es_shiny` to aArrayVista
+- `src/CombateEntrenadores/App/MapeadorPokemonBatalla.php` — add `?StatsValue $ivs = null`
+- `src/CombateEntrenadores/App/ConstruirEquipoJugador.php` — pass evs + ivs
+- `src/CombateEntrenadores/App/GeneradorEquipoEntrenador.php` — add ivPrincipal/ivResto params
+- `src/CombateEntrenadores/App/IniciarCombateEntrenador.php` — compute IVs by nivel
+- `src/Gimnasios/Domain/EvsRangoEntrenador.php` — delegate to DistribuidorStatsValor
+- `src/Gimnasios/App/GeneradorPokemonGimnasio.php` — add ivPrincipal/ivResto params
+- `src/Gimnasios/App/IniciarCombateGimnasio.php` — pass IVs by stage
+- `src/CombateRuta/App/GeneradorEquipoRuta.php` — shiny roll + random IVs per slot
+- `src/CombateRuta/App/OtorgarRecompensasRuta.php` — shiny partition + direct recruit
+- `src/CombateRuta/App/RegistrarResultadoRuta.php` — shinySlots param
+- `app/Livewire/Presenters/PresentadorResultadoBatalla.php` — pass shinySlots
+- `app/Models/Reclutado.php` — add ivs/evs to fillable + casts
+- `app/Support/ReclutadoSerializer.php` — add ivs/evs/habilidades + fix cpDe
+- `app/Http/Controllers/ReclutamientoController.php` — use CrearReclutado
+- `app/Http/Controllers/ReclutadoController.php` — add darEvs
+- `routes/player.php` — add dar-evs route
+- `routes/web.php` — require huevos.php
 
-### Modificados (producción)
-
-- `src/CombateEntrenadores/Domain/ClasificadorPosicion.php` — delega a
-  ClasificadorOfensivaDefensiva, marcado `@deprecated`.
-- `src/CombateEntrenadores/App/GeneradorEquipoEntrenador.php` — escalar a 5 especies
-  (Opción C: pool ≥5 → 5 únicas determinista; pool <5 → repetición ponderada hasta 5).
-  Ahora usa ClasificadorOfensivaDefensiva + generación determinista de formación.
-  Elimina dependencia de GeneradorFormacion.
-- `src/CombateEntrenadores/App/ConstruirEquipoJugador.php` — `desdeEquipo` prioriza:
-  popup → formación persistente en Team → clasificación automática vía
-  ClasificadorOfensivaDefensiva.
-- `src/Exploraciones/Domain/CalculadorRecompensas.php` — divisor `/3` → `/5` con constante
-  `MIEMBROS_EQUIPO = 5`. Afecta: `calcularExpPorMiembro` y `calcularExpTipoPorMiembro`.
-- `src/Exploraciones/App/PersistirRecompensas.php` — docblock actualizado (era "entre 3").
-  Lógica sin cambios (itera `$destinoExp->members`).
-- `app/Livewire/Presenters/PresentadorResultadoBatalla.php` — añade rama `'ruta'` al match
-  por `$meta['tipo']`.
-- `app/Http/Controllers/PlayerController.php` — `equipos()`: condición
-  `$members->count() === 3` → `>= 3` para calcular sinergia (la tabla solo tiene claves de
-  2-3; con 5 devuelve null, aceptable).
-- `app/Models/Team.php` — añadir `formacion` a fillable + cast `array`.
-- `routes/web.php` — añadir `require __DIR__.'/ruta.php'`.
-- `routes/player.php` — añadir `PATCH /teams/{team}/formacion`.
-
-### Migraciones nuevas
-
-- `database/migrations/20xx_add_formacion_to_teams.php` — columna `formacion`
-  JSON nullable en tabla `teams`.
-
-### Tests afectados
-
-- `tests/Unit/Exploraciones/CalculadorRecompensasTest.php` — actualizar asserts de `/3` a `/5`.
-- `tests/Unit/CombateEntrenadores/MapeadorPokemonBatallaTest.php` — verificar sin cambios
-  (no usa ClasificadorPosicion directamente).
-- Tests de gimnasios existentes: sin cambios (el catálogo DTO no cambia; el escalado es en
-  GeneradorPokemonGimnasio).
-
-## Tests
+## Comportamientos a cubrir en el testing futuro
 
 ### Unit
-
-1. `ClasificadorOfensivaDefensivaTest` — esOfensivo con ofensiva > defensiva, empate →
-   vanguardia, formación mixta determinista, edge case todos-mismo-bando.
-2. `CalculadorRecompensasTest` — actualizar asserts de /3 a /5 (nuevos valores:
-   floor(51.2/5)=10, floor(49.6/5)=9 → 19; etc.).
-3. `GeneradorEquipoEntrenadorTest` (nuevo o extender existente) — pool ≥5 → 5 especies;
-   pool <5 → repetición; ids en formato `entrenador_*_0..4`.
+- `ProbabilidadesShiny::esShiny()` — callable 1/max → true; callable 2/max → false.
+- `GeneradorIvs::aleatorios()` — 6 stats in [0,15]; callable override.
+- `GeneradorIvs::maximos()` — all 15.
+- `GeneradorIvs::huevo()` — all in [10,15]; callable override.
+- `BattleStats` — per-stat IVs affect formulas; no IVs → same as legacy.
+- `StatsValue::desdeArray()` — short keys, missing keys → 0, null → zeros.
+- `StatsValue::toArray()` — canonical short keys.
+- `StatsValue::conStat()` — returns new instance with one stat changed.
+- `DistribuidorStatsValor::distribuir()` — top2 → principal, rest → resto, tie-break.
+- `EvsRangoEntrenador::distribuir()` — same behavior (delegates).
+- `IvsRangoEntrenador::rangoPorNivelEntrenador()` — nivel 1→[8,6], 2→[10,8], 3→[12,10].
+- `IvsRangoEntrenador::distribuir()` — same as EvsRangoEntrenador.
+- `CalculadorTiemposHuevo::gestacionMinutos()` / `eclosionMinutos()` — CR45→160min/320min.
+- `CalculadorEstadoHuevo::estadoDe()` — GESTANDO→INCUBANDO→LISTO transitions.
+- `CrearReclutado::crear()` — creates with random IVs, dispatches PokedexJob.
+- `CrearHuevo::crear()` — validates ≥2 same species, no active eggs, rolls shiny/IVs.
+- `EclosionarHuevo::eclosionar()` — validates LISTO, marks eclosionado_en, creates reclutado.
+- `ListarHuevos::listar()` — builds huevos, disponibles, limites.
+- `CrearReclutado::crear()` for shiny — passes maximos IVs.
+- `CrearReclutado::crear()` for hatch — passes egg IVs.
 
 ### Feature
-
-4. `IniciarCombateRutaTest` — crea batalla 5v5, meta tipo=ruta, sin límite diario,
-   pool vacío → error claro.
-5. `CombateRutaControllerTest` — POST con team_id y formación, validación, respuesta JSON
-   con battle_id y redirect.
-6. `OtorgarRecompensasRutaTest` — victoria → recompensas ×1.0 con capturas,
-   derrota → sin recompensas.
-7. `RegistrarResultadoRutaTest` — victoria/derrota, sin log persistido, datos modal.
-8. `TeamFormacionTest` (Feature) — PATCH persiste formación, ConstruirEquipoJugador la consume.
-9. `GimnasioGeneradorEscaladoTest` (Feature) — GeneradorPokemonGimnasio produce 5 pokemon
-   con formación mixta.
-
-### Acceptance
-
-No necesario para esta tarea (la cobertura Unit+Feature es suficiente).
+- `POST /reclutado/{id}/dar-evs` — happy path (+10 EV), 422 sin caramelos, 422 tope 255, 422 en exploración.
+- `GET /api/huevos` — huevos vacíos, disponibles, limites, estados.
+- `POST /api/huevos` — crear huevo válido, 422 sin 2 ejemplares, 422 con huevo activo.
+- `POST /api/huevos/{id}/eclosionar` — eclosionar listo, 422 no listo, 422 ajeno (404).
+- Shiny capture en ruta — partition, direct recruit, capturas combined.
+- Rival IVs — entrenador nivel 1-3, gimnasio etapa 1-3 vs 4, líder.
 
 ## Diseño
 
-### ClasificadorOfensivaDefensiva (Domain puro, puede vivir en `src/CombateRuta/Domain/`)
+### IVs flow
+- `StatsValue` (6 float props) → `BattleStats` 4th param → `DatosPokemonBatalla::$ivs` → `EquipoBatalla::fromData` → `PokemonEntity::battleStats`.
+- Player IVs: `Reclutado->ivs` (StatsReclutado cast) → `ConstruirEquipoJugador` → `MapeadorPokemonBatalla::desdePokemon`.
+- Rival IVs: `IvsRangoEntrenador::distribuir()` → `GeneradorEquipoEntrenador`/`GeneradorPokemonGimnasio` → `DatosPokemonBatalla::$ivs`.
 
-```php
-final class ClasificadorOfensivaDefensiva {
-    public function esOfensivo(DatosStats $stats): bool; // ofensiva > defensiva
-    public function generarFormacion(array $statsPorSlot): array; // list<Posicion>
-}
-```
+### Shiny flow
+- `ProbabilidadesShiny::esShiny()` with callable `fn(int $max): int`.
+- `GeneradorEquipoRuta::generar()` → per-slot shiny roll → shinySlots list.
+- `OtorgarRecompensasRuta::otorgar()` → partition derrotados by shiny → normals via CalculadorRecompensas + PersistirRecompensas; shinies via `CrearReclutado::crear(esShiny: true, ivs: GeneradorIvs::maximos())`.
+- Combined capturas = normal captures + shiny RecompensaCaptura entries.
 
-- `esOfensivo`: `($atk + $speed) > ($def + $spDef + $hp)` → RETAGUARDIA; empate → VANGUARDIA.
-- `generarFormacion`: clasifica cada slot, si todos iguales → mueve el de mayor stat
-  contraria al otro bando. Determinista, sin random.
+### Huevos
+- States computed on READ from `created_at` + `capture_rate` (no stored state column).
+- `gestacionMinutos = round(7200/cr)` clamped [15,240]; `eclosionMinutos = gestacion × 2`.
+- Single active egg limit (gestando/incubando/listo unhatched).
+- Egg creation is USER-INITIATED via `POST /api/huevos` (no auto-trigger).
+- Route-model binding with BelongsToUser → anti-IDOR (404 on others).
 
-### GeneradorEquipoRuta (App — usa Eloquent)
+### Dar EVs
+- `POST /reclutado/{reclutado}/dar-evs` body `{stat}` validated `in:hp,atk,def,spAtk,spDef,speed`.
+- Stat slug → StatEnum::value (1-6) for item_key; slug → StatsValue property for read/write.
+- +10 EV per candy, per-stat cap 255 (no 510 total cap — per frontend UI).
+- Response: `{success, actual, caramelos_disponibles, evs}`.
 
-- Recibe `Habitat` → `PoolHabitat::ponderado()` → `ColeccionPoolPonderado`.
-- 5 slots independientes con reemplazo vía `elegirConAleatorio(fn => mt_random_float(0,1))`.
-- Sin pesos de hatch omitidos: `capture_rate ≤ 0` excluido; `hatch ≤ 0` → divisor 1
-  (replicado de `PokemonDelPool::peso()`).
-- Si pool vacío → retorna `[]`.
-- Mapea cada id a `Pokemon` con stats+types → `MapeadorPokemonBatalla::desdePokemon()`.
-- Aplica `ClasificadorOfensivaDefensiva::generarFormacion()`.
-
-### IniciarCombateRuta
-
-- Valida team con 5 miembros (si <5 → `ViolacionReglaNegocio`).
-- Genera rival vía GeneradorEquipoRuta.
-- Crea `AgregadoBatalla` y guarda sesión.
-- Meta: `['tipo' => 'ruta', 'habitat_id' => ..., 'nivel' => ..., 'user_id' => ..., 'team_id' => ...]`.
-
-### PresentadorResultadoBatalla — rama 'ruta'
-
-- Sin log, sin bloqueo diario.
-- Si gana → `OtorgarRecompensasRuta::otorgar()` con ×1.0.
-- Capturas se deciden por la función de captura existente (se reutiliza el callback).
-
-### Formación persistente (F)
-
-- Columna `formacion` JSON nullable en `teams` (mapa slot → vanguardia|retaguardia).
-- `ConstruirEquipoJugador::desdeEquipo` prioriza: formacion popup > formacion Team > auto.
-- Endpoint `PATCH /teams/{team}/formacion` actualiza la columna.
-
-### Gimnasios 5v5 (decisión: escalar en el generador)
-
-**Decisión**: NO modificar el catálogo `CatalogoGimnasios` (18×4 entradas). Escalar en
-`GeneradorPokemonGimnasio::porPosicion()` con repetición determinista de los members del DTO
-hasta llegar a 5. Esto:
-- Evita modificar 72 entradas de catálogo.
-- Mantiene la curación manual de los 3-4 members originales.
-- Garantiza formación mixta (vanguardia ≥ 1, retaguardia ≥ 1) porque el DTO siempre
-  tiene al menos 1 de cada.
-- Repite por ciclos del roster: [V1, V2, R1] → [V1, V2, R1, V1, V2] = 3V + 2R.
-
-### Roles deprecados (G)
-
-- `ClasificadorPosicion::esDefensivo` → delega a `ClasificadorOfensivaDefensiva`.
-- `GeneradorFormacion` → `@deprecated` (ya no se usa en entrenadores; formación es
-  determinista por stats).
-- `PlayerController::equipos()` → `$members->count() === 3` → `>= 3`.
-  La tabla `SinergiaEquipo` solo tiene claves de 2-3 chars; con 5 roles devuelve null
-  (sin sinergia mostrada), que es aceptable.
+### DRY
+- `DistribuidorStatsValor` shared by EvsRangoEntrenador + IvsRangoEntrenador.
+- `CrearReclutado` shared by recruit, shiny capture, egg hatch.
 
 ## Riesgos
 
-- **Gimnasios 5v5**: el escalado por repetición en GeneradorPokemonGimnasio puede generar
-  el mismo pokemon 2-3 veces en un equipo. Aceptable: es un rival controlado por catálogo.
-  Verificar que la BD tiene las especies en `pokemon.species_id` (ya está en el catálogo).
-- **Recompensas /5**: test `CalculadorRecompensasTest` usa valores exactos calculados con /3.
-  Actualizar TODOS los asserts afectados. Peligro: si otros tests en la suite asumen /3
-  (ej. `MultiplicadorRecompensasTest` usa ratios relativos ×5, que se preservan).
-- **Pool vacío en ruta**: si un hábitat no tiene pokemon en un nivel, `IniciarCombateRuta`
-  debe fallar con mensaje claro (no battle_id con equipo rival vacío).
-- **ClasificadorPosicion deprecated**: otros callers podrían existir. Grep mostrará todos.
-  Si hay callers fuera de los identificados, actualizarlos.
-- **SinergiaEquipo con 5 roles**: la clave tendria 5 chars, no encontrará match → null.
-  Aceptable, pero notificar al frontend que la sinergia de 5 es null.
-- **Migración formacion**: si el frontend aún no consume el endpoint, no afecta.
-
----
-
-# ANALISIS_BACKEND — Contrato del modal de victoria de Ruta (caramelos por grupo)
-
-## Objetivo
-
-Cambiar el contrato de `ResultadoRuta::aArray()` para que el modal de victoria del
-combate de ruta consuma `caramelos_familia`, `caramelos_ev` y `caramelos_tipo` (shape
-`{src, alt, cantidad, nombre}` como el partial `exploraciones/_caramelo.blade.php`),
-eliminando la clave plana `caramelos`. Marcar como DEPRECATED el endpoint
-`GET /ruta/rivales`. Sin tests (decisión explícita del usuario).
-
-## Archivos afectados
-
-- `src/CombateRuta/Domain/DataTransferObjects/ResultadoRuta.php` — nuevo contrato.
-- `src/CombateRuta/App/OtorgarRecompensasRuta.php` — construye los 3 grupos vía
-  `ItemCatalogo::resolve()` con las claves canónicas (`familia:{chainId}`, `ev:{stat}`,
-  `tipo:{slug}`); elimina el aplanado `ItemCatalogo::caramelosDeRecompensas` (que NO se
-  borra: sigue en uso por `OtorgarRecompensasEntrenador`).
-- `src/CombateRuta/Infra/Controllers/CombateRutaController.php` — comentario
-  `// DEPRECATED:` en `rivales()` (sin cambiar comportamiento).
-
-## Tests
-
-Ninguno: el usuario decidió no crear ni actualizar tests en esta iteración.
-
-## Diseño
-
-- `ResultadoRuta` pasa a ser un DTO inmutable `readonly` con promoción de constructor:
-  `victoria`, `expTotal`, `expMiembro`, `caramelosFamilia`, `caramelosEv`,
-  `caramelosTipo` (listas de arrays `{src: string, alt: string, cantidad: int,
-  nombre: string|null}`) y `capturas` (igual que hoy). `aArray()` devuelve las claves
-  `exp_total`, `exp_miembro`, `caramelos_familia`, `caramelos_ev`, `caramelos_tipo`,
-  `capturas` (sin `caramelos`).
-- `OtorgarRecompensasRuta` resuelve cada caramelo con `ItemCatalogo::resolve()`:
-  `src` = `imagen`; `alt` = `nombre`; para EV `nombre` = `StatEnum::fromId()->label()`
-  (null si el stat no aplica); para tipo `nombre` = el label de tipo.
-- `candyFallback` y los assets (`candy_pokemon/{id}.webp`, `candy_ev/{slug}.webp`,
-  `candy_type/{slug}.webp`) ya existen; la vista nueva los consumirá igual que
-  exploraciones.
-
-## Riesgos
-
-- La vista `combate.blade.php` aún lee `rewards['caramelos']` (lista plana); el
-  rediseño del modal es tarea del Frontend, por lo que el modal quedará sin caramelos
-  hasta ese cambio (cambio coordinado).
-- Tests existentes que fijan el contrato viejo (`OtorgarRecompensasRutaTest`,
-  `PresentadorRutaTest`) quedarán desactualizados hasta una iteración de tests; no se
-  tocan por decisión del usuario.
-- `ItemCatalogo::caramelosDeRecompensas` sigue siendo usada por CombateEntrenadores →
-  no se modifica.
+- **`MapadorPokemonBatalla` does not exist**: the file is `MapeadorPokemonBatalla` (typo in plan). Actual file is correct.
+- **DefenseHp/SpDefenseHp IV source**: These pseudo-HP stats use their respective stat's IV (defense IV for defenseHp, spDef IV for spDefenseHp) — changed from uniform `$iv`.
+- **`CombatientesCollection::map()` returns `array`** (not Collection) — verified via `Src\Shared\Domain\Collection::map()` signature.
+- **Shiny icon convention**: Real files are `{id}_s.webp` (1137 files), NOT `{id}.webp`. Backend must emit `_s` URL.
+- **`StatEnum::slug()`** uses `atksp|defsp|spd` — dar-evs maps frontend slugs to StatEnum internally.
+- **Auto-egg trigger DROPPED** — egg creation is user-initiated via POST /api/huevos only.
+- **Tests deferred** per backend.md convention.

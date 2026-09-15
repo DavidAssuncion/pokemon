@@ -37,6 +37,7 @@ class MapeadorPokemonBatalla
         ?string $item = null,
         ?int $nivel = null,
         ?StatsValue $evs = null,
+        ?StatsValue $ivs = null,
     ): DatosPokemonBatalla {
         $stats = $this->statsDe($pokemon);
 
@@ -72,6 +73,7 @@ class MapeadorPokemonBatalla
             formSuffix: '',
             nivel: $nivel,
             evs: $evs,
+            ivs: $ivs,
         );
     }
 

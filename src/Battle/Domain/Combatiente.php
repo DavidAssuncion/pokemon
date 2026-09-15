@@ -331,16 +331,25 @@ class Combatiente
 
     public function aArrayVista(int $teamIdx): array
     {
+        $base = $this->shiny
+            ? "/images/iconos_webp/shiny/{$this->speciesId}_s.webp"
+            : '/images/iconos_webp/0.webp';
+
         $icon = $this->speciesId === 0
-            ? '/images/iconos_webp/0.webp'
+            ? $base
             : ($this->formSuffix !== ''
-                ? "/images/iconos_webp/{$this->speciesId}_{$this->formSuffix}.webp"
-                : "/images/iconos_webp/{$this->speciesId}.webp");
+                ? ($this->shiny
+                    ? "/images/iconos_webp/shiny/{$this->speciesId}_{$this->formSuffix}_s.webp"
+                    : "/images/iconos_webp/{$this->speciesId}_{$this->formSuffix}.webp")
+                : ($this->shiny
+                    ? "/images/iconos_webp/shiny/{$this->speciesId}_s.webp"
+                    : "/images/iconos_webp/{$this->speciesId}.webp"));
 
         return [
             'refId' => $this->id,
             'nombre' => $this->nombre,
             'icon' => $icon,
+            'esShiny' => $this->shiny,
             'hp' => $this->hpActual,
             'maxHp' => $this->pokemon->battleStats()->hp,
             'defHp' => $this->defensaHpActual,

@@ -22,6 +22,7 @@ final class RegistrarResultadoRuta
     /**
      * @param  list<int>  $speciesIdsRival
      * @param  callable(): float|null  $aleatorio  fuerza el roll de captura en tests
+     * @param  array<int, bool>  $shinySlots  flags shiny alineados con $speciesIdsRival
      */
     public function registrar(
         int $userId,
@@ -29,6 +30,7 @@ final class RegistrarResultadoRuta
         array $speciesIdsRival,
         bool $won,
         ?callable $aleatorio = null,
+        array $shinySlots = [],
     ): ?ResultadoRuta {
         if (! $won) {
             return null;
@@ -39,6 +41,7 @@ final class RegistrarResultadoRuta
             teamId: $teamId,
             speciesIdsRival: $speciesIdsRival,
             aleatorio: $aleatorio,
+            shinySlots: $shinySlots,
         );
     }
 }

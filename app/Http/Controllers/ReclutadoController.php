@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Enums\StatEnum;
 use App\Jobs\ActualizarPokedexJob;
 use App\Models\Favorito;
 use App\Models\PlayerInventory;
@@ -111,6 +112,103 @@ class ReclutadoController extends Controller
             'caramelos_disponibles' => $caramelo->cantidad,
             'puede_evolucionar' => ServicioEvolucion::puedeEvolucionarPara($reclutado, $userId, $destino),
         ]);
+    }
+
+    /**
+     * Da un caramelo EV (+10 al stat) a un reclutado.
+     *
+     * - Consume 1 `candy_ev/{slug}` del inventario (lockForUpdate antifraude).
+     * - Cap por stat: 255 (sin cap total combinado, contrato del frontend); el
+     *   chequeo es ANTES de consumir el caramelo.
+     * - Rechazado con 422 si el stat ya está al máximo.
+     * - Mismo patrón anti-exploración que darCaramelo.
+     */
+    public function darEvs(Request $request, Reclutado $reclutado): JsonResponse
+    {
+        $data = $request->validate([
+            'stat' => 'required|string|in:hp,atk,def,spAtk,spDef,speed',
+        ]);
+
+        if ($reclutado->teamMember?->team?->isExploring()) {
+            return response()->json([
+                'error' => 'No se puede dar caramelos a un pokémon de un equipo en exploración',
+            ], 422);
+        }
+
+        $stat = $data['stat'];
+        $statEnum = match ($stat) {
+            'hp' => StatEnum::HP,
+            'atk' => StatEnum::ATTACK,
+            'def' => StatEnum::DEFENSE,
+            'spAtk' => StatEnum::SPECIAL_ATTACK,
+            'spDef' => StatEnum::SPECIAL_DEFENSE,
+            'speed' => StatEnum::SPEED,
+        };
+
+        $evsActuales = $reclutado->evs;
+        $valorActual = (float) match ($stat) {
+            'hp' => $evsActuales->hp,
+            'atk' => $evsActuales->attack,
+            'def' => $evsActuales->defense,
+            'spAtk' => $evsActuales->spAtk,
+            'spDef' => $evsActuales->spDef,
+            'speed' => $evsActuales->speed,
+        };
+
+        if ($valorActual >= 255) {
+            return response()->json([
+                'error' => 'Ese stat ya está al máximo (255)',
+            ], 422);
+        }
+
+        $userId = (int) auth()->id();
+
+        $caramelo = DB::transaction(function () use ($statEnum, $userId): ?PlayerInventory {
+            $caramelo = PlayerInventory::where('user_id', $userId)
+                ->where('item_key', ItemCatalogo::keyEv($statEnum->value))
+                ->lockForUpdate()
+                ->first();
+
+            if ($caramelo === null || $caramelo->cantidad <= 0) {
+                return null;
+            }
+
+            $caramelo->decrement('cantidad');
+
+            return $caramelo;
+        });
+
+        if ($caramelo === null) {
+            return response()->json([
+                'error' => 'No hay caramelos de EV para ese stat',
+            ], 422);
+        }
+
+        $nuevo = min(255.0, $valorActual + 10);
+        $reclutado->evs = $evsActuales->conStat($stat, $nuevo);
+        $reclutado->save();
+
+        return response()->json([
+            'success' => true,
+            'actual' => (int) $reclutado->fresh()->evs->toArray()[$this->claveFrontendDe($stat)],
+            'caramelos_disponibles' => $caramelo->cantidad,
+            'evs' => $reclutado->fresh()->evs->toArray(),
+        ]);
+    }
+
+    /**
+     * Clave corta del array serializado de StatsValue para un stat del frontend.
+     */
+    private function claveFrontendDe(string $stat): string
+    {
+        return match ($stat) {
+            'hp' => 'hp',
+            'atk' => 'atk',
+            'def' => 'def',
+            'spAtk' => 'spAtk',
+            'spDef' => 'spDef',
+            'speed' => 'speed',
+        };
     }
 
     public function evolucionar(Request $request, Reclutado $reclutado): JsonResponse

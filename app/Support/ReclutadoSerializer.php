@@ -34,6 +34,10 @@ final class ReclutadoSerializer
         $datos['rol'] = $reclutado->rol()->value;
         $datos['stats'] = self::statsDe($reclutado);
         $datos['cp'] = self::cpDe($reclutado);
+        $datos['ivs'] = $reclutado->ivs->toArray();
+        $datos['evs'] = $reclutado->evs->toArray();
+        // TODO: habilidad del pokémon (no existe Ability model todavía).
+        $datos['habilidades'] = [];
 
         // Fallback de nombre cuando es null (column nullable): usa el nombre del
         // pokémon para no romper/obtener "null" en el frontend.
@@ -99,8 +103,9 @@ final class ReclutadoSerializer
                 spDef: $base['spDef'],
                 speed: $base['speed'],
             ),
-            evs: new StatsValue(0, 0, 0, 0, 0, 0),
+            evs: $reclutado->evs,
             nivel: $nivel,
+            ivs: $reclutado->ivs,
         );
 
         return CalculadorCP::calcular($stats, 0);

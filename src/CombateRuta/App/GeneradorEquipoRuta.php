@@ -12,7 +12,9 @@ use Src\CombateEntrenadores\App\MapeadorPokemonBatalla;
 use Src\Exploraciones\Domain\ValueObjects\ColeccionPoolPonderado;
 use Src\Exploraciones\Domain\ValueObjects\PoolHabitat;
 use Src\Pokemon\Domain\Stats\DatosStats;
+use Src\Pokemon\Domain\Stats\GeneradorIvs;
 use Src\Shared\Domain\ClasificadorOfensivaDefensiva;
+use Src\Shared\Domain\ProbabilidadesShiny;
 
 /**
  * Genera el equipo rival de un combate de ruta (5 pokémon salvajes) a partir
@@ -37,10 +39,16 @@ final class GeneradorEquipoRuta
      * @param  int  $nivel  nivel de ruta del hábitat (1-3)
      * @param  int|null  $nivelRival  nivel de stats del rival (nivel del jugador)
      * @param  callable(): float|null  $aleatorio  fuente [0,1) por slot
+     * @param  callable(int): int|null  $aleatorioShiny  fuente 1..N del roll shiny (1 = shiny)
      * @return list<DatosPokemonBatalla>
      */
-    public function generar(int $habitatId, int $nivel, ?int $nivelRival = null, ?callable $aleatorio = null): array
-    {
+    public function generar(
+        int $habitatId,
+        int $nivel,
+        ?int $nivelRival = null,
+        ?callable $aleatorio = null,
+        ?callable $aleatorioShiny = null,
+    ): array {
         $pool = $this->poolDelHabitat($habitatId, $nivel);
         if ($pool === []) {
             return [];
@@ -70,12 +78,16 @@ final class GeneradorEquipoRuta
 
         $equipo = [];
         foreach ($seleccionados as $i => $pokemon) {
+            $shiny = ProbabilidadesShiny::esShiny(ProbabilidadesShiny::SALVAJE, $aleatorioShiny);
+
             $equipo[] = $this->mapeador->desdePokemon(
                 pokemon: $pokemon,
                 id: "ruta_{$habitatId}_{$nivel}_{$i}",
                 nombre: $pokemon->name,
                 posicion: $posiciones[$i],
                 nivel: $nivelRival,
+                shiny: $shiny,
+                ivs: $shiny ? GeneradorIvs::maximos() : GeneradorIvs::aleatorios(),
             );
         }
 

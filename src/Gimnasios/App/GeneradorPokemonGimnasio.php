@@ -12,6 +12,7 @@ use Src\CombateEntrenadores\App\MapeadorPokemonBatalla;
 use Src\CombateEntrenadores\Domain\GeneradorMovimientosTipo;
 use Src\Gimnasios\Domain\DataTransferObjects\EquipoEtapaGimnasio;
 use Src\Gimnasios\Domain\EvsRangoEntrenador;
+use Src\Shared\Domain\IvsRangoEntrenador;
 use Src\Shared\Tipos\TiposCollection;
 
 /**
@@ -23,8 +24,8 @@ use Src\Shared\Tipos\TiposCollection;
  * Las posiciones se respetan literalmente del DTO: vanguardia → VANGUARDIA,
  * retaguardia → RETAGUARDIA (no se reclasifica por stats).
  *
- * Los EVs se reparten según los stats base del pokémon: los 2 mejores stats
- * reciben $evPrincipal y los 4 restantes $evResto.
+ * Los EVs y los IVs se reparten según los stats base del pokémon: los 2 mejores
+ * stats reciben $evPrincipal/$ivPrincipal y los 4 restantes $evResto/$ivResto.
  */
 final class GeneradorPokemonGimnasio
 {
@@ -37,14 +38,21 @@ final class GeneradorPokemonGimnasio
     /**
      * @return list<DatosPokemonBatalla>
      */
-    public function generar(EquipoEtapaGimnasio $equipo, int $nivelRival, int $evPrincipal = 0, int $evResto = 0): array
-    {
+    public function generar(
+        EquipoEtapaGimnasio $equipo,
+        int $nivelRival,
+        int $evPrincipal = 0,
+        int $evResto = 0,
+        int $ivPrincipal = 0,
+        int $ivResto = 0,
+    ): array {
         $equipoRival = [];
         $indice = 0;
 
         foreach ($this->porPosicion($equipo) as [$posicion, $pokemon]) {
             $statsBase = $this->mapeador->statsDe($pokemon);
             $evs = EvsRangoEntrenador::distribuir($evPrincipal, $evResto, $statsBase);
+            $ivs = IvsRangoEntrenador::distribuir($ivPrincipal, $ivResto, $statsBase);
 
             $equipoRival[] = new DatosPokemonBatalla(
                 id: "gimnasio_rival_{$indice}",
@@ -66,6 +74,7 @@ final class GeneradorPokemonGimnasio
                 formSuffix: '',
                 nivel: $nivelRival,
                 evs: $evs,
+                ivs: $ivs,
             );
 
             $indice++;

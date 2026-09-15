@@ -8,6 +8,7 @@ use App\Models\Team;
 use App\Support\CreadorBatallaSesion;
 use Src\CombateEntrenadores\Domain\Exceptions\EntrenadorDerrotadoHoy;
 use Src\CombateEntrenadores\Domain\Repositories\EntrenadorLogRepositoryInterface;
+use Src\Shared\Domain\IvsRangoEntrenador;
 
 /**
  * Crea una batalla contra un entrenador del hábitat y la guarda en sesión
@@ -49,7 +50,17 @@ class IniciarCombateEntrenador
 
         $nivelRival = $nivelJugador;
 
-        $datosRival = $this->generadorEquipo->generar($habitatId, $nivel, $trainerIndex, $fecha, $nivelRival);
+        [$ivPrincipal, $ivResto] = IvsRangoEntrenador::rangoPorNivelEntrenador($nivel);
+
+        $datosRival = $this->generadorEquipo->generar(
+            $habitatId,
+            $nivel,
+            $trainerIndex,
+            $fecha,
+            $nivelRival,
+            $ivPrincipal,
+            $ivResto,
+        );
 
         return $this->creadorBatalla->crearYGuardar(
             datosJugador: $datosJugador,

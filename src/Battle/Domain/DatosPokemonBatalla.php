@@ -38,6 +38,7 @@ class DatosPokemonBatalla
         public readonly string $formSuffix = '',
         public readonly ?int $nivel = null,
         ?StatsValue $evs = null,
+        public readonly ?StatsValue $ivs = null,
     ) {
         $this->evs = $evs ?? new StatsValue(0, 0, 0, 0, 0, 0);
 

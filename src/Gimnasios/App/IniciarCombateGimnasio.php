@@ -13,6 +13,7 @@ use Src\Gimnasios\Domain\Exceptions\GimnasioCompletado;
 use Src\Gimnasios\Domain\Repositories\GymCatalogoRepositoryInterface;
 use Src\Gimnasios\Domain\Repositories\GymProgressRepositoryInterface;
 use Src\Shared\Domain\EscaladorNivelRival;
+use Src\Shared\Domain\IvsRangoEntrenador;
 
 /**
  * Crea una batalla contra un gimnasio y la guarda en sesión.
@@ -57,10 +58,20 @@ final class IniciarCombateGimnasio
 
         $nivelRival = $this->escalador->escalar($gimnasio->nivelMinimo, $nivelJugador);
 
-        // Etapas 1-3 (entrenadores): 64/64; etapa 4 (líder): 128/64
-        [$evPrincipal, $evResto] = $etapa === 4
-            ? [EvsRangoEntrenador::LIDER_PRINCIPAL, EvsRangoEntrenador::LIDER_RESTO]
-            : [EvsRangoEntrenador::GIMNASIO_PRINCIPAL, EvsRangoEntrenador::GIMNASIO_RESTO];
+        // Etapas 1-3 (entrenadores): 64/64 y IVs 12/10; etapa 4 (líder): 128/64 y IVs 14/12.
+        [$evPrincipal, $evResto, $ivPrincipal, $ivResto] = $etapa === 4
+            ? [
+                EvsRangoEntrenador::LIDER_PRINCIPAL,
+                EvsRangoEntrenador::LIDER_RESTO,
+                IvsRangoEntrenador::LIDER_PRINCIPAL,
+                IvsRangoEntrenador::LIDER_RESTO,
+            ]
+            : [
+                EvsRangoEntrenador::GIMNASIO_PRINCIPAL,
+                EvsRangoEntrenador::GIMNASIO_RESTO,
+                IvsRangoEntrenador::GIMNASIO_PRINCIPAL,
+                IvsRangoEntrenador::GIMNASIO_RESTO,
+            ];
 
         $equipo = Team::with('members.reclutado.pokemon.stats', 'members.reclutado.pokemon.types')
             ->findOrFail($teamId);
@@ -69,7 +80,7 @@ final class IniciarCombateGimnasio
 
         $equipoEtapa = $gimnasio->equipoEtapa($etapa);
         $datosRival = $equipoEtapa !== null
-            ? $this->generador->generar($equipoEtapa, $nivelRival, $evPrincipal, $evResto)
+            ? $this->generador->generar($equipoEtapa, $nivelRival, $evPrincipal, $evResto, $ivPrincipal, $ivResto)
             : [];
 
         return $this->creadorBatalla->crearYGuardar(
