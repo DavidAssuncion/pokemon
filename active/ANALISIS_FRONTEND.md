@@ -1,3 +1,77 @@
+# ANÁLISIS FRONTEND — Coordinación QA: caramelo EV +10, contrato /api/huevos en horas, es_shiny snake_case
+
+Fecha: 2026-09-15
+Rol: Frontend (Blade + Alpine.js + Tailwind 4 + CSS combate). Solo UI: NO tests, NO backend.
+Base: commit `3f217ff372` (anim-hit, detalle IV/EV/habilidades, pestaña 🥚 Huevos, badges shiny).
+Fuentes: `docs/context.md`, `docs/conventions.md`, `.ai/rules/index.md` (sin reglas para
+`resources/views/**`; grep de shiny/huevo/caramelo/es_shiny en `.ai/rules` → 0 coincidencias),
+`active/RESUMEN_TAREA.md`, `resources/views/equipos/index.blade.php` (2186 líneas),
+`resources/views/livewire/_pokemon-card.blade.php`, `resources/views/livewire/combate.blade.php`,
+`resources/views/livewire/partials/battle-field.blade.php`, `src/Battle/Domain/Combatiente.php`
+(aArrayVista → hoy `esShiny` camel; el backend alineará a `es_shiny`),
+`src/Huevos/App/ListarHuevos.php` + `src/Huevos/Domain/CalculadorTiemposHuevo.php` (contrato actual
+del backend, en pleno cambio de fórmulas), `src/CombateRuta/Domain/DataTransferObjects/ResultadoRuta.php`
+(aArray() hoy sin `es_shiny` en capturas; el backend lo propagará), `resources/css/combate.css`.
+
+## Qué tocar (3 ficheros)
+
+1. `resources/views/equipos/index.blade.php`:
+   - O4: helper/tooltip del botón 🍬 EV (línea ~876): "Dar un caramelo EV (+1 a …)" → "Dar caramelo
+     EV (+10 a …)". Feedback de `darEv()` (línea ~1429): "+1" → "+10" (mensaje "¡+10 EV!"). Tope 255
+     intacto (`puedeDarEv`, `evPct`). NO tocar `(+100 exp)` de caramelos de tipo (otra mecánica).
+   - Huevos: `huevoProgreso()` prefiere `huevo.progreso` (0–100, nuevo contrato) y si no lo calcula
+     con horas (`tiempo_total_horas`, `tiempo_restante_horas` ?? `tiempo_restante`). `huevoEtiquetaRestante()`
+     lee la misma clave horaria y `formatearDuracion()` ya interpreta horas (sin cambios).
+2. `resources/views/livewire/_pokemon-card.blade.php`:
+   - O3/O6: `$esShiny` tolera `es_shiny` (snake, destino) Y `esShiny` (camel, estado actual de
+     `Combatiente::aArrayVista()`) además del fallback por URL `/shiny/`. El `preg_replace` de
+     `$iconoNormal` ya cubre `{id}_s.webp` y `{id}.webp` (regex `/shiny/(\d+)[^/]*\.webp$/`).
+3. `resources/views/livewire/combate.blade.php`:
+   - O6: modal de capturas de ruta — cuando `captura.es_shiny` sea true (backend lo propagará en
+     `ResultadoRuta::aArray()`), añadir pulso dorado (ring/glow Tailwind) + badge ✨ en la card y usar
+     el asset shiny `shiny/{id}_s.webp` con onerror → normal. Tolerante a la ausencia del campo (data
+     legacy: hoy `aArray()` no emite `es_shiny`).
+
+## Contrato asumido de /api/huevos (coordinar con Backend — verificación al integrar)
+
+- Estado backend HOY (pre-cambio de fórmulas, `src/Huevos/`): `tiempo_total_horas` (float horas) y
+  `tiempo_restante` en **minutos** (`restante_minutos`), SIN `progreso`, SIN `tiempo_restante_horas`.
+- Contrato OBJETIVO (backend en paralelo): puesta = `255/capture_rate` horas, eclosión =
+  `ceil(hatch/15)` horas; la respuesta traerá tiempos en **horas float** (`tiempo_total_horas`,
+  `tiempo_restante_horas` o similar) y `progreso` 0–100 si lo expone.
+- El frontend consume: `tiempo_total_horas` (horas), `tiempo_restante_horas` (preferido) o
+  `tiempo_restante` (asumido en HORAS tras el cambio), y `progreso` (0–100) si existe.
+- ⚠️ Ventana intermedia: con el backend actual (minutos en `tiempo_restante`) la etiqueta/barra
+  mostrará minutos tratados como horas hasta que aterrice el cambio de fórmulas; sin heurística de
+  unidades (decisión: el contrato nuevo es horas, no se camuflan unidades legacy).
+
+## Estados UI cubiertos (testing futuro, NO ejecutado)
+
+- EV: botón con/sin caramelos, tope 255, feedback éxito (¡+10 EV!), error 422, bloqueado en
+  exploración, data legacy sin `caramelos_ev`.
+- Huevos: loading, error + Reintentar, 404 (módulo en preparación), empty, `puede_eclosionar`
+  (Listo), límite 1 gestación/1 incubación, barra con `progreso` presente vs ausente, etiqueta de
+  tiempo con horas decimales (<24h, ≥24h, restante 0).
+- Shiny: card de combate con `esShiny` (camel) y `es_shiny` (snake), con URL `/shiny/{id}_s.webp` y
+  `/shiny/{id}.webp`, fallback onerror a icono normal; modal capturas con/es_shiny y sin es_shiny.
+
+## Riesgos accesibilidad/UX
+
+- Botones EV: `title` documenta el valor; mantener `aria-label`/disabled estado.
+- Badge ✨ de captura shiny: contraste dorado sobre card clara/oscura (bg-yellow-400 + texto oscuro).
+- `animate-pulse` de Tailwind es opacidad; el anillo dorado (ring + shadow) da la señal sin depender
+  de animación (accesible con `prefers-reduced-motion`).
+- El pulso dorado es estrictamente aditivo (clases Tailwind); no interfiere con Bootstrap del modal.
+
+## Verificación (sin tests)
+
+- `php artisan view:cache` (Blade compila; no hay PHP de dominio tocado → no pint).
+- `grep` de `+1` EV restantes y de `esShiny|es_shiny` en las vistas tocadas.
+- `npm run build` NO necesario (no se añaden clases/comillas nuevas fuera de utilidades ya usadas;
+  `animate-pulse`/`ring-*` son utilities Tailwind 4 estándar — por seguridad se documenta el build).
+
+---
+
 # ANÁLISIS FRONTEND — Animación de daño, detalle con IVs/EVs/habilidades, pestaña Huevos, iconos shiny
 
 Fecha: 2026-09-15

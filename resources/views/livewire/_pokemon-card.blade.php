@@ -9,7 +9,7 @@
     $itemIcons = ['leftovers' => '🧴', 'focus_sash' => '🎗️', 'life_orb' => '🔮'];
     $itemName = $itemNames[$p['item']] ?? $p['item'];
     $itemIcon = $itemIcons[$p['item']] ?? '📦';
-    $esShiny = ($p['es_shiny'] ?? false) || str_contains((string) ($p['icon'] ?? ''), '/shiny/');
+    $esShiny = ($p['es_shiny'] ?? false) || ($p['esShiny'] ?? false) || str_contains((string) ($p['icon'] ?? ''), '/shiny/');
     $iconoNormal = preg_replace('#/shiny/(\d+)[^/]*\.webp$#', '/images/iconos_webp/$1.webp', (string) ($p['icon'] ?? ''));
     $recibeGolpe = ($animDefenderId ?? '') !== '' && $p['refId'] === $animDefenderId;
 @endphp

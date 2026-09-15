@@ -105,17 +105,32 @@
                                     <p class="text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wide mb-2">Capturados</p>
                                     <div class="flex flex-wrap gap-3">
                                         @foreach($rewards['capturas'] as $captura)
-                                            <div class="text-center" title="Pokémon capturado">
-                                                <div class="relative inline-block">
+                                            @php
+                                                // El backend propaga es_shiny (bool) en el contrato de ruta;
+                                                // tolerante a data legacy que aún no lo emite.
+                                                $capturaShiny = !empty($captura['es_shiny']);
+                                                $capturaId = (int) ($captura['pokemon_id'] ?? 0);
+                                                $capturaSrc = $capturaShiny
+                                                    ? '/images/iconos_webp/shiny/' . $capturaId . '_s.webp'
+                                                    : '/images/iconos_webp/' . $capturaId . '.webp';
+                                                $capturaOnerror = $capturaShiny
+                                                    ? "this.onerror=null; this.src='/images/iconos_webp/" . $capturaId . ".webp';"
+                                                    : "this.style.display='none'";
+                                            @endphp
+                                            <div class="text-center" title="{{ $capturaShiny ? '¡Captura shiny!' : 'Pokémon capturado' }}">
+                                                <div class="relative inline-block {{ $capturaShiny ? 'ring-2 ring-yellow-400 rounded-full animate-pulse' : '' }}">
                                                     <img
-                                                        src="/images/iconos_webp/{{ (int) ($captura['pokemon_id'] ?? 0) }}.webp"
+                                                        src="{{ $capturaSrc }}"
                                                         loading="lazy"
                                                         decoding="async"
                                                         alt="Capturado"
                                                         title="Pokémon capturado"
-                                                        class="w-16 h-16 object-contain"
-                                                        onerror="this.style.display='none'"
+                                                        class="w-16 h-16 object-contain rounded-full {{ $capturaShiny ? 'bg-yellow-100 dark:bg-yellow-900/40' : '' }}"
+                                                        onerror="{{ $capturaOnerror }}"
                                                     >
+                                                    @if($capturaShiny)
+                                                        <span class="absolute -top-1.5 -left-1.5 px-1 py-0.5 bg-yellow-400 text-yellow-900 text-[10px] font-bold rounded-full shadow" title="Shiny">✨</span>
+                                                    @endif
                                                     <span class="absolute -top-1.5 -right-1.5 px-1.5 py-0.5 bg-green-600 text-white text-[10px] font-bold rounded-full">
                                                         ×{{ (int) ($captura['cantidad'] ?? 0) }}
                                                     </span>

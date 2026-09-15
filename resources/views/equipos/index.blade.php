@@ -873,7 +873,7 @@
                                         <button
                                             @click="darEv(stat.key)"
                                             :disabled="!puedeDarEv(detailPokemon, stat.key)"
-                                            :title="!puedeDarEv(detailPokemon, stat.key) ? 'No puedes dar caramelos EV ahora mismo' : 'Dar un caramelo EV (+1 a ' + stat.label + ')'"
+                                            :title="!puedeDarEv(detailPokemon, stat.key) ? 'No puedes dar caramelos EV ahora mismo' : 'Dar caramelo EV (+10 a ' + stat.label + ')'"
                                             class="shrink-0 px-2 py-1 bg-amber-500 text-white rounded-md text-[10px] font-bold hover:bg-amber-600 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                                         >
                                             🍬 <span x-text="evCandyLabel(detailPokemon, stat.key)"></span>
@@ -1426,7 +1426,7 @@ function favoritosApp() {
                         pokemon.caramelos_ev = data.caramelos_ev;
                     }
                     const label = (this.evStats.find(s => s.key === key) || {}).label || key;
-                    this.detailEvFeedback = { tipo: 'success', mensaje: '✓ Caramelo EV entregado (' + label + ') +1' };
+                    this.detailEvFeedback = { tipo: 'success', mensaje: '✓ ¡+10 EV para ' + label + '!' };
                 } else {
                     let message = 'No se pudo dar el caramelo EV.';
                     try {
@@ -1584,15 +1584,21 @@ function favoritosApp() {
         },
 
         huevoProgreso(huevo) {
+            // Contrato nuevo: si el backend expone progreso 0-100, usarlo directamente.
+            if (typeof huevo?.progreso === 'number') {
+                return Math.max(0, Math.min(100, huevo.progreso));
+            }
+            // Fallback: ambos campos en horas (tiempo_total_horas + restante en horas).
             const total = Number(huevo?.tiempo_total_horas || 0);
-            const restante = Number(huevo?.tiempo_restante ?? total);
+            const restante = Number(huevo?.tiempo_restante_horas ?? huevo?.tiempo_restante ?? total);
             if (total <= 0) return 0;
             return Math.max(0, Math.min(100, ((total - restante) / total) * 100));
         },
 
         huevoEtiquetaRestante(huevo) {
             if (huevo?.puede_eclosionar) return '¡Listo!';
-            return this.formatearDuracion(huevo?.tiempo_restante ?? 0);
+            const horas = Number(huevo?.tiempo_restante_horas ?? huevo?.tiempo_restante ?? 0);
+            return this.formatearDuracion(horas);
         },
 
         formatearDuracion(horas) {
