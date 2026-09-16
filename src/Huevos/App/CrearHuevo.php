@@ -45,10 +45,10 @@ final class CrearHuevo
         $hayGestacionActiva = $huevosActivos->contains(
             fn (Huevo $huevo): bool => CalculadorEstadoHuevo::estadoDe(
                 $huevo->created_at,
-                (int) $huevo->capture_rate,
-                (int) ($huevo->hatch ?? 1),
+                $huevo->capture_rate,
+                $huevo->hatch ?? 1,
                 now(),
-            )['estado'] === EstadoHuevo::GESTANDO,
+            )->estado === EstadoHuevo::GESTANDO,
         );
 
         if ($hayGestacionActiva) {
@@ -81,8 +81,8 @@ final class CrearHuevo
             'user_id' => $userId,
             'pokemon_id' => $pokemon->id,
             'evolution_chain_id' => (int) $pokemon->evolution_chain_id,
-            'capture_rate' => (int) $pokemon->capture_rate,
-            'hatch' => (int) $pokemon->hatch,
+            'capture_rate' => $pokemon->capture_rate,
+            'hatch' => $pokemon->hatch,
             'es_shiny' => $shiny,
             'ivs' => $ivs,
         ]);

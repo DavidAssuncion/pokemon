@@ -28,12 +28,12 @@ final class EclosionarHuevo
 
         $estado = CalculadorEstadoHuevo::estadoDe(
             $huevo->created_at,
-            (int) $huevo->capture_rate,
-            (int) ($huevo->hatch ?? 1),
+            $huevo->capture_rate,
+            $huevo->hatch ?? 1,
             now(),
         );
 
-        if ($estado['estado'] !== EstadoHuevo::LISTO) {
+        if ($estado->estado !== EstadoHuevo::LISTO) {
             throw new ViolacionReglaNegocio('El huevo aún no está listo para eclosionar');
         }
 
@@ -41,9 +41,9 @@ final class EclosionarHuevo
 
         return $this->crearReclutado->crear(
             userId: $userId,
-            pokemonId: (int) $huevo->pokemon_id,
+            pokemonId: $huevo->pokemon_id,
             ivs: $huevo->ivs,
-            esShiny: (bool) $huevo->es_shiny,
+            esShiny: $huevo->es_shiny,
         );
     }
 }

@@ -11,6 +11,7 @@ use Carbon\Carbon;
 use Illuminate\Support\Collection;
 use Src\Huevos\Domain\CalculadorEstadoHuevo;
 use Src\Huevos\Domain\CalculadorTiemposHuevo;
+use Src\Huevos\Domain\EstadoCalculadoHuevo;
 use Src\Huevos\Domain\EstadoHuevo;
 
 /**
@@ -89,23 +90,20 @@ final class ListarHuevos
     public function serializarUno(Huevo $huevo, ?Carbon $ahora = null): array
     {
         $ahora ??= now();
-        $captureRate = (int) $huevo->capture_rate;
-        $hatch = (int) ($huevo->hatch ?? 1);
-        $estado = CalculadorEstadoHuevo::estadoDe($huevo->created_at, $captureRate, $hatch, $ahora);
+        $pokemon = $huevo->pokemon;
+        $captureRate = $huevo->capture_rate;
+        $hatch = $huevo->hatch ?? 1;
+        $estado = self::estadoDe($huevo, $ahora);
         $totalHoras = round(CalculadorTiemposHuevo::sumaHoras($captureRate, $hatch), 2);
 
         return [
             'id' => $huevo->id,
-            'estado' => $estado['estado']->value,
+            'estado' => $estado->estado->value,
             'tiempo_total_horas' => $totalHoras,
-            'tiempo_restante' => $estado['restante_horas'],
-            'progreso' => self::progresoDe($totalHoras, $estado['restante_horas']),
-            'puede_eclosionar' => $estado['estado'] === EstadoHuevo::LISTO,
-            'pokemon' => [
-                'id' => $huevo->pokemon->id,
-                'name' => $huevo->pokemon->name,
-                'icon' => "/images/iconos_webp/{$huevo->pokemon->id}.webp",
-            ],
+            'tiempo_restante' => $estado->restanteHoras,
+            'progreso' => self::progresoDe($totalHoras, $estado->restanteHoras),
+            'puede_eclosionar' => $estado->estado === EstadoHuevo::LISTO,
+            'pokemon' => self::serializarPokemon($pokemon),
         ];
     }
 
@@ -164,12 +162,8 @@ final class ListarHuevos
         return array_map(
             fn (Pokemon $pokemon, int $cadena): array => [
                 'evolution_chain_id' => $cadena,
-                'pokemon' => [
-                    'id' => $pokemon->id,
-                    'name' => $pokemon->name,
-                    'icon' => "/images/iconos_webp/{$pokemon->id}.webp",
-                ],
-                'capture_rate' => (int) $pokemon->capture_rate,
+                'pokemon' => self::serializarPokemon($pokemon),
+                'capture_rate' => $pokemon->capture_rate,
                 'hatch' => (int) $pokemon->hatch,
             ],
             $porCadena,
@@ -178,6 +172,7 @@ final class ListarHuevos
     }
 
     /**
+     * @param  Collection<int, Huevo>  $huevos
      * @return array{
      *     max_gestacion: int,
      *     max_incubando: int,
@@ -191,12 +186,7 @@ final class ListarHuevos
         $incubacionActiva = false;
 
         foreach ($huevos as $huevo) {
-            $estado = CalculadorEstadoHuevo::estadoDe(
-                $huevo->created_at,
-                (int) $huevo->capture_rate,
-                (int) ($huevo->hatch ?? 1),
-                $ahora,
-            )['estado'];
+            $estado = self::estadoDe($huevo, $ahora)->estado;
 
             if ($estado === EstadoHuevo::GESTANDO) {
                 $gestacionActiva = true;
@@ -221,5 +211,30 @@ final class ListarHuevos
         }
 
         return (int) round(max(0.0, min(100.0, ($totalHoras - $restanteHoras) / $totalHoras * 100)));
+    }
+
+    /**
+     * Estado calculado de un huevo (requiere pokemon cargado con ->with).
+     */
+    private static function estadoDe(Huevo $huevo, Carbon $ahora): EstadoCalculadoHuevo
+    {
+        return CalculadorEstadoHuevo::estadoDe(
+            $huevo->created_at,
+            $huevo->capture_rate,
+            $huevo->hatch ?? 1,
+            $ahora,
+        );
+    }
+
+    /**
+     * @return array{id: int, name: string, icon: string}
+     */
+    private static function serializarPokemon(Pokemon $pokemon): array
+    {
+        return [
+            'id' => $pokemon->id,
+            'name' => $pokemon->name,
+            'icon' => "/images/iconos_webp/{$pokemon->id}.webp",
+        ];
     }
 }

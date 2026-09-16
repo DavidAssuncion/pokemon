@@ -28,7 +28,7 @@ final class CalculadorTiemposHuevo
 
     public static function eclosionHoras(int $hatch): float
     {
-        return (float) ceil($hatch / self::DIVISOR_HATCH);
+        return ceil($hatch / self::DIVISOR_HATCH);
     }
 
     public static function sumaHoras(int $captureRate, int $hatch): float
