@@ -44,7 +44,7 @@ final class ReclutadoSerializer
         // Fallback de nombre cuando es null (column nullable): usa el nombre del
         // pokémon para no romper/obtener "null" en el frontend.
         if (($datos['nombre'] ?? null) === null) {
-            $datos['nombre'] = $reclutado->pokemon->name ?? 'Desconocido';
+            $datos['nombre'] = $reclutado->pokemon?->name ?? 'Desconocido';
         }
 
         if ($reclutado->pokemon?->types->isNotEmpty()) {

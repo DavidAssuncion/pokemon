@@ -57,6 +57,6 @@ class User extends Authenticatable
      */
     public function nivel(): int
     {
-        return NivelHelper::nivelDesdeExperiencia($this->experiencia);
+        return NivelHelper::nivelDesdeExperiencia((int) ($this->experiencia ?? 0));
     }
 }
