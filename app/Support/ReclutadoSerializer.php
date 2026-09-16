@@ -94,7 +94,7 @@ final class ReclutadoSerializer
                 StatEnum::SPECIAL_DEFENSE => 'spDef',
                 StatEnum::SPEED => 'speed',
             };
-            $base[$clave] = (int) $stat->base_stat;
+            $base[$clave] = $stat->base_stat;
         }
 
         $nivel = $nivelUsuario ?? NivelHelper::nivelDesdeExperiencia($reclutado->exp->total());

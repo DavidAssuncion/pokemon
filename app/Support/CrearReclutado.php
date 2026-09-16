@@ -15,6 +15,13 @@ use Src\Pokemon\Domain\Stats\StatsValue;
  */
 final class CrearReclutado
 {
+    /**
+     * @param  int                                     $userId
+     * @param  int                                     $pokemonId
+     * @param  StatsValue|null                         $ivs      null = IVs aleatorios
+     * @param  bool                                    $esShiny
+     * @param  array{total: int, tipos: array<string, int>}  $exp      Experiencia inicial
+     */
     public function crear(
         int $userId,
         int $pokemonId,

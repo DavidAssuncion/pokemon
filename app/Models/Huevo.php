@@ -29,11 +29,13 @@ class Huevo extends Model
         'eclosionado_en' => 'datetime',
     ];
 
+    /** @return BelongsTo<Pokemon, $this> */
     public function pokemon(): BelongsTo
     {
         return $this->belongsTo(Pokemon::class, 'pokemon_id');
     }
 
+    /** @return BelongsTo<User, $this> */
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
