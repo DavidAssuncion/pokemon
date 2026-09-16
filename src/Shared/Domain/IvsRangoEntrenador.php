@@ -25,11 +25,10 @@ final class IvsRangoEntrenador
      */
     public static function rangoPorNivelEntrenador(int $nivel): array
     {
-        return match (max(1, min(3, $nivel))) {
-            1 => [8, 6],
-            2 => [10, 8],
-            3 => [12, 10],
-            default => [8, 6],
+        return match (true) {
+            $nivel <= 1 => [8, 6],
+            $nivel === 2 => [10, 8],
+            default => [12, 10],
         };
     }
 

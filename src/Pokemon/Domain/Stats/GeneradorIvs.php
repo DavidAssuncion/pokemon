@@ -16,20 +16,7 @@ final class GeneradorIvs
      */
     public static function aleatorios(?callable $aleatorio = null): StatsValue
     {
-        if ($aleatorio !== null) {
-            $iv = static fn (): float => min(15.0, (float) (int) ($aleatorio() * 16));
-        } else {
-            $iv = static fn (): float => (float) random_int(0, 15);
-        }
-
-        return new StatsValue(
-            hp: $iv(),
-            attack: $iv(),
-            defense: $iv(),
-            spAtk: $iv(),
-            spDef: $iv(),
-            speed: $iv(),
-        );
+        return self::generar(0, 15, $aleatorio);
     }
 
     /**
@@ -46,10 +33,21 @@ final class GeneradorIvs
      */
     public static function huevo(?callable $aleatorio = null): StatsValue
     {
+        return self::generar(10, 15, $aleatorio);
+    }
+
+    /**
+     * Genera 6 IVs dentro del rango [min, max]. Fuente aleatoria opcional
+     * inyectable (tests); por defecto usa random_int determinista.
+     *
+     * @param  callable(): float|null  $aleatorio  devuelve [0, 1)
+     */
+    private static function generar(int $min, int $max, ?callable $aleatorio): StatsValue
+    {
         if ($aleatorio !== null) {
-            $iv = static fn (): float => min(15.0, (float) (int) (10 + $aleatorio() * 6));
+            $iv = static fn (): float => min((float) $max, (float) (int) ($min + $aleatorio() * ($max - $min + 1)));
         } else {
-            $iv = static fn (): float => (float) random_int(10, 15);
+            $iv = static fn (): float => (float) random_int($min, $max);
         }
 
         return new StatsValue(

@@ -49,12 +49,12 @@ class BattleStats
 
     private function calcularStats(StatsValue $stats, StatsValue $evs, int $nivel, ?StatsValue $ivs = null): void
     {
-        $hpIv = $ivs?->hp ?? 0.0;
-        $atkIv = $ivs?->attack ?? 0.0;
-        $defIv = $ivs?->defense ?? 0.0;
-        $spAtkIv = $ivs?->spAtk ?? 0.0;
-        $spDefIv = $ivs?->spDef ?? 0.0;
-        $speedIv = $ivs?->speed ?? 0.0;
+        $hpIv = $ivs->hp ?? 0.0;
+        $atkIv = $ivs->attack ?? 0.0;
+        $defIv = $ivs->defense ?? 0.0;
+        $spAtkIv = $ivs->spAtk ?? 0.0;
+        $spDefIv = $ivs->spDef ?? 0.0;
+        $speedIv = $ivs->speed ?? 0.0;
 
         $this->hp = $this->calcularHp($stats->hp, $evs->hp, $nivel, $hpIv);
         $this->defenseHp = $this->calcularHp($stats->defense, $evs->defense, $nivel, $defIv);

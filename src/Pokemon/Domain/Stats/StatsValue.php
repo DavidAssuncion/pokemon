@@ -20,6 +20,8 @@ class StatsValue
      * Normaliza un array (JSON de BD o payload) a un StatsValue.
      * Claves canónicas cortas {hp, atk, def, spAtk, spDef, speed} con fallback
      * a las largas {attack, defense}; keys faltantes → 0.
+     *
+     * @param  array<string, mixed>  $data
      */
     public static function desdeArray(array $data): self
     {
@@ -50,20 +52,52 @@ class StatsValue
         ];
     }
 
+    /** @var array<string, string> Mapa clave frontend/BD → nombre de propiedad del VO. */
+    private const PROPIEDADES = [
+        'hp' => 'hp',
+        'atk' => 'attack',
+        'attack' => 'attack',
+        'def' => 'defense',
+        'defense' => 'defense',
+        'spAtk' => 'spAtk',
+        'spDef' => 'spDef',
+        'speed' => 'speed',
+    ];
+
+    /**
+     * Resuelve la propiedad interna desde una clave corta (frontend) o larga (propiedad).
+     *
+     * @return 'hp'|'attack'|'defense'|'spAtk'|'spDef'|'speed'
+     */
+    private static function propiedadDe(string $stat): string
+    {
+        return self::PROPIEDADES[$stat] ?? throw new \InvalidArgumentException("Stat inválido: {$stat}");
+    }
+
+    /**
+     * Valor numérico del stat (float; sin valor → 0.0).
+     */
+    public function valorDe(string $stat): float
+    {
+        return $this->{self::propiedadDe($stat)} ?? 0.0;
+    }
+
     /**
      * Devuelve una instancia nueva con un stat modificado (inmutabilidad).
      * Acepta clave corta (frontend dar-evs) o propiedad larga.
      */
     public function conStat(string $stat, float $valor): self
     {
-        return match ($stat) {
-            'hp' => new self(hp: $valor, attack: $this->attack, defense: $this->defense, spAtk: $this->spAtk, spDef: $this->spDef, speed: $this->speed),
-            'atk', 'attack' => new self(hp: $this->hp, attack: $valor, defense: $this->defense, spAtk: $this->spAtk, spDef: $this->spDef, speed: $this->speed),
-            'def', 'defense' => new self(hp: $this->hp, attack: $this->attack, defense: $valor, spAtk: $this->spAtk, spDef: $this->spDef, speed: $this->speed),
-            'spAtk' => new self(hp: $this->hp, attack: $this->attack, defense: $this->defense, spAtk: $valor, spDef: $this->spDef, speed: $this->speed),
-            'spDef' => new self(hp: $this->hp, attack: $this->attack, defense: $this->defense, spAtk: $this->spAtk, spDef: $valor, speed: $this->speed),
-            'speed' => new self(hp: $this->hp, attack: $this->attack, defense: $this->defense, spAtk: $this->spAtk, spDef: $this->spDef, speed: $valor),
-            default => $this,
-        };
+        $nuevos = [
+            'hp' => $this->hp,
+            'attack' => $this->attack,
+            'defense' => $this->defense,
+            'spAtk' => $this->spAtk,
+            'spDef' => $this->spDef,
+            'speed' => $this->speed,
+        ];
+        $nuevos[self::propiedadDe($stat)] = $valor;
+
+        return new self(...$nuevos);
     }
 }
