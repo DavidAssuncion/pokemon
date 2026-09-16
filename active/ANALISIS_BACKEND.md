@@ -165,3 +165,53 @@ Origen: El Arquitecto señaló 3 correcciones menores a aplicar sin testing (tes
 
 - Si en el futuro se añade una propiedad NO opcional a una clase serializada en el grafo de batalla, el mínimo compatible deberá subirse (o añadirse `__unserialize`) — documentado en el docblock de `BattleSessionService`.
 - Los tests de Gimnasios/Mazmorras serializan v9; el mínimo compatible = 9 los preserva (testing diferido, no ejecutado ahora).
+
+---
+
+# ANÁLISIS BACKEND — Hardening P1 de guards capture_rate/hatch en Huevos (4 patches validados por el Hardener)
+
+Fecha: 2026-09-16
+Rol: Backend (Laravel / PHP 8.4).
+Origen: 4 patches de hardening validados por el Hardener, sin cambiar comportamiento público ni happy paths. Testing diferido.
+
+## Objetivo
+
+Proteger el cálculo de tiempos y el flujo de creación/eclosión/listado de huevos frente a datos null o ≤ 0 que llegarían a `CalculadorTiemposHuevo`/`CalculadorEstadoHuevo` con tipos `int` (un `null` pasaría por `?? 0`/`?? 1` y un `0` quebraría la probabilidad o la división):
+
+1. `CalculadorTiemposHuevo::eclosionHoras` — guard `max($hatch, 1)` coherente con el guard existente `max($captureRate, 1)` de `puestaHoras`.
+2. `CrearHuevo::crear` — rechazar especies con `capture_rate === null` (además del `hatch === null` ya existente).
+3. `EclosionarHuevo::eclosionar` — `capture_rate ?? 0` al pedir estado (mismas reglas de robustez que el resto).
+4. `ListarHuevos::serializarUno` y `ListarHuevos::estadoDe` — `capture_rate ?? 0` al calcular tiempos y estado.
+
+## Archivos afectados
+
+### Modificados
+- `src/Huevos/Domain/CalculadorTiemposHuevo.php` — `eclosionHoras`: `ceil($hatch / 15)` → `ceil(max($hatch, 1) / 15)`.
+- `src/Huevos/App/CrearHuevo.php` — guard: `|| $pokemon->capture_rate === null` (mismo import/mensaje existentes).
+- `src/Huevos/App/EclosionarHuevo.php` — `$huevo->capture_rate` → `$huevo->capture_rate ?? 0` (mantiene `$huevo->hatch ?? 1`).
+- `src/Huevos/App/ListarHuevos.php` — `$huevo->capture_rate` → `$huevo->capture_rate ?? 0` en `serializarUno` (variable local `$captureRate`, usada en `sumaHoras`) y en `estadoDe` (parámetro de `CalculadorEstadoHuevo::estadoDe`).
+
+## Comportamientos a cubrir en el testing futuro
+
+### Unit
+- `CalculadorTiemposHuevo::eclosionHoras(0)` y `eclosionHoras(-5)` → 1.0 (guard suelo en 1 hora); `eclosionHoras(15)` → 1.0; `eclosionHoras(16)` → 2.0; `eclosionHoras(30)` → 2.0. `puestaHoras(0)` → 255.0 (guard ya existente).
+- `CalculadorEstadoHuevo::estadoDe` con `captureRate = 0` (caso `?? 0`) no lanza división/TypeError y devuelve estado GESTANDO/INCUBANDO/LISTO coherente.
+- `CrearHuevo::crear` con especie cuyo `capture_rate` es null → `ViolacionReglaNegocio` 422 'Esta especie no tiene datos de eclosión'.
+
+### Feature
+- `GET /api/huevos` y `POST /api/huevos` con huevos legacy que tienen `capture_rate` null → el listado serializa con `tiempo_total_horas`/`progreso` válidos (sin 500) y `CrearHuevo` rechaza a esa especie con 422.
+- `POST /api/huevos/{huevo}/eclosionar` sobre un huevo legacy con `capture_rate` null → estado calculado correctamente (sin 500); al estar LISTO eclosiona OK.
+
+### Acceptance
+- Puesta con `capture_rate = 255` → 1.0 h; eclosión con `hatch ≥ 1` → `ceil(hatch/15)` (happy path idéntico al contrato B1).
+
+## Diseño
+
+- Sin abstracciones nuevas: los guards son locales en las 4 clases (dominio y casos de uso), coherentes con `puestaHoras` (que ya aplicaba `max($captureRate, 1)`).
+- Los `?? 0`/`?? 1` en App cubren huevos legacy/nullables; `max(..., 1)` en Domain cierra el rango de entrada del cálculo puro (el dominio nunca recibe ≤ 0 con efecto divisivo).
+- Comportamiento preservado para datos válidos: `max($hatch, 1) === $hatch` para `hatch ≥ 1`; `$huevo->capture_rate ?? 0` devuelve el valor original cuando es no-null (un `capture_rate` legítimo nunca es 0, y de serlo `puestaHoras` ya tiene suelo 1).
+
+## Riesgos
+
+- Filas legacy con `capture_rate` null en `disponibles` (`ListarHuevos::disponibles`) usan el valor directo de `$pokemon->capture_rate` (Eloquent devuelve null → el `array_map` los emite como null en `capture_rate`); no es parte de estos 4 patches y el frontend podría mostrar `null`. Documentado; el filtro de disponibilidad actual solo exige `hatch`, no `capture_rate` (posible ampliación futura, fuera de alcance).
+- Testing diferido: no se ejecutaron tests; los comportamientos quedan documentados arriba.
