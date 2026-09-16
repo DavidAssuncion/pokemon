@@ -135,25 +135,11 @@ class ReclutadoController extends Controller
             ], 422);
         }
 
-        $stat = $data['stat'];
-        $statEnum = match ($stat) {
-            'hp' => StatEnum::HP,
-            'atk' => StatEnum::ATTACK,
-            'def' => StatEnum::DEFENSE,
-            'spAtk' => StatEnum::SPECIAL_ATTACK,
-            'spDef' => StatEnum::SPECIAL_DEFENSE,
-            'speed' => StatEnum::SPEED,
-        };
+        $stat = (string) $data['stat'];
+        $statEnum = StatEnum::fromKey($stat) ?? throw new \InvalidArgumentException("Stat inválido: {$stat}");
 
         $evsActuales = $reclutado->evs;
-        $valorActual = (float) match ($stat) {
-            'hp' => $evsActuales->hp,
-            'atk' => $evsActuales->attack,
-            'def' => $evsActuales->defense,
-            'spAtk' => $evsActuales->spAtk,
-            'spDef' => $evsActuales->spDef,
-            'speed' => $evsActuales->speed,
-        };
+        $valorActual = $evsActuales->valorDe($stat);
 
         if ($valorActual >= 255) {
             return response()->json([
@@ -185,30 +171,16 @@ class ReclutadoController extends Controller
         }
 
         $nuevo = min(255.0, $valorActual + 10);
-        $reclutado->evs = $evsActuales->conStat($stat, $nuevo);
+        $evsNuevos = $evsActuales->conStat($stat, $nuevo);
+        $reclutado->evs = $evsNuevos;
         $reclutado->save();
 
         return response()->json([
             'success' => true,
-            'actual' => (int) $reclutado->fresh()->evs->toArray()[$this->claveFrontendDe($stat)],
+            'actual' => (int) $nuevo,
             'caramelos_disponibles' => $caramelo->cantidad,
-            'evs' => $reclutado->fresh()->evs->toArray(),
+            'evs' => $evsNuevos->toArray(),
         ]);
-    }
-
-    /**
-     * Clave corta del array serializado de StatsValue para un stat del frontend.
-     */
-    private function claveFrontendDe(string $stat): string
-    {
-        return match ($stat) {
-            'hp' => 'hp',
-            'atk' => 'atk',
-            'def' => 'def',
-            'spAtk' => 'spAtk',
-            'spDef' => 'spDef',
-            'speed' => 'speed',
-        };
     }
 
     public function evolucionar(Request $request, Reclutado $reclutado): JsonResponse

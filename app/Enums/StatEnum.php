@@ -45,6 +45,8 @@ enum StatEnum: int
 
     /**
      * Obtener todos los stats como opciones para select.
+     *
+     * @return array<int, string>
      */
     public static function options(): array
     {
@@ -67,5 +69,22 @@ enum StatEnum: int
     public static function getNombreEspanol(int $id): ?string
     {
         return self::tryFrom($id)?->label();
+    }
+
+    /**
+     * Resuelve el stat desde la clave corta canónica del frontend
+     * ({hp, atk, def, spAtk, spDef, speed}). null si la clave no es válida.
+     */
+    public static function fromKey(string $key): ?self
+    {
+        return match ($key) {
+            'hp' => self::HP,
+            'atk' => self::ATTACK,
+            'def' => self::DEFENSE,
+            'spAtk' => self::SPECIAL_ATTACK,
+            'spDef' => self::SPECIAL_DEFENSE,
+            'speed' => self::SPEED,
+            default => null,
+        };
     }
 }
