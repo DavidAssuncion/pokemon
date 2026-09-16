@@ -91,7 +91,7 @@ final class ListarHuevos
     {
         $ahora ??= now();
         $pokemon = $huevo->pokemon;
-        $captureRate = $huevo->capture_rate;
+        $captureRate = $huevo->capture_rate ?? 0;
         $hatch = $huevo->hatch ?? 1;
         $estado = self::estadoDe($huevo, $ahora);
         $totalHoras = round(CalculadorTiemposHuevo::sumaHoras($captureRate, $hatch), 2);
@@ -220,7 +220,7 @@ final class ListarHuevos
     {
         return CalculadorEstadoHuevo::estadoDe(
             $huevo->created_at,
-            $huevo->capture_rate,
+            $huevo->capture_rate ?? 0,
             $huevo->hatch ?? 1,
             $ahora,
         );

@@ -42,7 +42,7 @@ final class EclosionarHuevo
 
         $estado = CalculadorEstadoHuevo::estadoDe(
             $huevo->created_at,
-            $huevo->capture_rate,
+            $huevo->capture_rate ?? 0,
             $huevo->hatch ?? 1,
             now(),
         );

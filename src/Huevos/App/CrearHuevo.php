@@ -70,7 +70,7 @@ final class CrearHuevo
 
         $pokemon = $representante->pokemon;
 
-        if ($pokemon === null || $pokemon->hatch === null) {
+        if ($pokemon === null || $pokemon->hatch === null || $pokemon->capture_rate === null) {
             throw new ViolacionReglaNegocio('Esta especie no tiene datos de eclosión');
         }
 
