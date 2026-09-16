@@ -9,11 +9,20 @@ use Src\Battle\Domain\AgregadoBatalla;
 final class BattleSessionService
 {
     /**
+     * 10: BattleStats puede llevar ?StatsValue $ivs (propiedad opcional; los
+     * payloads v9 sin esa clave siguen siendo válidos: la propiedad se
+     * reconstruye en null sin migración).
      * 9: Combatiente cambió de etapas enteras ('etapas') a
      * MultiplicadoresStats ('multiplicadores' con factores float).
-     * La carga acepta payloads v8 (etapas int) vía MultiplicadoresStats::desdeEtapas.
      */
-    private const SESSION_VERSION = 9;
+    private const SESSION_VERSION = 10;
+
+    /**
+     * Versión mínima de payload aceptada por cargar(). SESSION_VERSION (10)
+     * y MINIMUM_COMPATIBLE_SESSION_VERSION (9) comparten estructura: el único
+     * cambio relevante es BattleStats.$ivs, opcional y con default null.
+     */
+    private const MINIMUM_COMPATIBLE_SESSION_VERSION = 9;
 
     public function crearId(): string
     {
@@ -41,12 +50,14 @@ final class BattleSessionService
 
         [$version, $payload] = explode('|', $data, 2);
 
-        // Compuerta de versión: un payload de una versión anterior (p.ej. v8 con
-        // propiedades de array antes del refactor a colecciones) puede lanzar
-        // TypeError al reconstruir AgregadoBatalla/EquipoBatalla. Descartar la
-        // sesión limpia sin intentar unserialize; el try/catch queda como red de
-        // seguridad para payloads corruptos del SESSION_VERSION actual.
-        if ((int) $version < self::SESSION_VERSION) {
+        // Versión gate: un payload anterior a MINIMUM_COMPATIBLE_SESSION_VERSION
+        // (p.ej. v8 con propiedades de array antes del refactor a colecciones)
+        // puede lanzar TypeError al reconstruir AgregadoBatalla/EquipoBatalla.
+        // Descartar la sesión limpia sin intentar unserialize; el try/catch
+        // queda como red de seguridad para payloads corruptos del
+        // SESSION_VERSION actual. Las sesiones v9 siguen cargando (estructura
+        // compatible con v10: BattleStats.$ivs es opcional).
+        if ((int) $version < self::MINIMUM_COMPATIBLE_SESSION_VERSION) {
             session()->forget([$battleId, $battleId.'_meta']);
 
             return null;

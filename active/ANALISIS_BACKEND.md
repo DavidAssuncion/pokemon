@@ -105,3 +105,63 @@ NOTA: el frontend ya consume `tiempo_restante` como horas (`formatearDuracion`) 
 - **`Tests de ReclutadoSerializerCPTest`**: conservados — sin `nivelUsuario`, `cpDe` cae al fallback nivel del reclutado (misma expectativa que el test existente, EV=0 por defecto).
 - **Migración**: se añade con migración NUEVA (no se toca `2026_09_15_000002_create_huevos_table`) para que aplique también sobre BDs que ya tienen la tabla (patrón del bug 23503).
 - **Testing diferido** por convención del proyecto: no se ejecutan tests.
+
+---
+
+# ANÁLISIS BACKEND — 3 correcciones menores del Arquitecto (idempotencia eclosión + defensa en profundidad + SESSION_VERSION 10)
+
+Fecha: 2026-09-16
+Rol: Backend (Laravel / PHP 8.4).
+Origen: El Arquitecto señaló 3 correcciones menores a aplicar sin testing (testing diferido al cierre del módulo).
+
+## Objetivo
+
+1. **Idempotencia de eclosión** — `EclosionarHuevo` debe rechazar con `ViolacionReglaNegocio` (422) cualquier intento de eclosionar un huevo que ya tiene `eclosionado_en` marcado.
+2. **Defensa en profundidad (user_id)** — `EclosionarHuevo` debe revalidar que el huevo pertenece al usuario; el route-model binding con el scope `BelongsToUser` ya acota por usuario (contrato preservado), este check solo protege llamadas que lleguen con un `Huevo` cargado fuera del scope (p.ej. jobs). Se revisa también `CrearHuevo` (no requiere cambio: no recibe modelos ajenos; todas sus queries ya acotan por `user_id`).
+3. **SESSION_VERSION 9 → 10** — `BattleSessionService` sube la versión de sesión de batalla. El cambio estructural relevante es que `BattleStats` ahora puede llevar `?StatsValue $ivs` (propiedad opcional). Un payload v9 sin esa clave debe seguir cargando (la propiedad se reconstruye en `null` sin migración).
+
+## Archivos afectados
+
+### Modificados
+- `src/Huevos/App/EclosionarHuevo.php` — checks al inicio (tras `load('pokemon')`): pertenencia al usuario (`RecursoNoExiste` 404) y idempotencia (`ViolacionReglaNegocio` 422).
+- `app/Support/BattleSessionService.php` — `SESSION_VERSION` 9 → 10 + compuerta de versión que sigue aceptando payloads v9 (mínimo compatible).
+
+### Revisados sin cambio
+- `src/Huevos/App/CrearHuevo.php` — no hay objeto de otro usuario que revalidar: recibe `int $userId` y todas sus consultas (`Reclutado`, `Huevo`) acotan por `where('user_id', $userId)`. Sin IDOR posible.
+- `src/Huevos/Infra/Controllers/HuevoController.php` — ya depende del route-model binding `{huevo}` (scope `BelongsToUser` bajo `auth`): sin cambios.
+- `app/Models/Huevo.php` — la columna correcta es `eclosionado_en` (confirmada en la migración `2026_09_15_000002_create_huevos_table.php`, cast `datetime` en el modelo). Sin cambios.
+
+### Verificados (sin cambio)
+- Tests `GimnasioLivewireTest` / `MazmorraLivewireTest` serializan con `SESSION_VERSION = 9`; la compuerta de v10 debe seguir aceptando v9 (por eso el mínimo compatible es 9).
+
+## Comportamientos a cubrir en el testing futuro
+
+### Unit
+- `EclosionarHuevo::eclosionar` con huevo ya eclosionado (`eclosionado_en` no nulo) → `ViolacionReglaNegocio` 422 'Este huevo ya eclosionó.'.
+- `EclosionarHuevo::eclosionar` con huevo de otro usuario (`user_id` distinto al recibido) → `RecursoNoExiste` 404, sin mutar nada.
+
+### Feature
+- `POST /api/huevos/{huevo}/eclosionar` idempotente: segunda llamada al mismo huevo → 422 sin duplicar reclutados.
+- `POST /api/huevos/{huevo}/eclosionar` con huevo ajeno → 404 (el route-model binding ya lo cubre; el check interno es cinturón de seguridad).
+
+### Acceptance
+- Una partida en curso con sesión de batalla v9 (guardada antes del despliegue) sigue cargando tras el bump a v10 (sesiones activas no se pierden).
+
+## Diseño
+
+### Idempotencia + defensa en profundidad (`EclosionarHuevo`)
+- Orden de checks tras `$huevo->load('pokemon')`:
+  1. `(int) $huevo->user_id !== $userId` → `RecursoNoExiste` (404; no revela existencia).
+  2. `$huevo->eclosionado_en !== null` → `ViolacionReglaNegocio('Este huevo ya eclosionó.')` (422).
+  3. Estado LISTO (check existente).
+- La columna `eclosionado_en` es `timestamp nullable` con cast `datetime` en `Huevo`; `null` → no eclosionado, `Carbon` → eclosionado.
+
+### SESSION_VERSION (`BattleSessionService`)
+- El mecanismo NO tiene método `migrar`/switch: la migración de formatos internos vive en `__unserialize()` de los objetos de dominio (`Combatiente` v8 'etapas' → v9 'multiplicadores'; `MovimientoBatalla` legacy v9). `BattleSessionService` solo versiona y descarta lo incompatible.
+- `SESSION_VERSION = 10` (las sesiones NUEVAS se guardan como v10). Se añade `SESSION_VERSION_MINIMA = 9`: la compuerta descarta `< 9` (v8 y anteriores, igual que hoy) y sigue aceptando v9 porque la única diferencia estructural es `BattleStats.$ivs` **opcional** (default `null`); `unserialize` reconstruye payloads v9 sin esa clave con `ivs = null`, sin TypeError ni función de migración.
+- No se tocan los tests.
+
+## Riesgos
+
+- Si en el futuro se añade una propiedad NO opcional a una clase serializada en el grafo de batalla, el mínimo compatible deberá subirse (o añadirse `__unserialize`) — documentado en el docblock de `BattleSessionService`.
+- Los tests de Gimnasios/Mazmorras serializan v9; el mínimo compatible = 9 los preserva (testing diferido, no ejecutado ahora).
