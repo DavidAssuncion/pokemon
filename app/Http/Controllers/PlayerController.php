@@ -13,6 +13,7 @@ use App\Models\Reclutado;
 use App\Models\Team;
 use App\Models\TeamMember;
 use App\Support\ReclutadoSerializer;
+use Illuminate\Support\Facades\Log;
 use Illuminate\View\View;
 use Src\Equipos\App\ObtenerEquipos;
 use Src\Exploraciones\Domain\RolExploracion;
@@ -101,13 +102,40 @@ class PlayerController extends Controller
 
         $reclutadosQuery = Reclutado::with(['pokemon.types', 'pokemon.stats', 'teamMember'])->get();
 
+        Log::info('[equipos:debug] user', [
+            'user_id' => auth()->id(),
+            'experiencia' => auth()->user()?->experiencia,
+            'nivel' => auth()->user()?->nivel(),
+            'reclutados_count' => $reclutadosQuery->count(),
+            'reclutado_ids' => $reclutadosQuery->pluck('id')->all(),
+            'user_id_column' => auth()->user()?->getAttributeValue('id'),
+        ]);
+
         $teamIds = $reclutadosQuery->filter(
             fn (Reclutado $r): bool => $r->teamMember !== null
         )->pluck('id')->toArray();
 
         $reclutados = $reclutadosQuery
-            ->map(fn (Reclutado $reclutado): array => ReclutadoSerializer::serializar($reclutado, auth()->user()?->nivel()))
+            ->map(function (Reclutado $reclutado): array {
+                try {
+                    return ReclutadoSerializer::serializar($reclutado, auth()->user()?->nivel());
+                } catch (\Throwable $e) {
+                    Log::error('[equipos:debug] fallo serializando reclutado', [
+                        'reclutado_id' => $reclutado->id,
+                        'pokemon_id' => $reclutado->pokemon_id,
+                        'user_id' => $reclutado->user_id,
+                        'error' => $e->getMessage(),
+                    ]);
+                    throw $e;
+                }
+            })
             ->values();
+
+        Log::info('[equipos:debug] serializado', [
+            'reclutados_serializados' => count($reclutados),
+            'primer_reclutado' => $reclutados[0] ?? null,
+            'teamIds_count' => count($teamIds),
+        ]);
 
         $reclutadosEnExploracion = ExploracionActiva::whereNull('regreso')
             ->pluck('reclutado_id')
@@ -120,6 +148,12 @@ class PlayerController extends Controller
                 ->values()
                 ->toArray()
             : [];
+
+        $pokemonCheck = \App\Models\Pokemon::with('stats')->find(436);
+        Log::info('[equipos:debug] pokemon 436', [
+            'existe' => $pokemonCheck !== null,
+            'stats_count' => $pokemonCheck?->stats->count(),
+        ]);
 
         return view('equipos.index', [
             'teams' => $teams,

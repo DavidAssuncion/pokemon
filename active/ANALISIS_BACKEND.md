@@ -215,3 +215,39 @@ Proteger el cálculo de tiempos y el flujo de creación/eclosión/listado de hue
 
 - Filas legacy con `capture_rate` null en `disponibles` (`ListarHuevos::disponibles`) usan el valor directo de `$pokemon->capture_rate` (Eloquent devuelve null → el `array_map` los emite como null en `capture_rate`); no es parte de estos 4 patches y el frontend podría mostrar `null`. Documentado; el filtro de disponibilidad actual solo exige `hatch`, no `capture_rate` (posible ampliación futura, fuera de alcance).
 - Testing diferido: no se ejecutaron tests; los comportamientos quedan documentados arriba.
+
+---
+
+# ANÁLISIS BACKEND — Logs de depuración en PlayerController::equipos()
+
+Fecha: 2026-09-16
+Rol: Backend (Laravel / PHP 8.4).
+Origen: el usuario recluta pokémon (inserta en `reclutados` correctamente, ids 43/44 con pokemon_id 436 y user_id 2) pero `/equipos` no muestra ningún pokémon. Se añaden SOLO logs de depuración para confirmar qué llega al HTML; no se cambia la lógica.
+
+## Objetivo
+
+Diagnosticar por qué los reclutados no aparecen en `/equipos` añadiendo 4 bloques de log en `PlayerController::equipos()`. Hipótesis: (a) el serializer lanza excepción silenciosa en algún reclutado; (b) los datos llegan correctos al HTML pero el JS del navegador no los pinta (bundle viejo con error Alpine `Cannot redefine property: $persist`).
+
+## Archivos afectados
+
+### Modificado
+- `app/Http/Controllers/PlayerController.php` — método `equipos()`: import `Log` y 4 bloques de log inline (sin cambios de lógica de salida).
+
+## Comportamientos a cubrir en el testing futuro
+
+Este cambio es de diagnóstico puro (solo logs, sin lógica). Validación manual:
+
+### Acceptance (manual)
+- Visitar `/equipos` tras reclutar y comprobar en `storage/logs/laravel.log` los logs `[equipos:debug] user`, `[equipos:debug] serializado` y `[equipos:debug] pokemon 436`.
+- Si un reclutado falla al serializar, `[equipos:debug] fallo serializando reclutado` (level ERROR) identifica el `reclutado_id`/`pokemon_id` culpable y la excepción se re-lanza.
+
+## Diseño
+
+- Sin abstracciones nuevas: 4 bloques de `Log` inline en el controlador existente.
+- `ReclutadoSerializer::serializar` queda envuelto en try/catch que loguea el reclutado que falla y re-lanza la excepción (`throw $e`), preservando el comportamiento original.
+
+## Riesgos
+
+- **Rendimiento**: `primer_reclutado` vuelca un array serializado potencialmente grande. Aceptable para diagnóstico temporal; eliminar al cerrar la depuración.
+- **Sensibilidad**: los logs incluyen `user_id`, `experiencia`, `reclutado_id`, `pokemon_id`; solo visibles en servidor.
+- Los logs son ruido en producción si el diagnóstico queda abierto; se recomienda retirarlos al confirmar la causa raíz.
