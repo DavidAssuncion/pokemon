@@ -1,4 +1,9 @@
-# DBeaver MCP Skill Reference
+---
+name: DBeaver MCP
+description: "Servidor MCP de DBeaver para consultar bases de datos desde agentes. Úsalo al configurar el MCP de DBeaver, listar tablas, describir esquemas o ejecutar consultas SQL de solo lectura contra las conexiones del proyecto (pokemon_local, pokemon_test)."
+---
+
+# DBeaver MCP
 
 ## Overview
 

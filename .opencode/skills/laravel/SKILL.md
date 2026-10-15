@@ -1,4 +1,9 @@
-# Laravel Skill Reference
+---
+name: Laravel
+description: "Patrones, comandos Artisan y reglas de arquitectura del proyecto Laravel 12 (híbrido app/ + src/ DDD). Úsalo al crear o modificar modelos, controladores, Form Requests, servicios de dominio, DTOs, enums, value objects, repositorios, rutas o migraciones, al ejecutar comandos Artisan, o al aplicar las reglas de boundaries de src/ y quality tools (Pint, PHPStan, Infection, Deptrac)."
+---
+
+# Laravel
 
 ## Commands
 

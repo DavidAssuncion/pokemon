@@ -1,51 +1,123 @@
 {
   "$schema": "https://opencode.ai/config.json",
+
+  // Agente primario por defecto cuando la sesión no selecciona uno.
   "default_agent": "analista",
-  "agent": {
+
+  // Los 8 agentes del orquestador. Los prompts se cargan desde docs/agents/*.md
+  // mediante {file:...} (soportado por V2 para `system`).
+  "agents": {
     "analista": {
       "description": "Analista: transforma ideas en especificación. No codea. Al cerrar el flujo pregunta por testing específico.",
       "mode": "primary",
-      "prompt": "{file:./docs/agents/analista.md}",
-      "permission": { "edit": "deny", "bash": "deny" }
+      "model": "deepseek/deepseek-flash#high",
+      "system": "{file:./docs/agents/analista.md}",
+      "permissions": [
+        { "action": "edit", "resource": "*", "effect": "deny" },
+        { "action": "shell", "resource": "*", "effect": "deny" }
+      ]
     },
     "backend": {
       "description": "Backend Laravel: implementa código tipado (DTOs/Collections), sin ejecutar tests. Análisis previo obligatorio.",
       "mode": "subagent",
-      "prompt": "{file:./docs/agents/backend.md}"
+      "model": "deepseek/deepseek-flash",
+      "system": "{file:./docs/agents/backend.md}"
     },
     "frontend": {
       "description": "Frontend Blade: implementa UI sin ejecutar tests. Análisis previo obligatorio.",
       "mode": "subagent",
-      "prompt": "{file:./docs/agents/frontend.md}"
+      "model": "deepseek/deepseek-flash",
+      "system": "{file:./docs/agents/frontend.md}"
     },
     "qa": {
       "description": "QA: valida edge cases, E2E, handoff consistency. Bloquea si falla.",
       "mode": "subagent",
-      "prompt": "{file:./docs/agents/qa.md}",
-      "permission": { "edit": "deny", "bash": "deny" }
+      "model": "deepseek/deepseek-flash#high",
+      "system": "{file:./docs/agents/qa.md}",
+      "permissions": [
+        { "action": "edit", "resource": "*", "effect": "deny" },
+        { "action": "shell", "resource": "*", "effect": "deny" }
+      ]
     },
     "cleaner": {
       "description": "Cleaner: refactoriza (CRAP/DRY, mutation sites, encapsulamiento). No features.",
       "mode": "subagent",
-      "prompt": "{file:./docs/agents/cleaner.md}"
+      "model": "deepseek/deepseek-flash",
+      "system": "{file:./docs/agents/cleaner.md}"
     },
     "arquitecto": {
       "description": "Arquitecto: code review POST-implementación. Valida estructura, boundaries, property tests.",
       "mode": "subagent",
-      "prompt": "{file:./docs/agents/arquitecto.md}",
-      "permission": { "edit": "deny", "bash": "deny" }
+      "model": "deepseek/deepseek-flash#high",
+      "system": "{file:./docs/agents/arquitecto.md}",
+      "permissions": [
+        { "action": "edit", "resource": "*", "effect": "deny" },
+        { "action": "shell", "resource": "*", "effect": "deny" }
+      ]
     },
     "hardener": {
       "description": "Hardener: mutation hardening, language mutation, soft Gherkin. Última barrera.",
       "mode": "subagent",
-      "prompt": "{file:./docs/agents/hardener.md}",
-      "permission": { "edit": "deny", "bash": "deny" }
+      "model": "deepseek/deepseek-flash#high",
+      "system": "{file:./docs/agents/hardener.md}",
+      "permissions": [
+        { "action": "edit", "resource": "*", "effect": "deny" },
+        { "action": "shell", "resource": "*", "effect": "deny" }
+      ]
     },
     "bibliotecario": {
       "description": "Bibliotecario: documenta conocimiento, cierra tarea. No codea.",
       "mode": "subagent",
-      "prompt": "{file:./docs/agents/bibliotecario.md}",
-      "permission": { "bash": "deny" }
+      "model": "deepseek/deepseek-flash",
+      "system": "{file:./docs/agents/bibliotecario.md}",
+      "permissions": [
+        { "action": "shell", "resource": "*", "effect": "deny" }
+      ]
     }
+  },
+
+  // MCP del proyecto. Engram vive en la config global (~/.config/opencode), no se duplica aquí.
+  "mcp": {
+    "servers": {
+      "context7": {
+        "type": "remote",
+        "url": "https://mcp.context7.com/mcp"
+      }
+    }
+  },
+
+  // Instrucciones adicionales (además de AGENTS.md).
+  "instructions": [
+    "docs/context.md",
+    "docs/conventions.md",
+    "docs/ddd.md",
+    "docs/workflow.md"
+  ],
+
+  // Rutas que no disparan updates del watcher.
+  "watcher": {
+    "ignore": [
+      "node_modules/**",
+      "vendor/**",
+      "public/build/**",
+      "public/images/**",
+      "storage/debugbar/**",
+      "storage/logs/**",
+      ".git/**"
+    ]
+  },
+
+  // Compactación automática preservando contexto reciente.
+  "compaction": {
+    "auto": true,
+    "keep": {
+      "tokens": 15000
+    }
+  },
+
+  // Límites de salida de herramientas.
+  "tool_output": {
+    "max_lines": 2000,
+    "max_bytes": 51200
   }
 }

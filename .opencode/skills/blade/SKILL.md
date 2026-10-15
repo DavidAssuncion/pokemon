@@ -1,4 +1,9 @@
-# Blade Skill Reference
+---
+name: Blade
+description: "Componentes Blade (anónimos y de clase), DTOs Wireable de Livewire, directivas y Alpine.js. Úsalo al escribir o revisar vistas y componentes Blade, extraer componentes reutilizables a components/, integrar Livewire/Alpine.js o maquetar UI con Tailwind. No lo uses para lógica de negocio, que vive en Domain/DTOs."
+---
+
+# Blade
 
 ## Components
 

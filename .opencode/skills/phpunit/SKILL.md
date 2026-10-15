@@ -1,4 +1,9 @@
-# PHPUnit Skill Reference
+---
+name: PHPUnit
+description: "Estructura de tests PHPUnit, flujo TDD, aserciones, factories, mocking (Mockery) y data providers. Úsalo al escribir o revisar tests de Unit/Feature/Browser o al planificar la fase de testing. Recuerda que en este proyecto el testing se difiere al cierre del módulo: no ejecutes estos comandos durante el desarrollo normal."
+---
+
+# PHPUnit
 
 > Nota: el testing se difiere al cierre del módulo completo. NO ejecutar estos comandos durante el desarrollo normal; se usan en la fase de testing del módulo.
 

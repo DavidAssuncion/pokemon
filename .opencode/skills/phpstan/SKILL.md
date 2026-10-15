@@ -1,4 +1,9 @@
-# PHPStan Skill Reference
+---
+name: PHPStan
+description: "Niveles y configuración de PHPStan (phpstan.neon L6 / phpstan-hardener.neon L8), reglas de tipado estricto del proyecto y su uso en el pipeline (Coder/Cleaner/Hardener). Úsalo al configurar PHPStan, interpretar o corregir errores de análisis estático, generar baselines o aplicar tipado estricto con DTOs, Collections, Enums y Value Objects."
+---
+
+# PHPStan
 
 ## Config Files
 

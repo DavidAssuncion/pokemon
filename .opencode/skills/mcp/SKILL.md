@@ -1,4 +1,9 @@
-# MCP Skill Reference
+---
+name: MCP
+description: "Configuración y uso de servidores MCP en OpenCode (proyecto y global) y catálogo de servidores disponibles. Úsalo al añadir o modificar servidores MCP, configurar `.mcp.json` o `~/.config/opencode/mcp.json`, o resolver dudas sobre las tools MCP y su seguridad (tokens, permisos, read-only)."
+---
+
+# MCP
 
 ## opencode MCP Configuration
 

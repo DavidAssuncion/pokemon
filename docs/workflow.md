@@ -65,6 +65,16 @@ commit: a1b2c3d4e5
 
 ---
 
+## Comandos slash (atajos)
+
+Los roles se pueden invocar directamente con comandos definidos en `.opencode/commands/`:
+`/spec` (analista), `/qa` (qa), `/clean` (cleaner), `/harden` (hardener), `/docs`
+(bibliotecario). Cada uno delega en su agente y pasa `$ARGUMENTS` como contexto. El
+tooling de agentes (config V2, MCP, skills, memoria Engram) se documenta en
+`docs/agent-tooling.md`.
+
+---
+
 ## Fases Detalladas
 
 ### Fase 1: Analista (`@analista`)
