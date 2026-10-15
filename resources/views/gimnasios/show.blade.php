@@ -333,8 +333,6 @@ function gimnasioShow(slug) {
                 1: persistida[1] || 'vanguardia',
                 2: persistida[2] || 'vanguardia',
                 3: persistida[3] || 'vanguardia',
-                4: persistida[4] || 'vanguardia',
-                5: persistida[5] || 'vanguardia',
             };
         },
 

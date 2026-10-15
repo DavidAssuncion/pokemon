@@ -218,8 +218,8 @@
                                     🔒 En exploración ({{ $equipoEnExploracion['habitat_name'] }})
                                 </p>
                                 @endif
-                                <div class="grid grid-cols-5 gap-1">
-                                    @for($i = 0; $i < 5; $i++)
+                                <div class="grid grid-cols-3 gap-1">
+                                    @for($i = 0; $i < 3; $i++)
                                         @if(isset($team->members[$i]))
                                             <div class="text-center min-w-0">
                                                 <img
@@ -748,7 +748,7 @@
                             : (!selectedTeamId || !selectedTrainer)"
                         class="flex-1 px-4 py-2.5 bg-red-600 text-white rounded-lg text-sm font-bold hover:bg-red-700 transition-colors disabled:bg-gray-300 dark:disabled:bg-gray-700 disabled:text-gray-500 dark:disabled:text-gray-500 disabled:cursor-not-allowed"
                         x-text="formacionContexto === 'ruta'
-                            ? (rutaCombatiendo ? 'Iniciando combate...' : '⚔️ ¡Combatir! (Ruta 5v5)')
+                            ? (rutaCombatiendo ? 'Iniciando combate...' : '⚔️ ¡Combatir! (Ruta 3v3)')
                             : '¡Combatir!'"
                     ></button>
                 </div>
@@ -1029,7 +1029,7 @@
                                         </template>
                                     </div>
 
-                                    <!-- Formación (hasta 5 miembros) -->
+                                    <!-- Formación (hasta 3 miembros) -->
                                     <div x-show="mazmorraTeamId" x-cloak class="space-y-3 mb-4">
                                         <p class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Formación</p>
                                         <template x-for="miembro in (mazmorraTeamMembers || [])" :key="miembro.id">
@@ -1128,7 +1128,7 @@ function habitatShow() {
         formacion: {},
         formacionContexto: 'entrenadores',
 
-        // ─── Ruta mode (combate 5v5; default) ─────────────
+        // ─── Ruta mode (combate 3v3; default) ─────────────
         rutaNivel: 1,
         rutaCombatiendo: false,
         rutaCombatError: '',
@@ -1183,7 +1183,7 @@ function habitatShow() {
             }
             this.formacionContexto = 'ruta';
             this.selectedTrainer = null;
-            // Formación completa (5 slots): la persistida del backend o 'vanguardia'
+            // Formación completa (3 slots): la persistida del backend o 'vanguardia'
             // por defecto. Se envía explícitamente; el backend nunca auto-clasifica.
             this.formacion = this.formacionInicialDe(this.selectedTeamId);
             this.rutaCombatError = '';
@@ -1215,7 +1215,7 @@ function habitatShow() {
             this.selectedTrainer = trainer;
             this.formacionContexto = 'entrenadores';
             this.rutaCombatError = '';
-            // Formación completa (5 slots) desde la persistida del equipo.
+            // Formación completa (3 slots) desde la persistida del equipo.
             this.formacion = this.formacionInicialDe(this.selectedTeamId);
             this.showFormacionPopup = true;
         },
@@ -1237,8 +1237,6 @@ function habitatShow() {
                 1: persistida[1] || 'vanguardia',
                 2: persistida[2] || 'vanguardia',
                 3: persistida[3] || 'vanguardia',
-                4: persistida[4] || 'vanguardia',
-                5: persistida[5] || 'vanguardia',
             };
         },
 

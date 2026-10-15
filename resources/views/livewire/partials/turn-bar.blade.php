@@ -8,7 +8,7 @@
                     <span class="badge rounded-pill {{ $idx === 0 ? 'bg-primary' : 'bg-secondary' }} d-inline-flex align-items-center gap-1 {{ $idx === 0 || $p['refId'] === $actingRefId ? 'active-turn' : '' }}" title="{{ $p['nombre'] }}">
                         <img src="{{ $p['icon'] }}" alt="{{ $p['nombre'] }}" style="width:20px; height:20px; object-fit:contain">
                         {{ $p['nombre'] }}
-                        <small class="opacity-75">{{ round($p['accumulatedSpeed']) }}</small>
+                        <small class="opacity-75">{{ round($p['effectiveSpeed']) }}</small>
                     </span>
                 @endif
             @empty

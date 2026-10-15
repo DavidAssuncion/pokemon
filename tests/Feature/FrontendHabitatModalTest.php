@@ -73,7 +73,7 @@ class FrontendHabitatModalTest extends TestCase
     }
 
     /**
-     * El combate de ruta 5v5 es el modo por defecto: panel ruta con nota obligatoria,
+     * El combate de ruta 3v3 es el modo por defecto: panel ruta,
      * selector de nivel, preview de rivales y popup de formación con estado "Automática".
      */
     public function test_habitat_defaults_to_ruta_mode_with_ruta_panel(): void
@@ -82,9 +82,9 @@ class FrontendHabitatModalTest extends TestCase
 
         // Modo por defecto = ruta
         $view->assertSee("modo: 'ruta'", false);
-        // Nota visible obligatoria
-        $view->assertSee('Combate 5v5 contra pokémon salvajes. Sin límite diario. Al ganar puedes capturar.', false);
-        // Panel ruta (badge 5v5 + selector de nivel)
+        // CTA del popup de ruta con la etiqueta 3v3
+        $view->assertSee('¡Combatir! (Ruta 3v3)', false);
+        // Panel ruta (etiqueta 3v3 + selector de nivel)
         $view->assertSee('Combate de Ruta', false);
         $view->assertSee('selectRutaNivel(lvl)', false);
         // Fetch de rivales por nivel
@@ -93,7 +93,7 @@ class FrontendHabitatModalTest extends TestCase
         $view->assertSee('No hay Pokémon salvajes disponibles en esta ruta para tu nivel.', false);
         // CTA de ruta
         $view->assertSee('openRutaFormacionPopup()', false);
-        // POST iniciar (5v5)
+        // POST iniciar (3v3)
         $view->assertSee('/ruta/iniciar', false);
         // Popup contextual de ruta con chip "Automática" (usa formación persistida)
         $view->assertSee('Combate de Ruta · Configurar Formación', false);
@@ -107,10 +107,10 @@ class FrontendHabitatModalTest extends TestCase
     }
 
     /**
-     * El escalado 5v5 llega a las tarjetas de equipo: grid de 5 slots y, con un
-     * equipo sin miembros, se renderizan exactamente 5 placeholders "Vacío".
+     * El escalado 3v3 llega a las tarjetas de equipo: grid de 3 slots y, con un
+     * equipo sin miembros, se renderizan exactamente 3 placeholders "Vacío".
      */
-    public function test_habitat_team_cards_render_five_slots(): void
+    public function test_habitat_team_cards_render_three_slots(): void
     {
         $team = (object) [
             'id' => 1,
@@ -123,7 +123,7 @@ class FrontendHabitatModalTest extends TestCase
         ]));
         $html = (string) $testView;
 
-        $this->assertStringContainsString('grid grid-cols-5', $html);
-        $this->assertSame(5, substr_count($html, '>Vacío</p>'));
+        $this->assertStringContainsString('grid grid-cols-3 gap-1', $html);
+        $this->assertSame(3, substr_count($html, '>Vacío</p>'));
     }
 }

@@ -1,575 +1,219 @@
-# ANÁLISIS FRONTEND — Coordinación QA: caramelo EV +10, contrato /api/huevos en horas, es_shiny snake_case
+# ANÁLISIS FRONTEND — Refuerzo tolerancia UI en `/equipos` (2026-09-16)
 
-Fecha: 2026-09-15
-Rol: Frontend (Blade + Alpine.js + Tailwind 4 + CSS combate). Solo UI: NO tests, NO backend.
-Base: commit `3f217ff372` (anim-hit, detalle IV/EV/habilidades, pestaña 🥚 Huevos, badges shiny).
-Fuentes: `docs/context.md`, `docs/conventions.md`, `.ai/rules/index.md` (sin reglas para
-`resources/views/**`; grep de shiny/huevo/caramelo/es_shiny en `.ai/rules` → 0 coincidencias),
-`active/RESUMEN_TAREA.md`, `resources/views/equipos/index.blade.php` (2186 líneas),
-`resources/views/livewire/_pokemon-card.blade.php`, `resources/views/livewire/combate.blade.php`,
-`resources/views/livewire/partials/battle-field.blade.php`, `src/Battle/Domain/Combatiente.php`
-(aArrayVista → hoy `esShiny` camel; el backend alineará a `es_shiny`),
-`src/Huevos/App/ListarHuevos.php` + `src/Huevos/Domain/CalculadorTiemposHuevo.php` (contrato actual
-del backend, en pleno cambio de fórmulas), `src/CombateRuta/Domain/DataTransferObjects/ResultadoRuta.php`
-(aArray() hoy sin `es_shiny` en capturas; el backend lo propagará), `resources/css/combate.css`.
+## Objetivo
 
-## Qué tocar (3 ficheros)
+Blindar el frontend de `/equipos` para que el listado de reclutados no se rompa ni quede
+vacío silenciosamente cuando algún campo del serializer falte o venga null. El backend está
+diagnosticando si la causa es 500 por migraciones o serializer. Este análisis es previo al
+código y se centra en tolerancia, no en ocultar.
 
-1. `resources/views/equipos/index.blade.php`:
-   - O4: helper/tooltip del botón 🍬 EV (línea ~876): "Dar un caramelo EV (+1 a …)" → "Dar caramelo
-     EV (+10 a …)". Feedback de `darEv()` (línea ~1429): "+1" → "+10" (mensaje "¡+10 EV!"). Tope 255
-     intacto (`puedeDarEv`, `evPct`). NO tocar `(+100 exp)` de caramelos de tipo (otra mecánica).
-   - Huevos: `huevoProgreso()` prefiere `huevo.progreso` (0–100, nuevo contrato) y si no lo calcula
-     con horas (`tiempo_total_horas`, `tiempo_restante_horas` ?? `tiempo_restante`). `huevoEtiquetaRestante()`
-     lee la misma clave horaria y `formatearDuracion()` ya interpreta horas (sin cambios).
-2. `resources/views/livewire/_pokemon-card.blade.php`:
-   - O3/O6: `$esShiny` tolera `es_shiny` (snake, destino) Y `esShiny` (camel, estado actual de
-     `Combatiente::aArrayVista()`) además del fallback por URL `/shiny/`. El `preg_replace` de
-     `$iconoNormal` ya cubre `{id}_s.webp` y `{id}.webp` (regex `/shiny/(\d+)[^/]*\.webp$/`).
-3. `resources/views/livewire/combate.blade.php`:
-   - O6: modal de capturas de ruta — cuando `captura.es_shiny` sea true (backend lo propagará en
-     `ResultadoRuta::aArray()`), añadir pulso dorado (ring/glow Tailwind) + badge ✨ en la card y usar
-     el asset shiny `shiny/{id}_s.webp` con onerror → normal. Tolerante a la ausencia del campo (data
-     legacy: hoy `aArray()` no emite `es_shiny`).
+## 1. Vistas/componentes a tocar
 
-## Contrato asumido de /api/huevos (coordinar con Backend — verificación al integrar)
+- `resources/views/equipos/index.blade.php` — único archivo modificado.
 
-- Estado backend HOY (pre-cambio de fórmulas, `src/Huevos/`): `tiempo_total_horas` (float horas) y
-  `tiempo_restante` en **minutos** (`restante_minutos`), SIN `progreso`, SIN `tiempo_restante_horas`.
-- Contrato OBJETIVO (backend en paralelo): puesta = `255/capture_rate` horas, eclosión =
-  `ceil(hatch/15)` horas; la respuesta traerá tiempos en **horas float** (`tiempo_total_horas`,
-  `tiempo_restante_horas` o similar) y `progreso` 0–100 si lo expone.
-- El frontend consume: `tiempo_total_horas` (horas), `tiempo_restante_horas` (preferido) o
-  `tiempo_restante` (asumido en HORAS tras el cambio), y `progreso` (0–100) si existe.
-- ⚠️ Ventana intermedia: con el backend actual (minutos en `tiempo_restante`) la etiqueta/barra
-  mostrará minutos tratados como horas hasta que aterrice el cambio de fórmulas; sin heurística de
-  unidades (decisión: el contrato nuevo es horas, no se camuflan unidades legacy).
+## 2. Contrato consumido (ReclutadoSerializer::serializar)
 
-## Estados UI cubiertos (testing futuro, NO ejecutado)
+Campos que el frontend consume de cada reclutado:
 
-- EV: botón con/sin caramelos, tope 255, feedback éxito (¡+10 EV!), error 422, bloqueado en
-  exploración, data legacy sin `caramelos_ev`.
-- Huevos: loading, error + Reintentar, 404 (módulo en preparación), empty, `puede_eclosionar`
-  (Listo), límite 1 gestación/1 incubación, barra con `progreso` presente vs ausente, etiqueta de
-  tiempo con horas decimales (<24h, ≥24h, restante 0).
-- Shiny: card de combate con `esShiny` (camel) y `es_shiny` (snake), con URL `/shiny/{id}_s.webp` y
-  `/shiny/{id}.webp`, fallback onerror a icono normal; modal capturas con/es_shiny y sin es_shiny.
+| Campo | Tipo contrato | Riesgo null | ¿Ya tolerado? |
+|-------|---------------|-------------|----------------|
+| `id` | int | Bajo (PK) | Sí |
+| `nombre` | string | Medio (nullable column) | Parcial (fallback en serializer, pero JS no blindado) |
+| `pokemon_id` | int | Medio | NO — genera URL rota |
+| `pokemon.types` | array | Medio | Sí (guard `r.pokemon && r.pokemon.types`) |
+| `es_shiny` | bool | Bajo | Sí |
+| `nivel` | int | Bajo (calculado) | Sí |
+| `cp` | int | Bajo (calculado, 0) | Sí (null check) |
+| `ivs` | object/array | Medio | Parcial — `ivsDe` tolera, pero template no |
+| `evs` | object/array | Medio | Parcial — `evsDe` tolera, pero template no |
+| `habilidades` | array | Bajo (siempre []) | Sí |
+| `stats` | array | Bajo | Sí (guard en `statsDe`) |
+| `exp_total` | int | Bajo | Sí |
+| `base_experience` | int/null | Medio | Sí |
 
-## Riesgos accesibilidad/UX
+## 3. Comportamientos a cubrir (testing futuro, NO ejecutado)
 
-- Botones EV: `title` documenta el valor; mantener `aria-label`/disabled estado.
-- Badge ✨ de captura shiny: contraste dorado sobre card clara/oscura (bg-yellow-400 + texto oscuro).
-- `animate-pulse` de Tailwind es opacidad; el anillo dorado (ring + shadow) da la señal sin depender
-  de animación (accesible con `prefers-reduced-motion`).
-- El pulso dorado es estrictamente aditivo (clases Tailwind); no interfiere con Bootstrap del modal.
+- Nombre null → fallback a `pokemon.name` → fallback a `?`
+- `pokemon_id` null → icono no se rompe, se oculta limpiamente
+- `ivs`/`evs` ausentes (serializer sin migración) → modal detalle no truena
+- `habilidades` no-array → template no truena
+- Lista vacía de reclutados → mensaje informativo visible, no grid vacío
+- Flujos de huevos y equipos no afectados
 
-## Verificación (sin tests)
+## 4. Estados UI a cubrir
 
-- `php artisan view:cache` (Blade compila; no hay PHP de dominio tocado → no pint).
-- `grep` de `+1` EV restantes y de `esShiny|es_shiny` en las vistas tocadas.
-- `npm run build` NO necesario (no se añaden clases/comillas nuevas fuera de utilidades ya usadas;
-  `animate-pulse`/`ring-*` son utilities Tailwind 4 estándar — por seguridad se documenta el build).
+| Estado | Antes | Después |
+|--------|-------|---------|
+| `reclutados.length === 0` | Grid vacío silencioso | Mensaje "No hay Pokémon disponibles" |
+| `pokemon_id` null | `<img src="...undefined.webp">` roto | Icono oculto, sin error visible |
+| `nombre` null | Podría mostrar "null" o vacío | Fallback a `pokemon.name` → `?` |
+| `ivs`/`evs` null en modal | Posible error Alpine | Template con fallbacks |
 
----
+## 5. Cambios propuestos (sin código)
 
-# ANÁLISIS FRONTEND — Animación de daño, detalle con IVs/EVs/habilidades, pestaña Huevos, iconos shiny
+1. **`availablePokemonsTeams`** (línea ~1101): blindar `r.nombre.toLowerCase()` con `String(r.nombre || '').toLowerCase()`.
+2. **`assignedPokemons`** (línea ~1120): mismo blindaje.
+3. **`nombreDe`** (línea ~1177): ya tolera null; verificar fallback a `pokemon.pokemon.name` vacío.
+4. **Icono** (líneas ~299, ~370, ~752): añadir helper `iconoDe(p)` que devuelva URL vacía si `pokemon_id` ausente.
+5. **Modal detalle** (líneas ~838-885): IVs/EVs con fallback `(p.ivs || {})`, `Array.isArray()` checks.
+6. **Estado vacío** (línea ~353): condición mejorada para distinguish filter vs data.
 
-Fecha: 2026-09-15
-Rol: Frontend (Blade + Alpine.js + Tailwind 4 + CSS combate). Solo UI: NO tests, NO backend.
-Fuentes: `docs/context.md`, `docs/conventions.md`, `.ai/rules/index.md` (sin reglas para `resources/views/**`),
-`active/RESUMEN_TAREA.md`, `src/Battle/context.md`, `app/Livewire/Combate.php` (601 líneas),
-`src/Battle/Domain/Combatiente.php` (aArrayVista), `routes/player.php`, `app/Support/ReclutadoSerializer.php`,
-`equipos/index.blade.php` (1655 líneas), `_pokemon-card.blade.php`, `battle-field.blade.php`, `combate.css`.
+## 6. Riesgos accesibilidad/UX
 
-## Qué tocar (4 ficheros)
+- El estado vacío ya tiene `x-if` — no afecta lectores de pantalla.
+- El icono roto con `onerror="this.style.display='none'"` es aceptable; mejor con helper que devuelva string vacío.
+- No se ocultan errores reales: si el backend falla, la UI muestra lo que tiene (tolerante).
 
-1. `resources/views/livewire/_pokemon-card.blade.php` — clase `anim-hit` al defensor + badge "★ Shiny" + fallback de icono.
-2. `resources/css/combate.css` — `@keyframes` de parpadeo rojo + sacudida, transición de barra de HP, pref. reduced-motion.
-3. `resources/views/equipos/index.blade.php` — modal detalle (IVs/EVs/habilidades + botón dar-evs + icono shiny) y pestaña "🥚 Huevos".
-4. `battle-field.blade.php` — SIN cambios: `$animDefenderId` está disponible en el partial por el mismo mecanismo que
-   `$actingRefId`/`$selectedTargetRefId` (los públicos de Livewire llegan como data de vista a los `@include`).
+## 7. Campos del serializer que puedo asumir que pueden faltar
 
-## Contrato de API asumido (contrastar con Backend)
-
-### Reclutado (serializador de /equipos)
-- Añade `ivs: {hp, atk, def, spAtk, spDef, speed}` (0–15), `evs: {hp, atk, def, spAtk, spDef, speed}` (0–255),
-  `habilidades: array` (strings u objetos `{id, nombre}`). Ya existen hoy: `es_shiny`, `cp`, `stats`, `pokemon`.
-- `POST /reclutado/{id}/dar-evs` (NUEVO, no está en `routes/player.php`) con body `{stat: 'hp'|'atk'|'def'|'spAtk'|'spDef'|'speed'}`.
-  Respuesta tolerada: `{evs}`, `{caramelos_ev}` (mapa stat→cantidad), o `{actual, caramelos_disponibles}`.
-  → 422 si sin caramelos / tope 255 (feedback inline, patrón `handleError`).
-
-### Huevos (módulo en paralelo)
-- `GET /api/huevos` → `{huevos: [...], disponibles: [...], limites: {...}}`
-  - `huevos[]`: `{id, estado: gestando|incubando|listo, tiempo_total_horas, tiempo_restante, puede_eclosionar, pokemon: {id, name, icon}}`.
-  - `disponibles[]` (familias con ≥2 ejemplares, 1/familia): `{evolution_chain_id, pokemon: {id, name, icon}, capture_rate?, hatch?}`.
-  - `limites`: `{max_gestacion, max_incubando, gestacion_activa?, incubacion_activa?}` (tolerado).
-- `POST /api/huevos` body `{evolution_chain_id}` → 201 huevo (gestación automática).
-- `POST /api/huevos/{id}/eclosionar` → eclosionar cuando `listo`.
-
-## Estados UI cubiertos
-
-- Combate: defensor recibiendo golpe (animación 600 ms dentro de la ventana de 700 ms), shiny vs normal, card debilitada
-  (`opacity-50`) no anima (solo el defensor vivo en ventana), `prefers-reduced-motion`.
-- Equipos/modal: sin IVs/EVs/habilidades (data legacy) → secciones ocultas; IV 15 resaltado; EV tope 255; sin caramelos → botón
-  deshabilitado o 422 con feedback; en exploración → bloqueado.
-- Huevos: loading (spinner), error (con Reintentar; 404 del endpoint → "módulo en preparación"), empty (sin huevos / sin familias),
-  success; límite alcanzado deshabilita "Poner huevo" con mensaje; eclosión con feedback del pokémon añadido + refetch.
-
-## Riesgos / decisiones
-
-1. **`$phase === 'animating'` no existe hoy**: `FaseCombate` solo tiene `init/player_target/player_move/battle_over`, aunque
-   `moves-panel` y `battle-field` ya comparan `'animating'` y `src/Battle/context.md` la documenta. Para no acoplar la feature a
-   un estado que el backend (en paralelo) aún no fija, la clase `anim-hit` se aplica cuando `$p['refId'] === $animDefenderId`
-   (señal precisa: `animDefenderId` solo se puebla en `setAnimState` y se limpia en `commitAction`/`resetAnimState`, exactamente la
-   ventana de animación). Es un superconjunto de la condición del brief; si el backend añade la fase 'animating' no cambia nada y
-   si no la añade la animación funciona igual. **Reportar al backend que `FaseCombate` no tiene `ANIMANDO` y que
-   `setAnimState()` no cambia `$phase`** (la dependencia de las vistas en `'animating'` para el banner quedó muerta).
-2. **Iconos shiny**: los assets reales son `/images/iconos_webp/shiny/{id}_s.webp` (1137 archivos; NO existe `{id}.webp` dentro
-   de shiny/), aunque el brief describe `/images/iconos_webp/shiny/{id}.webp`. En el modal se usa el contrato del brief como
-   primario con cadena `onerror` → `_s` → normal (así funciona hoy y sobrevive si el backend renombra). En la card de combate el
-   icono lo entrega el backend (`aArrayVista`); solo se añade badge (detecta `es_shiny` o `/shiny/` en la URL) y fallback
-   `onerror` del shiny → normal. **Reportar**: la convención real de archivos shiny es `{id}_s.webp`.
-3. **Slug de stat para dar-evs**: se usa `hp|atk|def|spAtk|spDef|speed` (keys de `ivs`/`evs`) por orden del brief. OJO: `StatEnum::slug()`
-   usa `atksp|defsp|spd` (candy_ev). El backend debe mapear en `dar-evs` al slug que use internamente. **Coordinar.**
-4. **Límites huevos**: brief dice "1 gestación + 1 eclosión" y la UI debe deshabilitar "Poner huevo" si ya hay 1 gestación **o**
-   1 eclosión. Se implementa literal (gestando / incubando / listo ocupan el pipeline); si el backend permite gestación+incubación
-   simultáneas habrá que relajar `limiteExcedido()` a solo gestación.
-5. Accessibility: `prefers-reduced-motion` desactiva sacudida y transición; botones con `aria-label`/`title`; tabs con `role="tablist"`.
-
-## Verificación (sin tests)
-- `php artisan view:cache` (Blade compila), `npm run build` (CSS combate). No se ejecuta pint: los únicos PHP sucios
-  (`src/Pokemon/Domain/Stats/BattleStats.php`, `src/Equipos/App/CrearEquipoInicial.php`) son del Backend en paralelo.
+- `ivs` / `evs` — podrían no existir si la migración de columnas no se ejecutó.
+- `habilidades` — siempre `[]` según el serializer (TODO en el código).
+- `pokemon.types` — podría no estar en el nested `pokemon` si la relación no se eager-load.
+- `cp` — calculado; podría no estar si `pokemon` es null.
+- `pokemon_id` — debería existir siempre (columna PK FK), pero si la migración falla, podría no estar en `toArray()`.
 
 ---
 
-# ANÁLISIS FRONTEND — Ajustes UI: formación en equipos, hábitat sin preview, popup nunca automático, rewards ruta
+# ANÁLISIS FRONTEND — Logs de depuración en `/equipos` (2026-09-16)
 
-Fecha: 2026-09-14
-Rol: Frontend (Blade + Alpine.js + Tailwind 4). Solo UI: NO tests, NO backend.
+## Objetivo
 
-## Contexto / fuentes leídas
-- `active/RESUMEN_TAREA.md`, `docs/conventions.md`, `.ai/rules/index.md` (sin reglas de glob para `resources/views/**`).
-- `src/CombateRuta/context.md` — contrato de ruta (formación popup > `teams.formacion` > automática; rewards `ResultadoRuta::aArray()`).
-- `resources/views/equipos/index.blade.php` — Alpine `favoritosApp()`, select rol por miembro, editor formación persistente (`formacionDe`/`setFormacionSlot`/`guardarFormacion`), tabs Equipos/Favoritos, modal favoritos.
-- `resources/views/habitats/show.blade.php` — Alpine `habitatShow()`, Ruta Panel con preview (`cargarRivalesRuta`), Teams Panel, Niveles Panel (pokémon/entrenadores), popup formación con chip "⚙️ Automática".
-- `resources/views/exploraciones/index.blade.php` (~264-415) + `exploraciones/_caramelo.blade.php` — patrón de recompensas de ruta a replicar en modal Livewire.
-- `resources/views/livewire/combate.blade.php` — modal victoria Bootstrap con `rewards` plano (`caramelos`, `medalla`).
+Diagnosticar por qué los reclutados no se muestran en `/equipos` aunque el backend los envía.
+**Solo se añaden logs de depuración; NO se cambia lógica de negocio ni estructura.**
 
-## Qué tocar (3 ficheros)
-1. `resources/views/equipos/index.blade.php`:
-   - Quitar tab "Favoritos" (barra de tabs + bloque ~44-238 + modal ~640-698). Título "Equipos". `activeTab` por defecto 'equipos' → se elimina el estado (barra y wrappers fuera).
-   - Sustituir `<select>` de rol por miembro por radio Vanguardia/Retaguardia (mini-botones, mismo criterio visual que bloques de formación). Marcar `// DEPRECATED:` `updateMemberRole` y `rolInicialDe` (ruta `/api/reclutado/{id}/rol` ya no se llama; endpoint se conserva).
-   - Eliminar bloque inferior "Formación de combate" (redundante), conservando "Guardar formación" + `formacionSaveError`/`formacionSaveSuccess` reubicados bajo el grid de miembros.
-   - Alpine: eliminar estado/lógica de favoritos (`favoritos`, `noFavoritos`, `allGestionables`, `availablePokemonsFav`, `togglingFavoritoId`, `showFavoritosModal`, `toggleFavorito`, `open/closeFavoritosModal`, normalize `r.favorito`).
+## Bug y contexto
 
-2. `resources/views/habitats/show.blade.php`:
-   - Mover Teams Panel antes del Ruta Panel (equipos arriba en ruta/entrenadores).
-   - Niveles Panel visible también en `modo === 'ruta'`: mismas tarjetas (gating `min_lvl`, conteo, visto/desconocido); click setea `rutaNivel` vía `selectRutaNivel(level)` SIN fetch (se conserva `rutaNivel` separado de `selectedLevel`; CTA y `confirmarCombateRuta` ya usan `rutaNivel`).
-   - Ruta Panel: quitar mini-selector de niveles + "Rivales salvajes"/preview; conservar cabecera 5v5 y nota azul. Eliminar Alpine `rutaRivales`, `rutaRivalesLoading`, `rutaRivalesError`, `cargarRivalesRuta()` y sus llamadas (init/setModoRuta/selectRutaNivel). CTA `:disabled="!selectedTeamId"`.
+- El usuario recluta pokémon (inserta en `reclutados`), pero en `/equipos` no se muestra ningún
+  pokémon (ni disponibles ni asignados a equipos).
+- El backend funciona: los tests pasan y el HTML ya incluye `@json($reclutados ?? [])` (línea 1019),
+  `@json($teams ?? [])` (1021), `@json($teamIds ?? [])` (1022).
+- `browser.log` muestra un error del bundle JS viejo en otras páginas:
+  `Uncaught TypeError: Cannot redefine property: $persist`, que rompe el arranque de Alpine.
+  `/equipos` es 100 % Alpine (`x-data="favoritosApp()"`): si Alpine no arranca, no se pinta nada.
+- Tras reconstruir la imagen Docker (`docker compose up -d --build`), los logs deben confirmar:
+  (a) Alpine arranca, (b) los datos llegan al componente, (c) algún error JS bloquea el render.
 
-3. `resources/views/livewire/combate.blade.php`:
-   - Rama ruta (`!empty($rewards['caramelos_familia'])`): recompensas estilo exploraciones (`_caramelo` por grupo familia/EV/tipo con `src/alt/cantidad/nombre` ya del backend), grid Tailwind `bg-gray-50 dark:bg-gray-900/50 rounded-lg p-3` + `<hr>`, tarjeta "Capturados" si `capturas`, EXP intactas, `@php $candyFallback…` al inicio. Rama else (entrenador/gimnasio/medalla) se mantiene.
+## 1. Vistas/componentes a tocar
 
-## Estados UI cubiertos
-- Equipos: loading/error de guardado formación, disabled en exploración, equipo vacío, slots vacíos.
-- Hábitat: niveles bloqueados (`min_lvl`), popup formación siempre poblado (5 slots), ruta sin preview (sin estados de carga de rivales que eliminar).
-- Combate: victoria ruta con/sin capturas, con grupos parciales de caramelos; victoria entrenador/gimnasio con medalla.
+- `resources/views/equipos/index.blade.php` — único archivo modificado.
 
-## Riesgos / decisiones
-- `rutaNivel` se mantiene como estado separado (no se unifica con `selectedLevel`) para no tocar `confirmarCombateRuta` ni el CTA; `selectRutaNivel(level)` deja de hacer fetch.
-- Popup formación: helper `formacionInicialDe(teamId)` (persistida > 'vanguardia') usado por `openRutaFormacionPopup`, `selectTrainer` y `openFormacionPopup`; se elimina el chip "⚙️ Automática" y el estilo dashed. `confirmarCombate` ya envía `formacion` completa en ambas ramas; con la inicialización nueva nunca habrá slots vacíos → backend nunca aplica clasificación automática.
-- Barra de tabs de equipos: se elimina por completo (contenido directo), opción más limpia.
-- Favoritos del HÁBITAT (exploración individual) se conservan intactos en `habitats/show.blade.php`.
-# ANÁLISIS FRONTEND — Gestión-Admin de Gymnasios + Mazmorras + CP en reclutados
+## 2. DTOs/contratos consumidos
 
-Fecha: 2026-09-05
-Rol: Frontend (Blade + Alpine.js + Tailwind 4 + Vite/Livewire)
-Base: sigue al agente Backend que está construyendo los endpoints (trabajo en árbol
-de trabajo con commits `73c19e8 5vs5`, `3941b5d gym ia`, `77e1f96 gestion equipos`).
+- No se consume ningún DTO nuevo. Se leen los datos ya inyectados en `favoritosApp()`:
+  `reclutados`, `teams`, `teamPokemonIds` (arrays serializados a JSON en Blade).
 
-## Contexto / fuentes leídas
+## 3. Comportamientos a cubrir (testing futuro, NO ejecutado)
 
-- `docs/context.md`, `.ai/rules/index.md`, `active/RESUMEN_TAREA.md`.
-- `resources/views/habitats/show.blade.php` — modal Alpine `habitatShow()` con
-  `openGestionModal()`, popup de formación (selección equipo + vanguardia/retaguardia),
-  modal Admin-Gestión de familias, favoritos. **Patrón de referencia** del que parto.
-- `resources/views/gimnasios/index.blade.php` y `show.blade.php` — vistas actuales de
-  gyms, popup de formación, mapping `$tipoBadges` (int TipoPokemon 1-18 → badge Tailwind),
-  endpoint `GET /api/gimnasios` (listado) y `GET /api/gimnasios/{slug}` (detalle).
-- `resources/views/equipos/index.blade.php` — vista Alpine `favoritosApp()`, tarjetas de
-  reclutados (icono + nombre + Nv), equipo con slots **hardcoded a 3** (`[1,2,3]`),
-  modal de detalle con stats/evolución.
-- `resources/views/reclutado/show.blade.php` — detalle individual (nivel + exp + evolución).
-- `resources/views/livewire/_pokemon-card.blade.php` — tarjeta de combate (Livewire).
-- `app/Support/ReclutadoSerializer.php` — serializador compartido de reclutado (nivel,
-  exp_total, es_shiny, behavior, rol, stats). El backend ampliará con **CP**.
+- `init()` se ejecuta ⇒ Alpine arrancó (`[equipos:init]` encontrado en consola).
+- `reclutados` es array y su longitud coincide con lo que envía el backend.
+- Primer reclutado serializado en JSON (recorte 500 chars) para detectar campos faltantes/null.
+- Si existe un reclutado con `pokemon_id === 436`, log explícito de su `id`/`nombre`/`pokemon`.
+- `reclutados` vacío o no-array ⇒ log de error con el JSON crudo.
+- Error JS global capturado con `window.addEventListener('error')` para ver si Alpine muere.
+- `[equipos:script-load]` se imprime aunque Alpine falle ⇒ confirma que el `<script>` se ejecutó.
 
-## Qué tocar
+## 4. Estados UI a cubrir
 
-### BLOQUE A — Popup Gestión-Admin de gyms (vista NUEVA)
-- **Nuevo**: `resources/views/gimnasios/admin.blade.php` — vista/alpine-modals de admin.
-  No reutiliza `gimnasios/show` (es una vista nueva dentro del popup).
-- 3 capas de modal Alpine con fetch API (patrón `habitatShow()`):
-  1. Popup "Gestión-Admin" → lista TODOS los gyms (datagrid / endpoint backend).
-  2. Popup detalle de gym → 4 pestañas (etapas 1-4, entrenadores).
-  3. Zona inferior → pokémon filtrados por el tipo del gym (filtro aplicado por defecto)
-     y a SOLO última evolución (flag `es_ultima_evolucion` del backend).
-  4. Edición medalla/tipo/nivel_minimo + 4 etapas (vanguardia/retaguardia species_id).
-- Botón de acceso: nuevo enlace/modal "Gestión-Admin" (p.ej. desde `/gimnasios`).
+| Estado | Cómo se diagnostica |
+|--------|---------------------|
+| Alpine no arranca | Ausencia de `[equipos:init]` + presencia de `[equipos:script-load]` |
+| Error JS bloqueante | `[equipos:global-error]` con mensaje + archivo:línea |
+| `reclutados` vacío | `console.error` con JSON crudo recortado |
+| `reclutados` con datos pero no renderiza | `[equipos:init]` con longitud > 0 + primer reclutado serializado |
 
-### BLOQUE B — Mazmorras en hábitat
-- `resources/views/habitats/show.blade.php`: activar botón "Mazmorras" (hoy placeholder
-  `alert('Función próximamente')`) → `openMazmorraModal()`.
-- Nuevo modal Alpine "Mazmorra": pisos, al completar → siguiente, cooldown 1h si pierdes,
-  no repetir ganados. Formación de equipo de 5 (vanguardia/retaguardia) — reutiliza patrón.
+## 5. Logs a añadir (sin lógica nueva)
 
-### BLOQUE C — CP en reclutados
-- `resources/views/equipos/index.blade.php`: badge CP en las tarjetas de reclutado
-  (favoritos + disponibles + asignados) y en el modal de detalle.
-- `resources/views/reclutado/show.blade.php`: CP junto a nivel/exp.
-- `resources/views/livewire/_pokemon-card.blade.php`: badge CP (tolerante a que no venga).
-- Nombre por defecto CAPITALIZADO (`ucfirst`) cuando el reclutado no tiene nombre personalizado.
+1. Al inicio de `init()` (línea 1137): conteos de `reclutados`, `teams`, `teamPokemonIds`.
+2. En `init()`, tras el log anterior: listener global `error` una sola vez (guard
+   `window.__equiposOnErrorInstalado`).
+3. Al final del `<script>` de `@push('scripts')`, antes de `</script>` (línea 2206), fuera de
+   `favoritosApp()`: log de carga con estado de `window.Alpine`.
 
-## DTOs Wireable / contrato JSON asumido (coordinar con Backend)
+## 6. Riesgos accesibilidad/UX
 
-Bloque admin gyms (endpoints que debe crear el backend):
-- `GET /api/gimnasios/admin` → `[{ id, slug, medalla, tipo, nivel_minimo }]`
-- `GET /api/gimnasios/admin/{gym}` → detalle admin:
-  ```
-  {
-    id, slug, medalla, tipo, nivel_minimo,
-    etapas: [ // 4 entrenadores
-      { etapa: 1, nombre, vanguardia_species_id, retaguardia_species_id },
-      ...
-    ],
-    pokemon: [ // tipo == gym.tipo, SOLO última evolución (es_ultima_evolucion)
-      { id, name, species_id, icon, es_ultima_evolucion }
-    ]
-  }
-  ```
-- `PATCH /api/gimnasios/admin/{gym}` → body `{ medalla?, tipo?, nivel_minimo?,
-  etapas?: [{etapa, vanguardia_species_id, retaguardia_species_id}] }`
-- (Alternativa compatible) `GET /datagrid/gyms` para la primera capa del listado.
+- Los logs son solo consola; no alteran DOM, accesibilidad ni UX.
+- El listener global se instala una única vez (guard) para no acumular handlers.
+- No se exponen datos sensibles: solo longitud, JSON recortado y campos de reclutado.
 
-Mazmorras:
-- `GET /api/habitats/{id}/mazmorra` → `{ pisos: [{piso, nombre, ganado, cooldown_hasta}] }`
-- `POST /api/habitats/{id}/mazmorra/{piso}/combatir` → body `{ team_id, formacion }`
-  → `{ battle_id | redirect }`
+## 7. Alcance y no-alcance
 
-CP reclutados:
-- Campo `cp` (int) en `ReclutadoSerializer::serializar()` y en `/equipos` payload.
-
-## Estados UI a cubrir
-- Loading (spinner), Error (mensaje + retry), Empty (sin gyms / sin pokémon / sin equipo),
-  Success. Para mazmorra: sin piso disponible / cooldown / ganado.
-
-## Riesgos accesibilidad/UX
-- Modales: `@keydown.escape.window`, overlay click-to-close, `aria-label`, focus en el
-  header. Background scroll bloqueado mientras el modal abierto (no toco; hereda patrón).
-- Alternancia pestañas con `role="tablist"`/`role="tab"`/`aria-selected`.
-- Toggle formación usa botones con texto visible (no solo color).
-
-## Tests a escribir (framework: feature view assertions + Alpine-fetch, ver
-FrontendHabitatModalTest / EquiposViewTest)
-- `tests/Feature/Gimnasios/GimnasioAdminViewTest.php` — render de la vista admin,
-  markers Alpine (`gimnasioAdminApp`, 4 pestañas, `es_ultima_evolucion`, PATCH).
-- `tests/Feature/Habitats/HabitatMazmorraViewTest.php` — botón Mazmorras activo
-  (`openMazmorraModal`), popup de formación de 5 (`[1,2,3,4,5]`), cooldown/ganado.
-- `tests/Feature/EquiposCpViewTest.php` — badge CP en tarjetas y detalle, nombre cap.
-- Ajustar `EquiposViewTest` si hace asserts de slots=3.
-
-## Restricciones
-- NO tocar UI de exploraciones ni `behavior/RolExploracion`.
-- Tras editar Tailwind → indicar `npm run build`.
-- No lógica de negocio en Blade; solo consumir DTOs/contrato JSON.
+- **Alcance**: añadir los 3 bloques de logs descritos.
+- **No-alcance**: no tocar getters, templates, endpoints, ni la lógica de render. Los logs son
+  temporales de diagnóstico; se retirarán al cerrar el bug (fuera de esta tarea).
 
 ---
 
-## Handoff — RF-A Cancelar exploración · RF-D sin Indefinido + preview · RF-C rol individual · RF-E Misiones (Frontend)
+# ANÁLISIS FRONTEND — Equipos de 3 y turnos con `effectiveSpeed` (2026-10-15)
 
-Fecha: 2026-09-06
-Prioridad: alta (contrato backend en paralelo)
+## Objetivo
 
-### Cambios aplicados (frontend únicamente)
+Adaptar las vistas Blade (y sus tests por lectura) a los commits backend `3039027d89` +
+`f846f1ca5e`:
 
-- **RF-A — Cancelar exploración** (`resources/views/exploraciones/index.blade.php`)
-  - Tarjeta ACTIVA: botón secundario "Cancelar" (todas), "Recoger resultados" SOLO en
-    indefinidas (`@if(!empty($exp['indefinido']))`).
-  - `cancelarExploracion(id)` → `postAction('/exploraciones/{id}/cancelar', '¿Cancelar la
-    exploración? No recibirás recompensas.')` (confirm + POST + reload; mismo patrón que
-    `recogerResultados`/`cerrarResultados`).
+1. Equipos estándar de **3 miembros** (máximo de asignación; "exactamente 3" al combatir).
+2. Contrato de la barra de turnos: `aArrayVista` expone `effectiveSpeed` (float); `accumulatedSpeed`
+   ya no existe (clave indefinida en Blade).
+3. Textos de UI "5v5" → "3v3" y slots de equipo 1-5 → 1-3.
 
-- **RF-D — Sin modo Indefinido + preview de recompensas** (`resources/views/habitats/show.blade.php`)
-  - Radio `value="indefinite"` eliminado; el branch `else { data.indefinido = true; }` de
-    `confirmExploration()` eliminado (solo envía `duracion_horas`/`return_time`).
-  - `loadPreview()` recarga al abrir el modal y en cada `@change` de radios/inputs de
-    duración, pasando `duracion_horas` o `return_time` a `GET /exploraciones/preview`.
-  - Bloque "Ganarás esto": `por_horas`, `aviso`, y `items` con `'entre {min} y {max}'`
-    (tolerante con `x-show="previewLoaded && preview?.recompensas_esperadas"`).
-    Badge de rol del reclutado: `preview.rol || preview.rol_sugerido`.
-  - El mismo cambio de envío sin `indefinido` se aplicó al flujo individual de
-    `resources/views/equipos/index.blade.php` (`postExploracionIndividual`).
+Testing diferido: NO se ejecutan tests; los adaptations de tests de vistas se hacen por lectura.
 
-- **RF-C — Rol individual vía `/api/reclutado/{id}/rol`** (`resources/views/equipos/index.blade.php`)
-  - `updateMemberRole()` → `POST /api/reclutado/{reclutadoId}/rol` con `{ behavior }`
-    (reclutadoId = `member.reclutado?.id ?? member.pokemon_id`); ya no usa
-    `/teams/update-member-role`.
-  - Valor inicial: `rolInicialDe()` = `member.reclutado?.behavior || member.behavior || 'VANGUARDIA'`.
-  - 4 roles disponibles en el selector (VANGUARDIA/COMBATIENTE/RECOLECTOR/RASTREADOR).
+## 1. Vistas/componentes a tocar
 
-- **RF-E — Página de Misiones** (`resources/views/misiones/index.blade.php`, NUEVO)
-  - Alpine `misionesPage()`: carga `GET /misiones`, `GET /misiones/activa`,
-    `GET /api/reclutados`, `GET /datagrid/habitat?per_page=200`.
-  - Aceptar: modal con `reclutado_id` + `habitat_id` → `POST /misiones/{id}/aceptar`.
-  - Activa: progreso (`progresoPorcentaje`), `POST /misiones/{activa.id}/cancelar`,
-    botón ¡Pelea! → `misionPeleaRuta` (parámetro de vista) o placeholder "La pelea de
-    misiones está en preparación."
-  - Link del nav a `/misiones` ya presente en `resources/views/layouts/app.blade.php`.
+| Archivo | Cambio |
+|---|---|
+| `resources/views/livewire/partials/turn-bar.blade.php` | `$p['accumulatedSpeed']` → `$p['effectiveSpeed']` (mantiene `round()`). |
+| `resources/views/equipos/index.blade.php` | Grid de slots del equipo `grid-cols-5`→`grid-cols-3`; `x-for="slot in [1,2,3,4,5]"`→`[1,2,3]`; `addToTeam` busca hueco en `[1,2,3]`; `guardarFormacion` recorre `slot <= 3`; comentarios `(combate 5v5)`→`(combate 3v3)`. |
+| `resources/views/habitats/show.blade.php` | Tarjetas de equipo: `grid-cols-5`→`grid-cols-3`, `@for $i < 5`→`$i < 3`; textos `(Ruta 5v5)`→`(Ruta 3v3)`; comentarios `(hasta 5 miembros)`/`(combate 5v5)`/`(5 slots)`→3; `formacionInicialDe` slots 1-3. |
+| `resources/views/gimnasios/show.blade.php` | `formacionInicialDe` slots 1-3. |
+| `tests/Feature/FrontendHabitatModalTest.php` | Comentarios 5v5→3v3; assert obsoleto L86 reconciliado; grid `grid-cols-3`; `Vacío` ×3; nombre del test `..._five_slots`→`..._three_slots`. |
+| `tests/Feature/EquiposViewTest.php` | Asserts `[1,2,3]`; comentarios/docblock/nombre `five_slots`→`three_slots`. |
 
-### Tests (verdes)
-- `tests/Feature/FrontendExploracionesCancelarTest.php`
-- `tests/Feature/FrontendHabitatModalTest.php`
-- `tests/Feature/FrontendMisionesTest.php`
-- `tests/Feature/FrontendEquiposRolTest.php`
-- 6 tests / 54 assertions PASS.
+## 2. Contratos consumidos (verificados por lectura en backend)
 
-### Pendientes de contrato backend (NO implementar aquí)
-- Rutas de misiones: `GET /misiones`, `GET /misiones/activa`, `POST /misiones/{mision}/aceptar`,
-  `POST /misiones/{activa}/cancelar`, `POST /misiones/{activa}/pelear` (backend en paralelo;
-  la vista tolera su ausencia).
-- El controlador/validación de `POST /exploraciones/{id}/cancelar` (backend en paralelo).
-- El preview debe poder devolver `recompensas_esperadas` y `rol`/`rol_sugerido` (tolerante).
+- `src/Battle/Domain/Combatiente::aArrayVista()` → `effectiveSpeed` (float, con multiplicadores y
+  parálisis), sin `accumulatedSpeed`. La vista ya resuelve `$p` desde `$team1/$team2` (mismo shape).
+- `TeamController::addMember` valida `slot: max:3`; `ConstruirEquipoJugador::desdeEquipo` exige
+  `count === 3`; la migración recorta `slot > 3`. La UI ya tenía `team.members.length < 3` (badge
+  INVÁLIDO) y `length !== 3` (composición), por lo que solo quedaban los límites de 5 residuales.
+- `teams.formacion` / payloads de combate: `{slot: 'vanguardia'|'retaguardia'}` con slots 1-3.
+  `formacionInicialDe` de ambas vistas genera ahora solo 1-3 (claves 4-5 fuera del contrato).
+- La UI de equipos ya no ofrece un 4º slot (grid de 3) y `addToTeam` no encuentra hueco fuera de
+  1-3 (alerta "Este equipo está lleno"); no hay endpoint nuevo que consumir.
 
-### Fallos pre-existentes NO imputables al frontend
-- `tests/Feature/ExploracionesPageTest.php` (10 fallos: `QueryException` NOT NULL
-  `reclutado_id` en `exploraciones_activas`): la migración backend
-  `2026_09_02_000003_change_equipo_id_to_reclutado_id_in_exploraciones.php` hace
-  `reclutado_id` NOT NULL pero el test crea filas sin ese campo → lo corrige el backend.
+## 3. Comportamientos a cubrir en testing futuro (NO ejecutado)
 
-### Notas
-- `vendor/bin/pint --dirty` aplicado (solo ajustó archivos de otros agentes; mis tests quedaron pass).
-- No se ejecutó `npm run build` (no hubo cambios Tailwind/CSS fuera del HTML en línea).
+- Barra de turnos: renderiza la velocidad efectiva redondeada (sin índice indefinido → sin
+  warnings PHP) tras cambios de stages/parálisis.
+- Equipos: un equipo de 3 muestra 3 slots; nunca un 4º placeholder ni opción de añadir 4º.
+- `guardarFormacion` no envía claves de slot 4-5 aunque existieran en `team.formacion` legacy
+  (el bucle corta en 3 y `getMember` descarta).
+- Hábitats: tarjetas de equipo con 3 slots y exactamente 3 placeholders "Vacío" si el equipo
+  está vacío; `formacionInicialDe` de ruta/entrenadores 1-3 y `mazmorra` data-driven.
+- Gimnasios: `formacionInicialDe` 1-3; el sed del payload no incluye slots 4-5.
 
-## BLOQUE A — Gestión-Admin de Gimnasios (wired)
-- `resources/views/gimnasios/admin.blade.php` (NUEVO): dos popups encadenados.
-  - Capa 1: listado de todos los gyms (`GET /api/admin/gyms`).
-  - Capa 2: detalle con 4 pestañas (etapas 1-4), pokémon por tipo SOLO última evolución
-    (A.3/A.4), edición de medalla/tipo/nivel_minimo + vanguardia/retaguardia, guardado
-    secuencial `PUT` datos básicos + `PUT` por-etapa.
-  - Última evolución (A.4): respeta `es_ultima_evolucion` del backend si viene; fallback
-    local excluyendo species_id que aparecen como `evolves_from_species_id` de otra fila.
-  - Filtros por tipo (A.3): aplicados por defecto (types del payload o `filter[types]` del
-    Datagrid en el fallback).
-  - Estados cubiertos: loading / error / empty / success para ambas capas y el guardado.
-- `app/Http/Controllers/GimnasiosViewController.php`: método `admin()` → `view`.
-- `routes/web.php`: `GET /gimnasios/admin` registrada ANTES de `/{slug}` (para no ser absorbida).
-- `resources/views/gimnasios/index.blade.php`: botón "Admin" (cosmético, cualquier user authed).
-- Build: `npm run build` ejecutado (nuevas clases Tailwind).
-- Test: `tests/Feature/Gimnasios/GimnasioAdminViewTest.php` (6 tests PASS).
+## 4. Estados UI a cubrir
 
-### Fix bug rutas admin (2026-09-10)
+| Estado | Comportamiento |
+|---|---|
+| Equipo con 0-2 miembros | 3 slots visibles; los vacíos como placeholder (sin añadir 4º). |
+| Equipo con 3 miembros | Sin hueco para añadir; `addToTeam` bloquea con alerta. |
+| `team.formacion` legacy con slots 4-5 | Se ignora en UI y no se reenvía al PATCH. |
+| Turno con velocidad efectiva alterada | Badge muestra el valor efectivo redondeado. |
 
-**Problema**: la vista hacía fetch contra `/api/gimnasios/admin` y `/api/gimnasios/admin/{slug}` con `PATCH`, rutas que NO existen. El contrato real es `/api/admin/gyms` con `PUT`.
+## 5. Riesgos accesibilidad/UX
 
-**Cambios aplicados** en `resources/views/gimnasios/admin.blade.php`:
+- El grid de 3 columnas mantiene tamaño de iconos (`h-16`) y no rompe lectores (mismo markup).
+- No se cambian textos visibles más allá de 5v5→3v3; sin nuevas interacciones.
 
-1. **`loadGyms()`**: eliminado intento-fallback. Ahora `GET /api/admin/gyms` directamente.
-2. **`loadDetail()`**: `GET /api/admin/gyms/{slug}`. Parse de `etapas` adaptado de array
-   (`[{etapa, vanguardia_species_id, ...}]`) a objeto map (`{1: {vanguardia, retaguardia}, ...}`)
-   — coincide con `AdminGymController::serializar()`.
-3. **`guardarGym()`**: secuencia de 2 pasos:
-   - `PUT /api/admin/gyms/{slug}` con `{medalla, tipo, nivel_minimo}` (datos básicos).
-   - `PUT /api/admin/gyms/{slug}/stages/{etapa}` × 4 etapas, con `{vanguardia: int[], retaguardia: int[]}`.
-   - Si falla el PUT de datos → aborta, muestra error.
-   - Si falla una etapa concreta → muestra error con detalle; las demás quedan guardadas.
-   - Se usa `idsDe()` existente para normalizar strings a arrays de ints.
+## 6. Verificación (sin tests)
 
-**Deuda de tests** (`GimnasioAdminViewTest`):
-- `test_admin_view_has_list_modal` línea 31: `assertSee('/api/gimnasios/admin')` → ya no existe.
-- `test_admin_view_has_detail_modal` línea 46: `assertSee('/api/gimnasios/admin/')` → ya no existe.
-- `test_admin_view_edit_fields_are_present` línea 56-57: `vanguardia_species_id` / `retaguardia_species_id` → desaparecieron del parse de carga.
-- `test_admin_view_edit_fields_are_present` línea 58: `method: 'PATCH'` → ahora es `PUT`.
-  Estos tests requieren actualización por QA/Backend (no tocar por orden vigente).
+- Grep final en `resources/views` y `tests/` de `5v5|hasta 5|1,2,3,4,5|grid-cols-5|Vacío`.
+- Revisión del diff completo; `vendor/bin/pint --dirty` para los PHP de tests.
 
----
+## 7. Nota de estado del working tree (WIP preexistente)
 
-## Combate de Ruta 5v5 — escalado global a 5v5 + modo ruta por defecto (2026-09-13)
-
-Rol: Frontend (Blade + Alpine.js + Tailwind 4). Base: backend commiteado en `0195b04`
-(combate ruta 5v5, formación persistida, gimnasios escalados; suite 1058 PASS).
-Constraint: NO tocar `src/` ni `app/` de backend; solo vistas + Alpine + estilos.
-
-### Contratos verificados (fuente)
-
-- `GET /api/habitats/{habitat}/ruta/rivales?nivel=N` → `{rivales: [{id, nombre, posicion, species_id, nivel}]}`.
-  `nivel` clamped 1-3 (`max(1,min(3,$nivel))`). Pool vacío → `rivales: []`.
-- `POST /api/habitats/{habitat}/ruta/iniciar` → body `{team_id, formacion?, nivel?}`;
-  `formacion` es `sometimes|array`, `formacion.*` ∈ {vanguardia, retaguardia} → **`{}` aceptado**
-  (= usa formación persistida del backend). Respuesta `{battle_id, redirect}`.
-- `ViolacionReglaNegocio` → 422 `{message}` (renderable en `bootstrap/app.php`).
-  `IniciarCombateRuta` lanza `'El equipo de ruta debe tener exactamente 5 miembros.'` y
-  `'No hay Pokémon salvajes disponibles en esta ruta para tu nivel.'`.
-- `PATCH /teams/{team}/formacion` (`routes/player.php:43`) → body `{formacion: {slot: pos}}`;
-  respuesta `{team: {id, formacion}}`; 404 equipo ajeno; en exploración → 422 `{error}` vía
-  `TeamController::responderError`.
-- `$teams` de la vista hábitat (`ObtenerEquipos` → `TeamAggregate`) NO expone `formacion`
-  (solo id/name/members). `PlayerController::equipos()` tampoco → la vista equipos no puede
-  pre-poblar la formación persistida en carga inicial; se puebla tras el primer PATCH local.
-
-### Qué tocar
-
-1. `resources/views/habitats/show.blade.php`:
-   - `modo: 'pokemon'` (línea 1081) → `modo: 'ruta'` (default). Persistencia del estado:
-     la vuelta del combate recarga la página y el default sigue siendo 'ruta'.
-   - Botones izquierda: quitar enlace "Favoritos" (líneas 51-62); añadir botón "Combate de ruta"
-     (arriba, activo si `modo === 'ruta'`); añadir botón "Exploraciones" debajo de "Entrenadores"
-     (activo si `modo === 'pokemon'`); respetar `$bloqueadoConstruccion`.
-   - `toggleEntrenadores()` → toggle entre 'entrenadores' y 'ruta' (NO a 'pokemon');
-     nuevo `toggleExploraciones()` entre 'pokemon' y 'ruta'; nuevo `setModoRuta()`.
-   - Nuevo **Ruta Panel** (x-show `modo === 'ruta'`): nota obligatoria "Combate 5v5 contra
-     pokémon salvajes. Sin límite diario. Al ganar puedes capturar.", selector nivel 1-3
-     (`rutaNivel`), preview de 5 rivales (loading/error/empty/success; `isSighted(species_id)`),
-     aviso empty "No hay Pokémon salvajes disponibles...". CTA "Combate de Ruta"
-     (`openRutaFormacionPopup`) deshabilitado sin equipo o sin rivales.
-   - Panel Equipos: `x-show="modo === 'entrenadores' || modo === 'ruta'"`.
-   - Niveles Panel: `x-show="modo === 'pokemon' || modo === 'entrenadores'"` (oculto en ruta).
-   - Botón "Iniciar Exploración": `x-show="modo === 'pokemon'"` (oculto en ruta).
-   - Popup formación (661-715): `formacionContexto` ('entrenadores'|'ruta').
-     Entrenadores: inicializa todos 'vanguardia' (existente). Ruta: `formacion = {}` →
-     backend usa persistida; chip "⚙️ Automática" cuando slot sin elegir. Error 422 inline
-     (`rutaCombatError`) en el popup, sin redirigir (requisito).
-   - `confirmarCombate()` → branch: ruta → `confirmarCombateRuta()` (POST iniciar);
-     entrenadores → flujo existente.
-   - Team cards preview (línea 287): `@for($i=0;$i<3;$i++)` → 5 slots en `grid grid-cols-5`
-     (imágenes `w-full h-14` en vez de `w-24 h-24` para no desbordar).
-   - `selectTeam()`: `checkAndOpenModal()` solo si `modo === 'pokemon'` (evita re-abrir el
-     modal de exploración con favorito previamente seleccionado).
-   - `init()`: `cargarRivalesRuta()` al cargar (modo ruta por defecto).
-   - Estados Alpine nuevos: `rutaNivel`, `rutaRivales`, `rutaRivalesLoading`, `rutaRivalesError`,
-     `rutaCombatiendo`, `rutaCombatError`, `formacionContexto` + `cargarRivalesRuta()`,
-     `selectRutaNivel()`, `openRutaFormacionPopup()`, `confirmarCombateRuta()`.
-   - No crear archivos Blade nuevos (todo en secciones dentro de `show.blade.php`).
-
-2. `resources/views/equipos/index.blade.php`:
-   - Slots 3 → 5: `slot in [1,2,3]` (línea 342) y `addToTeam` emptySlot `[1,2,3]` (línea 1534).
-   - Badge INVÁLIDO `team.members.length < 3` (línea 310): regla de producto, SE MANTIENE.
-   - `composicionBadge` (línea 1427): solo para 3 miembros → null; SE MANTIENE (documentado).
-   - Editor de formación por tarjeta de equipo: toggle vanguardia/retaguardia por slot
-     (2 botones), estado `formacionDraft` (por teamId), `formacionDe(team, slot)` =
-     draft ?? `team.formacion?.[slot]` ?? 'vanguardia', botón "Guardar formación" → PATCH,
-     feedback inline (error/success); deshabilitado en exploración.
-   - Estado Alpine nuevo en `favoritosApp()`: `formacionDraft`, `formacionSavingTeamId`,
-     `formacionSaveError`, `formacionSaveSuccess` + `formacionDe()`, `setFormacionSlot()`,
-     `guardarFormacion()`.
-
-3. Partials de combate (`battle-field`, `turn-bar`, `moves-panel`, `_pokemon-card`): verificados
-   dinámicos (`@foreach` por posicion / turnQueue) — **sin cambios**; ya soportan 5v5.
-
-### Estados UI cubiertos
-
-- Rivales: loading (spinner), error (aviso), empty (pool vacío → aviso), success (grid 5).
-- Popup ruta: 422 inline (`rutaCombatError`), botón deshabilitado mientras `rutaCombatiendo`.
-- Equipos: formación sin cambios → guardar deshabilitado; exploración activa → editor disabled.
-- `bloqueadoConstruccion` → todos los botones de construcción (incluido ruta) disabled.
-
-### Riesgos / decisiones
-
-- Widget "⚙️ Automática" solo en contexto ruta; entrenadores conserva su comportamiento.
-- `isSighted(rival.species_id)` reutiliza el helper existente (misma lógica que niveles).
-- Widget toggle del popup: `toggleFormacionSlot()` desde undefined → 'vanguardia' (sin
-  ciclo automática↔vanguardia; decisión aceptada).
-- Nota: `docs/context.md` desactualizado (describe 3v3); NO se toca (constraint).
-
-### Verificación
-
-- `npm run build` (clases Tailwind nuevas: grid-cols-5, chips formación, etc.).
-- `php -l` / `php artisan view:cache` (Blade compila).
-- Tests: ampliar `FrontendHabitatModalTest` (ruta panel + nota + popup ruta) y
-  `EquiposViewTest` (5 slots + formation editor strings). Suite completa al final.
-
-## ✅ Verificación final (2026-09-13)
-
-- `php artisan view:cache` OK (plantillas compilan).
-- `FrontendHabitatModalTest` + `EquiposViewTest`: 9/9 pass (79 asserts) — incluye
-  `test_habitat_defaults_to_ruta_mode_with_ruta_panel`, `test_habitat_team_cards_render_five_slots`
-  y `test_equipos_renders_five_slots_and_formation_editor`.
-- Suite completa: **1061 passed, 7 skipped, 0 failed** (sin regresiones).
-- `vendor/bin/pint --dirty` OK (solo EOF en `EquiposViewTest`).
-- `npm run build` OK (Tailwind compilado, `combate-*.css` regenerado).
-- Pendiente manual en navegador: popup de ruta, editor de formación, chips 5v5.
-
-## 🧾 Trazabilidad aplicada (2026-09-13)
-
-1. `resources/views/habitats/show.blade.php`:
-   - Panel izquierdo: se elimina el enlace Favoritos; se añaden "Combate de ruta"
-     (activo por defecto, `modo: 'ruta'`, ring `bg-blue-600`) y "Exploraciones" (icono).
-   - Panel ruta 5v5 (nota obligatoria, badge, selector de nivel, aviso pool vacío,
-     CTA sin formación, preview rivales 5 columnas, no-pool).
-   - Popup de formación contextual (`formacionContexto` 'ruta'|'entrenadores'|'pokémon') con
-     widget "⚙️ Automática" cuando el slot usa la formación persistida; `confirmarCombateRuta()`
-     con error 422 inline (`rutaCombatError`) sin redirigir tras éxito.
-   - Tarjetas de equipo a 5 slots (`@for 0..5`, `grid grid-cols-5`).
-2. `resources/views/equipos/index.blade.php`:
-   - Slots 3 → 5 (`slot in [1,2,3,4,5]`) en grid y `addToTeam` (busca hueco 1..5).
-   - Editor de formación persistente por tarjeta: draft local `formacionDraft`
-     (draft > `team.formacion` > 'vanguardia'), toggle vanguardia/retaguardia por slot,
-     "Guardar formación" → `PATCH /teams/{team}/formacion` (contrato `{team:{id, formacion}}`),
-     feedback inline ok/error, deshabilitado en exploración activa.
-3. Tests nuevos en `FrontendHabitatModalTest` y `EquiposViewTest` (ver IA arriba).
-
-## Riesgos/notas abiertas
-
-- `PATCH /teams/{id}/formacion` puede devolver 422 sin `error` para equipos ajenos/inactivos
-  (RespuestaApi sin responderError) → la UI mostraría el mensaje genérico. El editor solo opera
-  sobre equipos propios desde `/equipos`, así que el caso realista no se dispara.
-- La formación guardada se refleja en el hábitat si el backend expone `team.formacion` en su API
-  de equipos/rivales; el primer PATCH cierra el `{formacion: {}}` pendiente.
-- `docs/context.md` sigue describiendo 3v3 (constraint: no se toca).
-
----
-
-# ANÁLISIS FRONTEND — Refactor de gimnasios (eliminar lógica de dominio duplicada + medalla)
-
-Fecha: 2026-09-14
-Rol: Frontend (Blade + Alpine.js + Tailwind 4). Solo UI: NO tests (indicación explícita del brief).
-
-## Contexto / fuentes leídas
-- `docs/context.md`, `docs/architecture.md`, `docs/conventions.md`, `active/RESUMEN_TAREA.md`.
-- `.ai/rules/index.md` (sin reglas de glob para `resources/views/**`) + `grep` de keywords (blade/view/gimnasio/medalla/tipoBadge): sin coincidencias relevantes.
-- `src/Gimnasios/context.md` — catálogo, contrato público.
-- `src/Shared/UI/TipoBadges.php` — `MAP` (int→[label, tailwind]) y `DEFAULT` (single source of truth).
-- `src/Shared/Tipos/TipoPokemon.php` — `label()` (nombre ES) y `slug()` (`strtolower($this->name)`: `bicho`, `lucha`, `electrico`, `psiquico`…).
-- `src/Gimnasios/Domain/DataTransferObjects/{GimnasioResumen,DetalleGimnasio}.php` — `toArray()` con `tipo_nombre` + `tipo_slug`.
-- `src/Gimnasios/Infra/Controllers/GimnasioController.php` — endpoints públicos `/api/gimnasios` y `/api/gimnasios/{gym}`.
-- `public/images/medallas/` — 19 assets por **slug** (`normal.webp`, `electrico.webp`, `psiquico.webp`…), sin `0.webp`; el nombre de la medalla NO coincide con el archivo.
-- Las 3 vistas `resources/views/gimnasios/{index,show,admin}.blade.php`.
-
-## Qué tocar (3 ficheros, sin crear componentes nuevos)
-1. `index.blade.php`: sustituir el `@php` inline (líneas 6-29) por `\Src\Shared\UI\TipoBadges::MAP` / `::DEFAULT`; corregir la medalla a `gym.tipo_slug` con `onerror`; badge de tipo `x-text="gym.tipo_nombre"`.
-2. `show.blade.php`: mismo `@php` + `$cardPanelClass`; misma corrección de medalla (tamaño `text-4xl`); mismo badge.
-3. `admin.blade.php`: mismo `@php` + `$cardPanelClass`; medalla emoji 🏅 (sin cambio); `<select>` usa `tipoBadges` (sin cambio); badge de card con `gym.tipo_nombre`.
-
-## DTOs/API consumidos
-- `GET /api/gimnasios` → `GimnasioResumen::toArray()` (incluye `tipo`, `tipo_nombre`, `tipo_slug`).
-- `GET /api/gimnasios/{slug}` → `DetalleGimnasio::toArray()` (incluye `tipo`, `tipo_nombre`, `tipo_slug`, `etapas`).
-- `GET /api/admin/gyms` y `/api/admin/gyms/{slug}` → `AdminGymController::serializar()` (**NO** incluye `tipo_nombre`/`tipo_slug`; solo `tipo` int).
-
-## Estados UI a preservar
-- Loading, error, empty y success ya existen en las 3 vistas; el refactor no los altera.
-- Imagen de medalla: `onerror="this.style.display='none'"` (mismo patrón anti-loop del proyecto) evita icono roto si el slug no tuviera asset.
-- `tipoBadge()` se mantiene para el color (`:class`) y como fallback de texto.
-
-## Riesgos / desvío justificado
-- **Discrepancia de contrato (P1)**: el brief pide `x-text="gym.tipo_nombre"` en la card del **admin**, pero `/api/admin/gyms` no expone `tipo_nombre`. Aplicarlo literal dejaría el badge **vacío** (regresión visible). Desvío mínimo y justificado: `x-text="gym.tipo_nombre || tipoBadge(gym.tipo)[0]"` — usa el campo nuevo cuando exista y conserva el texto actual mientras el backend no lo añada. El `<select>` y `tipoBadge(detail.tipo)` siguen igual.
-- La medalla depende del slug del tipo (no del nombre): el backend ya lo entrega en el contrato público; no se duplica lógica de mapeo en Blade.
-
-## Tests
-- No se crean tests (indicación explícita del brief). Verificación: `npm run build`, `php artisan view:cache`, greps de `gym->medalla` y de arrays inline `$tipoBadges = [`.
-
-## Verificación final (2026-09-14)
-- `npm run build` OK (`app-BWbftYQV.css` + `app-CfKhHCJo.js` generados, 63 módulos).
-- `php artisan view:cache` OK (las 3 plantillas compilan; `TipoBadges` resuelve).
-- `grep -rn 'gym->medalla' resources/views/gimnasios/` → 0 resultados.
-- `grep -rn '$tipoBadges = [' resources/views/gimnasios/` → 0 resultados.
-- Tests existentes (no nuevos): `GimnasioAdminViewTest` + `GimnasioApiTest` → 20 passed (202 assertions).
-- Pendiente (deuda backend, fuera de alcance Frontend): añadir `tipo_nombre`/`tipo_slug` a `AdminGymController::serializar()`; mientras, el badge admin usa el fallback `gym.tipo_nombre || tipoBadge(gym.tipo)[0]`.
+`resources/views/equipos/index.blade.php` y `active/ANALISIS_FRONTEND.md` ya traían cambios sin
+commitear de la tarea de frontend previa (tolerancia UI + logs de diagnóstico, documentados en
+las secciones anteriores de este archivo). No se revierten: se conservan y este commit los
+absorbe junto con los cambios de 3v3/`effectiveSpeed`. Pendiente de QA decidir la retirada de
+los logs de diagnóstico (son temporales por diseño).

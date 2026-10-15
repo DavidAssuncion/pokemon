@@ -99,7 +99,9 @@ class EquiposViewTest extends TestCase
 
         $response->assertOk();
         $response->assertSee('expTotalDe(pokemon)', false);
-        $response->assertSee("'/images/iconos_webp/' + detailPokemon.pokemon_id + '.webp'", false);
+        // El modal resuelve el icono vía helper (shiny-aware) y el helper usa el contrato WebP
+        $response->assertSee('iconoPrincipalDe(detailPokemon)', false);
+        $response->assertSee("'/images/iconos_webp/' + pokemon.pokemon_id + '.webp'", false);
     }
 
     /**
@@ -139,18 +141,18 @@ class EquiposViewTest extends TestCase
     }
 
     /**
-     * Equipos escala a 5 slots y expone el editor de formación persistente
+     * Equipos escala a 3 slots y expone el editor de formación persistente
      * (toggle vanguardia/retaguardia + PATCH /teams/{team}/formacion).
      */
-    public function test_equipos_renders_five_slots_and_formation_editor(): void
+    public function test_equipos_renders_three_slots_and_formation_editor(): void
     {
         $response = $this->get('/equipos');
 
         $response->assertOk();
-        // Grid de slots del equipo a 5
-        $response->assertSee('slot in [1,2,3,4,5]', false);
-        // addToTeam busca el primer slot vacío en 1..5
-        $response->assertSee('[1,2,3,4,5].find(s => !team.members.some(m => m.slot === s))', false);
+        // Grid de slots del equipo a 3
+        $response->assertSee('slot in [1,2,3]', false);
+        // addToTeam busca el primer slot vacío en 1..3
+        $response->assertSee('[1,2,3].find(s => !team.members.some(m => m.slot === s))', false);
         // Editor de formación persistente
         $response->assertSee('Formación de combate', false);
         $response->assertSee('formacionDe(team, slot)', false);

@@ -113,13 +113,13 @@
                             </div>
                             <!-- Team members -->
                             <div class="p-3">
-                                <div class="grid grid-cols-5 gap-1">
-                                    <template x-for="slot in [1,2,3,4,5]" :key="'slot-'+team.id+'-'+slot">
+                                <div class="grid grid-cols-3 gap-1">
+                                    <template x-for="slot in [1,2,3]" :key="'slot-'+team.id+'-'+slot">
                                         <div class="text-center min-w-0">
                                             <template x-if="getMember(team, slot)">
                                                 <div class="relative">
                                                     <img
-                                                        :src="'/images/iconos_webp/' + getMember(team, slot).pokemon_id + '.webp'"
+                                                        :src="iconoDe(getMember(team, slot))"
                                                         loading="lazy"
                                                         decoding="async"
                                                         :alt="nombreFormateado(getMember(team, slot))"
@@ -296,11 +296,11 @@
                             >
                                 <div class="w-24 h-24 mx-auto">
                                     <img
-                                        :src="'/images/iconos_webp/' + pokemon.pokemon_id + '.webp'"
+                                        :src="iconoDe(pokemon)"
                                         loading="lazy"
                                         decoding="async"
-                                        :alt="pokemon.nombre"
-                                        :title="pokemon.nombre"
+                                        :alt="pokemon.nombre || pokemon.pokemon_id || 'Pokémon'"
+                                        :title="pokemon.nombre || pokemon.pokemon_id || 'Pokémon'"
                                         class="w-full h-full object-contain"
                                         onerror="this.style.display='none'"
                                     >
@@ -315,8 +315,8 @@
                                         <button
                                             @click="showTeamDropdown = !showTeamDropdown"
                                             class="w-8 h-8 bg-green-500 text-white rounded-full flex items-center justify-center hover:bg-green-600 transition-colors text-lg font-bold"
-                                            :aria-label="'Agregar ' + pokemon.nombre + ' a equipo'"
-                                            :title="'Agregar ' + pokemon.nombre + ' a equipo'"
+                                            :aria-label="'Agregar ' + nombreDe(pokemon) + ' a equipo'"
+                                            :title="'Agregar ' + nombreDe(pokemon) + ' a equipo'"
                                         >
                                             +
                                         </button>
@@ -337,8 +337,8 @@
                                     <button
                                         @click="openDetail(pokemon)"
                                         class="w-8 h-8 bg-blue-500 text-white rounded-full flex items-center justify-center hover:bg-blue-600 transition-colors"
-                                        :aria-label="'Ver detalle de ' + pokemon.nombre"
-                                        :title="'Ver detalle de ' + pokemon.nombre"
+                                        :aria-label="'Ver detalle de ' + nombreDe(pokemon)"
+                                        :title="'Ver detalle de ' + nombreDe(pokemon)"
                                     >
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
@@ -368,11 +368,11 @@
                             <div class="relative bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden text-center group opacity-60">
                                 <div class="w-24 h-24 mx-auto">
                                     <img
-                                        :src="'/images/iconos_webp/' + pokemon.pokemon_id + '.webp'"
+                                        :src="iconoDe(pokemon)"
                                         loading="lazy"
                                         decoding="async"
-                                        :alt="pokemon.nombre"
-                                        :title="pokemon.nombre + ' — ' + getTeamName(pokemon.team_id)"
+                                        :alt="pokemon.nombre || pokemon.pokemon_id || 'Pokémon'"
+                                        :title="(pokemon.nombre || pokemon.pokemon_id || 'Pokémon') + ' — ' + getTeamName(pokemon.team_id)"
                                         class="w-full h-full object-contain grayscale"
                                         onerror="this.style.display='none'"
                                     >
@@ -387,8 +387,8 @@
                                     <button
                                         @click="openDetail(pokemon)"
                                         class="w-8 h-8 bg-blue-500 text-white rounded-full flex items-center justify-center hover:bg-blue-600 transition-colors"
-                                        :aria-label="'Ver detalle de ' + pokemon.nombre"
-                                        :title="'Ver detalle de ' + pokemon.nombre"
+                                        :aria-label="'Ver detalle de ' + nombreDe(pokemon)"
+                                        :title="'Ver detalle de ' + nombreDe(pokemon)"
                                     >
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
@@ -399,9 +399,9 @@
                                     <button
                                         @click="!pokemonEnExploracion(pokemon) && removeFromTeam(pokemon)"
                                         :disabled="pokemonEnExploracion(pokemon)"
-                                        :title="pokemonEnExploracion(pokemon) ? 'El equipo está en exploración' : 'Quitar ' + pokemon.nombre + ' de equipo'"
+                                        :title="pokemonEnExploracion(pokemon) ? 'El equipo está en exploración' : 'Quitar ' + nombreDe(pokemon) + ' de equipo'"
                                         class="w-8 h-8 bg-orange-500 text-white rounded-full flex items-center justify-center hover:bg-orange-600 transition-colors text-sm disabled:opacity-30 disabled:cursor-not-allowed"
-                                        :aria-label="'Quitar ' + pokemon.nombre + ' de equipo'"
+                                        :aria-label="'Quitar ' + nombreDe(pokemon) + ' de equipo'"
                                     >
                                         →
                                     </button>
@@ -749,14 +749,14 @@
                 <div class="flex items-start gap-4 p-6 border-b border-gray-100 dark:border-gray-700">
                     <div class="w-24 h-24 shrink-0 rounded-lg bg-gray-50 dark:bg-gray-900/50 flex items-center justify-center overflow-hidden">
                         <img
-                            :src="(detailPokemon.es_shiny ? '/images/iconos_webp/shiny/' + detailPokemon.pokemon_id + '.webp' : '/images/iconos_webp/' + detailPokemon.pokemon_id + '.webp')"
+                            :src="iconoPrincipalDe(detailPokemon)"
                             loading="lazy"
                             decoding="async"
-                            :alt="detailPokemon.nombre"
+                            :alt="nombreDe(detailPokemon)"
                             class="w-full h-full object-contain"
                             :data-pid="detailPokemon.pokemon_id"
                             :data-intento="detailPokemon.es_shiny ? 'shiny' : 'normal'"
-                            onerror="this.onerror=null; var p=this.getAttribute('data-pid'); var i=this.getAttribute('data-intento'); if (i === 'shiny') { this.src='/images/iconos_webp/shiny/'+p+'_s.webp'; this.setAttribute('data-intento','shiny_s'); } else if (i === 'shiny_s') { this.src='/images/iconos_webp/'+p+'.webp'; this.setAttribute('data-intento','normal'); } else { this.style.display='none'; }"
+                            onerror="this.onerror=null; var p=this.getAttribute('data-pid'); var i=this.getAttribute('data-intento'); if (!p) { this.style.display='none'; return; } if (i === 'shiny') { this.src='/images/iconos_webp/shiny/'+p+'_s.webp'; this.setAttribute('data-intento','shiny_s'); } else if (i === 'shiny_s') { this.src='/images/iconos_webp/'+p+'.webp'; this.setAttribute('data-intento','normal'); } else { this.style.display='none'; }"
                         >
                     </div>
                     <div class="flex-1 min-w-0">
@@ -766,7 +766,7 @@
                                 <span class="px-1.5 py-0.5 bg-yellow-100 dark:bg-yellow-900/40 text-yellow-700 dark:text-yellow-400 text-[10px] font-bold rounded uppercase" title="Shiny">★ Shiny</span>
                             </template>
                         </div>
-                        <p class="text-xs text-gray-400 dark:text-gray-500" x-text="'#' + detailPokemon.pokemon_id"></p>
+                        <p class="text-xs text-gray-400 dark:text-gray-500" x-text="detailPokemon.pokemon_id ? '#' + detailPokemon.pokemon_id : ''"></p>
                         <div class="flex items-center gap-2 mt-1 flex-wrap">
                             <span class="px-2 py-0.5 bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-400 text-xs font-bold rounded-full">Nv <span x-text="nivelDe(detailPokemon)"></span></span>
                             <template x-if="cpDe(detailPokemon) != null">
@@ -1022,7 +1022,7 @@ function favoritosApp() {
         teamPokemonIds: @json($teamIds ?? []),
         equiposEnExploracion: @json($equiposEnExploracion ?? []),
 
-        // ─── Formación persistente (combate 5v5) ───────────────────────────
+        // ─── Formación persistente (combate 3v3) ───────────────────────────
         // Draft local por equipo: {teamId: {slot: 'vanguardia'|'retaguardia'}}.
         // La formación persistida del backend (team.formacion) recién se conoce
         // tras el primer PATCH; el draft tiene prioridad sobre ella.
@@ -1103,13 +1103,14 @@ function favoritosApp() {
             if (this.searchQuery.trim()) {
                 const q = this.searchQuery.toLowerCase().trim();
                 result = result.filter(r =>
-                    r.nombre.toLowerCase().includes(q) ||
-                    String(r.pokemon_id).includes(q)
+                    String(r.nombre || '').toLowerCase().includes(q) ||
+                    String(r.pokemon_id || '').includes(q)
                 );
             }
             if (this.typeFilter) {
                 result = result.filter(r =>
                     r.pokemon && r.pokemon.types &&
+                    Array.isArray(r.pokemon.types) &&
                     r.pokemon.types.some(t => t.tipo_nombre === this.typeFilter)
                 );
             }
@@ -1122,8 +1123,8 @@ function favoritosApp() {
             if (this.searchQuery.trim()) {
                 const q = this.searchQuery.toLowerCase().trim();
                 result = result.filter(r =>
-                    r.nombre.toLowerCase().includes(q) ||
-                    String(r.pokemon_id).includes(q)
+                    String(r.nombre || '').toLowerCase().includes(q) ||
+                    String(r.pokemon_id || '').includes(q)
                 );
             }
             return result;
@@ -1134,6 +1135,21 @@ function favoritosApp() {
         // ═══════════════════════════════════════════════════════════════════════
 
         init() {
+            console.log('[equipos:init] Alpine OK. reclutados=' + (Array.isArray(this.reclutados) ? this.reclutados.length : 'NO-ARRAY') + ' teams=' + (Array.isArray(this.teams) ? this.teams.length : 'NO-ARRAY') + ' teamPokemonIds=' + (Array.isArray(this.teamPokemonIds) ? this.teamPokemonIds.length : 'NO-ARRAY'));
+            if (Array.isArray(this.reclutados) && this.reclutados.length > 0) {
+                console.log('[equipos:init] primer reclutado:', JSON.stringify(this.reclutados[0]).slice(0, 500));
+                this.reclutados.forEach((r, i) => {
+                    if (r.pokemon_id === 436) console.log('[equipos:init] reclutado #' + i + ' pokemon_id=436 id=' + r.id + ' nombre=' + (r.nombre ?? 'NULL') + ' pokemon=' + (r.pokemon ? JSON.stringify(r.pokemon).slice(0, 300) : 'NULL'));
+                });
+            } else {
+                console.error('[equipos:init] reclutados vacío o no-array. JSON crudo: ' + JSON.stringify(this.reclutados).slice(0, 1000));
+            }
+            if (!window.__equiposOnErrorInstalado) {
+                window.__equiposOnErrorInstalado = true;
+                window.addEventListener('error', (event) => {
+                    console.error('[equipos:global-error] ' + (event.message || 'sin mensaje') + ' @ ' + ((event.filename || '') + ':' + (event.lineno || '')));
+                });
+            }
             document.addEventListener('click', (e) => {
                 if (!e.target.closest('[x-data]')?.contains(e.target)) {
                     this.showTypeFilter = false;
@@ -1188,6 +1204,21 @@ function favoritosApp() {
             if (!raw && pokemon.pokemon && pokemon.pokemon.name) raw = pokemon.pokemon.name;
             raw = String(raw || '').replace(/-/g, ' ');
             return raw.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+        },
+
+        /** URL del icono WebP; devuelve string vacío si pokemon_id ausente para no romper la UI. */
+        iconoDe(pokemon) {
+            if (!pokemon || !pokemon.pokemon_id) return '';
+            return '/images/iconos_webp/' + pokemon.pokemon_id + '.webp';
+        },
+
+        /** URL del icono WebP (shiny first, normal fallback handled by onerror in template). */
+        iconoPrincipalDe(pokemon) {
+            if (!pokemon || !pokemon.pokemon_id) return '';
+            if (pokemon.es_shiny) {
+                return '/images/iconos_webp/shiny/' + pokemon.pokemon_id + '.webp';
+            }
+            return '/images/iconos_webp/' + pokemon.pokemon_id + '.webp';
         },
 
         expParaNivel(nivel) {
@@ -1744,7 +1775,7 @@ function favoritosApp() {
         },
 
         async addToTeam(pokemon, team) {
-            const emptySlot = [1,2,3,4,5].find(s => !team.members.some(m => m.slot === s));
+            const emptySlot = [1,2,3].find(s => !team.members.some(m => m.slot === s));
             if (!emptySlot) {
                 alert('Este equipo está lleno');
                 return;
@@ -1857,7 +1888,7 @@ function favoritosApp() {
             return member.reclutado?.behavior || member.behavior || 'VANGUARDIA';
         },
 
-        // ─── Formación persistente (combate 5v5) ─────────────────────────────
+        // ─── Formación persistente (combate 3v3) ─────────────────────────────
 
         /** Posición actual del slot: draft local > formación persistida > 'vanguardia'. */
         formacionDe(team, slot) {
@@ -1882,7 +1913,7 @@ function favoritosApp() {
             const base = team.formacion || {};
             const draft = this.formacionDraft[team.id] || {};
             const formacionCompleta = {};
-            for (let slot = 1; slot <= 5; slot++) {
+            for (let slot = 1; slot <= 3; slot++) {
                 if (!this.getMember(team, slot)) continue;
                 formacionCompleta[slot] = draft[slot] || base[slot] || 'vanguardia';
             }
@@ -2187,6 +2218,8 @@ function favoritosApp() {
         },
     };
 }
+
+console.log('[equipos:script-load] JS ejecutándose. window.Alpine=' + (typeof window.Alpine !== 'undefined' ? 'OK' : 'MISSING'));
 </script>
 @endpush
 @endsection
