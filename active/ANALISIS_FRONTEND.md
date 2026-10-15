@@ -217,3 +217,12 @@ commitear de la tarea de frontend previa (tolerancia UI + logs de diagnóstico, 
 las secciones anteriores de este archivo). No se revierten: se conservan y este commit los
 absorbe junto con los cambios de 3v3/`effectiveSpeed`. Pendiente de QA decidir la retirada de
 los logs de diagnóstico (son temporales por diseño).
+
+### Addendum (2026-10-15) — limpieza autorizada por QA O2b
+
+Retirado el andamiaje de diagnóstico `[equipos:*]` de `resources/views/equipos/index.blade.php`:
+`console.log` de `init()`/script-load, `console.error` de reclutados vacío, forEach condicional
+del pokemon 436 y listener global de `error` con `window.__equiposOnErrorInstalado` (verificado
+que no se usaba en otro sitio). Se conservan el listener de click del `init()` y todos los
+`console.error` funcionales sin prefijo (fetch/formularios). Grep final `[equipos:` = 0 restos;
+ningún test de vistas asertaba esos logs. Resto del WIP del archivo intacto.

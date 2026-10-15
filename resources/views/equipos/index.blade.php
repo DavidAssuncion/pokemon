@@ -1135,21 +1135,6 @@ function favoritosApp() {
         // ═══════════════════════════════════════════════════════════════════════
 
         init() {
-            console.log('[equipos:init] Alpine OK. reclutados=' + (Array.isArray(this.reclutados) ? this.reclutados.length : 'NO-ARRAY') + ' teams=' + (Array.isArray(this.teams) ? this.teams.length : 'NO-ARRAY') + ' teamPokemonIds=' + (Array.isArray(this.teamPokemonIds) ? this.teamPokemonIds.length : 'NO-ARRAY'));
-            if (Array.isArray(this.reclutados) && this.reclutados.length > 0) {
-                console.log('[equipos:init] primer reclutado:', JSON.stringify(this.reclutados[0]).slice(0, 500));
-                this.reclutados.forEach((r, i) => {
-                    if (r.pokemon_id === 436) console.log('[equipos:init] reclutado #' + i + ' pokemon_id=436 id=' + r.id + ' nombre=' + (r.nombre ?? 'NULL') + ' pokemon=' + (r.pokemon ? JSON.stringify(r.pokemon).slice(0, 300) : 'NULL'));
-                });
-            } else {
-                console.error('[equipos:init] reclutados vacío o no-array. JSON crudo: ' + JSON.stringify(this.reclutados).slice(0, 1000));
-            }
-            if (!window.__equiposOnErrorInstalado) {
-                window.__equiposOnErrorInstalado = true;
-                window.addEventListener('error', (event) => {
-                    console.error('[equipos:global-error] ' + (event.message || 'sin mensaje') + ' @ ' + ((event.filename || '') + ':' + (event.lineno || '')));
-                });
-            }
             document.addEventListener('click', (e) => {
                 if (!e.target.closest('[x-data]')?.contains(e.target)) {
                     this.showTypeFilter = false;
@@ -2219,7 +2204,6 @@ function favoritosApp() {
     };
 }
 
-console.log('[equipos:script-load] JS ejecutándose. window.Alpine=' + (typeof window.Alpine !== 'undefined' ? 'OK' : 'MISSING'));
 </script>
 @endpush
 @endsection
