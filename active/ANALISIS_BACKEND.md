@@ -375,3 +375,13 @@ Resultado: revertido a los 3 primeros acordados (sin reordenar):
 Hallazgo: el contenido final coincide **exactamente** con HEAD (`git diff HEAD` vacío); la versión canónica del archivo ya definía esos 3 primeros y el desvío era solo el WIP. No se requiere commit de código B1 (no hay diff); este addendum es la traza.
 
 Verificación por lectura: `crear()` → 3 reclutados + 3 team_members (slots 1-3) con el rol por slot; `resolverNombres()` y dispatches de Pokédex a 3 ids; único consumidor `OnboardingController` (vista dinámica). `OnboardingTest` sin tocar y coherente (ids por equipo y behaviors por slot, incl. RASTREADOR en B slot 3).
+
+---
+
+# O1/O2a (QA) — limpieza post-revisión (2026-10-15)
+
+O1 — borde de fin de ronda con KO (`Combate::nextActor`): QA detectó que la alineación se comprobaba antes de `advanceRound()`, y los efectos de fin de ronda (veneno/quemadura/clima) podían tumbar al último pokémon de un bando dejando una acción extra al vivo. Corregido: tras `advanceRound` (flujo principal y bloque defensivo) se re-comprueba `bothTeamsAlive()` y se llama `endBattle()` antes de seleccionar actor. Sin tests que codificaran la ventana antigua (verificado por lectura).
+
+O2a — retirada de logs de diagnóstico en `PlayerController::equipos`: eliminados `Log::info('[equipos:debug] user')`, try/catch de serialización que solo logueaba y re-lanzaba (`ReclutadoSerializer::serializar` queda en llamada directa), `Log::info('[equipos:debug] serializado')` y bloque `$pokemonCheck` (query `Pokemon::find(436)` solo para log). Import `Log` eliminado (sin más usos). El resto del WIP del archivo se mantiene tal cual.
+
+Comportamientos a cubrir en testing futuro: KO por veneno/quemadura al cerrar ronda → la batalla termina sin acción extra; `equipos()` sin logs de diagnóstico.

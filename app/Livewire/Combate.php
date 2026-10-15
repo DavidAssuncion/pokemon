@@ -159,6 +159,14 @@ class Combate extends Component
         // Al inicio (ronda 0) o si todos actuaron, avanzar ronda
         if ($battle->turnManager()->round() === 0 || ! $battle->turnManager()->hayAlgunoConAccionPendiente()) {
             $this->advanceRound($battle);
+
+            // Los efectos de fin de ronda (veneno/quemadura/clima) pudieron
+            // debilitar al último pokémon de un bando: cerrar antes de actuar.
+            if (! $battle->turnManager()->bothTeamsAlive()) {
+                $this->endBattle($battle);
+
+                return;
+            }
         }
 
         $actor = $battle->turnManager()->getNextActor();
@@ -166,6 +174,14 @@ class Combate extends Component
         // Sin actor pendiente (caso defensivo): forzar nueva ronda
         if ($actor === null) {
             $this->advanceRound($battle);
+
+            // Mismo borde que arriba: fin de ronda con KO del último bando.
+            if (! $battle->turnManager()->bothTeamsAlive()) {
+                $this->endBattle($battle);
+
+                return;
+            }
+
             $actor = $battle->turnManager()->getNextActor();
             if ($actor === null) {
                 $this->endBattle($battle);
