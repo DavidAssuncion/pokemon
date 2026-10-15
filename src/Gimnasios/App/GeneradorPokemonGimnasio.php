@@ -88,9 +88,10 @@ final class GeneradorPokemonGimnasio
      * su posición. Permite duplicados (cada id del catálogo genera un
      * combatiente); si una especie no existe en BD, se omite.
      *
-     * Escalado 3v3: si el roster resultante tiene menos de 3 combatientes, se
-     * repite cíclicamente hasta llegar a 3 (el catálogo siempre conserva ambos
-     * bandos → la formación escalada mantiene vanguardia y retaguardia).
+     * Escalado 3v3: el roster se normaliza a exactamente 3 combatientes
+     * (menos de 3 → repite cíclicamente; más de 3 → recorta a los 3 primeros;
+     * vacío → vacío). El orden vanguardia → retaguardia se preserva, por lo que
+     * la formación escalada mantiene ambos bandos cuando el catálogo los tiene.
      *
      * @return list<array{Posicion, Pokemon}>
      */
@@ -111,19 +112,27 @@ final class GeneradorPokemonGimnasio
     }
 
     /**
-     * Repite cíclicamente el roster hasta tener exactamente 3 combatientes
-     * (cada ciclo respeta el orden vanguardia → retaguardia original).
+     * Garantiza exactamente 3 combatientes preservando el orden
+     * vanguardia → retaguardia original:
+     * - roster vacío → [];
+     * - roster > 3 → recorta a los 3 primeros;
+     * - roster < 3 → repite cíclicamente hasta 3.
      *
      * @param  list<array{Posicion, Pokemon}>  $roster
      * @return list<array{Posicion, Pokemon}>
      */
     private function escalarATres(array $roster): array
     {
-        if (count($roster) >= 3) {
-            return $roster;
+        $tamaño = count($roster);
+
+        if ($tamaño === 0) {
+            return [];
         }
 
-        $tamaño = count($roster);
+        if ($tamaño > 3) {
+            return array_slice($roster, 0, 3);
+        }
+
         $indice = $tamaño;
 
         while (count($roster) < 3) {

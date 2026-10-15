@@ -144,27 +144,37 @@ class GeneradorPokemonGimnasioTest extends TestCase
     }
 
     #[Test]
-    public function test_equipo_de_cuatro_combatientes_dark_etapa_3(): void
+    public function test_roster_mayor_a_tres_se_recorta_a_tres(): void
     {
         $this->crearPokemon(560, ['hp' => 50, 'atk' => 60, 'def' => 50, 'spAtk' => 60, 'spDef' => 50, 'speed' => 55]);
         $this->crearPokemon(461, ['hp' => 50, 'atk' => 60, 'def' => 50, 'spAtk' => 60, 'spDef' => 50, 'speed' => 55]);
         $this->crearPokemon(861, ['hp' => 50, 'atk' => 60, 'def' => 50, 'spAtk' => 60, 'spDef' => 50, 'speed' => 55]);
 
-        // Roster de 4: ya tiene >= 3 → se devuelve tal cual.
+        // dark etapa 3: [V(560), R(461), R(861), R(461)] → recorta a los 3 primeros.
         $equipo = $this->generador->generar(new EquipoEtapaGimnasio(
             vanguardia: new IntCollection([560]),
             retaguardia: new IntCollection([461, 861, 461]),
         ), 50);
 
-        $this->assertCount(4, $equipo);
+        $this->assertCount(3, $equipo);
         $this->assertSame(Posicion::VANGUARDIA, $equipo[0]->posicion);
         $this->assertSame(Posicion::RETAGUARDIA, $equipo[1]->posicion);
         $this->assertSame(Posicion::RETAGUARDIA, $equipo[2]->posicion);
-        $this->assertSame(Posicion::RETAGUARDIA, $equipo[3]->posicion);
-        $this->assertSame([560, 461, 861, 461], array_map(
+        $this->assertSame([560, 461, 861], array_map(
             fn (DatosPokemonBatalla $p): int => $p->speciesId,
             $equipo,
         ));
+    }
+
+    #[Test]
+    public function test_roster_vacio_devuelve_equipo_vacio(): void
+    {
+        $equipo = $this->generador->generar(new EquipoEtapaGimnasio(
+            vanguardia: new IntCollection([]),
+            retaguardia: new IntCollection([]),
+        ), 50);
+
+        $this->assertSame([], $equipo);
     }
 
     #[Test]

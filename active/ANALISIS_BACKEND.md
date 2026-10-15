@@ -346,3 +346,17 @@ Origen: especificación del Analista (equipos estándar de 3, una acción por po
 - Sesiones en vuelo v9/v10 con `velocidadAcumulada` cargan (mínimo 9) pero pierden el acumulado; contadores `vecesActuadoEstaRonda > 0` de payloads viejos se reinterpretan como «ya actuó» en la ronda en curso (best-effort).
 - Equipos existentes de 4-5 miembros: la migración los recorta; un combate en curso que los referenciara usará el top-3 en el siguiente inicio.
 - El mock pasa a 3v3 y varios tests quedan adaptados por lectura: sin ejecución no habrá confirmación hasta la fase de testing del módulo.
+---
+
+# Corrección post-revisión del Analista (2026-10-15)
+
+Desviación detectada: `GeneradorPokemonGimnasio::escalarATres` devolvía el roster tal cual con ≥3, y `dark` etapa 3 (única con 4 entries: V[560] + R[461,861,461]) generaba un rival de 4 combatientes, contradiciendo el principio «por defecto todo 3; solo las invocaciones pueden exceder 3».
+
+Corrección (commit `fix` posterior a `3039027d89`):
+
+- `escalarATres` garantiza **exactamente 3**: roster vacío → `[]` (elimina el `% 0`); roster > 3 → recorte a los 3 primeros (`array_slice`, preservando vanguardia → retaguardia); roster < 3 → repetición cíclica (sin cambios).
+- Catálogo (`CatalogoGimnasios.php`) intacto: el recorte vive en el generador, por lo que cubre también filas de `gym_stages` gestionadas por BD.
+- Test renombrado `test_roster_mayor_a_tres_se_recorta_a_tres` (ids `[560, 461, 861]`, posiciones V,R,R) y nuevo `test_roster_vacio_devuelve_equipo_vacio`.
+- Ruta y entrenador no se tocan (ya producían exactamente 3).
+
+Comportamientos a cubrir en testing futuro (añadidos): recorte de roster >3 y roster vacío en `GeneradorPokemonGimnasio`.
