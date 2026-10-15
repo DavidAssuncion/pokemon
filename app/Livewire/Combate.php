@@ -12,6 +12,7 @@ use Src\Battle\Domain\AccionBatalla;
 use Src\Battle\Domain\AgregadoBatalla;
 use Src\Battle\Domain\Combatiente;
 use Src\Battle\Domain\Enums\FaseCombate;
+use Src\Battle\Domain\Enums\StatClave;
 use Src\Battle\Domain\EquipoBatalla;
 use Src\Battle\Domain\FabricaBatallaInterface;
 use Src\Battle\Domain\MovimientoBatalla;
@@ -155,14 +156,14 @@ class Combate extends Component
             return;
         }
 
-        // Si todos actuaron o es el inicio, avanzar ronda
-        if (! $battle->turnManager()->hayAlgunoConAccionPendiente()) {
+        // Al inicio (ronda 0) o si todos actuaron, avanzar ronda
+        if ($battle->turnManager()->round() === 0 || ! $battle->turnManager()->hayAlgunoConAccionPendiente()) {
             $this->advanceRound($battle);
         }
 
         $actor = $battle->turnManager()->getNextActor();
 
-        // Si aún así no hay actor (todos sin velocidad), forzar nueva ronda
+        // Sin actor pendiente (caso defensivo): forzar nueva ronda
         if ($actor === null) {
             $this->advanceRound($battle);
             $actor = $battle->turnManager()->getNextActor();
@@ -225,7 +226,7 @@ class Combate extends Component
 
     /**
      * Finaliza una ronda (efectos de fin), inicia la siguiente
-     * (acumular velocidad, efectos de inicio) y registra el marcador.
+     * (resetear acciones consumidas, efectos de inicio) y registra el marcador.
      */
     private function advanceRound(AgregadoBatalla $battle): void
     {
@@ -528,16 +529,26 @@ class Combate extends Component
         return null;
     }
 
+    /**
+     * Cola de la ronda en curso: vivos que aún no actuaron, en orden de
+     * velocidad efectiva descendente (estable: los empates conservan el orden
+     * de inserción, coherente con GestorTurnos::getNextActor()).
+     *
+     * @return list<array{team: int, index: int}>
+     */
     private function buildTurnQueue(AgregadoBatalla $battle): array
     {
-        $alive = $battle->turnManager()->combatientesVivos()->all();
+        $pendientes = $battle->turnManager()->combatientesVivos()
+            ->filter(fn (Combatiente $c): bool => $c->vecesActuadoEstaRonda() === 0)
+            ->all();
 
         usort(
-            $alive,
-            fn (Combatiente $a, Combatiente $b) => $b->velocidadAcumulada() <=> $a->velocidadAcumulada()
+            $pendientes,
+            fn (Combatiente $a, Combatiente $b): int => $b->obtenerStatEfectivo(StatClave::VELOCIDAD)
+                <=> $a->obtenerStatEfectivo(StatClave::VELOCIDAD)
         );
 
-        return array_map(fn (Combatiente $c) => $this->findPokemonViewData($c) ?? ['team' => 0, 'index' => 0], $alive);
+        return array_map(fn (Combatiente $c) => $this->findPokemonViewData($c) ?? ['team' => 0, 'index' => 0], $pendientes);
     }
 
     // ─── Animación ───────────────────────────────────────────

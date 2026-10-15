@@ -6,13 +6,15 @@ namespace Tests\Unit\Battle;
 
 use PHPUnit\Framework\TestCase;
 use Src\Battle\Domain\Combatiente;
+use Src\Battle\Domain\Enums\EstadoPokemon;
 use Src\Battle\Domain\EquipoBatalla;
 use Src\Battle\Domain\GestorTurnos;
 use Src\Battle\Domain\Posicion;
 use Src\Shared\Tipos\TipoPokemon;
 
 /**
- * GestorTurnos: rondas, turnos por velocidad acumulada, alive checks.
+ * GestorTurnos: rondas, una acción por pokémon vivo y ronda en orden de
+ * velocidad efectiva, alive checks.
  */
 class GestorTurnosTest extends TestCase
 {
@@ -52,7 +54,7 @@ class GestorTurnosTest extends TestCase
         $this->assertSame(2, $gestor->round());
     }
 
-    public function test_start_new_round_acumula_velocidad_y_resetea_veces(): void
+    public function test_start_new_round_resetea_veces_actuado(): void
     {
         $gestor = $this->gestorConVarios();
         $a1 = $gestor->allCombatants()->all()[0];
@@ -63,13 +65,9 @@ class GestorTurnosTest extends TestCase
 
         $gestor->startNewRound();
 
-        // vecesActuado reseteado
+        // vecesActuado reseteado → cada vivo puede actuar una vez más
         $this->assertSame(0, $a1->vecesActuadoEstaRonda());
         $this->assertSame(0, $a2->vecesActuadoEstaRonda());
-
-        // velocidad acumulada = stat efectivo speed (2*base+5 = 2*100+5 = 205, 2*50+5 = 105)
-        $this->assertSame((float) (2 * 100 + 5), $a1->velocidadAcumulada());
-        $this->assertSame((float) (2 * 50 + 5), $a2->velocidadAcumulada());
     }
 
     public function test_get_next_actor_devuelve_el_de_mayor_velocidad(): void
@@ -79,7 +77,7 @@ class GestorTurnosTest extends TestCase
 
         $actor = $gestor->getNextActor();
         $this->assertNotNull($actor);
-        // a1 tiene speed 100 → acumula 205, a2 tiene 50 → 105, b1 tiene 80 → 165
+        // Velocidad efectiva: a1 (2*100+5 = 205) > b1 (165) > a2 (105)
         $this->assertSame('a1', $actor->id());
     }
 
@@ -99,7 +97,7 @@ class GestorTurnosTest extends TestCase
         $this->assertSame('a1', $actor->id());
     }
 
-    public function test_consume_action_reduce_velocidad_e_incrementa_veces(): void
+    public function test_consume_action_marca_la_accion_y_pasa_al_siguiente(): void
     {
         $gestor = $this->gestorConVarios();
         $gestor->startNewRound();
@@ -108,12 +106,27 @@ class GestorTurnosTest extends TestCase
         $this->assertNotNull($actor);
         $this->assertSame('a1', $actor->id());
 
-        $velInicial = $actor->velocidadAcumulada(); // 205
         $gestor->consumeAction($actor);
 
-        // menorVelocidadEntreVivos: min(205, 105, 165) = 105
-        $this->assertSame($velInicial - 105, $actor->velocidadAcumulada());
         $this->assertSame(1, $actor->vecesActuadoEstaRonda());
+
+        // a1 ya actuó: el siguiente por velocidad efectiva es b1 (165 > 105 de a2)
+        $siguiente = $gestor->getNextActor();
+        $this->assertNotNull($siguiente);
+        $this->assertSame('b1', $siguiente->id());
+    }
+
+    public function test_consume_action_marca_solo_al_actor_indicado(): void
+    {
+        $gestor = $this->gestorConVarios();
+        $gestor->startNewRound();
+
+        $a1 = $gestor->allCombatants()->all()[0];
+        $gestor->consumeAction($a1);
+
+        $this->assertSame(1, $a1->vecesActuadoEstaRonda());
+        $this->assertSame(0, $gestor->allCombatants()->all()[1]->vecesActuadoEstaRonda());
+        $this->assertSame(0, $gestor->allCombatants()->all()[2]->vecesActuadoEstaRonda());
     }
 
     public function test_both_teams_alive_true_con_ambos_vivos(): void
@@ -163,15 +176,96 @@ class GestorTurnosTest extends TestCase
         $this->assertNotContains('a2', $ids);
     }
 
-    public function test_menor_velocidad_entre_vivos_devuelve_0_sin_vivos(): void
+    public function test_hay_alguno_con_accion_pendiente_true_con_vivos(): void
     {
         $gestor = $this->gestorConVarios();
+        $gestor->startNewRound();
 
-        foreach ($gestor->allCombatants() as $c) {
-            $c->setHpActual(0);
+        $this->assertTrue($gestor->hayAlgunoConAccionPendiente());
+    }
+
+    public function test_hay_alguno_con_accion_pendiente_false_cuando_todos_actuaron(): void
+    {
+        $gestor = $this->gestorConVarios();
+        $gestor->startNewRound();
+
+        foreach ($gestor->combatientesVivos() as $c) {
+            $gestor->consumeAction($c);
         }
 
-        $this->assertSame(0.0, $gestor->menorVelocidadEntreVivos());
+        $this->assertFalse($gestor->hayAlgunoConAccionPendiente());
+        $this->assertNull($gestor->getNextActor());
+    }
+
+    public function test_cada_vivo_actua_una_sola_vez_por_ronda(): void
+    {
+        $gestor = $this->gestorConVarios();
+        $gestor->startNewRound();
+
+        $orden = [];
+        while (($actor = $gestor->getNextActor()) !== null) {
+            $orden[] = $actor->id();
+            $gestor->consumeAction($actor);
+        }
+
+        // Velocidad efectiva descendente: a1 (205) > b1 (165) > a2 (105)
+        $this->assertSame(['a1', 'b1', 'a2'], $orden);
+        $this->assertFalse($gestor->hayAlgunoConAccionPendiente());
+
+        // Nueva ronda: vuelven a estar disponibles en el mismo orden
+        $gestor->startNewRound();
+        $this->assertSame('a1', $gestor->getNextActor()?->id());
+    }
+
+    public function test_invariante_next_actor_no_es_null_mientras_haya_pendientes(): void
+    {
+        $gestor = $this->gestorConVarios();
+        $gestor->startNewRound();
+
+        while ($gestor->hayAlgunoConAccionPendiente()) {
+            $actor = $gestor->getNextActor();
+            $this->assertNotNull($actor);
+            $gestor->consumeAction($actor);
+        }
+
+        $this->assertNull($gestor->getNextActor());
+    }
+
+    public function test_velocidad_efectiva_no_positiva_no_cortocircuita_el_turno(): void
+    {
+        $team1 = new EquipoBatalla('T1');
+        $team1->agregarCombatiente($this->combatienteConSpeed('a1', -10), Posicion::VANGUARDIA);
+
+        $team2 = new EquipoBatalla('T2');
+        $team2->agregarCombatiente($this->combatienteConSpeed('b1', -20), Posicion::VANGUARDIA);
+
+        $gestor = new GestorTurnos($team1, $team2);
+        $gestor->startNewRound();
+
+        $this->assertTrue($gestor->hayAlgunoConAccionPendiente());
+
+        $actor = $gestor->getNextActor();
+        $this->assertNotNull($actor);
+        // Efectivas: a1 = -15, b1 = -35 → actúa el menos lento
+        $this->assertSame('a1', $actor->id());
+    }
+
+    public function test_paralisis_afecta_el_orden_de_actuacion(): void
+    {
+        $team1 = new EquipoBatalla('T1');
+        $team1->agregarCombatiente($this->combatienteConSpeed('a1', 100), Posicion::VANGUARDIA);
+
+        $paralizado = $this->combatienteConSpeed('b1', 100);
+        $paralizado->setEstado(EstadoPokemon::PARALYSIS);
+
+        $team2 = new EquipoBatalla('T2');
+        $team2->agregarCombatiente($paralizado, Posicion::VANGUARDIA);
+
+        $gestor = new GestorTurnos($team1, $team2);
+        $gestor->startNewRound();
+
+        // a1 efectiva 205; b1 paralizado 102.5 → actúa a1
+        $this->assertSame('a1', $gestor->getNextActor()?->id());
     }
 
     public function test_get_next_actor_devuelve_null_sin_vivos(): void
@@ -183,22 +277,5 @@ class GestorTurnosTest extends TestCase
         }
 
         $this->assertNull($gestor->getNextActor());
-    }
-
-    public function test_consume_action_reduce_por_1_cuando_menor_velocidad_es_0(): void
-    {
-        $gestor = $this->gestorConVarios();
-        $a1 = $gestor->allCombatants()->all()[0];
-        $a1->setVelocidadAcumulada(50);
-
-        // Matar a todos (incluido a1) → menorVelocidadEntreVivos = 0 → reduce por 1
-        foreach ($gestor->allCombatants() as $c) {
-            $c->setHpActual(0);
-        }
-
-        $gestor->consumeAction($a1);
-
-        $this->assertSame((float) (50 - 1), $a1->velocidadAcumulada());
-        $this->assertSame(1, $a1->vecesActuadoEstaRonda());
     }
 }

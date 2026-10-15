@@ -689,12 +689,12 @@ class EquiposControllerTest extends TestCase
         $this->assertSame('exploracion_agresiva', $teams[1]['sinergia_nombre']);
     }
 
-    public function test_add_member_permite_slots_hasta_cinco(): void
+    public function test_add_member_permite_slots_hasta_tres(): void
     {
         $user = $this->actingAsUser();
         $team = Team::create(['name' => 'Mazmorra', 'user_id' => $user->id]);
 
-        foreach ([1, 2, 3, 4, 5] as $slot) {
+        foreach ([1, 2, 3] as $slot) {
             $this->createPokemon(100 + $slot);
             $reclutado = $this->createReclutado($user->id, 100 + $slot, 'M'.$slot);
 
@@ -708,12 +708,11 @@ class EquiposControllerTest extends TestCase
             $response->assertRedirect();
         }
 
-        $this->assertDatabaseCount('team_members', 5);
-        $this->assertDatabaseHas('team_members', ['team_id' => $team->id, 'slot' => 4]);
-        $this->assertDatabaseHas('team_members', ['team_id' => $team->id, 'slot' => 5]);
+        $this->assertDatabaseCount('team_members', 3);
+        $this->assertDatabaseHas('team_members', ['team_id' => $team->id, 'slot' => 3]);
     }
 
-    public function test_add_member_rechaza_slot_seis(): void
+    public function test_add_member_rechaza_slot_cuatro(): void
     {
         $user = $this->actingAsUser();
         $team = Team::create(['name' => 'Mazmorra', 'user_id' => $user->id]);
@@ -723,7 +722,7 @@ class EquiposControllerTest extends TestCase
         $response = $this->post('/teams/add-member', [
             'team_id' => $team->id,
             'reclutado_id' => $reclutado->id,
-            'slot' => 6,
+            'slot' => 4,
             'behavior' => 'VANGUARDIA',
         ]);
 

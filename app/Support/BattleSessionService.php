@@ -9,18 +9,22 @@ use Src\Battle\Domain\AgregadoBatalla;
 final class BattleSessionService
 {
     /**
+     * 11: Combatiente dejó de serializar 'velocidadAcumulada' (el motor de
+     * turnos pasa a contador de acciones por ronda); los payloads v9/v10 con
+     * esa clave siguen cargando (la clave se ignora, best-effort).
      * 10: BattleStats puede llevar ?StatsValue $ivs (propiedad opcional; los
      * payloads v9 sin esa clave siguen siendo válidos: la propiedad se
      * reconstruye en null sin migración).
      * 9: Combatiente cambió de etapas enteras ('etapas') a
      * MultiplicadoresStats ('multiplicadores' con factores float).
      */
-    private const SESSION_VERSION = 10;
+    private const SESSION_VERSION = 11;
 
     /**
-     * Versión mínima de payload aceptada por cargar(). SESSION_VERSION (10)
-     * y MINIMUM_COMPATIBLE_SESSION_VERSION (9) comparten estructura: el único
-     * cambio relevante es BattleStats.$ivs, opcional y con default null.
+     * Versión mínima de payload aceptada por cargar(). SESSION_VERSION (11)
+     * y MINIMUM_COMPATIBLE_SESSION_VERSION (9) comparten estructura salvo
+     * claves opcionales: 'velocidadAcumulada' (ignorada) y BattleStats.$ivs
+     * (default null).
      */
     private const MINIMUM_COMPATIBLE_SESSION_VERSION = 9;
 
@@ -55,8 +59,9 @@ final class BattleSessionService
         // puede lanzar TypeError al reconstruir AgregadoBatalla/EquipoBatalla.
         // Descartar la sesión limpia sin intentar unserialize; el try/catch
         // queda como red de seguridad para payloads corruptos del
-        // SESSION_VERSION actual. Las sesiones v9 siguen cargando (estructura
-        // compatible con v10: BattleStats.$ivs es opcional).
+        // SESSION_VERSION actual. Las sesiones v9/v10 siguen cargando
+        // (estructura compatible con v11: velocidades acumuladas ignoradas y
+        // BattleStats.$ivs opcional).
         if ((int) $version < self::MINIMUM_COMPATIBLE_SESSION_VERSION) {
             session()->forget([$battleId, $battleId.'_meta']);
 

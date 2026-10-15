@@ -234,8 +234,8 @@ class FabricaBatallaMockTest extends TestCase
 
         $team1 = $battle->team1->combatientesCollection()->all();
         $team2 = $battle->team2->combatientesCollection()->all();
-        $this->assertCount(5, $team1);
-        $this->assertCount(5, $team2);
+        $this->assertCount(3, $team1);
+        $this->assertCount(3, $team2);
 
         $gengar = $team1[0];
         $this->assertSame('Gengar', $gengar->nombre());

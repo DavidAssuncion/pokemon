@@ -442,7 +442,7 @@ class ExploracionesTest extends TestCase
         $this->assertNotNull($ctx['exploracion']->refresh()->regreso);
 
         // Nivel salvaje 1: exp de derrota del bulbasaur (base_experience 64) con nivel 1.
-        // D3: cada integrante recibe floor((T×0.8)/5) = floor(12×0.8/5) = 1.
+        // D3: cada integrante recibe floor((T×0.8)/3) con T = exp de derrota del salvaje a nivel 1.
         $expPorMiembro = (int) floor(NivelHelper::expDerrota(64, 1) * 0.8 / CalculadorRecompensas::MIEMBROS_EQUIPO);
         $this->assertSame($expPorMiembro, $ctx['reclutado1']->refresh()->exp->total());
 
@@ -638,7 +638,7 @@ class ExploracionesTest extends TestCase
         $this->assertGreaterThan(0, $conteos[2] ?? 0);
 
         // T por derrota (nivel salvaje 5); 2 tipos → 50/50; por miembro
-        // floor((T/2)×0.8/5) por derrota y por tipo.
+        // floor((T/2)×0.8/3) por derrota y por tipo.
         $T = NivelHelper::expDerrota(5000, 5);
         $expTipoPorDerrota = (int) floor(intdiv($T, 2) * 0.8 / CalculadorRecompensas::MIEMBROS_EQUIPO);
         $esperadoPorTipo = $expTipoPorDerrota * ($conteos[2] ?? 0);

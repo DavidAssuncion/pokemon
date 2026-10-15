@@ -30,7 +30,7 @@ class GeneradorEquipoEntrenadorTest extends TestCase
     }
 
     #[Test]
-    public function genera_cinco_especies_unicas_cuando_el_pool_lo_permita(): void
+    public function genera_tres_especies_unicas_cuando_el_pool_lo_permita(): void
     {
         $habitat = $this->crearHabitat('Bosque');
         $ids = [101, 102, 103, 104, 105, 106];
@@ -46,7 +46,7 @@ class GeneradorEquipoEntrenadorTest extends TestCase
 
         $equipo = $generador->generar((int) $habitat->id, 1, 0, '2026-09-12');
 
-        $this->assertCount(5, $equipo);
+        $this->assertCount(3, $equipo);
         $idsGenerados = array_map(
             fn (DatosPokemonBatalla $d): int => $d->speciesId,
             $equipo
@@ -55,14 +55,14 @@ class GeneradorEquipoEntrenadorTest extends TestCase
             array_values(array_unique($idsGenerados)),
             $idsGenerados,
         );
-        $this->assertCount(5, $idsGenerados);
+        $this->assertCount(3, $idsGenerados);
     }
 
     #[Test]
-    public function genera_cinco_pokemon_con_repeticion_cuando_el_pool_tiene_menos_de_cinco(): void
+    public function genera_tres_pokemon_con_repeticion_cuando_el_pool_tiene_menos_de_tres(): void
     {
         $habitat = $this->crearHabitat('Cueva');
-        $ids = [201, 202, 203];
+        $ids = [201, 202];
 
         foreach ($ids as $id) {
             $this->crearPokemon($id, $habitat);
@@ -74,10 +74,10 @@ class GeneradorEquipoEntrenadorTest extends TestCase
         );
 
         // Pesos iguales (45/10 = 4.5 cada uno): el aleatorio decide el bucket.
-        // 0.01 → 201, 0.49 → 202, 0.99 → 203 (acumulado 33 %, 67 %, 100 %).
+        // 0.01 → 201, 0.99 → 202 (acumulado 50 %, 100 %).
         $aleatorio = (function (): float {
             static $pasos = null;
-            $pasos ??= [0.01, 0.49, 0.99, 0.01, 0.49];
+            $pasos ??= [0.01, 0.99, 0.01];
 
             return array_shift($pasos);
         });
@@ -89,28 +89,27 @@ class GeneradorEquipoEntrenadorTest extends TestCase
             $equipo
         );
 
-        $this->assertCount(5, $equipo);
-        $this->assertSame([201, 202, 203, 201, 202], $idsGenerados);
+        $this->assertCount(3, $equipo);
+        $this->assertSame([201, 202, 201], $idsGenerados);
     }
 
     #[Test]
-    public function con_pool_menor_a_cinco_repite_ponderado_por_capture_rate(): void
+    public function con_pool_menor_a_tres_repite_ponderado_por_capture_rate(): void
     {
         $habitat = $this->crearHabitat('Marisma');
-        // Pesos capture_rate/hatch: 200/10=20, 100/10=10, 10/10=1 (total 31).
+        // Pesos capture_rate/hatch: 200/10=20, 100/10=10 (total 30).
         $this->crearPokemon(501, $habitat, captureRate: 200);
         $this->crearPokemon(502, $habitat, captureRate: 100);
-        $this->crearPokemon(503, $habitat, captureRate: 10);
 
         $generador = new GeneradorEquipoEntrenador(
             new MapeadorPokemonBatalla(new GeneradorMovimientosTipo()),
             new ClasificadorOfensivaDefensiva(),
         );
 
-        // Buckets acumulados: 501 ≤ 20/31 ≈ 0.645; 502 ≤ 30/31 ≈ 0.968; 503 > 0.968.
+        // Buckets acumulados: 501 ≤ 20/30 ≈ 0.667; 502 > 0.667.
         $aleatorio = (function (): float {
             static $pasos = null;
-            $pasos ??= [0.05, 0.05, 0.7, 0.7, 0.99];
+            $pasos ??= [0.05, 0.05, 0.7];
 
             return array_shift($pasos);
         });
@@ -122,9 +121,9 @@ class GeneradorEquipoEntrenadorTest extends TestCase
             $equipo
         );
 
-        // El de mayor capture_rate aparece el doble de veces que el segundo,
-        // y el de menor peso solo una vez (con reemplazo, dependiente del peso).
-        $this->assertSame([501, 501, 502, 502, 503], $idsGenerados);
+        // El de mayor capture_rate aparece el doble de veces que el segundo
+        // (con reemplazo, dependiente del peso).
+        $this->assertSame([501, 501, 502], $idsGenerados);
     }
 
     #[Test]
@@ -154,7 +153,7 @@ class GeneradorEquipoEntrenadorTest extends TestCase
     }
 
     #[Test]
-    public function los_ids_mantienen_el_formato_entrenador_con_indice_0_a_4(): void
+    public function los_ids_mantienen_el_formato_entrenador_con_indice_0_a_2(): void
     {
         $habitat = $this->crearHabitat('Río');
         $ids = [401, 402, 403, 404, 405];
@@ -171,7 +170,7 @@ class GeneradorEquipoEntrenadorTest extends TestCase
         $equipo = $generador->generar((int) $habitat->id, 1, 2, '2026-09-12');
 
         $idsEsperados = [];
-        for ($i = 0; $i < 5; $i++) {
+        for ($i = 0; $i < 3; $i++) {
             $idsEsperados[] = "entrenador_{$habitat->id}_1_2_{$i}";
         }
 

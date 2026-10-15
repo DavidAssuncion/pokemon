@@ -28,10 +28,10 @@ use Src\Shared\Tipos\TipoPokemon;
 final class CalculadorRecompensas
 {
     /**
-     * Miembros del equipo de combate (5v5): divisor del reparto del 80 % de la
+     * Miembros del equipo de combate (3v3): divisor del reparto del 80 % de la
      * EXP entre cada integrante.
      */
-    public const MIEMBROS_EQUIPO = 5;
+    public const MIEMBROS_EQUIPO = 3;
     /**
      * @param  Collection<int, PokemonDerrotado>  $derrotados
      * @param  callable(PokemonDerrotado):bool  $aleatorioCaptura  Decide si el
@@ -317,7 +317,7 @@ final class CalculadorRecompensas
     }
 
     /**
-     * EXP por integrante (D3): cada miembro del equipo recibe floor((T×0.8)/5)
+     * EXP por integrante (D3): cada miembro del equipo recibe floor((T×0.8)/3)
      * por cada derrota (reparto 80 % entre MIEMBROS_EQUIPO).
      *
      * @param  Collection<int, PokemonDerrotado>  $derrotados
@@ -336,7 +336,7 @@ final class CalculadorRecompensas
 
     /**
      * EXP de tipo por miembro: reparto de la EXP tipada igual que
-     * calcularExpPorMiembro (floor(exp×0.8/5) por derrota), pero DESPUÉS del
+     * calcularExpPorMiembro (floor(exp×0.8/3) por derrota), pero DESPUÉS del
      * reparto por tipo (1 tipo → 100 %, 2 tipos → 50/50). Se acumula por tipo,
      * se aplica el multiplicador con floor y se filtra exp > 0.
      *

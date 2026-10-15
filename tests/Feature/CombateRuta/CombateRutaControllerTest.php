@@ -40,7 +40,7 @@ class CombateRutaControllerTest extends TestCase
     #[Test]
     public function inicia_combate_con_team_y_formation_valida(): void
     {
-        $team = $this->crearEquipo(5);
+        $team = $this->crearEquipo(3);
 
         $response = $this->postJson("/api/habitats/{$this->habitat->id}/ruta/iniciar", [
             'team_id' => $team->id,
@@ -56,7 +56,7 @@ class CombateRutaControllerTest extends TestCase
     public function team_ajeno_no_puede_iniciar(): void
     {
         $otro = User::factory()->create();
-        $team = $this->crearEquipo(5, $otro);
+        $team = $this->crearEquipo(3, $otro);
 
         $this->postJson("/api/habitats/{$this->habitat->id}/ruta/iniciar", [
             'team_id' => $team->id,
@@ -66,7 +66,7 @@ class CombateRutaControllerTest extends TestCase
     #[Test]
     public function formacion_invalida_rechaza(): void
     {
-        $team = $this->crearEquipo(5);
+        $team = $this->crearEquipo(3);
 
         $this->postJson("/api/habitats/{$this->habitat->id}/ruta/iniciar", [
             'team_id' => $team->id,
@@ -82,12 +82,12 @@ class CombateRutaControllerTest extends TestCase
     }
 
     #[Test]
-    public function rivales_del_panel_devuelve_cinco_salvajes(): void
+    public function rivales_del_panel_devuelve_tres_salvajes(): void
     {
         $response = $this->getJson("/api/habitats/{$this->habitat->id}/ruta/rivales");
 
         $response->assertOk();
-        $this->assertCount(5, $response->json('rivales'));
+        $this->assertCount(3, $response->json('rivales'));
         foreach ($response->json('rivales') as $rival) {
             $this->assertArrayHasKey('id', $rival);
             $this->assertArrayHasKey('nombre', $rival);
@@ -100,10 +100,10 @@ class CombateRutaControllerTest extends TestCase
     #[Test]
     public function rivales_recorta_el_nivel_al_rango_1_3(): void
     {
-        // nivel 0 → clamp a 1 (pool del nivel 1 existe → 5 rivales).
+        // nivel 0 → clamp a 1 (pool del nivel 1 existe → 3 rivales).
         $this->getJson("/api/habitats/{$this->habitat->id}/ruta/rivales?nivel=0")
             ->assertOk()
-            ->assertJsonCount(5, 'rivales');
+            ->assertJsonCount(3, 'rivales');
 
         // nivel 99 → clamp a 3 (sin pool en el nivel 3 → lista vacía).
         $this->getJson("/api/habitats/{$this->habitat->id}/ruta/rivales?nivel=99")

@@ -7,6 +7,7 @@ namespace Src\Battle\Domain;
 use Src\Battle\Domain\AI\NivelDificultad;
 use Src\Battle\Domain\AI\SelectorAccionIA;
 use Src\Battle\Domain\Chain\CadenaDanio;
+use Src\Battle\Domain\Enums\StatClave;
 use Src\Battle\Domain\Enums\TipoClima;
 use Src\Battle\Domain\Observer\SujetoBatalla;
 use Src\Battle\Domain\ValueObjects\BattleLog;
@@ -106,6 +107,20 @@ class AgregadoBatalla
     public function setDificultad(NivelDificultad $dificultad): void
     {
         $this->dificultad = $dificultad;
+    }
+
+    /**
+     * Incorpora un combatiente a un equipo durante la batalla en curso
+     * (invocaciones; permite más de 3 combatientes por bando).
+     *
+     * No dispara efectos de entrada ni registra log: el combatiente entra en
+     * el orden de la ronda actual (contador de acciones a 0) y comparte la
+     * colección que ya gestiona GestorTurnos.
+     */
+    public function incorporarCombatiente(EquipoBatalla $equipo, Combatiente $combatiente, Posicion $posicion): void
+    {
+        $equipo->agregarCombatiente($combatiente, $posicion);
+        $combatiente->setVecesActuadoEstaRonda(0);
     }
 
     // ─── Log ──────────────────────────────────────────────────
@@ -239,7 +254,7 @@ class AgregadoBatalla
         $this->getSelectorAccion()->registrarAccionEnemiga($accion, $daño, $this->turnManager->round());
 
         $this->agregarLog(
-            "{$actor->velocidadAcumulada()}vel {$actor->hpActual()}hp] "
+            "{$actor->obtenerStatEfectivo(StatClave::VELOCIDAD)}vel {$actor->hpActual()}hp] "
             ."ataca a {$objetivo->hpActual()}hp] "
             ."con {$movimiento->nombre} -> {$daño} de daño"
         );

@@ -9,7 +9,7 @@ use Src\Battle\Domain\DatosPokemonBatalla;
 use Src\Battle\Domain\EquipoBatalla;
 
 /**
- * Secuencia compartida de creación de combates 5v5: construye los dos
+ * Secuencia compartida de creación de combates 3v3: construye los dos
  * EquipoBatalla desde los datos ya generados, dispara los efectos de inicio
  * y persiste la batalla + meta en la sesión del navegador.
  *

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Src\Battle\Domain;
 
 use Src\Battle\Domain\Collections\CombatientesCollection;
+use Src\Battle\Domain\Enums\StatClave;
 
 class GestorTurnos
 {
@@ -47,68 +48,61 @@ class GestorTurnos
     }
 
     /**
-     * Menor velocidad efectiva entre combatientes vivos.
-     * 0 si no hay vivos.
+     * Inicia una nueva ronda: incrementa el contador y resetea las acciones
+     * consumidas, de modo que cada combatiente vivo pueda actuar una vez.
      */
-    public function menorVelocidadEntreVivos(): float
-    {
-        return $this->combatientesVivos()->menorVelocidadEfectiva();
-    }
-
     public function startNewRound(): void
     {
         $this->round++;
 
         foreach ($this->allCombatants() as $combatant) {
-            if ($combatant->estaVivo()) {
-                $combatant->agregarVelocidad();
-                $combatant->setVecesActuadoEstaRonda(0);
-            }
+            $combatant->setVecesActuadoEstaRonda(0);
         }
     }
 
+    /**
+     * Siguiente combatiente vivo que aún no actuó en la ronda actual: el de
+     * mayor velocidad efectiva (StatClave::VELOCIDAD, con multiplicadores y
+     * parálisis). Los empates se resuelven por orden de inserción (team1 antes
+     * que team2). null solo si ningún vivo tiene acción pendiente.
+     */
     public function getNextActor(): ?Combatiente
     {
-        $lowest = $this->menorVelocidadEntreVivos();
-        if ($lowest <= 0) {
-            return null;
+        $seleccionado = null;
+        $mejorVelocidad = null;
+
+        foreach ($this->combatientesVivos() as $candidato) {
+            if ($candidato->vecesActuadoEstaRonda() !== 0) {
+                continue;
+            }
+
+            $velocidad = $candidato->obtenerStatEfectivo(StatClave::VELOCIDAD);
+
+            if ($mejorVelocidad === null || $velocidad > $mejorVelocidad) {
+                $seleccionado = $candidato;
+                $mejorVelocidad = $velocidad;
+            }
         }
 
-        $alive = $this->combatientesVivos();
-
-        if ($alive->isEmpty()) {
-            return null;
-        }
-
-        $selected = $alive->mayorVelocidadActual();
-
-        if ($selected === null) {
-            return null;
-        }
-
-        if ($selected->velocidadAcumulada() <= 0) {
-            return null;
-        }
-
-        return $selected;
+        return $seleccionado;
     }
 
+    /**
+     * Marca la acción del actor en la ronda actual. No altera velocidades:
+     * cada combatiente vivo actúa exactamente una vez por ronda.
+     */
     public function consumeAction(Combatiente $actor): void
     {
-        $lowest = $this->menorVelocidadEntreVivos();
-        $actor->reducirVelocidad($lowest <= 0 ? 1 : $lowest);
         $actor->setVecesActuadoEstaRonda($actor->vecesActuadoEstaRonda() + 1);
     }
 
+    /**
+     * ¿Queda algún combatiente vivo sin actuar en la ronda actual?
+     */
     public function hayAlgunoConAccionPendiente(): bool
     {
-        $lowest = $this->menorVelocidadEntreVivos();
-        if ($lowest <= 0) {
-            return false;
-        }
-
         foreach ($this->combatientesVivos() as $c) {
-            if ($c->velocidadAcumulada() > 0) {
+            if ($c->vecesActuadoEstaRonda() === 0) {
                 return true;
             }
         }

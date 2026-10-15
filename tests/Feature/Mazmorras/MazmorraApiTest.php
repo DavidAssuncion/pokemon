@@ -21,7 +21,7 @@ use Tests\TestCase;
 
 /**
  * Mazmorra por pisos en un hábitat: consulta de pisos (disponible/ganado/
- * cooldown) e inicio de combate 5v1 contra un jefe con stats ×10.
+ * cooldown) e inicio de combate 3v1 contra un jefe con stats ×10.
  */
 class MazmorraApiTest extends TestCase
 {
@@ -109,7 +109,7 @@ class MazmorraApiTest extends TestCase
         $this->assertSame(1, $meta['floor']);
         $this->assertSame($pokemonJefe->id, $meta['boss_species_id']);
 
-        // El rival es 1 solo combatiente (5v1) y sus stats base están ×10.
+        // El rival es 1 solo combatiente (3v1) y sus stats base están ×10.
         $payload = session($battleId);
         $battle = unserialize(explode('|', $payload, 2)[1]);
         $rivales = $battle->team2->combatants();

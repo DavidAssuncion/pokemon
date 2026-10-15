@@ -19,8 +19,6 @@ class Combatiente
 
     private float $defensaEspHpActual;
 
-    private float $velocidadAcumulada = 0;
-
     private int $vecesActuadoEstaRonda = 0;
 
     private EstadoPokemon $estado = EstadoPokemon::NONE;
@@ -80,7 +78,6 @@ class Combatiente
             'hpActual' => $this->hpActual,
             'defensaHpActual' => $this->defensaHpActual,
             'defensaEspHpActual' => $this->defensaEspHpActual,
-            'velocidadAcumulada' => $this->velocidadAcumulada,
             'vecesActuadoEstaRonda' => $this->vecesActuadoEstaRonda,
             'estado' => $this->estado->value,
             'contadorVenenoGrave' => $this->contadorVenenoGrave,
@@ -105,7 +102,8 @@ class Combatiente
         $this->hpActual = (float) ($data['hpActual'] ?? 0);
         $this->defensaHpActual = (float) ($data['defensaHpActual'] ?? 0);
         $this->defensaEspHpActual = (float) ($data['defensaEspHpActual'] ?? 0);
-        $this->velocidadAcumulada = (float) ($data['velocidadAcumulada'] ?? 0);
+        // Compatibilidad: los payloads v≤10 traen 'velocidadAcumulada'; se ignora
+        // (el motor de turnos ya no la usa y el contador de acciones manda).
         $this->vecesActuadoEstaRonda = (int) ($data['vecesActuadoEstaRonda'] ?? 0);
         $this->estado = EstadoPokemon::tryFrom($data['estado'] ?? EstadoPokemon::NONE->value) ?? EstadoPokemon::NONE;
         $this->contadorVenenoGrave = (int) ($data['contadorVenenoGrave'] ?? 0);
@@ -148,11 +146,6 @@ class Combatiente
     public function defensaEspHpActual(): float
     {
         return $this->defensaEspHpActual;
-    }
-
-    public function velocidadAcumulada(): float
-    {
-        return $this->velocidadAcumulada;
     }
 
     public function vecesActuadoEstaRonda(): int
@@ -250,11 +243,6 @@ class Combatiente
     public function setDefensaEspHpActual(float $defensaEspHpActual): void
     {
         $this->defensaEspHpActual = $defensaEspHpActual;
-    }
-
-    public function setVelocidadAcumulada(float $velocidadAcumulada): void
-    {
-        $this->velocidadAcumulada = $velocidadAcumulada;
     }
 
     public function setVecesActuadoEstaRonda(int $vecesActuadoEstaRonda): void
@@ -359,7 +347,7 @@ class Combatiente
             'posicion' => $this->posicion->value,
             'alive' => $this->estaVivo(),
             'speed' => $this->pokemon->battleStats()->speed,
-            'accumulatedSpeed' => $this->velocidadAcumulada,
+            'effectiveSpeed' => $this->obtenerStatEfectivo(StatClave::VELOCIDAD),
             'status' => $this->estado->value,
             'statusTurns' => $this->turnosEstado,
             'stages' => $this->multiplicadores->obtenerEtapas(),
@@ -371,16 +359,6 @@ class Combatiente
     public function estaVivo(): bool
     {
         return $this->barrerasVidaManager->estaVivo($this->hpActual);
-    }
-
-    public function agregarVelocidad(): void
-    {
-        $this->velocidadAcumulada += $this->obtenerStatEfectivo(StatClave::VELOCIDAD);
-    }
-
-    public function reducirVelocidad(float $amount): void
-    {
-        $this->velocidadAcumulada -= $amount;
     }
 
     // ─── Stat Stages ─────────────────────────────────────────

@@ -6,7 +6,7 @@ namespace Src\Mazmorras\Domain;
 
 /**
  * Configuración de la mazmorra de un hábitat: lista ordenada de pisos, cada
- * uno con el species_id del jefe que se enfrenta al equipo del jugador (5v1).
+ * uno con el species_id del jefe que se enfrenta al equipo del jugador (3v1).
  */
 final class ConfiguracionMazmorra
 {

@@ -28,7 +28,8 @@ final class ClasificadorOfensivaDefensiva
     }
 
     /**
-     * Genera formación determinista para un equipo (5 slots).
+     * Genera formación determinista para un equipo (vanguardia/retaguardia,
+     * independiente del número de slots).
      * Mixed guarantee: si todos quedan en el mismo bando, mueve al de mayor
      * stat contraria al otro bando (el primero que lo cumple, para determinismo).
      *

@@ -17,7 +17,7 @@ use Src\Shared\Domain\ClasificadorOfensivaDefensiva;
 use Src\Shared\Domain\ProbabilidadesShiny;
 
 /**
- * Genera el equipo rival de un combate de ruta (5 pokémon salvajes) a partir
+ * Genera el equipo rival de un combate de ruta (3 pokémon salvajes) a partir
  * del pool del hábitat y nivel.
  *
  * - Selección ponderada CON reemplazo por slot (peso = capture_rate/hatch),
@@ -62,7 +62,7 @@ final class GeneradorEquipoRuta
         $aleatorio ??= $this->aleatorioAzar();
 
         $seleccionados = [];
-        for ($i = 0; $i < 5; $i++) {
+        for ($i = 0; $i < 3; $i++) {
             $seleccion = $ponderado->elegirConAleatorio($aleatorio);
             if ($seleccion === null) {
                 return [];

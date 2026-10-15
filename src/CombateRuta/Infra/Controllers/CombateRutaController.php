@@ -17,7 +17,7 @@ use Src\CombateRuta\App\IniciarCombateRuta;
 /**
  * Endpoints del combate de ruta (patrón EntrenadorController):
  * - GET  /api/habitats/{habitat}/ruta/rivales  → rivales salvajes del panel.
- * - POST /api/habitats/{habitat}/ruta/iniciar   → crea la batalla 5v5.
+ * - POST /api/habitats/{habitat}/ruta/iniciar   → crea la batalla 3v3.
  */
 final class CombateRutaController extends Controller
 {

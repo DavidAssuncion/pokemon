@@ -18,11 +18,11 @@ use Src\Shared\Domain\IvsRangoEntrenador;
 /**
  * Genera el equipo de un entrenador a partir del pool de un hábitat y nivel.
  *
- * - Con 5 especies únicas o más en el pool, elige 5 únicas (semilla
+ * - Con 3 especies únicas o más en el pool, elige 3 únicas (semilla
  *   determinista: misma fecha + hábitat + nivel + entrenador → mismo equipo
  *   durante el día).
- * - Con menos de 5 especies únicas, repite CON reemplazo ponderado por
- *   capture_rate/hatch (fórmula de PoolHabitat::ponderado) hasta completar 5;
+ * - Con menos de 3 especies únicas, repite CON reemplazo ponderado por
+ *   capture_rate/hatch (fórmula de PoolHabitat::ponderado) hasta completar 3;
  *   el aleatorio es inyectable para tests y determinista por semilla por defecto.
  * - Clasifica cada pokémon en defensivo (vanguardia) u ofensivo (retaguardia)
  *   con ClasificadorOfensivaDefensiva (fórmula determinista, sin random).
@@ -101,8 +101,8 @@ class GeneradorEquipoEntrenador
     }
 
     /**
-     * Elige 5 especies: únicas si el pool las tiene (en orden de la semilla);
-     * si no, repite CON reemplazo ponderado por capture_rate/hatch hasta 5.
+     * Elige 3 especies: únicas si el pool las tiene (en orden de la semilla);
+     * si no, repite CON reemplazo ponderado por capture_rate/hatch hasta 3.
      *
      * @param  list<Pokemon>  $pool
      * @param  callable(): float  $aleatorio
@@ -116,24 +116,24 @@ class GeneradorEquipoEntrenador
         )));
         $porId = $this->indexarPorId($pool);
 
-        if (count($ids) >= 5) {
+        if (count($ids) >= 3) {
             $randomizer = new Randomizer(new Mt19937($semilla));
             $idsOrdenados = $randomizer->shuffleArray($ids);
 
             $elegidos = [];
-            for ($i = 0; $i < 5; $i++) {
+            for ($i = 0; $i < 3; $i++) {
                 $elegidos[] = $porId[$idsOrdenados[$i]];
             }
 
             return $elegidos;
         }
 
-        // Pool con menos de 5 especies únicas: repetición ponderada hasta 5.
+        // Pool con menos de 3 especies únicas: repetición ponderada hasta 3.
         $aleatorio ??= $this->aleatorioDeterminista($semilla);
         $ponderado = $this->ponderadoDelPool($porId);
 
         $elegidos = [];
-        for ($i = 0; $i < 5; $i++) {
+        for ($i = 0; $i < 3; $i++) {
             $seleccion = $ponderado->elegirConAleatorio($aleatorio);
             if ($seleccion === null) {
                 return [];

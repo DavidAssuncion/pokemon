@@ -19,6 +19,7 @@ use Src\Battle\Domain\Posicion;
 use Src\CombateEntrenadores\App\ConstruirEquipoJugador;
 use Src\CombateEntrenadores\App\MapeadorPokemonBatalla;
 use Src\Shared\Domain\ClasificadorOfensivaDefensiva;
+use Src\Shared\Domain\Exceptions\ViolacionReglaNegocio;
 use Tests\TestCase;
 
 class ConstruirEquipoJugadorTest extends TestCase
@@ -38,7 +39,8 @@ class ConstruirEquipoJugadorTest extends TestCase
     {
         $pokemonOfensivo = $this->crearPokemon(801, 'ofensivo', atk: 120, def: 20, speed: 100);
         $pokemonDefensivo = $this->crearPokemon(802, 'defensivo', atk: 20, def: 120);
-        $team = $this->crearEquipoCon($pokemonDefensivo, $pokemonOfensivo);
+        $pokemonNeutro = $this->crearPokemon(803, 'neutro', atk: 60, def: 60);
+        $team = $this->crearEquipoCon($pokemonDefensivo, $pokemonOfensivo, $pokemonNeutro);
 
         $construir = new ConstruirEquipoJugador(
             app(MapeadorPokemonBatalla::class),
@@ -47,6 +49,7 @@ class ConstruirEquipoJugadorTest extends TestCase
 
         // Sin persistida ni popup → auto: slot 1 es defensivo (vanguardia), slot 2 ofensivo (retaguardia)
         $sinPrioridad = $construir->desdeEquipo($team, []);
+        $this->assertCount(3, $sinPrioridad);
         $this->assertSame(Posicion::VANGUARDIA, $sinPrioridad[0]->posicion);
         $this->assertSame(Posicion::RETAGUARDIA, $sinPrioridad[1]->posicion);
 
@@ -60,6 +63,44 @@ class ConstruirEquipoJugadorTest extends TestCase
         $conPopup = $construir->desdeEquipo($team, [1 => 'vanguardia', 2 => 'retaguardia']);
         $this->assertSame(Posicion::VANGUARDIA, $conPopup[0]->posicion);
         $this->assertSame(Posicion::RETAGUARDIA, $conPopup[1]->posicion);
+    }
+
+    #[Test]
+    public function desde_equipo_rechaza_equipo_con_dos_miembros(): void
+    {
+        $pokemonA = $this->crearPokemon(831, 'a', atk: 100, def: 30);
+        $pokemonB = $this->crearPokemon(832, 'b', atk: 30, def: 100);
+        $team = $this->crearEquipoCon($pokemonA, $pokemonB);
+
+        $construir = new ConstruirEquipoJugador(
+            app(MapeadorPokemonBatalla::class),
+            new ClasificadorOfensivaDefensiva(),
+        );
+
+        $this->expectException(ViolacionReglaNegocio::class);
+        $this->expectExceptionMessage('exactamente 3 miembros');
+
+        $construir->desdeEquipo($team, []);
+    }
+
+    #[Test]
+    public function desde_equipo_rechaza_equipo_con_cuatro_miembros(): void
+    {
+        $pokemons = [];
+        for ($i = 0; $i < 4; $i++) {
+            $pokemons[] = $this->crearPokemon(841 + $i, 'p'.$i, atk: 100, def: 30);
+        }
+        $team = $this->crearEquipoCon(...$pokemons);
+
+        $construir = new ConstruirEquipoJugador(
+            app(MapeadorPokemonBatalla::class),
+            new ClasificadorOfensivaDefensiva(),
+        );
+
+        $this->expectException(ViolacionReglaNegocio::class);
+        $this->expectExceptionMessage('exactamente 3 miembros');
+
+        $construir->desdeEquipo($team, []);
     }
 
     #[Test]

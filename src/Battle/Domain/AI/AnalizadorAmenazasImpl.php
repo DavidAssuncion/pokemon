@@ -6,6 +6,7 @@ namespace Src\Battle\Domain\AI;
 
 use Src\Battle\Domain\AI\ValueObjects\EvaluacionAmenaza;
 use Src\Battle\Domain\Combatiente;
+use Src\Battle\Domain\Enums\StatClave;
 
 /**
  * Analiza la amenaza de cada enemigo vivo calculando ThreatScore compuesto.
@@ -91,11 +92,12 @@ class AnalizadorAmenazasImpl implements AnalizadorAmenazas
     }
 
     /**
-     * Puntos si el enemigo actúa antes que el actor.
+     * Puntos si el enemigo tiene mayor velocidad efectiva que el actor
+     * (actúa antes en el orden de turnos).
      */
     private function calcularAmenazaVelocidad(ContextoDecisionIA $contexto, Combatiente $enemigo): float
     {
-        return $enemigo->velocidadAcumulada() > $contexto->actor->velocidadAcumulada()
+        return $enemigo->obtenerStatEfectivo(StatClave::VELOCIDAD) > $contexto->actor->obtenerStatEfectivo(StatClave::VELOCIDAD)
             ? $this->pesos->puntosVelocidadSuperior
             : 0.0;
     }

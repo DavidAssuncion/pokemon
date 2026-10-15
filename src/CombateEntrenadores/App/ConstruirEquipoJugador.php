@@ -9,6 +9,7 @@ use App\Models\Team;
 use Src\Battle\Domain\DatosPokemonBatalla;
 use Src\Battle\Domain\Posicion;
 use Src\Shared\Domain\ClasificadorOfensivaDefensiva;
+use Src\Shared\Domain\Exceptions\ViolacionReglaNegocio;
 
 /**
  * Construye el equipo de batalla del jugador a partir de un Team de la BD,
@@ -28,9 +29,14 @@ class ConstruirEquipoJugador
     }
 
     /**
+     * Construye los datos de batalla del equipo y valida que aporte
+     * exactamente 3 combatientes (regla estándar de combate).
+     *
      * @param  array<int, string>  $formacion  posición por slot del popup: [slot => 'vanguardia'|'retaguardia']
      * @param  int|null  $nivel  nivel del jugador (para escalar stats en gimnasios); null = stats base (entrenadores hábitat)
      * @return list<DatosPokemonBatalla>
+     *
+     * @throws ViolacionReglaNegocio si el equipo no aporta exactamente 3 combatientes
      */
     public function desdeEquipo(Team $equipo, array $formacion, ?int $nivel = null): array
     {
@@ -62,6 +68,10 @@ class ConstruirEquipoJugador
                 evs: $reclutado->evs,
                 ivs: $reclutado->ivs,
             );
+        }
+
+        if (count($combatientes) !== 3) {
+            throw new ViolacionReglaNegocio('El equipo debe tener exactamente 3 miembros para combatir.');
         }
 
         return $combatientes;

@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Src\Battle\Domain\Collections;
 
 use Src\Battle\Domain\Combatiente;
-use Src\Battle\Domain\Enums\StatClave;
 use Src\Battle\Domain\Posicion;
 use Src\Shared\Domain\Collection;
 
@@ -81,68 +80,6 @@ class CombatientesCollection extends Collection
         $primer = $this->first();
 
         return $primer instanceof Combatiente ? $primer : null;
-    }
-
-    /**
-     * Combatiente vivo con mayor velocidad acumulada actual.
-     */
-    public function mayorVelocidadActual(): ?Combatiente
-    {
-        $vivos = $this->vivos()->toList();
-        if ($vivos === []) {
-            return null;
-        }
-
-        $mayor = $vivos[0];
-        foreach ($vivos as $c) {
-            if ($c->velocidadAcumulada() > $mayor->velocidadAcumulada()) {
-                $mayor = $c;
-            }
-        }
-
-        return $mayor;
-    }
-
-    /**
-     * Combatiente vivo con menor velocidad acumulada actual.
-     */
-    public function menorVelocidadActual(): ?Combatiente
-    {
-        $vivos = $this->vivos()->toList();
-        if ($vivos === []) {
-            return null;
-        }
-
-        $menor = $vivos[0];
-        foreach ($vivos as $c) {
-            if ($c->velocidadAcumulada() < $menor->velocidadAcumulada()) {
-                $menor = $c;
-            }
-        }
-
-        return $menor;
-    }
-
-    /**
-     * Retorna la menor velocidad efectiva (StatClave::VELOCIDAD) entre vivos.
-     * 0 si no hay vivos.
-     */
-    public function menorVelocidadEfectiva(): float
-    {
-        $vivos = $this->vivos()->toList();
-        if ($vivos === []) {
-            return 0;
-        }
-
-        $min = $vivos[0]->obtenerStatEfectivo(StatClave::VELOCIDAD);
-        foreach ($vivos as $c) {
-            $val = $c->obtenerStatEfectivo(StatClave::VELOCIDAD);
-            if ($val < $min) {
-                $min = $val;
-            }
-        }
-
-        return $min;
     }
 
     /**

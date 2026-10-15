@@ -15,7 +15,7 @@ use Src\Shared\Tipos\TipoPokemon;
 /**
  * Tests avanzados de Combatiente: cubre mutantes de obtenerStatEfectivo,
  * puedeActuar con FREEZE/CONFUSION, curarBarreras, obtenerPorcentajeDanioDirecto,
- * agregarVelocidad acumulativa y aArrayVista.
+ * serialización de payloads legacy con velocidad acumulada y aArrayVista.
  */
 class CombatienteAvanzadoTest extends TestCase
 {
@@ -136,7 +136,7 @@ class CombatienteAvanzadoTest extends TestCase
         $this->assertSame($maxSpDef, $c->defensaEspHpActual());
     }
 
-    public function test_agregar_velocidad_acumula(): void
+    public function test_aarray_vista_expone_effective_speed(): void
     {
         $c = $this->combatiente(
             stats: ['hp' => 100, 'speed' => 100, 'atk' => 100, 'def' => 100],
@@ -145,11 +145,35 @@ class CombatienteAvanzadoTest extends TestCase
             nombre: 'Rápido',
         );
 
-        $c->agregarVelocidad();
-        $primera = $c->velocidadAcumulada(); // 205
+        $vista = $c->aArrayVista(0);
 
-        $c->agregarVelocidad();
-        $this->assertSame($primera * 2, $c->velocidadAcumulada());
+        // Velocidad efectiva lvl100 = 2*100+5 = 205 (sin multiplicadores)
+        $this->assertSame(205.0, $vista['effectiveSpeed']);
+        $this->assertArrayNotHasKey('accumulatedSpeed', $vista);
+    }
+
+    public function test_unserialize_ignora_velocidad_acumulada_de_payloads_legacy(): void
+    {
+        $c = $this->combatiente(
+            stats: ['hp' => 100, 'speed' => 100, 'atk' => 100, 'def' => 100],
+            tipos: [TipoPokemon::NORMAL],
+            id: 'c1',
+            nombre: 'Legacy',
+        );
+
+        $payload = $c->__serialize();
+        $payload['velocidadAcumulada'] = 205.0; // clave presente en payloads v≤10
+
+        $reconstruido = $this->combatiente(
+            stats: ['hp' => 100],
+            tipos: [TipoPokemon::NORMAL],
+            id: 'tmp',
+            nombre: 'tmp',
+        );
+        $reconstruido->__unserialize($payload);
+
+        $this->assertSame('c1', $reconstruido->id());
+        $this->assertSame(100.0, $reconstruido->pokemon()->battleStats()->speed);
     }
 
     public function test_obtener_porcentaje_danio_directo_capado_a_1_0(): void
@@ -226,7 +250,7 @@ class CombatienteAvanzadoTest extends TestCase
         $this->assertArrayHasKey('maxHp', $vista);
         $this->assertArrayHasKey('defHp', $vista);
         $this->assertArrayHasKey('spDefHp', $vista);
-        $this->assertArrayHasKey('accumulatedSpeed', $vista);
+        $this->assertArrayHasKey('effectiveSpeed', $vista);
     }
 
     public function test_aarray_vista_icono_con_species_id_y_form_suffix(): void

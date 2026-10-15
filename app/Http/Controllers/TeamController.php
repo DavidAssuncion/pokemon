@@ -80,8 +80,8 @@ class TeamController extends Controller
             'team_id' => 'required|exists:teams,id',
             // El reclutado debe ser del usuario autenticado (anti-IDOR).
             'reclutado_id' => ['required', Rule::exists('reclutados', 'id')->where('user_id', Auth::id())],
-            // Equipos de hasta 5 para mazmorras (antes 3).
-            'slot' => 'required|integer|min:1|max:5',
+            // Equipos estándar de 3 (combates 3v3 y mazmorra 3v1).
+            'slot' => 'required|integer|min:1|max:3',
             'behavior' => 'required|in:VANGUARDIA,COMBATIENTE,RECOLECTOR,RASTREADOR',
         ]);
 

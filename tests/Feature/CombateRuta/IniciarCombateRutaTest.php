@@ -43,12 +43,12 @@ class IniciarCombateRutaTest extends TestCase
     }
 
     #[Test]
-    public function crea_batalla_5v5_contra_salvajes_y_guarda_meta_ruta(): void
+    public function crea_batalla_3v3_contra_salvajes_y_guarda_meta_ruta(): void
     {
         for ($id = 1; $id <= 6; $id++) {
             $this->crearPokemonDelPool($id, captureRate: 200);
         }
-        $equipo = $this->crearEquipo(5);
+        $equipo = $this->crearEquipo(3);
 
         $iniciar = $this->iniciador();
         $battleId = $iniciar->iniciar(
@@ -63,8 +63,8 @@ class IniciarCombateRutaTest extends TestCase
         $battle = $session->cargar($battleId);
 
         $this->assertInstanceOf(AgregadoBatalla::class, $battle);
-        $this->assertCount(5, $battle->team1->combatientesCollection());
-        $this->assertCount(5, $battle->team2->combatientesCollection());
+        $this->assertCount(3, $battle->team1->combatientesCollection());
+        $this->assertCount(3, $battle->team2->combatientesCollection());
 
         $meta = $session->cargarMeta($battleId);
         $this->assertSame('ruta', $meta['tipo']);
@@ -74,15 +74,15 @@ class IniciarCombateRutaTest extends TestCase
     }
 
     #[Test]
-    public function team_con_menos_de_cinco_miembros_lanza_error(): void
+    public function team_con_menos_de_tres_miembros_lanza_error(): void
     {
         for ($id = 1; $id <= 5; $id++) {
             $this->crearPokemonDelPool($id, captureRate: 200);
         }
-        $equipo = $this->crearEquipo(4);
+        $equipo = $this->crearEquipo(2);
 
         $this->expectException(ViolacionReglaNegocio::class);
-        $this->expectExceptionMessage('5 miembros');
+        $this->expectExceptionMessage('exactamente 3 miembros');
 
         $this->iniciador()->iniciar(
             habitatId: (int) $this->habitat->id,
@@ -98,7 +98,7 @@ class IniciarCombateRutaTest extends TestCase
     {
         // El pool solo existe en nivel 2; se pide nivel 1 → sin rivales.
         $this->crearPokemonDelPool(1, captureRate: 200, nivel: 2);
-        $equipo = $this->crearEquipo(5);
+        $equipo = $this->crearEquipo(3);
 
         $this->expectException(ViolacionReglaNegocio::class);
         $this->expectExceptionMessage('No hay Pokémon salvajes');
@@ -118,7 +118,7 @@ class IniciarCombateRutaTest extends TestCase
         for ($id = 1; $id <= 5; $id++) {
             $this->crearPokemonDelPool($id, captureRate: 200);
         }
-        $equipo = $this->crearEquipo(5);
+        $equipo = $this->crearEquipo(3);
         $session = app(BattleSessionService::class);
         $iniciar = $this->iniciador();
 

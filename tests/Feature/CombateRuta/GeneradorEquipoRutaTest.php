@@ -32,7 +32,7 @@ class GeneradorEquipoRutaTest extends TestCase
     }
 
     #[Test]
-    public function genera_cinco_salvajes_con_seleccion_ponderada_con_reemplazo(): void
+    public function genera_tres_salvajes_con_seleccion_ponderada_con_reemplazo(): void
     {
         $habitat = $this->crearHabitat('Ruta 1');
         // Pesos capture_rate/hatch: 200/10=20, 100/10=10, 10/10=1 (total 31).
@@ -43,16 +43,16 @@ class GeneradorEquipoRutaTest extends TestCase
         // Buckets acumulados: 601 ≤ 20/31 ≈ 0.645; 602 ≤ 30/31 ≈ 0.968; 603 > 0.968.
         $aleatorio = (function (): float {
             static $pasos = null;
-            $pasos ??= [0.05, 0.05, 0.7, 0.7, 0.99];
+            $pasos ??= [0.05, 0.05, 0.7];
 
             return array_shift($pasos);
         });
 
         $equipo = $this->crearGenerador()->generar((int) $habitat->id, 1, nivelRival: 12, aleatorio: $aleatorio);
 
-        $this->assertCount(5, $equipo);
+        $this->assertCount(3, $equipo);
         $this->assertSame(
-            [601, 601, 602, 602, 603],
+            [601, 601, 602],
             array_map(fn (DatosPokemonBatalla $d): int => $d->speciesId, $equipo),
         );
     }
@@ -67,14 +67,14 @@ class GeneradorEquipoRutaTest extends TestCase
 
         $aleatorio = (function (): float {
             static $pasos = null;
-            $pasos ??= [0.1, 0.1, 0.1, 0.1, 0.9];
+            $pasos ??= [0.1, 0.1, 0.1];
 
             return array_shift($pasos);
         });
 
         $equipo = $this->crearGenerador()->generar((int) $habitat->id, 1, nivelRival: 12, aleatorio: $aleatorio);
 
-        $this->assertCount(5, $equipo);
+        $this->assertCount(3, $equipo);
         $formacion = array_map(fn (DatosPokemonBatalla $d): string => $d->posicion->value, $equipo);
 
         $this->assertContains(Posicion::VANGUARDIA->value, $formacion);
@@ -82,7 +82,7 @@ class GeneradorEquipoRutaTest extends TestCase
     }
 
     #[Test]
-    public function ids_siguen_el_formato_ruta_con_indice_0_a_4(): void
+    public function ids_siguen_el_formato_ruta_con_indice_0_a_2(): void
     {
         $habitat = $this->crearHabitat('Ruta 3');
         foreach ([801, 802, 803] as $id) {
@@ -92,7 +92,7 @@ class GeneradorEquipoRutaTest extends TestCase
         // Peso igual 45/10: pasos que recorren los tres buckets con reemplazo.
         $aleatorio = (function (): float {
             static $pasos = null;
-            $pasos ??= [0.1, 0.4, 0.9, 0.1, 0.9];
+            $pasos ??= [0.1, 0.4, 0.9];
 
             return array_shift($pasos);
         });
@@ -100,7 +100,7 @@ class GeneradorEquipoRutaTest extends TestCase
         $equipo = $this->crearGenerador()->generar((int) $habitat->id, 1, nivelRival: 12, aleatorio: $aleatorio);
 
         $this->assertSame(
-            ['ruta_'.$habitat->id.'_1_0', 'ruta_'.$habitat->id.'_1_1', 'ruta_'.$habitat->id.'_1_2', 'ruta_'.$habitat->id.'_1_3', 'ruta_'.$habitat->id.'_1_4'],
+            ['ruta_'.$habitat->id.'_1_0', 'ruta_'.$habitat->id.'_1_1', 'ruta_'.$habitat->id.'_1_2'],
             array_map(fn (DatosPokemonBatalla $d): string => $d->id, $equipo),
         );
     }
@@ -137,10 +137,10 @@ class GeneradorEquipoRutaTest extends TestCase
         $this->crearPokemon(911, $habitat, captureRate: 100, hatch: null);
         $this->crearPokemon(912, $habitat, captureRate: 100, hatch: 0);
 
-        // 5 tiradas al 0.01: siempre el primer bucket (911).
+        // 3 tiradas al 0.01: siempre el primer bucket (911).
         $aleatorio = (function (): float {
             static $pasos = null;
-            $pasos ??= [0.01, 0.01, 0.01, 0.01, 0.01];
+            $pasos ??= [0.01, 0.01, 0.01];
 
             return array_shift($pasos);
         });
@@ -148,7 +148,7 @@ class GeneradorEquipoRutaTest extends TestCase
         $equipo = $this->crearGenerador()->generar((int) $habitat->id, 1, nivelRival: 12, aleatorio: $aleatorio);
 
         $this->assertSame(
-            [911, 911, 911, 911, 911],
+            [911, 911, 911],
             array_map(fn (DatosPokemonBatalla $d): int => $d->speciesId, $equipo),
         );
     }

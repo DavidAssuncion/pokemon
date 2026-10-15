@@ -10,7 +10,7 @@ use Src\Battle\Domain\Posicion;
 use Src\CombateEntrenadores\App\MapeadorPokemonBatalla;
 
 /**
- * Construye el jefe de un piso de mazmorra: UN solo combatiente (5v1) cuyo
+ * Construye el jefe de un piso de mazmorra: UN solo combatiente (3v1) cuyo
  * pokémon tiene los stats base multiplicados por 10 (jefe ×10) al nivel del
  * piso (por defecto el del jugador).
  */

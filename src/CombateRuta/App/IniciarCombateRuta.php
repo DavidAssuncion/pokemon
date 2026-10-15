@@ -10,10 +10,11 @@ use Src\CombateEntrenadores\App\ConstruirEquipoJugador;
 use Src\Shared\Domain\Exceptions\ViolacionReglaNegocio;
 
 /**
- * Crea una batalla de ruta 5v5 (pokémon salvajes del hábitat) y la guarda en
+ * Crea una batalla de ruta 3v3 (pokémon salvajes del hábitat) y la guarda en
  * sesión para el componente Livewire de combate.
  *
- * - Valida que el equipo del jugador tenga exactamente 5 miembros.
+ * - Valida que el equipo del jugador aporte exactamente 3 miembros
+ *   (guard centralizado en ConstruirEquipoJugador::desdeEquipo).
  * - Sin límite diario ni log: la ruta se puede repetir siempre que se quiera.
  * - El jugador es team1; "Pokémon salvajes" generados del pool es team2.
  */
@@ -39,10 +40,6 @@ final class IniciarCombateRuta
     ): string {
         $equipo = Team::with('members.reclutado.pokemon.stats', 'members.reclutado.pokemon.types')
             ->findOrFail($teamId);
-
-        if ($equipo->members->count() !== 5) {
-            throw new ViolacionReglaNegocio('El equipo de ruta debe tener exactamente 5 miembros.');
-        }
 
         $datosJugador = $this->construirEquipoJugador->desdeEquipo($equipo, $formacion, $nivelJugador);
 

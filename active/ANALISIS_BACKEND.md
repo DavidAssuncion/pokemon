@@ -251,3 +251,98 @@ Este cambio es de diagnóstico puro (solo logs, sin lógica). Validación manual
 - **Rendimiento**: `primer_reclutado` vuelca un array serializado potencialmente grande. Aceptable para diagnóstico temporal; eliminar al cerrar la depuración.
 - **Sensibilidad**: los logs incluyen `user_id`, `experiencia`, `reclutado_id`, `pokemon_id`; solo visibles en servidor.
 - Los logs son ruido en producción si el diagnóstico queda abierto; se recomienda retirarlos al confirmar la causa raíz.
+
+---
+
+# ANÁLISIS BACKEND — Equipos de 3, motor de 1 acción por ronda e invocaciones (R1–R7)
+
+Fecha: 2026-10-15
+Rol: Backend (Laravel / PHP 8.4).
+Origen: especificación del Analista (equipos estándar de 3, una acción por pokémon vivo y ronda, soporte de invocaciones). Testing diferido: no se ejecutan tests; los tests existentes se adaptan por lectura.
+
+## Objetivo
+
+1. **R1 — Equipos de 3**: el slot del modal pasa de `max:5` a `max:3` (`TeamController`); la validación de tamaño se centraliza en `ConstruirEquipoJugador::desdeEquipo` (`count !== 3` → `ViolacionReglaNegocio`, mensaje con «exactamente 3 miembros») y se retira el pre-check de `IniciarCombateRuta`. Migración que elimina `team_members` con `slot > 3`. Exploraciones sin validación nueva. El jefe de mazmorra se mantiene 1×10 (solo docblocks `5v1`→`3v1`).
+2. **R2 — Motor de turnos**: `getNextActor` = vivo con `vecesActuadoEstaRonda === 0` y mayor velocidad efectiva; `consumeAction` solo marca; `startNewRound` resetea contadores; `hayAlgunoConAccionPendiente` = existe vivo con contador 0; nunca `null` si hay pendientes; velocidad efectiva ≤ 0 no cortocircuita; empates estables por orden de inserción (team1 antes que team2). Se elimina `velocidadAcumulada` (propiedad, serialización, getter/setter, `agregarVelocidad`, `reducirVelocidad`) y `GestorTurnos::menorVelocidadEntreVivos`.
+3. **R3 — Invocaciones**: `AgregadoBatalla::incorporarCombatiente(EquipoBatalla, Combatiente, Posicion)` añade el combatiente al combate en curso (contador a 0), sin tope, sin efectos de entrada y sin log; comparte la colección que ya gestiona `GestorTurnos`.
+4. **R4 — Contrato de vista**: `aArrayVista` expone `effectiveSpeed` (float) en lugar de `accumulatedSpeed`; se migran el log de `AgregadoBatalla`, `AnalizadorAmenazasImpl` y `Combate::buildTurnQueue` (velocidad efectiva descendente, estable, coherente con `getNextActor`); `SESSION_VERSION` 10→11 con mínimo compatible 9 (payloads legacy con `velocidadAcumulada` se ignoran best-effort).
+5. **R5 — Escalados**: `CalculadorRecompensas::MIEMBROS_EQUIPO` 5→3; `GeneradorEquipoRuta` genera 3 rivales; `GeneradorEquipoEntrenador` 3 especies; `GeneradorPokemonGimnasio` `escalarACinco`→`escalarATres`.
+6. **R6 — Mock**: `FabricaBatallaMock` 5v5→3v3 conservando índices 0-2.
+7. **R7 — Docblocks**: `5v5`/`5v1` en ruta, controlador, creador de sesión y jefes; verificar `PersistirRecompensas` (ya dice «entre 3», sin cambio).
+
+## Archivos afectados
+
+### Modificados
+- `app/Http/Controllers/TeamController.php` — slot `max:5`→`max:3` + comentario.
+- `src/CombateEntrenadores/App/ConstruirEquipoJugador.php` — guard post-build `count !== 3` → `ViolacionReglaNegocio`; docblock `@throws`.
+- `src/CombateRuta/App/IniciarCombateRuta.php` — elimina pre-check de miembros; docblock 3v3.
+- `src/CombateRuta/Infra/Controllers/CombateRutaController.php` — docblock 3v3.
+- `src/CombateRuta/App/GeneradorEquipoRuta.php` — 3 rivales + docblock.
+- `app/Support/CreadorBatallaSesion.php` — docblock «combates 3v3».
+- `app/Support/BattleSessionService.php` — `SESSION_VERSION` 11; mínimo 9; docblocks.
+- `src/Battle/Domain/GestorTurnos.php` — motor de una acción por ronda; elimina `menorVelocidadEntreVivos`.
+- `src/Battle/Domain/Combatiente.php` — elimina velocidad acumulada; `aArrayVista` `effectiveSpeed`.
+- `src/Battle/Domain/Collections/CombatientesCollection.php` — elimina `mayorVelocidadActual`, `menorVelocidadActual` y `menorVelocidadEfectiva` (sin consumidores tras R2); conserva `menorVelocidadBase`.
+- `src/Battle/Domain/AgregadoBatalla.php` — `incorporarCombatiente`; log con velocidad efectiva.
+- `src/Battle/Infrastructure/FabricaBatallaMock.php` — 3v3 (sin `player_4/5` ni `enemy_4/5`).
+- `src/Battle/Domain/AI/AnalizadorAmenazasImpl.php` — amenaza de velocidad con velocidad efectiva.
+- `app/Livewire/Combate.php` — `buildTurnQueue` por velocidad efectiva desc sobre pendientes; docblocks de ronda.
+- `src/Exploraciones/Domain/CalculadorRecompensas.php` — `MIEMBROS_EQUIPO` 3 + docblocks.
+- `src/CombateEntrenadores/App/GeneradorEquipoEntrenador.php` — 3 especies (umbral, docblocks y bucles).
+- `src/Gimnasios/App/GeneradorPokemonGimnasio.php` — `escalarATres` + docblocks.
+- `src/Mazmorras/Domain/ConfiguracionMazmorra.php` — docblock 3v1.
+- `src/Mazmorras/App/GeneradorJefeMazmorra.php` — docblock 3v1.
+- Tests adaptados por lectura (sin ejecutar): `tests/Unit/Battle/GestorTurnosTest.php` (reescritura al modelo de acción única), `tests/Unit/Battle/CombatienteAvanzadoTest.php`, `tests/Unit/Battle/FabricaBatallaMockTest.php`, `tests/Feature/PokemonBattleTest.php`, `tests/Feature/CombateLivewireTest.php`, `tests/Feature/CombateRuta/{IniciarCombateRutaTest,CombateRutaControllerTest,GeneradorEquipoRutaTest}.php`, `tests/Feature/CombateEntrenadores/{ConstruirEquipoJugadorTest,GeneradorEquipoEntrenadorTest}.php`, `tests/Feature/Gimnasios/GeneradorPokemonGimnasioTest.php`, `tests/Feature/EquiposControllerTest.php`.
+
+### Nuevos
+- `database/migrations/2026_10_15_000001_delete_team_members_with_slot_above_three.php` — borra `team_members` con `slot > 3`; `down()` no-op (los datos no son reconstruibles).
+
+### No modificados (verificados)
+- `src/Exploraciones/App/PersistirRecompensas.php` — su docblock ya dice «repartida entre 3»: consistente con la constante.
+- `src/Battle/Domain/EquipoBatalla.php` — `lowestSpeed()` se mantiene (usa `menorVelocidadBase`).
+- `resources/views/**` — pendientes de frontend (`effectiveSpeed`, slots 1-3 en vistas).
+- `tests/Feature/EquiposViewTest.php` y `tests/Feature/FrontendHabitatModalTest.php` — tests de vistas, responsabilidad del frontend.
+
+## Comportamientos a cubrir en el testing futuro
+
+### Unit
+- `GestorTurnos::startNewRound`: incrementa la ronda y resetea `vecesActuadoEstaRonda` a 0.
+- `GestorTurnos::getNextActor`: devuelve el vivo con contador 0 de mayor velocidad efectiva; ignora a los que ya actuaron y a los muertos; empate → primero por orden de inserción (team1 antes que team2).
+- `GestorTurnos::consumeAction`: solo incrementa el contador del actor (no modifica velocidad); el actor no vuelve a ser elegido en la ronda.
+- `GestorTurnos::hayAlgunoConAccionPendiente`: true con vivos sin actuar; false si todos actuaron o no hay vivos.
+- Invariante: si `hayAlgunoConAccionPendiente()` es true, `getNextActor()` no es null.
+- Velocidad efectiva ≤ 0 (stats base negativos) no cortocircuita la ronda: el combatiente actúa.
+- Parálisis (velocidad efectiva a la mitad) altera el orden de actuación.
+- `Combatiente::__serialize` no incluye `velocidadAcumulada`; `__unserialize` de un payload legacy con esa clave no lanza y reconstruye el combatiente (best-effort).
+- `Combatiente::aArrayVista` expone `effectiveSpeed` (float con multiplicadores/parálisis) y no `accumulatedSpeed`.
+- `AgregadoBatalla::incorporarCombatiente`: el combatiente incorporado puede actuar en la ronda en curso (contador 0), aparece en `allCombatants()`/`combatientesVivos()` (misma colección que el gestor) y no registra log ni dispara efectos.
+- `FabricaBatallaMock`: 3 combatientes por equipo con los ids/valores exactos de los índices 0-2.
+
+### Feature
+- `ConstruirEquipoJugador::desdeEquipo` con equipo de 2 o 4 miembros → `ViolacionReglaNegocio` con mensaje que contiene «exactamente 3 miembros»; con 3 → 3 combatientes con formación aplicada.
+- `IniciarCombateRuta` con equipo de 3 → batalla 3v3 en sesión (team1 3, team2 3) y meta correcta; equipo de 2 → error centralizado.
+- `TeamController::addMember`: slot 1-3 aceptado; slot 4 rechazado; slot ocupado y reclutado ya presente siguen rechazados.
+- `GeneradorEquipoRuta`: 3 rivales con reemplazo ponderado por slot e ids `ruta_*_0..2`.
+- `GeneradorEquipoEntrenador`: 3 especies únicas con pool suficiente; repetición ponderada hasta 3 con pool corto; ids `entrenador_*_0..2`.
+- `GeneradorPokemonGimnasio`: roster con menos de 3 escala cíclicamente hasta 3; roster de 3 o más se conserva.
+- `Combate` Livewire con mock 3v3: monta la batalla, genera la cola de turnos por velocidad efectiva y la completa.
+
+### Acceptance
+- Combate de ruta manual: 3v3; cada pokémon vivo actúa exactamente una vez por ronda en orden de velocidad efectiva; la barra de turnos consume `effectiveSpeed`.
+- Mazmorra: jefe 1×10 contra equipo de 3 (3v1); recompensas de exploración reparten el 80 % de la EXP entre 3 miembros.
+- Migración: un equipo legacy con slots 4-5 queda recortado al top-3 tras `migrate`; `migrate:rollback` no restaura datos.
+
+## Diseño
+
+- Sin abstracciones nuevas: el motor usa primitivas existentes (`vecesActuadoEstaRonda` + `obtenerStatEfectivo(StatClave::VELOCIDAD)`).
+- `incorporarCombatiente` es la puerta explícita para invocaciones futuras; no incluye tope de combatientes ni efectos de entrada (fuera de alcance).
+- La coherencia «siguiente actor» ↔ «cola de turnos» se garantiza usando la misma métrica (velocidad efectiva) y orden estable (inserción) en ambos.
+- La guarda de tamaño vive en `desdeEquipo` (punto único de construcción de los 4 iniciadores de combate); las exploraciones no pasan por ahí y conservan su comportamiento.
+- Migración de datos: `delete` directo por query builder (sin modelos ni eventos); `down()` no-op documentado.
+
+## Riesgos
+
+- `resources/views/livewire/partials/turn-bar.blade.php` usa `$p['accumulatedSpeed']`: quedará indefinido hasta el cambio de frontend (`effectiveSpeed`). `tests/Feature/EquiposViewTest.php` (slots 1-5) también queda pendiente del frontend. No se tocan vistas ni tests de vistas.
+- Sesiones en vuelo v9/v10 con `velocidadAcumulada` cargan (mínimo 9) pero pierden el acumulado; contadores `vecesActuadoEstaRonda > 0` de payloads viejos se reinterpretan como «ya actuó» en la ronda en curso (best-effort).
+- Equipos existentes de 4-5 miembros: la migración los recorta; un combate en curso que los referenciara usará el top-3 en el siguiente inicio.
+- El mock pasa a 3v3 y varios tests quedan adaptados por lectura: sin ejecución no habrá confirmación hasta la fase de testing del módulo.
