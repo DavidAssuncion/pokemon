@@ -360,3 +360,18 @@ Corrección (commit `fix` posterior a `3039027d89`):
 - Ruta y entrenador no se tocan (ya producían exactamente 3).
 
 Comportamientos a cubrir en testing futuro (añadidos): recorte de roster >3 y roster vacío en `GeneradorPokemonGimnasio`.
+
+---
+
+# B1 (QA) — CrearEquipoInicial: verificación sin diff (2026-10-15)
+
+Bloqueo B1: el working tree de `equiposDefinidos()` definía 5 pokémon/behaviors por equipo (WIP sin commitear) mientras el docblock y `OnboardingTest` especifican 3.
+
+Resultado: revertido a los 3 primeros acordados (sin reordenar):
+- A: ids `[69, 37, 79]` / behaviors VANGUARDIA, COMBATIENTE, RECOLECTOR
+- B: ids `[183, 228, 220]` / behaviors VANGUARDIA, COMBATIENTE, RASTREADOR
+- C: ids `[341, 328, 285]` / behaviors VANGUARDIA, COMBATIENTE, RECOLECTOR
+
+Hallazgo: el contenido final coincide **exactamente** con HEAD (`git diff HEAD` vacío); la versión canónica del archivo ya definía esos 3 primeros y el desvío era solo el WIP. No se requiere commit de código B1 (no hay diff); este addendum es la traza.
+
+Verificación por lectura: `crear()` → 3 reclutados + 3 team_members (slots 1-3) con el rol por slot; `resolverNombres()` y dispatches de Pokédex a 3 ids; único consumidor `OnboardingController` (vista dinámica). `OnboardingTest` sin tocar y coherente (ids por equipo y behaviors por slot, incl. RASTREADOR en B slot 3).
