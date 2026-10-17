@@ -149,39 +149,30 @@ class Combate extends Component
             return;
         }
 
-        if (! $battle->turnManager()->bothTeamsAlive()) {
+        $turnos = $battle->turnManager();
+
+        if (! $turnos->bothTeamsAlive()) {
             $this->endBattle($battle);
 
             return;
         }
 
         // Al inicio (ronda 0) o si todos actuaron, avanzar ronda
-        if ($battle->turnManager()->round() === 0 || ! $battle->turnManager()->hayAlgunoConAccionPendiente()) {
-            $this->advanceRound($battle);
-
-            // Los efectos de fin de ronda (veneno/quemadura/clima) pudieron
-            // debilitar al último pokémon de un bando: cerrar antes de actuar.
-            if (! $battle->turnManager()->bothTeamsAlive()) {
-                $this->endBattle($battle);
-
+        if ($turnos->round() === 0 || ! $turnos->hayAlgunoConAccionPendiente()) {
+            if ($this->advanceRoundOrEndBattle($battle)) {
                 return;
             }
         }
 
-        $actor = $battle->turnManager()->getNextActor();
+        $actor = $turnos->getNextActor();
 
         // Sin actor pendiente (caso defensivo): forzar nueva ronda
         if ($actor === null) {
-            $this->advanceRound($battle);
-
-            // Mismo borde que arriba: fin de ronda con KO del último bando.
-            if (! $battle->turnManager()->bothTeamsAlive()) {
-                $this->endBattle($battle);
-
+            if ($this->advanceRoundOrEndBattle($battle)) {
                 return;
             }
 
-            $actor = $battle->turnManager()->getNextActor();
+            $actor = $turnos->getNextActor();
             if ($actor === null) {
                 $this->endBattle($battle);
 
@@ -198,7 +189,7 @@ class Combate extends Component
             if ($statusCheck->autoDanio() > 0) {
                 $this->log[] = "¡{$actor->nombre()} se golpeó a sí mismo! ({$statusCheck->autoDanio()} daño)";
             }
-            $battle->turnManager()->consumeAction($actor);
+            $turnos->consumeAction($actor);
             $this->syncViewData($battle);
             $this->session->guardar($this->battleId, $battle);
             $this->nextActor();
@@ -252,6 +243,26 @@ class Combate extends Component
         $battle->triggerRoundStartEffects();
         $this->round = $battle->turnManager()->round();
         $this->log[] = "--- Ronda {$this->round} ---";
+    }
+
+    /**
+     * Avanza a la ronda siguiente y cierra la batalla si los efectos de fin
+     * de ronda (veneno/quemadura/clima) debilitaron al último pokémon de un
+     * bando.
+     *
+     * @return bool true si la batalla terminó y no hay actor que preparar
+     */
+    private function advanceRoundOrEndBattle(AgregadoBatalla $battle): bool
+    {
+        $this->advanceRound($battle);
+
+        if ($battle->turnManager()->bothTeamsAlive()) {
+            return false;
+        }
+
+        $this->endBattle($battle);
+
+        return true;
     }
 
     private function endBattle(AgregadoBatalla $battle): void
