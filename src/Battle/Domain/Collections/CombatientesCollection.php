@@ -41,6 +41,15 @@ class CombatientesCollection extends Collection
     }
 
     /**
+     * Retorna solo los combatientes que aún no actuaron en la ronda actual.
+     * No filtra por vida: combinar con vivos() cuando aplique.
+     */
+    public function conAccionPendiente(): static
+    {
+        return $this->filter(fn (Combatiente $c) => $c->tieneAccionPendienteEstaRonda());
+    }
+
+    /**
      * Retorna solo los combatientes vivos en vanguardia.
      */
     public function vanguardia(): static

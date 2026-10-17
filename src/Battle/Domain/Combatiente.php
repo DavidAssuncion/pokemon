@@ -153,6 +153,14 @@ class Combatiente
         return $this->vecesActuadoEstaRonda;
     }
 
+    /**
+     * ¿Le queda acción pendiente en la ronda actual?
+     */
+    public function tieneAccionPendienteEstaRonda(): bool
+    {
+        return $this->vecesActuadoEstaRonda === 0;
+    }
+
     public function estado(): EstadoPokemon
     {
         return $this->estado;

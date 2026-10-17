@@ -70,11 +70,7 @@ class GestorTurnos
         $seleccionado = null;
         $mejorVelocidad = null;
 
-        foreach ($this->combatientesVivos() as $candidato) {
-            if ($candidato->vecesActuadoEstaRonda() !== 0) {
-                continue;
-            }
-
+        foreach ($this->combatientesVivos()->conAccionPendiente() as $candidato) {
             $velocidad = $candidato->velocidadEfectiva();
 
             if ($mejorVelocidad === null || $velocidad > $mejorVelocidad) {
@@ -100,13 +96,7 @@ class GestorTurnos
      */
     public function hayAlgunoConAccionPendiente(): bool
     {
-        foreach ($this->combatientesVivos() as $c) {
-            if ($c->vecesActuadoEstaRonda() === 0) {
-                return true;
-            }
-        }
-
-        return false;
+        return ! $this->combatientesVivos()->conAccionPendiente()->isEmpty();
     }
 
     public function bothTeamsAlive(): bool

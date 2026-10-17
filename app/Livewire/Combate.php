@@ -554,7 +554,7 @@ class Combate extends Component
     private function buildTurnQueue(AgregadoBatalla $battle): array
     {
         $pendientes = $battle->turnManager()->combatientesVivos()
-            ->filter(fn (Combatiente $c): bool => $c->vecesActuadoEstaRonda() === 0)
+            ->conAccionPendiente()
             ->all();
 
         usort(
