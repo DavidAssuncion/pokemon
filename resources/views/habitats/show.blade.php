@@ -1303,7 +1303,7 @@ function habitatShow() {
                     }),
                 });
                 if (!response.ok) {
-                    // 422 (equipo ≠5, pool vacío...) → error inline en el popup, sin redirigir.
+                    // 422 (equipo ≠3, pool vacío...) → error inline en el popup, sin redirigir.
                     const err = await response.json().catch(() => ({}));
                     this.rutaCombatError = err.message || err.error || 'No se pudo iniciar el combate de ruta.';
                     return;
