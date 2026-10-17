@@ -385,3 +385,43 @@ O1 — borde de fin de ronda con KO (`Combate::nextActor`): QA detectó que la a
 O2a — retirada de logs de diagnóstico en `PlayerController::equipos`: eliminados `Log::info('[equipos:debug] user')`, try/catch de serialización que solo logueaba y re-lanzaba (`ReclutadoSerializer::serializar` queda en llamada directa), `Log::info('[equipos:debug] serializado')` y bloque `$pokemonCheck` (query `Pokemon::find(436)` solo para log). Import `Log` eliminado (sin más usos). El resto del WIP del archivo se mantiene tal cual.
 
 Comportamientos a cubrir en testing futuro: KO por veneno/quemadura al cerrar ronda → la batalla termina sin acción extra; `equipos()` sin logs de diagnóstico.
+
+---
+
+# Post-Arquitecto — O1/O2 (2026-10-17)
+
+Origen: revisión post-implementación del Arquitecto (APROBADO con observaciones, B:0). Dos defectos acotados corregidos, sin testing (diferido).
+
+## O1 — rival vacío = 422, nunca batalla 0v3
+
+- `src/CombateEntrenadores/App/IniciarCombateEntrenador.php` — guard tras `generar()`: `$datosRival === []` → `ViolacionReglaNegocio('No hay Pokémon disponibles para este entrenador.')` (422).
+- `src/Gimnasios/App/IniciarCombateGimnasio.php` — guard análogo cubriendo el ternario (`$equipoEtapa` null o generador vacío): `ViolacionReglaNegocio('Este gimnasio no tiene Pokémon disponibles.')` (422).
+- Patrón replicado de `IniciarCombateRuta` (ya lo tenía). `CreadorBatallaSesion` no valida el tamaño del rival: la guarda vive en cada caso de uso.
+- Commit: `f429271af3` — `fix(combate): 422 cuando entrenador o gimnasio no generan rival`.
+
+### Sweep de callers de generadores (solo lectura)
+
+- `IniciarCombateRuta` — ya guardado (referencia).
+- `IniciarCombateMazmorra` — `GeneradorJefeMazmorra::generar` devuelve `?DatosPokemonBatalla` y el caso de uso ya lanza `PisoNoDisponible` si es null. Sin hueco.
+- `CombateRutaController::rivales` (preview deprecated) — un `[]` solo produce `rivales: []` en el JSON; no crea batalla. Sin hueco.
+- `MapeadorPokemonBatalla` y `GeneradorPokemonGimnasio::movimientosDe` — un `GeneradorMovimientos::generar` vacío deja `moves = []`, pero `SelectorAccionIA` cae en el movimiento por defecto Placaje. No es un rival de 0 combatientes.
+- Exploraciones (`FinalizarExploracionHandler`, `ServicioEvolucion`, etc.) — no invocan los generadores de equipos de combate; sin cambios (exploraciones sin validación nueva está ratificado).
+- **Resultado: ningún otro caller de creación de batalla con el hueco.** Solo se reportan los casos benignos anteriores.
+
+## O2 — formato del log de ataque
+
+- `src/Battle/Domain/AgregadoBatalla.php` — restaurado el formato con corchetes previo a la regresión (`c31b16f`/`fa8017a`), manteniendo la velocidad efectiva de la tarea:
+  `"{$actor->velocidadEfectiva()}vel [{$actor->hpActual()}hp] ataca a [{$objetivo->hpActual()}hp] con {$movimiento->nombre} -> {$daño} de daño"`.
+  La malformación (sin `[`) se introdujo antes de la tarea en `1ba275f`; el padre `3039027^` también la arrastraba.
+- Commit: `9fcc9ff5e3` — `fix(combate): restaurar formato del log de ataque con corchetes`.
+- Tests: grep de `hp]` / `de daño` / `ataca` en `tests/` sin ninguna aserción sobre esta cadena. **Ningún test requirió adaptación.**
+
+## Comportamientos a cubrir en el testing futuro
+
+### Feature
+- `IniciarCombateEntrenador` con hábitat/nivel sin pool → 422 y no se persiste sesión de batalla.
+- `IniciarCombateGimnasio` con etapa inexistente o roster vacío → 422 y no se persiste sesión de batalla.
+- Combate de ruta/entrenador/gimnasio válido → sigue creando 3v3 (regresión de la guarda).
+
+### Unit
+- `AgregadoBatalla::ejecutarBatalla` genera la línea de ataque con corchetes (`vel [Xhp] ataca a [Yhp] con …`) y velocidad efectiva.
