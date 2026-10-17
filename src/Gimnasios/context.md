@@ -26,6 +26,10 @@ y las recompensas dobles de `CombateEntrenadores`.
   clamp a 1) antes de construir los `DatosPokemonBatalla` del rival.
 - **Nivel rival congelado**: `nivel_rival = nivel_min + floor((jugador - nivel_min)/2)` se calcula
   al INICIAR cada combate y se guarda en metadatos de sesión.
+- **Equipo rival de exactamente 3**: `GeneradorPokemonGimnasio::escalarATres` normaliza el roster
+  (vanguardia → retaguardia): más de 3 → recorta a los 3 primeros; menos de 3 → repite cíclicamente;
+  vacío → `[]` (sin `% 0`). El catálogo no se modifica: el recorte cubre también filas de
+  `gym_stages` gestionadas por BD.
 - **Progresión secuencial**: `gym_progress.current_stage` (1-5). Solo se puede combatir la etapa
   actual; ganar → +1; perder → repetible; 5 = completado para siempre.
 - **Anti-IDOR**: `RegistrarResultadoGimnasio` solo persiste si `won` y `userId === authUserId`.
@@ -37,7 +41,8 @@ y las recompensas dobles de `CombateEntrenadores`.
   AVISTADO por rival). Si se derrota al líder (etapa 4), añade la medalla al modal.
 - **Persistencia en sesión**: batalla serializada con prefijo `v{version}|` + metadatos
   (`tipo='gimnasio'`, `gym_id`, `stage`, `nivel_rival`, `user_id`, `team_id`) bajo `battleId._meta`.
-  `SESSION_VERSION` = 5 (coincide con `Combate.php` y `IniciarCombateEntrenador`).
+  `SESSION_VERSION` = 11 (mínimo compatible 9), definida en `app/Support/BattleSessionService.php`;
+  la creación pasa por `CreadorBatallaSesion`.
 
 ## Reglas de negocio
 
@@ -52,6 +57,8 @@ y las recompensas dobles de `CombateEntrenadores`.
 
 - `GimnasioBloqueado` (422) si nivel_jugador < nivel_min; `GimnasioCompletado` (422) si ya se
   completó; `GimnasioNoExiste` (404) si el slug no está en el catálogo.
+- `IniciarCombateGimnasio`: si `equipoEtapa` es null o el generador devuelve `[]`, lanza
+  `ViolacionReglaNegocio` 422 («Este gimnasio no tiene Pokémon disponibles.») sin persistir sesión.
 - `RegistrarResultadoGimnasio` devuelve `['avance', 'completado', 'medalla']`: si `won` y
   `userId === authUserId`, avanza; si llega a 5, `completado` y `medalla` = nombre de la medalla.
 - `GeneradorPokemonGimnasio` carga pokémon por `species_id` (no por `id`) y, si una especie no

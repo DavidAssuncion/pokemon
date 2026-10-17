@@ -16,7 +16,8 @@ Permite al jugador enfrentarse a entrenadores procedurales desde la vista de un 
 ## Decisiones de diseño
 
 - **Movimientos sintéticos**: no hay ataques reales en BD, se generan por tipo (físico 60, especial 80 por tipo no-Normal; Normal puro 80/100; Normal mixto 40/60).
-- **Rival determinista**: semilla `crc32(habitat|nivel|entrenador|fecha)` con `Mt19937` → mismo equipo todo el día.
+- **Rival determinista y de exactamente 3**: semilla `crc32(habitat|nivel|entrenador|fecha)` con `Mt19937` → mismo equipo todo el día; 3 especies únicas si el pool las tiene y repetición ponderada hasta 3 si es corto.
+- **Equipo del jugador de exactamente 3**: `ConstruirEquipoJugador::desdeEquipo` es el punto único de validación (422 «exactamente 3 miembros») para ruta, entrenadores, gimnasios y mazmorra.
 - **Formación rival**: clasificación defensivo→vanguardia + aleatorio 1/2 o 2/1.
 - **Límite diario**: 9 combates por hábitat (3×3). `won=true` bloquea. `won=false` es repetible.
 - **Recompensas dobles**: multiplicador 2.0 sobre la fórmula de exploración. Sin captura.
@@ -33,9 +34,12 @@ Permite al jugador enfrentarse a entrenadores procedurales desde la vista de un 
 ## Casos especiales
 
 - `EntrenadorDerrotadoHoy` (excepción 422) se lanza si se intenta combatir contra un entrenador ya derrotado hoy.
-- Si el pool del hábitat está vacío para un nivel, `GeneradorEquipoEntrenador` retorna array vacío.
+- Si el pool del hábitat está vacío para un nivel, `GeneradorEquipoEntrenador` retorna array vacío y
+  `IniciarCombateEntrenador` lanza `ViolacionReglaNegocio` 422 («No hay Pokémon disponibles para este
+  entrenador.») **sin persistir sesión** (guard post-Arquitecto).
 - `OtorgarRecompensasEntrenador` filtra `speciesIdsRival <= 0` y solo procesa los que existen en BD.
-- `SESSION_VERSION` en `IniciarCombateEntrenador` debe coincidir con la de `Combate.php` (actualmente 5).
+- `SESSION_VERSION` vive en `app/Support/BattleSessionService.php` (**11**, mínimo compatible 9);
+  `IniciarCombateEntrenador` no la duplica: usa `CreadorBatallaSesion`/`BattleSessionService`.
 
 ## Referencias
 

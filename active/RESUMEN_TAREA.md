@@ -6,7 +6,138 @@ absorbido en `docs/context.md` / `docs/architecture.md`. Los análisis fuente vi
 
 ---
 
-## Iteración actual — Eliminación de la tabla `evolution_chains` (bug 23503)
+## Iteración actual — Combate 3v3: equipos de 3, motor de 1 acción por ronda e invocaciones
+
+### Estado: CERRADA (QA ✅ / Cleaner ✅ / Arquitecto ✅ B:0 / Hardener ✅ PASS con observaciones)
+
+El modelo estándar de combate pasa de 5v5 a **3v3**: equipos de exactamente 3 miembros, una acción
+por pokémon vivo y ronda ordenada por velocidad efectiva, y puerta explícita de invocaciones en el
+motor. Testing diferido (comportamientos documentados en `docs/testing.md`; no se ejecutan tests).
+
+Commits de la iteración (15):
+
+- `3039027d89` — backend base 3v3 (equipos, motor, escalados, mock) + migración `2026_10_15_000001` [backend]
+- `f846f1ca5e` — fix `escalarATres` (roster >3 → recorte, vacío → []) [backend]
+- `2067d1fbb9` — frontend 3v3 (`effectiveSpeed`, slots 1-3, textos) [frontend]
+- `c89cf977de` — traza B1 (`CrearEquipoInicial` sin diff; WIP ajeno) [qa]
+- `729f51dc81` — guarda KO al cierre de ronda + limpieza de logs debug [backend]
+- `a62fb1b61f` — limpieza de logs debug en la vista de equipos [backend]
+- `3ba2515586` — comentarios 5→3 [backend]
+- `67a15e5197` — `Combatiente::velocidadEfectiva()` [backend]
+- `9b8aa95927` — predicado de acción pendiente en la colección [backend]
+- `a445a40912` — helper de guarda KO [cleaner]
+- `3d1cf137e0` — `urlIcono()` (webp/shiny/formSuffix) [cleaner]
+- `cff45616e8` — DRY del reparto de EXP [cleaner]
+- `f429271af3` — 422 rival vacío en entrenador y gimnasio [backend]
+- `9fcc9ff5e3` — log de ataque restaurado con corchetes [backend]
+- `047782440e` — traza post-Arquitecto (O1/O2) [docs]
+
+### Alcance implementado
+
+1. **Equipos estándar de exactamente 3** — `TeamController` slot `max:3`; migración
+   `2026_10_15_000001` borra `team_members` con `slot > 3` (`down()` no-op);
+   `ConstruirEquipoJugador::desdeEquipo` lanza 422 «exactamente 3 miembros» (punto único de los 4
+   iniciadores); `IniciarCombateRuta` pierde su pre-check. Exploraciones sin validación nueva
+   (ratificado); jefe de mazmorra 3v1 sin cambios.
+2. **Motor de turnos** — una acción por pokémon vivo y ronda; `getNextActor()` por velocidad
+   efectiva con empates estables por inserción; `consumeAction()` solo marca; `startNewRound()`
+   resetea; invariante anti-null con pendientes; bloqueado consume su acción. Eliminada la
+   velocidad acumulada.
+3. **Invocaciones (solo motor)** — `AgregadoBatalla::incorporarCombatiente(EquipoBatalla,
+   Combatiente, Posicion)`: sin tope, contador 0 en la ronda, sin efectos de entrada ni log, misma
+   colección que `GestorTurnos`.
+4. **Rivales exactamente 3** — ruta (3 tiradas), entrenador (3 especies con repetición ponderada),
+   gimnasio (`escalarATres`: recorte/ciclo/vacío→[]). Rival vacío → 422 en los tres inicios, sin
+   persistir sesión.
+5. **Sesión y contrato de vista** — `SESSION_VERSION` 11 (mínimo 9; v9/v10 con `velocidadAcumulada`
+   se ignoran); `effectiveSpeed` sustituye a `accumulatedSpeed`; `buildTurnQueue` por velocidad
+   efectiva estable.
+6. **Log, EXP y mock** — log de ataque restaurado con corchetes y velocidad efectiva (sin nombres);
+   `MIEMBROS_EQUIPO = 3` para el reparto de EXP; mock 3v3.
+
+### Documentación generada en el cierre
+
+- `docs/context.md` — resumen de la iteración, 3v3 en todo el documento, motor de turnos,
+  `SESSION_VERSION` 11, 60 migraciones, deuda 17 y referencias nuevas.
+- `docs/architecture.md` — motor de turnos/invocaciones (Battle), CombateRuta/CombateEntrenadores
+  3v3, guards 422, ER y conteo de migraciones.
+- `src/Battle/context.md` — `GestorTurnos` real, `Combatiente` (velocidad efectiva, contrato),
+  `EquipoBatalla` (invocaciones/deprecaciones), sesión v11 y sección de la iteración 3v3.
+- `src/CombateRuta/context.md` — 3v3, guard centralizado, rival/equipo de 3, sesión v11.
+- `src/CombateEntrenadores/context.md` y `src/Gimnasios/context.md` — rival de 3, guard 422, sesión
+  v11, `escalarATres`.
+- `docs/testing.md` — secciones 8-13 (motor, invocaciones, exactamente-3, contrato/sesión/log,
+  invariantes y property tests) y acceptance ampliada.
+
+### Deuda pendiente (no bloqueante)
+
+- DRY preexistente `GeneradorEquipoRuta` ↔ `GeneradorEquipoEntrenador` (pool + ponderación) →
+  refactor futuro; constante «3» repetida cross-módulo (futuro `MIEMBROS_EQUIPO` compartido).
+- `Combatiente::$iconName` serializado sin uso en `aArrayVista`; doble `session->guardar()` en
+  `Combate::initMockBattle`; `lowestSpeed()`/`menorVelocidadBase` retenidos (test
+  `EquipoBatallaTest`); `combatants()` deprecado en `app/Livewire/Combate.php:513,619,624`; PHPDoc
+  de `buildTurnQueue`; métodos largos (PHPMD) preexistentes.
+- Tooling: `phpstan-hardener.neon` inválido con PHPStan 2.2.9 (parámetros 1.x), shim deptrac 1.0.2
+  no parsea constantes tipadas (`MultiplicadoresStats`), sin baseline PHPStan; CRAP no medido
+  (testing diferido).
+
+---
+
+## Iteración anterior — Ruta/shiny/huevos/EV/IV/CP (6 mejoras de progresión)
+
+### Estado: CERRADA (QA ✅ / Hardener ✅ / cierre documental ✅)
+
+6 mejoras de progresión implementadas, QA-aprobadas y commiteadas. Cierre documental
+(Bibliotecario). Testing diferido al cierre del módulo (comportamientos en `docs/testing.md`).
+
+Commits de la iteración:
+
+- `79b7e45b27` — backend funcional (shiny ruta, huevos, IVs, CP, dar-evs, anim-hit) [backend]
+- `a8c46c1a57` — correcciones QA B1/B2/O1/O2/O3/O6 [backend]
+- `3f217ff372` — frontend base: anim-hit, detalle IV/EV/habilidades, pestaña 🥚 Huevos, badges shiny [frontend]
+- `af1b676d4c` — frontend QA: EV +10 (O4), huevoProgreso en horas, es_shiny tolerado [frontend]
+- `51cc0c9`, `b661fad`, `8d3fd57`, `8eee2ed` — refactor Cleaner [backend]
+- `869f84a217` — idempotencia eclosión + SESSION_VERSION 10 (mínimo 9) [backend + arquitecto]
+- `f1ea5d2ebc` (+ `7c919d8f9d`) — hardening P1 guards capture_rate/hatch [backend + hardener]
+
+### Alcance implementado
+
+1. **Animación de daño en combate** — `.anim-hit` (600 ms) al defensor vía `$animDefenderId`;
+   `prefers-reduced-motion` respetado.
+2. **Shiny salvaje en ruta** — 1/2048 por slot; captura directa con IVs 15 y `es_shiny`; iconos
+   `/images/iconos_webp/shiny/{id}_s.webp`; contrato `es_shiny` (snake) en DTOs.
+3. **Sistema de huevos** — módulo `src/Huevos/` (DDD): puesta `255/capture_rate` h, eclosión
+   `ceil(hatch/15)` h; estados derivados por timestamps; límites 1 gestando + 1 incubando + 1
+   activo por familia; pareja ≥2 reclutados de la misma cadena; shiny 1/512 (IVs 15); eclosión
+   idempotente (422) + 404 ajeno.
+4. **Detalle pokémon + EVs** — modal con IVs/EVs/habilidades y `POST /reclutado/{id}/dar-evs`
+   (+10, tope 255, 422 stock/exploración, `lockForUpdate`).
+5. **IVs 0-15 ×4 por stat** — `BattleStats::$ivs` opcional; reparto top-2 por dificultad
+   (gimnasio 12/10, líder 14/12, entrenador por nivel 8/6-12/10).
+6. **CP al nivel del usuario** — `ReclutadoSerializer::cpDe(nivelUsuario)` + EVs reales.
+   `SESSION_VERSION` 9 → 10 (mínimo 9). 3 migraciones nuevas → 59 totales.
+
+### Documentación generada en el cierre
+
+- `docs/context.md` — iteración, SESSION_VERSION 10, 59 migraciones, pendientes 14-16,
+  referencias nuevas.
+- `docs/architecture.md` — sección del módulo `src/Huevos/`, ER actualizado (huevos,
+  reclutados.ivs/evs), 59 migraciones.
+- `src/Huevos/context.md` — contexto canónico del módulo (nuevo).
+- `docs/testing.md` — comportamientos diferidos + invariantes para property tests (nuevo).
+
+### Deuda pendiente (no bloqueante)
+
+- OBS-01/02 — UI más restrictiva que backend en límites de huevos (decisión de producto).
+- `habilidades=[]` — pendiente de `app/Models/Ability` + pivot (boundary del Arquitecto).
+- WIP ajeno sin commitear (untracked `app/Support/AvistamientosPokedex.php`,
+  `app/Support/CargadorPokemonsDerrotados.php` y `storage/data/*`) — NO tocar.
+  `src/Equipos/App/CrearEquipoInicial.php` YA NO es WIP ajeno: es canónico y está commiteado.
+- Fase de testing diferida: ejecutar `docs/testing.md` al cierre del módulo.
+
+---
+
+## Iteración anterior — Eliminación de la tabla `evolution_chains` (bug 23503)
 
 ### Estado: CERRADA (QA ✅ / Hardener ✅ HARDENED)
 
@@ -249,14 +380,14 @@ optimización de UI (sin refresco pesado).
 
 | Archivo | Contenido |
 |---------|-----------|
-| `active/ANALISIS_BACKEND.md` | POST `/families` devuelve familia completa con niveles reales (histórico) + sección "El primer integrante de una familia es el de menor species_id" (2026-08-29; con nota de cierre: `STAT_SLUGS` unificada en `STATS` por `3d4e940`) + sección "Eliminar la tabla `evolution_chains` (bug 23503)" (2026-08-29; decisión, mapa por columna, desvío ReclutamientoController, riesgos QA) + sección "Endurecimiento P1 (Hardener)" (2026-08-29; 3 P1 sobre commits `daeadef198` + `c6877c5`). |
+| `active/ANALISIS_BACKEND.md` | POST `/families` devuelve familia completa con niveles reales (histórico) + sección "El primer integrante de una familia es el de menor species_id" (2026-08-29; con nota de cierre: `STAT_SLUGS` unificada en `STATS` por `3d4e940`) + sección "Eliminar la tabla `evolution_chains` (bug 23503)" (2026-08-29; decisión, mapa por columna, desvío ReclutamientoController, riesgos QA) + sección "Endurecimiento P1 (Hardener)" (2026-08-29; 3 P1 sobre commits `daeadef198` + `c6877c5`) + sección "Correctaciones QA del módulo Huevos + CP + Ruta" (2026-09-15; B1/B2/O1/O2/O3/O6) + sección "3 correcciones menores del Arquitecto (idempotencia eclosión + defensa en profundidad + SESSION_VERSION 10)" (2026-09-16) + sección "Hardening P1 de guards capture_rate/hatch en Huevos" (2026-09-16; 4 patches validados por el Hardener) + sección **"Equipos de 3, motor de 1 acción por ronda e invocaciones (R1–R7)"** (2026-10-15) + **"Corrección post-revisión del Analista"** (`escalarATres` exacto) + **"Post-Arquitecto — O1/O2"** (2026-10-17; rival vacío 422 + formato del log). |
 | `active/ANALISIS_FRONTEND_HABITAT_ASSIGNFAMILY.md` | Consumo del contrato nuevo en `assignFamily`; eliminación de inferencia client-side. |
-| `active/ANALISIS_FRONTEND.md` | Pokédex asíncrona, exploraciones, modal Admin-Gestión (Ya Asignados), header con nivel + sección "Iconos de caramelos (bitácora + resultados) y alineación de botones de construcción" (2026-08-29). |
+| `active/ANALISIS_FRONTEND.md` | Pokédex asíncrona, exploraciones, modal Admin-Gestión (Ya Asignados), header con nivel + sección "Iconos de caramelos (bitácora + resultados) y alineación de botones de construcción" (2026-08-29) + sección "Animación de daño, detalle con IVs/EVs/habilidades, pestaña Huevos, iconos shiny" (2026-09-15; base `3f217ff372`) + sección "Coordinación QA: caramelo EV +10, contrato /api/huevos en horas, es_shiny snake_case" (2026-09-15; O4, contrato horas, snake case) + sección **"Equipos de 3 y turnos con `effectiveSpeed`"** (2026-10-15; slots 1-3, `effectiveSpeed`, textos 3v3). |
 | `active/revision.md` | Revisión post-refactor de la traducción del módulo batalla (tarea anterior; histórico). |
 
 ---
 
-## Iteración actual — Corrección de bugs del módulo de combate (6 getters privados) + tests TDD
+## Tarea anterior — Corrección de bugs del módulo de combate (6 getters privados) + tests TDD (HISTÓRICO — preservado)
 
 ### Estado: BACKEND COMPLETADO (pendiente QA)
 
@@ -326,7 +457,7 @@ módulo quedó inaccesible hasta arreglar los bugs.
 
 ---
 
-## Iteración actual — Corrección UI del módulo de combate + reactivación de `/combate` (FRONTEND)
+## Tarea anterior — Corrección UI del módulo de combate + reactivación de `/combate` (FRONTEND, HISTÓRICO — preservado)
 
 ### Estado: COMPLETADA (pendiente QA visual)
 

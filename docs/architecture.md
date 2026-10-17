@@ -34,6 +34,7 @@ desaparece como destino y migra a DTOs en Domain.
 │  Battle · Pokemon · Habitats · Equipos      │
 │  Reclutamiento · Exploraciones · Crud       │
 │  Shared · CombateEntrenadores · CombateRuta │
+│  Huevos                                     │
 ├─────────────────────────────────────────────┤
 │  Estado actual: Controllers/Models/Livewire │
 │  aún en app/; migran por módulo (strangler)│
@@ -67,6 +68,26 @@ Documentación exhaustiva del módulo (clases, mecánicas, contrato de vista, fl
 - 26 strings mágicos de stats sin enum tipado.
 - `max(1, floor(...))` en `CadenaDanio::calculate()` anula inmunidad de tipos.
 - God-classes: `Combate.php` (653 líneas), `Combatiente` (606), `AgregadoBatalla` (~255 tras extraer `CalculadorDañoClima`/`SelectorAccionIA`).
+
+#### Motor de turnos e invocaciones (2026-10-15)
+
+- **Una acción por combatiente vivo y ronda.** `GestorTurnos` mantiene `round` y el contador
+  privado `vecesActuadoEstaRonda` de cada `Combatiente` (`vecesActuadoEstaRonda()` /
+  `tieneAccionPendienteEstaRonda()`); `getNextActor()` devuelve el vivo con contador 0 de mayor
+  **velocidad efectiva** (`Combatiente::velocidadEfectiva()` = `obtenerStatEfectivo(VELOCIDAD)`, que
+  aplica etapas y parálisis). `consumeAction()` solo incrementa el contador; `startNewRound()`
+  incrementa la ronda y resetea contadores. Empates: orden de inserción (team1 antes que team2).
+  Invariante: con acciones pendientes, `getNextActor()` nunca es null. Ya no existe velocidad
+  acumulada (`velocidadAcumulada`, `menorVelocidadEntreVivos`).
+- **Contrato de vista**: `Combatiente::aArrayVista()` expone `effectiveSpeed` (no
+  `accumulatedSpeed`); `Combate::buildTurnQueue()` ordena por velocidad efectiva descendente con
+  orden estable, misma métrica que `getNextActor()`.
+- **Invocaciones**: `AgregadoBatalla::incorporarCombatiente(EquipoBatalla, Combatiente, Posicion)`
+  añade combatientes sin tope, con contador 0 en la ronda en curso, sin efectos de entrada ni log y
+  sobre la misma colección que consume `GestorTurnos`. Es la única vía por la que un bando puede
+  superar los 3 combatientes.
+- **Sesión**: `SESSION_VERSION = 11`, mínimo compatible 9; los payloads v9/v10 con
+  `velocidadAcumulada` se cargan ignorando la clave (best-effort).
 
 ### Pokemon (`src/Pokemon/`)
 
@@ -135,6 +156,11 @@ Sustituye al componente Livewire `FamilyModal` (eliminado; hábitats ya no usa L
 | `Domain/` | `TeamAggregate`, `TeamSrv` |
 | `App/` | `ObtenerEquipos` |
 
+Los equipos estándar tienen **exactamente 3 miembros** (slots 1-3; `TeamController` valida
+`max:3` y la migración `2026_10_15_000001` recorta slots > 3). El tamaño se exige al combatir en
+`ConstruirEquipoJugador::desdeEquipo` (422), no al guardar el equipo (la UI permite equipos
+incompletos marcados como inválidos).
+
 ### Reclutamiento (`src/Reclutamiento/`)
 
 | Carpeta | Contenido |
@@ -187,11 +213,11 @@ Módulo que integra el combate PvE contra entrenadores dentro de los hábitats (
 | `App/` | Casos de uso | `MapeadorPokemonBatalla` (Eloquent `Pokemon` → `DatosPokemonBatalla`), `GeneradorEquipoEntrenador` (equipo rival determinista por semilla `crc32(habitat\|nivel\|entrenador\|fecha)` desde el pool del hábitat), `ConstruirEquipoJugador` (`Team` + formación), `ObtenerEntrenadoresHabitat`, `IniciarCombateEntrenador` (crea `AgregadoBatalla` y lo guarda en sesión con prefijo `v{version}\|` + metadatos `battleId._meta`), `RegistrarResultadoEntrenador`, `OtorgarRecompensasEntrenador` (recompensas dobles vía `CalculadorRecompensas` ×2.0 + `ActualizarPokedexJob` AVISTADO) |
 | `Infra/` | Persistencia/HTTP | `EloquentEntrenadorLogRepository` (upsert en `trainer_combat_log`), `Controllers/EntrenadorController` (GET listado, POST combatir), `routes.php` (placeholder; rutas reales en `routes/entrenadores.php`) |
 
-Reglas de negocio clave: límite diario 3×3=9 combates por hábitat; `won=true` bloquea al entrenador ese día (upsert con unique `(user_id, habitat_id, level, trainer_index, fought_at)`); perder es repetible; rival determinista por día; sin capturas (no recluta rivales). Documentación exhaustiva: `docs/combate_entrenadores.md` y `src/CombateEntrenadores/context.md`.
+Reglas de negocio clave: límite diario 3×3=9 combates por hábitat; `won=true` bloquea al entrenador ese día (upsert con unique `(user_id, habitat_id, level, trainer_index, fought_at)`); perder es repetible; rival determinista por día y de **exactamente 3 combatientes** (3 especies únicas; repetición ponderada si el pool es corto); rival vacío → `ViolacionReglaNegocio` 422 sin persistir sesión; sin capturas (no recluta rivales). Documentación exhaustiva: `docs/combate_entrenadores.md` y `src/CombateEntrenadores/context.md`.
 
 ### CombateRuta (`src/CombateRuta/`)
 
-Módulo del **combate de ruta 5v5** (2026-09-13): PvE contra 5 pokémon salvajes del pool de un
+Módulo del **combate de ruta 3v3** (2026-09-13; equipos y rivales de 3 desde 2026-10-15): PvE contra 3 pokémon salvajes del pool de un
 hábitat desde `/habitats/{id}` (modo "Ruta", el modo por defecto del hábitat). Sigue la convención
 DDD por módulos y **reutiliza el motor de batalla** (`src/Battle/Domain/`) y las recompensas de
 `Exploraciones`.
@@ -199,11 +225,12 @@ DDD por módulos y **reutiliza el motor de batalla** (`src/Battle/Domain/`) y la
 | Carpeta | Propósito | Archivos clave |
 |---|---|---|
 | `Domain/DataTransferObjects/` | DTO de presentación | `ResultadoRuta` (victoria/exp/caramelos/capturas; `aArray()` = contrato snake_case del modal) |
-| `App/` | Casos de uso | `GeneradorEquipoRuta` (5 salvajes por selección ponderada CON reemplazo `capture_rate/hatch` desde el pool del hábitat y nivel; aleatorio inyectable), `IniciarCombateRuta` (valida equipo 5v5, crea batalla y meta `tipo=ruta`), `RegistrarResultadoRuta`, `OtorgarRecompensasRuta` (multiplicador 1.0 + capturas cap-25 + avistados) |
+| `App/` | Casos de uso | `GeneradorEquipoRuta` (3 salvajes por selección ponderada CON reemplazo `capture_rate/hatch` desde el pool del hábitat y nivel; aleatorio inyectable), `IniciarCombateRuta` (delega la validación del equipo en `ConstruirEquipoJugador`: exactamente 3, crea batalla y meta `tipo=ruta`), `RegistrarResultadoRuta`, `OtorgarRecompensasRuta` (multiplicador 1.0 + capturas cap-25 + avistados) |
 | `Infra/Controllers/` | HTTP | `CombateRutaController` (GET rivales del panel, POST iniciar → `battle_id` + redirect) |
 
-Reglas de negocio clave: el equipo del jugador debe tener **exactamente 5 miembros**
-(`ViolacionReglaNegocio`); **sin límite diario ni log** (`trainer_combat_log` no aplica);
+Reglas de negocio clave: el equipo del jugador debe tener **exactamente 3 miembros**
+(`ViolacionReglaNegocio` 422 en `ConstruirEquipoJugador::desdeEquipo`, punto único de los 4
+iniciadores); **sin límite diario ni log** (`trainer_combat_log` no aplica);
 la victoria otorga recompensas ×1.0 y **capturas** (`ProbabilidadCaptura` cap-25) + avistados;
 el rival **varía en cada combate** (sin semilla). Endpoints en `routes/ruta.php`:
 
@@ -214,8 +241,53 @@ POST /api/habitats/{habitat}/ruta/iniciar   body: {team_id, formacion?, nivel?}
 
 Hardening compartido: `ClasificadorOfensivaDefensiva`, `ProbabilidadCaptura`,
 `EscaladorNivelRival` en `src/Shared/Domain/`; `CreadorBatallaSesion` (`app/Support`) unifica la
-creación de batallas 5v5 de Ruta/Entrenador/Gimnasio/Mazmorra (DRY). Documentación exhaustiva:
+creación de batallas 3v3 de Ruta/Entrenador/Gimnasio/Mazmorra (DRY). Documentación exhaustiva:
 `src/CombateRuta/context.md`.
+
+### Huevos (`src/Huevos/`)
+
+Módulo del **sistema de huevos** (2026-09-16): el jugador pone a gestar un huevo de una familia
+evolutiva de la que ya tiene **≥2 reclutados distintos** (misma `evolution_chain_id`; especies
+distintas de la misma cadena valen), espera gestación + incubación y eclosiona para obtener un
+reclutado con IVs mejores que los salvajes. Sigue la convención DDD por módulos (Domain puro;
+App/Infra con Laravel).
+
+| Carpeta | Propósito | Archivos clave |
+|---|---|---|
+| `Domain/` | Lógica pura de tiempos y estados | `CalculadorTiemposHuevo` (puesta = `255/capture_rate` horas con suelo 1; eclosión = `ceil(hatch/15)` horas, `DIVISOR_HATCH=15`; guards `max(rate,1)`/`max(hatch,1)`), `CalculadorEstadoHuevo` (estado **on-read** desde `created_at` + snapshots; GESTANDO → INCUBANDO → LISTO), `EstadoHuevo` (enum), `EstadoCalculadoHuevo` (VO inmutable con `restanteHoras`) |
+| `App/` | Casos de uso | `ListarHuevos` (serializa en horas float + `progreso` 0-100 + `limites`; `disponibles` por familia: ≥2 individuos, 1 entrada por cadena, sin huevo activo de esa familia, hatch no-nulo, representante de menor `species_id`), `CrearHuevo` (pareja por familia, 1 gestando + 1 incubando + 1 activo por familia, roll shiny 1/512 e IVs 15 o 10-15), `EclosionarHuevo` (idempotente + defensa en profundidad `userId`; crea el reclutado vía `CrearReclutado`) |
+| `Infra/Controllers/` | HTTP | `HuevoController` (GET listado, POST crear 201, POST eclosionar → reclutado serializado con CP al nivel del usuario) |
+
+Reglas de negocio clave:
+
+1. **Tiempos (contrato B1 del cliente)**: puesta `255 / capture_rate` horas; eclosión
+   `ceil(hatch / 15)` horas; total = suma. La respuesta trabaja en horas (float) con `progreso`
+   0-100.
+2. **Estados derivados por timestamps**: GESTANDO/INCUBANDO/LISTO se calculan on-read
+   (`CalculadorEstadoHuevo::estadoDe`); no se almacenan (solo `huevo.eclosionado_en` marca el final).
+3. **Límites**: máx. 1 huevo en GESTANDO y máx. 1 en INCUBANDO simultáneos (2 huevos activos de
+   distinto estado pueden convivir) + máx. 1 huevo activo (sin eclosionar) por familia
+   (`huevos.evolution_chain_id`, índice, sin FK estricta).
+4. **Pareja por familia**: ≥2 reclutados DISTINTOS de la misma `evolution_chain_id`; la especie del
+   huevo es el miembro de menor `species_id` (regla "primer integrante" del proyecto).
+5. **Shiny de huevo**: 1/512 (`ProbabilidadesShiny::HUEVO`); shiny → IVs máximos (15); no-shiny →
+   `GeneradorIvs::huevo` (10-15 por stat).
+6. **Eclosión idempotente**: eclosionar un huevo ya eclosionado → 422; huevo ajeno → 404 (ruta con
+   scope `BelongsToUser` + check interno de cinturón).
+
+Endpoints (`routes/huevos.php`, requerido desde `routes/web.php` bajo `auth`):
+
+```
+GET  /api/huevos                       → {huevos[], disponibles[], limites}
+POST /api/huevos                       body: {evolution_chain_id} → 201 {huevo}
+POST /api/huevos/{huevo}/eclosionar   → {reclutado} (ReclutadoSerializer con CP al nivel del usuario)
+```
+
+Deudas conocidas (ver `src/Huevos/context.md`):
+
+- `habilidades=[]` en `ReclutadoSerializer` pendiente de Ability model (pendiente 15 de `docs/context.md`).
+- Dedupe por familia sin FK estricta: `huevos.evolution_chain_id` es índice plano (misma estrategia
+  que `pokemon.evolution_chain_id`); filas legacy sin `hatch`/cadena se toleran con `?? 1` / whereNotNull.
 
 ### Crud (`src/Crud/`)
 
@@ -315,8 +387,8 @@ commitAction() → pendingAction.toDomain() → AccionBatalla
 
 ```
 AgregadoBatalla.ejecutarBatalla()
-  → loop rondas → turnManager.startNewRound() (acumula velocidad)
-    → loop turnos → SelectorAccionIA.elegirObjetivoPara() → SelectorAccionIA.elegirMejorMovimiento()
+  → loop rondas → turnManager.startNewRound() (resetea contadores de acción)
+    → loop turnos → getNextActor() (mayor velocidad efectiva) → SelectorAccionIA.elegirObjetivoPara() → SelectorAccionIA.elegirMejorMovimiento()
       → ServicioEjecucionBatalla.calcularYAplicarDaño()
       → aplicarEstado() / aplicarStatChanges()
       → observer.notifyDamaged() / notifyFainted()
@@ -373,7 +445,7 @@ En el **destino** (ver `docs/ddd.md`), Controllers, Models Eloquent y Livewire v
 ## Base de datos
 
 PostgreSQL en el entorno de ejecución (Docker); los tests usan SQLite en memoria (`:memory:`).
-56 migraciones. Esquema relacional:
+60 migraciones. Esquema relacional:
 
 ```
 provinces ──→ habitats ──→ pokemon_habitat ──→ pokemon ──→ pokemon_stats
@@ -384,10 +456,16 @@ provinces ──→ habitats ──→ pokemon_habitat ──→ pokemon ──�
 
 pokemon ──→ reclutados ──→ team_members ──→ teams
                        ──→ exploraciones_activas
+                       ──→ huevos (snapshot capture_rate/hatch, es_shiny,
+                                   ivs, evolution_chain_id índice, eclosionado_en)
 
-teams: equipos de 5 miembros; columna `formacion` (JSON nullable, migración
-2026_09_13_195001) con la posición por slot (vanguardia/retaguardia) para los
-combates 5v5 (prioridad: popup > persistida > clasificación automática).
+reclutados: columnas `ivs`/`evs` JSON nullable (cast `StatsReclutado`) desde
+2026-09-15; legacy rows quedan en ceros vía cast.
+
+teams: equipos de exactamente 3 miembros (slots 1-3; migración
+2026_10_15_000001 borra `team_members` con `slot > 3`, `down()` no-op); columna `formacion`
+(JSON nullable, migración 2026_09_13_195001) con la posición por slot (vanguardia/retaguardia)
+para los combates 3v3 (prioridad: popup > persistida > clasificación automática).
 
 users ──→ trainer_combat_log ──→ habitats
                                   (level, trainer_index, won, fought_at)

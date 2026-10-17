@@ -31,7 +31,7 @@
 | Clases de `src/` (Domain, App e Infra del módulo) | Español, PascalCase | `AgregadoBatalla`, `UsuarioRepositoryInterface`, `UsuarioController` |
 | Clases de `app/` (Laravel genérico, no migrado a módulo) | Inglés, PascalCase | `Combate`, `HabitatsController` |
 | Métodos/funciones | camelCase | `calcularYAplicarDaño()`, `elegirObjetivo()` |
-| Propiedades | camelCase | `hpActual`, `velocidadAcumulada` |
+| Propiedades | camelCase | `hpActual`, `velocidadEfectiva` |
 | Constantes | UPPER_SNAKE_CASE | `SESSION_VERSION` |
 | Tablas | snake_case, plural, inglés | `pokemon_stats`, `team_members` |
 | Columnas | snake_case, inglés | `capture_rate`, `base_experience` |

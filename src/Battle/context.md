@@ -89,19 +89,20 @@ src/Battle/
 **Responsabilidad:** Agregado raíz que orquesta una batalla 3v3. Contiene los dos equipos, el gestor de turnos, la cadena de daño, el clima, el log y el pendingAction. Expone métodos para ciclo de vida completo (batalla automática) y para integración con Livewire (batalla manual). **~255 líneas** (refactor 2026: la lógica de clima y de IA se extrajo a servicios).
 
 **Mecánica principal:**
-- `ejecutarBatalla(): array` — Bucle completo de batalla automática (IA vs IA). Itera rondas, turnos, aplica daño, estados, efectos de fin de ronda y determina ganador.
+- `ejecutarBatalla(): BattleLog` — Bucle completo de batalla automática (IA vs IA). Itera rondas, turnos, aplica daño, estados, efectos de fin de ronda y determina ganador.
 - `triggerBattleStartEffects()` — Dispara `onBattleStart` en todos los efectos de todos los combatientes (usado por invocadores de clima).
 - `triggerRoundStartEffects()` — Dispara `onRoundStart` en combatientes vivos.
 - `triggerRoundEndEffects()` — Dispara `onRoundEnd` + daño por estado (quemadura/veneno) + daño por clima (granizo/tormenta arena). El daño por clima **delega en `CalculadorDañoClima`** (servicio extraído).
 - `elegirObjetivoPara(Combatiente $actor): ?Combatiente` — Público para IA desde Livewire. **Delega en `SelectorAccionIA`**. Si el actor está en vanguardia, ataca a vanguardia enemiga viva (aleatorio); si no hay, a retaguardia. Si está en retaguardia, a cualquier enemigo vivo. Fallback: cualquier enemigo vivo.
 - `elegirMejorMovimiento(Combatiente $attacker, Combatiente $defender): ?MovimientoBatalla` — Público. **Delega en `SelectorAccionIA`**. Selecciona el movimiento con mayor `efectividad × potencia`. Si no hay movimientos, fallback a Placaje (40, NORMAL, FÍSICO).
 - `setPendingAction(?DTOAccionBatalla)` — Almacena la acción pendiente para el ciclo manual (Livewire).
+- `incorporarCombatiente(EquipoBatalla $equipo, Combatiente $combatiente, Posicion $posicion)` — Incorpora un combatiente durante la batalla (invocaciones): sin tope, contador de acciones a 0 en la ronda en curso, sin efectos de entrada ni log y sobre la misma colección que gestiona `GestorTurnos`.
 - `agregarLog(string)` / `limpiarLog()` / `log(): array` — Gestión del log de batalla.
 - `setWeather(TipoClima)` / `weather(): TipoClima` — Clima actual (default NONE).
 
 **Propiedades clave:** `team1`, `team2` (públicas readonly), `turnManager`, `damageChain`, `subject` (SujetoBatalla), `weather`, `pendingAction`, `log`.
 
-**Lazy getters nullable (patrón `??=`):** los servicios `CalculadorDañoClima` y `SelectorAccionIA` se guardan como propiedades privadas **nullable** (`private ?CalculadorDañoClima $calculadorClima = null;`) y se crean bajo demanda con `$this->calculadorClima ??= new CalculadorDañoClima();`. Motivo: PHP serializa `null` sin problemas, por lo que las batallas guardadas en sesión (v3) se deserializan sin rotura y el getter reconstruye el servicio al usarlo. Verificado con round-trip serialize/unserialize.
+**Lazy getters nullable (patrón `??=`):** los servicios `CalculadorDañoClima` y `SelectorAccionIA` se guardan como propiedades privadas **nullable** (`private ?CalculadorDañoClima $calculadorClima = null;`) y se crean bajo demanda con `$this->calculadorClima ??= new CalculadorDañoClima();`. Motivo: PHP serializa `null` sin problemas, por lo que las batallas guardadas en sesión (la versión actual es v11) se deserializan sin rotura y el getter reconstruye el servicio al usarlo. Verificado con round-trip serialize/unserialize.
 
 **Relaciones:** Inyecta `GestorTurnos`, `CadenaDanio`, `SujetoBatalla`. Usa `ServicioEjecucionBatalla` internamente en `ejecutarAccion`. Importa `DTOAccionBatalla` de Presentation (inversión de dependencia Domain→Presentation, deuda documentada).
 
@@ -171,7 +172,7 @@ Inmunes declarados como constantes privadas (`INMUNES_GRANIZO`, `INMUNES_TORMENT
 
 #### `Combatiente` (`src/Battle/Domain/Combatiente.php`)
 
-**Responsabilidad:** Representa un pokémon en batalla con su estado mutable: HP actual, barreras duales (defensa física/especial), velocidad acumulada, estado alterado, etapas de stats, objeto equipado, efectos. Es serializable a sesión.
+**Responsabilidad:** Representa un pokémon en batalla con su estado mutable: HP actual, barreras duales (defensa física/especial), contador de acciones de la ronda, estado alterado, etapas de stats, objeto equipado, efectos. Es serializable a sesión.
 
 **Mecánica principal:**
 - `recibirDaño(float $daño, bool $isSpecial, float $directPct = 0.0): float` — Aplica daño desglosado: primero `directPct`% va directo a HP (ignora barreras), el resto se descuenta de la barrera correspondiente (defensa física o especial). El excedente de barrera pasa a HP. Mecánica de barreras propia del juego (no estándar Pokémon).
@@ -185,12 +186,13 @@ Inmunes declarados como constantes privadas (`INMUNES_GRANIZO`, `INMUNES_TORMENT
 - `aplicarDañoStatus(): float` — Daño por estado al final de ronda: BURN 6.25%, POISON 12.5%, BAD_POISON creciente (contador/16 del HP máx).
 - `obtenerStatEfectivo(string $stat): float` — Stat base × multiplicador de etapas. Parálisis reduce velocidad a la mitad.
 - `aplicarCambioEtapa(string $stat, int $change)` — Modifica etapa (clamp -6..+6).
-- `aArrayVista(int $teamIdx): array` — Serializa a array para la vista (refId, nombre, icon, hp, maxHp, defHp, spDefHp, posicion, alive, speed, accumulatedSpeed, status, statusTurns, stages, team, item).
+- `velocidadEfectiva(): float` — `obtenerStatEfectivo(StatClave::VELOCIDAD)`: velocidad base × multiplicadores de etapas × 0.5 si parálisis. Es la métrica del orden de turnos y de `effectiveSpeed`.
+- `aArrayVista(int $teamIdx): array` — Serializa a array para la vista: `refId`, `nombre`, `icon` (URL generada por `urlIcono()` desde `speciesId`/`shiny`/`formSuffix`, con fallback al placeholder 0), `es_shiny`, `hp`, `maxHp`, `defHp`, `maxDefHp`, `spDefHp`, `maxSpDefHp`, `posicion`, `alive`, `speed` (base), **`effectiveSpeed`** (float con etapas y parálisis), `status`, `statusTurns`, `stages`, `team`, `item`.
 - `curarHp(float $porcentaje)` — Cura porcentaje del HP máximo.
 - `curarBarreras(float $porcentaje)` — Cura porcentaje de ambas barreras.
 - `__serialize()` / `__unserialize()` — Serialización a sesión con prefijo de versión. Incluye `effects` y `pokemon` serializados anidados.
 
-**Propiedades clave:** `hpActual`, `defensaHpActual`, `defensaEspHpActual`, `velocidadAcumulada`, `estado` (EstadoPokemon), `contadorVenenoGrave`, `turnosEstado`, `etapas` (EtapasStats), `id`, `nombre`, `iconName`, `shiny`, `item`, `effects` (ColeccionEfectos), `pokemon` (PokemonEntity), `posicion` (Posicion).
+**Propiedades clave:** `hpActual`, `defensaHpActual`, `defensaEspHpActual`, `vecesActuadoEstaRonda`, `estado` (EstadoPokemon), `contadorVenenoGrave`, `turnosEstado`, `multiplicadores` (MultiplicadoresStats), `id`, `nombre`, `speciesId`, `formSuffix`, `iconName`, `shiny`, `item`, `bonificadorDanio`, `effects` (ColeccionEfectos), `pokemon` (PokemonEntity), `posicion` (Posicion). `iconName` se serializa por compatibilidad, pero la vista usa `urlIcono()` (deuda: campo sin uso en `aArrayVista`).
 
 **Relaciones:** Contiene `PokemonEntity` (src/Pokemon/Domain), `ColeccionEfectos`, `EtapasStats`. Usado por `AgregadoBatalla`, `EquipoBatalla`, `GestorTurnos`, `ServicioEjecucionBatalla`.
 
@@ -198,11 +200,15 @@ Inmunes declarados como constantes privadas (`INMUNES_GRANIZO`, `INMUNES_TORMENT
 
 #### `EquipoBatalla` (`src/Battle/Domain/EquipoBatalla.php`)
 
-**Responsabilidad:** Colección de 3 `Combatiente` con nombre de equipo. Maneja consultas de estado (vivos, vanguardia, retaguardia, todos debilitados).
+**Responsabilidad:** Colección de `Combatiente` (3 por defecto; las invocaciones pueden añadir más) con nombre de equipo. Maneja consultas de estado (vivos, vanguardia, retaguardia, todos debilitados).
 
 **Mecánica principal:**
 - `fromData(array $members, string $name, ?FabricaEfectos $fabricaEfectos = null): self` — Factory method que construye un equipo completo desde `DatosPokemonBatalla[]`. Crea `StatsValue`, `TiposCollection`, `PokemonEntity` y `Combatiente` para cada miembro. Procesa efectos vía `FabricaEfectos::crearEfecto()` y objetos vía `FabricaEfectos::crearItem()`. La `FabricaEfectos` es inyectable (default: new instance).
-- `combatientesVivos(): array`, `vanguardiaAlive(): array`, `retaguardiaAlive(): array` — Filtros.
+- `combatientesVivos(): array`, `vanguardiaAlive(): array`, `retaguardiaAlive(): array` — Filtros (los dos últimos, deprecados en favor de la colección).
+- `combatientesCollection(): CombatientesCollection` — Colección tipada con `vivos()`, `conAccionPendiente()`, `vanguardia()`, `retaguardia()`, `menorVelocidadBase()`.
+- `agregarCombatiente(Combatiente $combatiente, Posicion $posicion)` — Añade al final de la colección (usado por `AgregadoBatalla::incorporarCombatiente`); el orden de la colección define el desempate de turnos.
+- `combatants(): array` — `@deprecated` (frontera): migrar a `combatientesCollection()`; usado aún en `Combate.php`.
+- `lowestSpeed(): float` — Retenido: delega en `menorVelocidadBase()` (lo usa `EquipoBatallaTest`).
 - `tieneVanguardiaViva(): bool`, `todosDebilitados(): bool`.
 - `findCombatant(Combatiente $target): ?Combatiente` — Búsqueda por identidad de objeto.
 - `findCombatantById(string $id): ?Combatiente` — Búsqueda por id string.
@@ -215,19 +221,19 @@ Inmunes declarados como constantes privadas (`INMUNES_GRANIZO`, `INMUNES_TORMENT
 
 #### `GestorTurnos` (`src/Battle/Domain/GestorTurnos.php`)
 
-**Responsabilidad:** Gestiona el ciclo de rondas y turnos basado en velocidad acumulada.
+**Responsabilidad:** Gestiona el ciclo de rondas y turnos con el modelo de **una acción por pokémon vivo y ronda**, ordenada por velocidad efectiva.
 
 **Mecánica principal:**
-- `startNewRound()` — Incrementa ronda, acumula velocidad a todos los vivos (`agregarVelocidad()` = stat efectivo speed), resetea `vecesActuadoEstaRonda` a 0.
-- `getNextActor(): ?Combatiente` — Retorna el combatiente vivo con mayor velocidad acumulada. Si todos tienen velocidad ≤ 0 o no hay vivos, retorna null.
-- `consumeAction(Combatiente $actor)` — Resta la menor velocidad entre vivos (o 1 si ≤ 0) al actor. Incrementa `vecesActuadoEstaRonda`.
-- `hayAlgunoConAccionPendiente(): bool` — true si algún vivo tiene velocidad acumulada > 0.
+- `startNewRound()` — Incrementa la ronda y resetea `vecesActuadoEstaRonda` a 0 en todos los combatientes (vivos y debilitados).
+- `getNextActor(): ?Combatiente` — Retorna el combatiente vivo **con acción pendiente** (`vecesActuadoEstaRonda === 0`) de **mayor velocidad efectiva**. Los empates se resuelven por orden de inserción (team1 antes que team2). Retorna null solo si ningún vivo tiene acción pendiente; una velocidad efectiva ≤ 0 no cortocircuita.
+- `consumeAction(Combatiente $actor)` — Solo incrementa el contador de acciones del actor; no altera velocidades.
+- `hayAlgunoConAccionPendiente(): bool` — true si existe algún vivo con contador 0. Invariante: si es true, `getNextActor()` no es null.
 - `bothTeamsAlive(): bool` — true si ambos equipos tienen al menos un vivo.
-- `allCombatants(): array`, `combatientesVivos(): array`, `menorVelocidadEntreVivos(): float`.
+- `allCombatants(): CombatientesCollection`, `combatientesVivos(): CombatientesCollection` (filtros `vivos()`/`conAccionPendiente()` en la colección), `round(): int`.
 
-**Propiedades:** `round`, `teamA`, `teamB` (referencias a `EquipoBatalla::combatants()`).
+**Propiedades:** `round`, `team1`/`team2` (públicas readonly) y `teamA`/`teamB` (colecciones de `EquipoBatalla::combatientesCollection()`).
 
-**Relaciones:** Usa `EquipoBatalla`, `Combatiente`. Usado por `AgregadoBatalla`.
+**Relaciones:** Usa `EquipoBatalla`, `Combatiente`, `CombatientesCollection`. Usado por `AgregadoBatalla`, `Combate` (Livewire). Sin velocidad acumulada ni `menorVelocidadEntreVivos` (eliminadas en la iteración 3v3).
 
 ---
 
@@ -605,7 +611,7 @@ Inmunes declarados como constantes privadas (`INMUNES_GRANIZO`, `INMUNES_TORMENT
 5. Consume acción, notifica debilitamiento, limpia pending, avanza al siguiente actor.
 
 **Persistencia en sesión:**
-- `SESSION_VERSION = 4` (prefijo `v{version}|{serialized}`).
+- `SESSION_VERSION = 11` (prefijo `v{version}|{serialized}`), definida en `app/Support/BattleSessionService.php` (mínimo compatible 9; los payloads v9/v10 con `velocidadAcumulada` se cargan ignorándola).
 - `getBattle()`: deserializa con control de versiones (tolera cambios de estructura).
 - `saveBattle()`: serializa con versión.
 
@@ -650,7 +656,7 @@ Inmunes declarados como constantes privadas (`INMUNES_GRANIZO`, `INMUNES_TORMENT
 | **Congelación** | 20% descongelar/turno | No puede actuar hasta descongelarse |
 | **Confusión** | 33% auto-daño | 2-4 turnos; auto-daño con fórmula nivel 50 |
 | **Etapas** | -6..+6 | Fórmula `(2+stage)/2` si ≥0, `2/(2-stage)` si <0 |
-| **Velocidad acumulada** | Suma por ronda | `getNextActor()` = mayor velocidad acumulada |
+| **Orden de turnos** | 1 acción por vivo y ronda | `getNextActor()` = vivo pendiente con mayor velocidad efectiva; empates por orden de inserción; `consumeAction()` solo marca |
 
 ---
 
@@ -662,7 +668,10 @@ Inmunes declarados como constantes privadas (`INMUNES_GRANIZO`, `INMUNES_TORMENT
 [
     'refId' => string,
     'nombre' => string,
-    'icon' => string,          // "/iconos/{iconName}.png" o "/iconos/shiny/{iconName}.png"
+    'icon' => string,          // URL webp: /images/iconos_webp/{speciesId}{formSuffix}.webp
+                               // (shiny: /images/iconos_webp/shiny/{speciesId}{formSuffix}_s.webp;
+                               //  speciesId 0 → placeholder 0.webp / shiny/0_s.webp)
+    'es_shiny' => bool,
     'hp' => float,
     'maxHp' => float,
     'defHp' => float,
@@ -671,8 +680,8 @@ Inmunes declarados como constantes privadas (`INMUNES_GRANIZO`, `INMUNES_TORMENT
     'maxSpDefHp' => float,
     'posicion' => 'vanguardia'|'retaguardia',
     'alive' => bool,
-    'speed' => float,
-    'accumulatedSpeed' => float,
+    'speed' => float,          // velocidad base (stats)
+    'effectiveSpeed' => float, // velocidad efectiva (etapas + parálisis) — barra de turnos y orden
     'status' => string,        // 'none'|'burn'|'poison'|'bad_poison'|'paralysis'|'sleep'|'freeze'|'confusion'
     'statusTurns' => int,
     'stages' => array<string, int>,  // ['attack' => 0, 'defense' => 0, ...]
@@ -734,9 +743,9 @@ commitAction() → getBattle() → pendingAction.toDomain()
 ```
 AgregadoBatalla::ejecutarBatalla()
   → loop while bothTeamsAlive():
-    → startNewRound() (acumular velocidad)
+    → startNewRound() (resetea contadores de acción)
     → loop while hayAlgunoConAccionPendiente():
-      → getNextActor() → SelectorAccionIA.elegirObjetivoPara() → SelectorAccionIA.elegirMejorMovimiento()
+      → getNextActor() (mayor velocidad efectiva) → SelectorAccionIA.elegirObjetivoPara() → SelectorAccionIA.elegirMejorMovimiento()
       → ServicioEjecucionBatalla::calcularYAplicarDano()
       → aplicarEstado() / aplicarStatChanges()
       → SujetoBatalla.notifyDamaged() / notifyFainted()
@@ -846,6 +855,41 @@ ahora prefiere el que daña directamente la salud para terminar antes el combate
 pasó en aislamiento pero falló una vez en suite completa eligiendo Ponzoña). POSTERGADO — hay otro
 desarrollo en marcha que puede interferir. Revisar al cerrar ese desarrollo.
 
+### Iteración combate 3v3 — motor de 1 acción por ronda e invocaciones (2026-10-15 → 2026-10-17)
+
+**Alcance (commits `3039027d89`, `67a15e5197`, `9b8aa95927`, `a445a40912`, `cff45616e8`, `9fcc9ff5e3`, `047782440e`):**
+
+- **`GestorTurnos` reescrito**: `round` + contador `vecesActuadoEstaRonda` por combatiente.
+  `getNextActor()` = vivo pendiente de mayor `velocidadEfectiva()`; empates estables por orden de
+  inserción (team1 antes que team2). `consumeAction()` solo marca; `startNewRound()` resetea.
+  `hayAlgunoConAccionPendiente()` = existe vivo con contador 0. Eliminadas la velocidad acumulada
+  y `menorVelocidadEntreVivos()`; `CombatientesCollection` perdió `mayorVelocidadActual`,
+  `menorVelocidadActual` y `menorVelocidadEfectiva` (conserva `menorVelocidadBase`).
+- **`Combatiente`**: sin `velocidadAcumulada`; nueva `velocidadEfectiva()` (stat con etapas y
+  parálisis); `aArrayVista()` expone `effectiveSpeed` y `es_shiny`, y resuelve `icon` con
+  `urlIcono()` (webp, shiny y sufijo de forma). `__unserialize()` ignora `velocidadAcumulada` de
+  payloads v≤10.
+- **Invocaciones**: `AgregadoBatalla::incorporarCombatiente()` añade al equipo con contador 0, sin
+  tope, sin efectos de entrada ni log, en la colección que ya usa el gestor.
+- **Log de ataque** (batalla automática): formato histórico con corchetes y velocidad efectiva
+  `"{vel}vel [{hp}hp] ataca a [{hp}hp] con {mov} -> {daño} de daño"`; sin nombres (nunca los llevó).
+- **Contrato de vista**: `Combate::buildTurnQueue()` ordena por `velocidadEfectiva()` descendente
+  (`usort` sobre pendientes, estable y coherente con `getNextActor()`); `turn-bar.blade.php` pinta
+  `effectiveSpeed`.
+- **Sesión**: `SESSION_VERSION` 10 → 11 (mínimo 9) en `BattleSessionService`.
+- **Mock y recompensas**: `FabricaBatallaMock` 3v3 (índices 0-2); `CalculadorRecompensas::MIEMBROS_EQUIPO = 3`.
+- **Ajuste de fin de ronda con KO** (`729f51dc81`, QA O1): tras `advanceRound` se re-comprueba
+  `bothTeamsAlive()` y se cierra la batalla antes de elegir actor.
+- **Log de ataque restaurado** (`9fcc9ff5e3`, post-Arquitecto O2): corchetes y velocidad efectiva.
+
+**Deuda (Hardener PASS con observaciones):** DRY preexistente `GeneradorEquipoRuta` ↔
+`GeneradorEquipoEntrenador` (pool + ponderación); constante «3» repetida cross-módulo; `iconName`
+serializado sin uso en `aArrayVista`; doble `session->guardar()` en `Combate::initMockBattle`;
+`lowestSpeed()`/`menorVelocidadBase` retenidos por test; `combatants()` deprecado en
+`app/Livewire/Combate.php:513,619,624`; PHPDoc de `buildTurnQueue`; métodos largos (PHPMD)
+preexistentes; tooling PHPStan 2.2.9/`phpstan-hardener.neon`, deptrac sin parsear constantes
+tipadas; CRAP no medido (testing diferido). Comportamientos a cubrir en `docs/testing.md`.
+
 ---
 
 ## Iteración refactor (2026-08-30)
@@ -897,7 +941,7 @@ app/Providers/BattleEffectServiceProvider.php → src/Battle/Domain/Effects/ (Fa
 3. **Chain of Responsibility**: 7 manejadores en orden fijo. Fácil de extender añadiendo nuevos manejadores al final de la cadena en `CadenaDanio::__construct()`.
 4. **Efectos como Strategy**: `InterfazEfecto` con 11 hooks de ciclo de vida. Los efectos se registran por clave en `FabricaEfectos`. Para añadir un nuevo efecto, solo se necesita la clase + registro en `BattleEffectServiceProvider`.
 5. **Observer para eventos**: `SujetoBatalla` notifica daño, debilitamiento y fin de turno. Los efectos se suscriben indirectamente a través de `ColeccionEfectos`.
-6. **Serialización en sesión con versionado**: `v{version}|{serialized}`. `SESSION_VERSION=4` en `Combate.php`. Permite migrar datos entre cambios estructurales. Los servicios del agregado se guardan como propiedades nullable + lazy getter (`??=`) para que la deserialización de versiones antiguas no falle.
+6. **Serialización en sesión con versionado**: `v{version}|{serialized}`. `SESSION_VERSION=11` (mínimo compatible 9) en `app/Support/BattleSessionService.php`. Permite migrar datos entre cambios estructurales. Los servicios del agregado se guardan como propiedades nullable + lazy getter (`??=`) para que la deserialización de versiones antiguas no falle.
 7. **FabricaEfectos inyectable**: no es estática. Se pasa como dependencia a `EquipoBatalla::fromData()` y `FabricaBatallaMock`. Registrada como singleton en Laravel.
 8. **Dominio sin dependencias de Laravel**: `src/Battle/Domain/` no importa nada de `app/` ni de Illuminate. Las colecciones usan implementaciones nativas (`ArrayIterator`), no `Illuminate\Support\Collection`.
 
@@ -938,7 +982,7 @@ app/Providers/BattleEffectServiceProvider.php → src/Battle/Domain/Effects/ (Fa
 | `src/Battle/Infrastructure/FabricaBatallaMock.php` | Datos mock de batalla |
 | `src/Battle/Presentation/DTOAccionBatalla.php` | DTO de acción pendiente |
 | `src/Battle/Presentation/DTOMovimientoBatalla.php` | DTO de movimiento (Wireable) |
-| `app/Livewire/Combate.php` | Componente Livewire de batalla manual (SESSION_VERSION=4) |
+| `app/Livewire/Combate.php` | Componente Livewire de batalla manual (usa `BattleSessionService`, v11) |
 | `app/Providers/BattleEffectServiceProvider.php` | Registro de efectos e items |
 | `app/Providers/AppServiceProvider.php` | Binding FabricaBatallaInterface |
 | `resources/views/livewire/combate.blade.php` | Vista principal de combate |
