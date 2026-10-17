@@ -13,6 +13,7 @@ use Src\Gimnasios\Domain\Exceptions\GimnasioCompletado;
 use Src\Gimnasios\Domain\Repositories\GymCatalogoRepositoryInterface;
 use Src\Gimnasios\Domain\Repositories\GymProgressRepositoryInterface;
 use Src\Shared\Domain\EscaladorNivelRival;
+use Src\Shared\Domain\Exceptions\ViolacionReglaNegocio;
 use Src\Shared\Domain\IvsRangoEntrenador;
 
 /**
@@ -82,6 +83,10 @@ final class IniciarCombateGimnasio
         $datosRival = $equipoEtapa !== null
             ? $this->generador->generar($equipoEtapa, $nivelRival, $evPrincipal, $evResto, $ivPrincipal, $ivResto)
             : [];
+
+        if ($datosRival === []) {
+            throw new ViolacionReglaNegocio('Este gimnasio no tiene Pokémon disponibles.');
+        }
 
         return $this->creadorBatalla->crearYGuardar(
             datosJugador: $datosJugador,

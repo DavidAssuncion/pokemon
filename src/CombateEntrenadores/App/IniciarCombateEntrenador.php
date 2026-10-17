@@ -8,6 +8,7 @@ use App\Models\Team;
 use App\Support\CreadorBatallaSesion;
 use Src\CombateEntrenadores\Domain\Exceptions\EntrenadorDerrotadoHoy;
 use Src\CombateEntrenadores\Domain\Repositories\EntrenadorLogRepositoryInterface;
+use Src\Shared\Domain\Exceptions\ViolacionReglaNegocio;
 use Src\Shared\Domain\IvsRangoEntrenador;
 
 /**
@@ -61,6 +62,10 @@ class IniciarCombateEntrenador
             $ivPrincipal,
             $ivResto,
         );
+
+        if ($datosRival === []) {
+            throw new ViolacionReglaNegocio('No hay Pokémon disponibles para este entrenador.');
+        }
 
         return $this->creadorBatalla->crearYGuardar(
             datosJugador: $datosJugador,
