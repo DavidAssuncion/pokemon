@@ -253,8 +253,8 @@ class AgregadoBatalla
         $this->getSelectorAccion()->registrarAccionEnemiga($accion, $daño, $this->turnManager->round());
 
         $this->agregarLog(
-            "{$actor->velocidadEfectiva()}vel {$actor->hpActual()}hp] "
-            ."ataca a {$objetivo->hpActual()}hp] "
+            "{$actor->velocidadEfectiva()}vel [{$actor->hpActual()}hp] "
+            ."ataca a [{$objetivo->hpActual()}hp] "
             ."con {$movimiento->nombre} -> {$daño} de daño"
         );
 
