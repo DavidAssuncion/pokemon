@@ -327,24 +327,10 @@ class Combatiente
 
     public function aArrayVista(int $teamIdx): array
     {
-        $base = $this->shiny
-            ? "/images/iconos_webp/shiny/{$this->speciesId}_s.webp"
-            : '/images/iconos_webp/0.webp';
-
-        $icon = $this->speciesId === 0
-            ? $base
-            : ($this->formSuffix !== ''
-                ? ($this->shiny
-                    ? "/images/iconos_webp/shiny/{$this->speciesId}_{$this->formSuffix}_s.webp"
-                    : "/images/iconos_webp/{$this->speciesId}_{$this->formSuffix}.webp")
-                : ($this->shiny
-                    ? "/images/iconos_webp/shiny/{$this->speciesId}_s.webp"
-                    : "/images/iconos_webp/{$this->speciesId}.webp"));
-
         return [
             'refId' => $this->id,
             'nombre' => $this->nombre,
-            'icon' => $icon,
+            'icon' => $this->urlIcono(),
             'es_shiny' => $this->shiny,
             'hp' => $this->hpActual,
             'maxHp' => $this->pokemon->battleStats()->hp,
@@ -362,6 +348,25 @@ class Combatiente
             'team' => $teamIdx,
             'item' => $this->item,
         ];
+    }
+
+    /**
+     * URL del icono de vista: placeholder si no hay species_id; variante
+     * shiny y sufijo de forma cuando aplican.
+     */
+    private function urlIcono(): string
+    {
+        if ($this->speciesId === 0) {
+            return $this->shiny
+                ? '/images/iconos_webp/shiny/0_s.webp'
+                : '/images/iconos_webp/0.webp';
+        }
+
+        $sufijo = $this->formSuffix !== '' ? "_{$this->formSuffix}" : '';
+
+        return $this->shiny
+            ? "/images/iconos_webp/shiny/{$this->speciesId}{$sufijo}_s.webp"
+            : "/images/iconos_webp/{$this->speciesId}{$sufijo}.webp";
     }
 
     public function estaVivo(): bool
