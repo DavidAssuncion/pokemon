@@ -269,6 +269,22 @@ final class CalculadorRecompensas
     }
 
     /**
+     * EXP de un derrotado repartida por tipo (D3/RF-14): 1 tipo → 100 %,
+     * 2 tipos → 50/50 (intdiv). null si el pokémon no tiene tipos.
+     */
+    private function expRepartidaPorTipo(PokemonDerrotado $pokemon, int $nivelSalvaje): ?int
+    {
+        $numTipos = count($pokemon->tipos);
+        if ($numTipos === 0) {
+            return null;
+        }
+
+        $exp = NivelHelper::expDerrota($pokemon->baseExperience, $nivelSalvaje);
+
+        return $numTipos === 1 ? $exp : intdiv($exp, 2);
+    }
+
+    /**
      * Caramelos de tipo (D3/RF-14): EXP tipada por victoria (1 tipo → 100 %,
      * 2 tipos → 50/50); caramelos = floor((exp_tipo × 0.2)/100). Sustituye al
      * antiguo "1 caramelo por tipo por derrotado".
@@ -281,12 +297,10 @@ final class CalculadorRecompensas
         $expTipo = [];
 
         foreach ($derrotados as $pokemon) {
-            $exp = NivelHelper::expDerrota($pokemon->baseExperience, $nivelSalvaje);
-            $numTipos = count($pokemon->tipos);
-            if ($numTipos === 0) {
+            $reparto = $this->expRepartidaPorTipo($pokemon, $nivelSalvaje);
+            if ($reparto === null) {
                 continue;
             }
-            $reparto = $numTipos === 1 ? $exp : intdiv($exp, 2);
 
             foreach ($pokemon->tipos as $tipo) {
                 $expTipo[$tipo] = ($expTipo[$tipo] ?? 0) + $reparto;
@@ -347,12 +361,13 @@ final class CalculadorRecompensas
     {
         $expTipo = [];
         foreach ($derrotados as $pokemon) {
-            $exp = NivelHelper::expDerrota($pokemon->baseExperience, $nivelSalvaje);
-            $numTipos = count($pokemon->tipos);
-            if ($numTipos === 0) {
+            $reparto = $this->expRepartidaPorTipo($pokemon, $nivelSalvaje);
+            if ($reparto === null) {
                 continue;
             }
-            $expMiembro = (int) floor(($numTipos === 1 ? $exp : intdiv($exp, 2)) * 0.8 / self::MIEMBROS_EQUIPO);
+
+            $expMiembro = (int) floor($reparto * 0.8 / self::MIEMBROS_EQUIPO);
+
             foreach ($pokemon->tipos as $tipo) {
                 $expTipo[$tipo] = ($expTipo[$tipo] ?? 0) + $expMiembro;
             }
