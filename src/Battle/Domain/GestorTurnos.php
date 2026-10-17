@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Src\Battle\Domain;
 
 use Src\Battle\Domain\Collections\CombatientesCollection;
-use Src\Battle\Domain\Enums\StatClave;
 
 class GestorTurnos
 {
@@ -62,9 +61,9 @@ class GestorTurnos
 
     /**
      * Siguiente combatiente vivo que aún no actuó en la ronda actual: el de
-     * mayor velocidad efectiva (StatClave::VELOCIDAD, con multiplicadores y
-     * parálisis). Los empates se resuelven por orden de inserción (team1 antes
-     * que team2). null solo si ningún vivo tiene acción pendiente.
+     * mayor velocidad efectiva (con multiplicadores y parálisis). Los empates
+     * se resuelven por orden de inserción (team1 antes que team2). null solo
+     * si ningún vivo tiene acción pendiente.
      */
     public function getNextActor(): ?Combatiente
     {
@@ -76,7 +75,7 @@ class GestorTurnos
                 continue;
             }
 
-            $velocidad = $candidato->obtenerStatEfectivo(StatClave::VELOCIDAD);
+            $velocidad = $candidato->velocidadEfectiva();
 
             if ($mejorVelocidad === null || $velocidad > $mejorVelocidad) {
                 $seleccionado = $candidato;

@@ -7,7 +7,6 @@ namespace Src\Battle\Domain;
 use Src\Battle\Domain\AI\NivelDificultad;
 use Src\Battle\Domain\AI\SelectorAccionIA;
 use Src\Battle\Domain\Chain\CadenaDanio;
-use Src\Battle\Domain\Enums\StatClave;
 use Src\Battle\Domain\Enums\TipoClima;
 use Src\Battle\Domain\Observer\SujetoBatalla;
 use Src\Battle\Domain\ValueObjects\BattleLog;
@@ -254,7 +253,7 @@ class AgregadoBatalla
         $this->getSelectorAccion()->registrarAccionEnemiga($accion, $daño, $this->turnManager->round());
 
         $this->agregarLog(
-            "{$actor->obtenerStatEfectivo(StatClave::VELOCIDAD)}vel {$actor->hpActual()}hp] "
+            "{$actor->velocidadEfectiva()}vel {$actor->hpActual()}hp] "
             ."ataca a {$objetivo->hpActual()}hp] "
             ."con {$movimiento->nombre} -> {$daño} de daño"
         );

@@ -12,7 +12,6 @@ use Src\Battle\Domain\AccionBatalla;
 use Src\Battle\Domain\AgregadoBatalla;
 use Src\Battle\Domain\Combatiente;
 use Src\Battle\Domain\Enums\FaseCombate;
-use Src\Battle\Domain\Enums\StatClave;
 use Src\Battle\Domain\EquipoBatalla;
 use Src\Battle\Domain\FabricaBatallaInterface;
 use Src\Battle\Domain\MovimientoBatalla;
@@ -560,8 +559,8 @@ class Combate extends Component
 
         usort(
             $pendientes,
-            fn (Combatiente $a, Combatiente $b): int => $b->obtenerStatEfectivo(StatClave::VELOCIDAD)
-                <=> $a->obtenerStatEfectivo(StatClave::VELOCIDAD)
+            fn (Combatiente $a, Combatiente $b): int => $b->velocidadEfectiva()
+                <=> $a->velocidadEfectiva()
         );
 
         return array_map(fn (Combatiente $c) => $this->findPokemonViewData($c) ?? ['team' => 0, 'index' => 0], $pendientes);

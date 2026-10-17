@@ -347,7 +347,7 @@ class Combatiente
             'posicion' => $this->posicion->value,
             'alive' => $this->estaVivo(),
             'speed' => $this->pokemon->battleStats()->speed,
-            'effectiveSpeed' => $this->obtenerStatEfectivo(StatClave::VELOCIDAD),
+            'effectiveSpeed' => $this->velocidadEfectiva(),
             'status' => $this->estado->value,
             'statusTurns' => $this->turnosEstado,
             'stages' => $this->multiplicadores->obtenerEtapas(),
@@ -386,6 +386,15 @@ class Combatiente
         }
 
         return $value;
+    }
+
+    /**
+     * Velocidad efectiva: stat de velocidad con multiplicadores de etapas y
+     * la penalización por parálisis aplicadas (StatClave::VELOCIDAD).
+     */
+    public function velocidadEfectiva(): float
+    {
+        return $this->obtenerStatEfectivo(StatClave::VELOCIDAD);
     }
 
     // ─── Estados (parálisis, sueño, hielo, confusión) ────────

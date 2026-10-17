@@ -6,7 +6,6 @@ namespace Src\Battle\Domain\AI;
 
 use Src\Battle\Domain\AI\ValueObjects\EvaluacionAmenaza;
 use Src\Battle\Domain\Combatiente;
-use Src\Battle\Domain\Enums\StatClave;
 
 /**
  * Analiza la amenaza de cada enemigo vivo calculando ThreatScore compuesto.
@@ -97,7 +96,7 @@ class AnalizadorAmenazasImpl implements AnalizadorAmenazas
      */
     private function calcularAmenazaVelocidad(ContextoDecisionIA $contexto, Combatiente $enemigo): float
     {
-        return $enemigo->obtenerStatEfectivo(StatClave::VELOCIDAD) > $contexto->actor->obtenerStatEfectivo(StatClave::VELOCIDAD)
+        return $enemigo->velocidadEfectiva() > $contexto->actor->velocidadEfectiva()
             ? $this->pesos->puntosVelocidadSuperior
             : 0.0;
     }
