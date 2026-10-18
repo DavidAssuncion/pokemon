@@ -65,7 +65,7 @@ Aplica la skill `cambio-minimo` en toda implementación de UI:
 * Sin variantes, props ni estados «para después» no pedidos. Borrar gana a añadir.
 * Nunca recortes accesibilidad, estados de error/vacío ni lo pedido en la especificación.
 * ¿Debería existir esto? El alcance lo decide el Analista/usuario: propón la opción menor; no recortes por tu cuenta.
-* Atajo deliberado: comentario `atajo:` con la sintaxis del lenguaje (`//`, `{{-- --}}`).
+* Atajo deliberado: comentario `atajo: <límite>, <cuándo revisar>` con la sintaxis del lenguaje (`//`, `{{-- --}}`); canónico en `docs/conventions.md`.
 
 ---
 

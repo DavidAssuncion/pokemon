@@ -90,7 +90,7 @@ Protocolo:
 
 | Fuente | Decisión |
 |--------|----------|
-| **Ponytail** (skill de cambio mínimo; MIT) | **Adaptado** al español como skill `cambio-minimo`, integrado en los prompts de Analista, Coder, QA, Cleaner, Hardener y Bibliotecario. |
+| **Ponytail** (skill de cambio mínimo; MIT) | **Adaptado** al español como skill `cambio-minimo`, con principios derivados en los prompts del pipeline (Analista, Coder, QA, Cleaner, Hardener y Bibliotecario). |
 | **Caveman** (patrones de trabajo; Apache-2.0) | **Adaptados** los patrones de trabajo (verificar sin expandir alcance, refactor seguro). **Descartado** el CLI/proxy: telemetría activa por defecto y reescritura de configuraciones de agentes (mismo motivo por el que se descartó Gentle-AI). |
 | **deepseek-harness** (harness de agentes; MIT) | **No se migra de harness** (developer preview con breaking changes). Se adoptan la disciplina de no repetir checks ya pasados y el criterio «una casa por hecho» para documentación. |
 

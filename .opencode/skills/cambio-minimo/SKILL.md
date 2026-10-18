@@ -26,13 +26,13 @@ Toma la primera opción que resuelva el problema por completo:
 
 ## Reglas del cambio mínimo
 
-* Sé vago con la solución, nunca con el cambio: completa todo lo que la tarea necesita, incluidos los llamadores, fixtures y config que tu cambio rompa.
-* Sin abstracciones, wrappers, conversiones, opciones, configuración ni código «para después» que nadie pidió. Borrar gana a añadir. Mantén las capas, interfaces y convenciones existentes.
-* Gana el diff más corto que se entienda, una vez conoces todo lo que debe tocar. Una línea ilegible no es corta.
-* Comenta solo el porqué que el código no puede mostrar, en una línea.
-* Bugfix: antes de editar, localiza todos los llamadores de la función que tocas y arregla la causa raíz una sola vez en el código compartido.
-* Entre opciones del mismo tamaño, elige la correcta en los casos límite.
-* El código que muevas o fusiones conserva su manejo de errores y su validación.
+- Sé vago con la solución, nunca con el cambio: completa todo lo que la tarea necesita, incluidos los llamadores, fixtures y config que tu cambio rompa.
+- Sin abstracciones, wrappers, conversiones, opciones, configuración ni código «para después» que nadie pidió. Borrar gana a añadir. Mantén las capas, interfaces y convenciones existentes.
+- Gana el diff más corto que se entienda, una vez conoces todo lo que debe tocar. Una línea ilegible no es corta.
+- Comenta solo el porqué que el código no puede mostrar, en una línea.
+- Bugfix: antes de editar, localiza todos los llamadores de la función que tocas y arregla la causa raíz una sola vez en el código compartido.
+- Entre opciones del mismo tamaño, elige la correcta en los casos límite.
+- El código que muevas o fusiones conserva su manejo de errores y su validación.
 
 ## Nunca recortar
 
@@ -42,15 +42,15 @@ Validación en fronteras de confianza, manejo de errores que evite pérdida de d
 
 En este proyecto no se escribe ni ejecuta testing durante el desarrollo: el testing del módulo se difiere a su cierre.
 
-* Lógica nueva no trivial (rama, bucle, parser, dinero o seguridad): registra el comportamiento a cubrir en el análisis previo (`active/ANALISIS_*`).
-* Cambios triviales: no requieren nada.
+- Lógica nueva no trivial (rama, bucle, parser, dinero o seguridad): registra el comportamiento a cubrir en el análisis previo (`active/ANALISIS_*`).
+- Cambios triviales: no requieren nada.
 
 ## Atajos deliberados
 
 Una simplificación con límite conocido se marca con un comentario:
 
 ```php
-// atajo: solo contempla equipos de 3; revisar cuando se permitan invocaciones
+// atajo: solo contempla equipos de 3, revisar cuando se permitan invocaciones
 ```
 
 En Blade/JS se usa la sintaxis de comentario equivalente. El Bibliotecario cosecha los atajos vigentes al cierre del módulo y los vuelca en los pendientes conocidos. Si un atajo se resuelve, su comentario se elimina.
