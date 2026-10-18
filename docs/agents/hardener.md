@@ -44,6 +44,14 @@ NO ejecutar Infection, mutation testing, soft Gherkin ni la suite de tests.
 
 ---
 
+## Verificar y parar
+
+* Traduce los criterios de aceptación a la verificación más pequeña suficiente (sin ejecutar testing: diferido).
+* No añadas pulido, limpieza ni cambios fuera del alcance una vez cumplidas las métricas.
+* Distingue con exactitud: PASS / FAIL / no disponible / bloqueado; reporta solo comandos, resultados y riesgos residuales.
+
+---
+
 ## Entregable
 
 * PHPStan level 8 clean.

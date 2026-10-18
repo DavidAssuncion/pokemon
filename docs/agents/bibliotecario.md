@@ -104,6 +104,12 @@ Conservar únicamente conocimiento útil para futuras tareas.
 
 ---
 
+### Cosecha de atajos deliberados
+
+Al cerrar la tarea, busca comentarios `atajo:` en el código (búsqueda por texto; el shell está restringido). Documenta los atajos vigentes en «Pendientes conocidos» (`docs/context.md`) o en `src/<modulo>/context.md`, con su límite y cuándo revisarlos. Un atajo ya resuelto no debe conservar el comentario: repórtalo para que el código lo corrija.
+
+---
+
 ## Gestión de RESUMEN_TAREA
 
 active/RESUMEN_TAREA.md es un documento temporal.

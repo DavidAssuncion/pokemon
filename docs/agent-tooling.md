@@ -52,8 +52,8 @@ Convención V2: `.opencode/skills/<id>/SKILL.md`, con frontmatter YAML `name` + 
 (la `description` es la que dispara el skill). Migradas desde el formato antiguo
 `.opencode/skill/<id>/reference.md`.
 
-- 6 skills de proyecto en `.opencode/skills/`: `laravel`, `blade`, `phpstan`, `phpunit`,
-  `dbeaver`, `mcp`.
+- 7 skills de proyecto en `.opencode/skills/`: `laravel`, `blade`, `phpstan`, `phpunit`,
+  `dbeaver`, `mcp`, `cambio-minimo`.
 - 3 skills en `.agents/skills/` (formato Laravel Boost): `laravel-best-practices`,
   `infer-conventions`, `tailwindcss-development`.
 - Índice en `docs/skills-index.md`.
@@ -85,6 +85,16 @@ Protocolo:
 - **Recuperar** con `mem_context` (historial reciente) y, si no hay match, `mem_search`;
   `mem_get_observation` para el contenido completo.
 - **Cierre de sesión**: `mem_session_summary` obligatorio antes de dar una tarea por terminada.
+
+## Adopción de patrones externos (2026-10-18)
+
+| Fuente | Decisión |
+|--------|----------|
+| **Ponytail** (skill de cambio mínimo; MIT) | **Adaptado** al español como skill `cambio-minimo`, integrado en los prompts de Analista, Coder, QA, Cleaner, Hardener y Bibliotecario. |
+| **Caveman** (patrones de trabajo; Apache-2.0) | **Adaptados** los patrones de trabajo (verificar sin expandir alcance, refactor seguro). **Descartado** el CLI/proxy: telemetría activa por defecto y reescritura de configuraciones de agentes (mismo motivo por el que se descartó Gentle-AI). |
+| **deepseek-harness** (harness de agentes; MIT) | **No se migra de harness** (developer preview con breaking changes). Se adoptan la disciplina de no repetir checks ya pasados y el criterio «una casa por hecho» para documentación. |
+
+La convención `atajo:` (atajos deliberados cosechados por el Bibliotecario al cierre) queda definida en `docs/conventions.md`.
 
 ## Pendientes / observaciones (no bloqueantes)
 

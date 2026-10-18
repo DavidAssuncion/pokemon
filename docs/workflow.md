@@ -107,7 +107,8 @@ tooling de agentes (config V2, MCP, skills, memoria Engram) se documenta en
 2. DRY por módulo y `src/Shared`.
 3. DTOs readonly en fronteras, Enums/Value Objects para primitivas.
 4. Escribe análisis previo con los comportamientos a cubrir en el testing futuro.
-5. Aplica formato: `vendor/bin/pint --dirty --format agent`.
+5. Aplica la regla de cambio mínimo (skill `cambio-minimo`) y marca los atajos deliberados con `// atajo:`.
+6. Aplica formato: `vendor/bin/pint --dirty --format agent`.
 
 **Entrega:** Handoff a QA con `commit:` (10 chars), análisis previo escrito con comportamientos a testear.
 
@@ -200,7 +201,8 @@ tooling de agentes (config V2, MCP, skills, memoria Engram) se documenta en
    - `docs/architecture.md` — patrones, componentes, decisiones.
    - `src/<modulo>/context.md` — funcionalidades, cambios, dependencias, decisiones, motivos.
 3. Limpia: elimina duplicados, obsoletos, irrelevantes.
-4. **Elimina** `active/RESUMEN_TAREA.md` y `active/ANALISIS_*.md`.
+4. Cosecha los comentarios `atajo:` vigentes hacia los pendientes conocidos (`docs/context.md` / `src/<modulo>/context.md`).
+5. **Elimina** `active/RESUMEN_TAREA.md` y `active/ANALISIS_*.md`.
 
 **Verificación final:**
 - [ ] `docs/context.md` actualizado

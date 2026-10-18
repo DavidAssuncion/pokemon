@@ -43,6 +43,14 @@ NO ejecutar Infection ni la suite de tests.
 
 ---
 
+## Refactor seguro (sin expandir alcance)
+
+* Preserva el comportamiento observable y los cambios ajenos.
+* Refactoriza en la capa más estrecha que posee el problema; sin renombrados masivos ni abstracciones que el objetivo (DRY, CRAP, code smells) no exija.
+* Si resuelves un atajo `atajo:`, elimina su comentario; si permanece, se conserva para la cosecha del Bibliotecario.
+
+---
+
 ## Entregable
 
 * Commits de refactoring (mensaje: "refactor: ...").

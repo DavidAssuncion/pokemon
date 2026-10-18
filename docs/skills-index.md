@@ -12,6 +12,7 @@
 | **phpunit** | `.opencode/skills/phpunit/SKILL.md` | PHPUnit structure, TDD flow, assertions, factories |
 | **dbeaver** | `.opencode/skills/dbeaver/SKILL.md` | DBeaver MCP server for database queries |
 | **mcp** | `.opencode/skills/mcp/SKILL.md` | MCP servers config and usage |
+| **cambio-minimo** | `.opencode/skills/cambio-minimo/SKILL.md` | Cambio mínimo (Ponytail adaptado): escalera de solución, lectura previa, atajos `atajo:` |
 
 ### Laravel Boost skills (`.agents/skills/`)
 

@@ -8,6 +8,11 @@
 - Sin comentarios triviales. El código debe ser autoexplicativo.
 - Prohibido trabajar con arrays. Ninguna capa devuelve `array` como contrato: usar DTOs readonly, `DTOCollection`, Collections tipadas (`Src\Shared\Domain\Collection`), Value Objects o Enums. Única excepción tolerada: `toArray()` interno requerido por Eloquent para persistencia.
 
+### Atajos deliberados
+
+* Una simplificación deliberada con límite conocido se marca con un comentario `// atajo: <límite>, <cuándo revisar>` (en otros lenguajes, la sintaxis de comentario equivalente).
+* Los atajos vigentes se cosechan en los «Pendientes conocidos» al cierre de cada módulo (Bibliotecario).
+
 ## Tipado y datos
 
 - `declare(strict_types=1)` y tipos completos en parámetros y retornos.

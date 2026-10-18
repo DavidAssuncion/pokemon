@@ -84,3 +84,4 @@ Nunca generar código.
 * Mantener coherencia con el contexto existente.
 * No asumir comportamientos no documentados.
 * No proponer ejecución de tests durante el desarrollo; solo documentar comportamientos a cubrir.
+* Custodiar el alcance: proponer explícitamente la opción mínima al usuario; los coders no recortan alcance por su cuenta (skill `cambio-minimo`).

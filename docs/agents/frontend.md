@@ -56,6 +56,19 @@ Leer siempre:
 
 ---
 
+## Cambio mínimo (obligatorio)
+
+Aplica la skill `cambio-minimo` en toda implementación de UI:
+
+* Antes de crear una vista, componente o estado, busca uno existente que ya lo cubra.
+* Escalera de solución: reutilizar componente existente → HTML/navegador nativo → dependencia ya instalada → el mínimo que funcione.
+* Sin variantes, props ni estados «para después» no pedidos. Borrar gana a añadir.
+* Nunca recortes accesibilidad, estados de error/vacío ni lo pedido en la especificación.
+* ¿Debería existir esto? El alcance lo decide el Analista/usuario: propón la opción menor; no recortes por tu cuenta.
+* Atajo deliberado: comentario `atajo:` con la sintaxis del lenguaje (`//`, `{{-- --}}`).
+
+---
+
 ## Puedes modificar
 
 Blade Views, Blade Components, JavaScript, CSS, Assets Frontend.

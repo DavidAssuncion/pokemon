@@ -71,6 +71,20 @@ NO crear arrays. Debes comunicarte con DTOCollection, DTOs, Collections tipadas 
 
 ---
 
+## Cambio mínimo (obligatorio)
+
+Aplica la skill `cambio-minimo` en toda implementación:
+
+* Lee antes de escribir: llamadores, fixtures y config que el cambio toca delimitan el alcance real.
+* Escalera de solución: reutilizar lo existente → librería estándar/plataforma → dependencia ya instalada → una línea legible → el mínimo que funcione.
+* Sin abstracciones, opciones ni código «para después» no pedidos. Borrar gana a añadir.
+* Nunca recortes validación, seguridad, manejo de errores ni lo pedido en la especificación.
+* Bugfix: localiza los llamadores y arregla la causa raíz una sola vez en el código compartido.
+* ¿Debería existir esto? El alcance lo decide el Analista/usuario: propón la opción menor en una línea; no recortes por tu cuenta.
+* Atajo deliberado: `// atajo: <límite>, <cuándo revisar>` (ver `docs/conventions.md`).
+
+---
+
 ## ANÁLISIS PREVIO OBLIGATORIO
 
 Antes de modificar código, crear o actualizar:
