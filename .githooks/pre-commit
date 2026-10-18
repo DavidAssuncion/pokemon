@@ -1,12 +1,14 @@
 #!/bin/sh
-# Pre-commit: rechaza whitespace/conflictos y exige formato Pint en los PHP staged.
+# Pre-commit: rechaza whitespace/conflictos y exige formato Pint en los PHP staged
+# (salvo los baselines de PHPStan, que son generados y quedan fuera del lint).
 
 if ! git diff --cached --check; then
     echo "pre-commit: hay errores de whitespace o marcadores de conflicto en los cambios staged." >&2
     exit 1
 fi
 
-ficheros_php=$(git diff --cached --name-only --diff-filter=ACMR -- '*.php')
+ficheros_php=$(git diff --cached --name-only --diff-filter=ACMR -- '*.php' \
+    | grep -v -E '^phpstan(-hardener)?-baseline\.php$')
 
 if [ -z "$ficheros_php" ]; then
     exit 0
