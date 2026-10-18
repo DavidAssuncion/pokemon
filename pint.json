@@ -1,5 +1,9 @@
 {
     "preset": "psr12",
+    "notPath": [
+        "phpstan-baseline.php",
+        "phpstan-hardener-baseline.php"
+    ],
     "rules": {
         "declare_strict_types": true,
         "strict_param": true,

@@ -4,6 +4,7 @@ includes:
     - vendor/phpstan/phpstan-strict-rules/rules.neon
     - vendor/phpstan/phpstan-deprecation-rules/rules.neon
     - vendor/phpstan/phpstan-phpunit/extension.neon
+    - phpstan-baseline.php
 
 parameters:
     paths:
@@ -23,14 +24,3 @@ parameters:
             - config/
             - routes/
             - tests/
-            - tests/Unit/Infra (?)
-            - tests/Feature/Infra (?)
-
-    ignoreErrors:
-        -
-            message: '#Call to an undefined method Illuminate\\\\Support\\\\HigherOrderCollectionProxy::#'
-            path: tests/*
-
-        -
-            message: '#Property .* does not exist on .*#'
-            path: tests/*

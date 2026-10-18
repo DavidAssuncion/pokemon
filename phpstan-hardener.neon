@@ -1,13 +1,10 @@
 includes:
     - phpstan.neon
+    - phpstan-hardener-baseline.php
 
 parameters:
     level: 8
 
     # Hardener-specific: stricter rules
-    checkMissingIterableValueType: true
-    checkGenericClassInNonGenericObjectType: true
     treatPhpDocTypesAsCertain: true
-    checkAlwaysTrueInstanceof: true
-    checkAlwaysTrueStrictComparison: true
     reportUnmatchedIgnoredErrors: true
