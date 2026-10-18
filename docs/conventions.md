@@ -10,8 +10,8 @@
 
 ### Atajos deliberados
 
-* Una simplificación deliberada con límite conocido se marca con un comentario `// atajo: <límite>, <cuándo revisar>` (en otros lenguajes, la sintaxis de comentario equivalente).
-* Los atajos vigentes se cosechan en los «Pendientes conocidos» al cierre de cada módulo (Bibliotecario).
+- Una simplificación deliberada con límite conocido se marca con un comentario `// atajo: <límite>, <cuándo revisar>` (en otros lenguajes, la sintaxis de comentario equivalente).
+- Los atajos vigentes se cosechan en los «Pendientes conocidos» al cierre de cada módulo (Bibliotecario).
 
 ## Tipado y datos
 
