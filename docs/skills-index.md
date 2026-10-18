@@ -42,18 +42,29 @@ opencode api GET /api/skill -H "x-opencode-directory: /home/david/pokemon"
 
 | Config | Purpose |
 |--------|---------|
-| `phpstan.neon` | Level 6 (Coder/Cleaner) |
-| `phpstan-hardener.neon` | Level 8 (Hardener) |
+| `phpstan.neon` | Level 6 (Coder/Cleaner) + `phpstan-baseline.php` (221 entradas/279 errores) |
+| `phpstan-hardener.neon` | Level 8 (Hardener) + `phpstan-hardener-baseline.php` (157/196) |
 | `infection.json5` | Mutation testing (MSI 80%→100%) |
-| `deptrac.yaml` | Dependency analysis (src/ boundaries) |
+| `deptrac.yaml` | deptrac 4 DDD boundaries (report-only: 71 violaciones / 1126 uncovered) |
 | `pint.json` | Code style (PSR-12 + strict) |
 | `phpunit.xml` | Unit + Feature test suites |
+
+### Quality commands
+
+```bash
+composer run analyse       # PHPStan L6 (baseline incluido)
+composer run analyse:hard  # PHPStan L8 (baseline L8 incluido)
+composer run arch          # deptrac 4 (report-only)
+composer run lint          # Pint global (--test)
+composer run check         # analyse + lint (sin arch)
+composer run hooks:install # activa .githooks vía core.hooksPath
+```
 
 ## Pipeline Integration
 
 ```
 Coder:     phpstan.neon (L6) + infection (MSI≥80%) + phpunit
-Cleaner:   phpstan.neon (L6) + infection (MSI≥80%) + deptrac
-Hardener:  phpstan-hardener.neon (L8) + infection (MSI=100%) + deptrac
-Arquitecto: deptrac (boundaries) + phpstan (L6)
+Cleaner:   phpstan.neon (L6) + infection (MSI≥80%) + deptrac (report-only)
+Hardener:  phpstan-hardener.neon (L8) + infection (MSI=100%) + deptrac (report-only)
+Arquitecto: deptrac (boundaries, report-only) + phpstan (L6)
 ```

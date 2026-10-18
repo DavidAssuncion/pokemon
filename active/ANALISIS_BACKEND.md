@@ -161,7 +161,7 @@ Tokens destino:
 | `Src\Exploraciones\Presentation\TransformadorResultadoExploracion` | 1 |
 | **Total** | **71** |
 
-Ficheros origen:
+Ficheros origen (18):
 
 | Fichero origen | Capas | Nº |
 |---|---|---:|
@@ -223,7 +223,8 @@ entradas de `PlayerController` del baseline **no** eran WIP: `Guard::user()`,
 `Builder<Reclutable>::orderBy()` y el nullsafe `?->name` existen en la versión commiteada
 (`git show 4d657f5:app/Http/Controllers/PlayerController.php`, líneas 49, 54 y login). La
 entrada de L8 (`SinergiaEquipo::sinergiaPara($roles)`) tampoco era WIP: la versión commiteada
-ya llama a `sinergiaPara` en la línea 80. Por tanto: **L6 4→1 entrada eliminada; L8 0**.
+ya llama a `sinergiaPara` en la línea 80. Por tanto: de las 4 entradas L6 de `PlayerController`,
+**solo 1 era del WIP y se eliminó**; en L8 **no se eliminó ninguna**.
 
 En el árbol de trabajo actual (con el WIP) el resultado esperado es:
 
@@ -236,9 +237,10 @@ $ vendor/bin/phpstan analyse -c phpstan-hardener.neon
   (el mismo error) [ERROR] Found 1 error                          # exit 1
 ```
 
-Es deuda del WIP hasta que aterrice; no se toca ni se excluye. Si bloquea un push puntual,
-el escape documentado es `git push --no-verify`; el pre-commit equivalente es
-`git commit --no-verify`. Cuando el WIP aterrice, regenerar baselines si cambian sus errores.
+Es deuda del WIP hasta que aterrice; no se toca ni se excluye. El error esperado lo reporta
+**PHPStan en el `pre-push`**; si bloquea un push puntual, el escape documentado es
+`git push --no-verify` (el `pre-commit` — whitespace + Pint — no se ve afectado). Cuando el WIP
+aterrice, regenerar baselines si cambian sus errores.
 El worktree se eliminó (`git worktree remove --force` + `git worktree prune`).
 
 ## Hallazgos menores de la iteración QA

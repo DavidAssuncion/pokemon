@@ -6,7 +6,66 @@ absorbido en `docs/context.md` / `docs/architecture.md`. Los análisis fuente vi
 
 ---
 
-## Iteración actual — Combate 3v3: equipos de 3, motor de 1 acción por ronda e invocaciones
+## Iteración actual — Tooling fase 2: gates de calidad locales (PHPStan/deptrac/hooks)
+
+### Estado: CERRADA (QA ✅ PASS en `c94bd5d217`)
+
+Saneada la parte de tooling del pendiente 17: PHPStan 2.2.9 válido con baselines, deptrac 4 en
+lugar del shim (report-only), hooks Git y scripts Composer. Sin cambios de lógica en `app/`/`src/`;
+testing diferido (no se ejecutaron PHPUnit ni Infection).
+
+Commit de referencia (QA PASS): `c94bd5d217` — tooling de calidad (PHPStan, deptrac, hooks,
+scripts) [backend].
+
+### Alcance implementado
+
+1. **PHPStan** — `phpstan-hardener.neon` válido con PHPStan 2.2.9 (eliminados parámetros de 1.x).
+   Baselines incluidos: `phpstan-baseline.php` (221 entradas/279 errores, L6) y
+   `phpstan-hardener-baseline.php` (157/196, L8). Política: congelan deuda preexistente, no se
+   añaden entradas y se regeneran al reducirla.
+2. **deptrac** — shim abandonado sustituido por `deptrac/deptrac` 4.7.2 (aprobado por el usuario);
+   `deptrac.yaml` migrado al esquema v4 (`classNameRegex`/`value`) y a la estructura real
+   (Domain/App/Application/Infra/Infrastructure/Presentation + legado `App\...`), con ruleset DDD
+   estricto. Resultado: **71 violaciones** (Infra→Presentation 38, App→Presentation 17,
+   Domain→Presentation 16) y **1126 uncovered** (legado `app/*` y `src/Shared/*`). Deuda no
+   arreglada: deptrac queda **report-only**, fuera de hooks y de `composer check`.
+3. **Hooks Git** — `.githooks/` (POSIX, activación `composer hooks:install` vía
+   `core.hooksPath=.githooks`): `pre-commit` = whitespace + Pint sobre PHP staged (excluye
+   baselines; omite con aviso sin `vendor/`); `pre-push` = `composer run analyse` (fallback a
+   PHPStan directo). Escape: `git push --no-verify`.
+4. **Scripts Composer** — `analyse` (L6), `analyse:hard` (L8), `arch`, `lint`, `hooks:install` y
+   `check` (`analyse`+`lint`, sin `arch`). `composer lint` verde (588 ficheros; normalizados 2
+   issues triviales preexistentes en `database/seeders/CatalogoSeeder.php` y
+   `tests/Feature/HabitatsViewTest.php`). `composer check` verde en árbol limpio; en el árbol
+   actual hay 1 error esperado por el WIP ajeno (`PlayerController:126`, `Guard::id()`).
+5. **`.deptrac.cache`** — estaba trackeado pese a `.gitignore`; destrackeado (`git rm --cached`),
+   sigue en disco e ignorado.
+6. **CRAP** — receta para el testing diferido:
+   `XDEBUG_MODE=coverage vendor/bin/phpunit --coverage-crap4j build/crap4j.xml` (requiere driver
+   de cobertura y `<source>` en `phpunit.xml`). No medido.
+7. **Notas** — `composer.lock` arrastra bumps transitivos (Symfony/php-parser);
+   `phpstan/phpstan` restaurado a 2.2.9.
+
+### Documentación generada en el cierre
+
+- `docs/context.md` — pendiente 17 (parte tooling) reescrito y referencia `.githooks/`.
+- `docs/agent-tooling.md` — sección «Gates de calidad locales (2026-10-18)».
+- `docs/testing.md` — bullet de tooling actualizado + receta CRAP.
+- `docs/skills-index.md` — deptrac 4, baselines y comandos canónicos.
+- `.opencode/skills/phpstan/SKILL.md` — comandos Composer y política de baselines.
+- `active/ANALISIS_BACKEND.md` — correcciones de redacción de QA.
+
+### Deuda pendiente (no bloqueante)
+
+- deptrac: limpiar las 71 violaciones y ampliar colectores para los 1126 uncovered; solo entonces
+  puede entrar en hooks/`check`.
+- 1 error PHPStan esperado por el WIP ajeno (`PlayerController:126`) hasta que aterrice.
+- CRAP sin medir (testing diferido).
+- Bumps transitivos en `composer.lock`.
+
+---
+
+## Iteración anterior — Combate 3v3: equipos de 3, motor de 1 acción por ronda e invocaciones
 
 ### Estado: CERRADA (QA ✅ / Cleaner ✅ / Arquitecto ✅ B:0 / Hardener ✅ PASS con observaciones)
 
@@ -77,9 +136,8 @@ Commits de la iteración (15):
   `Combate::initMockBattle`; `lowestSpeed()`/`menorVelocidadBase` retenidos (test
   `EquipoBatallaTest`); `combatants()` deprecado en `app/Livewire/Combate.php:513,619,624`; PHPDoc
   de `buildTurnQueue`; métodos largos (PHPMD) preexistentes.
-- Tooling: `phpstan-hardener.neon` inválido con PHPStan 2.2.9 (parámetros 1.x), shim deptrac 1.0.2
-  no parsea constantes tipadas (`MultiplicadoresStats`), sin baseline PHPStan; CRAP no medido
-  (testing diferido).
+- Tooling: resuelto en la iteración «Tooling fase 2» (baselines PHPStan, deptrac 4 report-only,
+  hooks y scripts Composer); CRAP sigue diferido al testing.
 
 ---
 
@@ -380,7 +438,7 @@ optimización de UI (sin refresco pesado).
 
 | Archivo | Contenido |
 |---------|-----------|
-| `active/ANALISIS_BACKEND.md` | POST `/families` devuelve familia completa con niveles reales (histórico) + sección "El primer integrante de una familia es el de menor species_id" (2026-08-29; con nota de cierre: `STAT_SLUGS` unificada en `STATS` por `3d4e940`) + sección "Eliminar la tabla `evolution_chains` (bug 23503)" (2026-08-29; decisión, mapa por columna, desvío ReclutamientoController, riesgos QA) + sección "Endurecimiento P1 (Hardener)" (2026-08-29; 3 P1 sobre commits `daeadef198` + `c6877c5`) + sección "Correctaciones QA del módulo Huevos + CP + Ruta" (2026-09-15; B1/B2/O1/O2/O3/O6) + sección "3 correcciones menores del Arquitecto (idempotencia eclosión + defensa en profundidad + SESSION_VERSION 10)" (2026-09-16) + sección "Hardening P1 de guards capture_rate/hatch en Huevos" (2026-09-16; 4 patches validados por el Hardener) + sección **"Equipos de 3, motor de 1 acción por ronda e invocaciones (R1–R7)"** (2026-10-15) + **"Corrección post-revisión del Analista"** (`escalarATres` exacto) + **"Post-Arquitecto — O1/O2"** (2026-10-17; rival vacío 422 + formato del log). |
+| `active/ANALISIS_BACKEND.md` | POST `/families` devuelve familia completa con niveles reales (histórico) + sección "El primer integrante de una familia es el de menor species_id" (2026-08-29; con nota de cierre: `STAT_SLUGS` unificada en `STATS` por `3d4e940`) + sección "Eliminar la tabla `evolution_chains` (bug 23503)" (2026-08-29; decisión, mapa por columna, desvío ReclutamientoController, riesgos QA) + sección "Endurecimiento P1 (Hardener)" (2026-08-29; 3 P1 sobre commits `daeadef198` + `c6877c5`) + sección "Correctaciones QA del módulo Huevos + CP + Ruta" (2026-09-15; B1/B2/O1/O2/O3/O6) + sección "3 correcciones menores del Arquitecto (idempotencia eclosión + defensa en profundidad + SESSION_VERSION 10)" (2026-09-16) + sección "Hardening P1 de guards capture_rate/hatch en Huevos" (2026-09-16; 4 patches validados por el Hardener) + sección **"Equipos de 3, motor de 1 acción por ronda e invocaciones (R1–R7)"** (2026-10-15) + **"Corrección post-revisión del Analista"** (`escalarATres` exacto) + **"Post-Arquitecto — O1/O2"** (2026-10-17; rival vacío 422 + formato del log) + sección **"Tooling de calidad: PHPStan 2.x, deptrac 4, hooks y scripts"** (2026-10-18; baselines, report-only, gates locales). |
 | `active/ANALISIS_FRONTEND_HABITAT_ASSIGNFAMILY.md` | Consumo del contrato nuevo en `assignFamily`; eliminación de inferencia client-side. |
 | `active/ANALISIS_FRONTEND.md` | Pokédex asíncrona, exploraciones, modal Admin-Gestión (Ya Asignados), header con nivel + sección "Iconos de caramelos (bitácora + resultados) y alineación de botones de construcción" (2026-08-29) + sección "Animación de daño, detalle con IVs/EVs/habilidades, pestaña Huevos, iconos shiny" (2026-09-15; base `3f217ff372`) + sección "Coordinación QA: caramelo EV +10, contrato /api/huevos en horas, es_shiny snake_case" (2026-09-15; O4, contrato horas, snake case) + sección **"Equipos de 3 y turnos con `effectiveSpeed`"** (2026-10-15; slots 1-3, `effectiveSpeed`, textos 3v3). |
 | `active/revision.md` | Revisión post-refactor de la traducción del módulo batalla (tarea anterior; histórico). |

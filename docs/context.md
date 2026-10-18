@@ -107,7 +107,7 @@ Seeders: provincias (8), hábitats, pokémon (151+), reclutados.
 1. Integrar datos reales de pokémon reclutados en lugar de datos mock en batalla.
 2. Cache-busting de iconos: los WebP se sirven con `Cache-Control: immutable`; si un icono cambia con el mismo id, los clientes no lo refrescarán (pendiente de decisión/ticket).
 3. `infection.json5` solo cubre `src/`; el código de `app/` (Datagrid, WebP, comandos) no genera mutaciones.
-4. `phpstan.neon` líneas 26-27: baseline de errores tolerados preexistentes (categoría `staticMethod.dynamicCall` de asserts en tests y otros); ampliar limpieza gradualmente.
+4. `phpstan-baseline.php` (L6) y `phpstan-hardener-baseline.php` (L8) congelan los errores tolerados preexistentes; ampliar la limpieza gradualmente (política en el pendiente 17).
 5. `HabitatRepository` vive en `src/Habitats/Infra/` pero recibe datos de `app/` (backlog de arquitectura: mover a infraestructura Laravel o definir interfaz en Domain). Es además una god-class de ~477 líneas pendiente de dividir (asignación de familias, niveles, tipos y detalle conviven en el mismo repositorio).
 6. Tests: existen pocos tests, la cobertura es baja (aunque Datagrid/WebP/Pokédex ya tienen cobertura de feature/unit).
 7. Manejar migración de sesiones de batalla cuando cambia la estructura serializada.
@@ -151,9 +151,22 @@ Seeders: provincias (8), hábitats, pokémon (151+), reclutados.
     (sin uso en vista); doble `session->guardar()` en `Combate::initMockBattle`; `EquipoBatalla::lowestSpeed()`/
     `menorVelocidadBase` retenidos (test `EquipoBatallaTest`); `EquipoBatalla::combatants()` deprecado
     en `app/Livewire/Combate.php:513,619,624`; PHPDoc de `buildTurnQueue`; métodos largos (PHPMD)
-    preexistentes; tooling: `phpstan-hardener.neon` inválido con PHPStan 2.2.9 (parámetros de 1.x),
-    shim deptrac 1.0.2 no parsea constantes tipadas (`MultiplicadoresStats`) y no hay baseline PHPStan;
-    CRAP no medido (testing diferido).
+    preexistentes. **Tooling (actualizado 2026-10-18, `tooling-fase2-calidad-hooks`)**: PHPStan
+    2.2.9 con `phpstan-hardener.neon` válido y baselines incluidos — `phpstan-baseline.php`
+    (221 entradas/279 errores, L6) y `phpstan-hardener-baseline.php` (157/196, L8); congelan deuda
+    preexistente, no se añaden entradas nuevas y se regeneran al reducirla. Comandos canónicos:
+    `composer run analyse` (L6), `analyse:hard` (L8), `arch` (deptrac), `lint` y `check`
+    (`analyse`+`lint`). deptrac 4.7.2 sustituye al shim 1.0.2 con ruleset DDD estricto, pero queda
+    **report-only** (fuera de hooks y de `check`) por **71 violaciones preexistentes**
+    (Infra→Presentation 38, App→Presentation 17, Domain→Presentation 16 — incluye el pendiente 12)
+    y **1126 tokens uncovered** (legado `app/*` y `src/Shared/*`); ampliar colectores y limpiar la
+    deuda siguen pendientes. Hooks `.githooks/` (activación `composer hooks:install`): `pre-commit`
+    = whitespace + Pint sobre PHP staged; `pre-push` = `composer run analyse`; escape
+    `git push --no-verify`. En el árbol actual `analyse`/`check` reporta **1 error esperado** por el
+    WIP ajeno (`PlayerController:126`, `Guard::id()`), que desaparecerá al aterrizar. CRAP sigue sin
+    medir (testing diferido): receta
+    `XDEBUG_MODE=coverage vendor/bin/phpunit --coverage-crap4j build/crap4j.xml` (requiere driver
+    de cobertura y `<source>` en `phpunit.xml`).
 
 ## Referencias
 
@@ -197,3 +210,4 @@ Seeders: provincias (8), hábitats, pokémon (151+), reclutados.
 - `docs/agent-tooling.md` — Tooling de agentes OpenCode V2 (decisión Engram vs Gentle-AI, config, MCP, skills, comandos, memoria, pendientes O1/O2/O4/O6)
 - `.opencode/skills/` — 7 skills de proyecto discoverables por OpenCode V2 (índice en `docs/skills-index.md`)
 - `.opencode/commands/` — 5 comandos slash (`/spec /qa /clean /harden /docs`)
+- `.githooks/` — Hooks Git de calidad (`pre-commit`: Pint; `pre-push`: PHPStan L6); activación `composer hooks:install`

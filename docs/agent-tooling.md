@@ -96,6 +96,31 @@ Protocolo:
 
 La convención `atajo:` (atajos deliberados cosechados por el Bibliotecario al cierre) queda definida en `docs/conventions.md`.
 
+## Gates de calidad locales (2026-10-18)
+
+Hooks en `.githooks/` (POSIX sh), activados por clon con `composer hooks:install` (equivale a
+`git config core.hooksPath .githooks`):
+
+- **pre-commit** — `git diff --cached --check` + `vendor/bin/pint --test` sobre los PHP staged
+  (excluye `phpstan-baseline.php`/`phpstan-hardener-baseline.php`; omite con aviso si no hay
+  `vendor/`).
+- **pre-push** — `composer run analyse` (L6; fallback a PHPStan directo si no hay Composer).
+  Escape puntual: `git push --no-verify`.
+
+Scripts Composer: `analyse` (PHPStan L6), `analyse:hard` (L8), `arch` (deptrac), `lint` (Pint
+global), `hooks:install`, `check` (`@analyse` + `@lint`, sin `arch`).
+
+Política de baselines: `phpstan-baseline.php` (221 entradas/279 errores, L6) y
+`phpstan-hardener-baseline.php` (157/196, L8) congelan la deuda preexistente; **no se añaden
+entradas nuevas** y se regeneran al reducirla.
+
+deptrac 4.7.2 (`deptrac/deptrac`, esquema v4) sustituye al shim y aplica un ruleset DDD estricto.
+Reporta **71 violaciones** y **1126 tokens uncovered** preexistentes, así que queda **report-only**
+(`composer arch`), fuera de hooks y de `check` hasta limpiar esa deuda.
+
+Nota: en el árbol actual `composer run analyse`/`check` falla con **1 error esperado** por el WIP
+ajeno (`PlayerController:126`, `Guard::id()`); desaparecerá cuando ese WIP aterrice.
+
 ## Pendientes / observaciones (no bloqueantes)
 
 - **O1 — Skills `mcp` y `dbeaver` con formato obsoleto**: `.opencode/skills/mcp/SKILL.md` y
@@ -125,4 +150,5 @@ La convención `atajo:` (atajos deliberados cosechados por el Bibliotecario al c
 - `docs/agents/*.md` — Prompts de los 8 agentes.
 - `.opencode/skills/` / `.agents/skills/` — Skills; índice en `docs/skills-index.md`.
 - `.opencode/commands/` — Comandos slash.
+- `.githooks/` — Hooks Git locales (`pre-commit` Pint, `pre-push` PHPStan L6).
 - `docs/workflow.md` — Pipeline de roles y handoffs.

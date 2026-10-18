@@ -239,6 +239,9 @@ Propiedades a verificar al cierre del módulo (complementan las de la sección 7
 - `habilidades=[]` en `ReclutadoSerializer` — sin `app/Models/Ability` + pivot aún.
 - Filas legacy de huevos con `capture_rate` null en `disponibles` (posible ampliación futura del
   filtro de disponibilidad, fuera de alcance).
-- Combate 3v3: CRAP no medido (testing diferido); `phpstan-hardener.neon` inválido con PHPStan 2.2.9
-  y shim deptrac 1.0.2 sin soporte de constantes tipadas; sin baseline PHPStan (ver deuda 17 de
-  `docs/context.md`).
+- Tooling de calidad: PHPStan 2.2.9 con baselines incluidos (`phpstan-baseline.php` L6,
+  `phpstan-hardener-baseline.php` L8; política: no añadir entradas, regenerar al reducir); deptrac 4
+  report-only (71 violaciones / 1126 uncovered, deuda preexistente); hooks `.githooks/` (pre-commit Pint,
+  pre-push L6). CRAP no medido (testing diferido); receta:
+  `XDEBUG_MODE=coverage vendor/bin/phpunit --coverage-crap4j build/crap4j.xml` (requiere driver de
+  cobertura y `<source>` en `phpunit.xml`; ver deuda 17 de `docs/context.md`).

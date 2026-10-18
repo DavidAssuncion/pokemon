@@ -13,17 +13,13 @@ description: "Niveles y configuración de PHPStan (phpstan.neon L6 / phpstan-har
 ## Commands
 
 ```bash
-# Baseline (Coder/Cleaner)
-vendor/bin/phpstan analyse --configuration=phpstan.neon --memory-limit=512M
+# Canónicos (scripts Composer, baseline incluido)
+composer run analyse        # Level 6 (Coder/Cleaner)
+composer run analyse:hard   # Level 8 (Hardener)
 
-# Hardener (Level 8)
-vendor/bin/phpstan analyse --configuration=phpstan-hardener.neon --memory-limit=512M
-
-# Generate baseline
-vendor/bin/phpstan analyse -c phpstan.neon --generate-baseline phpstan-baseline.php
-
-# With baseline
-vendor/bin/phpstan analyse -c phpstan.neon --error-format=table
+# Regenerar baselines (solo contra árbol limpio y al reducir deuda)
+vendor/bin/phpstan analyse -c phpstan.neon --generate-baseline=phpstan-baseline.php
+vendor/bin/phpstan analyse -c phpstan-hardener.neon --generate-baseline=phpstan-hardener-baseline.php
 ```
 
 ## Levels Meaning
@@ -98,14 +94,14 @@ return ['hp' => 100, 'max_hp' => 100]; // PROHIBIDO
 
 ```bash
 # Coder: level 6, debe pasar
-vendor/bin/phpstan analyse -c phpstan.neon
+composer run analyse
 
 # Cleaner: level 6 + Infection
-vendor/bin/phpstan analyse -c phpstan.neon
+composer run analyse
 vendor/bin/infection --min-msi=80
 
 # Hardener: level 8 + 100% MSI
-vendor/bin/phpstan analyse -c phpstan-hardener.neon
+composer run analyse:hard
 vendor/bin/infection --min-msi=100
 ```
 
@@ -121,13 +117,16 @@ vendor/bin/infection --min-msi=100
 
 ## Baselines
 
-```bash
-# Generar baseline inicial (solo una vez)
-vendor/bin/phpstan analyse -c phpstan.neon --generate-baseline phpstan-baseline.php
+- `phpstan-baseline.php` — L6 (221 entradas / 279 errores), incluido desde `phpstan.neon`.
+- `phpstan-hardener-baseline.php` — errores exclusivos de L8 (157 entradas / 196 errores),
+  incluido desde `phpstan-hardener.neon` (que a su vez incluye el baseline L6).
 
-# Incluir en phpstan.neon:
-# includes:
-#     - phpstan-baseline.php
+Regeneración (solo contra árbol limpio y al reducir deuda):
+
+```bash
+vendor/bin/phpstan analyse -c phpstan.neon --generate-baseline=phpstan-baseline.php
+vendor/bin/phpstan analyse -c phpstan-hardener.neon --generate-baseline=phpstan-hardener-baseline.php
 ```
 
-**Regla:** Baseline solo para deuda técnica existente. Código nuevo debe pasar sin baseline.
+**Regla:** los baselines congelan deuda preexistente; no se añaden entradas nuevas. Código nuevo
+debe pasar sin baseline.
