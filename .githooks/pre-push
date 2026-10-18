@@ -1,0 +1,14 @@
+#!/bin/sh
+# Pre-push: análisis estático L6 antes de publicar (testing diferido).
+
+if [ ! -x vendor/bin/phpstan ]; then
+    echo "pre-push: vendor/ no está instalado; se omite el análisis estático." >&2
+    exit 0
+fi
+
+if command -v composer >/dev/null 2>&1; then
+    composer run analyse
+else
+    echo "pre-push: composer no disponible; ejecutando PHPStan directamente." >&2
+    vendor/bin/phpstan analyse -c phpstan.neon --no-progress --memory-limit=512M
+fi

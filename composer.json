@@ -59,6 +59,15 @@
             "@php artisan config:clear --ansi",
             "@php artisan test"
         ],
+        "analyse": "vendor/bin/phpstan analyse -c phpstan.neon --no-progress --memory-limit=512M",
+        "analyse:hard": "vendor/bin/phpstan analyse -c phpstan-hardener.neon --no-progress --memory-limit=512M",
+        "arch": "vendor/bin/deptrac analyse",
+        "lint": "vendor/bin/pint --test",
+        "hooks:install": "git config core.hooksPath .githooks",
+        "check": [
+            "@analyse",
+            "@lint"
+        ],
         "post-autoload-dump": [
             "Illuminate\\Foundation\\ComposerScripts::postAutoloadDump",
             "@php artisan package:discover --ansi"

@@ -1,0 +1,31 @@
+#!/bin/sh
+# Pre-commit: rechaza whitespace/conflictos y exige formato Pint en los PHP staged.
+
+if ! git diff --cached --check; then
+    echo "pre-commit: hay errores de whitespace o marcadores de conflicto en los cambios staged." >&2
+    exit 1
+fi
+
+ficheros_php=$(git diff --cached --name-only --diff-filter=ACMR -- '*.php')
+
+if [ -z "$ficheros_php" ]; then
+    exit 0
+fi
+
+if [ ! -x vendor/bin/pint ]; then
+    echo "pre-commit: vendor/bin/pint no está disponible; se omite la comprobación de formato." >&2
+    exit 0
+fi
+
+set --
+while IFS= read -r fichero; do
+    set -- "$@" "$fichero"
+done <<EOF
+$ficheros_php
+EOF
+
+if ! vendor/bin/pint --test "$@"; then
+    echo "" >&2
+    echo "pre-commit: formato incorrecto. Ejecuta 'vendor/bin/pint <ficheros>' y vuelve a hacer stage." >&2
+    exit 1
+fi
