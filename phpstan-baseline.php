@@ -340,12 +340,6 @@ $ignoreErrors[] = [
     'path' => __DIR__ . '/app/Http/Controllers/OnboardingController.php',
 ];
 $ignoreErrors[] = [
-    'message' => '#^Dynamic call to static method Illuminate\\\\Contracts\\\\Auth\\\\Guard\\:\\:id\\(\\)\\.$#',
-    'identifier' => 'staticMethod.dynamicCall',
-    'count' => 1,
-    'path' => __DIR__ . '/app/Http/Controllers/PlayerController.php',
-];
-$ignoreErrors[] = [
     'message' => '#^Dynamic call to static method Illuminate\\\\Contracts\\\\Auth\\\\Guard\\:\\:user\\(\\)\\.$#',
     'identifier' => 'staticMethod.dynamicCall',
     'count' => 1,
