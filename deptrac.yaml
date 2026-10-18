@@ -3,47 +3,39 @@ deptrac:
         - src/
         - app/
 
+    # Rutas que nunca deben analizarse aunque se amplíen `paths`.
     exclude_files:
-        - src/*/Infra/*
-        - app/Http/*
-        - app/Console/*
-        - app/Exceptions/*
-        - app/Providers/*
-        - vendor/*
-        - bootstrap/*
-        - config/*
-        - database/*
-        - public/*
-        - resources/*
-        - routes/*
-        - storage/*
         - tests/*
+        - vendor/*
 
     layers:
         - name: Domain
           collectors:
-              - type: className
-                regex: '^Src\\\\(.+)\\\\Domain\\\\(.+)$'
+              - type: classNameRegex
+                value: '/^Src\\(.+)\\Domain\\(.+)$/'
         - name: Application
           collectors:
-              - type: className
-                regex: '^Src\\\\(.+)\\\\Application\\\\(.+)$'
+              - type: classNameRegex
+                value: '/^Src\\(.+)\\App\\(.+)$/'
+              - type: classNameRegex
+                value: '/^Src\\(.+)\\Application\\(.+)$/'
         - name: Infrastructure
           collectors:
-              - type: className
-                regex: '^Src\\\\(.+)\\\\Infra\\\\(.+)$'
+              - type: classNameRegex
+                value: '/^Src\\(.+)\\Infra\\(.+)$/'
+              - type: classNameRegex
+                value: '/^Src\\(.+)\\Infrastructure\\(.+)$/'
         - name: Presentation
           collectors:
-              - type: className
-                regex: '^App\\\\(Http|Livewire|Console|View)\\\\(.+)$'
+              - type: classNameRegex
+                value: '/^Src\\(.+)\\Presentation\\(.+)$/'
+              - type: classNameRegex
+                value: '/^App\\(Http|Livewire|Console|View)\\(.+)$/'
 
     ruleset:
-        Domain:
-            - Application
-            - Infrastructure
+        Domain: []
         Application:
             - Domain
-            - Infrastructure
         Infrastructure:
             - Domain
             - Application
