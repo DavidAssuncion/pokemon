@@ -116,6 +116,7 @@ La convención `atajo:` (atajos deliberados cosechados por el Bibliotecario al c
 - `opencode models` resuelve `deepseek/deepseek-flash`.
 - `opencode debug agents` resuelve la interpolación `{file:...}` en `system`.
 - `default_agent = analista`.
+- La skill `cambio-minimo` se descubre y carga en runtime (verificado el 2026-10-18).
 
 ## Referencias
 
