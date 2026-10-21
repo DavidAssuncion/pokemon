@@ -60,9 +60,11 @@ class FabricaBatallaMockTest extends TestCase
         $toxico = $gengar->moves[4];
         $this->assertSame(EstadoPokemon::POISON, $toxico->statusEffect);
         $this->assertSame(0, $toxico->potencia);
+        $this->assertSame(CategoriaMovimiento::ESTADO, $toxico->categoria);
 
         $fuegoFatuo = $gengar->moves[5];
         $this->assertSame(EstadoPokemon::BURN, $fuegoFatuo->statusEffect);
+        $this->assertSame(CategoriaMovimiento::ESTADO, $fuegoFatuo->categoria);
     }
 
     public function test_generate_team1_contiene_giratina(): void

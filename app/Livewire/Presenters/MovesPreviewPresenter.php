@@ -6,9 +6,11 @@ namespace App\Livewire\Presenters;
 
 use Src\Battle\Domain\AccionBatalla;
 use Src\Battle\Domain\AgregadoBatalla;
+use Src\Battle\Domain\BarrerasVidaManager;
 use Src\Battle\Domain\Chain\ManejadorSTAB;
 use Src\Battle\Domain\Collections\CambiosStatsCollection;
 use Src\Battle\Domain\Combatiente;
+use Src\Battle\Domain\Enums\CategoriaMovimiento;
 use Src\Battle\Domain\EquipoBatalla;
 use Src\Battle\Domain\MovimientoBatalla;
 
@@ -32,6 +34,10 @@ final class MovesPreviewPresenter
      *     efectividad: float,
      *     stab: bool,
      *     directo: bool,
+     *     danoHp: float,
+     *     danoBarrera: float,
+     *     barreraLabel: string,
+     *     letal: bool,
      *     statusEffect: string,
      *     selfStatChanges: array<int, array{stat: string, factor: float}>,
      *     targetStatChanges: array<int, array{stat: string, factor: float}>,
@@ -58,6 +64,10 @@ final class MovesPreviewPresenter
      *     efectividad: float,
      *     stab: bool,
      *     directo: bool,
+     *     danoHp: float,
+     *     danoBarrera: float,
+     *     barreraLabel: string,
+     *     letal: bool,
      *     statusEffect: string,
      *     selfStatChanges: array<int, array{stat: string, factor: float}>,
      *     targetStatChanges: array<int, array{stat: string, factor: float}>,
@@ -70,6 +80,7 @@ final class MovesPreviewPresenter
         MovimientoBatalla $move
     ): array {
         $defenderTeam = self::defenderTeam($battle, $target);
+        $categoria = $move->esEstado() ? CategoriaMovimiento::ESTADO : $move->categoria;
 
         $action = new AccionBatalla(
             attacker: $actor,
@@ -80,15 +91,26 @@ final class MovesPreviewPresenter
             isPreview: true,
         );
 
+        $daño = $battle->damageChain()->calculate($action);
+        $directPct = $actor->obtenerPorcentajeDanioDirecto();
+        $barreraActual = $move->esEspecial()
+            ? $target->defensaEspHpActual()
+            : $target->defensaHpActual();
+        $desglose = (new BarrerasVidaManager())->desglosarDaño($daño, $barreraActual, $directPct);
+
         return [
             'nombre' => $move->nombre,
             'tipo' => $move->tipo->value,
             'potencia' => $move->potencia,
-            'categoria' => $move->categoria->value,
-            'daño' => $battle->damageChain()->calculate($action),
-            'efectividad' => $move->tipo->effectiveness($target->pokemon()),
+            'categoria' => $categoria->value,
+            'daño' => $daño,
+            'danoHp' => $desglose['danoHp'],
+            'danoBarrera' => $desglose['absorbido'],
+            'barreraLabel' => $move->esEspecial() ? 'DEF.ESP' : 'DEF',
+            'letal' => $daño > 0 && $desglose['danoHp'] >= $target->hpActual(),
+            'efectividad' => $move->esEstado() ? 1.0 : $move->tipo->effectiveness($target->pokemon()),
             'stab' => ManejadorSTAB::tieneStab($actor, $move),
-            'directo' => $actor->obtenerPorcentajeDanioDirecto() > 0,
+            'directo' => ! $move->esEstado() && $directPct > 0,
             'statusEffect' => $move->statusEffect->value,
             'selfStatChanges' => self::cambiosParaArray($move->selfStatChanges),
             'targetStatChanges' => self::cambiosParaArray($move->targetStatChanges),

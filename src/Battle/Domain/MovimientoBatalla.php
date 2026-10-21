@@ -65,17 +65,20 @@ class MovimientoBatalla
 
     public function esEspecial(): bool
     {
-        return $this->categoria === CategoriaMovimiento::ESPECIAL;
+        return ! $this->esEstado() && $this->categoria === CategoriaMovimiento::ESPECIAL;
     }
 
     public function esFisico(): bool
     {
-        return $this->categoria === CategoriaMovimiento::FISICO;
+        return ! $this->esEstado() && $this->categoria === CategoriaMovimiento::FISICO;
     }
 
     public function esEstado(): bool
     {
-        return $this->categoria === CategoriaMovimiento::ESTADO;
+        // Un movimiento sin potencia no inflige daño: se trata como estado
+        // aunque los datos de origen lo etiqueten como físico/especial
+        // (ej. Tóxico o Fuego Fatuo).
+        return $this->categoria === CategoriaMovimiento::ESTADO || $this->potencia <= 0;
     }
 
     public function tieneStatus(): bool

@@ -226,3 +226,150 @@ del pokemon 436 y listener global de `error` con `window.__equiposOnErrorInstala
 que no se usaba en otro sitio). Se conservan el listener de click del `init()` y todos los
 `console.error` funcionales sin prefijo (fetch/formularios). Grep final `[equipos:` = 0 restos;
 ningún test de vistas asertaba esos logs. Resto del WIP del archivo intacto.
+
+# ANÁLISIS FRONTEND — Animación de vitales en combate: barras progresivas, estela de daño y estado protegido (2026-10-21)
+
+## Objetivo
+
+Que el combate comunique los cambios de vitales (HP, DEF y DEF.ESP) sin saltos: el tramo perdido
+queda marcado en un tono más claro (estela) y se drena después, la barra sube/baja progresivamente,
+una pista flotante muestra el delta (`-N`/`+N`), y el golpe/curación se señala sobre la tarjeta
+(temblor + destello rojo / destello verde). Además, mientras un pokémon conserva barreras activas
+(no puede perder vida todavía) su tarjeta muestra un estilo distintivo de "protegido".
+
+## Bug reportado
+
+> "Hay ocasiones en las que se cancelan las animaciones y simplemente sucede todo de golpe y se
+> cambia el turno."
+
+## 1. Causa raíz del bug (verificada por lectura)
+
+La única animación actual (`.anim-hit`: temblor + destello rojo) viaja **en el HTML del servidor**.
+`Combate::setAnimState()` marca al defensor en `$animDefenderId` y `_pokemon-card.blade.php` pinta
+la clase. Cualquier respuesta de Livewire durante la ventana de 700 ms vuelve a renderizar el
+componente **sin** esa clase, y el morph borra la animación a media reproducción.
+
+La ventana no está bloqueada: `$phase` sigue valiendo `player_move`/`player_target` mientras la
+animación corre (tanto en la acción del jugador como en la del rival), así que en esos 700 ms:
+
+- las tarjetas rivales siguen clicables (`previewTarget`) → render que **cancela** el temblor;
+- los botones de ataque siguen activos (`selectMove`) → sobrescribe la acción pendiente y reinicia
+  el temporizador (`animTick++` → el watcher limpia y reprograma).
+
+Si el clic cae justo antes de que dispare el temporizador, el `commitAction` aplica el daño y el
+siguiente actor en un único render: la animación se canceló y "todo sucede de golpe".
+
+## 2. Estrategia elegida (sin estado de animación en PHP)
+
+1. **Animación de vitales en cliente, en el momento del impacto**: el `x-init` de
+   `combate.blade.php` toma una instantánea de los anchos de las tres barras antes de
+   `$wire.commitAction()` (la promesa de Livewire resuelve después del morph) y, al volver,
+   compara y anima. Aunque una ventana se saltara, el daño siempre se ve progresivo.
+2. **Ventana no cancelable**: durante `$animAttackerId !== ''` el panel de ataques muestra el
+   estado "atacando" (quién y con qué movimiento) y las tarjetas dejan de ser seleccionables.
+   Sin renders intermedios no hay animaciones canceladas ni acciones pisadas.
+3. **Telegrafía reubicada**: el temblor deja de aplicarse al defensor *antes* del golpe (700 ms de
+   antelación) y pasa al **momento del impacto**; el atacante recibe una embestida (`.anim-ataque`)
+   durante la ventana, que es el verdadero aviso previo.
+
+## 3. Vistas/componentes a tocar
+
+| Fichero | Cambio |
+|---|---|
+| `resources/views/livewire/_pokemon-card.blade.php` | `data-ref-id`, `con-barreras`, `anim-ataque`; estela + clases `vital-*` en las 3 barras; clases en los contadores; retira `$recibeGolpe`/`x-ref` muertos. |
+| `resources/views/livewire/partials/moves-panel.blade.php` | Rama previa: con `$animAttackerId` activo muestra "atacando" (bloquea la interacción). |
+| `resources/views/livewire/combate.blade.php` | `x-init`: instantánea → `await commitAction()` → animar; conserva temporizador de 700 ms. |
+| `resources/views/combate_page.blade.php` | Script inline (convención de páginas del repo) con `instantaneaVitales()`/`animarVitales()`. |
+| `resources/css/combate.css` | Transiciones de barras, estela, `con-barreras`, `.anim-ataque`, `.anim-cura`, `.vital-delta`, `prefers-reduced-motion`. |
+| `app/Livewire/Combate.php` | 1 línea: `$this->animMoveNombre = $move->nombre` en `setAnimState()` (hoy nunca se rellena). |
+
+## 4. Contrato consumido (verificado por lectura)
+
+- `Combatiente::aArrayVista()` expone `hp/maxHp`, `defHp/maxDefHp`, `spDefHp/maxSpDefHp`, `alive`,
+  `posicion`, `canTarget` (este último lo inyecta `Combate::syncViewData`). Nada nuevo que consumir.
+- `Livewire\Features\SupportMorph` inserta `wire:id` en la raíz en **cada** render, por lo que la
+  raíz del componente se morphea en el sitio (no se reemplaza) y `x-init` no se re-ejecuta.
+- La promesa de `$wire.commitAction()` resuelve tras el morph (`.finally()`), punto válido para
+  medir el DOM ya actualizado.
+
+## 5. Estados UI a cubrir
+
+| Estado | Comportamiento esperado |
+|---|---|
+| Daño que entra a HP | Barra baja progresiva; estela roja marca el tramo perdido y se drena; temblor + píldora `-N`. |
+| Daño absorbido por barrera | Igual pero sobre DEF (`info`) o DEF.ESP (`primary`); la píldora suma el delta de barreras. |
+| Sobrepaso directo (barrera llena y resto a HP) | Las dos barras bajan a la vez; la píldora suma ambos deltas. |
+| Curación (restos, drenaje, movimiento) | Barra sube progresiva; destello verde + píldora `+N`; sin estela visible. |
+| Cambio sin delta (movimiento de estado) | No hay animación de barras ni píldora; solo registro/etiquetas. |
+| Barreras activas | Tarjeta con franja celeste en el borde izquierdo + tinte sutil; al agotarse ambas barreras, el estilo desaparece. |
+| Ventana de acción (700 ms) | Panel en estado "atacando" y tarjetas no seleccionables; luego vuelve el control normal. |
+| `prefers-reduced-motion` | Sin animaciones ni transiciones; la píldora no se muestra (valores igualmente actualizados). |
+
+## 6. Comportamientos a cubrir en testing futuro (NO ejecutado)
+
+- El temblor ya no se pinta desde el servidor: `grep anim-hit` en `resources/views` = 0.
+- `setAnimState()` rellena `animMoveNombre` y `resetAnimState()` lo limpia (contrato del panel).
+- Con `$animAttackerId !== ''` no se emite `wire:click` en tarjetas seleccionables.
+- La instantánea/animación es degradación progresiva: si el script de página no carga, el combate
+  sigue funcionando (temporizador en la vista del componente), solo sin animación.
+
+## 7. Riesgos accesibilidad/UX
+
+- `.vital-delta` es decorativa (`aria-hidden`) y no duplica información: los contadores numéricos
+  siguen en el DOM. Las barras ya tienen `role="progressbar"` + `aria-valuenow` actualizado.
+- El bloqueo de la ventana no añade un modo de fallo nuevo: la batalla ya depende del temporizador
+  cliente para invocar `commitAction()` (si no dispara, la partida ya estaba detenida).
+- `prefers-reduced-motion` desactiva animaciones/transiciones y oculta la píldora.
+
+## 8. Verificación (sin tests, testing diferido)
+
+- `npm run build` (los assets servidos salen de `public/build`).
+- `php artisan view:cache` + `php artisan view:clear` como smoke de sintaxis Blade.
+- `vendor/bin/pint --dirty --format agent` para los PHP tocados.
+- Grep final: `anim-hit` fuera de CSS/JS = 0; `recibeGolpe` = 0.
+
+## 9. Nota de estado del working tree (WIP preexistente)
+
+`app/Http/Controllers/PlayerController.php` y `resources/views/equipos/index.blade.php` ya venían
+modificados sin commitear (más ficheros sin trackear de soporte/datos). No se tocan; este cambio
+solo afecta a los ficheros de la tabla de la sección 3.
+
+## Addendum (2026-10-21) — cola de eventos de combate, impacto y cambio de turno
+
+### Objetivo
+
+Completar el feedback de combate: separar daño a HP y a barreras, mostrar la rotura de barrera y
+el golpe letal en la vista previa; reproducir la reacción al impacto (hit-stop + sacudida/zoom
+según daño); animar estados, curaciones, KO y baja vida; y permitir adelantar el turno cuando la
+cola muestra dos pokémon del jugador consecutivos.
+
+### Implementación
+
+| Fichero | Cambio |
+|---|---|
+| `src/Battle/Domain/BarrerasVidaManager.php` | `desglosarDaño()` puro (HP directo + excedente / absorbido) reutilizado por `recibirDaño()`. |
+| `app/Livewire/Presenters/MovesPreviewPresenter.php` | Expone `danoHp`, `danoBarrera`, `barreraLabel` y `letal`; la tarjeta muestra `N DEF` / `N PS` y el badge `LETAL`. |
+| `app/Livewire/Combate.php` | Journal público `$eventos` con snapshots antes/después (`damage`, `status`, `effect`, `round`, `battle_over`, `fin`); `commitAction()` envuelve la resolución; la cola de turnos pone al actor actual primero; `swapTurno()` fuerza al siguiente jugador en la misma petición. |
+| `resources/views/combate_page.blade.php` | `reproducirEventos()` secuencial, hit-stop de 60 ms, píldoras divididas, barrera rota, estado/cura, KO, baja vida y restauración de barras. |
+| `resources/views/livewire/combate.blade.php` | Bloqueo con `inert` de panel/barra/campo durante la cola; restauración del log, banner y modal al final; clave raíz por `battleId` para no reiniciar `x-init` al cambiar de ronda. |
+| `resources/views/livewire/_pokemon-card.blade.php` | Clases `hp-bajo`/`hp-critico`, `anim-ko`, sprite y estado final oculto. |
+| `resources/css/combate.css` | Hit-stop, zoom, barreras, KO, estado, baja vida, banner/modal y `prefers-reduced-motion`. |
+
+La cola se reproduce con la interfaz bloqueada y el estado final se revela al terminar: el log
+mantiene el HTML previo durante la reproducción, el banner de victoria/derrota y el modal de
+recompensas esperan al evento `battle_over`/al `finally` (con fallback de 8000 ms), y las tarjetas
+recién debilitadas ocultan su insignia/opacidad final hasta el cierre.
+
+### Cambio de turno
+
+`swapTurno()` solo actúa en `player_target`/`player_move`, sin animación pendiente y con dos
+turnos propios consecutivos en `turnQueue`. El actor actual sigue pendiente (no se consume dos
+veces): el siguiente pokémon ataca ahora y el actual queda para después. El forzado es privado y
+se consume en la misma petición; un refresco antes de atacar pierde la selección, pero no la
+acción pendiente.
+
+### Verificación (sin tests; testing diferido)
+
+`php -l` de los PHP tocados, `vendor/bin/pint --dirty --format agent`, `node --check` del script
+inline, `php artisan view:cache`/`view:clear`, `git diff --check` y `npm run build`. No se pudo
+hacer QA en navegador (barreras/sobrepaso, curación, KO/victoria, movimiento reducido, swap).

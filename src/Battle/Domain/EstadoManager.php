@@ -47,20 +47,15 @@ final class EstadoManager
     /**
      * Calcula el daño por efecto de estado al final de la ronda.
      *
-     * @return array{dano: float, hpActualNueva: float, contadorNuevo: int}
+     * @return array{dano: float, contadorNuevo: int}
      */
     public function calcularDanoStatus(
         EstadoPokemon $estado,
         int $contadorVenenoGrave,
         float $hpMax,
-        float $hpActual,
     ): array {
-        if ($hpActual <= 0) {
-            return ['dano' => 0.0, 'hpActualNueva' => $hpActual, 'contadorNuevo' => $contadorVenenoGrave];
-        }
-
         if (! $estado->causaDanoPorRonda()) {
-            return ['dano' => 0.0, 'hpActualNueva' => $hpActual, 'contadorNuevo' => $contadorVenenoGrave];
+            return ['dano' => 0.0, 'contadorNuevo' => $contadorVenenoGrave];
         }
 
         $daño = match ($estado) {
@@ -71,15 +66,14 @@ final class EstadoManager
         };
 
         if ($daño <= 0) {
-            return ['dano' => 0.0, 'hpActualNueva' => $hpActual, 'contadorNuevo' => $contadorVenenoGrave];
+            return ['dano' => 0.0, 'contadorNuevo' => $contadorVenenoGrave];
         }
 
-        $hpNueva = max(0, $hpActual - $daño);
         $contadorNuevo = $estado === EstadoPokemon::BAD_POISON
             ? $contadorVenenoGrave + 1
             : $contadorVenenoGrave;
 
-        return ['dano' => $daño, 'hpActualNueva' => $hpNueva, 'contadorNuevo' => $contadorNuevo];
+        return ['dano' => $daño, 'contadorNuevo' => $contadorNuevo];
     }
 
     // ─── Métodos privados de procesamiento por estado ─────────

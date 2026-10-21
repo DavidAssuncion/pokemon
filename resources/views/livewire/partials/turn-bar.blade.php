@@ -1,4 +1,12 @@
-<div class="card mb-3">
+@php
+    $puedeCambiarTurno = count($turnQueue) >= 2
+        && ($turnQueue[0]['team'] ?? null) === 0
+        && ($turnQueue[1]['team'] ?? null) === 0
+        && in_array($phase, ['player_target', 'player_move'], true)
+        && ($animAttackerId ?? '') === '';
+    $siguienteTurno = $puedeCambiarTurno ? ($team1[$turnQueue[1]['index']] ?? null) : null;
+@endphp
+<div class="card mb-3 turn-bar">
     <div class="card-body py-2">
         <div class="d-flex align-items-center gap-2 flex-wrap">
             <span class="text-uppercase small fw-bold text-muted me-1">Próximos turnos</span>
@@ -14,6 +22,25 @@
             @empty
                 <span class="text-muted small">Esperando...</span>
             @endforelse
+
+            <div class="ms-auto d-flex align-items-center gap-2">
+                @if($siguienteTurno && $siguienteTurno['alive'] && $siguienteTurno['refId'] !== $actingRefId)
+                    <button type="button"
+                            class="btn btn-sm btn-outline-primary turn-swap"
+                            wire:click="swapTurno"
+                            wire:loading.attr="disabled"
+                            title="Adelanta el turno de {{ $siguienteTurno['nombre'] }}; el pokémon actual actuará después">
+                        ⇄ Atacar con {{ $siguienteTurno['nombre'] }}
+                    </button>
+                @endif
+                <button type="button"
+                        class="btn btn-sm btn-outline-secondary"
+                        data-bs-toggle="modal"
+                        data-bs-target="#battle-log-modal"
+                        title="Consultar el registro de batalla">
+                    📜 Registro
+                </button>
+            </div>
         </div>
     </div>
 </div>

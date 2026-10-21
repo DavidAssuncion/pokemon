@@ -175,4 +175,39 @@ class CadenaDanioTest extends TestCase
 
         $this->assertSame(1.0, $daño); // max(1, floor(<1)) = 1
     }
+
+    public function test_movimientos_de_estado_no_infligen_dano(): void
+    {
+        // Los movimientos de estado no deben aplicar el mínimo de 1 de la cadena.
+        $atacante = $this->combatiente(
+            stats: ['atk' => 100, 'def' => 100],
+            tipos: [TipoPokemon::NORMAL],
+            id: 'a1',
+            nombre: 'Atacante',
+        );
+        $defensor = $this->combatiente(
+            stats: ['hp' => 100, 'atk' => 80, 'def' => 100],
+            tipos: [TipoPokemon::ACERO],
+            id: 'd1',
+            nombre: 'Defensor',
+        );
+
+        $movimientos = [
+            new MovimientoBatalla('Danza Espada', 0, TipoPokemon::NORMAL, CategoriaMovimiento::ESTADO),
+            // Tóxico con potencia 0 aunque los datos lo etiqueten como especial.
+            new MovimientoBatalla('Tóxico', 0, TipoPokemon::VENENO, CategoriaMovimiento::ESPECIAL),
+        ];
+
+        foreach ($movimientos as $movimiento) {
+            $accion = new AccionBatalla(
+                attacker: $atacante,
+                defender: $defensor,
+                move: $movimiento,
+                defenderTeamHasVanguard: false,
+                weather: TipoClima::NONE,
+            );
+
+            $this->assertSame(0.0, $this->chain->calculate($accion));
+        }
+    }
 }

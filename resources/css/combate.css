@@ -30,8 +30,139 @@
 .dark .pokemon-card {
     background-color: #1f2937;
 }
+
+/* ─── Vanguardia: color propio de cada equipo ─── */
+.pokemon-card.vanguardia-jugador {
+    border: 2px solid rgb(39, 200, 237);
+    background-color: rgb(22, 78, 103);
+    color: #f8fafc;
+}
+.pokemon-card.vanguardia-rival {
+    border: 2px solid rgb(255, 99, 123) !important;
+    background-color: rgb(112, 42, 60);
+    color: #f8fafc;
+}
+.pokemon-card.vanguardia-jugador .vital-label-row,
+.pokemon-card.vanguardia-rival .vital-label-row {
+    color: #e5e7eb;
+}
+/* El borde de turno activo y el de objetivo siguen teniendo prioridad. */
+.pokemon-card.vanguardia-jugador.border-warning,
+.pokemon-card.vanguardia-rival.border-warning {
+    border-color: var(--bs-warning) !important;
+}
+.pokemon-card.vanguardia-rival.targeted-card {
+    border-color: #dc3545 !important;
+}
 .pokemon-card .progress {
     max-width: 100%;
+    --bs-progress-box-shadow: none;
+}
+
+/* ─── Campo de combate: una fila de 4 columnas, equipos separados y centrados ─── */
+.battle-teams {
+    position: relative;
+}
+.battle-teams .row {
+    --bs-gutter-x: 1rem;
+}
+.battle-teams .pokemon-card {
+    max-width: 97%;
+    margin-inline: auto;
+}
+.battle-teams-divider {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 50%;
+    width: 2px;
+    border-radius: 999px;
+    background: linear-gradient(180deg, transparent, rgba(100, 116, 139, .55) 12%, rgba(100, 116, 139, .55) 88%, transparent);
+    transform: translateX(-50%);
+    pointer-events: none;
+}
+.pokemon-column {
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+.pokemon-column .pokemon-card:last-child {
+    margin-bottom: 0;
+}
+@media (min-width: 768px) {
+    /* Más aire entre las dos vanguardias, sin mover la línea central. */
+    .battle-teams .row > .col-6:nth-child(2) {
+        padding-right: 1rem;
+    }
+    .battle-teams .row > .col-6:nth-child(3) {
+        padding-left: 1rem;
+    }
+}
+@media (max-width: 767.98px) {
+    .battle-teams-divider {
+        display: none;
+    }
+    .battle-teams .row > .col-6:nth-child(3),
+    .battle-teams .row > .col-6:nth-child(4) {
+        border-top: 2px solid rgba(100, 116, 139, .55);
+        padding-top: .75rem;
+        margin-top: .5rem;
+    }
+}
+
+/* ─── Barras de vitales: doble altura y texto siempre visible encima ─── */
+.barrier-progress {
+    height: 20px;
+}
+.hp-progress {
+    height: 16px;
+}
+.vital-label-row {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: .35rem;
+    margin-bottom: .2rem;
+    color: #495057;
+    font-size: .7rem;
+    font-weight: 600;
+    line-height: 1;
+}
+.dark .vital-label-row {
+    color: #cbd5e1;
+}
+.vital-label-row .vital-label {
+    min-width: 0;
+}
+.vital-label-row .vital-value {
+    flex-shrink: 0;
+    font-variant-numeric: tabular-nums;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+/* ─── Cards de ataques: una fila de tarjetas, 1/6 del ancho en pantallas grandes ─── */
+.move-card {
+    color: inherit;
+    transition: transform 120ms ease, box-shadow 120ms ease;
+}
+.move-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 0.4rem 0.9rem rgba(0, 0, 0, 0.16);
+}
+.move-card.move-best {
+    box-shadow: 0 0 0 2px #0d6efd, 0 0.4rem 0.9rem rgba(13, 110, 253, 0.25);
+}
+.move-card:focus-visible {
+    outline: 2px solid #0d6efd;
+    outline-offset: 2px;
+}
+.dark .move-card:hover {
+    box-shadow: 0 0.4rem 0.9rem rgba(0, 0, 0, 0.5);
+}
+.dark .move-card.move-best {
+    box-shadow: 0 0 0 2px #60a5fa, 0 0.4rem 0.9rem rgba(96, 165, 250, 0.3);
 }
 
 /* ─── Dark mode: Bootstrap no es consciente de .dark en <html> ─── */
@@ -67,6 +198,20 @@
     --bs-link-hover-color: #60a5fa;
 }
 
+/* Modal del registro en dark mode (Bootstrap no detecta la clase .dark). */
+.dark .modal-content {
+    background-color: #1f2937;
+    color: #f9fafb;
+    border-color: #374151;
+}
+.dark .modal-header,
+.dark .modal-footer {
+    border-color: #374151;
+}
+.dark .modal .btn-close {
+    filter: invert(1) grayscale(100%) brightness(200%);
+}
+
 /* Restaurar comportamiento de enlaces del layout (Tailwind) frente a Reboot de Bootstrap */
 a { color: inherit; text-decoration: inherit; }
 
@@ -93,17 +238,143 @@ a { color: inherit; text-decoration: inherit; }
     color: #60a5fa;
 }
 
+/* ─── Animación de vitales (HP / DEF / DEF.ESP) ───
+   Barras progresivas + estela del tramo perdido.
+   El HTML se re-renderiza con morphing, que fija el ancho nuevo de golpe; el JS de página
+   (`combate_page.blade.php`) fija el ancho anterior (sin transición), fuerza reflow y pasa al
+   nuevo: la barra principal anima ya y la estela mantiene el tramo perdido y se drena después.
+   En curaciones la estela queda oculta tras la barra principal (z-index 1). */
+.pokemon-card .progress {
+    position: relative;
+    overflow: hidden;
+}
+
+.pokemon-card .progress-bar.vital-hp,
+.pokemon-card .progress-bar.vital-def,
+.pokemon-card .progress-bar.vital-spdef {
+    position: relative;
+    z-index: 1;
+    flex: 0 0 auto;
+    transition: width 500ms ease-out;
+}
+
+.pokemon-card .progress-bar-trail {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: 0;
+    z-index: 0;
+    transition: width 600ms ease-in 400ms;
+}
+
+.vital-hp-trail { background-color: rgba(220, 53, 69, 0.45); }
+.vital-def-trail { background-color: rgba(13, 202, 240, 0.45); }
+.vital-spdef-trail { background-color: rgba(13, 110, 253, 0.45); }
+
+/* ─── Píldora flotante con el delta de vitales (±N) ───
+   Decorativa (aria-hidden): los contadores numéricos siguen siendo la fuente de datos. */
+.vital-delta {
+    position: absolute;
+    top: calc(40% + var(--delta-y, 0px));
+    left: 50%;
+    z-index: 4;
+    max-width: 92%;
+    padding: 0 .35rem;
+    border-radius: .5rem;
+    font-size: .8rem;
+    font-weight: 700;
+    line-height: 1.4;
+    text-align: center;
+    pointer-events: none;
+    animation: vital-delta-flota 1200ms ease-out forwards;
+}
+.vital-delta-dano {
+    color: #842029;
+    background-color: rgba(220, 53, 69, .18);
+    border: 1px solid rgba(220, 53, 69, .55);
+}
+.vital-delta-cura {
+    color: #0f5132;
+    background-color: rgba(25, 135, 84, .18);
+    border: 1px solid rgba(25, 135, 84, .55);
+}
+.vital-delta-barrera {
+    color: #0e7490;
+    background-color: rgba(13, 202, 240, .18);
+    border: 1px solid rgba(13, 202, 240, .65);
+}
+.vital-delta-ko {
+    color: #fff;
+    background-color: #7f1d1d;
+    border: 1px solid #ef4444;
+    font-size: .85rem;
+    letter-spacing: .08em;
+}
+.vital-delta-estado {
+    color: #78350f;
+    background-color: rgba(245, 158, 11, .22);
+    border: 1px solid rgba(245, 158, 11, .65);
+    font-size: .72rem;
+}
+.vital-delta-bloqueo {
+    color: #374151;
+    background-color: rgba(107, 114, 128, .18);
+    border: 1px solid rgba(107, 114, 128, .55);
+    font-size: .72rem;
+}
+.dark .vital-delta-dano { color: #fca5a5; }
+.dark .vital-delta-cura { color: #6ee7b7; }
+.dark .vital-delta-barrera { color: #67e8f9; }
+.dark .vital-delta-estado { color: #fcd34d; }
+.dark .vital-delta-bloqueo { color: #d1d5db; background-color: rgba(107, 114, 128, .3); }
+
+@keyframes vital-delta-flota {
+    0%   { opacity: 0; transform: translate(-50%, 6px) scale(.85); }
+    18%  { opacity: 1; transform: translate(-50%, -2px) scale(1.06); }
+    70%  { opacity: 1; transform: translate(-50%, -10px) scale(1); }
+    100% { opacity: 0; transform: translate(-50%, -20px) scale(1); }
+}
+
+/* ─── Animación de ataque (ventana previa al golpe) ───
+   La clase la pinta _pokemon-card.blade.php sobre el pokémon que va a actuar; la
+   embestida apunta a la columna rival (los equipos van a izquierda y derecha). */
+.anim-ataque {
+    --anim-ataque-dir: 14px;
+    animation: anim-ataque-embestida 500ms ease-in-out 1;
+    box-shadow: 0 0 0 2px rgba(255, 193, 7, 0.85), 0 0 16px rgba(255, 193, 7, 0.45) !important;
+}
+.pokemon-card[data-team="1"].anim-ataque {
+    --anim-ataque-dir: -14px;
+}
+
+@keyframes anim-ataque-embestida {
+    0%   { transform: translateX(0); }
+    30%  { transform: translateX(var(--anim-ataque-dir)) scale(1.02); }
+    55%  { transform: translateX(calc(var(--anim-ataque-dir) * .6)) scale(1.01); }
+    100% { transform: translateX(0); }
+}
+
+/* ─── Animación de curación (vitales que suben) ─── */
+.anim-cura {
+    animation: anim-cura-brillo 900ms ease-out 1;
+}
+
+@keyframes anim-cura-brillo {
+    0%   { box-shadow: 0 0 0 2px rgba(25, 135, 84, 0.85), 0 0 16px rgba(25, 135, 84, 0.45); }
+    100% { box-shadow: 0 0 0 2px rgba(25, 135, 84, 0), 0 0 16px rgba(25, 135, 84, 0); }
+}
+
 /* ─── Animación de daño recibido ───
-   La clase .anim-hit se aplica desde _pokemon-card.blade.php cuando el pokémon es
-   el defensor activo de un ataque (window animDefenderId). Reacciona con un
-   temblor + destello rojo mientras el HP se actualiza (barras animan por CSS). */
+   .anim-hit la añade el JS de página en el momento del impacto (según el delta de
+   vitales medido tras el commit), no el servidor: temblor + destello rojo. */
 @keyframes anim-hit-shake {
     0%   { transform: translateX(0); }
-    15%  { transform: translateX(-6px) rotate(-1.5deg); }
-    30%  { transform: translateX(5px) rotate(1deg); }
-    45%  { transform: translateX(-4px) rotate(-1deg); }
-    60%  { transform: translateX(3px); }
-    75%  { transform: translateX(-2px); }
+    15%  { transform: translateX(calc(-6px * var(--hit-force, 1))) rotate(-1.5deg); }
+    30%  { transform: translateX(calc(5px * var(--hit-force, 1))) rotate(1deg); }
+    45%  { transform: translateX(calc(-4px * var(--hit-force, 1))) rotate(-1deg); }
+    60%  { transform: translateX(calc(3px * var(--hit-force, 1))); }
+    75%  { transform: translateX(calc(-2px * var(--hit-force, 1))); }
     100% { transform: translateX(0); }
 }
 
@@ -112,17 +383,118 @@ a { color: inherit; text-decoration: inherit; }
     box-shadow: 0 0 0 2px rgba(220, 53, 69, 0.9), 0 0 18px rgba(220, 53, 69, 0.55) !important;
 }
 
-/* Las barras de vida/defensa se animan al cambiar tras el golpe */
-.pokemon-card .progress-bar {
-    transition: width 600ms ease-in-out;
+/* ─── Cola de eventos: hit-stop, impacto, barrera rota, KO y estados ─── */
+.hit-stop .pokemon-card,
+.hit-stop .pokemon-card * {
+    animation-play-state: paused !important;
 }
+
+.anim-impacto .pokemon-sprite {
+    animation: impacto-sprite 240ms ease-out 1;
+}
+@keyframes impacto-sprite {
+    0%   { transform: scale(1); }
+    35%  { transform: scale(calc(1 + 0.12 * var(--hit-force, 1))); filter: brightness(1.4); }
+    100% { transform: scale(1); }
+}
+
+.anim-barrera-rota {
+    animation: barrera-rota-flash 700ms ease-out 1;
+}
+@keyframes barrera-rota-flash {
+    0%   { box-shadow: 0 0 0 0 rgba(13, 202, 240, 0); }
+    30%  { box-shadow: 0 0 0 3px rgba(13, 202, 240, .95), 0 0 18px rgba(13, 202, 240, .7); }
+    100% { box-shadow: 0 0 0 0 rgba(13, 202, 240, 0); }
+}
+
+.anim-ko {
+    animation: ko-caida 700ms ease-out 1 forwards;
+}
+@keyframes ko-caida {
+    0%   { filter: grayscale(0) brightness(1); transform: scale(1); }
+    25%  { filter: grayscale(1) brightness(1.35); transform: scale(.985); }
+    100% { filter: grayscale(1) brightness(.9); transform: scale(.94); }
+}
+.ko-badge { font-size: .62rem; letter-spacing: .08em; }
+
+.status-badge.anim-estado { animation: estado-badge-pulso 650ms ease-out 1; }
+@keyframes estado-badge-pulso {
+    0%   { transform: scale(1); }
+    35%  { transform: scale(1.35); filter: brightness(1.4); }
+    100% { transform: scale(1); }
+}
+
+/* Durante la cola de eventos se oculta el KO recién aplicado por el servidor:
+   la insignia y la opacidad se revelan al terminar la reproducción. */
+.pokemon-card.estado-final-oculto { opacity: 1 !important; }
+.pokemon-card.estado-final-oculto .ko-badge { display: none !important; }
+
+.hp-bajo .vital-hp { animation: hp-alerta 1.4s ease-in-out infinite; }
+.hp-critico .vital-hp { animation-duration: .8s; }
+@keyframes hp-alerta {
+    50% { filter: brightness(1.4); box-shadow: 0 0 8px rgba(220, 53, 69, .85); }
+}
+
+.move-breakdown { display: flex; gap: .35rem; flex-wrap: wrap; }
+.move-lethal {
+    font-size: .62rem;
+    letter-spacing: .06em;
+    animation: lethal-pulso 1.1s ease-in-out infinite;
+}
+@keyframes lethal-pulso {
+    50% { filter: brightness(1.3); }
+}
+
+.round-pulso { animation: ronda-pulso 650ms ease-out 1; }
+@keyframes ronda-pulso {
+    40% { transform: scale(1.12); box-shadow: 0 0 0 3px rgba(13, 110, 253, .35); }
+}
+
+.fin-batalla { animation: fin-batalla-entrada 450ms ease-out 1; }
+.fin-batalla-activa {
+    animation: fin-batalla-entrada 450ms ease-out 1, fin-batalla-brillo 900ms ease-out 1;
+}
+@keyframes fin-batalla-entrada {
+    0%   { opacity: 0; transform: translateY(-8px) scale(.97); }
+    100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes fin-batalla-brillo {
+    50% { filter: brightness(1.25); }
+}
+
+.reward-modal { animation: fin-batalla-entrada 400ms ease-out 1; }
+.modal-pendiente { display: none !important; }
+.turn-swap { white-space: nowrap; }
 
 /* Accesibilidad: respetar prefers-reduced-motion */
 @media (prefers-reduced-motion: reduce) {
-    .anim-hit {
+    .anim-hit,
+    .anim-ataque,
+    .anim-cura,
+    .anim-impacto .pokemon-sprite,
+    .anim-barrera-rota,
+    .anim-ko,
+    .status-badge.anim-estado,
+    .hp-bajo .vital-hp,
+    .hp-critico .vital-hp,
+    .move-lethal,
+    .round-pulso,
+    .fin-batalla,
+    .fin-batalla-activa,
+    .reward-modal {
         animation: none;
     }
-    .pokemon-card .progress-bar {
+    .pokemon-card .progress-bar,
+    .pokemon-card .progress-bar-trail {
         transition: none;
+    }
+    .vital-delta {
+        display: none;
+    }
+    .move-card {
+        transition: none;
+    }
+    .move-card:hover {
+        transform: none;
     }
 }

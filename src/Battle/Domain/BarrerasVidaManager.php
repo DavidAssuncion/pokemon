@@ -18,6 +18,26 @@ final class BarrerasVidaManager
     }
 
     /**
+     * Desglose puro del daño: parte absorbida por la barrera y parte que llega
+     * a HP (daño directo + excedente de la barrera).
+     *
+     * @return array{danoHp: float, absorbido: float, excedente: float}
+     */
+    public function desglosarDaño(float $daño, float $barreraActual, float $directPct): array
+    {
+        $dañoDirecto = $daño * $directPct;
+        $dañoBarreras = $daño - $dañoDirecto;
+        $absorbido = min($barreraActual, $dañoBarreras);
+        $excedente = $dañoBarreras - $absorbido;
+
+        return [
+            'danoHp' => $dañoDirecto + $excedente,
+            'absorbido' => $absorbido,
+            'excedente' => $excedente,
+        ];
+    }
+
+    /**
      * Aplica daño desglosado: primero `directPct`% va directo a HP (ignora barreras),
      * el resto se descuenta de la barrera correspondiente (defensa física o especial).
      * El excedente de barrera se desborda al HP.
@@ -32,30 +52,20 @@ final class BarrerasVidaManager
         bool $isSpecial,
         float $directPct,
     ): array {
-        $dañoDirecto = $daño * $directPct;
-        $dañoBarreras = $daño - $dañoDirecto;
-
-        $hpNuevo = $hpActual - $dañoDirecto;
-
         $barrera = $isSpecial ? $defensaEspHpActual : $defensaHpActual;
-        $dañoBarrera = min($barrera, $dañoBarreras);
+        $desglose = $this->desglosarDaño($daño, $barrera, $directPct);
 
-        if ($isSpecial) {
-            $defensaEspHpNuevo = $defensaEspHpActual - $dañoBarrera;
-            $defensaHpNuevo = $defensaHpActual;
-        } else {
-            $defensaHpNuevo = $defensaHpActual - $dañoBarrera;
-            $defensaEspHpNuevo = $defensaEspHpActual;
-        }
-
-        $excedente = $dañoBarreras - $dañoBarrera;
-
-        if ($excedente > 0) {
-            $hpNuevo -= $excedente;
-        }
-
+        $hpNuevo = $hpActual - $desglose['danoHp'];
         if ($hpNuevo < 0) {
             $hpNuevo = 0;
+        }
+
+        if ($isSpecial) {
+            $defensaEspHpNuevo = $defensaEspHpActual - $desglose['absorbido'];
+            $defensaHpNuevo = $defensaHpActual;
+        } else {
+            $defensaHpNuevo = $defensaHpActual - $desglose['absorbido'];
+            $defensaEspHpNuevo = $defensaEspHpActual;
         }
 
         return [

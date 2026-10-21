@@ -173,10 +173,10 @@ class AgregadoBatalla
                 }
             }
 
-            // Daño por clima (granizo / tormenta arena)
+            // Daño por clima (granizo / tormenta arena): golpea primero la barrera física
             $dañoClima = $this->getCalculadorClima()->calcular($c, $this->weather);
             if ($dañoClima > 0) {
-                $c->setHpActual(max(0, $c->hpActual() - $dañoClima));
+                $c->recibirDaño($dañoClima, false);
                 $climaLabel = $this->weather->label();
                 $this->agregarLog("{$c->nombre()} sufre {$dañoClima} de daño por {$climaLabel}");
                 if (! $c->estaVivo()) {

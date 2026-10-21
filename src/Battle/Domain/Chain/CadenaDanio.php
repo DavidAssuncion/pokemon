@@ -33,6 +33,11 @@ class CadenaDanio
 
     public function calculate(AccionBatalla $action): float
     {
+        // Los movimientos de estado no infligen daño (ni siquiera el mínimo de 1).
+        if ($action->move->esEstado()) {
+            return 0.0;
+        }
+
         return max(1, floor($this->first->handle($action, 0)));
     }
 }

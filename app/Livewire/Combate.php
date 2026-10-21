@@ -61,6 +61,11 @@ class Combate extends Component
 
     public int $habitatId = 0;
 
+    /** @var list<array<string, mixed>> */
+    public array $eventos = [];
+
+    public int $eventoTick = 0;
+
     public ?int $selectedTargetTeam = null;
 
     public ?int $selectedTargetIdx = null;
@@ -72,6 +77,10 @@ class Combate extends Component
     private BattleSessionService $session;
 
     private ?ServicioEjecucionBatalla $servicioEjecucion = null;
+
+    private bool $grabandoEventos = false;
+
+    private ?string $forzarSiguienteActorId = null;
 
     // ─── Lifecycle ───────────────────────────────────────────
 
@@ -180,10 +189,36 @@ class Combate extends Component
             }
         }
 
+        if ($this->forzarSiguienteActorId !== null) {
+            $forzado = $battle->team1->findCombatantById($this->forzarSiguienteActorId);
+            $this->forzarSiguienteActorId = null;
+
+            if ($forzado !== null && $forzado->estaVivo() && $forzado->tieneAccionPendienteEstaRonda()) {
+                $actor = $forzado;
+            }
+        }
+
         $this->actingRefId = $actor->id();
 
         // Verificar si el actor puede actuar (sueño, hielo, parálisis, confusión)
+        $antesEstado = $this->grabandoEventos ? $this->capturarEstado($battle) : [];
         $statusCheck = $actor->puedeActuar();
+        if ($this->grabandoEventos) {
+            $motivo = $statusCheck->autoDanio() > 0
+                ? "{$actor->nombre()} se golpeó a sí mismo ({$statusCheck->autoDanio()} daño)"
+                : "{$actor->nombre()} {$statusCheck->motivo()}";
+
+            $this->registrarEvento(
+                $statusCheck->esPermitida() ? 'status' : 'status_block',
+                $antesEstado,
+                $this->capturarEstado($battle),
+                [
+                    'actorId' => $actor->id(),
+                    'texto' => $motivo,
+                    'forzar' => ! $statusCheck->esPermitida(),
+                ],
+            );
+        }
         if (! $statusCheck->esPermitida()) {
             $this->log[] = "{$actor->nombre()} {$statusCheck->motivo()}!";
             if ($statusCheck->autoDanio() > 0) {
@@ -222,6 +257,7 @@ class Combate extends Component
         } else {
             $this->processing = true;
             $this->prepareAiAnimation($battle, $actor);
+            $this->turnQueue = $this->buildTurnQueue($battle);
 
             return; // la animación llama commitAction() via Alpine
         }
@@ -236,11 +272,26 @@ class Combate extends Component
      */
     private function advanceRound(AgregadoBatalla $battle): void
     {
+        $rondaNueva = $battle->turnManager()->round() + 1;
+        $previoFin = $this->grabandoEventos ? $this->capturarEstado($battle) : [];
+
         if ($battle->turnManager()->round() > 0) {
             $battle->triggerRoundEndEffects();
         }
+
+        $this->registrarEvento('round', $previoFin, $this->capturarEstado($battle), [
+            'ronda' => $rondaNueva,
+            'forzar' => true,
+        ]);
+
         $battle->turnManager()->startNewRound();
+
+        $previoInicio = $this->grabandoEventos ? $this->capturarEstado($battle) : [];
         $battle->triggerRoundStartEffects();
+        $this->registrarEvento('effect', $previoInicio, $this->capturarEstado($battle), [
+            'texto' => 'Inicio de ronda',
+        ]);
+
         $this->round = $battle->turnManager()->round();
         $this->log[] = "--- Ronda {$this->round} ---";
     }
@@ -279,6 +330,17 @@ class Combate extends Component
         $this->log = array_merge($this->log, $resultado['log']);
         $this->rewards = $resultado['rewards'];
         $this->habitatId = $resultado['habitatId'];
+
+        if ($this->grabandoEventos) {
+            $this->eventos[] = [
+                'id' => $this->eventoTick.'.'.(count($this->eventos) + 1),
+                'tipo' => 'battle_over',
+                'cambios' => [],
+                'muertos' => [],
+                'victoria' => ! $battle->team1->todosDebilitados(),
+                'texto' => "¡{$winner} gana la batalla!",
+            ];
+        }
     }
 
     // ─── AI ──────────────────────────────────────────────────
@@ -325,8 +387,22 @@ class Combate extends Component
             return;
         }
 
+        $this->iniciarEventos();
+
+        try {
+            $this->resolverAccion($battle);
+        } finally {
+            $this->cerrarEventos($battle);
+        }
+    }
+
+    private function resolverAccion(AgregadoBatalla $battle): void
+    {
         $pending = $battle->pendingAction();
         if ($pending === null) {
+            $this->resetAnimState();
+            $this->processing = false;
+
             return;
         }
 
@@ -364,7 +440,16 @@ class Combate extends Component
             weather: $battle->weather(),
         );
 
+        $previo = $this->capturarEstado($battle);
         $resultado = $servicio->calcularYAplicarDano($accion);
+        $actual = $this->capturarEstado($battle);
+
+        $this->registrarEvento('damage', $previo, $actual, [
+            'actorId' => $actor->id(),
+            'objetivoId' => $objetivo->id(),
+            'movimiento' => $movimiento->nombre,
+        ]);
+        $previo = $actual;
 
         $daño = $resultado->dano;
         $directPct = $resultado->directPct;
@@ -387,6 +472,18 @@ class Combate extends Component
             $label = $movimiento->statusEffect->label();
             $this->log[] = "{$objetivo->nombre()} sufre {$label}!";
         }
+
+        $actual = $this->capturarEstado($battle);
+        $this->registrarEvento('status', $previo, $actual, [
+            'actorId' => $actor->id(),
+            'objetivoId' => $objetivo->id(),
+            'texto' => $movimiento->tieneStatus()
+                ? "{$objetivo->nombre()} sufre {$movimiento->statusEffect->label()}"
+                : '',
+            'forzar' => $movimiento->tieneStatus() && $objetivo->estaVivo(),
+        ]);
+        $previo = $actual;
+
         $this->applyMoveStatChanges($actor, $movimiento, true);
         $this->applyMoveStatChanges($objetivo, $movimiento, false);
 
@@ -394,6 +491,11 @@ class Combate extends Component
         $battle->subject()->notifyDamaged($objetivo, $daño);
         $objetivo->dispararDanioRecibido($daño, $battle);
         $actor->dispararDanioInfligido($objetivo, $daño, $battle);
+        $this->registrarEvento('effect', $previo, $this->capturarEstado($battle), [
+            'actorId' => $actor->id(),
+            'objetivoId' => $objetivo->id(),
+            'texto' => 'Efecto de combate',
+        ]);
         $battle->turnManager()->consumeAction($actor);
 
         // 5. Debilitamiento
@@ -429,7 +531,7 @@ class Combate extends Component
         }
 
         $target = $this->getTargetFromSelection($battle, $teamIdx, $pokemonIdx);
-        if ($target === null) {
+        if ($target === null || ! $target->estaVivo()) {
             return;
         }
 
@@ -465,7 +567,7 @@ class Combate extends Component
             ? $actor
             : $this->getTargetFromSelection($battle, $this->selectedTargetTeam, $this->selectedTargetIdx);
 
-        if ($defender === null) {
+        if ($defender === null || ! $defender->estaVivo()) {
             return;
         }
 
@@ -489,6 +591,40 @@ class Combate extends Component
         $this->selectedTargetIdx = null;
         $this->selectedTargetRefId = '';
         $this->phase = FaseCombate::SELECCION_OBJETIVO->value;
+    }
+
+    /**
+     * Adelanta el turno del siguiente pokémon del jugador cuando la cola
+     * muestra dos turnos propios consecutivos. El actor actual sigue pendiente
+     * y actuará después; no se pierde ninguna acción.
+     */
+    public function swapTurno(): void
+    {
+        if (! in_array($this->phase, [
+            FaseCombate::SELECCION_OBJETIVO->value,
+            FaseCombate::SELECCION_MOVIMIENTO->value,
+        ], true)) {
+            return;
+        }
+
+        if ($this->processing || $this->animAttackerId !== '') {
+            return;
+        }
+
+        $siguienteTurno = $this->turnQueue[1] ?? null;
+        if (($this->turnQueue[0]['team'] ?? null) !== 0 || ($siguienteTurno['team'] ?? null) !== 0) {
+            return;
+        }
+
+        $siguiente = $this->team1[$siguienteTurno['index']] ?? null;
+        if ($siguiente === null || ! $siguiente['alive'] || $siguiente['refId'] === $this->actingRefId) {
+            return;
+        }
+
+        $this->resetAnimState();
+        $this->selectedMoveIdx = null;
+        $this->forzarSiguienteActorId = $siguiente['refId'];
+        $this->nextActor();
     }
 
     // ─── Helpers ─────────────────────────────────────────────
@@ -555,10 +691,131 @@ class Combate extends Component
         return null;
     }
 
+    // ─── Eventos de animación ────────────────────────────────
+
     /**
-     * Cola de la ronda en curso: vivos que aún no actuaron, en orden de
-     * velocidad efectiva descendente (estable: los empates conservan el orden
-     * de inserción, coherente con GestorTurnos::getNextActor()).
+     * Instantánea de los vitales y estados de todos los combatientes.
+     *
+     * @return array<string, array{hp: float, defHp: float, spDefHp: float, alive: bool, status: string, statusTurns: int}>
+     */
+    private function capturarEstado(AgregadoBatalla $battle): array
+    {
+        $estado = [];
+
+        foreach ($battle->turnManager()->allCombatants() as $combatiente) {
+            $estado[$combatiente->id()] = [
+                'hp' => $combatiente->hpActual(),
+                'defHp' => $combatiente->defensaHpActual(),
+                'spDefHp' => $combatiente->defensaEspHpActual(),
+                'alive' => $combatiente->estaVivo(),
+                'status' => $combatiente->estado()->value,
+                'statusTurns' => $combatiente->turnosEstado(),
+            ];
+        }
+
+        return $estado;
+    }
+
+    private function iniciarEventos(): void
+    {
+        $this->eventos = [];
+        $this->eventoTick++;
+        $this->grabandoEventos = true;
+    }
+
+    private function cerrarEventos(AgregadoBatalla $battle): void
+    {
+        if ($this->grabandoEventos) {
+            $this->eventos[] = [
+                'id' => $this->eventoTick.'.'.(count($this->eventos) + 1),
+                'tipo' => 'fin',
+                'cambios' => [],
+                'muertos' => [],
+                'estado' => $this->capturarEstado($battle),
+            ];
+        }
+
+        $this->grabandoEventos = false;
+    }
+
+    /**
+     * Registra un evento con el delta de cada combatiente afectado. Los
+     * eventos se reproducen en orden en el cliente (cola de animación).
+     *
+     * @param  array<string, array{hp: float, defHp: float, spDefHp: float, alive: bool, status: string, statusTurns: int}>  $antes
+     * @param  array<string, array{hp: float, defHp: float, spDefHp: float, alive: bool, status: string, statusTurns: int}>  $despues
+     * @param  array<string, mixed>  $extra
+     */
+    private function registrarEvento(string $tipo, array $antes, array $despues, array $extra = []): void
+    {
+        if (! $this->grabandoEventos) {
+            return;
+        }
+
+        $cambios = [];
+        $muertos = [];
+
+        foreach ($despues as $refId => $actual) {
+            $previo = $antes[$refId] ?? null;
+            if ($previo === null) {
+                continue;
+            }
+
+            $delta = [
+                'hp' => round($actual['hp'] - $previo['hp'], 2),
+                'def' => round($actual['defHp'] - $previo['defHp'], 2),
+                'spdef' => round($actual['spDefHp'] - $previo['spDefHp'], 2),
+            ];
+
+            $cambioVida = abs($delta['hp']) > 0.001
+                || abs($delta['def']) > 0.001
+                || abs($delta['spdef']) > 0.001;
+            $cambioEstado = $actual['status'] !== $previo['status']
+                || $actual['statusTurns'] !== $previo['statusTurns'];
+
+            if (! $cambioVida && ! $cambioEstado) {
+                continue;
+            }
+
+            $rotas = [];
+            if ($previo['defHp'] > 0 && $actual['defHp'] <= 0) {
+                $rotas[] = 'def';
+            }
+            if ($previo['spDefHp'] > 0 && $actual['spDefHp'] <= 0) {
+                $rotas[] = 'spdef';
+            }
+
+            $cambios[$refId] = [
+                'previo' => $previo,
+                'actual' => $actual,
+                'delta' => $delta,
+                'rotas' => $rotas,
+            ];
+
+            if ($previo['alive'] && ! $actual['alive']) {
+                $muertos[] = $refId;
+            }
+        }
+
+        $forzar = (bool) ($extra['forzar'] ?? false);
+        unset($extra['forzar']);
+
+        if ($cambios === [] && ! $forzar) {
+            return;
+        }
+
+        $this->eventos[] = array_merge([
+            'id' => $this->eventoTick.'.'.(count($this->eventos) + 1),
+            'tipo' => $tipo,
+            'cambios' => $cambios,
+            'muertos' => $muertos,
+        ], $extra);
+    }
+
+    /**
+     * Cola de la ronda en curso: el actor actual siempre encabeza la lista
+     * (puede haberse adelantado con swapTurno), el resto va en orden de
+     * velocidad efectiva descendente (empates: orden de inserción).
      *
      * @return list<array{team: int, index: int}>
      */
@@ -568,11 +825,16 @@ class Combate extends Component
             ->conAccionPendiente()
             ->all();
 
-        usort(
-            $pendientes,
-            fn (Combatiente $a, Combatiente $b): int => $b->velocidadEfectiva()
-                <=> $a->velocidadEfectiva()
-        );
+        usort($pendientes, function (Combatiente $a, Combatiente $b): int {
+            if ($a->id() === $this->actingRefId) {
+                return -1;
+            }
+            if ($b->id() === $this->actingRefId) {
+                return 1;
+            }
+
+            return $b->velocidadEfectiva() <=> $a->velocidadEfectiva();
+        });
 
         return array_map(fn (Combatiente $c) => $this->findPokemonViewData($c) ?? ['team' => 0, 'index' => 0], $pendientes);
     }
@@ -584,6 +846,7 @@ class Combate extends Component
         $this->animTick++;
         $this->animAttackerId = $actor->id();
         $this->animAttackerNombre = $actor->nombre();
+        $this->animMoveNombre = $move->nombre;
         // Movimientos autodirigidos (ej: Danza Espada) no necesitan parpadeo en el defensor
         if ($target->id() !== $actor->id()) {
             $this->animDefenderId = $target->id();

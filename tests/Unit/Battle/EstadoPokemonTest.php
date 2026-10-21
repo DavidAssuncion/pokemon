@@ -25,12 +25,14 @@ class EstadoPokemonTest extends TestCase
         );
         $combatiente->setEstado(EstadoPokemon::BURN);
 
-        $maxHp = $combatiente->pokemon()->battleStats()->hp;
+        $maxHp = $combatiente->hpActual();
+        $spDefInicial = $combatiente->defensaEspHpActual();
         $daño = $combatiente->aplicarDañoStatus();
 
-        // Daño = max(1, maxHp * 6.25%)
-        $this->assertSame(max(1.0, $maxHp * 0.0625), $daño);
-        $this->assertSame($maxHp - $daño, $combatiente->hpActual());
+        // Daño = max(1, maxHp * 6.25%): golpea primero la barrera especial
+        $this->assertSame(max(1.0, $combatiente->pokemon()->battleStats()->hp * 0.0625), $daño);
+        $this->assertSame($spDefInicial - $daño, $combatiente->defensaEspHpActual());
+        $this->assertSame($maxHp, $combatiente->hpActual());
     }
 
     public function test_sleep_impide_actuar(): void
@@ -91,11 +93,14 @@ class EstadoPokemonTest extends TestCase
         );
         $combatiente->setEstado(EstadoPokemon::POISON);
 
-        $maxHp = $combatiente->pokemon()->battleStats()->hp;
+        $maxHp = $combatiente->hpActual();
+        $spDefInicial = $combatiente->defensaEspHpActual();
         $daño = $combatiente->aplicarDañoStatus();
 
-        $this->assertSame(max(1.0, $maxHp * 0.125), $daño);
-        $this->assertSame($maxHp - $daño, $combatiente->hpActual());
+        // Daño = max(1, maxHp * 12.5%): golpea primero la barrera especial
+        $this->assertSame(max(1.0, $combatiente->pokemon()->battleStats()->hp * 0.125), $daño);
+        $this->assertSame($spDefInicial - $daño, $combatiente->defensaEspHpActual());
+        $this->assertSame($maxHp, $combatiente->hpActual());
     }
 
     public function test_bad_poison_dano_creciente_por_contador(): void

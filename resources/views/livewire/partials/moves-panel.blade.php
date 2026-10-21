@@ -33,8 +33,17 @@
     });
     @endphp
 
-    @if($phase === 'player_move')
-        <div class="d-grid gap-2">
+    @if($animAttackerId !== '')
+        {{-- Ventana de animación en curso (acción pendiente de resolver): bloquea la
+             interacción para que ningún clic cancele la animación ni pise la acción
+             pendiente (ver ANALISIS_FRONTEND 2026-10-21). --}}
+        <div class="waiting d-flex align-items-center gap-2 text-muted" role="status">
+            <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+            <span>⚔ {{ $animAttackerNombre }} usa {{ $animMoveNombre !== '' ? $animMoveNombre : 'un ataque' }}...</span>
+        </div>
+    @elseif($phase === 'player_move')
+        {{-- Ataques en una fila de cards: 1/6 del ancho en pantallas grandes --}}
+        <div class="row g-2">
             @foreach($currentMoves as $idx => $move)
                 @php
                     $tipoValue = (int) $move['tipo'];
@@ -45,74 +54,108 @@
                     $eff = (float) $move['efectividad'];
                     $effText = $eff == (int) $eff ? (string) (int) $eff : number_format($eff, 1);
                     $effColor = $eff <= 0 ? 'dark' : ($eff < 1 ? 'warning' : ($eff <= 1 ? 'light border' : 'success'));
-                    $catLabel = match ($move['categoria']) { 'fisico' => 'Físico', 'especial' => 'Especial', default => 'Estado' };
-                    $catColor = match ($move['categoria']) { 'fisico' => 'danger', 'especial' => 'primary', default => 'secondary' };
+                    $esEstado = $move['categoria'] === 'estado' || (int) ($move['potencia'] ?? 0) <= 0;
+                    $catLabel = $esEstado ? 'Estado' : match ($move['categoria']) { 'fisico' => 'Físico', 'especial' => 'Especial', default => 'Estado' };
+                    $catColor = $esEstado ? 'secondary' : match ($move['categoria']) { 'fisico' => 'danger', 'especial' => 'primary', default => 'secondary' };
                     $isBest = $move['potencia'] > 0 && $maxDmg > 0 && (float) $move['daño'] >= $maxDmg;
                 @endphp
-                <button class="btn btn-outline-primary w-100 text-start position-relative {{ $isBest ? 'border-primary border-2 shadow-sm' : '' }}"
-                        style="background-color: {{ $tipoColor }}; color: #fff"
-                        wire:click="selectMove({{ $idx }})">
-                    {{-- Primera línea: icono tipo + nombre + (catálogo + potencia al final) --}}
-                    <div class="d-flex justify-content-between align-items-center gap-2">
-                        <span class="fw-bold move-name d-flex align-items-center gap-1">
-                            <img src="/images/type/{{ $tipoSlug }}.webp" alt="{{ $tipoLabel }}" style="width:24px;height:24px" class="me-1">
-                            {{ $move['nombre'] }}
-                        </span>
-                        <span class="d-flex align-items-center gap-1 flex-shrink-0">
-                            <span class="badge text-bg-{{ $catColor }} move-cat">{{ $catLabel }}</span>
+                <div class="col-6 col-md-4 col-xl-2">
+                    <button type="button"
+                            class="card move-card h-100 w-100 text-start position-relative {{ $isBest ? 'move-best' : '' }}"
+                            style="background-color: {{ $tipoColor }}; color: #fff"
+                            wire:click="selectMove({{ $idx }})">
+                        <div class="card-body p-2 d-flex flex-column gap-1">
+                            {{-- Icono de tipo + nombre del ataque --}}
+                            <div class="d-flex align-items-center gap-1">
+                                <img src="/images/type/{{ $tipoSlug }}.webp" alt="{{ $tipoLabel }}" style="width:40px;height:40px" class="flex-shrink-0">
+                                <span class="fw-bold small lh-sm move-name">{{ $move['nombre'] }}</span>
+                            </div>
+
+                            {{-- Daño destacado --}}
                             @if($move['potencia'] > 0)
-                                <span class="badge text-bg-dark move-power">Pot. {{ $move['potencia'] }}</span>
+                                <div class="lh-1">
+                                    <span class="fs-5 fw-bold move-dmg">{{ ceil($move['daño']) }}</span>
+                                    <span class="small text-white-50">daño</span>
+                                </div>
+
+                                @php
+                                    $danoHp = (float) ($move['danoHp'] ?? 0);
+                                    $danoBarrera = (float) ($move['danoBarrera'] ?? 0);
+                                    $barreraLabel = $move['barreraLabel'] ?? 'DEF';
+                                @endphp
+                                @if($danoHp > 0 || $danoBarrera > 0)
+                                    <div class="small text-white-50 lh-sm move-breakdown">
+                                        @if($danoBarrera > 0)
+                                            <span>{{ ceil($danoBarrera) }} {{ $barreraLabel }}</span>
+                                        @endif
+                                        @if($danoHp > 0)
+                                            <span>{{ ceil($danoHp) }} PS</span>
+                                        @endif
+                                    </div>
+                                @endif
+                                @if($move['letal'] ?? false)
+                                    <span class="badge text-bg-danger move-lethal">LETAL</span>
+                                @endif
                             @endif
-                        </span>
-                    </div>
-                    {{-- Segunda línea: daño destacado + efectividad + STAB + estados + cambios --}}
-                    <div class="d-flex flex-wrap gap-1 align-items-center mt-1 small">
-                        @if($move['potencia'] > 0)
-                            <span class="move-dmg fs-5 fw-bold {{ $isBest ? 'text-success' : 'text-dark' }}">{{ ceil($move['daño']) }} daño</span>
-                        @endif
-                        <span class="badge move-type" style="background-color: {{ $tipoColor }}; color: #fff">{{ $tipoLabel }}</span>
-                        <span class="badge text-bg-{{ $effColor }} efectividad">×{{ $effText }}</span>
-                        @if($move['stab'])
-                            <span class="badge text-bg-info stab-badge">STAB</span>
-                        @endif
-                        @if($move['directo'] ?? false)
-                            <span class="badge text-bg-danger directo-badge">DIRECTO</span>
-                        @endif
-                        @if(!empty($move['statusEffect']) && $move['statusEffect'] !== 'none')
-                            <span class="badge text-bg-warning status-badge">
-                                @switch($move['statusEffect'])
-                                    @case('burn') 🔥 QUEMAR @break
-                                    @case('poison') ☠ ENVENENAR @break
-                                    @case('bad_poison') ☠ TOXICO @break
-                                    @case('paralysis') ⚡ PARALIZAR @break
-                                    @case('sleep') 💤 DORMIR @break
-                                    @case('freeze') ❄ CONGELAR @break
-                                    @case('confusion') 😵 CONFUNDIR @break
-                                @endswitch
-                            </span>
-                        @endif
-                        @if(!empty($move['selfStatChanges']))
-                            @foreach($move['selfStatChanges'] as $sc)
-                                @php
-                                    $pct = (int) round((($sc['factor'] ?? 1.0) - 1) * 100);
-                                @endphp
-                                <span class="badge stage-up stat-self">
-                                    {{ $pct > 0 ? '+' : '' }}{{ $pct }}% {{ $statLabels[$sc['stat']] ?? $sc['stat'] }}
-                                </span>
-                            @endforeach
-                        @endif
-                        @if(!empty($move['targetStatChanges']))
-                            @foreach($move['targetStatChanges'] as $tc)
-                                @php
-                                    $pct = (int) round((($tc['factor'] ?? 1.0) - 1) * 100);
-                                @endphp
-                                <span class="badge stage-down stat-target">
-                                    {{ $pct > 0 ? '+' : '' }}{{ $pct }}% {{ $statLabels[$tc['stat']] ?? $tc['stat'] }}
-                                </span>
-                            @endforeach
-                        @endif
-                    </div>
-                </button>
+
+                            {{-- Efectividad y etiquetas del ataque. Los movimientos de estado
+                                 no tienen efectividad de tipo porque no infligen daño. --}}
+                            @php
+                                $tieneBadgeEstado = !empty($move['statusEffect']) && $move['statusEffect'] !== 'none';
+                            @endphp
+                            @if(! $esEstado || $tieneBadgeEstado)
+                                <div class="d-flex flex-wrap gap-1 align-items-center">
+                                    @if(! $esEstado)
+                                        <span class="badge text-bg-{{ $effColor }} efectividad">×{{ $effText }}</span>
+                                        @if($move['directo'] ?? false)
+                                            <span class="badge text-bg-danger directo-badge">DIRECTO</span>
+                                        @endif
+                                    @endif
+                                    @if($tieneBadgeEstado)
+                                        <span class="badge text-bg-warning status-badge">
+                                            @switch($move['statusEffect'])
+                                                @case('burn') 🔥 QUEMAR @break
+                                                @case('poison') ☠ ENVENENAR @break
+                                                @case('bad_poison') ☠ TOXICO @break
+                                                @case('paralysis') ⚡ PARALIZAR @break
+                                                @case('sleep') 💤 DORMIR @break
+                                                @case('freeze') ❄ CONGELAR @break
+                                                @case('confusion') 😵 CONFUNDIR @break
+                                            @endswitch
+                                        </span>
+                                    @endif
+                                </div>
+                            @endif
+
+                            {{-- Cambios de estadísticas propios y del objetivo --}}
+                            @if(!empty($move['selfStatChanges']) || !empty($move['targetStatChanges']))
+                                <div class="d-flex flex-wrap gap-1">
+                                    @foreach(($move['selfStatChanges'] ?? []) as $sc)
+                                        @php
+                                            $pct = (int) round((($sc['factor'] ?? 1.0) - 1) * 100);
+                                        @endphp
+                                        <span class="badge stage-up stat-self">
+                                            {{ $pct > 0 ? '+' : '' }}{{ $pct }}% {{ $statLabels[$sc['stat']] ?? $sc['stat'] }}
+                                        </span>
+                                    @endforeach
+                                    @foreach(($move['targetStatChanges'] ?? []) as $tc)
+                                        @php
+                                            $pct = (int) round((($tc['factor'] ?? 1.0) - 1) * 100);
+                                        @endphp
+                                        <span class="badge stage-down stat-target">
+                                            {{ $pct > 0 ? '+' : '' }}{{ $pct }}% {{ $statLabels[$tc['stat']] ?? $tc['stat'] }}
+                                        </span>
+                                    @endforeach
+                                </div>
+                            @endif
+
+                            {{-- Categoría al pie de la card --}}
+                            <div class="mt-auto">
+                                <span class="badge text-bg-{{ $catColor }} move-cat">{{ $catLabel }}</span>
+                            </div>
+                        </div>
+                    </button>
+                </div>
             @endforeach
         </div>
     @elseif($phase === 'player_target')
@@ -121,7 +164,7 @@
             <p class="penalty-note mb-0 small">Retaguardia: -50% daño si hay vanguardia viva</p>
         </div>
     @elseif($phase === 'battle_over')
-        <div class="alert alert-success battle-over" role="status">
+        <div class="alert alert-success battle-over {{ !empty($eventos) ? 'd-none' : '' }}" role="status">
             ¡Batalla terminada!
         </div>
     @elseif($phase === 'animating')

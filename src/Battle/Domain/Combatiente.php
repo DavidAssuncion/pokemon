@@ -502,7 +502,8 @@ class Combatiente
 
     /**
      * Aplica el daño por efecto de estado al final de la ronda.
-     * Delega el cálculo a EstadoManager y aplica las mutaciones resultantes.
+     * Delega el cálculo a EstadoManager y aplica el daño a la barrera especial
+     * (con desbordamiento a HP), igual que un ataque especial.
      *
      * @return float Daño real infligido
      */
@@ -516,11 +517,13 @@ class Combatiente
             $this->estado,
             $this->contadorVenenoGrave,
             $this->pokemon->battleStats()->hp,
-            $this->hpActual,
         );
 
-        $this->hpActual = $resultado['hpActualNueva'];
         $this->contadorVenenoGrave = $resultado['contadorNuevo'];
+
+        if ($resultado['dano'] > 0) {
+            $this->recibirDaño($resultado['dano'], true);
+        }
 
         return $resultado['dano'];
     }
