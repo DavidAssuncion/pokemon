@@ -13,6 +13,8 @@ use App\Models\Reclutado;
 use App\Models\Team;
 use App\Models\TeamMember;
 use App\Support\ReclutadoSerializer;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Illuminate\View\View;
 use Src\Equipos\App\ObtenerEquipos;
 use Src\Exploraciones\Domain\RolExploracion;
@@ -115,11 +117,27 @@ class PlayerController extends Controller
 
         $equiposEnExploracion = $reclutadosEnExploracion !== []
             ? \App\Models\TeamMember::whereIn('pokemon_id', $reclutadosEnExploracion)
-                ->pluck('team_id')
-                ->unique()
-                ->values()
-                ->toArray()
+            ->pluck('team_id')
+            ->unique()
+            ->values()
+            ->toArray()
             : [];
+
+        Log::debug('[equipos:trace] datos inyectados a la vista', [
+            'user_id' => Auth::id(),
+            'reclutados_total' => $reclutados->count(),
+            'reclutados_ids' => $reclutadosQuery->pluck('id')->all(),
+            'team_ids' => $teamIds,
+            'teams' => collect($teams)->map(fn (array $team): array => [
+                'id' => $team['id'],
+                'name' => $team['name'],
+                'members_count' => count($team['members']),
+                'slots' => collect($team['members'])->pluck('slot')->all(),
+                'pokemon_ids' => collect($team['members'])->pluck('pokemon_id')->all(),
+            ])->all(),
+            'equipos_en_exploracion' => $equiposEnExploracion,
+            'reclutados_en_exploracion' => $reclutadosEnExploracion,
+        ]);
 
         return view('equipos.index', [
             'teams' => $teams,

@@ -237,6 +237,7 @@
                 </div>
 
                 <template x-if="activeSeccion === 'pokemon'">
+                <div class="space-y-6">
                     <!-- Search and Filter -->
                 <div class="flex flex-col sm:flex-row gap-3">
                     <div class="relative flex-1">
@@ -417,6 +418,7 @@
                         </template>
                     </div>
                 </div>
+                </div>
                     </template>
 
                     <!-- ═══ Huevos (tab) ═══ -->
@@ -463,6 +465,7 @@
                             </template>
 
                             <template x-if="!huevosLoading && !huevosError && huevosLoaded">
+                                <div class="space-y-6">
                                 <!-- Mis huevos -->
                                 <div>
                                     <div class="flex items-center justify-between bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-2 mb-4">
@@ -547,6 +550,7 @@
                                             </template>
                                         </div>
                                     </template>
+                                </div>
                                 </div>
                             </template>
                         </div>
@@ -1013,6 +1017,43 @@
 
 @push('scripts')
 <script>
+    window.addEventListener('error', (e) => console.error('[equipos:trace] window error:', e.message, e.filename + ':' + e.lineno, e.error || ''));
+    window.addEventListener('unhandledrejection', (e) => console.error('[equipos:trace] unhandled rejection:', e.reason));
+    document.addEventListener('alpine:init', () => console.log('[equipos:trace] alpine:init'));
+    document.addEventListener('alpine:initialized', () => console.log('[equipos:trace] alpine:initialized'));
+    window.addEventListener('load', () => {
+        console.log('[equipos:trace] load — Alpine:', typeof window.Alpine, '| Livewire:', typeof window.Livewire, '| x-data presente:', !!document.querySelector('[x-data]'));
+        setTimeout(() => {
+            try {
+                const gridAudit = (titulo) => {
+                    const h = [...document.querySelectorAll('h2')].find(x => x.textContent.includes(titulo));
+                    if (!h) return { encontrado: false };
+                    const grid = h.closest('div').nextElementSibling;
+                    const imgs = [...grid.querySelectorAll('img')];
+                    return {
+                        encontrado: true,
+                        hijos: grid.children.length,
+                        texto: (grid.textContent || '').trim().slice(0, 140),
+                        imgs: imgs.length,
+                        imgsCargadas: imgs.filter(i => i.naturalWidth > 0).length,
+                        imgsOcultas: imgs.filter(i => getComputedStyle(i).display === 'none').length,
+                        alto: grid.offsetHeight,
+                        display: getComputedStyle(grid).display,
+                    };
+                };
+                console.log('[equipos:trace] DOM audit', {
+                    disponibles: gridAudit('Reclutados Disponibles'),
+                    asignados: gridAudit('Asignados'),
+                    imgsEquipos: document.querySelectorAll('.grid-cols-3 img').length,
+                    imgsPagina: document.images.length,
+                });
+            } catch (e) {
+                console.error('[equipos:trace] DOM audit error', e);
+            }
+        }, 2000);
+    });
+</script>
+<script>
 function favoritosApp() {
     return {
         // ─── Datos del servidor ─────────────────────────────────────────────
@@ -1135,6 +1176,32 @@ function favoritosApp() {
         // ═══════════════════════════════════════════════════════════════════════
 
         init() {
+            try {
+                const baseSinAsignar = Array.isArray(this.reclutados)
+                    ? this.reclutados.filter(r => !this.teamPokemonIds.includes(r.id))
+                    : null;
+                console.log('[equipos:trace] init()', {
+                    reclutadosTipo: Array.isArray(this.reclutados) ? 'array' : typeof this.reclutados,
+                    reclutadosTotal: Array.isArray(this.reclutados) ? this.reclutados.length : null,
+                    reclutadosIds: Array.isArray(this.reclutados) ? this.reclutados.map(r => r.id) : null,
+                    teamPokemonIds: this.teamPokemonIds,
+                    teams: this.teams.map(t => ({
+                        id: t.id,
+                        name: t.name,
+                        members: t.members ? t.members.length : null,
+                        slots: t.members ? t.members.map(m => m.slot) : null,
+                        pokemonIds: t.members ? t.members.map(m => m.pokemon_id) : null,
+                        formacion: t.formacion,
+                    })),
+                    searchQuery: this.searchQuery,
+                    typeFilter: this.typeFilter,
+                    disponiblesSinFiltros: baseSinAsignar ? baseSinAsignar.length : null,
+                    disponibles: this.availablePokemonsTeams.length,
+                    asignados: this.assignedPokemons.length,
+                });
+            } catch (traceError) {
+                console.error('[equipos:trace] init() error', traceError);
+            }
             document.addEventListener('click', (e) => {
                 if (!e.target.closest('[x-data]')?.contains(e.target)) {
                     this.showTypeFilter = false;
