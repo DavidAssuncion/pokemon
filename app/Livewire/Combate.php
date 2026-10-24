@@ -78,6 +78,9 @@ class Combate extends Component
     /** @var array<string, string> refId => índice del movimiento prioritario elegido */
     public array $prioridades = [];
 
+    /** @var array<string, string> refId => postura elegida para la ronda ('atacar'|'guardia'|'cubrir') */
+    public array $posturas = [];
+
     /** @var array<string, list<array{index: int, nombre: string, prioridad: int}>> */
     public array $prioridadesDisponibles = [];
 
@@ -184,10 +187,6 @@ class Combate extends Component
 
         if ($battle->rondaPreparada() !== $turnos->round()) {
             $this->abrirPreparacion($battle);
-
-            if ($this->prioridadesDisponibles === []) {
-                $this->confirmarPreparacion();
-            }
 
             return;
         }
@@ -348,9 +347,11 @@ class Combate extends Component
         $this->phase = FaseCombate::PREPARACION->value;
         $this->prioridades = [];
         $this->prioridadesDisponibles = [];
+        $this->posturas = [];
 
         foreach ($battle->team1->combatientesCollection()->vivos() as $combatiente) {
             $this->prioridades[$combatiente->id()] = '';
+            $this->posturas[$combatiente->id()] = $combatiente->postura()->value;
 
             $disponibles = [];
             foreach ($combatiente->pokemon()->moves()->all() as $index => $movimiento) {
@@ -388,6 +389,10 @@ class Combate extends Component
         $vivosJugador = $equipoJugador->combatientesCollection()->vivos()->all();
 
         foreach ($vivosJugador as $combatiente) {
+            $postura = PosturaCombate::tryFrom($this->posturas[$combatiente->id()] ?? '')
+                ?? PosturaCombate::ATACAR;
+            $combatiente->setPostura($postura);
+
             $prioridad = null;
             $indicePrioridad = $this->prioridades[$combatiente->id()] ?? '';
             if ($indicePrioridad !== '') {
@@ -428,6 +433,7 @@ class Combate extends Component
         $this->resolverPrioridades($battle);
         $this->prioridades = [];
         $this->prioridadesDisponibles = [];
+        $this->posturas = [];
         $this->session->guardar($this->battleId, $battle);
         $this->nextActor();
     }
@@ -436,6 +442,36 @@ class Combate extends Component
     {
         $this->prioridades = [];
         $this->confirmarPreparacion();
+    }
+
+    /**
+     * Cambia la postura de un combatiente del jugador durante la preparación
+     * de la ronda y refleja el cambio al instante en las tarjetas del campo.
+     */
+    public function cambiarPostura(string $refId, string $postura): void
+    {
+        $battle = $this->session->cargar($this->battleId);
+        if ($battle === null || $this->phase !== FaseCombate::PREPARACION->value) {
+            return;
+        }
+
+        $combatiente = $battle->team1->findCombatantById($refId);
+        if ($combatiente === null || ! $combatiente->estaVivo()) {
+            return;
+        }
+
+        $nuevaPostura = PosturaCombate::tryFrom($postura) ?? PosturaCombate::ATACAR;
+        $combatiente->setPostura($nuevaPostura);
+        $battle->team1->normalizarCubridores();
+
+        $this->posturas[$refId] = $nuevaPostura->value;
+        if ($nuevaPostura !== PosturaCombate::ATACAR) {
+            // Una postura defensiva no puede usar movimientos de prioridad.
+            $this->prioridades[$refId] = '';
+        }
+
+        $this->syncViewData($battle);
+        $this->session->guardar($this->battleId, $battle);
     }
 
     /**
@@ -609,14 +645,10 @@ class Combate extends Component
         Combatiente $actor,
         MovimientoBatalla $movimiento,
     ): ?Combatiente {
-        $autodirigido = in_array($movimiento->objetivo, [
-            ObjetivoMovimiento::SELF,
-            ObjetivoMovimiento::ALLY_SIDE,
-            ObjetivoMovimiento::ALLIES,
-            ObjetivoMovimiento::ALLY_TEAM,
-        ], true) || ($movimiento->tieneSelfStatChanges() && ! $movimiento->tieneTargetStatChanges());
+        $autodirigido = $movimiento->esAutodirigido()
+            || $movimiento->objetivo === ObjetivoMovimiento::ALL;
 
-        if ($autodirigido || $movimiento->objetivo === ObjetivoMovimiento::ALL) {
+        if ($autodirigido) {
             return $actor;
         }
 
@@ -673,7 +705,7 @@ class Combate extends Component
         // Movimientos autodirigidos (ej: Danza Espada) apuntan al actor
         $targetForAnim = $objetivo;
         $defenderId = $objetivo->id();
-        if ($movimiento->tieneSelfStatChanges() && ! $movimiento->tieneTargetStatChanges()) {
+        if ($movimiento->esAutodirigido()) {
             $defenderId = $actor->id();
             $targetForAnim = $actor;
         }
@@ -705,7 +737,10 @@ class Combate extends Component
         try {
             $this->resolverAccion($battle);
         } finally {
-            $this->cerrarEventos($battle);
+            // `nextActor()` recarga la batalla desde sesión y puede aplicar
+            // efectos de fin de ronda (p. ej. Presión). El evento `fin` debe
+            // capturar esa instancia, no la hidratada al inicio del commit.
+            $this->cerrarEventos();
         }
     }
 
@@ -750,7 +785,7 @@ class Combate extends Component
         }
 
         // Movimientos autodirigidos (ej: Danza Espada) siempre apuntan al actor
-        if ($movimiento->tieneSelfStatChanges() && ! $movimiento->tieneTargetStatChanges()) {
+        if ($movimiento->esAutodirigido()) {
             $objetivo = $actor;
         }
 
@@ -914,12 +949,7 @@ class Combate extends Component
         }
 
         // Movimientos autodirigidos (ej: Danza Espada) apuntan al actor y no requieren objetivo enemigo
-        $selfTargeting = in_array($move->objetivo, [
-            ObjetivoMovimiento::SELF,
-            ObjetivoMovimiento::ALLY_SIDE,
-            ObjetivoMovimiento::ALLIES,
-            ObjetivoMovimiento::ALLY_TEAM,
-        ], true) || ($move->tieneSelfStatChanges() && ! $move->tieneTargetStatChanges());
+        $selfTargeting = $move->esAutodirigido();
         $defender = $selfTargeting
             ? $actor
             : $this->getTargetFromSelection($battle, $this->selectedTargetTeam, $this->selectedTargetIdx);
@@ -1158,16 +1188,20 @@ class Combate extends Component
         $this->grabandoEventos = true;
     }
 
-    private function cerrarEventos(AgregadoBatalla $battle): void
+    private function cerrarEventos(): void
     {
         if ($this->grabandoEventos) {
-            $this->eventos[] = [
-                'id' => $this->eventoTick.'.'.(count($this->eventos) + 1),
-                'tipo' => 'fin',
-                'cambios' => [],
-                'muertos' => [],
-                'estado' => $this->capturarEstado($battle),
-            ];
+            $battle = $this->session->cargar($this->battleId);
+
+            if ($battle !== null) {
+                $this->eventos[] = [
+                    'id' => $this->eventoTick.'.'.(count($this->eventos) + 1),
+                    'tipo' => 'fin',
+                    'cambios' => [],
+                    'muertos' => [],
+                    'estado' => $this->capturarEstado($battle),
+                ];
+            }
         }
 
         $this->grabandoEventos = false;
