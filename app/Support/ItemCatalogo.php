@@ -10,6 +10,7 @@ use App\Models\Pokemon;
 use Src\Exploraciones\Domain\Recompensas\ResultadoRecompensas;
 use Src\Shared\Domain\Collections\ItemCarameloCollection;
 use Src\Shared\Domain\DataTransferObjects\ItemCaramelo;
+use Src\Shared\Domain\DataTransferObjects\ItemResuelto;
 use Src\Shared\Domain\SlugTipo;
 
 /**
@@ -50,8 +51,8 @@ final class ItemCatalogo
         foreach ($recompensas->caramelosFamilia as $recompensa) {
             $resuelto = self::resolve(self::keyFamilia($recompensa->evolutionChainId));
             $caramelos->add(new ItemCaramelo(
-                nombre: $resuelto['nombre'],
-                imagen: $resuelto['imagen'],
+                nombre: $resuelto->nombre,
+                imagen: $resuelto->imagen,
                 cantidad: $recompensa->cantidad,
             ));
         }
@@ -59,8 +60,8 @@ final class ItemCatalogo
         foreach ($recompensas->caramelosEv as $recompensa) {
             $resuelto = self::resolve(self::keyEv($recompensa->stat));
             $caramelos->add(new ItemCaramelo(
-                nombre: $resuelto['nombre'],
-                imagen: $resuelto['imagen'],
+                nombre: $resuelto->nombre,
+                imagen: $resuelto->imagen,
                 cantidad: $recompensa->cantidad,
             ));
         }
@@ -79,10 +80,8 @@ final class ItemCatalogo
     /**
      * Resuelve un item_key a su presentación. Nunca lanza: cualquier clave
      * desconocida cae a 'Desconocido' + placeholder + categoria 'desconocida'.
-     *
-     * @return array{nombre: string, imagen: string, categoria: string}
      */
-    public static function resolve(string $itemKey): array
+    public static function resolve(string $itemKey): ItemResuelto
     {
         if (str_starts_with($itemKey, 'familia:')) {
             $chainId = substr($itemKey, 8);
@@ -110,10 +109,8 @@ final class ItemCatalogo
     /**
      * Caramelo de familia: primer integrante = menor species_id (desempate id),
      * misma regla que TransformadorResultadoExploracion::pokemonBaseDeCadena.
-     *
-     * @return array{nombre: string, imagen: string, categoria: string}
      */
-    private static function resolverFamilia(int $chainId): array
+    private static function resolverFamilia(int $chainId): ItemResuelto
     {
         if ($chainId < 1) {
             return self::desconocido();
@@ -129,17 +126,14 @@ final class ItemCatalogo
             return self::desconocido('familia');
         }
 
-        return [
-            'nombre' => $base->name,
-            'imagen' => "/images/candy_pokemon/{$base->id}.webp",
-            'categoria' => 'familia',
-        ];
+        return new ItemResuelto(
+            nombre: $base->name,
+            imagen: "/images/candy_pokemon/{$base->id}.webp",
+            categoria: 'familia',
+        );
     }
 
-    /**
-     * @return array{nombre: string, imagen: string, categoria: string}
-     */
-    private static function resolverEv(int $stat): array
+    private static function resolverEv(int $stat): ItemResuelto
     {
         $slug = StatEnum::fromId($stat)?->slug();
         $nombre = StatEnum::fromId($stat)?->label();
@@ -149,17 +143,14 @@ final class ItemCatalogo
             return self::desconocido('ev');
         }
 
-        return [
-            'nombre' => $nombre,
-            'imagen' => "/images/candy_ev/{$slug}.webp",
-            'categoria' => 'ev',
-        ];
+        return new ItemResuelto(
+            nombre: $nombre,
+            imagen: "/images/candy_ev/{$slug}.webp",
+            categoria: 'ev',
+        );
     }
 
-    /**
-     * @return array{nombre: string, imagen: string, categoria: string}
-     */
-    private static function resolverTipo(string $slug): array
+    private static function resolverTipo(string $slug): ItemResuelto
     {
         $nombre = null;
         foreach (TipoEnum::cases() as $caso) {
@@ -173,22 +164,19 @@ final class ItemCatalogo
             return self::desconocido('tipo');
         }
 
-        return [
-            'nombre' => $nombre,
-            'imagen' => "/images/candy_type/{$slug}.webp",
-            'categoria' => 'tipo',
-        ];
+        return new ItemResuelto(
+            nombre: $nombre,
+            imagen: "/images/candy_type/{$slug}.webp",
+            categoria: 'tipo',
+        );
     }
 
-    /**
-     * @return array{nombre: string, imagen: string, categoria: string}
-     */
-    private static function desconocido(string $categoria = 'desconocida'): array
+    private static function desconocido(string $categoria = 'desconocida'): ItemResuelto
     {
-        return [
-            'nombre' => 'Desconocido',
-            'imagen' => '/images/candy_pokemon/0.webp',
-            'categoria' => $categoria,
-        ];
+        return new ItemResuelto(
+            nombre: 'Desconocido',
+            imagen: '/images/candy_pokemon/0.webp',
+            categoria: $categoria,
+        );
     }
 }

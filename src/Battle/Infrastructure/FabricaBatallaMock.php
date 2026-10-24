@@ -6,6 +6,7 @@ namespace Src\Battle\Infrastructure;
 
 use Src\Battle\Domain\AgregadoBatalla;
 use Src\Battle\Domain\Collections\CambiosStatsCollection;
+use Src\Battle\Domain\Collections\DatosPokemonBatallaCollection;
 use Src\Battle\Domain\DatosPokemonBatalla;
 use Src\Battle\Domain\Effects\FabricaEfectos;
 use Src\Battle\Domain\Enums\CategoriaMovimiento;
@@ -37,10 +38,9 @@ class FabricaBatallaMock implements FabricaBatallaInterface
         return new CambiosStatsCollection($cambios);
     }
 
-    /** @return DatosPokemonBatalla[] */
-    public function generateTeam1(): array
+    public function generateTeam1(): DatosPokemonBatallaCollection
     {
-        return [
+        return new DatosPokemonBatallaCollection([
             new DatosPokemonBatalla(
                 id: 'player_1',
                 nombre: 'Gengar',
@@ -107,13 +107,12 @@ class FabricaBatallaMock implements FabricaBatallaInterface
                 item: 'leftovers',
                 speciesId: 248,
             ),
-        ];
+        ]);
     }
 
-    /** @return DatosPokemonBatalla[] */
-    public function generateTeam2(): array
+    public function generateTeam2(): DatosPokemonBatallaCollection
     {
-        return [
+        return new DatosPokemonBatallaCollection([
             new DatosPokemonBatalla(
                 id: 'enemy_1',
                 nombre: 'Aggron',
@@ -176,7 +175,7 @@ class FabricaBatallaMock implements FabricaBatallaInterface
                 item: 'life_orb',
                 speciesId: 150,
             ),
-        ];
+        ]);
     }
 
     /**

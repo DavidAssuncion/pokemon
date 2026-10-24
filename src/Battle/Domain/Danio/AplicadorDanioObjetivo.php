@@ -70,16 +70,16 @@ final class AplicadorDanioObjetivo
 
         if ($battle !== null && ! $accion->attacker->tieneEfecto('allanamiento')) {
             $sustituto = $objetivo->absorberConSustituto($daño);
-            if ($sustituto['absorbido'] > 0.0) {
+            if ($sustituto->absorbido > 0.0) {
                 $battle->agregarLog(
-                    "El sustituto de {$objetivo->nombre()} absorbe ".round($sustituto['absorbido']).' de daño',
+                    "El sustituto de {$objetivo->nombre()} absorbe ".round($sustituto->absorbido).' de daño',
                 );
-                if ($sustituto['roto']) {
+                if ($sustituto->roto) {
                     $battle->agregarLog("¡El sustituto de {$objetivo->nombre()} se rompe!");
                 }
             }
 
-            $daño = $sustituto['restante'];
+            $daño = $sustituto->restante;
         }
 
         if ($daño <= 0.0) {

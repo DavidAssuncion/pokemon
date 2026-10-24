@@ -7,6 +7,7 @@ namespace Src\CombateRuta\App;
 use App\Models\Team;
 use App\Support\CreadorBatallaSesion;
 use Src\CombateEntrenadores\App\ConstruirEquipoJugador;
+use Src\CombateEntrenadores\Domain\ValueObjects\FormacionEquipo;
 use Src\Shared\Domain\Exceptions\ViolacionReglaNegocio;
 
 /**
@@ -41,10 +42,10 @@ final class IniciarCombateRuta
         $equipo = Team::with('members.reclutado.pokemon.stats', 'members.reclutado.pokemon.types')
             ->findOrFail($teamId);
 
-        $datosJugador = $this->construirEquipoJugador->desdeEquipo($equipo, $formacion, $nivelJugador);
+        $datosJugador = $this->construirEquipoJugador->desdeEquipo($equipo, FormacionEquipo::desde($formacion), $nivelJugador);
 
         $datosRival = $this->generadorEquipo->generar($habitatId, $nivel, $nivelJugador);
-        if ($datosRival === []) {
+        if ($datosRival->isEmpty()) {
             throw new ViolacionReglaNegocio('No hay Pokémon salvajes disponibles en esta ruta para tu nivel.');
         }
 

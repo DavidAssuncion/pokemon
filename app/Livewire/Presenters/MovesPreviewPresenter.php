@@ -129,7 +129,12 @@ final class MovesPreviewPresenter
         );
         $tipoEfectivo = $actor->tipoEfectivoMovimiento($action);
         $ajusteGolpes = $actor->ajustarGolpes($action);
-        $golpes = $ajusteGolpes['golpes'] ?? $move->perfil->golpesMax;
+        $golpes = $move->perfil->golpesMax;
+        $golpesMin = $move->perfil->golpesMin;
+        if ($ajusteGolpes !== null) {
+            $golpes = $ajusteGolpes->golpes;
+            $golpesMin = $ajusteGolpes->golpes;
+        }
 
         return [
             'nombre' => $move->nombre,
@@ -148,7 +153,7 @@ final class MovesPreviewPresenter
             'selfStatChanges' => self::cambiosParaArray($move->selfStatChanges),
             'targetStatChanges' => self::cambiosParaArray($move->targetStatChanges),
             'golpes' => $golpes,
-            'golpesMin' => $ajusteGolpes['golpes'] ?? $move->perfil->golpesMin,
+            'golpesMin' => $golpesMin,
             'golpesMax' => $golpes,
             'disponible' => $actor->movimientoDisponible($move),
             'motivoNoDisponible' => $actor->motivoMovimientoNoDisponible($move),

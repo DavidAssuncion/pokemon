@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Src\Battle\Domain\ValueObjects;
 
+use Src\Shared\Collections\StringCollection;
+
 /**
  * Value Object inmutable que encapsula el registro de eventos de una batalla.
  *
@@ -31,17 +33,9 @@ final class BattleLog
         return new self([...$this->entries, $entrada]);
     }
 
-    /**
-     * Retorna las entradas como array indexado.
-     *
-     * Frontera — para serialización/compatibilidad con capas externas.
-     * En F5b se migrará el consumo de los call-sites.
-     *
-     * @return list<string>
-     */
-    public function entries(): array
+    public function entries(): StringCollection
     {
-        return $this->entries;
+        return new StringCollection($this->entries);
     }
 
     /**
@@ -52,14 +46,9 @@ final class BattleLog
         return new self();
     }
 
-    /**
-     * Retorna las últimas N entradas.
-     *
-     * @return list<string>
-     */
-    public function ultimas(int $n): array
+    public function ultimas(int $n): StringCollection
     {
-        return array_slice($this->entries, -$n);
+        return new StringCollection(array_slice($this->entries, -$n));
     }
 
     /**

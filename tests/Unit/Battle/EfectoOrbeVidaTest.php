@@ -86,7 +86,7 @@ class EfectoOrbeVidaTest extends TestCase
         // Recoil = 10% del HP máximo
         $this->assertSame($hpInicial - max(1, $maxHp * 0.10), $atacante->hpActual());
         $this->assertTrue($battle->log()->tieneContenido());
-        $this->assertStringContainsString('Orbe Vida', implode(' ', $battle->log()->entries()));
+        $this->assertStringContainsString('Orbe Vida', implode(' ', $battle->log()->entries()->toList()));
     }
 
     public function test_orbe_vida_no_activa_recoil_si_atacante_muerto(): void

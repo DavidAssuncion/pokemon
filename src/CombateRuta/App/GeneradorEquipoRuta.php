@@ -7,11 +7,13 @@ namespace Src\CombateRuta\App;
 use App\Models\Habitat;
 use App\Models\Pokemon;
 use Random\Randomizer;
-use Src\Battle\Domain\DatosPokemonBatalla;
+use Src\Battle\Domain\Collections\DatosPokemonBatallaCollection;
+use Src\Battle\Domain\Posicion;
 use Src\CombateEntrenadores\App\MapeadorPokemonBatalla;
 use Src\Exploraciones\Domain\ValueObjects\ColeccionPoolPonderado;
 use Src\Exploraciones\Domain\ValueObjects\PoolHabitat;
 use Src\Pokemon\Domain\Stats\DatosStats;
+use Src\Pokemon\Domain\Stats\DatosStatsCollection;
 use Src\Pokemon\Domain\Stats\GeneradorIvs;
 use Src\Shared\Domain\ClasificadorOfensivaDefensiva;
 use Src\Shared\Domain\ProbabilidadesShiny;
@@ -40,7 +42,6 @@ final class GeneradorEquipoRuta
      * @param  int|null  $nivelRival  nivel de stats del rival (nivel del jugador)
      * @param  callable(): float|null  $aleatorio  fuente [0,1) por slot
      * @param  callable(int): int|null  $aleatorioShiny  fuente 1..N del roll shiny (1 = shiny)
-     * @return list<DatosPokemonBatalla>
      */
     public function generar(
         int $habitatId,
@@ -48,15 +49,15 @@ final class GeneradorEquipoRuta
         ?int $nivelRival = null,
         ?callable $aleatorio = null,
         ?callable $aleatorioShiny = null,
-    ): array {
+    ): DatosPokemonBatallaCollection {
         $pool = $this->poolDelHabitat($habitatId, $nivel);
         if ($pool === []) {
-            return [];
+            return new DatosPokemonBatallaCollection();
         }
 
         $ponderado = $this->ponderar($pool);
         if ($ponderado->pesoTotal() <= 0) {
-            return [];
+            return new DatosPokemonBatallaCollection();
         }
 
         $aleatorio ??= $this->aleatorioAzar();
@@ -65,15 +66,15 @@ final class GeneradorEquipoRuta
         for ($i = 0; $i < 3; $i++) {
             $seleccion = $ponderado->elegirConAleatorio($aleatorio);
             if ($seleccion === null) {
-                return [];
+                return new DatosPokemonBatallaCollection();
             }
             $seleccionados[] = $pool[$seleccion->id];
         }
 
-        $stats = array_map(
+        $stats = new DatosStatsCollection(array_map(
             fn (Pokemon $pokemon): DatosStats => $this->mapeador->statsDe($pokemon),
             $seleccionados,
-        );
+        ));
         $posiciones = $this->clasificador->generarFormacion($stats);
 
         $equipo = [];
@@ -84,14 +85,14 @@ final class GeneradorEquipoRuta
                 pokemon: $pokemon,
                 id: "ruta_{$habitatId}_{$nivel}_{$i}",
                 nombre: $pokemon->name,
-                posicion: $posiciones[$i],
+                posicion: $posiciones->en($i) ?? Posicion::VANGUARDIA,
                 nivel: $nivelRival,
                 shiny: $shiny,
                 ivs: $shiny ? GeneradorIvs::maximos() : GeneradorIvs::aleatorios(),
             );
         }
 
-        return $equipo;
+        return new DatosPokemonBatallaCollection($equipo);
     }
 
     /**

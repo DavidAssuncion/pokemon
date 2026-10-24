@@ -48,9 +48,9 @@ class ItemCatalogoTest extends TestCase
 
         $resuelto = ItemCatalogo::resolve('familia:51');
 
-        $this->assertSame('chansey', $resuelto['nombre']);
-        $this->assertSame('/images/candy_pokemon/1.webp', $resuelto['imagen']);
-        $this->assertSame('familia', $resuelto['categoria']);
+        $this->assertSame('chansey', $resuelto->nombre);
+        $this->assertSame('/images/candy_pokemon/1.webp', $resuelto->imagen);
+        $this->assertSame('familia', $resuelto->categoria);
     }
 
     public function test_resolve_familia_desempata_por_id_con_especies_iguales(): void
@@ -61,26 +61,26 @@ class ItemCatalogoTest extends TestCase
 
         $resuelto = ItemCatalogo::resolve('familia:52');
 
-        $this->assertSame('copia-temprana', $resuelto['nombre']);
-        $this->assertSame('/images/candy_pokemon/4.webp', $resuelto['imagen']);
+        $this->assertSame('copia-temprana', $resuelto->nombre);
+        $this->assertSame('/images/candy_pokemon/4.webp', $resuelto->imagen);
     }
 
     public function test_resolve_familia_sin_pokemon_cae_al_fallback(): void
     {
         $resuelto = ItemCatalogo::resolve('familia:999');
 
-        $this->assertSame('Desconocido', $resuelto['nombre']);
-        $this->assertSame('/images/candy_pokemon/0.webp', $resuelto['imagen']);
-        $this->assertSame('familia', $resuelto['categoria']);
+        $this->assertSame('Desconocido', $resuelto->nombre);
+        $this->assertSame('/images/candy_pokemon/0.webp', $resuelto->imagen);
+        $this->assertSame('familia', $resuelto->categoria);
     }
 
     public function test_resolve_ev_devuelve_nombre_y_slug_del_stat(): void
     {
         $resuelto = ItemCatalogo::resolve('ev:2');
 
-        $this->assertSame('Ataque', $resuelto['nombre']);
-        $this->assertSame('/images/candy_ev/atk.webp', $resuelto['imagen']);
-        $this->assertSame('ev', $resuelto['categoria']);
+        $this->assertSame('Ataque', $resuelto->nombre);
+        $this->assertSame('/images/candy_ev/atk.webp', $resuelto->imagen);
+        $this->assertSame('ev', $resuelto->categoria);
     }
 
     public function test_resolve_ev_todos_los_stats(): void
@@ -96,8 +96,8 @@ class ItemCatalogoTest extends TestCase
 
         foreach ($esperados as $stat => [$slug, $nombre]) {
             $resuelto = ItemCatalogo::resolve('ev:'.$stat);
-            $this->assertSame($nombre, $resuelto['nombre'], "stat {$stat}");
-            $this->assertSame("/images/candy_ev/{$slug}.webp", $resuelto['imagen'], "stat {$stat}");
+            $this->assertSame($nombre, $resuelto->nombre, "stat {$stat}");
+            $this->assertSame("/images/candy_ev/{$slug}.webp", $resuelto->imagen, "stat {$stat}");
         }
     }
 
@@ -105,43 +105,43 @@ class ItemCatalogoTest extends TestCase
     {
         $resuelto = ItemCatalogo::resolve('ev:99');
 
-        $this->assertSame('Desconocido', $resuelto['nombre']);
-        $this->assertSame('/images/candy_pokemon/0.webp', $resuelto['imagen']);
-        $this->assertSame('ev', $resuelto['categoria']);
+        $this->assertSame('Desconocido', $resuelto->nombre);
+        $this->assertSame('/images/candy_pokemon/0.webp', $resuelto->imagen);
+        $this->assertSame('ev', $resuelto->categoria);
     }
 
     public function test_resolve_tipo_resuelve_el_slug_al_nombre_en_espanol(): void
     {
         $resuelto = ItemCatalogo::resolve('tipo:electrico');
 
-        $this->assertSame('Eléctrico', $resuelto['nombre']);
-        $this->assertSame('/images/candy_type/electrico.webp', $resuelto['imagen']);
-        $this->assertSame('tipo', $resuelto['categoria']);
+        $this->assertSame('Eléctrico', $resuelto->nombre);
+        $this->assertSame('/images/candy_type/electrico.webp', $resuelto->imagen);
+        $this->assertSame('tipo', $resuelto->categoria);
     }
 
     public function test_resolve_tipo_desconocido_cae_al_fallback(): void
     {
         $resuelto = ItemCatalogo::resolve('tipo:metal');
 
-        $this->assertSame('Desconocido', $resuelto['nombre']);
-        $this->assertSame('/images/candy_pokemon/0.webp', $resuelto['imagen']);
-        $this->assertSame('tipo', $resuelto['categoria']);
+        $this->assertSame('Desconocido', $resuelto->nombre);
+        $this->assertSame('/images/candy_pokemon/0.webp', $resuelto->imagen);
+        $this->assertSame('tipo', $resuelto->categoria);
     }
 
     public function test_resolve_key_desconocida_no_lanza(): void
     {
         $resuelto = ItemCatalogo::resolve('pocion:42');
 
-        $this->assertSame('Desconocido', $resuelto['nombre']);
-        $this->assertSame('/images/candy_pokemon/0.webp', $resuelto['imagen']);
-        $this->assertSame('desconocida', $resuelto['categoria']);
+        $this->assertSame('Desconocido', $resuelto->nombre);
+        $this->assertSame('/images/candy_pokemon/0.webp', $resuelto->imagen);
+        $this->assertSame('desconocida', $resuelto->categoria);
     }
 
     public function test_resolve_ev_no_numerico_cae_al_fallback(): void
     {
         $resuelto = ItemCatalogo::resolve('ev:xyz');
 
-        $this->assertSame('Desconocido', $resuelto['nombre']);
-        $this->assertSame('desconocida', $resuelto['categoria']);
+        $this->assertSame('Desconocido', $resuelto->nombre);
+        $this->assertSame('desconocida', $resuelto->categoria);
     }
 }

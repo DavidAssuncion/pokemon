@@ -37,17 +37,32 @@ use Src\Battle\Domain\Enums\EstadoPokemon;
 use Src\Battle\Domain\Enums\FlagMovimiento;
 use Src\Battle\Domain\Enums\StatClave;
 use Src\Battle\Domain\Enums\TipoClima;
+use Src\Battle\Domain\ValueObjects\AjusteGolpes;
 use Src\Battle\Domain\ValueObjects\ResultadoDanio;
 use Src\Shared\Tipos\TipoPokemon;
 
-class ColeccionEfectos
+/**
+ * @implements \IteratorAggregate<int, InterfazEfecto>
+ */
+class ColeccionEfectos implements \Countable, \IteratorAggregate
 {
     /** @var InterfazEfecto[] */
     private array $effects = [];
 
+    /** @return \ArrayIterator<int, InterfazEfecto> */
+    public function getIterator(): \ArrayIterator
+    {
+        return new \ArrayIterator($this->effects);
+    }
+
     public function add(InterfazEfecto $effect): void
     {
         $this->effects[] = $effect;
+    }
+
+    public function first(): ?InterfazEfecto
+    {
+        return $this->effects[0] ?? null;
     }
 
     /**
@@ -71,16 +86,14 @@ class ColeccionEfectos
      *
      * Equivalencia exacta con el filtrado previo (array_filter + array_values):
      * mismo orden y mismo reindexado (append secuencial).
-     *
-     * @return InterfazEfecto[]
      */
-    public function unicos(): array
+    public function unicos(): self
     {
-        $resultado = [];
+        $resultado = new self();
 
         foreach ($this->effects as $e) {
             if ($e->esUnico()) {
-                $resultado[] = $e;
+                $resultado->add($e);
             }
         }
 
@@ -180,10 +193,7 @@ class ColeccionEfectos
         return false;
     }
 
-    /**
-     * @return array{golpes: int, fraccionPotencia: float}|null
-     */
-    public function ajustarGolpes(AccionBatalla $accion): ?array
+    public function ajustarGolpes(AccionBatalla $accion): ?AjusteGolpes
     {
         foreach ($this->effects as $efecto) {
             if ($efecto instanceof AjustaGolpes) {

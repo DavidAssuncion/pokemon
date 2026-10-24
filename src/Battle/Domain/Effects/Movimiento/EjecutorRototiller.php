@@ -28,7 +28,7 @@ class EjecutorRototiller extends EjecutorMovimientoAbstracto
 
         foreach ([$battle->team1, $battle->team2] as $equipo) {
             foreach ($equipo->combatientesCollection()->vivos() as $combatiente) {
-                if (! in_array(TipoPokemon::PLANTA, $combatiente->tiposDefensivos(), true)) {
+                if (! $combatiente->tiposDefensivos()->contiene(TipoPokemon::PLANTA)) {
                     continue;
                 }
 

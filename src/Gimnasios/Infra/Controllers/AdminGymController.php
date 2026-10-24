@@ -8,6 +8,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
+use Src\Gimnasios\Domain\Collections\EquipoEtapaGimnasioCollection;
 use Src\Gimnasios\Domain\DataTransferObjects\EquipoEtapaGimnasio;
 use Src\Gimnasios\Domain\Repositories\GymCatalogoRepositoryInterface;
 use Src\Shared\Collections\IntCollection;
@@ -26,9 +27,8 @@ class AdminGymController extends Controller
 
     public function index(): JsonResponse
     {
-        $gimnasios = array_map(
+        $gimnasios = $this->catalogo->obtenerTodos()->map(
             fn ($gimnasio): array => $this->serializar($gimnasio),
-            $this->catalogo->obtenerTodos(),
         );
 
         return response()->json($gimnasios);
@@ -93,23 +93,21 @@ class AdminGymController extends Controller
 
         $etapa = max(1, min(4, $etapa));
         $gimnasio = $this->catalogo->obtenerPorSlugOrFail($slug);
-        $equipos = $gimnasio->equipos;
-
-        $equipos[$etapa] = new EquipoEtapaGimnasio(
+        $equipo = new EquipoEtapaGimnasio(
             vanguardia: new IntCollection(array_map('intval', (array) ($data['vanguardia'] ?? []))),
             retaguardia: new IntCollection(array_map('intval', (array) ($data['retaguardia'] ?? []))),
         );
+        $equipos = $gimnasio->equipos->con($etapa, $equipo);
 
         $this->catalogo->actualizarEtapas($slug, $equipos);
 
-        return response()->json($this->serializarEquipoEtapa($etapa, $equipos[$etapa]));
+        return response()->json($this->serializarEquipoEtapa($etapa, $equipo));
     }
 
     /**
      * @param  array<int, array{vanguardia?: list<int>, retaguardia?: list<int>}>  $etapas
-     * @return array<int, EquipoEtapaGimnasio>
      */
-    private function equiposDesdeValidated(array $etapas): array
+    private function equiposDesdeValidated(array $etapas): EquipoEtapaGimnasioCollection
     {
         $equipos = [];
 
@@ -125,13 +123,13 @@ class AdminGymController extends Controller
             );
         }
 
-        return $equipos;
+        return new EquipoEtapaGimnasioCollection($equipos);
     }
 
     private function serializar(\Src\Gimnasios\Domain\Gimnasio $gimnasio): array
     {
         $etapas = [];
-        foreach ($gimnasio->equipos as $etapa => $equipo) {
+        foreach ($gimnasio->equipos->etapas() as $etapa => $equipo) {
             $etapas[$etapa] = [
                 'vanguardia' => $equipo->vanguardia->all(),
                 'retaguardia' => $equipo->retaguardia->all(),

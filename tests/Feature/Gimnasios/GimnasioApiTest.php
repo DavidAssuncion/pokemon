@@ -270,11 +270,11 @@ class GimnasioApiTest extends TestCase
         $this->assertCount(3, $combatants);
 
         // HP base 35, nivel 17 → BattleStats::calcularHp(35,0,17) = floor((2*35*17/100)+17+10) = 38
-        $this->assertSame(38, (int) $combatants[0]->pokemon()->battleStats()->hp);
+        $this->assertSame(38, (int) $combatants->en(0)->pokemon()->battleStats()->hp);
         // atk base 40, nivel 17 → floor((2*40*17/100)+5) = 18
-        $this->assertSame(18, (int) $combatants[0]->pokemon()->battleStats()->attack);
+        $this->assertSame(18, (int) $combatants->en(0)->pokemon()->battleStats()->attack);
         // speed base 60, nivel 17 → floor((2*60*17/100)+5) = 25
-        $this->assertSame(25, (int) $combatants[0]->pokemon()->battleStats()->speed);
+        $this->assertSame(25, (int) $combatants->en(0)->pokemon()->battleStats()->speed);
     }
 
     #[Test]

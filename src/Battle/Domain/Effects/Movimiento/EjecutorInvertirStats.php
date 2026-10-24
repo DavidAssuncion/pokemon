@@ -20,7 +20,7 @@ class EjecutorInvertirStats extends EjecutorMovimientoAbstracto
     public function ejecutar(AccionBatalla $accion, float $danoAplicado, AgregadoBatalla $battle): void
     {
         $etapas = $accion->defender->multiplicadores()->obtenerEtapas();
-        $invertidas = array_map(static fn (int $etapa): int => -$etapa, $etapas);
+        $invertidas = array_map(static fn (int $etapa): int => -$etapa, $etapas->toArray());
         $accion->defender->setMultiplicadores(MultiplicadoresStats::desdeEtapas($invertidas));
         $battle->agregarLog("{$accion->defender->nombre()} ve invertidas sus características");
     }

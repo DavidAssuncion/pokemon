@@ -24,7 +24,7 @@ final class HuevoController extends Controller
 
     public function index(): JsonResponse
     {
-        return response()->json($this->listar->listar((int) auth()->id()));
+        return response()->json($this->listar->listar((int) auth()->id())->toArray());
     }
 
     public function store(Request $request): JsonResponse
@@ -39,7 +39,7 @@ final class HuevoController extends Controller
         );
 
         return response()->json([
-            'huevo' => $this->listar->serializarUno($huevo),
+            'huevo' => $this->listar->serializarUno($huevo)->toArray(),
         ], 201);
     }
 

@@ -21,8 +21,8 @@ class AgregadoBatallaTest extends TestCase
     public function test_elegir_mejor_movimiento_accede_a_movimientos_por_getter(): void
     {
         $battle = (new FabricaBatallaMock())->createBattle();
-        $attacker = $battle->team1->combatants()[0];
-        $defender = $battle->team2->combatants()[0];
+        $attacker = $battle->team1->combatants()->en(0);
+        $defender = $battle->team2->combatants()->en(0);
 
         $move = $battle->elegirMejorMovimiento($attacker, $defender);
 

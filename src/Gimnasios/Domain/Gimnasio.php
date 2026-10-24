@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Src\Gimnasios\Domain;
 
+use Src\Gimnasios\Domain\Collections\EquipoEtapaGimnasioCollection;
 use Src\Gimnasios\Domain\DataTransferObjects\EquipoEtapaGimnasio;
 use Src\Shared\Tipos\TipoPokemon;
 
@@ -14,21 +15,18 @@ use Src\Shared\Tipos\TipoPokemon;
  */
 final class Gimnasio
 {
-    /**
-     * @param  array<int, EquipoEtapaGimnasio>  $equipos  etapas 1-4, cada una con vanguardia/retaguardia
-     */
     public function __construct(
         public readonly string $slug,
         public readonly string $medalla,
         public readonly TipoPokemon $tipo,
         public readonly int $nivelMinimo,
-        public readonly array $equipos,
+        public readonly EquipoEtapaGimnasioCollection $equipos,
     ) {
     }
 
     public function equipoEtapa(int $etapa): ?EquipoEtapaGimnasio
     {
-        return $this->equipos[$etapa] ?? null;
+        return $this->equipos->en($etapa);
     }
 
     public function nombreEtapa(int $etapa): string

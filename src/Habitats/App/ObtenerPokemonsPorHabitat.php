@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Src\Habitats\App;
 
+use Src\Habitats\Domain\Collections\PokemonBasicoCollection;
 use Src\Habitats\Domain\Repositories\HabitatRepositoryInterface;
 
 class ObtenerPokemonsPorHabitat
@@ -12,7 +13,7 @@ class ObtenerPokemonsPorHabitat
     {
     }
 
-    public function handle(int $habitatId): array
+    public function handle(int $habitatId): PokemonBasicoCollection
     {
         return $this->repository->getPokemonsByHabitat($habitatId);
     }

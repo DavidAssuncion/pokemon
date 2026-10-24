@@ -41,7 +41,7 @@ final readonly class ResultadoBatallaExploracion
             'hp_final' => $this->hpFinal,
             'barrera_fisica_final' => $this->barreraFisicaFinal,
             'barrera_especial_final' => $this->barreraEspecialFinal,
-            'log' => $this->log->entries(),
+            'log' => $this->log->entries()->toList(),
             'hp_max' => $this->hpMax,
             'barrera_fisica_max' => $this->barreraFisicaMax,
             'barrera_especial_max' => $this->barreraEspecialMax,

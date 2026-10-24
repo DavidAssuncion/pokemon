@@ -40,15 +40,15 @@ class EquipoBatallaTest extends TestCase
 
     public function test_from_data_crea_combatientes_con_ids(): void
     {
-        $equipo = EquipoBatalla::fromData([
+        $equipo = EquipoBatalla::fromData(new \Src\Battle\Domain\Collections\DatosPokemonBatallaCollection([
             $this->datoPokemon('p1'),
             $this->datoPokemon('p2'),
             $this->datoPokemon('p3'),
-        ], 'Equipo');
+        ]), 'Equipo');
 
         $this->assertSame('Equipo', $equipo->name);
         $this->assertCount(3, $equipo->combatants());
-        $this->assertSame('Pp1', $equipo->combatants()[0]->nombre());
+        $this->assertSame('Pp1', $equipo->combatants()->en(0)->nombre());
     }
 
     public function test_from_data_procesa_efectos_y_items(): void
@@ -73,9 +73,9 @@ class EquipoBatallaTest extends TestCase
             item: 'leftovers',
         );
 
-        $equipo = EquipoBatalla::fromData([$dato], 'Equipo', $fabrica);
+        $equipo = EquipoBatalla::fromData(new \Src\Battle\Domain\Collections\DatosPokemonBatallaCollection([$dato]), 'Equipo', $fabrica);
 
-        $combatant = $equipo->combatants()[0];
+        $combatant = $equipo->combatants()->en(0);
         $this->assertSame('leftovers', $combatant->item());
         $this->assertTrue($combatant->tieneEfecto('armor_pierce'));
         $this->assertTrue($combatant->tieneEfecto('leftovers'));
@@ -91,7 +91,7 @@ class EquipoBatallaTest extends TestCase
         $equipo->agregarCombatiente($c2, Posicion::VANGUARDIA);
 
         $this->assertCount(1, $equipo->combatientesVivos());
-        $this->assertSame('Vivo', $equipo->combatientesVivos()[0]->nombre());
+        $this->assertSame('Vivo', $equipo->combatientesVivos()->en(0)->nombre());
     }
 
     public function test_vanguardia_y_retaguardia_alive(): void
@@ -166,8 +166,8 @@ class EquipoBatallaTest extends TestCase
             evs: $evs,
         );
 
-        $equipo = EquipoBatalla::fromData([$dato], 'Equipo');
-        $evs = $equipo->combatants()[0]->pokemon()->evs();
+        $equipo = EquipoBatalla::fromData(new \Src\Battle\Domain\Collections\DatosPokemonBatallaCollection([$dato]), 'Equipo');
+        $evs = $equipo->combatants()->en(0)->pokemon()->evs();
 
         $this->assertSame(252.0, $evs->hp, 'hp debe ser 252');
         $this->assertSame(128.0, $evs->attack, 'attack debe ser 128');
@@ -193,8 +193,8 @@ class EquipoBatallaTest extends TestCase
             moves: [new MovimientoBatalla('Golpe', 50, TipoPokemon::NORMAL, CategoriaMovimiento::FISICO)],
         );
 
-        $equipo = EquipoBatalla::fromData([$dato], 'Equipo');
-        $evs = $equipo->combatants()[0]->pokemon()->evs();
+        $equipo = EquipoBatalla::fromData(new \Src\Battle\Domain\Collections\DatosPokemonBatallaCollection([$dato]), 'Equipo');
+        $evs = $equipo->combatants()->en(0)->pokemon()->evs();
 
         $this->assertSame(0.0, $evs->hp);
         $this->assertSame(0.0, $evs->attack);

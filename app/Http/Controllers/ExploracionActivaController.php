@@ -114,7 +114,7 @@ class ExploracionActivaController extends Controller
         );
 
         return response()->json([
-            'capacidades' => $capacidades->todas(),
+            'capacidades' => $capacidades->todas()->toArray(),
             'nivel_jugador' => $usuario->nivel(),
             'nivel_pokemon' => NivelHelper::nivelDesdeExperiencia($reclutado->exp->total()),
             'min_lvl' => $minLvl,

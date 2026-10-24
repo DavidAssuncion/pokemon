@@ -20,6 +20,20 @@ final class MovimientoBatallaCollection extends Collection
     public string $type = MovimientoBatalla::class;
 
     /**
+     * @param  list<MovimientoBatalla>  $items
+     */
+    public function __construct(array $items = [])
+    {
+        parent::__construct($items);
+    }
+
+    /** @return list<MovimientoBatalla> */
+    public function all(): array
+    {
+        return $this->items;
+    }
+
+    /**
      * Primer movimiento con el nombre dado, o null si no existe.
      */
     public function porNombre(string $nombre): ?MovimientoBatalla

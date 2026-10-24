@@ -67,7 +67,7 @@ class EloquentTeamRepositoryTest extends TestCase
         $resultado = app(EloquentTeamRepository::class)->obtenerTodos();
 
         $this->assertCount(1, $resultado);
-        $agregado = $resultado[0];
+        $agregado = $resultado->en(0);
         $this->assertInstanceOf(TeamAggregate::class, $agregado);
         $this->assertSame($team->id, $agregado->id);
         $this->assertSame('Alpha', $agregado->name);

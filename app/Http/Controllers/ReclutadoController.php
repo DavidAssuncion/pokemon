@@ -18,6 +18,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 use Src\Exploraciones\App\FabricaCapacidadesStats;
+use Src\Reclutamiento\App\Collections\PokemonCollection;
 use Src\Reclutamiento\App\ServicioEvolucion;
 use Src\Shared\Domain\NivelHelper;
 
@@ -193,7 +194,7 @@ class ReclutadoController extends Controller
         $userId = auth()->id();
         $opciones = ServicioEvolucion::opcionesEvolucion($reclutado->pokemon);
 
-        if ($opciones === []) {
+        if ($opciones->isEmpty()) {
             return response()->json(['error' => 'No hay evolución disponible'], 422);
         }
 
@@ -241,24 +242,21 @@ class ReclutadoController extends Controller
      *
      * - Una sola opción → siempre esa (se acepta con o sin evolved_species_id).
      * - Varias opciones → exige evolved_species_id ∈ opciones.
-     *
-     * @param  array<int, Pokemon>  $opciones
      */
-    private function resolverDestinoSeleccion(array $opciones, ?int $evolvedSpeciesId): ?Pokemon
+    private function resolverDestinoSeleccion(PokemonCollection $opciones, ?int $evolvedSpeciesId): ?Pokemon
     {
-        if (count($opciones) === 1) {
-            return $evolvedSpeciesId === null || $evolvedSpeciesId === $opciones[0]->id ? $opciones[0] : null;
+        $primera = $opciones->primero();
+
+        if ($opciones->count() === 1) {
+            return $evolvedSpeciesId === null || ($primera !== null && $evolvedSpeciesId === $primera->id)
+                ? $primera
+                : null;
         }
         if ($evolvedSpeciesId === null) {
             return null;
         }
-        foreach ($opciones as $opcion) {
-            if ($opcion->id === $evolvedSpeciesId) {
-                return $opcion;
-            }
-        }
 
-        return null;
+        return $opciones->porId($evolvedSpeciesId);
     }
 
     /**
@@ -268,19 +266,14 @@ class ReclutadoController extends Controller
     private function resolverDestino(Reclutado $reclutado, ?int $evolvedSpeciesId): ?Pokemon
     {
         $opciones = ServicioEvolucion::opcionesEvolucion($reclutado->pokemon);
-        if ($opciones === []) {
+        if ($opciones->isEmpty()) {
             return null;
         }
         if ($evolvedSpeciesId === null) {
-            return $opciones[0];
-        }
-        foreach ($opciones as $opcion) {
-            if ($opcion->id === $evolvedSpeciesId) {
-                return $opcion;
-            }
+            return $opciones->primero();
         }
 
-        return null;
+        return $opciones->porId($evolvedSpeciesId);
     }
 
     /**
@@ -491,7 +484,7 @@ class ReclutadoController extends Controller
         $reclutado->loadMissing('pokemon.stats', 'pokemon.types');
 
         return response()->json(
-            FabricaCapacidadesStats::desdeReclutado($reclutado, auth()->user())->todas()
+            FabricaCapacidadesStats::desdeReclutado($reclutado, auth()->user())->todas()->toArray()
         );
     }
 

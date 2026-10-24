@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Src\Exploraciones\Domain;
 
+use Src\Shared\Domain\ValueObjects\MapaFactores;
+
 /**
  * Capacidades de un pokémon reclutado para exploración, calculadas a partir
  * de sus stats base y niveles (dominio puro).
@@ -220,18 +222,15 @@ final class CapacidadesStats
         return $this->rangoDeteccion($dificultad)->nivel() >= RangoCapacidad::EXPERTO->nivel();
     }
 
-    /**
-     * @return array{combate: float, deteccion: float, recoleccion: float, supervivencia: float, exploracion: float, movilidad: float}
-     */
-    public function todas(): array
+    public function todas(): MapaFactores
     {
-        return [
+        return MapaFactores::desdeArray([
             'combate' => $this->combate(),
             'deteccion' => $this->deteccion(),
             'recoleccion' => $this->recoleccion(),
             'supervivencia' => $this->supervivencia(),
             'exploracion' => $this->exploracion(),
             'movilidad' => $this->movilidad(),
-        ];
+        ]);
     }
 }

@@ -15,6 +15,7 @@ use Illuminate\Validation\Rule;
 use Src\Battle\Domain\Catalog\CatalogoObjetos;
 use Src\Equipos\App\ActualizarObjetosEquipo;
 use Src\Equipos\Domain\TeamRepositoryInterface;
+use Src\Equipos\Domain\ValueObjects\ObjetosEquipo;
 
 class TeamController extends Controller
 {
@@ -231,12 +232,12 @@ class TeamController extends Controller
 
         $data = Validator::make($request->all(), [
             'items' => 'sometimes|array',
-            'items.*' => ['nullable', 'string', Rule::in([...CatalogoObjetos::claves(), ''])],
+            'items.*' => ['nullable', 'string', Rule::in([...CatalogoObjetos::claves()->toList(), ''])],
         ])->validate();
 
         $itemsActuales = $this->actualizarObjetosEquipo->actualizar(
             $team,
-            $data['items'] ?? [],
+            ObjetosEquipo::desde($data['items'] ?? []),
             (int) Auth::id(),
         );
 
@@ -244,7 +245,7 @@ class TeamController extends Controller
             return response()->json([
                 'team' => [
                     'id' => $team->id,
-                    'items' => $itemsActuales,
+                    'items' => $itemsActuales->toArray(),
                 ],
             ]);
         }

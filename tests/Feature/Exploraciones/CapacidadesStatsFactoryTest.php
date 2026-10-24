@@ -65,8 +65,8 @@ class CapacidadesStatsFactoryTest extends TestCase
         $stats = FabricaCapacidadesStats::desdeReclutado($reclutado, $user);
 
         // Recalculamos con los valores reales: hp=100, atk=80, def=70, spAtk=90, spDef=60, speed=50
-        $manual = (new CapacidadesStats(100, 80, 70, 90, 60, 50, 7, 3))->todas();
-        $this->assertSame($manual, $stats->todas());
+        $manual = (new CapacidadesStats(100, 80, 70, 90, 60, 50, 7, 3))->todas()->toArray();
+        $this->assertSame($manual, $stats->todas()->toArray());
     }
 
     private function crearReclutado(User $user, int $expTotal, bool $soloHp = false): Reclutado

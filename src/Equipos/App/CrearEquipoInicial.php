@@ -10,6 +10,12 @@ use App\Models\Reclutado;
 use App\Models\Team;
 use App\Models\TeamMember;
 use Illuminate\Support\Facades\DB;
+use Src\Equipos\Domain\Collections\EquipoDefinidoCollection;
+use Src\Equipos\Domain\Collections\EquipoInicialResumenCollection;
+use Src\Equipos\Domain\DataTransferObjects\EquipoDefinido;
+use Src\Equipos\Domain\DataTransferObjects\EquipoInicialResumen;
+use Src\Shared\Collections\IntCollection;
+use Src\Shared\Collections\StringCollection;
 
 /**
  * Creación del equipo inicial de onboarding en una transacción.
@@ -25,68 +31,55 @@ use Illuminate\Support\Facades\DB;
  */
 final class CrearEquipoInicial
 {
-    /**
-     * @return list<array{key: string, nombre: string, pokemon_ids: list<int>, behaviors: list<string>}>
-     */
-    public static function equiposDefinidos(): array
+    public static function equiposDefinidos(): EquipoDefinidoCollection
     {
-        return [
-            [
-                'key' => 'A',
-                'nombre' => 'Equipo A',
-                'pokemon_ids' => [69, 37, 79],
-                'behaviors' => ['VANGUARDIA', 'COMBATIENTE', 'RECOLECTOR'],
-            ],
-            [
-                'key' => 'B',
-                'nombre' => 'Equipo B',
-                'pokemon_ids' => [183, 228, 220],
-                'behaviors' => ['VANGUARDIA', 'COMBATIENTE', 'RASTREADOR'],
-            ],
-            [
-                'key' => 'C',
-                'nombre' => 'Equipo C',
-                'pokemon_ids' => [341, 328, 285],
-                'behaviors' => ['VANGUARDIA', 'COMBATIENTE', 'RECOLECTOR'],
-            ],
-        ];
+        return new EquipoDefinidoCollection([
+            new EquipoDefinido(
+                key: 'A',
+                nombre: 'Equipo A',
+                pokemonIds: new IntCollection([69, 37, 79]),
+                behaviors: new StringCollection(['VANGUARDIA', 'COMBATIENTE', 'RECOLECTOR']),
+            ),
+            new EquipoDefinido(
+                key: 'B',
+                nombre: 'Equipo B',
+                pokemonIds: new IntCollection([183, 228, 220]),
+                behaviors: new StringCollection(['VANGUARDIA', 'COMBATIENTE', 'RASTREADOR']),
+            ),
+            new EquipoDefinido(
+                key: 'C',
+                nombre: 'Equipo C',
+                pokemonIds: new IntCollection([341, 328, 285]),
+                behaviors: new StringCollection(['VANGUARDIA', 'COMBATIENTE', 'RECOLECTOR']),
+            ),
+        ]);
     }
 
-    /**
-     * @return array{key: string, nombre: string, pokemon_ids: list<int>, behaviors: list<string>}|null
-     */
-    public static function porClave(string $key): ?array
+    public static function porClave(string $key): ?EquipoDefinido
     {
-        $equipos = self::equiposDefinidos();
-        foreach ($equipos as $equipo) {
-            if ($equipo['key'] === $key) {
-                return $equipo;
-            }
-        }
-
-        return null;
+        return self::equiposDefinidos()->porClave($key);
     }
 
     /**
      * Equipos predefinidos con nombres de pokémon resueltos desde BD.
-     *
-     * @return list<array{key: string, nombre: string, pokemon_ids: list<int>, pokemon_nombres: list<string>}>
      */
-    public static function equiposConNombres(): array
+    public static function equiposConNombres(): EquipoInicialResumenCollection
     {
         $nombresPorId = self::resolverNombres();
+        $resultado = new EquipoInicialResumenCollection();
 
-        return array_map(function (array $equipo) use ($nombresPorId): array {
-            return [
-                'key' => $equipo['key'],
-                'nombre' => $equipo['nombre'],
-                'pokemon_ids' => $equipo['pokemon_ids'],
-                'pokemon_nombres' => array_map(
+        foreach (self::equiposDefinidos() as $equipo) {
+            $resultado->add(new EquipoInicialResumen(
+                key: $equipo->key,
+                nombre: $equipo->nombre,
+                pokemonIds: $equipo->pokemonIds,
+                pokemonNombres: new StringCollection($equipo->pokemonIds->map(
                     fn (int $id): string => $nombresPorId[$id] ?? 'Pokémon #'.$id,
-                    $equipo['pokemon_ids'],
-                ),
-            ];
-        }, self::equiposDefinidos());
+                )),
+            ));
+        }
+
+        return $resultado;
     }
 
     /**
@@ -104,7 +97,7 @@ final class CrearEquipoInicial
         $team = DB::transaction(function () use ($userId, $equipo, $nombresPorId): Team {
             $reclutadoIds = [];
 
-            foreach ($equipo['pokemon_ids'] as $pokemonId) {
+            foreach ($equipo->pokemonIds as $pokemonId) {
                 $nombre = $nombresPorId[$pokemonId] ?? 'Pokémon #'.$pokemonId;
                 $reclutado = Reclutado::create([
                     'user_id' => $userId,
@@ -122,7 +115,7 @@ final class CrearEquipoInicial
             }
 
             $team = Team::create([
-                'name' => $equipo['nombre'],
+                'name' => $equipo->nombre,
                 'user_id' => $userId,
             ]);
 
@@ -131,14 +124,14 @@ final class CrearEquipoInicial
                     'team_id' => $team->id,
                     'pokemon_id' => $reclutadoId,
                     'slot' => $index + 1,
-                    'behavior' => $equipo['behaviors'][$index],
+                    'behavior' => $equipo->behaviors->toList()[$index],
                 ]);
             }
 
             return $team;
         });
 
-        foreach ($equipo['pokemon_ids'] as $pokemonId) {
+        foreach ($equipo->pokemonIds as $pokemonId) {
             ActualizarPokedexJob::dispatch($userId, $pokemonId, 'RECLUTADO');
         }
 
@@ -152,7 +145,7 @@ final class CrearEquipoInicial
     {
         $ids = [];
         foreach (self::equiposDefinidos() as $equipo) {
-            foreach ($equipo['pokemon_ids'] as $id) {
+            foreach ($equipo->pokemonIds as $id) {
                 $ids[$id] = $id;
             }
         }

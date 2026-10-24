@@ -15,6 +15,7 @@ use App\Models\TeamMember;
 use App\Support\ReclutadoSerializer;
 use Illuminate\View\View;
 use Src\Equipos\App\ObtenerEquipos;
+use Src\Exploraciones\Domain\Collections\RolesExploracionCollection;
 use Src\Exploraciones\Domain\RolExploracion;
 use Src\Exploraciones\Domain\SinergiaEquipo;
 
@@ -77,9 +78,11 @@ class PlayerController extends Controller
                 // no con team_members.behavior.
                 // Equipos de 4-5: la tabla solo cubre pares/tríos → null
                 // (no mostrar sinergia), aceptable.
-                $roles = $members->map(
-                    fn (TeamMember $m): RolExploracion => $m->reclutado?->rol() ?? RolExploracion::COMBATIENTE
-                )->all();
+                $roles = new RolesExploracionCollection(
+                    $members->map(
+                        fn (TeamMember $m): RolExploracion => $m->reclutado?->rol() ?? RolExploracion::COMBATIENTE
+                    )->all()
+                );
                 $sinergia = SinergiaEquipo::sinergiaPara($roles);
             }
 
@@ -98,8 +101,8 @@ class PlayerController extends Controller
                         'reclutado' => $m->reclutado,
                     ];
                 })->all(),
-                'sinergia' => $sinergia,
-                'sinergia_nombre' => $sinergia['nombre'] ?? null,
+                'sinergia' => $sinergia?->toArray(),
+                'sinergia_nombre' => $sinergia?->nombre,
             ];
         })->all();
 

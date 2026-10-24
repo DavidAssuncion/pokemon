@@ -64,4 +64,10 @@ final class StringCollection extends Collection
     {
         return $this->items;
     }
+
+    /** @return list<string> */
+    public function all(): array
+    {
+        return $this->items;
+    }
 }

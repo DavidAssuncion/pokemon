@@ -6,9 +6,10 @@ namespace Src\CombateEntrenadores\App;
 
 use App\Models\Pokemon;
 use App\Models\Team;
-use Src\Battle\Domain\DatosPokemonBatalla;
+use Src\Battle\Domain\Collections\DatosPokemonBatallaCollection;
 use Src\Battle\Domain\Enums\PosturaCombate;
 use Src\Battle\Domain\Posicion;
+use Src\CombateEntrenadores\Domain\ValueObjects\FormacionEquipo;
 use Src\Shared\Domain\ClasificadorOfensivaDefensiva;
 use Src\Shared\Domain\Exceptions\ViolacionReglaNegocio;
 
@@ -33,13 +34,12 @@ class ConstruirEquipoJugador
      * Construye los datos de batalla del equipo y valida que aporte
      * exactamente 3 combatientes (regla estándar de combate).
      *
-     * @param  array<int, string>  $formacion  posición por slot del popup: [slot => 'vanguardia'|'retaguardia']
+     * @param  FormacionEquipo  $formacion  posición por slot elegida en el popup
      * @param  int|null  $nivel  nivel del jugador (para escalar stats en gimnasios); null = stats base (entrenadores hábitat)
-     * @return list<DatosPokemonBatalla>
      *
      * @throws ViolacionReglaNegocio si el equipo no aporta exactamente 3 combatientes
      */
-    public function desdeEquipo(Team $equipo, array $formacion, ?int $nivel = null): array
+    public function desdeEquipo(Team $equipo, FormacionEquipo $formacion, ?int $nivel = null): DatosPokemonBatallaCollection
     {
         $combatientes = [];
 
@@ -47,6 +47,7 @@ class ConstruirEquipoJugador
 
         /** @var array<int, string> $formacionPersistida */
         $formacionPersistida = $equipo->getAttribute('formacion') ?? [];
+        $formacionPersistidaVo = FormacionEquipo::desde($formacionPersistida);
 
         foreach ($miembros as $miembro) {
             $reclutado = $miembro->reclutado;
@@ -57,7 +58,7 @@ class ConstruirEquipoJugador
             }
 
             $slot = (int) $miembro->slot;
-            $posicion = $this->posicionPara($slot, $formacion, $formacionPersistida, $pokemon);
+            $posicion = $this->posicionPara($slot, $formacion, $formacionPersistidaVo, $pokemon);
 
             /** @var array<int, string> $posturasPersistidas */
             $posturasPersistidas = $equipo->getAttribute('posturas') ?? [];
@@ -87,23 +88,20 @@ class ConstruirEquipoJugador
             throw new ViolacionReglaNegocio('El equipo debe tener exactamente 3 miembros para combatir.');
         }
 
-        return $combatientes;
+        return new DatosPokemonBatallaCollection($combatientes);
     }
 
     /**
      * Posición de un slot: la del popup si existe; si no, la persistida en el
      * Team; si no, la clasificación por stats (se usan stats base: el ratio
      * ofensiva/defensiva es el mismo a cualquier nivel).
-     *
-     * @param  array<int, string>  $formacion
-     * @param  array<int, string>  $formacionPersistida
      */
-    private function posicionPara(int $slot, array $formacion, array $formacionPersistida, Pokemon $pokemon): Posicion
+    private function posicionPara(int $slot, FormacionEquipo $formacion, FormacionEquipo $formacionPersistida, Pokemon $pokemon): Posicion
     {
-        $elegida = $formacion[$slot] ?? $formacionPersistida[$slot] ?? null;
+        $elegida = $formacion->para($slot) ?? $formacionPersistida->para($slot);
 
-        if ($elegida !== null && in_array($elegida, ['vanguardia', 'retaguardia'], true)) {
-            return Posicion::from($elegida);
+        if ($elegida !== null) {
+            return $elegida;
         }
 
         $stats = $this->mapeador->statsDe($pokemon);

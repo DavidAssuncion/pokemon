@@ -53,7 +53,7 @@ class GeneradorEquipoRutaTest extends TestCase
         $this->assertCount(3, $equipo);
         $this->assertSame(
             [601, 601, 602],
-            array_map(fn (DatosPokemonBatalla $d): int => $d->speciesId, $equipo),
+            array_map(fn (DatosPokemonBatalla $d): int => $d->speciesId, $equipo->all()),
         );
     }
 
@@ -75,7 +75,7 @@ class GeneradorEquipoRutaTest extends TestCase
         $equipo = $this->crearGenerador()->generar((int) $habitat->id, 1, nivelRival: 12, aleatorio: $aleatorio);
 
         $this->assertCount(3, $equipo);
-        $formacion = array_map(fn (DatosPokemonBatalla $d): string => $d->posicion->value, $equipo);
+        $formacion = array_map(fn (DatosPokemonBatalla $d): string => $d->posicion->value, $equipo->all());
 
         $this->assertContains(Posicion::VANGUARDIA->value, $formacion);
         $this->assertContains(Posicion::RETAGUARDIA->value, $formacion);
@@ -101,7 +101,7 @@ class GeneradorEquipoRutaTest extends TestCase
 
         $this->assertSame(
             ['ruta_'.$habitat->id.'_1_0', 'ruta_'.$habitat->id.'_1_1', 'ruta_'.$habitat->id.'_1_2'],
-            array_map(fn (DatosPokemonBatalla $d): string => $d->id, $equipo),
+            array_map(fn (DatosPokemonBatalla $d): string => $d->id, $equipo->all()),
         );
     }
 
@@ -113,7 +113,7 @@ class GeneradorEquipoRutaTest extends TestCase
 
         $equipo = $this->crearGenerador()->generar((int) $habitat->id, 1, nivelRival: 12);
 
-        $this->assertSame([], $equipo);
+        $this->assertTrue($equipo->isEmpty());
     }
 
     #[Test]
@@ -126,7 +126,7 @@ class GeneradorEquipoRutaTest extends TestCase
 
         $equipo = $this->crearGenerador()->generar((int) $habitat->id, 1, nivelRival: 12);
 
-        $this->assertSame([], $equipo);
+        $this->assertTrue($equipo->isEmpty());
     }
 
     #[Test]
@@ -149,7 +149,7 @@ class GeneradorEquipoRutaTest extends TestCase
 
         $this->assertSame(
             [911, 911, 911],
-            array_map(fn (DatosPokemonBatalla $d): int => $d->speciesId, $equipo),
+            array_map(fn (DatosPokemonBatalla $d): int => $d->speciesId, $equipo->all()),
         );
     }
 

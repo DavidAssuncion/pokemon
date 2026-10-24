@@ -6,6 +6,8 @@ namespace Src\Gimnasios\Infra;
 
 use App\Models\Gym;
 use App\Models\GymStage;
+use Src\Gimnasios\Domain\Collections\EquipoEtapaGimnasioCollection;
+use Src\Gimnasios\Domain\Collections\GimnasioCollection;
 use Src\Gimnasios\Domain\DataTransferObjects\EquipoEtapaGimnasio;
 use Src\Gimnasios\Domain\Exceptions\GimnasioNoExiste;
 use Src\Gimnasios\Domain\Gimnasio;
@@ -21,11 +23,13 @@ use Src\Shared\Tipos\TipoPokemon;
  */
 final class EloquentGymCatalogoRepository implements GymCatalogoRepositoryInterface
 {
-    public function obtenerTodos(): array
+    public function obtenerTodos(): GimnasioCollection
     {
         $gyms = Gym::query()->with('stages')->get();
 
-        return $gyms->map(fn (Gym $model): Gimnasio => $this->desdeModelo($model))->values()->all();
+        return new GimnasioCollection(
+            $gyms->map(fn (Gym $model): Gimnasio => $this->desdeModelo($model))->values()->all()
+        );
     }
 
     public function obtenerPorSlugOrFail(string $slug): Gimnasio
@@ -39,7 +43,7 @@ final class EloquentGymCatalogoRepository implements GymCatalogoRepositoryInterf
         return $this->desdeModelo($model);
     }
 
-    public function insertar(string $slug, string $medalla, TipoPokemon $tipo, int $nivelMinimo, array $equipos = []): Gimnasio
+    public function insertar(string $slug, string $medalla, TipoPokemon $tipo, int $nivelMinimo, EquipoEtapaGimnasioCollection $equipos = new EquipoEtapaGimnasioCollection()): Gimnasio
     {
         $gym = Gym::query()->updateOrCreate(
             ['slug' => $slug],
@@ -68,22 +72,18 @@ final class EloquentGymCatalogoRepository implements GymCatalogoRepositoryInterf
         return $this->desdeModelo($model->load('stages'));
     }
 
-    public function actualizarEtapas(string $slug, array $equipos): void
+    public function actualizarEtapas(string $slug, EquipoEtapaGimnasioCollection $equipos): void
     {
         $model = $this->obtenerModeloOrFail($slug);
 
         $this->persistirEtapas($model, $equipos);
     }
 
-    private function persistirEtapas(Gym $gym, array $equipos): void
+    private function persistirEtapas(Gym $gym, EquipoEtapaGimnasioCollection $equipos): void
     {
         $existentes = $gym->stages()->pluck('id', 'etapa');
 
-        foreach ($equipos as $etapa => $equipo) {
-            if (! $equipo instanceof EquipoEtapaGimnasio) {
-                continue;
-            }
-
+        foreach ($equipos->etapas() as $etapa => $equipo) {
             $data = [
                 'vanguardia' => $equipo->vanguardia->all(),
                 'retaguardia' => $equipo->retaguardia->all(),
@@ -127,7 +127,7 @@ final class EloquentGymCatalogoRepository implements GymCatalogoRepositoryInterf
             medalla: $model->medalla,
             tipo: TipoPokemon::from((int) $model->tipo),
             nivelMinimo: (int) $model->nivel_minimo,
-            equipos: $equipos,
+            equipos: new EquipoEtapaGimnasioCollection($equipos),
         );
     }
 }

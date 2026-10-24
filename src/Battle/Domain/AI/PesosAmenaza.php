@@ -6,6 +6,7 @@ namespace Src\Battle\Domain\AI;
 
 use Src\Battle\Domain\Enums\ClaveEfecto;
 use Src\Battle\Domain\Enums\ClaveItem;
+use Src\Shared\Domain\ValueObjects\MapaFactores;
 
 /**
  * Pesos configurables para el cálculo de amenaza y evaluación de acciones.
@@ -81,12 +82,15 @@ final class PesosAmenaza
 
     /**
      * Retorna todos los efectos registrados y sus pesos.
-     *
-     * @return array<int|string, float>
      */
-    public function efectosRegistrados(): array
+    public function efectosRegistrados(): MapaFactores
     {
-        return $this->efectos;
+        $efectos = [];
+        foreach ($this->efectos as $clave => $peso) {
+            $efectos[(string) $clave] = $peso;
+        }
+
+        return MapaFactores::desdeArray($efectos);
     }
 
     /**

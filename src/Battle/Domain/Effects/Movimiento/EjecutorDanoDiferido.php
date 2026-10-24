@@ -35,8 +35,8 @@ class EjecutorDanoDiferido extends EjecutorMovimientoAbstracto
                     ? \Src\Battle\Domain\Enums\StatClave::ATAQUE_ESPECIAL
                     : \Src\Battle\Domain\Enums\StatClave::ATAQUE,
             ),
-            'stab' => $accion->attacker->tiposDefensivos() !== []
-                && in_array($accion->move->tipo, $accion->attacker->tiposDefensivos(), true) ? 1.5 : 1.0,
+            'stab' => ! $accion->attacker->tiposDefensivos()->isEmpty()
+                && $accion->attacker->tiposDefensivos()->contiene($accion->move->tipo) ? 1.5 : 1.0,
             'ronda' => $battle->turnManager()->round() + $turnos,
             'fraccion' => 0.0,
         ]);

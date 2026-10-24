@@ -4,7 +4,8 @@ declare(strict_types=1);
 
 namespace Src\CombateRuta\Domain\DataTransferObjects;
 
-use Src\Exploraciones\Domain\Recompensas\RecompensaCaptura;
+use Src\Exploraciones\Domain\Collections\RecompensaCapturaCollection;
+use Src\Shared\Domain\Collections\ItemModalCollection;
 
 /**
  * Resultado de un combate de ruta: la victoria devuelve las recompensas al
@@ -15,20 +16,14 @@ use Src\Exploraciones\Domain\Recompensas\RecompensaCaptura;
  */
 final readonly class ResultadoRuta
 {
-    /**
-     * @param  list<array{src: string, alt: string, cantidad: int, nombre: string|null}>  $caramelosFamilia
-     * @param  list<array{src: string, alt: string, cantidad: int, nombre: string|null}>  $caramelosEv
-     * @param  list<array{src: string, alt: string, cantidad: int, nombre: string|null}>  $caramelosTipo
-     * @param  list<RecompensaCaptura>  $capturas
-     */
     public function __construct(
         public readonly bool $victoria,
         public readonly int $expTotal,
         public readonly int $expMiembro,
-        public readonly array $caramelosFamilia,
-        public readonly array $caramelosEv,
-        public readonly array $caramelosTipo,
-        public readonly array $capturas,
+        public readonly ItemModalCollection $caramelosFamilia,
+        public readonly ItemModalCollection $caramelosEv,
+        public readonly ItemModalCollection $caramelosTipo,
+        public readonly RecompensaCapturaCollection $capturas,
     ) {
     }
 
@@ -49,17 +44,10 @@ final readonly class ResultadoRuta
         return [
             'exp_total' => $this->expTotal,
             'exp_miembro' => $this->expMiembro,
-            'caramelos_familia' => $this->caramelosFamilia,
-            'caramelos_ev' => $this->caramelosEv,
-            'caramelos_tipo' => $this->caramelosTipo,
-            'capturas' => array_map(
-                fn (RecompensaCaptura $captura): array => [
-                    'pokemon_id' => $captura->pokemonId,
-                    'cantidad' => $captura->cantidad,
-                    'es_shiny' => $captura->esShiny,
-                ],
-                $this->capturas,
-            ),
+            'caramelos_familia' => $this->caramelosFamilia->toArray(),
+            'caramelos_ev' => $this->caramelosEv->toArray(),
+            'caramelos_tipo' => $this->caramelosTipo->toArray(),
+            'capturas' => $this->capturas->toArray(),
         ];
     }
 }

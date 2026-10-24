@@ -10,20 +10,20 @@
     <div class="grid md:grid-cols-3 gap-6">
         @foreach($equipos as $equipo)
         <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-            <h2 class="text-lg font-bold text-gray-900 dark:text-white mb-2">{{ $equipo['nombre'] }}</h2>
+            <h2 class="text-lg font-bold text-gray-900 dark:text-white mb-2">{{ $equipo->nombre }}</h2>
             <ul class="space-y-1 mb-4">
-                @foreach($equipo['pokemon_nombres'] as $nombre)
+                @foreach($equipo->pokemonNombres as $nombre)
                 <li class="text-sm text-gray-600 dark:text-gray-400">• {{ $nombre }}</li>
                 @endforeach
             </ul>
             <form method="POST" action="{{ url('/onboarding/equipo-inicial') }}">
                 @csrf
-                <input type="hidden" name="team_key" value="{{ $equipo['key'] }}">
+                <input type="hidden" name="team_key" value="{{ $equipo->key }}">
                 <button
                     type="submit"
                     class="w-full px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-bold hover:bg-blue-700 transition-colors"
                 >
-                    Elegir {{ $equipo['nombre'] }}
+                    Elegir {{ $equipo->nombre }}
                 </button>
             </form>
         </div>

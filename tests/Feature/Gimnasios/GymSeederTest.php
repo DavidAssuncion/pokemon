@@ -28,8 +28,8 @@ class GymSeederTest extends TestCase
         // El gimnasio bug conserva las especies de su etapa 1 del catálogo
         $bug = $repo->obtenerPorSlugOrFail('bug');
         $this->assertSame('Medalla Bicho', $bug->medalla);
-        $this->assertSame([268, 266], $bug->equipos[1]->vanguardia->all());
-        $this->assertSame([900], $bug->equipos[1]->retaguardia->all());
+        $this->assertSame([268, 266], $bug->equipos->en(1)->vanguardia->all());
+        $this->assertSame([900], $bug->equipos->en(1)->retaguardia->all());
 
         // dragon es el de mayor nivel mínimo
         $dragon = $repo->obtenerPorSlugOrFail('dragon');
@@ -37,7 +37,7 @@ class GymSeederTest extends TestCase
 
         // Cada gimnasio tiene sus etapas persistidas en gym_stages
         $this->assertSame(18 * 4, GymStage::query()->count());
-        $this->assertGreaterThanOrEqual(1, $bug->equipos[1]->vanguardia->count());
+        $this->assertGreaterThanOrEqual(1, $bug->equipos->en(1)->vanguardia->count());
     }
 
     #[Test]

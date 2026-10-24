@@ -216,7 +216,7 @@ class ValidadorExploracionTest extends TestCase
         $activas = $this->validator->exploracionesActivas($habitat->id);
 
         $this->assertCount(1, $activas);
-        $this->assertEquals(1, $activas[0]['nivel']);
+        $this->assertEquals(1, $activas->en(0)?->nivel);
     }
 
     public function test_exploraciones_activas_returns_multiple_teams(): void

@@ -46,7 +46,7 @@ class GeneradorPokemonGimnasioTest extends TestCase
 
         // Escalado 3v3: un DTO de 1 solo combatiente se repite cíclicamente hasta 3.
         $this->assertCount(3, $equipo);
-        $evs = $equipo[0]->evs;
+        $evs = $equipo->en(0)->evs;
         $this->assertSame(64.0, $evs->hp);
         $this->assertSame(64.0, $evs->attack);
         $this->assertSame(64.0, $evs->defense);
@@ -68,7 +68,7 @@ class GeneradorPokemonGimnasioTest extends TestCase
         ), 50, 128, 64);
 
         $this->assertCount(3, $equipo);
-        $evs = $equipo[0]->evs;
+        $evs = $equipo->en(0)->evs;
         $this->assertSame(64.0, $evs->hp);
         $this->assertSame(128.0, $evs->attack);
         $this->assertSame(64.0, $evs->defense);
@@ -88,7 +88,7 @@ class GeneradorPokemonGimnasioTest extends TestCase
         ), 50, 0, 0);
 
         $this->assertCount(3, $equipo);
-        $evs = $equipo[0]->evs;
+        $evs = $equipo->en(0)->evs;
         $this->assertSame(0.0, $evs->hp);
         $this->assertSame(0.0, $evs->attack);
         $this->assertSame(0.0, $evs->defense);
@@ -111,12 +111,12 @@ class GeneradorPokemonGimnasioTest extends TestCase
         ), 50);
 
         $this->assertCount(3, $equipo);
-        $this->assertSame(Posicion::VANGUARDIA, $equipo[0]->posicion);
-        $this->assertSame(Posicion::VANGUARDIA, $equipo[1]->posicion);
-        $this->assertSame(Posicion::RETAGUARDIA, $equipo[2]->posicion);
+        $this->assertSame(Posicion::VANGUARDIA, $equipo->en(0)->posicion);
+        $this->assertSame(Posicion::VANGUARDIA, $equipo->en(1)->posicion);
+        $this->assertSame(Posicion::RETAGUARDIA, $equipo->en(2)->posicion);
         $this->assertSame([268, 266, 900], array_map(
             fn (DatosPokemonBatalla $p): int => $p->speciesId,
-            $equipo,
+            $equipo->all(),
         ));
     }
 
@@ -133,12 +133,12 @@ class GeneradorPokemonGimnasioTest extends TestCase
         ), 50);
 
         $this->assertCount(3, $equipo);
-        $this->assertSame(Posicion::VANGUARDIA, $equipo[0]->posicion);
-        $this->assertSame(Posicion::RETAGUARDIA, $equipo[1]->posicion);
-        $this->assertSame(Posicion::RETAGUARDIA, $equipo[2]->posicion);
+        $this->assertSame(Posicion::VANGUARDIA, $equipo->en(0)->posicion);
+        $this->assertSame(Posicion::RETAGUARDIA, $equipo->en(1)->posicion);
+        $this->assertSame(Posicion::RETAGUARDIA, $equipo->en(2)->posicion);
         $this->assertSame([338, 464, 464], array_map(
             fn (DatosPokemonBatalla $p): int => $p->speciesId,
-            $equipo,
+            $equipo->all(),
         ));
     }
 
@@ -156,12 +156,12 @@ class GeneradorPokemonGimnasioTest extends TestCase
         ), 50);
 
         $this->assertCount(3, $equipo);
-        $this->assertSame(Posicion::VANGUARDIA, $equipo[0]->posicion);
-        $this->assertSame(Posicion::RETAGUARDIA, $equipo[1]->posicion);
-        $this->assertSame(Posicion::RETAGUARDIA, $equipo[2]->posicion);
+        $this->assertSame(Posicion::VANGUARDIA, $equipo->en(0)->posicion);
+        $this->assertSame(Posicion::RETAGUARDIA, $equipo->en(1)->posicion);
+        $this->assertSame(Posicion::RETAGUARDIA, $equipo->en(2)->posicion);
         $this->assertSame([560, 461, 861], array_map(
             fn (DatosPokemonBatalla $p): int => $p->speciesId,
-            $equipo,
+            $equipo->all(),
         ));
     }
 
@@ -173,7 +173,7 @@ class GeneradorPokemonGimnasioTest extends TestCase
             retaguardia: new IntCollection([]),
         ), 50);
 
-        $this->assertSame([], $equipo);
+        $this->assertTrue($equipo->isEmpty());
     }
 
     #[Test]
@@ -191,11 +191,11 @@ class GeneradorPokemonGimnasioTest extends TestCase
         $this->assertCount(3, $equipo);
         $this->assertSame([488, 150, 488], array_map(
             fn (DatosPokemonBatalla $p): int => $p->speciesId,
-            $equipo,
+            $equipo->all(),
         ));
-        $this->assertSame(Posicion::VANGUARDIA, $equipo[0]->posicion);
-        $this->assertSame(Posicion::RETAGUARDIA, $equipo[1]->posicion);
-        $this->assertSame(Posicion::VANGUARDIA, $equipo[2]->posicion);
+        $this->assertSame(Posicion::VANGUARDIA, $equipo->en(0)->posicion);
+        $this->assertSame(Posicion::RETAGUARDIA, $equipo->en(1)->posicion);
+        $this->assertSame(Posicion::VANGUARDIA, $equipo->en(2)->posicion);
     }
 
     /**

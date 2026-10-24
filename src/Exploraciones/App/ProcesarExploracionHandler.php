@@ -498,7 +498,7 @@ final class ProcesarExploracionHandler implements CommandHandler
             'barrera_especial_final' => $estadoExplorador->barreraEspecial,
             'barrera_fisica_max' => $estadoExplorador->barreraFisicaMax,
             'barrera_especial_max' => $estadoExplorador->barreraEspecialMax,
-            'log' => $resultado->log->entries(),
+            'log' => $resultado->log->entries()->toList(),
             'duration_loss' => 0,
         ];
     }

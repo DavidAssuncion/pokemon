@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Src\Battle\Domain\Catalog;
 
 use Src\Battle\Domain\Enums\ClaveItem;
+use Src\Shared\Collections\StringCollection;
 
 /**
  * Catálogo de objetos equipables de combate.
@@ -55,22 +56,16 @@ final class CatalogoObjetos
         return self::cargasDe($clave) > 0;
     }
 
-    /**
-     * @return list<string>
-     */
-    public static function claves(): array
+    public static function claves(): StringCollection
     {
-        return array_keys(self::OBJETOS);
+        return new StringCollection(array_keys(self::OBJETOS));
     }
 
-    /**
-     * @return list<string>
-     */
-    public static function clavesDeEfecto(): array
+    public static function clavesDeEfecto(): StringCollection
     {
-        return array_map(
+        return new StringCollection(array_map(
             static fn (ClaveItem $item): string => $item->value,
             ClaveItem::cases(),
-        );
+        ));
     }
 }

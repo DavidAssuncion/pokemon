@@ -4,7 +4,8 @@ declare(strict_types=1);
 
 namespace Src\Gimnasios\Domain\Repositories;
 
-use Src\Gimnasios\Domain\DataTransferObjects\EquipoEtapaGimnasio;
+use Src\Gimnasios\Domain\Collections\EquipoEtapaGimnasioCollection;
+use Src\Gimnasios\Domain\Collections\GimnasioCollection;
 use Src\Gimnasios\Domain\Gimnasio;
 use Src\Shared\Tipos\TipoPokemon;
 
@@ -16,10 +17,7 @@ use Src\Shared\Tipos\TipoPokemon;
  */
 interface GymCatalogoRepositoryInterface
 {
-    /**
-     * @return list<Gimnasio>
-     */
-    public function obtenerTodos(): array;
+    public function obtenerTodos(): GimnasioCollection;
 
     /**
      * NO devuelve null: si el slug no existe lanza GimnasioNoExiste.
@@ -34,8 +32,7 @@ interface GymCatalogoRepositoryInterface
         string $medalla,
         TipoPokemon $tipo,
         int $nivelMinimo,
-        /** @var array<int, EquipoEtapaGimnasio> */
-        array $equipos = [],
+        EquipoEtapaGimnasioCollection $equipos = new EquipoEtapaGimnasioCollection(),
     ): Gimnasio;
 
     /**
@@ -45,8 +42,6 @@ interface GymCatalogoRepositoryInterface
 
     /**
      * (Re)escribe las etapas (1-4) de un gimnasio.
-     *
-     * @param  array<int, EquipoEtapaGimnasio>  $equipos
      */
-    public function actualizarEtapas(string $slug, array $equipos): void;
+    public function actualizarEtapas(string $slug, EquipoEtapaGimnasioCollection $equipos): void;
 }

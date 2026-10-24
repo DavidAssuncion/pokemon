@@ -15,7 +15,7 @@ class ManejadorEfectividadTipo extends ManejadorDanioAbstracto
 
         if ($action->attacker->tieneEfecto('ojo_mental')
             && in_array($tipo, [\Src\Shared\Tipos\TipoPokemon::NORMAL, \Src\Shared\Tipos\TipoPokemon::LUCHA], true)
-            && in_array(\Src\Shared\Tipos\TipoPokemon::FANTASMA, $action->defender->tiposDefensivos(), true)) {
+            && $action->defender->tiposDefensivos()->contiene(\Src\Shared\Tipos\TipoPokemon::FANTASMA)) {
             $efectividad = 1.0;
             foreach ($action->defender->tiposDefensivos() as $tipoDefensor) {
                 if ($tipoDefensor !== \Src\Shared\Tipos\TipoPokemon::FANTASMA) {
@@ -26,7 +26,7 @@ class ManejadorEfectividadTipo extends ManejadorDanioAbstracto
 
         if ($action->attacker->tieneEfecto('valentia')
             && in_array($tipo, [\Src\Shared\Tipos\TipoPokemon::NORMAL, \Src\Shared\Tipos\TipoPokemon::LUCHA], true)
-            && in_array(\Src\Shared\Tipos\TipoPokemon::FANTASMA, $action->defender->tiposDefensivos(), true)) {
+            && $action->defender->tiposDefensivos()->contiene(\Src\Shared\Tipos\TipoPokemon::FANTASMA)) {
             $efectividad = 1.0;
             foreach ($action->defender->tiposDefensivos() as $tipoDefensor) {
                 if ($tipoDefensor !== \Src\Shared\Tipos\TipoPokemon::FANTASMA) {

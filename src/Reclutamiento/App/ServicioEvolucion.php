@@ -10,10 +10,12 @@ use App\Models\PokemonEvolution;
 use App\Models\PokemonType;
 use App\Models\Reclutado;
 use App\Support\ItemCatalogo;
+use Src\Reclutamiento\App\Collections\PokemonCollection;
 use Src\Reclutamiento\Domain\Collections\OpcionEvolucionCollection;
 use Src\Reclutamiento\Domain\Collections\RequisitoEvolucionCollection;
 use Src\Reclutamiento\Domain\DataTransferObjects\OpcionEvolucion;
 use Src\Reclutamiento\Domain\DataTransferObjects\RequisitoEvolucion;
+use Src\Reclutamiento\Domain\ValueObjects\InventarioCaramelos;
 use Src\Shared\Collections\StringCollection;
 use Src\Shared\Domain\NivelHelper;
 use Src\Shared\Domain\SlugTipo;
@@ -47,14 +49,12 @@ final class ServicioEvolucion
      * con orden determinístico por minimum_level y evolved_species_id.
      * El seeder omite las formas alternas (mega/gmax), por lo que no es
      * necesario excluirlas por id.
-     *
-     * @return array<int, Pokemon>
      */
-    public static function opcionesEvolucion(Pokemon $pokemon): array
+    public static function opcionesEvolucion(Pokemon $pokemon): PokemonCollection
     {
         $ids = self::idsEvolucion($pokemon);
         if ($ids->isEmpty()) {
-            return [];
+            return new PokemonCollection();
         }
 
         $pokemons = Pokemon::query()
@@ -63,11 +63,13 @@ final class ServicioEvolucion
             ->get()
             ->keyBy('id');
 
-        return $ids
-            ->map(fn (int $id): Pokemon => $pokemons->get($id))
-            ->filter()
-            ->values()
-            ->all();
+        return new PokemonCollection(
+            $ids
+                ->map(fn (int $id): Pokemon => $pokemons->get($id))
+                ->filter()
+                ->values()
+                ->all()
+        );
     }
 
     /**
@@ -89,7 +91,7 @@ final class ServicioEvolucion
      */
     public static function siguienteEvolucion(Pokemon $pokemon): ?Pokemon
     {
-        return self::opcionesEvolucion($pokemon)[0] ?? null;
+        return self::opcionesEvolucion($pokemon)->primero();
     }
 
     /**
@@ -150,7 +152,7 @@ final class ServicioEvolucion
 
         $resultado = new OpcionEvolucionCollection();
 
-        if ($opciones === []) {
+        if ($opciones->isEmpty()) {
             return $resultado;
         }
 
@@ -164,11 +166,7 @@ final class ServicioEvolucion
         return $resultado;
     }
 
-    /**
-     * @param  array<int, Pokemon>  $opciones
-     * @return array<string, int>  item_key -> cantidad
-     */
-    private static function caramelosDeOpciones(array $opciones, int $userId): array
+    private static function caramelosDeOpciones(PokemonCollection $opciones, int $userId): InventarioCaramelos
     {
         $slugs = [];
         foreach ($opciones as $opcion) {
@@ -178,20 +176,19 @@ final class ServicioEvolucion
         }
 
         if ($slugs === []) {
-            return [];
+            return InventarioCaramelos::vacio();
         }
 
-        return PlayerInventory::query()
-            ->where('user_id', $userId)
-            ->whereIn('item_key', array_keys($slugs))
-            ->pluck('cantidad', 'item_key')
-            ->all();
+        return new InventarioCaramelos(
+            PlayerInventory::query()
+                ->where('user_id', $userId)
+                ->whereIn('item_key', array_keys($slugs))
+                ->pluck('cantidad', 'item_key')
+                ->all()
+        );
     }
 
-    /**
-     * @param  array<string, int>  $inventario  item_key -> cantidad
-     */
-    private static function opcionRequisitos(Pokemon $opcion, int $umbral, Reclutado $reclutado, array $inventario): OpcionEvolucion
+    private static function opcionRequisitos(Pokemon $opcion, int $umbral, Reclutado $reclutado, InventarioCaramelos $inventario): OpcionEvolucion
     {
         $requisitos = new RequisitoEvolucionCollection();
 
@@ -218,21 +215,18 @@ final class ServicioEvolucion
             $tipo,
             $umbral,
             $reclutado,
-            [ItemCatalogo::keyTipo($tipo) => self::caramelosDisponibles($tipo, $userId)],
+            new InventarioCaramelos([ItemCatalogo::keyTipo($tipo) => self::caramelosDisponibles($tipo, $userId)]),
         );
     }
 
-    /**
-     * @param  array<string, int>  $inventario  item_key -> cantidad
-     */
-    private static function requisitoTipoConInventario(string $tipo, int $umbral, Reclutado $reclutado, array $inventario): RequisitoEvolucion
+    private static function requisitoTipoConInventario(string $tipo, int $umbral, Reclutado $reclutado, InventarioCaramelos $inventario): RequisitoEvolucion
     {
         return new RequisitoEvolucion(
             tipo: $tipo,
             slug: SlugTipo::de($tipo),
             necesario: $umbral,
             actual: $reclutado->exp->expTipo($tipo),
-            caramelosDisponibles: $inventario[ItemCatalogo::keyTipo($tipo)] ?? 0,
+            caramelosDisponibles: $inventario->cantidad(ItemCatalogo::keyTipo($tipo)),
         );
     }
 

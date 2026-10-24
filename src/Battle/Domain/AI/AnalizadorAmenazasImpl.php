@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Src\Battle\Domain\AI;
 
+use Src\Battle\Domain\AI\Collections\EvaluacionAmenazaCollection;
 use Src\Battle\Domain\AI\ValueObjects\EvaluacionAmenaza;
 use Src\Battle\Domain\Combatiente;
 
@@ -19,18 +20,15 @@ class AnalizadorAmenazasImpl implements AnalizadorAmenazas
     ) {
     }
 
-    public function analizar(ContextoDecisionIA $contexto): array
+    public function analizar(ContextoDecisionIA $contexto): EvaluacionAmenazaCollection
     {
-        $amenazas = [];
+        $amenazas = new EvaluacionAmenazaCollection();
 
         foreach ($contexto->enemigos as $enemigo) {
-            $amenazas[] = $this->evaluarEnemigo($contexto, $enemigo);
+            $amenazas->add($this->evaluarEnemigo($contexto, $enemigo));
         }
 
-        // Ordenar por score descendente
-        usort($amenazas, fn (EvaluacionAmenaza $a, EvaluacionAmenaza $b) => $b->score <=> $a->score);
-
-        return array_values($amenazas);
+        return $amenazas->ordenadasPorScoreDesc();
     }
 
     private function evaluarEnemigo(ContextoDecisionIA $contexto, Combatiente $enemigo): EvaluacionAmenaza
@@ -110,7 +108,7 @@ class AnalizadorAmenazasImpl implements AnalizadorAmenazas
     {
         $etapas = $enemigo->multiplicadores()->obtenerEtapas();
         $totalPositivas = 0;
-        foreach ($etapas as $valor) {
+        foreach ($etapas->toArray() as $valor) {
             if ($valor > 0) {
                 $totalPositivas += $valor;
             }
@@ -133,7 +131,7 @@ class AnalizadorAmenazasImpl implements AnalizadorAmenazas
         }
 
         // Efectos/habilidades registradas en PesosAmenaza
-        foreach ($this->pesos->efectosRegistrados() as $clave => $pesoEfecto) {
+        foreach ($this->pesos->efectosRegistrados()->toArray() as $clave => $pesoEfecto) {
             if ($enemigo->tieneEfecto($clave)) {
                 $puntos += $pesoEfecto;
             }

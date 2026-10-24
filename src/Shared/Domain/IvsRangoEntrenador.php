@@ -19,16 +19,14 @@ final class IvsRangoEntrenador
     public const LIDER_RESTO = 12;
 
     /**
-     * Rango [ivPrincipal, ivResto] para entrenadores de hábitat según nivel (1-3).
-     *
-     * @return array{0: int, 1: int}
+     * Rango de IVs para entrenadores de hábitat según nivel (1-3).
      */
-    public static function rangoPorNivelEntrenador(int $nivel): array
+    public static function rangoPorNivelEntrenador(int $nivel): RangoIvs
     {
         return match (true) {
-            $nivel <= 1 => [8, 6],
-            $nivel === 2 => [10, 8],
-            default => [12, 10],
+            $nivel <= 1 => new RangoIvs(8, 6),
+            $nivel === 2 => new RangoIvs(10, 8),
+            default => new RangoIvs(12, 10),
         };
     }
 

@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Src\Battle\Domain\ValueObjects;
 
-use Src\Battle\Domain\Effects\InterfazEfecto;
+use Src\Battle\Domain\Effects\ColeccionEfectos;
 
 /**
  * Estado de supresión de habilidades de un combatiente.
@@ -19,8 +19,12 @@ final class EstadoHabilidad
 
     private bool $anuladaPorGas = false;
 
-    /** @var list<InterfazEfecto> */
-    private array $guardados = [];
+    private ColeccionEfectos $guardados;
+
+    public function __construct()
+    {
+        $this->guardados = new ColeccionEfectos();
+    }
 
     public function anulada(): bool
     {
@@ -32,41 +36,29 @@ final class EstadoHabilidad
         return $this->anuladaPorGas;
     }
 
-    /**
-     * @return list<InterfazEfecto>
-     */
-    public function guardados(): array
+    public function guardados(): ColeccionEfectos
     {
         return $this->guardados;
     }
 
-    /**
-     * @param  list<InterfazEfecto>  $guardados
-     */
-    public function marcarAnulada(array $guardados, bool $porGas = false): void
+    public function marcarAnulada(ColeccionEfectos $guardados, bool $porGas = false): void
     {
         $this->anulada = true;
         $this->anuladaPorGas = $porGas;
         $this->guardados = $guardados;
     }
 
-    /**
-     * @return list<InterfazEfecto>
-     */
-    public function restaurar(): array
+    public function restaurar(): ColeccionEfectos
     {
         $guardados = $this->guardados;
-        $this->guardados = [];
+        $this->guardados = new ColeccionEfectos();
         $this->anulada = false;
         $this->anuladaPorGas = false;
 
         return $guardados;
     }
 
-    /**
-     * @param  list<InterfazEfecto>  $guardados
-     */
-    public function restaurarDesde(bool $anulada, array $guardados, bool $anuladaPorGas = false): void
+    public function restaurarDesde(bool $anulada, ColeccionEfectos $guardados, bool $anuladaPorGas = false): void
     {
         $this->anulada = $anulada;
         $this->guardados = $guardados;

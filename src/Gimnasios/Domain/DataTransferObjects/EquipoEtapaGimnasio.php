@@ -20,9 +20,11 @@ final class EquipoEtapaGimnasio
     ) {
     }
 
-    /** @return list<int> */
-    public function todos(): array
+    public function todos(): IntCollection
     {
-        return [...$this->vanguardia->all(), ...$this->retaguardia->all()];
+        return new IntCollection([
+            ...$this->vanguardia->all(),
+            ...$this->retaguardia->all(),
+        ]);
     }
 }

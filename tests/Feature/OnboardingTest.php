@@ -64,16 +64,18 @@ class OnboardingTest extends TestCase
         $response->assertOk();
         $equipos = $response->viewData('equipos');
 
+        $lista = $equipos->all();
+
         $this->assertCount(3, $equipos);
-        $this->assertSame(['A', 'B', 'C'], array_column($equipos, 'key'));
-        $this->assertSame('Equipo A', $equipos[0]['nombre']);
-        $this->assertSame('Equipo B', $equipos[1]['nombre']);
-        $this->assertSame('Equipo C', $equipos[2]['nombre']);
-        $this->assertSame([69, 37, 79], $equipos[0]['pokemon_ids']);
-        $this->assertSame([183, 228, 220], $equipos[1]['pokemon_ids']);
-        $this->assertSame([341, 328, 285], $equipos[2]['pokemon_ids']);
+        $this->assertSame(['A', 'B', 'C'], array_map(fn ($equipo): string => $equipo->key, $lista));
+        $this->assertSame('Equipo A', $lista[0]->nombre);
+        $this->assertSame('Equipo B', $lista[1]->nombre);
+        $this->assertSame('Equipo C', $lista[2]->nombre);
+        $this->assertSame([69, 37, 79], $lista[0]->pokemonIds->all());
+        $this->assertSame([183, 228, 220], $lista[1]->pokemonIds->all());
+        $this->assertSame([341, 328, 285], $lista[2]->pokemonIds->all());
         // Nombres resueltos desde la tabla pokemon.
-        $this->assertSame(['Bellsprout', 'Vulpix', 'Slowpoke'], $equipos[0]['pokemon_nombres']);
+        $this->assertSame(['Bellsprout', 'Vulpix', 'Slowpoke'], $lista[0]->pokemonNombres->all());
     }
 
     public function test_get_onboarding_resuelve_nombres_con_fallback_si_falta_pokemon(): void
@@ -85,7 +87,7 @@ class OnboardingTest extends TestCase
 
         $response->assertOk();
         $equipos = $response->viewData('equipos');
-        $this->assertSame(['Pokémon #69', 'Pokémon #37', 'Pokémon #79'], $equipos[0]['pokemon_nombres']);
+        $this->assertSame(['Pokémon #69', 'Pokémon #37', 'Pokémon #79'], $equipos->en(0)?->pokemonNombres->all());
     }
 
     public function test_get_onboarding_con_equipo_existente_redirige_a_home(): void

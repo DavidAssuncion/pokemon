@@ -18,6 +18,7 @@ use PHPUnit\Framework\Attributes\Test;
 use Src\Battle\Domain\Posicion;
 use Src\CombateEntrenadores\App\ConstruirEquipoJugador;
 use Src\CombateEntrenadores\App\MapeadorPokemonBatalla;
+use Src\CombateEntrenadores\Domain\ValueObjects\FormacionEquipo;
 use Src\Shared\Domain\ClasificadorOfensivaDefensiva;
 use Src\Shared\Domain\Exceptions\ViolacionReglaNegocio;
 use Tests\TestCase;
@@ -48,21 +49,21 @@ class ConstruirEquipoJugadorTest extends TestCase
         );
 
         // Sin persistida ni popup → auto: slot 1 es defensivo (vanguardia), slot 2 ofensivo (retaguardia)
-        $sinPrioridad = $construir->desdeEquipo($team, []);
+        $sinPrioridad = $construir->desdeEquipo($team, FormacionEquipo::vacia());
         $this->assertCount(3, $sinPrioridad);
-        $this->assertSame(Posicion::VANGUARDIA, $sinPrioridad[0]->posicion);
-        $this->assertSame(Posicion::RETAGUARDIA, $sinPrioridad[1]->posicion);
+        $this->assertSame(Posicion::VANGUARDIA, $sinPrioridad->en(0)->posicion);
+        $this->assertSame(Posicion::RETAGUARDIA, $sinPrioridad->en(1)->posicion);
 
         // Persistida gana a auto: invertimos la formación en el Team.
         $team->update(['formacion' => [1 => 'retaguardia', 2 => 'vanguardia']]);
-        $conPersistida = $construir->desdeEquipo($team, []);
-        $this->assertSame(Posicion::RETAGUARDIA, $conPersistida[0]->posicion);
-        $this->assertSame(Posicion::VANGUARDIA, $conPersistida[1]->posicion);
+        $conPersistida = $construir->desdeEquipo($team, FormacionEquipo::vacia());
+        $this->assertSame(Posicion::RETAGUARDIA, $conPersistida->en(0)->posicion);
+        $this->assertSame(Posicion::VANGUARDIA, $conPersistida->en(1)->posicion);
 
         // Popup gana a persistida.
-        $conPopup = $construir->desdeEquipo($team, [1 => 'vanguardia', 2 => 'retaguardia']);
-        $this->assertSame(Posicion::VANGUARDIA, $conPopup[0]->posicion);
-        $this->assertSame(Posicion::RETAGUARDIA, $conPopup[1]->posicion);
+        $conPopup = $construir->desdeEquipo($team, FormacionEquipo::desde([1 => 'vanguardia', 2 => 'retaguardia']));
+        $this->assertSame(Posicion::VANGUARDIA, $conPopup->en(0)->posicion);
+        $this->assertSame(Posicion::RETAGUARDIA, $conPopup->en(1)->posicion);
     }
 
     #[Test]
@@ -80,7 +81,7 @@ class ConstruirEquipoJugadorTest extends TestCase
         $this->expectException(ViolacionReglaNegocio::class);
         $this->expectExceptionMessage('exactamente 3 miembros');
 
-        $construir->desdeEquipo($team, []);
+        $construir->desdeEquipo($team, FormacionEquipo::vacia());
     }
 
     #[Test]
@@ -100,7 +101,7 @@ class ConstruirEquipoJugadorTest extends TestCase
         $this->expectException(ViolacionReglaNegocio::class);
         $this->expectExceptionMessage('exactamente 3 miembros');
 
-        $construir->desdeEquipo($team, []);
+        $construir->desdeEquipo($team, FormacionEquipo::vacia());
     }
 
     #[Test]

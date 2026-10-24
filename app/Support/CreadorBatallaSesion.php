@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Support;
 
 use Src\Battle\Domain\AgregadoBatalla;
-use Src\Battle\Domain\DatosPokemonBatalla;
+use Src\Battle\Domain\Collections\DatosPokemonBatallaCollection;
 use Src\Battle\Domain\Effects\FabricaEfectos;
 use Src\Battle\Domain\EquipoBatalla;
 
@@ -26,14 +26,14 @@ final class CreadorBatallaSesion
     }
 
     /**
-     * @param  list<DatosPokemonBatalla>  $datosJugador  team1
-     * @param  list<DatosPokemonBatalla>  $datosRival    team2
+     * @param  DatosPokemonBatallaCollection  $datosJugador  team1
+     * @param  DatosPokemonBatallaCollection  $datosRival    team2
      * @param  array<string, mixed>  $meta  Metadatos de la batalla (tipo, ids…)
      */
     public function crearYGuardar(
-        array $datosJugador,
+        DatosPokemonBatallaCollection $datosJugador,
         string $nombreJugador,
-        array $datosRival,
+        DatosPokemonBatallaCollection $datosRival,
         string $nombreRival,
         string $prefijoId,
         array $meta,

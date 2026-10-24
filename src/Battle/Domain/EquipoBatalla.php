@@ -6,6 +6,7 @@ namespace Src\Battle\Domain;
 
 use Src\Battle\Domain\Catalog\CatalogoHabilidades;
 use Src\Battle\Domain\Collections\CombatientesCollection;
+use Src\Battle\Domain\Collections\DatosPokemonBatallaCollection;
 use Src\Battle\Domain\Effects\Equipo\ColeccionEfectosEquipo;
 use Src\Battle\Domain\Effects\Equipo\InterfazEfectoEquipo;
 use Src\Battle\Domain\Effects\FabricaEfectos;
@@ -102,14 +103,9 @@ class EquipoBatalla
         return $this->combatientes;
     }
 
-    /**
-     * @return Combatiente[]
-     *
-     * @deprecated Frontera — migrar a combatientesCollection()
-     */
-    public function combatants(): array
+    public function combatants(): CombatientesCollection
     {
-        return $this->combatientes->all();
+        return $this->combatientes;
     }
 
     public function agregarCombatiente(Combatiente $combatant, Posicion $posicion): void
@@ -127,34 +123,19 @@ class EquipoBatalla
         $this->combatientes->quitar($combatiente);
     }
 
-    /**
-     * @return Combatiente[]
-     *
-     * @deprecated Frontera — usar combatientesCollection()->vivos()
-     */
-    public function combatientesVivos(): array
+    public function combatientesVivos(): CombatientesCollection
     {
-        return $this->combatientes->vivos()->all();
+        return $this->combatientes->vivos();
     }
 
-    /**
-     * @return Combatiente[]
-     *
-     * @deprecated Frontera — usar combatientesCollection()->vanguardia()
-     */
-    public function vanguardiaAlive(): array
+    public function vanguardiaAlive(): CombatientesCollection
     {
-        return $this->combatientes->vanguardia()->all();
+        return $this->combatientes->vanguardia();
     }
 
-    /**
-     * @return Combatiente[]
-     *
-     * @deprecated Frontera — usar combatientesCollection()->retaguardia()
-     */
-    public function retaguardiaAlive(): array
+    public function retaguardiaAlive(): CombatientesCollection
     {
-        return $this->combatientes->retaguardia()->all();
+        return $this->combatientes->retaguardia();
     }
 
     public function tieneVanguardiaViva(): bool
@@ -172,10 +153,7 @@ class EquipoBatalla
         return $this->combatientes->menorVelocidadBase();
     }
 
-    /**
-     * @param  DatosPokemonBatalla[]  $members
-     */
-    public static function fromData(array $members, string $name, ?FabricaEfectos $fabricaEfectos = null): self
+    public static function fromData(DatosPokemonBatallaCollection $members, string $name, ?FabricaEfectos $fabricaEfectos = null): self
     {
         $fabricaEfectos ??= new FabricaEfectos();
         $team = new self($name);
@@ -218,8 +196,8 @@ class EquipoBatalla
             // Procesar efectos/habilidades via Factory (una clave puede componer varios efectos)
             foreach ($member->effectKeys as $key) {
                 $claves = CatalogoHabilidades::clavesDe($key);
-                if ($claves === []) {
-                    $claves = [$key];
+                if ($claves->isEmpty()) {
+                    $claves = new \Src\Shared\Collections\StringCollection([$key]);
                 }
 
                 foreach ($claves as $clave) {

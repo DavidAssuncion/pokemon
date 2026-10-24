@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace Src\Exploraciones\Domain;
 
+use Src\Exploraciones\Domain\Collections\RolesExploracionCollection;
+use Src\Exploraciones\Domain\ValueObjects\ModificadoresSinergia;
+
 /**
  * RF-13: sinergias de equipo como tabla config-driven (dominio puro).
  *
@@ -20,51 +23,30 @@ final class SinergiaEquipo
 {
     /**
      * Sinergia que aplica al conjunto de roles.
-     *
-     * @param  list<RolExploracion>  $roles
-     * @return array{
-     *     nombre: string,
-     *     bonusCapacidad: int,
-     *     bonusResolucion: int,
-     *     multiplicadorCaramelos: float,
-     *     multiplicadorHuidas: float,
-     *     multiplicadorRetirada: float,
-     *     detectaEmboscadas: bool,
-     *     reduccionTiempo: bool,
-     * }|null
      */
-    public static function sinergiaPara(array $roles): ?array
+    public static function sinergiaPara(RolesExploracionCollection $roles): ?ModificadoresSinergia
     {
         $clave = self::clave($roles);
         if ($clave === '') {
             return null;
         }
 
-        foreach (self::tabla() as $entrada) {
-            if ($entrada['clave'] === $clave) {
-                return $entrada['modificadores'];
-            }
-        }
-
-        return null;
+        return self::tabla()[$clave] ?? null;
     }
 
     /**
      * Clave canónica: códigos V/C/R/T ordenados (la composición no depende del
      * orden). V=Vanguardia, C=Combatiente, R=Recolector, T=Rastreador.
-     *
-     * @param  list<RolExploracion>  $roles
      */
-    private static function clave(array $roles): string
+    private static function clave(RolesExploracionCollection $roles): string
     {
-        $codigos = array_map(
+        $codigos = $roles->map(
             static fn (RolExploracion $rol): string => match ($rol) {
                 RolExploracion::VANGUARDIA => 'V',
                 RolExploracion::COMBATIENTE => 'C',
                 RolExploracion::RECOLECTOR => 'R',
                 RolExploracion::RASTREADOR => 'T',
             },
-            $roles,
         );
         sort($codigos);
 
@@ -72,22 +54,13 @@ final class SinergiaEquipo
     }
 
     /**
-     * Tabla config-driven de sinergias. Orden: negativas, tríos, pares.
+     * Tabla config-driven de sinergias indexada por clave canónica.
      *
-     * @return list<array{clave: string, modificadores: array{
-     *     nombre: string,
-     *     bonusCapacidad: int,
-     *     bonusResolucion: int,
-     *     multiplicadorCaramelos: float,
-     *     multiplicadorHuidas: float,
-     *     multiplicadorRetirada: float,
-     *     detectaEmboscadas: bool,
-     *     reduccionTiempo: bool,
-     * }}>
+     * @return array<string, ModificadoresSinergia>
      */
     private static function tabla(): array
     {
-        return [
+        $entradas = [
             // Negativas (3 del mismo rol).
             self::entrada('VVV', 'exploracion_agresiva', bonusCapacidad: -10),
             self::entrada('CCC', 'fuerza_bruta', bonusResolucion: -5, multiplicadorCaramelos: 0.5),
@@ -109,19 +82,17 @@ final class SinergiaEquipo
             self::entrada('RV', 'avance_seguro', bonusCapacidad: 5, reduccionTiempo: true),
             self::entrada('CR', 'escolta', multiplicadorRetirada: 0.5),
         ];
+
+        $tabla = [];
+        foreach ($entradas as $entrada) {
+            $tabla[$entrada['clave']] = $entrada['modificadores'];
+        }
+
+        return $tabla;
     }
 
     /**
-     * @return array{clave: string, modificadores: array{
-     *     nombre: string,
-     *     bonusCapacidad: int,
-     *     bonusResolucion: int,
-     *     multiplicadorCaramelos: float,
-     *     multiplicadorHuidas: float,
-     *     multiplicadorRetirada: float,
-     *     detectaEmboscadas: bool,
-     *     reduccionTiempo: bool,
-     * }}
+     * @return array{clave: string, modificadores: ModificadoresSinergia}
      */
     private static function entrada(
         string $clave,
@@ -136,16 +107,16 @@ final class SinergiaEquipo
     ): array {
         return [
             'clave' => $clave,
-            'modificadores' => [
-                'nombre' => $nombre,
-                'bonusCapacidad' => $bonusCapacidad,
-                'bonusResolucion' => $bonusResolucion,
-                'multiplicadorCaramelos' => $multiplicadorCaramelos,
-                'multiplicadorHuidas' => $multiplicadorHuidas,
-                'multiplicadorRetirada' => $multiplicadorRetirada,
-                'detectaEmboscadas' => $detectaEmboscadas,
-                'reduccionTiempo' => $reduccionTiempo,
-            ],
+            'modificadores' => new ModificadoresSinergia(
+                nombre: $nombre,
+                bonusCapacidad: $bonusCapacidad,
+                bonusResolucion: $bonusResolucion,
+                multiplicadorCaramelos: $multiplicadorCaramelos,
+                multiplicadorHuidas: $multiplicadorHuidas,
+                multiplicadorRetirada: $multiplicadorRetirada,
+                detectaEmboscadas: $detectaEmboscadas,
+                reduccionTiempo: $reduccionTiempo,
+            ),
         ];
     }
 }

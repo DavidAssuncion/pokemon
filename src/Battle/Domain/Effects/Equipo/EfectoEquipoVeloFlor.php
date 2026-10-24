@@ -53,6 +53,6 @@ class EfectoEquipoVeloFlor implements InterfazEfectoEquipo
     {
         return $this->activo
             && $estado !== EstadoPokemon::NONE
-            && in_array(TipoPokemon::PLANTA, $combatiente->tiposDefensivos(), true);
+            && $combatiente->tiposDefensivos()->contiene(TipoPokemon::PLANTA);
     }
 }

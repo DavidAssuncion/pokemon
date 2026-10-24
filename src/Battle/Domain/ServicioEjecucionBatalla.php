@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Src\Battle\Domain;
 
 use Src\Battle\Domain\Chain\CadenaDanio;
+use Src\Battle\Domain\Collections\CombatientesCollection;
 use Src\Battle\Domain\Danio\AplicadorPosturaDanio;
 use Src\Battle\Domain\Danio\GestorEfectosMovimiento;
 use Src\Battle\Domain\Danio\ResolutorObjetivosDanio;
@@ -58,7 +59,7 @@ class ServicioEjecucionBatalla
             return $resultado;
         }
 
-        if ($defensores === []) {
+        if ($defensores->isEmpty()) {
             $this->aplicarAutodestruccion($accion, $battle);
 
             return new DTOResultadoDanio(dano: 0.0, directPct: 0.0, resultado: ResultadoDanio::sinDano(), golpes: 0);
@@ -121,7 +122,7 @@ class ServicioEjecucionBatalla
             golpes: $golpes,
             curado: $curado,
             recoil: $recoil,
-            objetivos: $objetivos,
+            objetivos: new CombatientesCollection($objetivos),
         );
     }
 
@@ -242,8 +243,8 @@ class ServicioEjecucionBatalla
         $fraccionPotencia = $perfil->fraccionPotenciaPorGolpe;
         $ajusteGolpes = $accion->attacker->ajustarGolpes($accion);
         if ($ajusteGolpes !== null) {
-            $golpes = $ajusteGolpes['golpes'];
-            $fraccionPotencia = $ajusteGolpes['fraccionPotencia'];
+            $golpes = $ajusteGolpes->golpes;
+            $fraccionPotencia = $ajusteGolpes->fraccionPotencia;
         }
 
         $potenciaGolpe = $golpes > 1
@@ -360,7 +361,9 @@ class ServicioEjecucionBatalla
             golpes: $golpesRealizados,
             curado: $curado,
             recoil: $recoil,
-            objetivos: $golpesRealizados > 0 ? [$accion->defender] : [],
+            objetivos: $golpesRealizados > 0
+                ? new CombatientesCollection([$accion->defender])
+                : new CombatientesCollection(),
         );
     }
 
@@ -413,31 +416,30 @@ class ServicioEjecucionBatalla
      * propios se aplican una sola vez; los del objetivo, una vez por objetivo.
      */
     /**
-     * @param  list<Combatiente>|null  $objetivos  Objetivos realmente alcanzados;
-     *        null resuelve todos los del movimiento, [] no aplica a ninguno.
+     * @param  CombatientesCollection|null  $objetivos  Objetivos realmente alcanzados;
+     *        null resuelve todos los del movimiento, colección vacía no aplica a ninguno.
      */
     public function aplicarEstadoYStatChanges(
         AccionBatalla $accion,
         ?AgregadoBatalla $battle = null,
-        ?array $objetivos = null,
+        ?CombatientesCollection $objetivos = null,
     ): void {
         if ($objetivos === null) {
             $objetivos = $battle !== null
                 ? ResolutorObjetivosDanio::resolver($accion, $battle)
                 : null;
-            $objetivos ??= [$accion->defender];
+            $objetivos ??= new CombatientesCollection([$accion->defender]);
         }
 
-        $objetivos = array_values(array_filter(
-            $objetivos,
+        $objetivos = $objetivos->filter(
             fn (Combatiente $objetivo): bool => ! ($accion->move->esEstado() && $objetivo->tieneEfecto('cuerpo_aureo')),
-        ));
+        );
 
         foreach ($objetivos as $objetivo) {
             $this->aplicarEstado($objetivo, $accion->move, $battle, $accion->attacker);
         }
 
-        $this->gestorEfectos->aplicarStatChangesAMuchos($accion->attacker, $objetivos, $accion->move);
+        $this->gestorEfectos->aplicarStatChangesAMuchos($accion->attacker, $objetivos->all(), $accion->move);
     }
 
     /**

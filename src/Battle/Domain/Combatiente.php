@@ -16,6 +16,7 @@ use Src\Battle\Domain\Enums\EstadoPokemon;
 use Src\Battle\Domain\Enums\PosturaCombate;
 use Src\Battle\Domain\Enums\StatClave;
 use Src\Battle\Domain\Enums\TipoClima;
+use Src\Battle\Domain\ValueObjects\AjusteGolpes;
 use Src\Battle\Domain\ValueObjects\CondicionVolatil;
 use Src\Battle\Domain\ValueObjects\EstadoHabilidad;
 use Src\Battle\Domain\ValueObjects\EstadoMovimientos;
@@ -26,8 +27,11 @@ use Src\Battle\Domain\ValueObjects\JefeEstado;
 use Src\Battle\Domain\ValueObjects\MultiplicadoresStats;
 use Src\Battle\Domain\ValueObjects\ResultadoAccion;
 use Src\Battle\Domain\ValueObjects\ResultadoDanio;
+use Src\Battle\Domain\ValueObjects\ResultadoSustituto;
 use Src\Pokemon\Domain\PokemonEntity;
+use Src\Shared\Domain\ValueObjects\MapaConteo;
 use Src\Shared\Tipos\TipoPokemon;
+use Src\Shared\Tipos\TiposCollection;
 
 class Combatiente
 {
@@ -160,7 +164,7 @@ class Combatiente
             'movimientoBloqueado' => $this->objeto->movimientoBloqueado(),
             'habilidadAnulada' => $this->habilidad->anulada(),
             'habilidadAnuladaPorGas' => $this->habilidad->anuladaPorGas(),
-            'efectosHabilidadGuardados' => serialize($this->habilidad->guardados()),
+            'efectosHabilidadGuardados' => serialize($this->habilidad->guardados()->all()),
             'jefe' => serialize($this->jefe),
             'bonificadorDanio' => $this->bonificadorDanio,
             'ultimoDanoRecibido' => $this->ultimoDanoRecibido,
@@ -174,8 +178,8 @@ class Combatiente
             'postura' => $this->turno->postura()->value,
             'objetivoCubiertoId' => $this->turno->objetivoCubiertoId(),
             'prioridadDeclarada' => $this->turno->prioridad(),
-            'cargasMovimiento' => $this->movimientos->cargas(),
-            'usosMovimiento' => $this->movimientos->usos(),
+            'cargasMovimiento' => $this->movimientos->cargas()->toArray(),
+            'usosMovimiento' => $this->movimientos->usos()->toArray(),
             'turnoRetrasado' => $this->turno->turnoRetrasado(),
             'retrasoUsado' => $this->turno->retrasoUsado(),
             'combo' => $this->recursos->combo(),
@@ -233,9 +237,13 @@ class Combatiente
             ))
             : [];
         $this->habilidad = new EstadoHabilidad();
+        $efectosGuardados = new ColeccionEfectos();
+        foreach ($guardados as $efecto) {
+            $efectosGuardados->add($efecto);
+        }
         $this->habilidad->restaurarDesde(
             (bool) ($data['habilidadAnulada'] ?? false),
-            $guardados,
+            $efectosGuardados,
             (bool) ($data['habilidadAnuladaPorGas'] ?? false),
         );
 
@@ -267,7 +275,10 @@ class Combatiente
         $cargas = is_array($data['cargasMovimiento'] ?? null) ? $data['cargasMovimiento'] : [];
         $usos = is_array($data['usosMovimiento'] ?? null) ? $data['usosMovimiento'] : [];
         $this->movimientos = new EstadoMovimientos();
-        $this->movimientos->restaurar($cargas, $usos);
+        $this->movimientos->restaurar(
+            MapaConteo::desdeArray($cargas),
+            MapaConteo::desdeArray($usos),
+        );
         $this->recursos = new EstadoRecursos();
         $this->recursos->restaurar(
             (int) ($data['combo'] ?? 0),
@@ -633,18 +644,12 @@ class Combatiente
         $this->movimientos->cancelarCargas();
     }
 
-    /**
-     * @return array<string, int>
-     */
-    public function cargasMovimientoPorNombre(): array
+    public function cargasMovimientoPorNombre(): MapaConteo
     {
         return $this->movimientos->cargas();
     }
 
-    /**
-     * @return array<string, int>
-     */
-    public function usosMovimientoPorNombre(): array
+    public function usosMovimientoPorNombre(): MapaConteo
     {
         return $this->movimientos->usos();
     }
@@ -884,15 +889,12 @@ class Combatiente
         $this->quitarCondicion(ClaveCondicion::HABILIDAD_ANULADA);
     }
 
-    /**
-     * @return list<InterfazEfecto>
-     */
-    public function efectosHabilidad(): array
+    public function efectosHabilidad(): ColeccionEfectos
     {
-        $efectos = [];
+        $efectos = new ColeccionEfectos();
         foreach ($this->effects->all() as $efecto) {
             if (! $this->esEfectoDeObjeto($efecto)) {
-                $efectos[] = $efecto;
+                $efectos->add($efecto);
             }
         }
 
@@ -904,7 +906,7 @@ class Combatiente
         $this->restaurarHabilidad();
         $copias = array_map(
             static fn (InterfazEfecto $efecto): InterfazEfecto => clone $efecto,
-            $otro->efectosHabilidad(),
+            $otro->efectosHabilidad()->all(),
         );
 
         $this->reemplazarEfectosHabilidad($copias);
@@ -918,8 +920,8 @@ class Combatiente
         $propias = $this->efectosHabilidad();
         $ajenas = $otro->efectosHabilidad();
 
-        $this->reemplazarEfectosHabilidad($ajenas);
-        $otro->reemplazarEfectosHabilidad($propias);
+        $this->reemplazarEfectosHabilidad($ajenas->all());
+        $otro->reemplazarEfectosHabilidad($propias->all());
     }
 
     /**
@@ -939,7 +941,7 @@ class Combatiente
 
     private function esEfectoDeObjeto(InterfazEfecto $efecto): bool
     {
-        return in_array($efecto->obtenerClave(), CatalogoObjetos::clavesDeEfecto(), true);
+        return CatalogoObjetos::clavesDeEfecto()->contiene($efecto->obtenerClave());
     }
 
     public function ignorarHabilidadRival(int $turnos = 5): void
@@ -974,17 +976,14 @@ class Combatiente
         ));
     }
 
-    /**
-     * @return list<TipoPokemon>
-     */
-    public function tiposDefensivos(): array
+    public function tiposDefensivos(): TiposCollection
     {
         $alterado = $this->condicion(ClaveCondicion::TIPO_ALTERADO);
         if ($alterado?->tipoOverride !== null) {
-            return [$alterado->tipoOverride];
+            return new TiposCollection([$alterado->tipoOverride]);
         }
 
-        return $this->pokemon->tiposCollection()->toList();
+        return $this->pokemon->tiposCollection();
     }
 
     public function efectividadContra(TipoPokemon $tipo): float
@@ -1024,14 +1023,12 @@ class Combatiente
 
     /**
      * Absorbe daño con el sustituto. Devuelve el daño restante y si se rompió.
-     *
-     * @return array{restante: float, absorbido: float, roto: bool}
      */
-    public function absorberConSustituto(float $dano): array
+    public function absorberConSustituto(float $dano): ResultadoSustituto
     {
         $sustituto = $this->condicion(ClaveCondicion::SUSTITUTO);
         if ($sustituto === null || $sustituto->hpSustituto <= 0.0 || $dano <= 0.0) {
-            return ['restante' => $dano, 'absorbido' => 0.0, 'roto' => false];
+            return new ResultadoSustituto(restante: $dano, absorbido: 0.0, roto: false);
         }
 
         $absorbido = min($dano, $sustituto->hpSustituto);
@@ -1042,11 +1039,11 @@ class Combatiente
             $this->quitarCondicion(ClaveCondicion::SUSTITUTO);
         }
 
-        return [
-            'restante' => max(0.0, $dano - $absorbido),
-            'absorbido' => $absorbido,
-            'roto' => $roto,
-        ];
+        return new ResultadoSustituto(
+            restante: max(0.0, $dano - $absorbido),
+            absorbido: $absorbido,
+            roto: $roto,
+        );
     }
 
     /**
@@ -1086,8 +1083,8 @@ class Combatiente
             $this->pokemon->battleStats()->hp,
         ) as $evento) {
             $battle->agregarLog(
-                "¡{$this->nombre} entra en {$evento['nombre']}! (+".
-                (int) round(($evento['bonificador_dano'] - 1.0) * 100).'% daño)',
+                "¡{$this->nombre} entra en {$evento->nombre}! (+".
+                (int) round(($evento->bonificadorDano - 1.0) * 100).'% daño)',
             );
         }
 
@@ -1158,7 +1155,7 @@ class Combatiente
     public function bonificacionesPositivas(): int
     {
         $total = 0;
-        foreach ($this->multiplicadores->obtenerEtapas() as $etapas) {
+        foreach ($this->multiplicadores->obtenerEtapas()->toArray() as $etapas) {
             if ($etapas > 0) {
                 $total += $etapas;
             }
@@ -1844,10 +1841,7 @@ class Combatiente
 
     // ─── Capacidades (delegan a ColeccionEfectos) ────────────
 
-    /**
-     * @return array{golpes: int, fraccionPotencia: float}|null
-     */
-    public function ajustarGolpes(AccionBatalla $accion): ?array
+    public function ajustarGolpes(AccionBatalla $accion): ?AjusteGolpes
     {
         return $this->effects->ajustarGolpes($accion);
     }

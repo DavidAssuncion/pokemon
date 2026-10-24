@@ -8,6 +8,7 @@ use App\Models\Team;
 use App\Support\CreadorBatallaSesion;
 use Src\CombateEntrenadores\Domain\Exceptions\EntrenadorDerrotadoHoy;
 use Src\CombateEntrenadores\Domain\Repositories\EntrenadorLogRepositoryInterface;
+use Src\CombateEntrenadores\Domain\ValueObjects\FormacionEquipo;
 use Src\Shared\Domain\Exceptions\ViolacionReglaNegocio;
 use Src\Shared\Domain\IvsRangoEntrenador;
 
@@ -47,11 +48,11 @@ class IniciarCombateEntrenador
         $equipo = Team::with('members.reclutado.pokemon.stats', 'members.reclutado.pokemon.types')
             ->findOrFail($teamId);
 
-        $datosJugador = $this->construirEquipoJugador->desdeEquipo($equipo, $formacion, $nivelJugador);
+        $datosJugador = $this->construirEquipoJugador->desdeEquipo($equipo, FormacionEquipo::desde($formacion), $nivelJugador);
 
         $nivelRival = $nivelJugador;
 
-        [$ivPrincipal, $ivResto] = IvsRangoEntrenador::rangoPorNivelEntrenador($nivel);
+        $rangoIvs = IvsRangoEntrenador::rangoPorNivelEntrenador($nivel);
 
         $datosRival = $this->generadorEquipo->generar(
             $habitatId,
@@ -59,11 +60,11 @@ class IniciarCombateEntrenador
             $trainerIndex,
             $fecha,
             $nivelRival,
-            $ivPrincipal,
-            $ivResto,
+            $rangoIvs->principal,
+            $rangoIvs->resto,
         );
 
-        if ($datosRival === []) {
+        if ($datosRival->isEmpty()) {
             throw new ViolacionReglaNegocio('No hay Pokémon disponibles para este entrenador.');
         }
 

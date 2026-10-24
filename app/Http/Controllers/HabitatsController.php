@@ -82,7 +82,7 @@ class HabitatsController extends Controller
 
         return view('habitats.show', [
             'habitat' => $habitatData,
-            'teams' => $this->obtenerEquipos->run(),
+            'teams' => $this->obtenerEquipos->run()->all(),
             'exploracionesActivas' => $exploracionesActivas,
             'equiposEnExploracion' => $equiposEnExploracion,
             'sightedPokemonIds' => $sightedPokemonIds,
@@ -93,7 +93,7 @@ class HabitatsController extends Controller
     {
         $pokemon = $this->obtenerPokemonsPorHabitat->handle($habitat);
 
-        return response()->json($pokemon);
+        return response()->json($pokemon->toArray());
     }
 
     public function families(int $id): JsonResponse

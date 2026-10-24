@@ -132,8 +132,8 @@ class CombateExploracionTest extends TestCase
 
         $this->assertTrue($resultado->victoria, 'El explorador fuerte debe ganar');
         $this->assertGreaterThan(0, $resultado->hpFinal, 'El explorador debe tener HP > 0');
-        $this->assertIsArray($resultado->log->entries(), 'log debe ser array');
-        $this->assertNotEmpty($resultado->log->entries(), 'log no debe estar vacío');
+        $this->assertNotEmpty($resultado->log->entries()->toList(), 'log debe tener entradas');
+        $this->assertNotEmpty($resultado->log->entries()->toList(), 'log no debe estar vacío');
     }
 
     #[Test]
@@ -218,8 +218,8 @@ class CombateExploracionTest extends TestCase
 
         // Con el bonus el salvaje cae antes: menos rondas de combate.
         $this->assertLessThan(
-            $rondas($sinBonus->log->entries()),
-            $rondas($conBonus->log->entries()),
+            $rondas($sinBonus->log->entries()->toList()),
+            $rondas($conBonus->log->entries()->toList()),
             'El bonus de daño debe reducir las rondas del combate',
         );
     }

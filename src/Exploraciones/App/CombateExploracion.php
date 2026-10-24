@@ -7,6 +7,7 @@ namespace Src\Exploraciones\App;
 use App\Models\Pokemon;
 use App\Models\Reclutado;
 use Src\Battle\Domain\AgregadoBatalla;
+use Src\Battle\Domain\Collections\DatosPokemonBatallaCollection;
 use Src\Battle\Domain\DatosPokemonBatalla;
 use Src\Battle\Domain\Effects\FabricaEfectos;
 use Src\Battle\Domain\EquipoBatalla;
@@ -89,8 +90,8 @@ class CombateExploracion
         ?array $estadoInicial = null,
         float $modificadorDanio = 1.0,
     ): ResultadoBatallaExploracion {
-        $team1 = EquipoBatalla::fromData([$explorador], 'Explorador', $this->fabricaEfectos);
-        $team2 = EquipoBatalla::fromData([$salvaje], 'Salvaje', $this->fabricaEfectos);
+        $team1 = EquipoBatalla::fromData(new DatosPokemonBatallaCollection([$explorador]), 'Explorador', $this->fabricaEfectos);
+        $team2 = EquipoBatalla::fromData(new DatosPokemonBatallaCollection([$salvaje]), 'Salvaje', $this->fabricaEfectos);
 
         // Aplicar estado inicial si se proporciona (para combates secuenciales)
         $combatiente = $team1->combatientesCollection()->primero();

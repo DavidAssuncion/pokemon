@@ -32,6 +32,13 @@ class CombatientesCollection extends Collection
         return $this->items;
     }
 
+    public function en(int $indice): ?Combatiente
+    {
+        $item = $this->items[$indice] ?? null;
+
+        return $item instanceof Combatiente ? $item : null;
+    }
+
     /**
      * Retira un combatiente mutando la colección actual. Es importante no
      * reasignar la colección en EquipoBatalla: GestorTurnos conserva la

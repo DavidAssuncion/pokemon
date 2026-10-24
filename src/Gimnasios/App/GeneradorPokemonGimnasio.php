@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace Src\Gimnasios\App;
 
 use App\Models\Pokemon;
+use Src\Battle\Domain\Collections\DatosPokemonBatallaCollection;
+use Src\Battle\Domain\Collections\MovimientoBatallaCollection;
 use Src\Battle\Domain\DatosPokemonBatalla;
 use Src\Battle\Domain\Posicion;
 use Src\CombateEntrenadores\App\MapeadorPokemonBatalla;
@@ -32,9 +34,6 @@ final class GeneradorPokemonGimnasio
     ) {
     }
 
-    /**
-     * @return list<DatosPokemonBatalla>
-     */
     public function generar(
         EquipoEtapaGimnasio $equipo,
         int $nivelRival,
@@ -42,7 +41,7 @@ final class GeneradorPokemonGimnasio
         int $evResto = 0,
         int $ivPrincipal = 0,
         int $ivResto = 0,
-    ): array {
+    ): DatosPokemonBatallaCollection {
         $equipoRival = [];
         $indice = 0;
 
@@ -62,10 +61,10 @@ final class GeneradorPokemonGimnasio
                 speed: $statsBase->speed,
                 tipos: $this->mapeador->tiposDe($pokemon)->toList(),
                 posicion: $posicion,
-                moves: $this->movimientosDe($pokemon, $this->mapeador->tiposDe($pokemon), $nivelRival),
+                moves: $this->movimientosDe($pokemon, $this->mapeador->tiposDe($pokemon), $nivelRival)->all(),
                 shiny: false,
                 iconName: '',
-                effectKeys: $this->mapeador->efectosDe($pokemon),
+                effectKeys: $this->mapeador->efectosDe($pokemon)->toList(),
                 item: null,
                 speciesId: $pokemon->id,
                 formSuffix: '',
@@ -78,7 +77,7 @@ final class GeneradorPokemonGimnasio
             $indice++;
         }
 
-        return $equipoRival;
+        return new DatosPokemonBatallaCollection($equipoRival);
     }
 
     /**
@@ -173,10 +172,7 @@ final class GeneradorPokemonGimnasio
         return $resultado;
     }
 
-    /**
-     * @return list<\Src\Battle\Domain\MovimientoBatalla>
-     */
-    private function movimientosDe(Pokemon $pokemon, TiposCollection $tipos, int $nivel): array
+    private function movimientosDe(Pokemon $pokemon, TiposCollection $tipos, int $nivel): MovimientoBatallaCollection
     {
         return $this->mapeador->movimientosDeConFallback($pokemon, $tipos, null, $nivel);
     }

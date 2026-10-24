@@ -46,7 +46,7 @@ final class CombatienteVista
             'statusMayorTurns' => $combatiente->turnosEstadoMayor(),
             'venenoCargas' => $combatiente->cargasVeneno(),
             'prioridadDeclarada' => $prioridad !== null ? $prioridad->nombre : '',
-            'stages' => $combatiente->multiplicadores()->obtenerEtapas(),
+            'stages' => $combatiente->multiplicadores()->obtenerEtapas()->toArray(),
             'buffTurns' => $combatiente->multiplicadores()->turnosTemporales(),
             'condiciones' => array_map(
                 static fn (CondicionVolatil $condicion): string => $condicion->clave->value,
@@ -66,7 +66,7 @@ final class CombatienteVista
             ),
             'tiposDefensivos' => array_map(
                 static fn (TipoPokemon $tipo): int => $tipo->value,
-                $combatiente->tiposDefensivos(),
+                $combatiente->tiposDefensivos()->toList(),
             ),
             'team' => $teamIdx,
             'item' => $combatiente->item(),
@@ -83,8 +83,8 @@ final class CombatienteVista
             'accionesExtra' => $combatiente->accionesExtra(),
             'turnoRetrasado' => $combatiente->turnoRetrasado(),
             'puedeRetrasar' => ! $combatiente->retrasoUsado(),
-            'cargasMovimiento' => $combatiente->cargasMovimientoPorNombre(),
-            'usosMovimiento' => $combatiente->usosMovimientoPorNombre(),
+            'cargasMovimiento' => $combatiente->cargasMovimientoPorNombre()->toArray(),
+            'usosMovimiento' => $combatiente->usosMovimientoPorNombre()->toArray(),
             'combo' => $combatiente->comboMovimiento() !== '' ? $combatiente->combo() : 0,
             'comboMovimiento' => $combatiente->comboMovimiento(),
             'comboMultiplicador' => $combatiente->comboMovimiento() !== ''

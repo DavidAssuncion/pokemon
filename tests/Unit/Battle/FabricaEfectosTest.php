@@ -68,7 +68,7 @@ class FabricaEfectosTest extends TestCase
 
     public function test_claves_efectos_lista_registrados(): void
     {
-        $claves = $this->fabrica->clavesEfectos();
+        $claves = $this->fabrica->clavesEfectos()->toList();
 
         $this->assertContains('armor_pierce', $claves);
         $this->assertContains('regen_def', $claves);
@@ -77,7 +77,7 @@ class FabricaEfectosTest extends TestCase
 
     public function test_claves_items_lista_registrados(): void
     {
-        $claves = $this->fabrica->clavesItems();
+        $claves = $this->fabrica->clavesItems()->toList();
 
         $this->assertContains('leftovers', $claves);
         $this->assertContains('life_orb', $claves);

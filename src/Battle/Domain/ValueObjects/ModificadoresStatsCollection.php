@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Src\Battle\Domain\ValueObjects;
 
 use Src\Shared\Domain\Collection;
+use Src\Shared\Domain\ValueObjects\MapaFactores;
 
 /**
  * Colección tipada de pares (StatClave, factor) que representa
@@ -16,10 +17,8 @@ final class ModificadoresStatsCollection extends Collection
 
     /**
      * Retorna los factores indexados por clave de estadística.
-     *
-     * @return array<string, float>
      */
-    public function factores(): array
+    public function factores(): MapaFactores
     {
         $resultado = [];
         foreach ($this->items as $item) {
@@ -27,7 +26,7 @@ final class ModificadoresStatsCollection extends Collection
             $resultado[$item->statValue()] = $item->factor;
         }
 
-        return $resultado;
+        return MapaFactores::desdeArray($resultado);
     }
 
     /**

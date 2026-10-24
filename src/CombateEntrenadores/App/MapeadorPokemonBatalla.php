@@ -8,6 +8,7 @@ use App\Enums\StatEnum;
 use App\Models\Pokemon;
 use App\Models\PokemonType;
 use Src\Battle\Domain\Catalog\CatalogoHabilidades;
+use Src\Battle\Domain\Collections\MovimientoBatallaCollection;
 use Src\Battle\Domain\DatosPokemonBatalla;
 use Src\Battle\Domain\Enums\PosturaCombate;
 use Src\Battle\Domain\Exceptions\MovimientoNoExiste;
@@ -17,6 +18,7 @@ use Src\Battle\Domain\Repositories\MovimientoRepository;
 use Src\CombateEntrenadores\Domain\GeneradorMovimientosTipo;
 use Src\Pokemon\Domain\Stats\DatosStats;
 use Src\Pokemon\Domain\Stats\StatsValue;
+use Src\Shared\Collections\StringCollection;
 use Src\Shared\Tipos\TipoPokemon;
 use Src\Shared\Tipos\TiposCollection;
 
@@ -75,10 +77,10 @@ class MapeadorPokemonBatalla
             speed: $stats->speed,
             tipos: $tipos->toList(),
             posicion: $posicion,
-            moves: $movimientos,
+            moves: $movimientos->all(),
             shiny: $shiny,
             iconName: '',
-            effectKeys: $this->efectosDe($pokemon, $habilidadActivaId),
+            effectKeys: $this->efectosDe($pokemon, $habilidadActivaId)->toList(),
             item: $item,
             speciesId: (int) $pokemon->id,
             formSuffix: '',
@@ -95,14 +97,13 @@ class MapeadorPokemonBatalla
      * movimiento ofensivo asignado.
      *
      * @param  list<string>|null  $seleccionados
-     * @return list<MovimientoBatalla>
      */
     public function movimientosDeConFallback(
         Pokemon $pokemon,
         TiposCollection $tipos,
         ?array $seleccionados = null,
         ?int $nivelDesbloqueo = null,
-    ): array {
+    ): MovimientoBatallaCollection {
         $movimientos = $seleccionados !== null && $seleccionados !== []
             ? $this->movimientosDeSeleccion($seleccionados, $nivelDesbloqueo)
             : $this->movimientosDe($pokemon, $nivelDesbloqueo);
@@ -114,12 +115,12 @@ class MapeadorPokemonBatalla
         }
 
         foreach ($this->generadorMovimientos->generar($tipos) as $m) {
-            $movimientos[] = new MovimientoBatalla(
+            $movimientos->add(new MovimientoBatalla(
                 nombre: $m->nombre,
                 potencia: $m->potencia,
                 tipo: $m->tipo,
                 categoria: $m->categoria,
-            );
+            ));
         }
 
         return $movimientos;
@@ -129,12 +130,11 @@ class MapeadorPokemonBatalla
      * Resuelve una selección de slugs del loadout del reclutado.
      *
      * @param  array<int, mixed>  $slugs
-     * @return list<MovimientoBatalla>
      */
-    public function movimientosDeSeleccion(array $slugs, ?int $nivelDesbloqueo = null): array
+    public function movimientosDeSeleccion(array $slugs, ?int $nivelDesbloqueo = null): MovimientoBatallaCollection
     {
         if ($this->movimientoRepository === null) {
-            return [];
+            return new MovimientoBatallaCollection();
         }
 
         $movimientos = [];
@@ -156,19 +156,17 @@ class MapeadorPokemonBatalla
             }
         }
 
-        return $movimientos;
+        return new MovimientoBatallaCollection($movimientos);
     }
 
     /**
      * Movimientos reales asignados a la especie. Si no tiene ninguno, el
      * llamador conserva el fallback sintético por tipos.
-     *
-     * @return list<MovimientoBatalla>
      */
-    public function movimientosDe(Pokemon $pokemon, ?int $nivelDesbloqueo = null): array
+    public function movimientosDe(Pokemon $pokemon, ?int $nivelDesbloqueo = null): MovimientoBatallaCollection
     {
         if ($this->movimientoRepository === null) {
-            return [];
+            return new MovimientoBatallaCollection();
         }
 
         $pokemon->loadMissing('moves');
@@ -187,16 +185,14 @@ class MapeadorPokemonBatalla
             }
         }
 
-        return $movimientos;
+        return new MovimientoBatallaCollection($movimientos);
     }
 
     /**
      * Claves de efecto de todas las habilidades equipadas. Las habilidades
      * personalizadas pueden aportar varias claves (p. ej. inmunidad + boost).
-     *
-     * @return list<string>
      */
-    public function efectosDe(Pokemon $pokemon, ?int $habilidadActivaId = null): array
+    public function efectosDe(Pokemon $pokemon, ?int $habilidadActivaId = null): StringCollection
     {
         $pokemon->loadMissing('abilities');
 
@@ -222,7 +218,7 @@ class MapeadorPokemonBatalla
             }
         }
 
-        return array_values($claves);
+        return new StringCollection(array_values($claves));
     }
 
     public function statsDe(Pokemon $pokemon): DatosStats

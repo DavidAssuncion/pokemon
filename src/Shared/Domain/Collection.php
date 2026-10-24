@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Src\Shared\Domain;
 
-class Collection implements \IteratorAggregate
+class Collection implements \Countable, \IteratorAggregate, \JsonSerializable
 {
     public string $type;
 
@@ -20,6 +20,17 @@ class Collection implements \IteratorAggregate
     public function getIterator(): \ArrayIterator
     {
         return new \ArrayIterator($this->items);
+    }
+
+    /**
+     * Frontera JSON (Blade `@json`, respuestas HTTP): serializa como lista,
+     * nunca como objeto `{type, items}`.
+     *
+     * @return list<mixed>
+     */
+    public function jsonSerialize(): array
+    {
+        return $this->items;
     }
 
     public function add($item): void

@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace Src\Battle\Domain\ValueObjects;
 
+use Src\Battle\Domain\Collections\EventosFaseJefeCollection;
+use Src\Battle\Domain\Collections\PartesJefeCollection;
+
 /**
  * Estado de un jefe: fases por umbral de vida, enrage y puntos débiles.
  *
@@ -103,17 +106,16 @@ class JefeEstado
 
     /**
      * Activa las fases cuyo umbral ya se cruzó.
-     *
-     * @return list<array{tipo: string, nombre: string, bonificador_dano: float, bonificador_velocidad: float, enrage: bool}>
      */
-    public function procesarDanio(float $hpActual, float $hpMax): array
+    public function procesarDanio(float $hpActual, float $hpMax): EventosFaseJefeCollection
     {
+        $eventos = new EventosFaseJefeCollection();
+
         if ($hpMax <= 0.0) {
-            return [];
+            return $eventos;
         }
 
         $fraccion = max(0.0, min(1.0, $hpActual / $hpMax));
-        $eventos = [];
 
         while (isset($this->fases[$this->faseActual])
             && $fraccion <= $this->fases[$this->faseActual]['umbral']) {
@@ -121,13 +123,13 @@ class JefeEstado
             $this->faseActual++;
             $this->enrage = $this->enrage || $fase['enrage'];
 
-            $eventos[] = [
-                'tipo' => 'fase',
-                'nombre' => $fase['nombre'],
-                'bonificador_dano' => $fase['bonificador_dano'],
-                'bonificador_velocidad' => $fase['bonificador_velocidad'],
-                'enrage' => $fase['enrage'],
-            ];
+            $eventos->add(new EventoFaseJefe(
+                tipo: 'fase',
+                nombre: $fase['nombre'],
+                bonificadorDano: $fase['bonificador_dano'],
+                bonificadorVelocidad: $fase['bonificador_velocidad'],
+                enrage: $fase['enrage'],
+            ));
         }
 
         return $eventos;
@@ -185,12 +187,9 @@ class JefeEstado
         return $this->fases[$this->faseActual - 1]['bonificador_velocidad'] ?? 1.0;
     }
 
-    /**
-     * @return list<ParteJefe>
-     */
-    public function partes(): array
+    public function partes(): PartesJefeCollection
     {
-        return $this->partes;
+        return new PartesJefeCollection($this->partes);
     }
 
     public function tienePartesRotas(): bool

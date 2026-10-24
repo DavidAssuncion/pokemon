@@ -486,13 +486,6 @@ $ignoreErrors[] = [
     'path' => __DIR__ . '/app/Jobs/RecompilarHabitatJsonJob.php',
 ];
 $ignoreErrors[] = [
-    'message' => '#^Call to deprecated method combatants\\(\\) of class Src\\\\Battle\\\\Domain\\\\EquipoBatalla\\:
-Frontera — migrar a combatientesCollection\\(\\)$#',
-    'identifier' => 'method.deprecated',
-    'count' => 3,
-    'path' => __DIR__ . '/app/Livewire/Combate.php',
-];
-$ignoreErrors[] = [
     'message' => '#^Dynamic call to static method Illuminate\\\\View\\\\View\\:\\:extends\\(\\)\\.$#',
     'identifier' => 'staticMethod.dynamicCall',
     'count' => 1,
@@ -714,18 +707,6 @@ $ignoreErrors[] = [
     'identifier' => 'nullsafe.neverNull',
     'count' => 1,
     'path' => __DIR__ . '/app/Support/ReclutadoSerializer.php',
-];
-$ignoreErrors[] = [
-    'message' => '#^Parameter \\#1 \\$array \\(list\\<Src\\\\Battle\\\\Domain\\\\AI\\\\ValueObjects\\\\EvaluacionAmenaza\\>\\) of array_values is already a list, call has no effect\\.$#',
-    'identifier' => 'arrayValues.list',
-    'count' => 1,
-    'path' => __DIR__ . '/src/Battle/Domain/AI/AnalizadorAmenazasImpl.php',
-];
-$ignoreErrors[] = [
-    'message' => '#^Method Src\\\\Battle\\\\Domain\\\\AI\\\\EvaluadorAccionIAImpl\\:\\:calcularReduccionAmenaza\\(\\) has parameter \\$amenazas with no value type specified in iterable type array\\.$#',
-    'identifier' => 'missingType.iterableValue',
-    'count' => 1,
-    'path' => __DIR__ . '/src/Battle/Domain/AI/EvaluadorAccionIAImpl.php',
 ];
 $ignoreErrors[] = [
     'message' => '#^Property Src\\\\Battle\\\\Domain\\\\AI\\\\MemoriaCombateIA\\:\\:\\$pesos is never read, only written\\.$#',
@@ -956,12 +937,6 @@ $ignoreErrors[] = [
     'path' => __DIR__ . '/src/Gimnasios/App/GeneradorPokemonGimnasio.php',
 ];
 $ignoreErrors[] = [
-    'message' => '#^Method Src\\\\Gimnasios\\\\Domain\\\\Repositories\\\\GymCatalogoRepositoryInterface\\:\\:insertar\\(\\) has parameter \\$equipos with no value type specified in iterable type array\\.$#',
-    'identifier' => 'missingType.iterableValue',
-    'count' => 1,
-    'path' => __DIR__ . '/src/Gimnasios/Domain/Repositories/GymCatalogoRepositoryInterface.php',
-];
-$ignoreErrors[] = [
     'message' => '#^Casting to int something that\'s already int\\.$#',
     'identifier' => 'cast.useless',
     'count' => 1,
@@ -1018,28 +993,10 @@ $ignoreErrors[] = [
     'path' => __DIR__ . '/src/Gimnasios/Infra/EloquentGymCatalogoRepository.php',
 ];
 $ignoreErrors[] = [
-    'message' => '#^Method Src\\\\Gimnasios\\\\Infra\\\\EloquentGymCatalogoRepository\\:\\:insertar\\(\\) has parameter \\$equipos with no value type specified in iterable type array\\.$#',
-    'identifier' => 'missingType.iterableValue',
-    'count' => 1,
-    'path' => __DIR__ . '/src/Gimnasios/Infra/EloquentGymCatalogoRepository.php',
-];
-$ignoreErrors[] = [
-    'message' => '#^Method Src\\\\Gimnasios\\\\Infra\\\\EloquentGymCatalogoRepository\\:\\:persistirEtapas\\(\\) has parameter \\$equipos with no value type specified in iterable type array\\.$#',
-    'identifier' => 'missingType.iterableValue',
-    'count' => 1,
-    'path' => __DIR__ . '/src/Gimnasios/Infra/EloquentGymCatalogoRepository.php',
-];
-$ignoreErrors[] = [
     'message' => '#^Dynamic call to static method Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<App\\\\Models\\\\GymProgress\\>\\:\\:exists\\(\\)\\.$#',
     'identifier' => 'staticMethod.dynamicCall',
     'count' => 1,
     'path' => __DIR__ . '/src/Gimnasios/Infra/EloquentGymProgressRepository.php',
-];
-$ignoreErrors[] = [
-    'message' => '#^Method Src\\\\Habitats\\\\App\\\\ObtenerPokemonsPorHabitat\\:\\:handle\\(\\) return type has no value type specified in iterable type array\\.$#',
-    'identifier' => 'missingType.iterableValue',
-    'count' => 1,
-    'path' => __DIR__ . '/src/Habitats/App/ObtenerPokemonsPorHabitat.php',
 ];
 $ignoreErrors[] = [
     'message' => '#^Dynamic call to static method Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<App\\\\Models\\\\ExploracionActiva\\>\\:\\:exists\\(\\)\\.$#',
@@ -1092,7 +1049,7 @@ $ignoreErrors[] = [
 $ignoreErrors[] = [
     'message' => '#^Casting to int something that\'s already int\\.$#',
     'identifier' => 'cast.useless',
-    'count' => 2,
+    'count' => 1,
     'path' => __DIR__ . '/src/Habitats/Infra/HabitatRepository.php',
 ];
 $ignoreErrors[] = [

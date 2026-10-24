@@ -7,7 +7,9 @@ namespace Src\Mazmorras\App;
 use App\Models\Habitat;
 use App\Models\Team;
 use App\Support\CreadorBatallaSesion;
+use Src\Battle\Domain\Collections\DatosPokemonBatallaCollection;
 use Src\CombateEntrenadores\App\ConstruirEquipoJugador;
+use Src\CombateEntrenadores\Domain\ValueObjects\FormacionEquipo;
 use Src\Mazmorras\Domain\ConfiguracionMazmorra;
 use Src\Mazmorras\Domain\Repositories\DungeonProgresoRepositoryInterface;
 
@@ -64,12 +66,12 @@ final class IniciarCombateMazmorra
             'members.reclutado.pokemon.abilities',
         )->findOrFail($teamId);
 
-        $datosJugador = $this->construirEquipoJugador->desdeEquipo($equipo, $formacion, $nivelJugador);
+        $datosJugador = $this->construirEquipoJugador->desdeEquipo($equipo, FormacionEquipo::desde($formacion), $nivelJugador);
 
         return $this->creadorBatalla->crearYGuardar(
             datosJugador: $datosJugador,
             nombreJugador: $equipo->name,
-            datosRival: [$jefe],
+            datosRival: new DatosPokemonBatallaCollection([$jefe]),
             nombreRival: 'Jefe del piso '.$piso,
             prefijoId: 'mazmorra',
             meta: [

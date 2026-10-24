@@ -6,6 +6,8 @@ namespace Src\Shared\Domain;
 
 use Src\Battle\Domain\Posicion;
 use Src\Pokemon\Domain\Stats\DatosStats;
+use Src\Pokemon\Domain\Stats\DatosStatsCollection;
+use Src\Shared\Domain\Collections\PosicionCollection;
 
 /**
  * Clasifica un pokémon como ofensivo (retaguardia) o defensivo (vanguardia)
@@ -33,38 +35,36 @@ final class ClasificadorOfensivaDefensiva
      * Mixed guarantee: si todos quedan en el mismo bando, mueve al de mayor
      * stat contraria al otro bando (el primero que lo cumple, para determinismo).
      *
-     * @param  list<DatosStats>  $statsPorSlot
-     * @return list<Posicion>
+     * @param  DatosStatsCollection  $statsPorSlot  stats en el orden de los slots
      */
-    public function generarFormacion(array $statsPorSlot): array
+    public function generarFormacion(DatosStatsCollection $statsPorSlot): PosicionCollection
     {
-        $posiciones = array_map(
+        $posiciones = new PosicionCollection(array_map(
             fn (DatosStats $stats): Posicion => $this->esOfensivo($stats)
                 ? Posicion::RETAGUARDIA
                 : Posicion::VANGUARDIA,
-            $statsPorSlot,
-        );
+            $statsPorSlot->all(),
+        ));
 
-        $total = count($posiciones);
+        $total = $posiciones->count();
         if ($total < 2) {
             return $posiciones;
         }
 
-        $countVan = array_count_values(array_map(fn (Posicion $p): string => $p->value, $posiciones));
-        $numVan = $countVan[Posicion::VANGUARDIA->value] ?? 0;
+        $numVan = $posiciones->cantidad(Posicion::VANGUARDIA);
 
         if ($numVan === 0) {
             // Todos RET → mover al de mayor defensiva (def + spDef + hp) a VAN
-            $posiciones[$this->indiceMayorValor(
+            $posiciones->reemplazar($this->indiceMayorValor(
                 $statsPorSlot,
                 static fn (DatosStats $stats): int => $stats->def + $stats->spDef + $stats->hp,
-            )] = Posicion::VANGUARDIA;
+            ), Posicion::VANGUARDIA);
         } elseif ($numVan === $total) {
             // Todos VAN → mover al de mayor ofensiva (atk + speed) a RET
-            $posiciones[$this->indiceMayorValor(
+            $posiciones->reemplazar($this->indiceMayorValor(
                 $statsPorSlot,
                 static fn (DatosStats $stats): int => $stats->atk + $stats->speed,
-            )] = Posicion::RETAGUARDIA;
+            ), Posicion::RETAGUARDIA);
         }
 
         return $posiciones;
@@ -73,12 +73,11 @@ final class ClasificadorOfensivaDefensiva
     /**
      * Índice del primer slot con el mayor valor (determinista en empates).
      *
-     * @param  non-empty-list<DatosStats>  $statsPorSlot
      * @param  callable(DatosStats): int  $valor
      */
-    private function indiceMayorValor(array $statsPorSlot, callable $valor): int
+    private function indiceMayorValor(DatosStatsCollection $statsPorSlot, callable $valor): int
     {
-        $valores = array_map($valor, $statsPorSlot);
+        $valores = array_map($valor, $statsPorSlot->all());
 
         return (int) array_search(max($valores), $valores, true);
     }

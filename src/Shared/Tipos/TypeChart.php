@@ -20,11 +20,12 @@ class TypeChart
     private static ?array $chart = null;
 
     /**
-     * Devuelve la matriz completa de efectividades.
+     * Matriz interna de efectividades. Se mantiene privada: el contrato
+     * público es getEffectiveness(), no la estructura de datos.
      *
      * @return array<int, array<int, float>>
      */
-    public static function getChart(): array
+    private static function matriz(): array
     {
         if (self::$chart !== null) {
             return self::$chart;
@@ -233,6 +234,6 @@ class TypeChart
      */
     public static function getEffectiveness(TipoPokemon $attackType, TipoPokemon $defenderType): float
     {
-        return self::getChart()[$attackType->value][$defenderType->value] ?? self::NEUTRAL;
+        return self::matriz()[$attackType->value][$defenderType->value] ?? self::NEUTRAL;
     }
 }

@@ -73,8 +73,8 @@ class PresentadorRutaTest extends TestCase
         $session = app(BattleSessionService::class);
 
         $battleId = 'battle_ruta_test_'.uniqid();
-        $team1 = EquipoBatalla::fromData([$pokemonJugador], 'Jugador');
-        $team2 = EquipoBatalla::fromData([$pokemonRival], 'Salvajes');
+        $team1 = EquipoBatalla::fromData(new \Src\Battle\Domain\Collections\DatosPokemonBatallaCollection([$pokemonJugador]), 'Jugador');
+        $team2 = EquipoBatalla::fromData(new \Src\Battle\Domain\Collections\DatosPokemonBatallaCollection([$pokemonRival]), 'Salvajes');
 
         $battle = new AgregadoBatalla($team1, $team2);
         $battle->triggerBattleStartEffects();

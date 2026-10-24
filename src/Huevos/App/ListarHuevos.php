@@ -11,8 +11,15 @@ use Carbon\Carbon;
 use Illuminate\Support\Collection;
 use Src\Huevos\Domain\CalculadorEstadoHuevo;
 use Src\Huevos\Domain\CalculadorTiemposHuevo;
+use Src\Huevos\Domain\Collections\HuevoDisponibleCollection;
+use Src\Huevos\Domain\Collections\HuevoResumenCollection;
+use Src\Huevos\Domain\DataTransferObjects\HuevoDisponible;
+use Src\Huevos\Domain\DataTransferObjects\HuevoResumen;
+use Src\Huevos\Domain\DataTransferObjects\LimitesHuevos;
+use Src\Huevos\Domain\DataTransferObjects\ResumenHuevos;
 use Src\Huevos\Domain\EstadoCalculadoHuevo;
 use Src\Huevos\Domain\EstadoHuevo;
+use Src\Shared\Domain\DataTransferObjects\PokemonResumen;
 
 /**
  * Lista huevos del usuario, especies disponibles para crear huevos y límites.
@@ -22,34 +29,10 @@ final class ListarHuevos
     /**
      * Resumen de huevos activos, familias disponibles y límites.
      *
-     * Contrato de tiempos (B1): `tiempo_total_horas` y `tiempo_restante` están
-     * en la misma unidad — horas, float — y `progreso` es un entero 0-100.
-     *
-     * @return array{
-     *     huevos: list<array{
-     *         id: int,
-     *         estado: string,
-     *         tiempo_total_horas: float,
-     *         tiempo_restante: float,
-     *         progreso: int,
-     *         puede_eclosionar: bool,
-     *         pokemon: array{id: int, name: string, icon: string},
-     *     }>,
-     *     disponibles: list<array{
-     *         evolution_chain_id: int,
-     *         pokemon: array{id: int, name: string, icon: string},
-     *         capture_rate: int,
-     *         hatch: int,
-     *     }>,
-     *     limites: array{
-     *         max_gestacion: int,
-     *         max_incubando: int,
-     *         gestacion_activa: bool,
-     *         incubacion_activa: bool,
-     *     },
-     * }
+     * Contrato de tiempos (B1): `tiempoTotalHoras` y `tiempoRestante` están en
+     * la misma unidad — horas, float — y `progreso` es un entero 0-100.
      */
-    public function listar(int $userId): array
+    public function listar(int $userId): ResumenHuevos
     {
         $huevos = Huevo::where('user_id', $userId)
             ->with('pokemon')
@@ -59,52 +42,40 @@ final class ListarHuevos
 
         $ahora = now();
 
-        $huevosSerializados = $huevos
-            ->map(fn (Huevo $huevo): array => $this->serializarUno($huevo, $ahora))
-            ->values()
-            ->all();
+        $huevosResumen = new HuevoResumenCollection(
+            $huevos
+                ->map(fn (Huevo $huevo): HuevoResumen => $this->serializarUno($huevo, $ahora))
+                ->values()
+                ->all()
+        );
 
-        $disponibles = $this->disponibles($userId);
-        $limites = $this->limites($huevos, $ahora);
-
-        return [
-            'huevos' => $huevosSerializados,
-            'disponibles' => $disponibles,
-            'limites' => $limites,
-        ];
+        return new ResumenHuevos(
+            huevos: $huevosResumen,
+            disponibles: $this->disponibles($userId),
+            limites: $this->limites($huevos, $ahora),
+        );
     }
 
     /**
      * Serializa un huevo individual (usado también por HuevoController::store).
-     *
-     * @return array{
-     *     id: int,
-     *     estado: string,
-     *     tiempo_total_horas: float,
-     *     tiempo_restante: float,
-     *     progreso: int,
-     *     puede_eclosionar: bool,
-     *     pokemon: array{id: int, name: string, icon: string},
-     * }
      */
-    public function serializarUno(Huevo $huevo, ?Carbon $ahora = null): array
+    public function serializarUno(Huevo $huevo, ?Carbon $ahora = null): HuevoResumen
     {
         $ahora ??= now();
-        $pokemon = $huevo->pokemon;
         $captureRate = $huevo->capture_rate ?? 0;
         $hatch = $huevo->hatch ?? 1;
         $estado = self::estadoDe($huevo, $ahora);
         $totalHoras = round(CalculadorTiemposHuevo::sumaHoras($captureRate, $hatch), 2);
 
-        return [
-            'id' => $huevo->id,
-            'estado' => $estado->estado->value,
-            'tiempo_total_horas' => $totalHoras,
-            'tiempo_restante' => $estado->restanteHoras,
-            'progreso' => self::progresoDe($totalHoras, $estado->restanteHoras),
-            'puede_eclosionar' => $estado->estado === EstadoHuevo::LISTO,
-            'pokemon' => self::serializarPokemon($pokemon),
-        ];
+        return new HuevoResumen(
+            id: $huevo->id,
+            estado: $estado->estado->value,
+            tiempoTotalHoras: $totalHoras,
+            tiempoRestante: $estado->restanteHoras,
+            progreso: self::progresoDe($totalHoras, $estado->restanteHoras),
+            puedeEclosionar: $estado->estado === EstadoHuevo::LISTO,
+            pokemon: self::resumenPokemon($huevo->pokemon),
+        );
     }
 
     /**
@@ -112,15 +83,8 @@ final class ListarHuevos
      * misma cadena), sin huevo activo de esa familia y cuyo representante tiene
      * hatch. 1 entrada por evolution_chain_id; se elige el miembro con menor
      * species_id (regla "primer integrante" del proyecto).
-     *
-     * @return list<array{
-     *     evolution_chain_id: int,
-     *     pokemon: array{id: int, name: string, icon: string},
-     *     capture_rate: int,
-     *     hatch: int,
-     * }>
      */
-    private function disponibles(int $userId): array
+    private function disponibles(int $userId): HuevoDisponibleCollection
     {
         $reclutados = Reclutado::with('pokemon')
             ->where('user_id', $userId)
@@ -159,28 +123,23 @@ final class ListarHuevos
 
         ksort($porCadena);
 
-        return array_map(
-            fn (Pokemon $pokemon, int $cadena): array => [
-                'evolution_chain_id' => $cadena,
-                'pokemon' => self::serializarPokemon($pokemon),
-                'capture_rate' => $pokemon->capture_rate,
-                'hatch' => (int) $pokemon->hatch,
-            ],
-            $porCadena,
-            array_keys($porCadena),
-        );
+        $disponibles = new HuevoDisponibleCollection();
+        foreach ($porCadena as $cadena => $pokemon) {
+            $disponibles->add(new HuevoDisponible(
+                evolutionChainId: $cadena,
+                pokemon: self::resumenPokemon($pokemon),
+                captureRate: $pokemon->capture_rate,
+                hatch: (int) $pokemon->hatch,
+            ));
+        }
+
+        return $disponibles;
     }
 
     /**
      * @param  Collection<int, Huevo>  $huevos
-     * @return array{
-     *     max_gestacion: int,
-     *     max_incubando: int,
-     *     gestacion_activa: bool,
-     *     incubacion_activa: bool,
-     * }
      */
-    private function limites(Collection $huevos, Carbon $ahora): array
+    private function limites(Collection $huevos, Carbon $ahora): LimitesHuevos
     {
         $gestacionActiva = false;
         $incubacionActiva = false;
@@ -196,12 +155,12 @@ final class ListarHuevos
             }
         }
 
-        return [
-            'max_gestacion' => 1,
-            'max_incubando' => 1,
-            'gestacion_activa' => $gestacionActiva,
-            'incubacion_activa' => $incubacionActiva,
-        ];
+        return new LimitesHuevos(
+            maxGestacion: 1,
+            maxIncubando: 1,
+            gestacionActiva: $gestacionActiva,
+            incubacionActiva: $incubacionActiva,
+        );
     }
 
     private static function progresoDe(float $totalHoras, float $restanteHoras): int
@@ -226,15 +185,8 @@ final class ListarHuevos
         );
     }
 
-    /**
-     * @return array{id: int, name: string, icon: string}
-     */
-    private static function serializarPokemon(Pokemon $pokemon): array
+    private static function resumenPokemon(Pokemon $pokemon): PokemonResumen
     {
-        return [
-            'id' => $pokemon->id,
-            'name' => $pokemon->name,
-            'icon' => "/images/iconos_webp/{$pokemon->id}.webp",
-        ];
+        return PokemonResumen::desdeIdNombre($pokemon->id, $pokemon->name);
     }
 }

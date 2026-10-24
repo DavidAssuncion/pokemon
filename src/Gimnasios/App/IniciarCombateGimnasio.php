@@ -7,6 +7,7 @@ namespace Src\Gimnasios\App;
 use App\Models\Team;
 use App\Support\CreadorBatallaSesion;
 use Src\CombateEntrenadores\App\ConstruirEquipoJugador;
+use Src\CombateEntrenadores\Domain\ValueObjects\FormacionEquipo;
 use Src\Gimnasios\Domain\EvsRangoEntrenador;
 use Src\Gimnasios\Domain\Exceptions\GimnasioBloqueado;
 use Src\Gimnasios\Domain\Exceptions\GimnasioCompletado;
@@ -77,14 +78,14 @@ final class IniciarCombateGimnasio
         $equipo = Team::with('members.reclutado.pokemon.stats', 'members.reclutado.pokemon.types')
             ->findOrFail($teamId);
 
-        $datosJugador = $this->construirEquipoJugador->desdeEquipo($equipo, $formacion, $nivelJugador);
+        $datosJugador = $this->construirEquipoJugador->desdeEquipo($equipo, FormacionEquipo::desde($formacion), $nivelJugador);
 
         $equipoEtapa = $gimnasio->equipoEtapa($etapa);
         $datosRival = $equipoEtapa !== null
             ? $this->generador->generar($equipoEtapa, $nivelRival, $evPrincipal, $evResto, $ivPrincipal, $ivResto)
             : [];
 
-        if ($datosRival === []) {
+        if ($datosRival->isEmpty()) {
             throw new ViolacionReglaNegocio('Este gimnasio no tiene Pokémon disponibles.');
         }
 

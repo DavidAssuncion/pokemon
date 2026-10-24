@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Src\Battle\Domain\AI;
 
 use Src\Battle\Domain\AccionBatalla;
+use Src\Battle\Domain\AI\Collections\EvaluacionAmenazaCollection;
 use Src\Battle\Domain\AI\ValueObjects\EvaluacionAccion;
 use Src\Battle\Domain\AI\ValueObjects\EvaluacionAmenaza;
 use Src\Battle\Domain\Combatiente;
@@ -32,7 +33,7 @@ class EvaluadorAccionIAImpl implements EvaluadorAccionIA
 
     public function evaluar(
         ContextoDecisionIA $contexto,
-        array $amenazas,
+        EvaluacionAmenazaCollection $amenazas,
         AccionBatalla $accion,
     ): EvaluacionAccion {
         $movimiento = $accion->move;
@@ -156,7 +157,7 @@ class EvaluadorAccionIAImpl implements EvaluadorAccionIA
     /**
      * Si el objetivo muere, el score de amenaza de ese enemigo se suma como reducción.
      */
-    private function calcularReduccionAmenaza(array $amenazas, Combatiente $objetivo, float $koValue): float
+    private function calcularReduccionAmenaza(EvaluacionAmenazaCollection $amenazas, Combatiente $objetivo, float $koValue): float
     {
         if ($koValue <= 0) {
             return 0.0;

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Src\Battle\Domain\ValueObjects;
 
 use Src\Battle\Domain\MovimientoBatalla;
+use Src\Shared\Domain\ValueObjects\MapaConteo;
 
 /**
  * Cargas y usos limitados por nombre de movimiento.
@@ -65,30 +66,20 @@ final class EstadoMovimientos
         $this->cargas = [];
     }
 
-    /**
-     * @return array<string, int>
-     */
-    public function cargas(): array
+    public function cargas(): MapaConteo
     {
-        return $this->cargas;
+        return MapaConteo::desdeArray($this->cargas);
     }
 
-    /**
-     * @return array<string, int>
-     */
-    public function usos(): array
+    public function usos(): MapaConteo
     {
-        return $this->usos;
+        return MapaConteo::desdeArray($this->usos);
     }
 
-    /**
-     * @param  array<string, int>  $cargas
-     * @param  array<string, int>  $usos
-     */
-    public function restaurar(array $cargas, array $usos): void
+    public function restaurar(MapaConteo $cargas, MapaConteo $usos): void
     {
-        $this->cargas = $this->normalizar($cargas);
-        $this->usos = $this->normalizar($usos);
+        $this->cargas = $this->normalizar($cargas->toArray());
+        $this->usos = $this->normalizar($usos->toArray());
     }
 
     public function reiniciar(): void

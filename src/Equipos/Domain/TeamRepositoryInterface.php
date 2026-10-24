@@ -4,10 +4,11 @@ declare(strict_types=1);
 
 namespace Src\Equipos\Domain;
 
+use Src\Equipos\Domain\Collections\TeamCollection;
+
 interface TeamRepositoryInterface
 {
-    /** @return TeamAggregate[] */
-    public function obtenerTodos(): array;
+    public function obtenerTodos(): TeamCollection;
 
     public function obtenerPorId(int $id): ?TeamAggregate;
 

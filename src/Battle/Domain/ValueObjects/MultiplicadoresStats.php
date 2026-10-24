@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Src\Battle\Domain\ValueObjects;
 
 use Src\Battle\Domain\Enums\StatClave;
+use Src\Shared\Domain\ValueObjects\MapaConteo;
 
 /**
  * Modificadores multiplicativos de estadísticas de un combatiente.
@@ -270,17 +271,14 @@ final class MultiplicadoresStats
         return new ModificadoresStatsCollection($items);
     }
 
-    /**
-     * @return array<string, int>
-     */
-    public function obtenerEtapas(): array
+    public function obtenerEtapas(): MapaConteo
     {
         $etapas = [];
         foreach (StatClave::cases() as $stat) {
             $etapas[$stat->value] = $this->factorAEtapa($this->obtenerMultiplicador($stat));
         }
 
-        return $etapas;
+        return MapaConteo::desdeArray($etapas);
     }
 
     /**

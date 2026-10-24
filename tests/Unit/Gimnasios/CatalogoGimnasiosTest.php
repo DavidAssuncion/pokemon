@@ -25,7 +25,7 @@ class CatalogoGimnasiosTest extends TestCase
     {
         $slugs = array_map(
             static fn ($gimnasio): string => $gimnasio->slug,
-            $this->catalogo->todos(),
+            $this->catalogo->todos()->all(),
         );
 
         $this->assertSame([
@@ -141,7 +141,7 @@ class CatalogoGimnasiosTest extends TestCase
         foreach ($gimnasio->equipos as $etapa => $equipo) {
             $this->assertInstanceOf(EquipoEtapaGimnasio::class, $equipo, "equipo etapa {$etapa}");
         }
-        $this->assertSame([1, 2, 3, 4], array_keys($gimnasio->equipos));
+        $this->assertSame([1, 2, 3, 4], array_keys($gimnasio->equipos->etapas()));
     }
 
     /**

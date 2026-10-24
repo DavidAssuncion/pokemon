@@ -19,7 +19,7 @@ class EjecutorDanzaRevelacion extends EjecutorMovimientoAbstracto
 
     public function tipoEfectivo(AccionBatalla $accion, AgregadoBatalla $battle): ?TipoPokemon
     {
-        return $accion->attacker->tiposDefensivos()[0] ?? null;
+        return $accion->attacker->tiposDefensivos()->primera();
     }
 
     public function ejecutar(AccionBatalla $accion, float $danoAplicado, AgregadoBatalla $battle): void

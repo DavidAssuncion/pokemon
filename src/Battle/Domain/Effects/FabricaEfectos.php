@@ -6,6 +6,7 @@ namespace Src\Battle\Domain\Effects;
 
 use Src\Battle\Domain\Enums\ClaveEfecto;
 use Src\Battle\Domain\Enums\ClaveItem;
+use Src\Shared\Collections\StringCollection;
 
 /**
  * Fábrica que registra y crea efectos (habilidades e items).
@@ -47,20 +48,18 @@ class FabricaEfectos
     /**
      * Crea todos los efectos registrados para una clave. Una habilidad puede
      * componerse de varios efectos (inmunidad + boost, por ejemplo).
-     *
-     * @return list<InterfazEfecto>
      */
-    public function crearEfectos(string|ClaveEfecto $clave): array
+    public function crearEfectos(string|ClaveEfecto $clave): ColeccionEfectos
     {
         $key = $clave instanceof ClaveEfecto ? $clave->value : $clave;
         $registros = $this->efectosRegistrados[$key] ?? [];
-        $efectos = [];
+        $efectos = new ColeccionEfectos();
 
         foreach ($registros as $registro) {
             $clase = $registro['clase'];
             $args = $registro['args'];
             array_unshift($args, $key);
-            $efectos[] = new $clase(...$args);
+            $efectos->add(new $clase(...$args));
         }
 
         return $efectos;
@@ -73,7 +72,7 @@ class FabricaEfectos
      */
     public function crearEfecto(string|ClaveEfecto $clave): ?InterfazEfecto
     {
-        return $this->crearEfectos($clave)[0] ?? null;
+        return $this->crearEfectos($clave)->first();
     }
 
     /**
@@ -97,21 +96,17 @@ class FabricaEfectos
 
     /**
      * Retorna todas las claves de efectos registrados.
-     *
-     * @return string[]
      */
-    public function clavesEfectos(): array
+    public function clavesEfectos(): StringCollection
     {
-        return array_keys($this->efectosRegistrados);
+        return new StringCollection(array_keys($this->efectosRegistrados));
     }
 
     /**
      * Retorna todas las claves de items registrados.
-     *
-     * @return string[]
      */
-    public function clavesItems(): array
+    public function clavesItems(): StringCollection
     {
-        return array_keys($this->itemsRegistrados);
+        return new StringCollection(array_keys($this->itemsRegistrados));
     }
 }

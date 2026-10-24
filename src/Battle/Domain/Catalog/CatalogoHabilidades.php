@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Src\Battle\Domain\Catalog;
 
+use Src\Shared\Collections\StringCollection;
+
 /**
  * Resuelve los nombres que aparecen en `poke habilidades.csv` a las claves
  * canónicas que usa FabricaEfectos. Incluye alias, erratas y etiquetas de
@@ -118,10 +120,8 @@ final class CatalogoHabilidades
     /**
      * Devuelve todas las claves de una etiqueta de grupo
      * (“Enjambre/Mar Llamas/Espesura” → enjambre, mar_llamas, espesura).
-     *
-     * @return list<string>
      */
-    public static function clavesDe(string $nombre): array
+    public static function clavesDe(string $nombre): StringCollection
     {
         $claves = [];
 
@@ -132,7 +132,7 @@ final class CatalogoHabilidades
             }
         }
 
-        return array_values(array_unique($claves));
+        return new StringCollection(array_values(array_unique($claves)));
     }
 
     /**

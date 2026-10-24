@@ -8,6 +8,7 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Src\Battle\Domain\Posicion;
 use Src\Pokemon\Domain\Stats\DatosStats;
+use Src\Pokemon\Domain\Stats\DatosStatsCollection;
 use Src\Shared\Domain\ClasificadorOfensivaDefensiva;
 
 class ClasificadorOfensivaDefensivaTest extends TestCase
@@ -65,14 +66,14 @@ class ClasificadorOfensivaDefensivaTest extends TestCase
             $this->stats(hp: 60, atk: 110, def: 80, spAtk: 40, spDef: 70, speed: 100),   // ofensiva=210 > defensiva=210 → empate → VAN
         ];
 
-        $formacion = $this->clasificador->generarFormacion($stats);
+        $formacion = $this->clasificador->generarFormacion($this->coleccion($stats));
 
-        $this->assertCount(5, $formacion);
-        $this->assertSame(Posicion::RETAGUARDIA, $formacion[0]);
-        $this->assertSame(Posicion::VANGUARDIA, $formacion[1]);
-        $this->assertSame(Posicion::RETAGUARDIA, $formacion[2]);
-        $this->assertSame(Posicion::VANGUARDIA, $formacion[3]);
-        $this->assertSame(Posicion::VANGUARDIA, $formacion[4]);
+        $this->assertSame(5, $formacion->count());
+        $this->assertSame(Posicion::RETAGUARDIA, $formacion->en(0));
+        $this->assertSame(Posicion::VANGUARDIA, $formacion->en(1));
+        $this->assertSame(Posicion::RETAGUARDIA, $formacion->en(2));
+        $this->assertSame(Posicion::VANGUARDIA, $formacion->en(3));
+        $this->assertSame(Posicion::VANGUARDIA, $formacion->en(4));
     }
 
     #[Test]
@@ -87,15 +88,15 @@ class ClasificadorOfensivaDefensivaTest extends TestCase
             $this->stats(hp: 60, atk: 100, def: 70, spAtk: 30, spDef: 60, speed: 100),  // of=200, def=190 → RET
         ];
 
-        $formacion = $this->clasificador->generarFormacion($stats);
+        $formacion = $this->clasificador->generarFormacion($this->coleccion($stats));
 
-        $this->assertCount(5, $formacion);
+        $this->assertSame(5, $formacion->count());
         // 4 RET + 1 VAN → el de mayor defensiva (hp=60, def=70, spDef=60 = 190) → VANGUARDIA
-        $this->assertSame(Posicion::VANGUARDIA, $formacion[4]); // idx 4 tiene mayor defensiva (190)
-        $this->assertSame(Posicion::RETAGUARDIA, $formacion[0]);
-        $this->assertSame(Posicion::RETAGUARDIA, $formacion[1]);
-        $this->assertSame(Posicion::RETAGUARDIA, $formacion[2]);
-        $this->assertSame(Posicion::RETAGUARDIA, $formacion[3]);
+        $this->assertSame(Posicion::VANGUARDIA, $formacion->en(4)); // idx 4 tiene mayor defensiva (190)
+        $this->assertSame(Posicion::RETAGUARDIA, $formacion->en(0));
+        $this->assertSame(Posicion::RETAGUARDIA, $formacion->en(1));
+        $this->assertSame(Posicion::RETAGUARDIA, $formacion->en(2));
+        $this->assertSame(Posicion::RETAGUARDIA, $formacion->en(3));
     }
 
     #[Test]
@@ -110,15 +111,15 @@ class ClasificadorOfensivaDefensivaTest extends TestCase
             $this->stats(hp: 120, atk: 40, def: 130, spAtk: 25, spDef: 120, speed: 35),  // def=370, of=100 → VAN
         ];
 
-        $formacion = $this->clasificador->generarFormacion($stats);
+        $formacion = $this->clasificador->generarFormacion($this->coleccion($stats));
 
-        $this->assertCount(5, $formacion);
+        $this->assertSame(5, $formacion->count());
         // 4 VAN + 1 RET → el de mayor ofensiva (atk=80, speed=70 = 150) → RETAGUARDIA
-        $this->assertSame(Posicion::RETAGUARDIA, $formacion[3]); // idx 3 tiene mayor ofensiva (150)
-        $this->assertSame(Posicion::VANGUARDIA, $formacion[0]);
-        $this->assertSame(Posicion::VANGUARDIA, $formacion[1]);
-        $this->assertSame(Posicion::VANGUARDIA, $formacion[2]);
-        $this->assertSame(Posicion::VANGUARDIA, $formacion[4]);
+        $this->assertSame(Posicion::RETAGUARDIA, $formacion->en(3)); // idx 3 tiene mayor ofensiva (150)
+        $this->assertSame(Posicion::VANGUARDIA, $formacion->en(0));
+        $this->assertSame(Posicion::VANGUARDIA, $formacion->en(1));
+        $this->assertSame(Posicion::VANGUARDIA, $formacion->en(2));
+        $this->assertSame(Posicion::VANGUARDIA, $formacion->en(4));
     }
 
     #[Test]
@@ -134,10 +135,10 @@ class ClasificadorOfensivaDefensivaTest extends TestCase
             $this->stats(hp: 60, atk: 100, def: 50, spAtk: 30, spDef: 60, speed: 100),  // of=200, def=170 → RET (empate)
         ];
 
-        $formacion = $this->clasificador->generarFormacion($stats);
+        $formacion = $this->clasificador->generarFormacion($this->coleccion($stats));
 
-        $this->assertSame(Posicion::VANGUARDIA, $formacion[3]);
-        $this->assertSame(Posicion::RETAGUARDIA, $formacion[4]);
+        $this->assertSame(Posicion::VANGUARDIA, $formacion->en(3));
+        $this->assertSame(Posicion::RETAGUARDIA, $formacion->en(4));
     }
 
     #[Test]
@@ -153,10 +154,10 @@ class ClasificadorOfensivaDefensivaTest extends TestCase
             $this->stats(hp: 51, atk: 100, def: 60, spAtk: 30, spDef: 60, speed: 100),  // of=200, def=171 → RET
         ];
 
-        $formacion = $this->clasificador->generarFormacion($stats);
+        $formacion = $this->clasificador->generarFormacion($this->coleccion($stats));
 
-        $this->assertSame(Posicion::VANGUARDIA, $formacion[4]);
-        $this->assertSame(Posicion::RETAGUARDIA, $formacion[3]);
+        $this->assertSame(Posicion::VANGUARDIA, $formacion->en(4));
+        $this->assertSame(Posicion::RETAGUARDIA, $formacion->en(3));
     }
 
     #[Test]
@@ -170,9 +171,17 @@ class ClasificadorOfensivaDefensivaTest extends TestCase
             $this->stats(hp: 60, atk: 90, def: 70, spAtk: 40, spDef: 60, speed: 80),
         ];
 
-        $primera = $this->clasificador->generarFormacion($stats);
-        $segunda = $this->clasificador->generarFormacion($stats);
+        $primera = $this->clasificador->generarFormacion($this->coleccion($stats));
+        $segunda = $this->clasificador->generarFormacion($this->coleccion($stats));
 
-        $this->assertSame($primera, $segunda);
+        $this->assertSame($primera->all(), $segunda->all());
+    }
+
+    /**
+     * @param  list<DatosStats>  $stats
+     */
+    private function coleccion(array $stats): DatosStatsCollection
+    {
+        return new DatosStatsCollection($stats);
     }
 }

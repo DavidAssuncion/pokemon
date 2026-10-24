@@ -122,10 +122,10 @@ class MazmorraApiTest extends TestCase
             evs: new \Src\Pokemon\Domain\Stats\StatsValue(0, 0, 0, 0, 0, 0),
             nivel: 20,
         );
-        $this->assertSame((float) $esperado->hp, $rivales[0]->hpActual());
-        $this->assertSame((float) $esperado->defenseHp, $rivales[0]->defensaHpActual());
-        $this->assertSame((float) $esperado->spDefenseHp, $rivales[0]->defensaEspHpActual());
-        $this->assertSame((float) $esperado->attack, $rivales[0]->pokemon()->battleStats()->attack);
+        $this->assertSame((float) $esperado->hp, $rivales->en(0)->hpActual());
+        $this->assertSame((float) $esperado->defenseHp, $rivales->en(0)->defensaHpActual());
+        $this->assertSame((float) $esperado->spDefenseHp, $rivales->en(0)->defensaEspHpActual());
+        $this->assertSame((float) $esperado->attack, $rivales->en(0)->pokemon()->battleStats()->attack);
     }
 
     #[Test]

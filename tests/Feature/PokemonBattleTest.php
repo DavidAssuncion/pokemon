@@ -27,7 +27,7 @@ class PokemonBattleTest extends TestCase
     {
         $battle = $this->app->make(FabricaBatallaInterface::class)->createBattle();
 
-        $first = $battle->team1->combatants()[0];
+        $first = $battle->team1->combatants()->en(0);
         $this->assertNotEmpty($first->pokemon()->moves()->all());
 
         // Verificar que todos los combatientes tienen movimientos accesibles

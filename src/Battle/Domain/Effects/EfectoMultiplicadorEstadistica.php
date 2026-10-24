@@ -42,7 +42,7 @@ class EfectoMultiplicadorEstadistica implements InterfazEfecto, ModificaEstadist
             return 1.0;
         }
 
-        if (in_array($this->clave, CatalogoObjetos::clavesDeEfecto(), true)
+        if (CatalogoObjetos::clavesDeEfecto()->contiene($this->clave)
             && ! $portador->itemActivo()) {
             return 1.0;
         }

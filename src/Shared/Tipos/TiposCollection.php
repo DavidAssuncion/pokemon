@@ -57,4 +57,11 @@ class TiposCollection extends Collection
     {
         return $this->contains(fn (TipoPokemon $existente) => $existente === $tipo);
     }
+
+    public function primera(): ?TipoPokemon
+    {
+        $primera = $this->first();
+
+        return $primera instanceof TipoPokemon ? $primera : null;
+    }
 }

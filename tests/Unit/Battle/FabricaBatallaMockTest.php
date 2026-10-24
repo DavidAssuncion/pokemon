@@ -27,7 +27,7 @@ class FabricaBatallaMockTest extends TestCase
 
     public function test_generate_team1_contiene_gengar(): void
     {
-        $gengar = $this->fabrica->generateTeam1()[0];
+        $gengar = $this->fabrica->generateTeam1()->en(0);
 
         $this->assertSame('player_1', $gengar->id);
         $this->assertSame('Gengar', $gengar->nombre);
@@ -47,7 +47,7 @@ class FabricaBatallaMockTest extends TestCase
 
     public function test_gengar_movimientos(): void
     {
-        $gengar = $this->fabrica->generateTeam1()[0];
+        $gengar = $this->fabrica->generateTeam1()->en(0);
 
         $nombres = array_map(fn ($m) => $m->nombre, $gengar->moves);
         $this->assertSame(['Bola Sombra', 'Bomba Lodo', 'Rayo', 'Pulso Umbrío', 'Tóxico', 'Fuego Fatuo'], $nombres);
@@ -69,7 +69,7 @@ class FabricaBatallaMockTest extends TestCase
 
     public function test_generate_team1_contiene_giratina(): void
     {
-        $giratina = $this->fabrica->generateTeam1()[1];
+        $giratina = $this->fabrica->generateTeam1()->en(1);
 
         $this->assertSame('player_2', $giratina->id);
         $this->assertSame('Giratina', $giratina->nombre);
@@ -89,7 +89,7 @@ class FabricaBatallaMockTest extends TestCase
 
     public function test_giratina_paz_mental_sube_spatk_y_spdef(): void
     {
-        $giratina = $this->fabrica->generateTeam1()[1];
+        $giratina = $this->fabrica->generateTeam1()->en(1);
 
         $pazMental = $giratina->moves[3];
         $this->assertSame('Paz Mental', $pazMental->nombre);
@@ -105,7 +105,7 @@ class FabricaBatallaMockTest extends TestCase
 
     public function test_generate_team1_contiene_tyranitar(): void
     {
-        $tyranitar = $this->fabrica->generateTeam1()[2];
+        $tyranitar = $this->fabrica->generateTeam1()->en(2);
 
         $this->assertSame('player_3', $tyranitar->id);
         $this->assertSame('Tyranitar', $tyranitar->nombre);
@@ -124,7 +124,7 @@ class FabricaBatallaMockTest extends TestCase
 
     public function test_tyranitar_onda_trueno_paraliza(): void
     {
-        $tyranitar = $this->fabrica->generateTeam1()[2];
+        $tyranitar = $this->fabrica->generateTeam1()->en(2);
 
         $ondaTrueno = $tyranitar->moves[3];
         $this->assertSame('Onda Trueno', $ondaTrueno->nombre);
@@ -134,7 +134,7 @@ class FabricaBatallaMockTest extends TestCase
 
     public function test_generate_team2_contiene_aggron(): void
     {
-        $aggron = $this->fabrica->generateTeam2()[0];
+        $aggron = $this->fabrica->generateTeam2()->en(0);
 
         $this->assertSame('enemy_1', $aggron->id);
         $this->assertSame('Aggron', $aggron->nombre);
@@ -153,7 +153,7 @@ class FabricaBatallaMockTest extends TestCase
 
     public function test_aggron_defensa_ferrea_cambia_defense(): void
     {
-        $aggron = $this->fabrica->generateTeam2()[0];
+        $aggron = $this->fabrica->generateTeam2()->en(0);
 
         $defensaFerrea = $aggron->moves[3];
         $this->assertSame('Defensa Férrea', $defensaFerrea->nombre);
@@ -167,7 +167,7 @@ class FabricaBatallaMockTest extends TestCase
 
     public function test_generate_team2_contiene_deoxys(): void
     {
-        $deoxys = $this->fabrica->generateTeam2()[1];
+        $deoxys = $this->fabrica->generateTeam2()->en(1);
 
         $this->assertSame('enemy_2', $deoxys->id);
         $this->assertSame('Deoxys', $deoxys->nombre);
@@ -186,7 +186,7 @@ class FabricaBatallaMockTest extends TestCase
 
     public function test_deoxys_psicorrayo_confunde(): void
     {
-        $deoxys = $this->fabrica->generateTeam2()[1];
+        $deoxys = $this->fabrica->generateTeam2()->en(1);
 
         $psicorrayo = $deoxys->moves[2];
         $this->assertSame('Psicorrayo', $psicorrayo->nombre);
@@ -195,7 +195,7 @@ class FabricaBatallaMockTest extends TestCase
 
     public function test_generate_team2_contiene_mewtwo(): void
     {
-        $mewtwo = $this->fabrica->generateTeam2()[2];
+        $mewtwo = $this->fabrica->generateTeam2()->en(2);
 
         $this->assertSame('enemy_3', $mewtwo->id);
         $this->assertSame('Mewtwo', $mewtwo->nombre);
@@ -213,7 +213,7 @@ class FabricaBatallaMockTest extends TestCase
 
     public function test_mewtwo_paz_mental_sube_spatk_y_spdef(): void
     {
-        $mewtwo = $this->fabrica->generateTeam2()[2];
+        $mewtwo = $this->fabrica->generateTeam2()->en(2);
 
         $pazMental = $mewtwo->moves[3];
         $this->assertSame('Paz Mental', $pazMental->nombre);
@@ -253,7 +253,7 @@ class FabricaBatallaMockTest extends TestCase
 
     public function test_potencias_de_movimientos_de_team1(): void
     {
-        $gengar = $this->fabrica->generateTeam1()[0];
+        $gengar = $this->fabrica->generateTeam1()->en(0);
         $this->assertSame(90, $gengar->moves[1]->potencia); // Bomba Lodo
         $this->assertSame(90, $gengar->moves[2]->potencia); // Rayo
         $this->assertSame(80, $gengar->moves[3]->potencia); // Pulso Umbrío
@@ -261,7 +261,7 @@ class FabricaBatallaMockTest extends TestCase
         $this->assertSame(TipoPokemon::ELECTRICO, $gengar->moves[2]->tipo);
         $this->assertSame(TipoPokemon::SINIESTRO, $gengar->moves[3]->tipo);
 
-        $giratina = $this->fabrica->generateTeam1()[1];
+        $giratina = $this->fabrica->generateTeam1()->en(1);
         $this->assertSame(80, $giratina->moves[0]->potencia); // Bola Sombra
         $this->assertSame(130, $giratina->moves[1]->potencia); // Cometa Draco
         $this->assertSame(90, $giratina->moves[2]->potencia); // Tierra Viva
@@ -271,7 +271,7 @@ class FabricaBatallaMockTest extends TestCase
         $this->assertSame(CategoriaMovimiento::ESPECIAL, $giratina->moves[1]->categoria);
         $this->assertSame(TipoPokemon::TIERRA, $giratina->moves[2]->tipo);
 
-        $tyranitar = $this->fabrica->generateTeam1()[2];
+        $tyranitar = $this->fabrica->generateTeam1()->en(2);
         $this->assertSame(100, $tyranitar->moves[0]->potencia); // Roca Afilada
         $this->assertSame(80, $tyranitar->moves[1]->potencia); // Triturar
         $this->assertSame(100, $tyranitar->moves[2]->potencia); // Terremoto
@@ -281,14 +281,14 @@ class FabricaBatallaMockTest extends TestCase
 
     public function test_potencias_de_movimientos_de_team2(): void
     {
-        $aggron = $this->fabrica->generateTeam2()[0];
+        $aggron = $this->fabrica->generateTeam2()->en(0);
         $this->assertSame(80, $aggron->moves[0]->potencia); // Cabeza de Hierro
         $this->assertSame(100, $aggron->moves[1]->potencia); // Roca Afilada
         $this->assertSame(100, $aggron->moves[2]->potencia); // Terremoto
         $this->assertSame(TipoPokemon::ACERO, $aggron->moves[0]->tipo);
         $this->assertSame(CategoriaMovimiento::FISICO, $aggron->moves[0]->categoria);
 
-        $deoxys = $this->fabrica->generateTeam2()[1];
+        $deoxys = $this->fabrica->generateTeam2()->en(1);
         $this->assertSame(90, $deoxys->moves[0]->potencia); // Psíquico
         $this->assertSame(90, $deoxys->moves[1]->potencia); // Rayo
         $this->assertSame(65, $deoxys->moves[2]->potencia); // Psicorrayo
@@ -297,7 +297,7 @@ class FabricaBatallaMockTest extends TestCase
         $this->assertSame(CategoriaMovimiento::ESPECIAL, $deoxys->moves[2]->categoria);
         $this->assertSame(TipoPokemon::SINIESTRO, $deoxys->moves[3]->tipo);
 
-        $mewtwo = $this->fabrica->generateTeam2()[2];
+        $mewtwo = $this->fabrica->generateTeam2()->en(2);
         $this->assertSame(90, $mewtwo->moves[0]->potencia); // Psíquico
         $this->assertSame(80, $mewtwo->moves[1]->potencia); // Esfera Aural
         $this->assertSame(110, $mewtwo->moves[2]->potencia); // Llamarada

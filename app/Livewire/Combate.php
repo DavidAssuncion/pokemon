@@ -1080,7 +1080,7 @@ class Combate extends Component
 
         $team = $teamIdx === 0 ? $battle->team1 : $battle->team2;
 
-        return $team->combatants()[$pokemonIdx] ?? null;
+        return $team->combatants()->en($pokemonIdx);
     }
 
     private function defenderTeam(AgregadoBatalla $battle, Combatiente $defender): EquipoBatalla
@@ -1319,17 +1319,17 @@ class Combate extends Component
     private function syncViewData(AgregadoBatalla $battle, ?Combatiente $actor = null): void
     {
         $this->weather = $battle->weather()->value;
-        $this->log = array_merge($this->log, $battle->log()->entries());
+        $this->log = array_merge($this->log, $battle->log()->entries()->toList());
         $battle->limpiarLog();
 
         $this->team1 = array_map(
             fn (Combatiente $c) => $c->aArrayVista(0),
-            $battle->team1->combatants()
+            $battle->team1->combatants()->all()
         );
 
         $this->team2 = array_map(
             fn (Combatiente $c) => $c->aArrayVista(1),
-            $battle->team2->combatants()
+            $battle->team2->combatants()->all()
         );
 
         if ($actor === null || ! $battle->team1->findCombatant($actor)) {

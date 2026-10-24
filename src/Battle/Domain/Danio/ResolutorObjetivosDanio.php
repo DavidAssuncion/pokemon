@@ -6,7 +6,7 @@ namespace Src\Battle\Domain\Danio;
 
 use Src\Battle\Domain\AccionBatalla;
 use Src\Battle\Domain\AgregadoBatalla;
-use Src\Battle\Domain\Combatiente;
+use Src\Battle\Domain\Collections\CombatientesCollection;
 use Src\Battle\Domain\Enums\ObjetivoMovimiento;
 use Src\Battle\Domain\Posicion;
 
@@ -17,10 +17,7 @@ use Src\Battle\Domain\Posicion;
  */
 final class ResolutorObjetivosDanio
 {
-    /**
-     * @return list<Combatiente>|null
-     */
-    public static function resolver(AccionBatalla $accion, AgregadoBatalla $battle): ?array
+    public static function resolver(AccionBatalla $accion, AgregadoBatalla $battle): ?CombatientesCollection
     {
         $objetivo = $accion->move->objetivo;
         $rival = $battle->equipoRivalDe($accion->attacker);
@@ -30,7 +27,7 @@ final class ResolutorObjetivosDanio
         // flujo de un solo objetivo.
         if ($accion->move->esEstado()) {
             if ($objetivo === ObjetivoMovimiento::ALL_ADJACENT_FOES) {
-                return $rival?->combatientesCollection()->vivos()->all() ?? [];
+                return $rival?->combatientesCollection()->vivos() ?? new CombatientesCollection();
             }
 
             if ($objetivo === ObjetivoMovimiento::ALL_ADJACENT || $objetivo === ObjetivoMovimiento::ALL) {
@@ -47,7 +44,7 @@ final class ResolutorObjetivosDanio
                     }
                 }
 
-                return array_values($defensores);
+                return new CombatientesCollection(array_values($defensores));
             }
 
             return null;
@@ -55,7 +52,7 @@ final class ResolutorObjetivosDanio
 
         if ($objetivo->esFila()) {
             if ($rival === null) {
-                return [];
+                return new CombatientesCollection();
             }
 
             $posicion = match ($objetivo) {
@@ -64,11 +61,11 @@ final class ResolutorObjetivosDanio
                 default => $accion->defender->posicion(),
             };
 
-            return $rival->combatientesCollection()->porPosicion($posicion)->vivos()->all();
+            return $rival->combatientesCollection()->porPosicion($posicion)->vivos();
         }
 
         if ($objetivo === ObjetivoMovimiento::ALL_ADJACENT_FOES) {
-            return $rival?->combatientesCollection()->vivos()->all() ?? [];
+            return $rival?->combatientesCollection()->vivos() ?? new CombatientesCollection();
         }
 
         if ($objetivo === ObjetivoMovimiento::ALL_ADJACENT || $objetivo === ObjetivoMovimiento::ALL) {
@@ -85,7 +82,7 @@ final class ResolutorObjetivosDanio
                 }
             }
 
-            return array_values($defensores);
+            return new CombatientesCollection(array_values($defensores));
         }
 
         return null;

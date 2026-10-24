@@ -49,7 +49,7 @@ class GeneradorEquipoEntrenadorTest extends TestCase
         $this->assertCount(3, $equipo);
         $idsGenerados = array_map(
             fn (DatosPokemonBatalla $d): int => $d->speciesId,
-            $equipo
+            $equipo->all()
         );
         $this->assertSame(
             array_values(array_unique($idsGenerados)),
@@ -86,7 +86,7 @@ class GeneradorEquipoEntrenadorTest extends TestCase
 
         $idsGenerados = array_map(
             fn (DatosPokemonBatalla $d): int => $d->speciesId,
-            $equipo
+            $equipo->all()
         );
 
         $this->assertCount(3, $equipo);
@@ -118,7 +118,7 @@ class GeneradorEquipoEntrenadorTest extends TestCase
 
         $idsGenerados = array_map(
             fn (DatosPokemonBatalla $d): int => $d->speciesId,
-            $equipo
+            $equipo->all()
         );
 
         // El de mayor capture_rate aparece el doble de veces que el segundo
@@ -146,8 +146,8 @@ class GeneradorEquipoEntrenadorTest extends TestCase
         $equipo1 = $generador->generar((int) $habitat->id, 2, 1, $fecha);
         $equipo2 = $generador->generar((int) $habitat->id, 2, 1, $fecha);
 
-        $ids1 = array_map(fn (DatosPokemonBatalla $d): string => $d->id, $equipo1);
-        $ids2 = array_map(fn (DatosPokemonBatalla $d): string => $d->id, $equipo2);
+        $ids1 = array_map(fn (DatosPokemonBatalla $d): string => $d->id, $equipo1->all());
+        $ids2 = array_map(fn (DatosPokemonBatalla $d): string => $d->id, $equipo2->all());
 
         $this->assertSame($ids1, $ids2);
     }
@@ -176,7 +176,7 @@ class GeneradorEquipoEntrenadorTest extends TestCase
 
         $this->assertSame(
             $idsEsperados,
-            array_map(fn (DatosPokemonBatalla $d): string => $d->id, $equipo),
+            array_map(fn (DatosPokemonBatalla $d): string => $d->id, $equipo->all()),
         );
     }
 

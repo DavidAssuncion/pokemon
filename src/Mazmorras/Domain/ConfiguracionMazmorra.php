@@ -4,17 +4,17 @@ declare(strict_types=1);
 
 namespace Src\Mazmorras\Domain;
 
+use Src\Mazmorras\Domain\Collections\PisoConfiguracionCollection;
+use Src\Mazmorras\Domain\DataTransferObjects\PisoConfiguracion;
+
 /**
  * Configuración de la mazmorra de un hábitat: lista ordenada de pisos, cada
  * uno con el species_id del jefe que se enfrenta al equipo del jugador (3v1).
  */
 final class ConfiguracionMazmorra
 {
-    /**
-     * @param  list<array{piso: int, species_id: int}>  $pisos
-     */
     private function __construct(
-        private readonly array $pisos,
+        private readonly PisoConfiguracionCollection $pisos,
     ) {
     }
 
@@ -30,7 +30,7 @@ final class ConfiguracionMazmorra
             return null;
         }
 
-        $pisos = [];
+        $porNumero = [];
         foreach ($json['pisos'] as $piso) {
             if (! is_array($piso) || ! isset($piso['piso']) || ! isset($piso['species_id'])) {
                 continue;
@@ -42,30 +42,29 @@ final class ConfiguracionMazmorra
                 continue;
             }
 
-            $pisos[$numero] = ['piso' => $numero, 'species_id' => $speciesId];
+            $porNumero[$numero] = new PisoConfiguracion($numero, $speciesId);
         }
 
-        ksort($pisos);
+        ksort($porNumero);
 
-        if ($pisos === []) {
+        if ($porNumero === []) {
             return null;
         }
 
-        return new self(array_values($pisos));
+        return new self(new PisoConfiguracionCollection(array_values($porNumero)));
     }
 
     public function totalPisos(): int
     {
-        return count($this->pisos);
+        return $this->pisos->count();
     }
 
     public function speciesDe(int $piso): ?int
     {
-        return $this->pisos[$piso - 1]['species_id'] ?? null;
+        return $this->pisos->porNumero($piso)?->speciesId;
     }
 
-    /** @return list<array{piso: int, species_id: int}> */
-    public function todos(): array
+    public function pisos(): PisoConfiguracionCollection
     {
         return $this->pisos;
     }

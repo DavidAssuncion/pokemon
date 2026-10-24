@@ -7,17 +7,20 @@ namespace Src\Equipos\Infra;
 use App\Models\Team;
 use App\Models\TeamMember;
 use Illuminate\Support\Facades\DB;
+use Src\Equipos\Domain\Collections\TeamCollection;
 use Src\Equipos\Domain\TeamAggregate;
 use Src\Equipos\Domain\TeamRepositoryInterface;
 
 class EloquentTeamRepository implements TeamRepositoryInterface
 {
-    public function obtenerTodos(): array
+    public function obtenerTodos(): TeamCollection
     {
-        return Team::with('members.reclutado.pokemon')
-            ->get()
-            ->map(fn (Team $team): TeamAggregate => $this->toDomain($team))
-            ->all();
+        return new TeamCollection(
+            Team::with('members.reclutado.pokemon')
+                ->get()
+                ->map(fn (Team $team): TeamAggregate => $this->toDomain($team))
+                ->all()
+        );
     }
 
     public function obtenerPorId(int $id): ?TeamAggregate

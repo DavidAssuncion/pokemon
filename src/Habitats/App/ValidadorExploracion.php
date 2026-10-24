@@ -6,6 +6,7 @@ namespace Src\Habitats\App;
 
 use App\Models\ExploracionActiva;
 use App\Models\Team;
+use Src\Habitats\App\Collections\ExploracionActivaCollection;
 
 class ValidadorExploracion
 {
@@ -61,15 +62,15 @@ class ValidadorExploracion
 
     /**
      * Get all active explorations for a habitat.
-     *
-     * @return array<int, \App\Models\ExploracionActiva>
      */
-    public function exploracionesActivas(int $habitatId): array
+    public function exploracionesActivas(int $habitatId): ExploracionActivaCollection
     {
-        return ExploracionActiva::where('habitat_id', $habitatId)
-            ->whereNull('regreso')
-            ->with('reclutado.pokemon')
-            ->get()
-            ->toArray();
+        return new ExploracionActivaCollection(
+            ExploracionActiva::where('habitat_id', $habitatId)
+                ->whereNull('regreso')
+                ->with('reclutado.pokemon')
+                ->get()
+                ->all()
+        );
     }
 }

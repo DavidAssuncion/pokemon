@@ -1,3 +1,6 @@
+> **Índice canónico actualizado:** [`docs/modulos/README.md`](../docs/modulos/README.md).
+> Este directorio se conserva como documentación histórica.
+
 # Documentación - Pokémon Explorer
 
 Índice de documentación funcional del proyecto. Cada módulo tiene su contexto, features implementadas y pendientes.

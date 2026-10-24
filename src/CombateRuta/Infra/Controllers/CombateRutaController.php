@@ -48,7 +48,7 @@ final class CombateRutaController extends Controller
                     'species_id' => $pokemon->speciesId,
                     'nivel' => $pokemon->nivel,
                 ],
-                $rivales,
+                $rivales->all(),
             ),
         ]);
     }

@@ -90,7 +90,7 @@ class Fase3Test extends TestCase
     public function test_selector_elige_objetivo_valido_para_team1(): void
     {
         $battle = (new FabricaBatallaMock())->createBattle();
-        $actor = $battle->team1->combatants()[1]; // Giratina en vanguardia
+        $actor = $battle->team1->combatants()->en(1); // Giratina en vanguardia
 
         $resultado = $battle->elegirObjetivoPara($actor);
 

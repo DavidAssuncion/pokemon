@@ -6,6 +6,7 @@ namespace Src\Battle\Domain\Effects;
 
 use Src\Battle\Domain\AccionBatalla;
 use Src\Battle\Domain\Effects\Capacidades\AjustaGolpes;
+use Src\Battle\Domain\ValueObjects\AjusteGolpes;
 
 /**
  * Doble/Triple/Cuádruple Ataque: convierte el movimiento en una secuencia de
@@ -27,14 +28,11 @@ class EfectoGolpesMultiples implements InterfazEfecto, AjustaGolpes
         return $this->clave;
     }
 
-    /**
-     * @return array{golpes: int, fraccionPotencia: float}
-     */
-    public function ajustarGolpes(AccionBatalla $accion): array
+    public function ajustarGolpes(AccionBatalla $accion): AjusteGolpes
     {
-        return [
-            'golpes' => max(1, $this->golpes),
-            'fraccionPotencia' => max(0.01, min(1.0, $this->fraccionPotencia)),
-        ];
+        return new AjusteGolpes(
+            golpes: max(1, $this->golpes),
+            fraccionPotencia: max(0.01, min(1.0, $this->fraccionPotencia)),
+        );
     }
 }

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Src\Battle\Presentation;
 
+use Src\Battle\Domain\Collections\CombatientesCollection;
 use Src\Battle\Domain\ValueObjects\ResultadoDanio;
 
 /**
@@ -21,8 +22,7 @@ class DTOResultadoDanio
         public readonly int $golpes = 1,
         public readonly float $curado = 0.0,
         public readonly float $recoil = 0.0,
-        /** @var list<\Src\Battle\Domain\Combatiente> Objetivos realmente alcanzados */
-        public readonly array $objetivos = [],
+        public readonly CombatientesCollection $objetivos = new CombatientesCollection(),
     ) {
     }
 }

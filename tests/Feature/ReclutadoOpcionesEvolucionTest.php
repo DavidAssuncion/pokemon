@@ -117,7 +117,7 @@ class ReclutadoOpcionesEvolucionTest extends TestCase
         $opciones = ServicioEvolucion::opcionesEvolucion(Pokemon::findOrFail(133));
 
         $this->assertCount(4, $opciones);
-        $this->assertSame([134, 135, 136, 700], array_map(fn (Pokemon $p): int => $p->id, $opciones));
+        $this->assertSame([134, 135, 136, 700], array_map(fn (Pokemon $p): int => $p->id, $opciones->all()));
         // Todos con types cargados (sin N+1)
         foreach ($opciones as $opcion) {
             $this->assertTrue($opcion->relationLoaded('types'));
@@ -305,7 +305,7 @@ class ReclutadoOpcionesEvolucionTest extends TestCase
         $opciones = ServicioEvolucion::opcionesEvolucion(Pokemon::findOrFail(10101));
 
         $this->assertCount(1, $opciones);
-        $this->assertSame(10102, $opciones[0]->id);
+        $this->assertSame(10102, $opciones->primero()?->id);
     }
 
     public function test_opciones_evolucion_cubone_devuelve_marowak_normal_y_alola(): void
@@ -319,7 +319,7 @@ class ReclutadoOpcionesEvolucionTest extends TestCase
         $opciones = ServicioEvolucion::opcionesEvolucion(Pokemon::findOrFail(104));
 
         $this->assertCount(2, $opciones);
-        $this->assertSame([105, 10115], array_map(fn (Pokemon $p): int => $p->id, $opciones));
+        $this->assertSame([105, 10115], array_map(fn (Pokemon $p): int => $p->id, $opciones->all()));
     }
 
     public function test_siguiente_evolucion_cubone_sigue_siendo_marowak_normal(): void
@@ -348,7 +348,7 @@ class ReclutadoOpcionesEvolucionTest extends TestCase
         $opciones = ServicioEvolucion::opcionesEvolucion(Pokemon::findOrFail(102));
 
         $this->assertCount(2, $opciones);
-        $this->assertSame([103, 10114], array_map(fn (Pokemon $p): int => $p->id, $opciones));
+        $this->assertSame([103, 10114], array_map(fn (Pokemon $p): int => $p->id, $opciones->all()));
     }
 
     public function test_opciones_evolucion_pikachu_devuelve_raichu_normal_y_alola(): void
@@ -362,6 +362,6 @@ class ReclutadoOpcionesEvolucionTest extends TestCase
         $opciones = ServicioEvolucion::opcionesEvolucion(Pokemon::findOrFail(25));
 
         $this->assertCount(2, $opciones);
-        $this->assertSame([26, 10100], array_map(fn (Pokemon $p): int => $p->id, $opciones));
+        $this->assertSame([26, 10100], array_map(fn (Pokemon $p): int => $p->id, $opciones->all()));
     }
 }

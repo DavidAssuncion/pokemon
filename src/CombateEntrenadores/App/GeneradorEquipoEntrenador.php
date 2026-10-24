@@ -8,10 +8,12 @@ use App\Models\Habitat;
 use App\Models\Pokemon;
 use Random\Engine\Mt19937;
 use Random\Randomizer;
-use Src\Battle\Domain\DatosPokemonBatalla;
+use Src\Battle\Domain\Collections\DatosPokemonBatallaCollection;
+use Src\Battle\Domain\Posicion;
 use Src\Exploraciones\Domain\ValueObjects\ColeccionPoolPonderado;
 use Src\Exploraciones\Domain\ValueObjects\PoolHabitat;
 use Src\Pokemon\Domain\Stats\DatosStats;
+use Src\Pokemon\Domain\Stats\DatosStatsCollection;
 use Src\Shared\Domain\ClasificadorOfensivaDefensiva;
 use Src\Shared\Domain\IvsRangoEntrenador;
 
@@ -38,7 +40,6 @@ class GeneradorEquipoEntrenador
     /**
      * @param  callable(): float  $aleatorio  Fuente aleatoria inyectable para la
      *                                         repetición ponderada (tests lo fijan).
-     * @return list<DatosPokemonBatalla>
      */
     public function generar(
         int $habitatId,
@@ -49,19 +50,19 @@ class GeneradorEquipoEntrenador
         int $ivPrincipal = 0,
         int $ivResto = 0,
         ?callable $aleatorio = null,
-    ): array {
+    ): DatosPokemonBatallaCollection {
         $pool = $this->poolDelHabitat($habitatId, $nivel);
         if ($pool === []) {
-            return [];
+            return new DatosPokemonBatallaCollection();
         }
 
         $semilla = crc32("{$habitatId}|{$nivel}|{$entrenadorIndex}|{$fecha}");
         $elegidos = $this->elegirEspecies($pool, $semilla, $aleatorio);
 
-        $stats = array_map(
+        $stats = new DatosStatsCollection(array_map(
             fn (Pokemon $pokemon): DatosStats => $this->mapeador->statsDe($pokemon),
             $elegidos
-        );
+        ));
         $posiciones = $this->clasificador->generarFormacion($stats);
 
         $equipo = [];
@@ -70,13 +71,17 @@ class GeneradorEquipoEntrenador
                 pokemon: $pokemon,
                 id: "entrenador_{$habitatId}_{$nivel}_{$entrenadorIndex}_{$i}",
                 nombre: $pokemon->name,
-                posicion: $posiciones[$i],
+                posicion: $posiciones->en($i) ?? Posicion::VANGUARDIA,
                 nivel: $nivelRival,
-                ivs: IvsRangoEntrenador::distribuir($ivPrincipal, $ivResto, $stats[$i]),
+                ivs: IvsRangoEntrenador::distribuir(
+                    $ivPrincipal,
+                    $ivResto,
+                    $stats->en($i) ?? new DatosStats(0, 0, 0, 0, 0, 0),
+                ),
             );
         }
 
-        return $equipo;
+        return new DatosPokemonBatallaCollection($equipo);
     }
 
     /**

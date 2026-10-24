@@ -19,7 +19,7 @@ class EquipoEtapaGimnasioTest extends TestCase
             retaguardia: new IntCollection([900]),
         );
 
-        $this->assertSame([268, 266, 900], $equipo->todos());
+        $this->assertSame([268, 266, 900], $equipo->todos()->all());
     }
 
     #[Test]
@@ -30,7 +30,7 @@ class EquipoEtapaGimnasioTest extends TestCase
             retaguardia: new IntCollection([464, 464]),
         );
 
-        $this->assertSame([338, 464, 464], $equipo->todos());
+        $this->assertSame([338, 464, 464], $equipo->todos()->all());
     }
 
     #[Test]

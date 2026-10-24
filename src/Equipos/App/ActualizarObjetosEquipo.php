@@ -6,6 +6,7 @@ namespace Src\Equipos\App;
 
 use App\Models\Team;
 use App\Models\TeamMember;
+use Src\Equipos\Domain\ValueObjects\ObjetosEquipo;
 
 /**
  * Actualiza el objeto equipado de los reclutados de un equipo.
@@ -15,38 +16,35 @@ use App\Models\TeamMember;
  */
 final class ActualizarObjetosEquipo
 {
-    /**
-     * @param  array<string|int, string|null>  $items  slot => item_key
-     * @return array<int|string, string> slot => item_key
-     */
-    public function actualizar(Team $team, array $items, int $userId): array
+    public function actualizar(Team $team, ObjetosEquipo $items, int $userId): ObjetosEquipo
     {
-        foreach ($items as $slot => $itemKey) {
-            $member = TeamMember::where('team_id', $team->id)
-                ->where('slot', (int) $slot)
-                ->first();
+        $miembros = TeamMember::where('team_id', $team->id)
+            ->with('reclutado')
+            ->get();
 
-            if ($member === null) {
-                continue;
-            }
+        $actuales = ObjetosEquipo::desde([]);
 
+        foreach ($miembros as $member) {
             $reclutado = $member->reclutado;
             abort_unless($reclutado?->user_id === $userId, 404);
 
-            $reclutado->update([
-                'obj_equipados' => is_string($itemKey) && $itemKey !== '' ? [$itemKey] : [],
-            ]);
+            if ($items->tieneSlot($member->slot)) {
+                $itemKey = $items->porSlot($member->slot);
+
+                $reclutado->update([
+                    'obj_equipados' => $itemKey !== '' ? [$itemKey] : [],
+                ]);
+            }
+
+            $objEquipados = $reclutado->obj_equipados;
+            $itemActual = is_array($objEquipados) ? ($objEquipados[0] ?? '') : '';
+
+            $actuales = $actuales->conSlot(
+                $member->slot,
+                is_string($itemActual) ? $itemActual : '',
+            );
         }
 
-        return TeamMember::where('team_id', $team->id)
-            ->with('reclutado')
-            ->get()
-            ->mapWithKeys(function (TeamMember $member): array {
-                $items = $member->reclutado?->obj_equipados;
-                $item = is_array($items) ? ($items[0] ?? '') : '';
-
-                return [(string) $member->slot => is_string($item) ? $item : ''];
-            })
-            ->all();
+        return $actuales;
     }
 }

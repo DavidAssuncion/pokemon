@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Src\Habitats\Domain\Repositories;
 
+use Src\Habitats\Domain\Collections\PokemonBasicoCollection;
 use Src\Habitats\Domain\ProvinciasCollection;
 use Src\Habitats\Presentation\DTOFamiliaDisponible;
 use Src\Habitats\Presentation\DTOFamiliaEliminada;
@@ -16,10 +17,7 @@ interface HabitatRepositoryInterface
 {
     public function allProvinciasWithHabitats(): ProvinciasCollection;
 
-    /**
-     * @return array<int, array{id: int, name: string}>
-     */
-    public function getPokemonsByHabitat(int $habitatId): array;
+    public function getPokemonsByHabitat(int $habitatId): PokemonBasicoCollection;
 
     public function getHabitatDetail(int $habitatId): DTOHabitatDetalle;
 

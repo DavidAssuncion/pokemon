@@ -63,7 +63,7 @@ class OtorgarRecompensasRutaTest extends TestCase
         $this->assertTrue($resultado->victoria);
         $this->assertGreaterThan(0, $resultado->expTotal);
         $this->assertCount(1, $resultado->capturas);
-        $this->assertSame((int) $pokemon->id, $resultado->capturas[0]->pokemonId);
+        $this->assertSame((int) $pokemon->id, $resultado->capturas->en(0)?->pokemonId);
 
         Bus::assertDispatched(ActualizarPokedexJob::class, 1);
     }

@@ -21,7 +21,7 @@ class GimnasiosViewController extends Controller
 
     public function show(string $slug): View
     {
-        $teams = $this->obtenerEquipos->run();
+        $teams = $this->obtenerEquipos->run()->all();
 
         return view('gimnasios.show', [
             'slug' => $slug,
