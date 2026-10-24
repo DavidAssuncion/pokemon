@@ -29,7 +29,7 @@ class EfectoOrbeVida implements InterfazEfecto
 
     public function onDamageDealt(Combatiente $portador, Combatiente $target, float $daño, AgregadoBatalla $battle): void
     {
-        if ($daño <= 0 || ! $portador->estaVivo()) {
+        if ($daño <= 0 || ! $portador->estaVivo() || ! $portador->itemActivo()) {
             return;
         }
 

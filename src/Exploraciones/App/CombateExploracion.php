@@ -8,6 +8,7 @@ use App\Models\Pokemon;
 use App\Models\Reclutado;
 use Src\Battle\Domain\AgregadoBatalla;
 use Src\Battle\Domain\DatosPokemonBatalla;
+use Src\Battle\Domain\Effects\FabricaEfectos;
 use Src\Battle\Domain\EquipoBatalla;
 use Src\Battle\Domain\Posicion;
 use Src\CombateEntrenadores\App\MapeadorPokemonBatalla;
@@ -23,6 +24,7 @@ class CombateExploracion
 {
     public function __construct(
         private readonly MapeadorPokemonBatalla $mapeador,
+        private readonly ?FabricaEfectos $fabricaEfectos = null,
     ) {
     }
 
@@ -42,10 +44,13 @@ class CombateExploracion
         ?array $estadoInicial = null,
         float $modificadorDanio = 1.0,
     ): ResultadoBatallaExploracion {
-        $reclutado->loadMissing('pokemon.stats', 'pokemon.types');
+        $reclutado->loadMissing('pokemon.stats', 'pokemon.types', 'pokemon.abilities');
 
         $nivelPokemon = NivelHelper::nivelDesdeExperiencia($reclutado->exp->total());
-        $item = $reclutado->obj_equipados[0] ?? null;
+        $nivelDesbloqueo = $reclutado->user?->nivel() ?? $nivelPokemon;
+        $items = $reclutado->obj_equipados ?? [];
+        $item = array_values($items)[0] ?? null;
+        $item = is_string($item) ? $item : null;
 
         $explorador = $this->mapeador->desdePokemon(
             pokemon: $reclutado->pokemon,
@@ -55,9 +60,12 @@ class CombateExploracion
             shiny: $reclutado->es_shiny,
             item: $item,
             nivel: $nivelPokemon,
+            movimientosSeleccionados: is_array($reclutado->movimientos) ? $reclutado->movimientos : null,
+            habilidadActivaId: $reclutado->habilidad_activa_id,
+            nivelDesbloqueo: $nivelDesbloqueo,
         );
 
-        $salvaje->loadMissing('stats', 'types');
+        $salvaje->loadMissing('stats', 'types', 'abilities');
         $salvajeDatos = $this->mapeador->desdePokemon(
             pokemon: $salvaje,
             id: 'salvaje_'.$salvaje->id,
@@ -81,8 +89,8 @@ class CombateExploracion
         ?array $estadoInicial = null,
         float $modificadorDanio = 1.0,
     ): ResultadoBatallaExploracion {
-        $team1 = EquipoBatalla::fromData([$explorador], 'Explorador');
-        $team2 = EquipoBatalla::fromData([$salvaje], 'Salvaje');
+        $team1 = EquipoBatalla::fromData([$explorador], 'Explorador', $this->fabricaEfectos);
+        $team2 = EquipoBatalla::fromData([$salvaje], 'Salvaje', $this->fabricaEfectos);
 
         // Aplicar estado inicial si se proporciona (para combates secuenciales)
         $combatiente = $team1->combatientesCollection()->primero();

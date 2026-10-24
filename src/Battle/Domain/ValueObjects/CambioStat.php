@@ -18,6 +18,7 @@ final readonly class CambioStat
     public function __construct(
         public StatClave $stat,
         public float $factor,
+        public int $etapas = 0,
     ) {
     }
 
@@ -26,7 +27,7 @@ final readonly class CambioStat
      */
     public static function desdeEtapas(StatClave $stat, int $etapas): self
     {
-        return new self($stat, MultiplicadoresStats::factorDesdeStages($etapas));
+        return new self($stat, MultiplicadoresStats::factorDesdeStages($etapas), $etapas);
     }
 
     /**
@@ -51,5 +52,42 @@ final readonly class CambioStat
     public function aplicadoEn(MultiplicadoresStats $multiplicadores): MultiplicadoresStats
     {
         return $multiplicadores->aplicarFactor($this->stat, $this->factor);
+    }
+
+    /**
+     * Factor temporal: +30 % por etapa positiva, -30 % por etapa negativa.
+     */
+    public function factorTemporal(): float
+    {
+        $etapas = $this->etapas;
+        if ($etapas === 0) {
+            $etapas = $this->etapasDesdeFactor();
+        }
+
+        if ($etapas === 0) {
+            return 1.0;
+        }
+
+        return $etapas > 0
+            ? 1.30 ** $etapas
+            : 0.70 ** abs($etapas);
+    }
+
+    public function aplicadoTemporalEn(MultiplicadoresStats $multiplicadores): MultiplicadoresStats
+    {
+        return $multiplicadores->aplicarTemporal($this->stat, $this->factorTemporal());
+    }
+
+    private function etapasDesdeFactor(): int
+    {
+        if ($this->factor > 1.0) {
+            return max(1, (int) round(2 * $this->factor - 2));
+        }
+
+        if ($this->factor < 1.0) {
+            return min(-1, (int) round(2 - 2 / $this->factor));
+        }
+
+        return 0;
     }
 }

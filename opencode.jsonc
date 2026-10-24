@@ -111,7 +111,7 @@
   "compaction": {
     "auto": true,
     "keep": {
-      "tokens": 15000
+      "tokens": 150000
     }
   },
 

@@ -1,0 +1,429 @@
+id,slug,nombre,decision,motivo,descripcion
+1,stench,Hedor,Entra,Cierre de catálogo,Puede amedrentar al rival al atacarlo debido al mal olor que emana.
+2,drizzle,Llovizna,Dentro,Heredada; homologar nombre,Hace que llueva al entrar en combate.
+3,speed-boost,Impulso,Dentro,Definida en JSON,Aumenta su Velocidad en cada turno.
+4,battle-armor,Armadura Batalla,Dentro,Heredada; homologar nombre,La robusta coraza que lo protege bloquea los golpes críticos.
+5,sturdy,Robustez,Entra,Cierre de catálogo,Evita que el rival pueda debilitarlo de un solo golpe cuando tiene los PS al máximo. También evita los movimientos fulminantes.
+6,damp,Humedad,Entra,Cierre de catálogo,"Aumenta la humedad del entorno y evita que se puedan utilizar movimientos explosivos, tales como Autodestrucción."
+7,limber,Flexibilidad,Dentro,Heredada; homologar nombre,Evita ser paralizado gracias a la flexibilidad de su cuerpo.
+8,sand-veil,Velo Arena,Dentro,Heredada; homologar nombre,Aumenta su Evasión durante las tormentas de arena.
+9,static,Electricidad Estática,Dentro,Heredada; homologar nombre,La electricidad estática que lo envuelve puede paralizar al mínimo contacto.
+10,volt-absorb,Absorbe Electricidad,Entra,Cierre de catálogo,"Si le alcanza un movimiento de tipo Eléctrico, recupera PS en vez de sufrir daño."
+11,water-absorb,Absorbe Agua,Entra,Cierre de catálogo,"Si le alcanza un movimiento de tipo Agua, recupera PS en vez de sufrir daño."
+12,oblivious,Despiste,Dentro,Definida en JSON,Su indiferencia evita que sea provocado o caiga presa del enamoramiento.
+13,cloud-nine,Aclimatación,Dentro,Definida en JSON,Anula todos los efectos del tiempo atmosférico.
+14,compound-eyes,Ojo Compuesto,Dentro,Definida en JSON,Aumenta la precisión de sus movimientos.
+15,insomnia,Insomnio,Dentro,Definida en JSON,Su resistencia al sueño le impide quedarse dormido.
+16,color-change,Cambio Color,Entra,Cierre de catálogo,Adopta el tipo del último movimiento del que es blanco.
+17,immunity,Inmunidad,Dentro,Definida en JSON,Su sistema inmunitario evita el envenenamiento.
+18,flash-fire,Absorbe Fuego,Entra,Cierre de catálogo,"Si le alcanza algún movimiento de tipo Fuego, potencia sus propios movimientos de dicho tipo."
+19,shield-dust,Polvo Escudo,Entra,Cierre de catálogo,El polvo de escamas que lo envuelve lo protege de los efectos secundarios de los ataques recibidos.
+20,own-tempo,Ritmo Propio,Dentro,Definida en JSON,"Como le gusta hacer las cosas a su manera, los rivales no logran confundirlo."
+21,suction-cups,Ventosas,Dentro,Definida en JSON,"Sus ventosas se aferran al suelo, con lo cual anula movimientos y objetos que fuerzan el relevo."
+22,intimidate,Intimidación,Dentro,Heredada; homologar nombre,Al entrar en combate amilana al rival de tal manera que su Ataque disminuye.
+23,shadow-tag,Sombra Trampa,Fuera,Cambio/huida,Impide que el enemigo huya o sea cambiado por otro.
+24,rough-skin,Piel Tosca,Dentro,Definida en JSON,Hiere con su piel áspera al rival que lo ataque con un movimiento de contacto.
+25,wonder-guard,Superguarda,Dentro,Definida en JSON,"Gracias a un poder misterioso, solo le hacen daño los movimientos supereficaces."
+26,levitate,Levitación,Dentro,Definida en JSON,Su capacidad de flotar sobre el suelo le proporciona inmunidad frente a los movimientos de tipo Tierra.
+27,effect-spore,Efecto Espora,Dentro,Heredada; homologar nombre,"Puede dormir, envenenar o paralizar al Pokémon con el que entre en contacto al recibir un ataque."
+28,synchronize,Sincronía,Entra,Cierre de catálogo,"Contagia el envenenamiento, las quemaduras o la parálisis al Pokémon que le cause ese estado."
+29,clear-body,Cuerpo Puro,Dentro,Definida en JSON,Evita que bajen sus características a causa de movimientos o habilidades de otros Pokémon.
+30,natural-cure,Cura Natural,Fuera,Cambio/huida,Cura sus problemas de estado al cambiarse con otro Pokémon.
+31,lightning-rod,Pararrayos,Dentro,Heredada; homologar nombre,"Atrae y neutraliza los movimientos de tipo Eléctrico, que además le suben el Ataque Especial."
+32,serene-grace,Dicha,Entra,Cierre de catálogo,Aumenta la probabilidad de que los movimientos causen efectos secundarios.
+33,swift-swim,Nado Rápido,Dentro,Definida en JSON,Sube su Velocidad cuando llueve.
+34,chlorophyll,Clorofila,Dentro,Heredada; homologar nombre,Sube su Velocidad cuando hace sol.
+35,illuminate,Iluminación,Fuera,Sin efecto de combate,Aumenta la probabilidad de encontrar Pokémon al iluminar el entorno.
+36,trace,Calco,Fuera,Copia/identidad,Al entrar en combate copia la habilidad del rival.
+37,huge-power,Potencia,Entra,Cierre de catálogo,Duplica la potencia de sus ataques físicos.
+38,poison-point,Punto Tóxico,Dentro,Heredada; homologar nombre,Puede envenenar al mínimo contacto.
+39,inner-focus,Fuerza Mental,Dentro,Definida en JSON,"Gracias a su profunda concentración, no se amedrenta ante los ataques del rival."
+40,magma-armor,Escudo Magma,Dentro,Definida en JSON,"Gracias al magma candente que lo envuelve, no puede ser congelado."
+41,water-veil,Velo Agua,Dentro,Heredada; homologar nombre,Evita las quemaduras gracias a la capa de agua que lo envuelve.
+42,magnet-pull,Imán,Fuera,Cambio/huida,Su magnetismo atrae a los Pokémon de tipo Acero y les impide huir.
+43,soundproof,Insonorizar,Dentro,Definida en JSON,Su aislamiento acústico lo protege de movimientos que usan sonido.
+44,rain-dish,Cura Lluvia,Dentro,Definida en JSON,Recupera PS de forma gradual cuando llueve.
+45,sand-stream,Chorro Arena,Entra,Cierre de catálogo,Crea una tormenta de arena al entrar en combate.
+46,pressure,Presión,Dentro,Heredada; homologar nombre,Presiona al rival para que sus PP se acaben antes.
+47,thick-fat,Sebo,Dentro,Definida en JSON,"Gracias a la gruesa capa de grasa que lo protege, reduce a la mitad el daño que recibe de ataques de tipo Fuego o Hielo."
+48,early-bird,Madrugar,Entra,Cierre de catálogo,"Si se duerme, tardará la mitad de tiempo en despertarse."
+49,flame-body,Cuerpo Llama,Dentro,Heredada; homologar nombre,Puede quemar al mínimo contacto.
+50,run-away,Fuga,Fuera,Cambio/huida,Puede escaparse de todos los Pokémon salvajes.
+51,keen-eye,Vista Lince,Dentro,Definida en JSON,Su aguda vista evita que le disminuya la Precisión.
+52,hyper-cutter,Corte Fuerte,Dentro,Definida en JSON,Evita que el rival le baje el Ataque.
+53,pickup,Recogida,Fuera,Objetos/bayas,"Puede recoger objetos que el rival haya usado, o bien otros que encuentre en plena aventura."
+54,truant,Ausente,Entra,Cierre de catálogo,"Al ejecutar un movimiento, descansará en el turno siguiente."
+55,hustle,Entusiasmo,Dentro,Definida en JSON,"Aumenta su Ataque, pero reduce su Precisión."
+56,cute-charm,Gran Encanto,Fuera,Género,Puede causar enamoramiento al rival que lo toque.
+57,plus,Más,Fuera,Dobles/redirección,Potencia su Ataque Especial si un Pokémon aliado tiene la habilidad Más o Menos.
+58,minus,Menos,Fuera,Dobles/redirección,Potencia su Ataque Especial si un Pokémon aliado tiene la habilidad Más o Menos.
+59,forecast,Predicción,Dentro,Heredada; homologar nombre,"Cambia a tipo Agua, Fuego o Hielo en función del tiempo atmosférico."
+60,sticky-hold,Viscosidad,Fuera,Objetos/bayas,"Los objetos se quedan pegados a su cuerpo, por lo que no pueden robárselos."
+61,shed-skin,Mudar,Dentro,Definida en JSON,Puede curar sus problemas de estado al mudar la piel.
+62,guts,Agallas,Dentro,Definida en JSON,"Si sufre un problema de estado, se viene arriba y aumenta su Ataque."
+63,marvel-scale,Escama Especial,Dentro,Definida en JSON,Sube su Defensa si sufre un problema de estado.
+64,liquid-ooze,Lodo Líquido,Entra,Cierre de catálogo,Exuda una sustancia tóxica de intenso hedor que hiere a quienes intentan drenarle PS.
+65,overgrow,Espesura,Dentro,Heredada; homologar nombre,Potencia sus movimientos de tipo Planta cuando le quedan pocos PS.
+66,blaze,Mar Llamas,Dentro,Heredada; homologar nombre,Potencia sus movimientos de tipo Fuego cuando le quedan pocos PS.
+67,torrent,Torrente,Dentro,Heredada; homologar nombre,Potencia sus movimientos de tipo Agua cuando le quedan pocos PS.
+68,swarm,Enjambre,Dentro,Heredada; homologar nombre,Potencia sus movimientos de tipo Bicho cuando le quedan pocos PS.
+69,rock-head,Cabeza Roca,Dentro,Heredada; homologar nombre,No puede dañarse con sus propios movimientos.
+70,drought,Sequía,Dentro,Heredada; homologar nombre,"Cuando entra en combate, el tiempo pasa a ser soleado."
+71,arena-trap,Trampa Arena,Fuera,Cambio/huida,Evita que el rival huya.
+72,vital-spirit,Espíritu Vital,Dentro,Definida en JSON,Su determinación le impide quedarse dormido.
+73,white-smoke,Humo Blanco,Dentro,Definida en JSON,El humo blanco que lo protege evita que otros Pokémon le bajen las características.
+74,pure-power,Energía Pura,Entra,Cierre de catálogo,Duplica la potencia de sus ataques físicos gracias al yoga.
+75,shell-armor,Caparazón,Dentro,Heredada; homologar nombre,La robusta coraza que lo protege bloquea los golpes críticos.
+76,air-lock,Bucle Aire,Dentro,Definida en JSON,Neutraliza todos los efectos del tiempo atmosférico.
+77,tangled-feet,Tumbos,Entra,Cierre de catálogo,Sube su Evasión si está confuso.
+78,motor-drive,Electromotor,Dentro,Definida en JSON,"Si le alcanza un movimiento de tipo Eléctrico, le sube la Velocidad en vez de sufrir daño."
+79,rivalry,Rivalidad,Fuera,Género,"Si el objetivo es del mismo sexo, su competitividad le lleva a infligir más daño. Si es del sexo contrario, en cambio, el daño será menor."
+80,steadfast,Impasible,Entra,Cierre de catálogo,"Cada vez que se amedrenta sube su Velocidad, debido a su voluntad inquebrantable."
+81,snow-cloak,Manto Níveo,Dentro,Definida en JSON,Sube la Evasión cuando graniza.
+82,gluttony,Gula,Fuera,Objetos/bayas,"Cuando sus PS se ven reducidos a la mitad, engulle la baya que normalmente solo se comería cuando le quedasen pocos PS."
+83,anger-point,Irascible,Dentro,Definida en JSON,"Si recibe un golpe crítico, monta en cólera y sube su Ataque hasta el máximo."
+84,unburden,Liviano,Fuera,Objetos/bayas,Sube su Velocidad si usa o pierde el objeto que lleva.
+85,heatproof,Ignífugo,Dentro,Definida en JSON,"Su cuerpo, resistente al calor, reduce a la mitad el daño recibido por movimientos de tipo Fuego."
+86,simple,Simple,Dentro,Definida en JSON,Duplica los cambios en las características.
+87,dry-skin,Piel Seca,Entra,Cierre de catálogo,"Pierde PS si hace sol y los recupera si llueve o recibe un movimiento de tipo Agua. Los movimientos de tipo Fuego, por su parte, le hacen más daño de lo normal."
+88,download,Descarga,Entra,Cierre de catálogo,Compara la Defensa y la Defensa Especial del rival para ver cuál es inferior y aumenta su propio Ataque o Ataque Especial según sea lo más eficaz.
+89,iron-fist,Puño Férreo,Dentro,Definida en JSON,Aumenta la potencia de los puñetazos.
+90,poison-heal,Antídoto,Dentro,Heredada; homologar nombre,"Si resulta envenenado, recupera PS en vez de perderlos."
+91,adaptability,Adaptable,Dentro,Definida en JSON,Potencia aún más los movimientos cuyo tipo coincida con el suyo.
+92,skill-link,Encadenado,Dentro,Definida en JSON,Ejecuta siempre los movimientos múltiples con el número máximo de golpes.
+93,hydration,Hidratación,Dentro,Definida en JSON,Cura los problemas de estado si está lloviendo.
+94,solar-power,Poder Solar,Dentro,Definida en JSON,"Si hace sol, aumenta su Ataque Especial, pero pierde PS en cada turno."
+95,quick-feet,Pies Rápidos,Dentro,Definida en JSON,Aumenta la Velocidad si sufre problemas de estado.
+96,normalize,Normalidad,Dentro,Definida en JSON,Hace que todos sus movimientos se vuelvan de tipo Normal y aumenten ligeramente su potencia.
+97,sniper,Francotirador,Dentro,Definida en JSON,Potencia los golpes críticos que asesta aún más de lo normal.
+98,magic-guard,Muro Mágico,Dentro,Heredada; homologar nombre,Solo recibe daño de ataques.
+99,no-guard,Indefenso,Entra,Cierre de catálogo,"Al quedar ambos expuestos, tanto sus movimientos como los del rival acertarán siempre."
+100,stall,Rezagado,Fuera,Prioridad/orden,Ejecuta su movimiento tras todos los demás.
+101,technician,Experto,Dentro,Definida en JSON,Potencia sus movimientos más débiles.
+102,leaf-guard,Defensa Hoja,Entra,Cierre de catálogo,Evita los problemas de estado si hace sol.
+103,klutz,Zoquete,Fuera,Objetos/bayas,No puede usar objetos equipados.
+104,mold-breaker,Rompemoldes,Entra,Cierre de catálogo,Las habilidades del objetivo no afectan a los movimientos que emplea.
+105,super-luck,Afortunado,Dentro,Definida en JSON,Su buena suerte aumenta la probabilidad de asestar golpes críticos.
+106,aftermath,Detonación,Dentro,Heredada; homologar nombre,Daña al agresor que le ha dado el golpe de gracia con un movimiento de contacto.
+107,anticipation,Anticipación,Fuera,Sin efecto de combate,Prevé los movimientos peligrosos del rival.
+108,forewarn,Alerta,Fuera,Sin efecto de combate,Indica el movimiento más potente del rival al entrar en combate.
+109,unaware,Ignorante,Dentro,Definida en JSON,Pasa por alto las mejoras en las características del rival al atacar.
+110,tinted-lens,Cromolente,Entra,Cierre de catálogo,"Potencia los movimientos que no son muy eficaces, que infligen ahora un daño normal."
+111,filter,Filtro,Dentro,Definida en JSON,Mitiga el daño que le infligen los movimientos supereficaces.
+112,slow-start,Inicio Lento,Entra,Cierre de catálogo,Baja a la mitad su Ataque y su Velocidad durante cinco turnos.
+113,scrappy,Intrépido,Dentro,Definida en JSON,Puede alcanzar a Pokémon de tipo Fantasma con movimientos de tipo Normal o Lucha.
+114,storm-drain,Colector,Dentro,Heredada; homologar nombre,"Atrae y neutraliza los movimientos de tipo Agua, que además le suben el Ataque Especial."
+115,ice-body,Gélido,Entra,Cierre de catálogo,Recupera PS de forma gradual cuando hay tormentas de granizo.
+116,solid-rock,Roca Sólida,Dentro,Definida en JSON,Mitiga el daño que le infligen los movimientos supereficaces.
+117,snow-warning,Nevada,Dentro,Definida en JSON,Invoca una tormenta de granizo al entrar en combate.
+118,honey-gather,Recogemiel,Fuera,Objetos/bayas,Puede que encuentre Miel una vez concluido el combate.
+119,frisk,Cacheo,Fuera,Objetos/bayas,Puede ver el objeto que lleva el rival al entrar en combate.
+120,reckless,Audaz,Entra,Cierre de catálogo,Potencia los movimientos que también dañan al usuario.
+121,multitype,Multitipo,Fuera,Objetos/formas,Cambia su tipo al de la tabla o al del Cristal Z que lleve.
+122,flower-gift,Don Floral,Dentro,Definida en JSON,"Si hace sol, aumenta su Ataque y su Defensa Especial, así como los de sus aliados."
+123,bad-dreams,Mal Sueño,Dentro,Heredada; homologar nombre,Inflige daño a cualquier rival que esté dormido.
+124,pickpocket,Hurto,Fuera,Objetos/bayas,"Si el rival usa un movimiento de contacto al atacar, le roba el objeto."
+125,sheer-force,Potencia Bruta,Dentro,Definida en JSON,"Sube la potencia de sus movimientos en detrimento de los efectos secundarios, que se ven anulados."
+126,contrary,Respondón,Dentro,Definida en JSON,Invierte los cambios en las características: bajan cuando les toca subir y suben cuando les toca bajar.
+127,unnerve,Nerviosismo,Fuera,Objetos/bayas,Pone nervioso al rival y le impide usar bayas.
+128,defiant,Competitivo,Dentro,Definida en JSON,Sube mucho su Ataque cuando el rival le baja las características.
+129,defeatist,Flaqueza,Entra,Cierre de catálogo,Se debilita tanto cuando sus PS se ven reducidos a la mitad que su Ataque y su Ataque Especial bajan.
+130,cursed-body,Cuerpo Maldito,Entra,Cierre de catálogo,Puede anular el movimiento usado en su contra.
+131,healer,Alma Cura,Dentro,Definida en JSON,A veces cura los problemas de estado de un aliado.
+132,friend-guard,Compiescolta,Dentro,Definida en JSON,Reduce el daño que sufren los aliados.
+133,weak-armor,Armadura Frágil,Dentro,Definida en JSON,"Al recibir daño de un ataque físico, le baja la Defensa, pero le sube mucho la Velocidad."
+134,heavy-metal,Metal Pesado,Entra,Cierre de catálogo,Duplica su peso.
+135,light-metal,Metal Liviano,Entra,Cierre de catálogo,Reduce a la mitad su peso.
+136,multiscale,Multiescamas,Dentro,Definida en JSON,Reduce el daño que sufre si sus PS están al máximo.
+137,toxic-boost,Ímpetu Tóxico,Dentro,Definida en JSON,Aumenta la potencia de sus ataques físicos cuando está envenenado.
+138,flare-boost,Ímpetu Ardiente,Dentro,Definida en JSON,Aumenta la potencia de sus ataques especiales cuando sufre quemaduras.
+139,harvest,Cosecha,Fuera,Objetos/bayas,Puede reutilizar varias veces una misma baya.
+140,telepathy,Telepatía,Dentro,Definida en JSON,Elude los ataques de los aliados durante el combate.
+141,moody,Veleta,Dentro,Heredada; homologar nombre,"Una característica le sube mucho en cada turno, pero le baja otra."
+142,overcoat,Funda,Dentro,Definida en JSON,"No le afectan las tormentas de arena, el granizo y los movimientos con polvos."
+143,poison-touch,Toque Tóxico,Entra,Cierre de catálogo,Puede envenenar al objetivo con solo tocarlo.
+144,regenerator,Regeneración,Dentro,Heredada; homologar nombre,Recupera unos pocos PS al ser cambiado por otro Pokémon.
+145,big-pecks,Sacapecho,Dentro,Definida en JSON,Impide que el rival le baje la Defensa.
+146,sand-rush,Ímpetu Arena,Dentro,Heredada; homologar nombre,Aumenta su Velocidad durante las tormentas de arena.
+147,wonder-skin,Piel Milagro,Dentro,Definida en JSON,Presenta una mayor resistencia ante los movimientos de estado.
+148,analytic,Cálculo Final,Entra,Cierre de catálogo,Aumenta la potencia de su movimiento si es el último en atacar.
+149,illusion,Ilusión,Fuera,Copia/identidad,Adopta el aspecto del último Pokémon del equipo al entrar en combate para desconcertar al rival.
+150,imposter,Impostor,Fuera,Copia/identidad,Se transforma en el Pokémon que tiene enfrente.
+151,infiltrator,Allanamiento,Entra,Cierre de catálogo,Ataca sorteando la barrera o el sustituto del rival.
+152,mummy,Momia,Fuera,Copia/identidad,Contagia la habilidad Momia al rival que entre en contacto con él.
+153,moxie,Autoestima,Entra,Cierre de catálogo,"Al debilitar a un objetivo, su confianza se refuerza de tal manera que aumenta su Ataque."
+154,justified,Justiciero,Dentro,Definida en JSON,"Si le alcanza un movimiento de tipo Siniestro, aumenta el Ataque debido a su integridad."
+155,rattled,Cobardía,Dentro,Definida en JSON,"Si le alcanza un movimiento de tipo Siniestro, Bicho o Fantasma, el miedo hace que le suba la Velocidad."
+156,magic-bounce,Espejo Mágico,Dentro,Definida en JSON,"Puede devolver los movimientos de estado lanzados por el rival, sin verse afectado por ellos."
+157,sap-sipper,Herbívoro,Dentro,Definida en JSON,Neutraliza los movimientos de tipo Planta y sube su Ataque.
+158,prankster,Bromista,Dentro,Heredada; homologar nombre,Sus movimientos de estado tienen prioridad alta.
+159,sand-force,Poder Arena,Dentro,Definida en JSON,"Potencia los movimientos de tipo Tierra, Acero y Roca durante las tormentas de arena."
+160,iron-barbs,Punta Acero,Entra,Cierre de catálogo,Inflige daño al rival si este le golpea con un movimiento de contacto.
+161,zen-mode,Modo Daruma,Fuera,Forma/cambio,Cambia de forma si sus PS se ven reducidos a la mitad.
+162,victory-star,Tinovictoria,Entra,Cierre de catálogo,Sube su Precisión y la de sus aliados.
+163,turboblaze,Turbollama,Entra,Cierre de catálogo,Las habilidades del objetivo no afectan a los movimientos que emplea.
+164,teravolt,Terravoltaje,Entra,Cierre de catálogo,Las habilidades del objetivo no afectan a los movimientos que emplea.
+165,aroma-veil,Velo Aroma,Dentro,Definida en JSON,Se protege a sí mismo y a sus aliados de ataques que impiden elegir movimientos.
+166,flower-veil,Velo Flor,Dentro,Definida en JSON,Evita que los Pokémon de tipo Planta aliados sufran problemas de estado o que les bajen sus características.
+167,cheek-pouch,Carrillo,Fuera,Objetos/bayas,Recupera PS al comer cualquier baya.
+168,protean,Mutatipo,Entra,Cierre de catálogo,Cambia su tipo al del movimiento que va a usar.
+169,fur-coat,Pelaje Recio,Dentro,Definida en JSON,Reduce a la mitad el daño que recibe de ataques físicos del rival.
+170,magician,Prestidigitador,Fuera,Objetos/bayas,Roba el objeto del Pokémon al que alcance con un movimiento.
+171,bulletproof,Antibalas,Dentro,Definida en JSON,No le afectan las bombas ni algunos proyectiles.
+172,competitive,Tenacidad,Dentro,Definida en JSON,Aumenta mucho su Ataque Especial cuando el rival le baja cualquiera de sus características.
+173,strong-jaw,Mandíbula Fuerte,Dentro,Definida en JSON,Su robusta mandíbula le confiere una mordedura potente.
+174,refrigerate,Piel Helada,Dentro,Definida en JSON,Convierte los movimientos de tipo Normal en tipo Hielo y aumenta ligeramente su potencia.
+175,sweet-veil,Velo Dulce,Dentro,Definida en JSON,No cae dormido y evita también que sus aliados se duerman.
+176,stance-change,Cambio Táctico,Fuera,Forma/cambio,"Adopta la Forma Filo al lanzar un ataque, o bien la Forma Escudo si usa el movimiento Escudo Real."
+177,gale-wings,Alas Vendaval,Fuera,Prioridad/orden,Da prioridad a los movimientos de tipo Volador si sus PS están al máximo.
+178,mega-launcher,Megadisparador,Entra,Cierre de catálogo,Aumenta la potencia de algunos movimientos de pulsos y auras.
+179,grass-pelt,Manto Frondoso,Entra,Cierre de catálogo,Aumenta su Defensa si hay un campo de hierba en el terreno de combate.
+180,symbiosis,Simbiosis,Fuera,Objetos/bayas,Pasa su objeto a un aliado que ya haya utilizado el suyo.
+181,tough-claws,Garra Dura,Dentro,Heredada; homologar nombre,Aumenta la potencia de los movimientos de contacto.
+182,pixilate,Piel Feérica,Dentro,Definida en JSON,Convierte los movimientos de tipo Normal en tipo Hada y aumenta ligeramente su potencia.
+183,gooey,Baba,Dentro,Definida en JSON,Baja la Velocidad del rival cuando este le ataca con un movimiento de contacto.
+184,aerilate,Piel Celeste,Dentro,Definida en JSON,Convierte los movimientos de tipo Normal en tipo Volador y aumenta ligeramente su potencia.
+185,parental-bond,Amor Filial,Entra,Cierre de catálogo,Une fuerzas con su cría y ataca dos veces.
+186,dark-aura,Aura Oscura,Entra,Cierre de catálogo,Aumenta la potencia de todos los movimientos de tipo Siniestro.
+187,fairy-aura,Aura Feérica,Entra,Cierre de catálogo,Aumenta la potencia de todos los movimientos de tipo Hada.
+188,aura-break,Rompeaura,Entra,Cierre de catálogo,"Invierte los efectos de las auras, por lo que baja la potencia de ciertos movimientos en vez de subirla."
+189,primordial-sea,Mar del Albor,Fuera,Superclima,Altera el clima para anular los ataques de tipo Fuego.
+190,desolate-land,Tierra del Ocaso,Fuera,Superclima,Altera el clima para anular los ataques de tipo Agua.
+191,delta-stream,Ráfaga Delta,Fuera,Superclima,Altera el clima para anular las vulnerabilidades del tipo Volador.
+192,stamina,Firmeza,Dentro,Definida en JSON,Aumenta su Defensa al recibir un ataque.
+193,wimp-out,Huida,Fuera,Cambio/huida,Se asusta y abandona el terreno de combate cuando sus PS se ven reducidos a la mitad.
+194,emergency-exit,Retirada,Fuera,Cambio/huida,Abandona el terreno de combate cuando sus PS se ven reducidos a la mitad para evitar males mayores.
+195,water-compaction,Hidrorrefuerzo,Dentro,Definida en JSON,Aumenta mucho su Defensa si le alcanza un movimiento de tipo Agua.
+196,merciless,Ensañamiento,Entra,Cierre de catálogo,Hace que sus movimientos asesten siempre un golpe crítico si el rival está envenenado.
+197,shields-down,Escudo Limitado,Fuera,Forma/cambio,Rompe su coraza cuando sus PS se ven reducidos a la mitad y adopta una forma ofensiva.
+198,stakeout,Vigilante,Fuera,Cambio/huida,"Si el objetivo de su ataque es sustituido por otro, duplica el daño que infligirá."
+199,water-bubble,Pompa,Dentro,Definida en JSON,Reduce el daño que le provocan los movimientos de tipo Fuego y es inmune a las quemaduras.
+200,steelworker,Acero Templado,Dentro,Heredada; homologar nombre,Potencia los movimientos de tipo Acero.
+201,berserk,Cólera,Dentro,Definida en JSON,Aumenta su Ataque Especial si sus PS se ven reducidos a la mitad debido a algún ataque.
+202,slush-rush,Quitanieves,Dentro,Definida en JSON,Aumenta su Velocidad si está granizando.
+203,long-reach,Remoto,Entra,Cierre de catálogo,Puede usar cualquier movimiento sin entrar en contacto con el rival.
+204,liquid-voice,Voz Fluida,Dentro,Definida en JSON,Hace que todos sus movimientos que usan sonido pasen a ser de tipo Agua.
+205,triage,Primer Auxilio,Fuera,Prioridad/orden,Da prioridad a los movimientos que restauran PS.
+206,galvanize,Piel Eléctrica,Dentro,Definida en JSON,Convierte los movimientos de tipo Normal en tipo Eléctrico y aumenta ligeramente su potencia.
+207,surge-surfer,Cola Surf,Entra,Cierre de catálogo,Duplica su Velocidad si hay un campo eléctrico en el terreno de combate.
+208,schooling,Banco,Fuera,Forma/cambio,"Forma bancos con sus congéneres cuando tiene muchos PS, lo cual le otorga más fuerza. Cuando le quedan pocos PS, el banco se dispersa."
+209,disguise,Disfraz,Fuera,Forma/cambio,Puede eludir un ataque valiéndose de la tela que le cubre el cuerpo una vez por combate.
+210,battle-bond,Fuerte Afecto,Fuera,Forma/cambio,"Al derrotar a un rival, los vínculos con su Entrenador se refuerzan y se convierte en Greninja Ash. Su Shuriken de Agua también se ve potenciado."
+211,power-construct,Agrupamiento,Fuera,Forma/cambio,"Cuando sus PS se ven reducidos a la mitad, las células se reagrupan y adopta su Forma Completa."
+212,corrosion,Corrosión,Entra,Cierre de catálogo,Puede envenenar incluso a rivales de tipo Acero o Veneno.
+213,comatose,Letargo Perenne,Entra,Cierre de catálogo,No despierta jamás de su profundo letargo e incluso ataca dormido.
+214,queenly-majesty,Regia Presencia,Fuera,Prioridad/orden,Intimida al objetivo y le impide usar movimientos con prioridad.
+215,innards-out,Revés,Entra,Cierre de catálogo,"Al caer debilitado, inflige al rival un daño equivalente a los PS que le quedaran."
+216,dancer,Pareja de Baile,Fuera,Copia/identidad,Puede copiar inmediatamente cualquier movimiento de baile que haya usado otro Pokémon presente en el combate.
+217,battery,Batería,Dentro,Definida en JSON,Potencia los ataques especiales de los aliados.
+218,fluffy,Peluche,Dentro,Definida en JSON,"Reduce a la mitad el daño provocado por los movimientos de contacto, pero duplica el infligido por los de tipo Fuego."
+219,dazzling,Cuerpo Vívido,Fuera,Prioridad/orden,Desconcierta al rival y le impide utilizar movimientos con prioridad en su contra.
+220,soul-heart,Coránima,Dentro,Definida en JSON,Aumenta su Ataque Especial cada vez que un Pokémon cae debilitado.
+221,tangling-hair,Rizos Rebeldes,Dentro,Definida en JSON,Baja la Velocidad del rival cuando este le ataca con un movimiento de contacto.
+222,receiver,Receptor,Fuera,Copia/identidad,Adquiere la habilidad de un aliado debilitado.
+223,power-of-alchemy,Reacción Química,Fuera,Copia/identidad,Reacciona copiando la habilidad de un aliado debilitado.
+224,beast-boost,Ultraimpulso,Dentro,Definida en JSON,"Si derrota a un rival en ese turno, aumenta su característica más fuerte."
+225,rks-system,Sistema Alfa,Fuera,Objetos/formas,Cambia su tipo según el disco que lleve instalado.
+226,electric-surge,Electrogénesis,Dentro,Definida en JSON,Crea un campo eléctrico al entrar en combate.
+227,psychic-surge,Psicogénesis,Dentro,Definida en JSON,Crea un campo psíquico al entrar en combate.
+228,misty-surge,Nebulogénesis,Dentro,Definida en JSON,Crea un campo de niebla al entrar en combate.
+229,grassy-surge,Herbogénesis,Dentro,Definida en JSON,Crea un campo de hierba al entrar en combate.
+230,full-metal-body,Guardia Metálica,Entra,Cierre de catálogo,Evita que bajen sus características a causa de movimientos o habilidades de otros Pokémon.
+231,shadow-shield,Guardia Espectro,Dentro,Definida en JSON,Reduce el daño que sufre si sus PS están al máximo.
+232,prism-armor,Armadura Prisma,Dentro,Definida en JSON,Mitiga el daño que le infligen los movimientos supereficaces.
+233,neuroforce,Fuerza Cerebral,Entra,Cierre de catálogo,Potencia los ataques supereficaces.
+234,intrepid-sword,Espada Indómita,Entra,Cierre de catálogo,Aumenta su Ataque al entrar en combate.
+235,dauntless-shield,Escudo Recio,Entra,Cierre de catálogo,Aumenta su Defensa al entrar en combate.
+236,libero,Líbero,Entra,Cierre de catálogo,Cambia su tipo al del movimiento que va a usar.
+237,ball-fetch,Recogebolas,Fuera,Objetos/bayas,"Si no lleva equipado ningún objeto, recupera la Poké Ball del primer intento de captura fallido."
+238,cotton-down,Pelusa,Entra,Cierre de catálogo,"Al ser alcanzado por un ataque, suelta una pelusa de algodón que reduce la Velocidad de todos los demás Pokémon."
+239,propeller-tail,Hélice Caudal,Fuera,Dobles/redirección,Impide que el rival pueda atraer ataques hacia sí mismo por efecto de su habilidad o sus movimientos.
+240,mirror-armor,Coraza Reflejo,Entra,Cierre de catálogo,Refleja los efectos que reducen las características.
+241,gulp-missile,Tragamisil,Fuera,Forma/cambio,"Tras usar Surf o Buceo, emerge con una presa en la boca. Al recibir daño, ataca escupiéndola al rival."
+242,stalwart,Acérrimo,Fuera,Dobles/redirección,Impide que el rival pueda atraer ataques hacia sí mismo por efecto de su habilidad o sus movimientos.
+243,steam-engine,Combustible,Dentro,Definida en JSON,"Si le alcanza un movimiento de tipo Fuego o Agua, le sube muchísimo la Velocidad."
+244,punk-rock,Punk Rock,Dentro,Definida en JSON,Potencia los movimientos que usan sonido y reduce a la mitad el daño que le infligen dichos movimientos.
+245,sand-spit,Expulsarena,Dentro,Definida en JSON,Provoca una tormenta de arena al recibir un ataque.
+246,ice-scales,Escama de Hielo,Dentro,Definida en JSON,Las gélidas escamas que protegen su cuerpo reducen a la mitad el daño que le infligen los ataques especiales.
+247,ripen,Maduración,Fuera,Objetos/bayas,"Hace madurar las bayas, por lo que duplica sus efectos."
+248,ice-face,Cara de Hielo,Fuera,Forma/cambio,"Absorbe el daño de un ataque físico con el hielo de la cabeza, tras lo cual cambia de forma. El hielo se regenerará la próxima vez que granice."
+249,power-spot,Fuente Energía,Dentro,Definida en JSON,Potencia los movimientos de los Pokémon adyacentes.
+250,mimicry,Mimetismo,Entra,Cierre de catálogo,Cambia su tipo según el campo que haya en el terreno de combate.
+251,screen-cleaner,Antibarrera,Entra,Cierre de catálogo,"Anula los efectos de Pantalla de Luz, Reflejo y Velo Aurora tanto de rivales como de aliados al entrar en combate."
+252,steely-spirit,Alma Acerada,Dentro,Definida en JSON,Potencia los movimientos de tipo Acero de los aliados.
+253,perish-body,Cuerpo Mortal,Entra,Cierre de catálogo,"Si le alcanza un movimiento de contacto, se debilitará al cabo de 3 turnos, así como su agresor, a menos que abandonen el terreno de combate."
+254,wandering-spirit,Alma Errante,Fuera,Copia/identidad,"Si le alcanza un movimiento de contacto, intercambia su habilidad con la del agresor."
+255,gorilla-tactics,Monotema,Fuera,Objetos/bayas,"Potencia su Ataque, pero solo puede usar el primer movimiento escogido."
+256,neutralizing-gas,Gas Reactivo,Entra,Cierre de catálogo,Anula los efectos de las habilidades de los demás Pokémon presentes mientras esté en el terreno de combate.
+257,pastel-veil,Velo Pastel,Dentro,Definida en JSON,Se protege a sí mismo y a sus aliados del envenenamiento.
+258,hunger-switch,Mutapetito,Fuera,Forma/cambio,Alterna entre su Forma Saciada y Forma Voraz al final de cada turno.
+259,quick-draw,Mano Rápida,Fuera,Prioridad/orden,"A veces, puede atacar el primero."
+260,unseen-fist,Puño Invisible,Fuera,Protección,"Si usa un movimiento de contacto, puede infligir daño al objetivo aunque este se proteja."
+261,curious-medicine,Medicina Extraña,Entra,Cierre de catálogo,"Al entrar en combate, rezuma una substancia medicinal por la caracola que revierte los cambios en las características de los aliados."
+262,transistor,Transistor,Dentro,Definida en JSON,Potencia los movimientos de tipo Eléctrico.
+263,dragons-maw,Mandíbula Dragón,Dentro,Definida en JSON,Potencia los movimientos de tipo Dragón.
+264,chilling-neigh,Relincho Blanco,Entra,Cierre de catálogo,"Al derrotar a un objetivo, emite un relincho gélido y aumenta su Ataque."
+265,grim-neigh,Relincho Negro,Entra,Cierre de catálogo,"Al derrotar a un objetivo, emite un relincho aterrador y aumenta su Ataque Especial."
+266,as-one-glastrier,Unidad Ecuestre,Fuera,Forma/cambio,El Pokémon tiene dos habilidades: Relincho Blanco de Glastrier y Nerviosismo de Calyrex.
+267,as-one-spectrier,Unidad Ecuestre,Fuera,Forma/cambio,El Pokémon tiene dos habilidades: Relincho Negro de Spectrier y Nerviosismo de Calyrex.
+268,lingering-aroma,Olor Persistente,Fuera,Copia/identidad,Sin descripción oficial en PokeAPI; efecto según Showdown.
+269,seed-sower,Disemillar,Dentro,Definida en JSON,Sin descripción oficial en PokeAPI; efecto según Showdown.
+270,thermal-exchange,Termoconversión,Dentro,Definida en JSON,Sin descripción oficial en PokeAPI; efecto según Showdown.
+271,anger-shell,Coraza Ira,Dentro,Definida en JSON,Sin descripción oficial en PokeAPI; efecto según Showdown.
+272,purifying-salt,Sal Purificadora,Dentro,Definida en JSON,Sin descripción oficial en PokeAPI; efecto según Showdown.
+273,well-baked-body,Cuerpo Horneado,Dentro,Definida en JSON,Sin descripción oficial en PokeAPI; efecto según Showdown.
+274,wind-rider,Surcavientos,Fuera,Inmunidad (restricción previa),Sin descripción oficial en PokeAPI; efecto según Showdown.
+275,guard-dog,Perro Guardián,Dentro,Definida en JSON,Sin descripción oficial en PokeAPI; efecto según Showdown.
+276,rocky-payload,Transportarrocas,Dentro,Definida en JSON,Sin descripción oficial en PokeAPI; efecto según Showdown.
+277,wind-power,Energía Eólica,Entra,Cierre de catálogo,Sin descripción oficial en PokeAPI; efecto según Showdown.
+278,zero-to-hero,Cambio Heroico,Fuera,Forma/cambio,Sin descripción oficial en PokeAPI; efecto según Showdown.
+279,commander,Comandar,Fuera,Forma/cambio,Sin descripción oficial en PokeAPI; efecto según Showdown.
+280,electromorphosis,Dinamo,Entra,Cierre de catálogo,Sin descripción oficial en PokeAPI; efecto según Showdown.
+281,protosynthesis,Paleosíntesis,Entra,Cierre de catálogo,Sin descripción oficial en PokeAPI; efecto según Showdown.
+282,quark-drive,Carga Cuark,Entra,Cierre de catálogo,Sin descripción oficial en PokeAPI; efecto según Showdown.
+283,good-as-gold,Cuerpo Áureo,Dentro,Definida en JSON,Sin descripción oficial en PokeAPI; efecto según Showdown.
+284,vessel-of-ruin,Caldero Debacle,Entra,Cierre de catálogo,Sin descripción oficial en PokeAPI; efecto según Showdown.
+285,sword-of-ruin,Espada Debacle,Entra,Cierre de catálogo,Sin descripción oficial en PokeAPI; efecto según Showdown.
+286,tablets-of-ruin,Tablilla Debacle,Entra,Cierre de catálogo,Sin descripción oficial en PokeAPI; efecto según Showdown.
+287,beads-of-ruin,Abalorio Debacle,Entra,Cierre de catálogo,Sin descripción oficial en PokeAPI; efecto según Showdown.
+288,orichalcum-pulse,Latido Oricalco,Entra,Cierre de catálogo,Sin descripción oficial en PokeAPI; efecto según Showdown.
+289,hadron-engine,Motor Hadrónico,Entra,Cierre de catálogo,Sin descripción oficial en PokeAPI; efecto según Showdown.
+290,opportunist,Oportunista,Entra,Cierre de catálogo,Sin descripción oficial en PokeAPI; efecto según Showdown.
+291,cud-chew,Rumia,Fuera,Objetos/bayas,Sin descripción oficial en PokeAPI; efecto según Showdown.
+292,sharpness,Cortante,Entra,Cierre de catálogo,Sin descripción oficial en PokeAPI; efecto según Showdown.
+293,supreme-overlord,General Supremo,Entra,Cierre de catálogo,Sin descripción oficial en PokeAPI; efecto según Showdown.
+294,costar,Unísono,Entra,Cierre de catálogo,Sin descripción oficial en PokeAPI; efecto según Showdown.
+295,toxic-debris,Capa Tóxica,Entra,Cierre de catálogo,Sin descripción oficial en PokeAPI; efecto según Showdown.
+296,armor-tail,Cola Armadura,Fuera,Prioridad/orden,Sin descripción oficial en PokeAPI; efecto según Showdown.
+297,earth-eater,Geofagia,Dentro,Definida en JSON,Sin descripción oficial en PokeAPI; efecto según Showdown.
+298,mycelium-might,Poder Fúngico,Fuera,Prioridad/orden,Sin descripción oficial en PokeAPI; efecto según Showdown.
+299,minds-eye,Ojo Mental,Entra,Cierre de catálogo,Sin descripción oficial en PokeAPI; efecto según Showdown.
+300,supersweet-syrup,Néctar Dulce,Entra,Cierre de catálogo,Sin descripción oficial en PokeAPI; efecto según Showdown.
+301,hospitality,Hospitalidad,Entra,Cierre de catálogo,Sin descripción oficial en PokeAPI; efecto según Showdown.
+302,toxic-chain,Cadena Tóxica,Entra,Cierre de catálogo,Sin descripción oficial en PokeAPI; efecto según Showdown.
+303,embody-aspect,Evocarrecuerdos,Fuera,Forma/cambio,Sin descripción oficial en PokeAPI; efecto según Showdown.
+304,tera-shift,Teracambio,Fuera,Forma/cambio,Sin descripción oficial en PokeAPI; efecto según Showdown.
+305,tera-shell,Teracaparazón,Fuera,Forma/cambio,Sin descripción oficial en PokeAPI; efecto según Showdown.
+306,teraform-zero,Teraformación 0,Fuera,Forma/cambio,Sin descripción oficial en PokeAPI; efecto según Showdown.
+307,poison-puppeteer,Títere Tóxico,Entra,Cierre de catálogo,Sin descripción oficial en PokeAPI; efecto según Showdown.
+308,piercing-drill,Turbotaladro,Fuera,Protección,Sin descripción oficial en PokeAPI; efecto según Showdown.
+309,dragonize,Piel Dragontina,Entra,Cierre de catálogo,Sin descripción oficial en PokeAPI; efecto según Showdown.
+310,mega-sol,Megasolar,Fuera,Prioridad/orden,Sin descripción oficial en PokeAPI; efecto según Showdown.
+311,spicy-spray,Salpicante,Entra,Cierre de catálogo,Sin descripción oficial en PokeAPI; efecto según Showdown.
+312,eelevate,eelevate,Fuera,Sin datos/futuro,Sin descripción oficial en PokeAPI; efecto según Showdown.
+313,fire-mane,fire-mane,Fuera,Sin datos/futuro,Sin descripción oficial en PokeAPI; efecto según Showdown.
+314,aura-guard,aura-guard,Fuera,Sin datos/futuro,Sin descripción oficial en PokeAPI; efecto según Showdown.
+10001,mountaineer,mountaineer,Fuera,Conquest / no mainline,Sin descripción oficial en PokeAPI; efecto según Showdown.
+10002,wave-rider,wave-rider,Fuera,Conquest / no mainline,Sin descripción oficial en PokeAPI; efecto según Showdown.
+10003,skater,skater,Fuera,Conquest / no mainline,Sin descripción oficial en PokeAPI; efecto según Showdown.
+10004,thrust,thrust,Fuera,Conquest / no mainline,Sin descripción oficial en PokeAPI; efecto según Showdown.
+10005,perception,perception,Fuera,Conquest / no mainline,Sin descripción oficial en PokeAPI; efecto según Showdown.
+10006,parry,parry,Fuera,Conquest / no mainline,Sin descripción oficial en PokeAPI; efecto según Showdown.
+10007,instinct,instinct,Fuera,Conquest / no mainline,Sin descripción oficial en PokeAPI; efecto según Showdown.
+10008,dodge,dodge,Fuera,Conquest / no mainline,Sin descripción oficial en PokeAPI; efecto según Showdown.
+10009,jagged-edge,jagged-edge,Fuera,Conquest / no mainline,Sin descripción oficial en PokeAPI; efecto según Showdown.
+10010,frostbite,frostbite,Fuera,Conquest / no mainline,Sin descripción oficial en PokeAPI; efecto según Showdown.
+10011,tenacity,tenacity,Fuera,Conquest / no mainline,Sin descripción oficial en PokeAPI; efecto según Showdown.
+10012,pride,pride,Fuera,Conquest / no mainline,Sin descripción oficial en PokeAPI; efecto según Showdown.
+10013,deep-sleep,deep-sleep,Fuera,Conquest / no mainline,Sin descripción oficial en PokeAPI; efecto según Showdown.
+10014,power-nap,power-nap,Fuera,Conquest / no mainline,Sin descripción oficial en PokeAPI; efecto según Showdown.
+10015,spirit,spirit,Fuera,Conquest / no mainline,Sin descripción oficial en PokeAPI; efecto según Showdown.
+10016,warm-blanket,warm-blanket,Fuera,Conquest / no mainline,Sin descripción oficial en PokeAPI; efecto según Showdown.
+10017,gulp,gulp,Fuera,Conquest / no mainline,Sin descripción oficial en PokeAPI; efecto según Showdown.
+10018,herbivore,herbivore,Fuera,Conquest / no mainline,Sin descripción oficial en PokeAPI; efecto según Showdown.
+10019,sandpit,sandpit,Fuera,Conquest / no mainline,Sin descripción oficial en PokeAPI; efecto según Showdown.
+10020,hot-blooded,hot-blooded,Fuera,Conquest / no mainline,Sin descripción oficial en PokeAPI; efecto según Showdown.
+10021,medic,medic,Fuera,Conquest / no mainline,Sin descripción oficial en PokeAPI; efecto según Showdown.
+10022,life-force,life-force,Fuera,Conquest / no mainline,Sin descripción oficial en PokeAPI; efecto según Showdown.
+10023,lunchbox,lunchbox,Fuera,Conquest / no mainline,Sin descripción oficial en PokeAPI; efecto según Showdown.
+10024,nurse,nurse,Fuera,Conquest / no mainline,Sin descripción oficial en PokeAPI; efecto según Showdown.
+10025,melee,melee,Fuera,Conquest / no mainline,Sin descripción oficial en PokeAPI; efecto según Showdown.
+10026,sponge,sponge,Fuera,Conquest / no mainline,Sin descripción oficial en PokeAPI; efecto según Showdown.
+10027,bodyguard,bodyguard,Fuera,Conquest / no mainline,Sin descripción oficial en PokeAPI; efecto según Showdown.
+10028,hero,hero,Fuera,Conquest / no mainline,Sin descripción oficial en PokeAPI; efecto según Showdown.
+10029,last-bastion,last-bastion,Fuera,Conquest / no mainline,Sin descripción oficial en PokeAPI; efecto según Showdown.
+10030,stealth,stealth,Fuera,Conquest / no mainline,Sin descripción oficial en PokeAPI; efecto según Showdown.
+10031,vanguard,vanguard,Fuera,Conquest / no mainline,Sin descripción oficial en PokeAPI; efecto según Showdown.
+10032,nomad,nomad,Fuera,Conquest / no mainline,Sin descripción oficial en PokeAPI; efecto según Showdown.
+10033,sequence,sequence,Fuera,Conquest / no mainline,Sin descripción oficial en PokeAPI; efecto según Showdown.
+10034,grass-cloak,grass-cloak,Fuera,Conquest / no mainline,Sin descripción oficial en PokeAPI; efecto según Showdown.
+10035,celebrate,celebrate,Fuera,Conquest / no mainline,Sin descripción oficial en PokeAPI; efecto según Showdown.
+10036,lullaby,lullaby,Fuera,Conquest / no mainline,Sin descripción oficial en PokeAPI; efecto según Showdown.
+10037,calming,calming,Fuera,Conquest / no mainline,Sin descripción oficial en PokeAPI; efecto según Showdown.
+10038,daze,daze,Fuera,Conquest / no mainline,Sin descripción oficial en PokeAPI; efecto según Showdown.
+10039,frighten,frighten,Fuera,Conquest / no mainline,Sin descripción oficial en PokeAPI; efecto según Showdown.
+10040,interference,interference,Fuera,Conquest / no mainline,Sin descripción oficial en PokeAPI; efecto según Showdown.
+10041,mood-maker,mood-maker,Fuera,Conquest / no mainline,Sin descripción oficial en PokeAPI; efecto según Showdown.
+10042,confidence,confidence,Fuera,Conquest / no mainline,Sin descripción oficial en PokeAPI; efecto según Showdown.
+10043,fortune,fortune,Fuera,Conquest / no mainline,Sin descripción oficial en PokeAPI; efecto según Showdown.
+10044,bonanza,bonanza,Fuera,Conquest / no mainline,Sin descripción oficial en PokeAPI; efecto según Showdown.
+10045,explode,explode,Fuera,Conquest / no mainline,Sin descripción oficial en PokeAPI; efecto según Showdown.
+10046,omnipotent,omnipotent,Fuera,Conquest / no mainline,Sin descripción oficial en PokeAPI; efecto según Showdown.
+10047,share,share,Fuera,Conquest / no mainline,Sin descripción oficial en PokeAPI; efecto según Showdown.
+10048,black-hole,black-hole,Fuera,Conquest / no mainline,Sin descripción oficial en PokeAPI; efecto según Showdown.
+10049,shadow-dash,shadow-dash,Fuera,Conquest / no mainline,Sin descripción oficial en PokeAPI; efecto según Showdown.
+10050,sprint,sprint,Fuera,Conquest / no mainline,Sin descripción oficial en PokeAPI; efecto según Showdown.
+10051,disgust,disgust,Fuera,Conquest / no mainline,Sin descripción oficial en PokeAPI; efecto según Showdown.
+10052,high-rise,high-rise,Fuera,Conquest / no mainline,Sin descripción oficial en PokeAPI; efecto según Showdown.
+10053,climber,climber,Fuera,Conquest / no mainline,Sin descripción oficial en PokeAPI; efecto según Showdown.
+10054,flame-boost,flame-boost,Fuera,Conquest / no mainline,Sin descripción oficial en PokeAPI; efecto según Showdown.
+10055,aqua-boost,aqua-boost,Fuera,Conquest / no mainline,Sin descripción oficial en PokeAPI; efecto según Showdown.
+10056,run-up,run-up,Fuera,Conquest / no mainline,Sin descripción oficial en PokeAPI; efecto según Showdown.
+10057,conqueror,conqueror,Fuera,Conquest / no mainline,Sin descripción oficial en PokeAPI; efecto según Showdown.
+10058,shackle,shackle,Fuera,Conquest / no mainline,Sin descripción oficial en PokeAPI; efecto según Showdown.
+10059,decoy,decoy,Fuera,Conquest / no mainline,Sin descripción oficial en PokeAPI; efecto según Showdown.
+10060,shield,shield,Fuera,Conquest / no mainline,Sin descripción oficial en PokeAPI; efecto según Showdown.
+,,Absorción Agua,Homebrew,Se conserva fuera de PokeAPI,
+,,Absorción Electricidad,Homebrew,Se conserva fuera de PokeAPI,
+,,Absorción Fuego,Homebrew,Se conserva fuera de PokeAPI,
+,,Actualizacion software,Homebrew,Se conserva fuera de PokeAPI,
+,,Alma dragon,Homebrew,Se conserva fuera de PokeAPI,
+,,Baba Toxica,Homebrew,Se conserva fuera de PokeAPI,
+,,Bendicion,Homebrew,Se conserva fuera de PokeAPI,
+,,Campo Magnetico,Homebrew,Se conserva fuera de PokeAPI,
+,,Cañones,Homebrew,Se conserva fuera de PokeAPI,
+,,Comealmas,Homebrew,Se conserva fuera de PokeAPI,
+,,Crueldad,Homebrew,Se conserva fuera de PokeAPI,
+,,Cuadruple Ataque,Homebrew,Se conserva fuera de PokeAPI,
+,,Danza Lunar,Homebrew,Se conserva fuera de PokeAPI,
+,,Demoledor,Homebrew,Se conserva fuera de PokeAPI,
+,,Demoledor / Mandíbula Hidráulica,Homebrew,Se conserva fuera de PokeAPI,
+,,Depredador,Homebrew,Se conserva fuera de PokeAPI,
+,,Depredador / Depredador Prehistorico / Malvado,Homebrew,Se conserva fuera de PokeAPI,
+,,Depredador Marino,Homebrew,Se conserva fuera de PokeAPI,
+,,Depredador Prehistorico,Homebrew,Se conserva fuera de PokeAPI,
+,,Depredador de Arena,Homebrew,Se conserva fuera de PokeAPI,
+,,Divide dolor,Homebrew,Se conserva fuera de PokeAPI,
+,,Doble Ataque,Homebrew,Se conserva fuera de PokeAPI,
+,,Dormilon,Homebrew,Se conserva fuera de PokeAPI,
+,,Enjambre/Mar Llamas/Espesura,Homebrew,Se conserva fuera de PokeAPI,
+,,Enredaderas,Homebrew,Se conserva fuera de PokeAPI,
+,,Escamas,Homebrew,Se conserva fuera de PokeAPI,
+,,Espinas/piel seca,Homebrew,Se conserva fuera de PokeAPI,
+,,Espsura,Homebrew,Se conserva fuera de PokeAPI,
+,,Evasion,Homebrew,Se conserva fuera de PokeAPI,
+,,Flexibilidad/ Depredador Marino,Homebrew,Se conserva fuera de PokeAPI,
+,,Flor Aromática,Homebrew,Se conserva fuera de PokeAPI,
+,,Fotosíntesis,Homebrew,Se conserva fuera de PokeAPI,
+,,Granizo,Homebrew,Se conserva fuera de PokeAPI,
+,,Guardian de los mares,Homebrew,Se conserva fuera de PokeAPI,
+,,Hypnotizador,Homebrew,Se conserva fuera de PokeAPI,
+,,Ira,Homebrew,Se conserva fuera de PokeAPI,
+,,Ira Gyarados,Homebrew,Se conserva fuera de PokeAPI,
+,,Malvado,Homebrew,Se conserva fuera de PokeAPI,
+,,Mandíbula Hidráulica,Homebrew,Se conserva fuera de PokeAPI,
+,,Manto Helado,Homebrew,Se conserva fuera de PokeAPI,
+,,Meditacion,Homebrew,Se conserva fuera de PokeAPI,
+,,Pantallista,Homebrew,Se conserva fuera de PokeAPI,
+,,Predicion,Homebrew,Se conserva fuera de PokeAPI,
+,,Protector,Homebrew,Se conserva fuera de PokeAPI,
+,,Protector / Campo Magnetico,Homebrew,Se conserva fuera de PokeAPI,
+,,Refuerzos,Homebrew,Se conserva fuera de PokeAPI,
+,,Regeneracion/Sintesis/Bendicion,Homebrew,Se conserva fuera de PokeAPI,
+,,Sintesis,Homebrew,Se conserva fuera de PokeAPI,
+,,Sombra traviesa,Homebrew,Se conserva fuera de PokeAPI,
+,,Tormenta Arena,Homebrew,Se conserva fuera de PokeAPI,
+,,Triple Ataque,Homebrew,Se conserva fuera de PokeAPI,
+,,Veleta / Actualizacion software,Homebrew,Se conserva fuera de PokeAPI,
+,,espinas,Homebrew,Se conserva fuera de PokeAPI,
+,,(Vacio),Técnica,Fila vacía,

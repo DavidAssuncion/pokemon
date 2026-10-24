@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Support;
 
 use App\Enums\StatEnum;
+use App\Models\Ability;
+use App\Models\Move;
 use App\Models\PokemonStat;
 use App\Models\PokemonType;
 use App\Models\Reclutado;
@@ -38,8 +40,40 @@ final class ReclutadoSerializer
         $datos['cp'] = self::cpDe($reclutado, $nivelUsuario);
         $datos['ivs'] = $reclutado->ivs->toArray();
         $datos['evs'] = $reclutado->evs->toArray();
-        // TODO: habilidad del pokémon (no existe Ability model todavía).
-        $datos['habilidades'] = [];
+        $datos['habilidades'] = $reclutado->pokemon?->abilities
+            ->map(static fn (Ability $ability): string => $ability->name)
+            ->values()
+            ->all() ?? [];
+        $datos['movimientos_pokemon'] = $reclutado->pokemon?->moves
+            ->map(static fn (Move $move): string => $move->name)
+            ->values()
+            ->all() ?? [];
+        $datos['habilidad_activa_id'] = $reclutado->habilidad_activa_id;
+        $datos['movimientos_seleccionados'] = is_array($reclutado->movimientos)
+            ? array_values($reclutado->movimientos)
+            : [];
+        $datos['habilidades_disponibles'] = $reclutado->pokemon?->abilities
+            ->map(static fn (Ability $ability): array => [
+                'id' => $ability->id,
+                'name' => $ability->name,
+                'description' => $ability->effect ?? '',
+            ])
+            ->values()
+            ->all() ?? [];
+        $nivelDesbloqueo = $nivelUsuario ?? NivelHelper::nivelDesdeExperiencia($reclutado->exp->total());
+        $datos['movimientos_disponibles'] = $reclutado->pokemon?->moves
+            ->map(static fn (Move $move): array => [
+                'slug' => $move->slug,
+                'name' => $move->name,
+                'description' => $move->description ?? '',
+                'type_id' => $move->type_id,
+                'base_power' => $move->base_power,
+                'nivel_requerido' => $move->nivel_requerido,
+                'desbloqueado' => $move->nivel_requerido <= $nivelDesbloqueo,
+                'category' => $move->category,
+            ])
+            ->values()
+            ->all() ?? [];
 
         // Fallback de nombre cuando es null (column nullable): usa el nombre del
         // pokémon para no romper/obtener "null" en el frontend.

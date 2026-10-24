@@ -6,11 +6,15 @@ namespace Src\Battle\Presentation;
 
 use Livewire\Wireable;
 use Src\Battle\Domain\Collections\CambiosStatsCollection;
+use Src\Battle\Domain\Collections\EfectosSecundariosCollection;
+use Src\Battle\Domain\Collections\FlagsMovimientoCollection;
 use Src\Battle\Domain\Enums\CategoriaMovimiento;
 use Src\Battle\Domain\Enums\EstadoPokemon;
+use Src\Battle\Domain\Enums\ObjetivoMovimiento;
 use Src\Battle\Domain\Enums\StatClave;
 use Src\Battle\Domain\MovimientoBatalla;
 use Src\Battle\Domain\ValueObjects\CambioStat;
+use Src\Battle\Domain\ValueObjects\PerfilMovimiento;
 use Src\Shared\Tipos\TipoPokemon;
 
 /**
@@ -30,6 +34,15 @@ class DTOMovimientoBatalla implements Wireable
         public readonly array $selfStatChanges = [],
         /** @var array<array{stat: string, factor: float}> */
         public readonly array $targetStatChanges = [],
+        /** @var array<string, mixed> */
+        public readonly array $perfil = [],
+        public readonly string $objetivo = 'normal',
+        /** @var list<string> */
+        public readonly array $flags = [],
+        /** @var list<array<string, mixed>> */
+        public readonly array $secundarios = [],
+        /** @var list<array<string, mixed>> */
+        public readonly array $autoEfectos = [],
     ) {
     }
 
@@ -44,6 +57,17 @@ class DTOMovimientoBatalla implements Wireable
             priority: $move->priority,
             selfStatChanges: self::cambiosParaArray($move->selfStatChanges),
             targetStatChanges: self::cambiosParaArray($move->targetStatChanges),
+            perfil: $move->perfil->toArray(),
+            objetivo: $move->objetivo->value,
+            flags: $move->flags->toArray(),
+            secundarios: array_map(
+                static fn ($efecto): array => $efecto->toArray(),
+                $move->secundarios->all(),
+            ),
+            autoEfectos: array_map(
+                static fn ($efecto): array => $efecto->toArray(),
+                $move->autoEfectos->all(),
+            ),
         );
     }
 
@@ -57,6 +81,11 @@ class DTOMovimientoBatalla implements Wireable
      *     priority: int,
      *     selfStatChanges: array<int, array{stat: string, factor: float}>,
      *     targetStatChanges: array<int, array{stat: string, factor: float}>,
+     *     perfil: array<string, mixed>,
+     *     objetivo: string,
+     *     flags: list<string>,
+     *     secundarios: list<array<string, mixed>>,
+     *     autoEfectos: list<array<string, mixed>>,
      * }
      */
     public function toLivewire(): array
@@ -70,6 +99,11 @@ class DTOMovimientoBatalla implements Wireable
             'priority' => $this->priority,
             'selfStatChanges' => $this->selfStatChanges,
             'targetStatChanges' => $this->targetStatChanges,
+            'perfil' => $this->perfil,
+            'objetivo' => $this->objetivo,
+            'flags' => $this->flags,
+            'secundarios' => $this->secundarios,
+            'autoEfectos' => $this->autoEfectos,
         ];
     }
 
@@ -87,6 +121,11 @@ class DTOMovimientoBatalla implements Wireable
             priority: $value['priority'] ?? 0,
             selfStatChanges: $value['selfStatChanges'] ?? [],
             targetStatChanges: $value['targetStatChanges'] ?? [],
+            perfil: is_array($value['perfil'] ?? null) ? $value['perfil'] : [],
+            objetivo: is_string($value['objetivo'] ?? null) ? $value['objetivo'] : 'normal',
+            flags: is_array($value['flags'] ?? null) ? $value['flags'] : [],
+            secundarios: is_array($value['secundarios'] ?? null) ? $value['secundarios'] : [],
+            autoEfectos: is_array($value['autoEfectos'] ?? null) ? $value['autoEfectos'] : [],
         );
     }
 
@@ -101,17 +140,26 @@ class DTOMovimientoBatalla implements Wireable
             priority: $this->priority,
             selfStatChanges: self::cambiosDesdeArray($this->selfStatChanges),
             targetStatChanges: self::cambiosDesdeArray($this->targetStatChanges),
+            perfil: PerfilMovimiento::desdeArray($this->perfil),
+            objetivo: ObjetivoMovimiento::tryFrom($this->objetivo) ?? ObjetivoMovimiento::NORMAL,
+            flags: FlagsMovimientoCollection::desdeArray($this->flags),
+            secundarios: EfectosSecundariosCollection::desdeArray($this->secundarios),
+            autoEfectos: EfectosSecundariosCollection::desdeArray($this->autoEfectos, true),
         );
     }
 
     /**
-     * @return array<int, array{stat: string, factor: float}>
+     * @return array<int, array{stat: string, factor: float, etapas: int}>
      */
     private static function cambiosParaArray(CambiosStatsCollection $cambios): array
     {
         $resultado = [];
         foreach ($cambios as $cambio) {
-            $resultado[] = ['stat' => $cambio->statValue(), 'factor' => $cambio->factor];
+            $resultado[] = [
+                'stat' => $cambio->statValue(),
+                'factor' => $cambio->factorTemporal(),
+                'etapas' => $cambio->etapas,
+            ];
         }
 
         return $resultado;
@@ -132,7 +180,7 @@ class DTOMovimientoBatalla implements Wireable
             }
 
             if (array_key_exists('factor', $cambio)) {
-                $items[] = new CambioStat($stat, (float) $cambio['factor']);
+                $items[] = new CambioStat($stat, (float) $cambio['factor'], (int) ($cambio['etapas'] ?? 0));
             } elseif (array_key_exists('stages', $cambio)) {
                 $items[] = CambioStat::desdeEtapas($stat, (int) $cambio['stages']);
             }

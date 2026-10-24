@@ -13,8 +13,6 @@ use App\Models\Reclutado;
 use App\Models\Team;
 use App\Models\TeamMember;
 use App\Support\ReclutadoSerializer;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Log;
 use Illuminate\View\View;
 use Src\Equipos\App\ObtenerEquipos;
 use Src\Exploraciones\Domain\RolExploracion;
@@ -64,7 +62,10 @@ class PlayerController extends Controller
 
     public function equipos(): View
     {
-        $teams = Team::with('members.reclutado.pokemon')->get()->sortBy('id')->values();
+        $teams = Team::with('members.reclutado.pokemon.abilities')
+            ->get()
+            ->sortBy('id')
+            ->values();
 
         $teams = $teams->map(function (Team $team): array {
             $members = $team->members->sortBy('slot')->values();
@@ -86,6 +87,7 @@ class PlayerController extends Controller
                 'id' => $team->id,
                 'name' => $team->name,
                 'formacion' => $team->formacion ?? [],
+                'posturas' => $team->posturas ?? [],
                 'members' => $members->map(function (TeamMember $m): array {
                     return [
                         'id' => $m->id,
@@ -101,7 +103,13 @@ class PlayerController extends Controller
             ];
         })->all();
 
-        $reclutadosQuery = Reclutado::with(['pokemon.types', 'pokemon.stats', 'teamMember'])->get();
+        $reclutadosQuery = Reclutado::with([
+            'pokemon.types',
+            'pokemon.stats',
+            'pokemon.abilities',
+            'pokemon.moves',
+            'teamMember',
+        ])->get();
 
         $teamIds = $reclutadosQuery->filter(
             fn (Reclutado $r): bool => $r->teamMember !== null
@@ -122,22 +130,6 @@ class PlayerController extends Controller
             ->values()
             ->toArray()
             : [];
-
-        Log::debug('[equipos:trace] datos inyectados a la vista', [
-            'user_id' => Auth::id(),
-            'reclutados_total' => $reclutados->count(),
-            'reclutados_ids' => $reclutadosQuery->pluck('id')->all(),
-            'team_ids' => $teamIds,
-            'teams' => collect($teams)->map(fn (array $team): array => [
-                'id' => $team['id'],
-                'name' => $team['name'],
-                'members_count' => count($team['members']),
-                'slots' => collect($team['members'])->pluck('slot')->all(),
-                'pokemon_ids' => collect($team['members'])->pluck('pokemon_id')->all(),
-            ])->all(),
-            'equipos_en_exploracion' => $equiposEnExploracion,
-            'reclutados_en_exploracion' => $reclutadosEnExploracion,
-        ]);
 
         return view('equipos.index', [
             'teams' => $teams,

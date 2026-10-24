@@ -611,7 +611,7 @@ Inmunes declarados como constantes privadas (`INMUNES_GRANIZO`, `INMUNES_TORMENT
 5. Consume acción, notifica debilitamiento, limpia pending, avanza al siguiente actor.
 
 **Persistencia en sesión:**
-- `SESSION_VERSION = 11` (prefijo `v{version}|{serialized}`), definida en `app/Support/BattleSessionService.php` (mínimo compatible 9; los payloads v9/v10 con `velocidadAcumulada` se cargan ignorándola).
+- `SESSION_VERSION = 20` (prefijo `v{version}|{serialized}`), definida en `app/Support/BattleSessionService.php` (mínimo compatible 9; los payloads v9-v19 cargan con defaults para objeto, habilidad, sustituto y jefe).
 - `getBattle()`: deserializa con control de versiones (tolera cambios de estructura).
 - `saveBattle()`: serializa con versión.
 
@@ -941,7 +941,7 @@ app/Providers/BattleEffectServiceProvider.php → src/Battle/Domain/Effects/ (Fa
 3. **Chain of Responsibility**: 7 manejadores en orden fijo. Fácil de extender añadiendo nuevos manejadores al final de la cadena en `CadenaDanio::__construct()`.
 4. **Efectos como Strategy**: `InterfazEfecto` con 11 hooks de ciclo de vida. Los efectos se registran por clave en `FabricaEfectos`. Para añadir un nuevo efecto, solo se necesita la clase + registro en `BattleEffectServiceProvider`.
 5. **Observer para eventos**: `SujetoBatalla` notifica daño, debilitamiento y fin de turno. Los efectos se suscriben indirectamente a través de `ColeccionEfectos`.
-6. **Serialización en sesión con versionado**: `v{version}|{serialized}`. `SESSION_VERSION=11` (mínimo compatible 9) en `app/Support/BattleSessionService.php`. Permite migrar datos entre cambios estructurales. Los servicios del agregado se guardan como propiedades nullable + lazy getter (`??=`) para que la deserialización de versiones antiguas no falle.
+6. **Serialización en sesión con versionado**: `v{version}|{serialized}`. `SESSION_VERSION=20` (mínimo compatible 9) en `app/Support/BattleSessionService.php`. Permite migrar datos entre cambios estructurales. Los servicios del agregado se guardan como propiedades nullable + lazy getter (`??=`) para que la deserialización de versiones antiguas no falle.
 7. **FabricaEfectos inyectable**: no es estática. Se pasa como dependencia a `EquipoBatalla::fromData()` y `FabricaBatallaMock`. Registrada como singleton en Laravel.
 8. **Dominio sin dependencias de Laravel**: `src/Battle/Domain/` no importa nada de `app/` ni de Illuminate. Las colecciones usan implementaciones nativas (`ArrayIterator`), no `Illuminate\Support\Collection`.
 

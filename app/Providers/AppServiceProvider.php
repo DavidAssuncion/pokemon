@@ -13,6 +13,8 @@ use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 use Src\Battle\Domain\FabricaBatallaInterface;
+use Src\Battle\Domain\Repositories\MovimientoRepository;
+use Src\Battle\Infra\Repositories\EloquentMovimientoRepository;
 use Src\Battle\Infrastructure\FabricaBatallaMock;
 use Src\CombateEntrenadores\Domain\Repositories\EntrenadorLogRepositoryInterface;
 use Src\CombateEntrenadores\Infra\EloquentEntrenadorLogRepository;
@@ -47,6 +49,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(GymProgressRepositoryInterface::class, EloquentGymProgressRepository::class);
         $this->app->bind(GymCatalogoRepositoryInterface::class, EloquentGymCatalogoRepository::class);
         $this->app->bind(DungeonProgresoRepositoryInterface::class, EloquentDungeonProgresoRepository::class);
+        $this->app->bind(MovimientoRepository::class, EloquentMovimientoRepository::class);
     }
 
     /**

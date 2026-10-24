@@ -106,6 +106,9 @@
     {{-- TOP: TURN ORDER --}}
     @include('livewire.partials.turn-bar')
 
+    {{-- PREPARACIÓN DE RONDA --}}
+    @include('livewire.partials.preparacion-panel')
+
     {{-- CAMPO Y ATAQUES A ANCHO COMPLETO --}}
     <div class="d-flex flex-column gap-3">
         @include('livewire.partials.battle-field')

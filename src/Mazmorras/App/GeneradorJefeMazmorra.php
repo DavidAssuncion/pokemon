@@ -24,7 +24,7 @@ final class GeneradorJefeMazmorra
     public function generar(int $speciesId, int $nivel): ?DatosPokemonBatalla
     {
         $pokemon = Pokemon::query()
-            ->with('stats', 'types')
+            ->with('stats', 'types', 'abilities')
             ->where('species_id', $speciesId)
             ->first();
 
@@ -57,12 +57,23 @@ final class GeneradorJefeMazmorra
             moves: $datos->moves,
             shiny: false,
             iconName: '',
-            effectKeys: [],
-            item: null,
+            effectKeys: $datos->effectKeys,
+            item: $datos->item,
             speciesId: $pokemon->id,
             formSuffix: '',
             nivel: $datos->nivel,
             evs: $datos->evs,
+            peso: $datos->peso,
+            esJefe: true,
+            fasesJefe: [
+                ['umbral' => 0.75, 'nombre' => 'Fase 2', 'bonificador_dano' => 1.15, 'bonificador_velocidad' => 1.10],
+                ['umbral' => 0.50, 'nombre' => 'Fase 3', 'bonificador_dano' => 1.30, 'bonificador_velocidad' => 1.20],
+                ['umbral' => 0.25, 'nombre' => 'Enrage', 'bonificador_dano' => 1.50, 'bonificador_velocidad' => 1.30, 'enrage' => true],
+            ],
+            puntosDebiles: [
+                ['id' => 'nucleo', 'nombre' => 'Núcleo', 'fraccion_hp' => 0.18],
+                ['id' => 'coraza', 'nombre' => 'Coraza', 'fraccion_hp' => 0.22],
+            ],
         );
     }
 }

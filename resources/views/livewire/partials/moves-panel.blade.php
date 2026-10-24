@@ -1,7 +1,19 @@
 <div class="moves-panel">
-    <div class="d-flex justify-content-between align-items-center mb-3">
+    <div class="d-flex justify-content-between align-items-center mb-3 gap-2 flex-wrap">
         <h3 class="h5 mb-0">Ataques</h3>
-        <span class="badge bg-primary round-info">Ronda {{ $round }}</span>
+        <div class="d-flex align-items-center gap-2">
+            @php
+                $primerMovimientoVista = $currentMoves !== [] ? $currentMoves[array_key_first($currentMoves)] : [];
+                $comboActualVista = (int) ($primerMovimientoVista['comboActual'] ?? 0);
+                $comboMultiVista = (float) ($primerMovimientoVista['comboMultiplicador'] ?? 1);
+            @endphp
+            @if($comboActualVista > 0)
+                <span class="badge bg-info text-dark" title="Racha de combo">
+                    COMBO {{ $comboActualVista }} · ×{{ number_format($comboMultiVista, 2) }}
+                </span>
+            @endif
+            <span class="badge bg-primary round-info">Ronda {{ $round }}</span>
+        </div>
     </div>
 
     @php
@@ -58,11 +70,25 @@
                     $catLabel = $esEstado ? 'Estado' : match ($move['categoria']) { 'fisico' => 'Físico', 'especial' => 'Especial', default => 'Estado' };
                     $catColor = $esEstado ? 'secondary' : match ($move['categoria']) { 'fisico' => 'danger', 'especial' => 'primary', default => 'secondary' };
                     $isBest = $move['potencia'] > 0 && $maxDmg > 0 && (float) $move['daño'] >= $maxDmg;
+                    $disponible = (bool) ($move['disponible'] ?? true);
+                    $cargaMax = (int) ($move['cargaMaxima'] ?? 0);
+                    $cargaActual = (int) ($move['cargaActual'] ?? 0);
+                    $usosMax = (int) ($move['usosMaximos'] ?? 0);
+                    $usosRestantes = (int) ($move['usosRestantes'] ?? -1);
+                    $motivo = match ($move['motivoNoDisponible'] ?? null) {
+                        'cargando' => 'Cargando '.$cargaActual.'/'.$cargaMax,
+                        'sin_usos' => 'Sin usos restantes',
+                        'silencio' => 'Silenciado: no puede usar estado',
+                        'objeto_eleccion' => 'Objeto de elección: bloqueado a otro movimiento',
+                        default => '',
+                    };
                 @endphp
                 <div class="col-6 col-md-4 col-xl-2">
                     <button type="button"
-                            class="card move-card h-100 w-100 text-start position-relative {{ $isBest ? 'move-best' : '' }}"
+                            class="card move-card h-100 w-100 text-start position-relative {{ $isBest ? 'move-best' : '' }} {{ $disponible ? '' : 'opacity-50' }}"
                             style="background-color: {{ $tipoColor }}; color: #fff"
+                            @disabled(! $disponible)
+                            title="{{ $disponible ? '' : $motivo }}"
                             wire:click="selectMove({{ $idx }})">
                         <div class="card-body p-2 d-flex flex-column gap-1">
                             {{-- Icono de tipo + nombre del ataque --}}
@@ -96,6 +122,24 @@
                                 @if($move['letal'] ?? false)
                                     <span class="badge text-bg-danger move-lethal">LETAL</span>
                                 @endif
+                            @endif
+
+                            @if($cargaMax > 0 || $usosMax > 0 || ! $disponible)
+                                <div class="d-flex flex-wrap gap-1">
+                                    @if($cargaMax > 0)
+                                        <span class="badge {{ $cargaActual >= $cargaMax ? 'text-bg-success' : 'text-bg-secondary' }}">
+                                            Carga {{ $cargaActual }}/{{ $cargaMax }}
+                                        </span>
+                                    @endif
+                                    @if($usosMax > 0)
+                                        <span class="badge {{ $usosRestantes > 0 ? 'text-bg-info' : 'text-bg-dark' }}">
+                                            Usos {{ max(0, $usosRestantes) }}/{{ $usosMax }}
+                                        </span>
+                                    @endif
+                                    @if(! $disponible && $motivo !== '')
+                                        <span class="badge text-bg-dark">{{ $motivo }}</span>
+                                    @endif
+                                </div>
                             @endif
 
                             {{-- Efectividad y etiquetas del ataque. Los movimientos de estado

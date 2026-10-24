@@ -5,6 +5,12 @@
         && in_array($phase, ['player_target', 'player_move'], true)
         && ($animAttackerId ?? '') === '';
     $siguienteTurno = $puedeCambiarTurno ? ($team1[$turnQueue[1]['index']] ?? null) : null;
+    $actorActual = ($turnQueue[0]['team'] ?? null) === 0
+        ? ($team1[$turnQueue[0]['index']] ?? null)
+        : null;
+    $puedeRetrasar = in_array($phase, ['player_target', 'player_move'], true)
+        && ($animAttackerId ?? '') === ''
+        && ($actorActual['puedeRetrasar'] ?? false);
 @endphp
 <div class="card mb-3 turn-bar">
     <div class="card-body py-2">
@@ -24,6 +30,24 @@
             @endforelse
 
             <div class="ms-auto d-flex align-items-center gap-2">
+                @if(in_array($phase, ['player_target', 'player_move'], true) && ($animAttackerId ?? '') === '')
+                    <button type="button"
+                            class="btn btn-sm btn-outline-secondary"
+                            wire:click="pasarTurno"
+                            wire:loading.attr="disabled"
+                            title="Consume tu acción sin atacar">
+                        ⏭ Esperar
+                    </button>
+                @endif
+                @if($puedeRetrasar)
+                    <button type="button"
+                            class="btn btn-sm btn-outline-warning"
+                            wire:click="retrasarTurno"
+                            wire:loading.attr="disabled"
+                            title="Actúa al final de la ronda; no consume tu acción">
+                        ⏳ Retrasar turno
+                    </button>
+                @endif
                 @if($siguienteTurno && $siguienteTurno['alive'] && $siguienteTurno['refId'] !== $actingRefId)
                     <button type="button"
                             class="btn btn-sm btn-outline-primary turn-swap"

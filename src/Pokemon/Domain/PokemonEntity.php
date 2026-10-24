@@ -37,6 +37,7 @@ class PokemonEntity
         ?string $objetos = null,
         ?string $habilidad = null,
         ?BattleStats $precomputedBattleStats = null,
+        private readonly float $peso = 0.0,
     ) {
         $this->stats = $stats;
         $this->evs = $evs;
@@ -45,6 +46,11 @@ class PokemonEntity
         $this->objetos = $objetos;
         $this->habilidad = $habilidad;
         $this->battleStats = $precomputedBattleStats ?? new BattleStats($stats, $evs);
+    }
+
+    public function peso(): float
+    {
+        return $this->peso;
     }
 
     public function battleStats(): BattleStats

@@ -11,7 +11,10 @@ use Livewire\Component;
 use Src\Battle\Domain\AccionBatalla;
 use Src\Battle\Domain\AgregadoBatalla;
 use Src\Battle\Domain\Combatiente;
+use Src\Battle\Domain\Enums\ClaveCondicion;
 use Src\Battle\Domain\Enums\FaseCombate;
+use Src\Battle\Domain\Enums\ObjetivoMovimiento;
+use Src\Battle\Domain\Enums\PosturaCombate;
 use Src\Battle\Domain\EquipoBatalla;
 use Src\Battle\Domain\FabricaBatallaInterface;
 use Src\Battle\Domain\MovimientoBatalla;
@@ -71,6 +74,12 @@ class Combate extends Component
     public ?int $selectedTargetIdx = null;
 
     public string $selectedTargetRefId = '';
+
+    /** @var array<string, string> refId => índice del movimiento prioritario elegido */
+    public array $prioridades = [];
+
+    /** @var array<string, list<array{index: int, nombre: string, prioridad: int}>> */
+    public array $prioridadesDisponibles = [];
 
     private FabricaBatallaInterface $fabricaBatalla;
 
@@ -173,6 +182,16 @@ class Combate extends Component
             }
         }
 
+        if ($battle->rondaPreparada() !== $turnos->round()) {
+            $this->abrirPreparacion($battle);
+
+            if ($this->prioridadesDisponibles === []) {
+                $this->confirmarPreparacion();
+            }
+
+            return;
+        }
+
         $actor = $turnos->getNextActor();
 
         // Sin actor pendiente (caso defensivo): forzar nueva ronda
@@ -235,6 +254,16 @@ class Combate extends Component
             $this->log[] = "¡{$actor->nombre()} {$statusCheck->motivo()}!";
         }
 
+        if ($actor->postura() !== PosturaCombate::ATACAR) {
+            $this->log[] = "{$actor->nombre()} mantiene la postura de {$actor->postura()->label()}.";
+            $turnos->consumeAction($actor);
+            $this->syncViewData($battle);
+            $this->session->guardar($this->battleId, $battle);
+            $this->nextActor();
+
+            return;
+        }
+
         $this->syncViewData($battle, $actor);
         $actorView = $this->findPokemonViewData($actor);
 
@@ -279,17 +308,15 @@ class Combate extends Component
             $battle->triggerRoundEndEffects();
         }
 
+        $battle->turnManager()->startNewRound();
+        $battle->triggerRoundStartEffects();
+
+        // Un único evento para cierre + inicio de ronda. Así Presión y
+        // cualquier regeneración de inicio se muestran como un cambio neto y
+        // no como “pierde escudo → lo recupera” en dos pasos.
         $this->registrarEvento('round', $previoFin, $this->capturarEstado($battle), [
             'ronda' => $rondaNueva,
             'forzar' => true,
-        ]);
-
-        $battle->turnManager()->startNewRound();
-
-        $previoInicio = $this->grabandoEventos ? $this->capturarEstado($battle) : [];
-        $battle->triggerRoundStartEffects();
-        $this->registrarEvento('effect', $previoInicio, $this->capturarEstado($battle), [
-            'texto' => 'Inicio de ronda',
         ]);
 
         $this->round = $battle->turnManager()->round();
@@ -314,6 +341,286 @@ class Combate extends Component
         $this->endBattle($battle);
 
         return true;
+    }
+
+    private function abrirPreparacion(AgregadoBatalla $battle): void
+    {
+        $this->phase = FaseCombate::PREPARACION->value;
+        $this->prioridades = [];
+        $this->prioridadesDisponibles = [];
+
+        foreach ($battle->team1->combatientesCollection()->vivos() as $combatiente) {
+            $this->prioridades[$combatiente->id()] = '';
+
+            $disponibles = [];
+            foreach ($combatiente->pokemon()->moves()->all() as $index => $movimiento) {
+                if ($movimiento->priority <= 0 || ! $combatiente->movimientoDisponible($movimiento)) {
+                    continue;
+                }
+
+                $disponibles[] = [
+                    'index' => $index,
+                    'nombre' => $movimiento->nombre,
+                    'prioridad' => $movimiento->priority,
+                ];
+            }
+
+            if ($disponibles !== []) {
+                $this->prioridadesDisponibles[$combatiente->id()] = $disponibles;
+            }
+        }
+
+        $this->syncViewData($battle);
+        $this->turnQueue = $this->buildTurnQueue($battle);
+        $this->resetAnimState();
+        $this->session->guardar($this->battleId, $battle);
+        $this->processing = false;
+    }
+
+    public function confirmarPreparacion(): void
+    {
+        $battle = $this->session->cargar($this->battleId);
+        if ($battle === null || $this->phase !== FaseCombate::PREPARACION->value) {
+            return;
+        }
+
+        $equipoJugador = $battle->team1;
+        $vivosJugador = $equipoJugador->combatientesCollection()->vivos()->all();
+
+        foreach ($vivosJugador as $combatiente) {
+            $prioridad = null;
+            $indicePrioridad = $this->prioridades[$combatiente->id()] ?? '';
+            if ($indicePrioridad !== '') {
+                $candidato = $combatiente->pokemon()->moves()->get((int) $indicePrioridad);
+                if ($candidato instanceof MovimientoBatalla
+                    && $candidato->priority > 0
+                    && $combatiente->movimientoDisponible($candidato)) {
+                    $prioridad = $candidato;
+                }
+            }
+
+            if ($prioridad !== null) {
+                // Usar una prioridad es una acción de ataque: anula Guardia/Cubrir.
+                $combatiente->setPostura(PosturaCombate::ATACAR);
+                $combatiente->setObjetivoCubiertoId('');
+                $combatiente->declararPrioridad($prioridad);
+
+                continue;
+            }
+
+            $combatiente->limpiarPrioridad();
+        }
+
+        $equipoJugador->normalizarCubridores();
+
+        foreach ($battle->team2->combatientesCollection()->vivos() as $rival) {
+            $rival->limpiarPrioridad();
+        }
+
+        $battle->team2->normalizarCubridores();
+        $this->declararPrioridadesIA($battle);
+
+        $battle->setRondaPreparada($battle->turnManager()->round());
+        $this->log[] = "--- Ronda {$battle->turnManager()->round()}: preparación confirmada ---";
+
+        $this->phase = FaseCombate::INICIO->value;
+        $this->syncViewData($battle);
+        $this->resolverPrioridades($battle);
+        $this->prioridades = [];
+        $this->prioridadesDisponibles = [];
+        $this->session->guardar($this->battleId, $battle);
+        $this->nextActor();
+    }
+
+    public function saltarPreparacion(): void
+    {
+        $this->prioridades = [];
+        $this->confirmarPreparacion();
+    }
+
+    /**
+     * La IA declara, para cada rival vivo, su mejor movimiento con prioridad.
+     * Siempre puede usarla, aunque el jugador decida saltar la preparación.
+     */
+    private function declararPrioridadesIA(AgregadoBatalla $battle): void
+    {
+        foreach ($battle->team2->combatientesCollection()->vivos() as $rival) {
+            $mejor = null;
+
+            foreach ($rival->pokemon()->moves()->all() as $movimiento) {
+                if ($movimiento->priority <= 0 || ! $rival->movimientoDisponible($movimiento)) {
+                    continue;
+                }
+
+                if ($mejor === null
+                    || $movimiento->priority > $mejor->priority
+                    || ($movimiento->priority === $mejor->priority && $movimiento->potencia > $mejor->potencia)) {
+                    $mejor = $movimiento;
+                }
+            }
+
+            if ($mejor !== null) {
+                $rival->setPostura(PosturaCombate::ATACAR);
+                $rival->setObjetivoCubiertoId('');
+                $rival->declararPrioridad($mejor);
+            }
+        }
+    }
+
+    /**
+     * Resuelve todas las acciones de prioridad antes de las acciones normales.
+     * Orden: bracket de prioridad (mayor primero) y, dentro del bracket, la
+     * velocidad efectiva (Trick Room invierte el desempate).
+     */
+    private function resolverPrioridades(AgregadoBatalla $battle): void
+    {
+        $declaradas = [];
+        foreach ($battle->turnManager()->combatientesVivos() as $combatiente) {
+            $movimiento = $combatiente->prioridadDeclarada();
+            if ($movimiento !== null) {
+                $declaradas[] = ['actor' => $combatiente, 'movimiento' => $movimiento];
+            }
+        }
+
+        if ($declaradas === []) {
+            return;
+        }
+
+        $turnos = $battle->turnManager();
+        $invertir = $battle->trickRoomActivo();
+        usort($declaradas, function (array $a, array $b) use ($turnos, $invertir): int {
+            $porPrioridad = $b['movimiento']->priority <=> $a['movimiento']->priority;
+            if ($porPrioridad !== 0) {
+                return $porPrioridad;
+            }
+
+            $va = $turnos->velocidadEfectivaDe($a['actor']);
+            $vb = $turnos->velocidadEfectivaDe($b['actor']);
+
+            return $invertir ? $va <=> $vb : $vb <=> $va;
+        });
+
+        $servicio = $this->servicioEjecucion ?? new ServicioEjecucionBatalla($battle->damageChain());
+
+        foreach ($declaradas as $declarada) {
+            /** @var Combatiente $actor */
+            $actor = $declarada['actor'];
+            /** @var MovimientoBatalla $movimiento */
+            $movimiento = $declarada['movimiento'];
+            $actor->limpiarPrioridad();
+
+            if (! $battle->turnManager()->bothTeamsAlive()) {
+                break;
+            }
+
+            if (! $actor->estaVivo()) {
+                continue;
+            }
+
+            if (! $actor->movimientoDisponible($movimiento)) {
+                $actor->romperCombo();
+                $this->log[] = "{$actor->nombre()} no puede usar {$movimiento->nombre} todavía.";
+                $turnos->consumeAction($actor);
+
+                continue;
+            }
+
+            $puedeActuar = $actor->puedeActuar();
+            if (! $puedeActuar->esPermitida()) {
+                $this->log[] = "{$actor->nombre()} no puede usar {$movimiento->nombre}: {$puedeActuar->motivo()}";
+                if ($puedeActuar->autoDanio() > 0) {
+                    $this->log[] = "¡{$actor->nombre()} se golpeó a sí mismo! ({$puedeActuar->autoDanio()} daño)";
+                }
+                $turnos->consumeAction($actor);
+
+                continue;
+            }
+
+            $objetivo = $this->objetivoParaPrioridad($battle, $actor, $movimiento);
+            if ($objetivo === null) {
+                $actor->romperCombo();
+                $this->log[] = "{$actor->nombre()} no encuentra objetivo para {$movimiento->nombre}.";
+                $turnos->consumeAction($actor);
+
+                continue;
+            }
+
+            $defenderTeam = $this->defenderTeam($battle, $objetivo);
+            $accion = new AccionBatalla(
+                attacker: $actor,
+                defender: $objetivo,
+                move: $movimiento,
+                defenderTeamHasVanguard: $defenderTeam->tieneVanguardiaViva(),
+                weather: $battle->weather(),
+                terreno: $battle->terreno(),
+            );
+
+            $actor->effects()->dispararInicioTurno($actor, $battle);
+            $resultado = $servicio->calcularYAplicarDano($accion, $battle);
+            $isAi = $battle->team2->findCombatantById($actor->id()) !== null;
+            $this->log[] = ($isAi ? 'RIVAL PRIORIDAD: ' : 'PRIORIDAD: ').$servicio->generarLogMovimiento(
+                $actor,
+                $objetivo,
+                $movimiento,
+                $resultado->dano,
+                $resultado->directPct,
+                $defenderTeam->tieneVanguardiaViva(),
+            );
+
+            $objetivos = $resultado->objetivos;
+            foreach ($objetivos as $target) {
+                $servicio->aplicarEstado($target, $movimiento, $battle, $actor);
+                if ($movimiento->tieneStatus() && $target->estaVivo()) {
+                    $this->log[] = "{$target->nombre()} sufre {$movimiento->statusEffect->label()}!";
+                }
+            }
+
+            $this->applyMoveStatChanges($actor, $movimiento, true);
+            foreach ($objetivos as $target) {
+                $this->applyMoveStatChanges($target, $movimiento, false);
+            }
+
+            $battle->subject()->notifyDamaged($objetivo, $resultado->dano);
+            $objetivo->dispararDanioRecibido($resultado->dano, $battle);
+            $actor->dispararDanioInfligido($objetivo, $resultado->dano, $battle);
+            $turnos->consumeAction($actor);
+            $actor->consumirMovimiento($movimiento);
+            $actor->effects()->dispararFinTurno($actor, $battle);
+
+            if (! $objetivo->estaVivo()) {
+                $this->log[] = "¡{$objetivo->nombre()} se ha debilitado!";
+            }
+
+            $nuevosDebilitados = $battle->procesarDebilitamientos();
+            if ($nuevosDebilitados > 0 && $actor->estaVivo()) {
+                $actor->otorgarAccionExtra();
+            }
+
+            if (! $actor->estaVivo()) {
+                $this->log[] = "¡{$actor->nombre()} se ha debilitado!";
+            }
+        }
+
+        $this->syncViewData($battle);
+    }
+
+    private function objetivoParaPrioridad(
+        AgregadoBatalla $battle,
+        Combatiente $actor,
+        MovimientoBatalla $movimiento,
+    ): ?Combatiente {
+        $autodirigido = in_array($movimiento->objetivo, [
+            ObjetivoMovimiento::SELF,
+            ObjetivoMovimiento::ALLY_SIDE,
+            ObjetivoMovimiento::ALLIES,
+            ObjetivoMovimiento::ALLY_TEAM,
+        ], true) || ($movimiento->tieneSelfStatChanges() && ! $movimiento->tieneTargetStatChanges());
+
+        if ($autodirigido || $movimiento->objetivo === ObjetivoMovimiento::ALL) {
+            return $actor;
+        }
+
+        return $battle->elegirObjetivoPara($actor);
     }
 
     private function endBattle(AgregadoBatalla $battle): void
@@ -353,7 +660,13 @@ class Combate extends Component
         }
 
         $movimiento = $battle->elegirMejorMovimiento($actor, $objetivo);
-        if ($movimiento === null) {
+        if ($movimiento === null || ! $actor->movimientoDisponible($movimiento)) {
+            $this->log[] = "{$actor->nombre()} no tiene movimientos disponibles.";
+            $battle->turnManager()->consumeAction($actor);
+            $this->syncViewData($battle, $actor);
+            $this->session->guardar($this->battleId, $battle);
+            $this->nextActor();
+
             return;
         }
 
@@ -412,6 +725,7 @@ class Combate extends Component
             ?? $battle->team2->findCombatantById($pending->defenderId);
 
         if ($actor === null || $objetivo === null) {
+            $actor?->romperCombo();
             $battle->setPendingAction(null);
             $this->session->guardar($this->battleId, $battle);
             $this->resetAnimState();
@@ -421,6 +735,19 @@ class Combate extends Component
         }
 
         $movimiento = $pending->move->toDomain();
+
+        if (! $actor->movimientoDisponible($movimiento)) {
+            $actor->romperCombo();
+            $this->log[] = "{$actor->nombre()} ya no puede usar {$movimiento->nombre}.";
+            $battle->setPendingAction(null);
+            $battle->turnManager()->consumeAction($actor);
+            $this->resetAnimState();
+            $this->syncViewData($battle, $actor);
+            $this->session->guardar($this->battleId, $battle);
+            $this->nextActor();
+
+            return;
+        }
 
         // Movimientos autodirigidos (ej: Danza Espada) siempre apuntan al actor
         if ($movimiento->tieneSelfStatChanges() && ! $movimiento->tieneTargetStatChanges()) {
@@ -438,10 +765,12 @@ class Combate extends Component
             move: $movimiento,
             defenderTeamHasVanguard: $defenderTeam->tieneVanguardiaViva(),
             weather: $battle->weather(),
+            terreno: $battle->terreno(),
         );
 
         $previo = $this->capturarEstado($battle);
-        $resultado = $servicio->calcularYAplicarDano($accion);
+        $actor->effects()->dispararInicioTurno($actor, $battle);
+        $resultado = $servicio->calcularYAplicarDano($accion, $battle);
         $actual = $this->capturarEstado($battle);
 
         $this->registrarEvento('damage', $previo, $actual, [
@@ -466,11 +795,14 @@ class Combate extends Component
             $defenderTeam->tieneVanguardiaViva(),
         );
 
-        // 3. Aplicar estado y cambios de estadísticas
-        $servicio->aplicarEstado($objetivo, $movimiento);
-        if ($movimiento->tieneStatus() && $objetivo->estaVivo()) {
-            $label = $movimiento->statusEffect->label();
-            $this->log[] = "{$objetivo->nombre()} sufre {$label}!";
+        // 3. Aplicar estado y cambios de estadísticas a todos los objetivos
+        $objetivos = $resultado->objetivos;
+        foreach ($objetivos as $target) {
+            $servicio->aplicarEstado($target, $movimiento, $battle, $actor);
+            if ($movimiento->tieneStatus() && $target->estaVivo()) {
+                $label = $movimiento->statusEffect->label();
+                $this->log[] = "{$target->nombre()} sufre {$label}!";
+            }
         }
 
         $actual = $this->capturarEstado($battle);
@@ -485,7 +817,9 @@ class Combate extends Component
         $previo = $actual;
 
         $this->applyMoveStatChanges($actor, $movimiento, true);
-        $this->applyMoveStatChanges($objetivo, $movimiento, false);
+        foreach ($objetivos as $target) {
+            $this->applyMoveStatChanges($target, $movimiento, false);
+        }
 
         // 4. Disparar eventos de efectos (items, habilidades, etc.)
         $battle->subject()->notifyDamaged($objetivo, $daño);
@@ -497,15 +831,21 @@ class Combate extends Component
             'texto' => 'Efecto de combate',
         ]);
         $battle->turnManager()->consumeAction($actor);
+        $actor->consumirMovimiento($movimiento);
+        $actor->effects()->dispararFinTurno($actor, $battle);
 
-        // 5. Debilitamiento
+        // 5. Debilitamiento (incluye objetivos secundarios, cubridores y vínculos)
         if (! $objetivo->estaVivo()) {
             $this->log[] = "¡{$objetivo->nombre()} se ha debilitado!";
-            $battle->subject()->notifyFainted($objetivo);
         }
+
+        $nuevosDebilitados = $battle->procesarDebilitamientos();
+        if ($nuevosDebilitados > 0 && $actor->estaVivo()) {
+            $actor->otorgarAccionExtra();
+        }
+
         if (! $actor->estaVivo()) {
             $this->log[] = "¡{$actor->nombre()} se ha debilitado!";
-            $battle->subject()->notifyFainted($actor);
         }
 
         // 6. Limpiar estado pendiente y seguir
@@ -561,11 +901,35 @@ class Combate extends Component
             return;
         }
 
+        if (! $actor->movimientoDisponible($move)) {
+            $this->log[] = match ($actor->motivoMovimientoNoDisponible($move)) {
+                'cargando' => "{$move->nombre} aún se está cargando ({$actor->cargaMovimiento($move)}/{$move->perfil->cargaMaxima}).",
+                'sin_usos' => "{$move->nombre} no tiene usos restantes.",
+                'silencio' => "{$actor->nombre()} está en silencio y no puede usar movimientos de estado.",
+                'objeto_eleccion' => "{$move->nombre} está bloqueado por el objeto de elección.",
+                default => "{$move->nombre} no está disponible.",
+            };
+
+            return;
+        }
+
         // Movimientos autodirigidos (ej: Danza Espada) apuntan al actor y no requieren objetivo enemigo
-        $selfTargeting = $move->tieneSelfStatChanges() && ! $move->tieneTargetStatChanges();
+        $selfTargeting = in_array($move->objetivo, [
+            ObjetivoMovimiento::SELF,
+            ObjetivoMovimiento::ALLY_SIDE,
+            ObjetivoMovimiento::ALLIES,
+            ObjetivoMovimiento::ALLY_TEAM,
+        ], true) || ($move->tieneSelfStatChanges() && ! $move->tieneTargetStatChanges());
         $defender = $selfTargeting
             ? $actor
             : $this->getTargetFromSelection($battle, $this->selectedTargetTeam, $this->selectedTargetIdx);
+
+        $desafio = $actor->condicion(ClaveCondicion::DESAFIO);
+        if (! $selfTargeting && $desafio !== null && $desafio->objetivoForzadoId !== '') {
+            $defender = $battle->team1->findCombatantById($desafio->objetivoForzadoId)
+                ?? $battle->team2->findCombatantById($desafio->objetivoForzadoId)
+                ?? $defender;
+        }
 
         if ($defender === null || ! $defender->estaVivo()) {
             return;
@@ -627,6 +991,76 @@ class Combate extends Component
         $this->nextActor();
     }
 
+    /**
+     * Retrasa la acción del jugador actual al final de la ronda. Se puede
+     * usar una vez por ronda y no consume la acción.
+     */
+    public function retrasarTurno(): void
+    {
+        if (! in_array($this->phase, [
+            FaseCombate::SELECCION_OBJETIVO->value,
+            FaseCombate::SELECCION_MOVIMIENTO->value,
+        ], true)) {
+            return;
+        }
+
+        if ($this->processing || $this->animAttackerId !== '') {
+            return;
+        }
+
+        $battle = $this->session->cargar($this->battleId);
+        if ($battle === null) {
+            return;
+        }
+
+        $actor = $this->resolveActor($battle);
+        if ($actor === null || ! $actor->retrasarTurno()) {
+            return;
+        }
+
+        $this->log[] = "{$actor->nombre()} retrasa su turno.";
+        $this->resetAnimState();
+        $this->selectedMoveIdx = null;
+        $this->session->guardar($this->battleId, $battle);
+        $this->nextActor();
+    }
+
+    /**
+     * Consume la acción sin atacar. Sirve cuando todos los movimientos están
+     * cargando, silenciados o sin usos.
+     */
+    public function pasarTurno(): void
+    {
+        if (! in_array($this->phase, [
+            FaseCombate::SELECCION_OBJETIVO->value,
+            FaseCombate::SELECCION_MOVIMIENTO->value,
+        ], true)) {
+            return;
+        }
+
+        if ($this->processing || $this->animAttackerId !== '') {
+            return;
+        }
+
+        $battle = $this->session->cargar($this->battleId);
+        if ($battle === null) {
+            return;
+        }
+
+        $actor = $this->resolveActor($battle);
+        if ($actor === null) {
+            return;
+        }
+
+        $this->log[] = "{$actor->nombre()} espera.";
+        $battle->turnManager()->consumeAction($actor);
+        $this->resetAnimState();
+        $this->selectedMoveIdx = null;
+        $this->syncViewData($battle, $actor);
+        $this->session->guardar($this->battleId, $battle);
+        $this->nextActor();
+    }
+
     // ─── Helpers ─────────────────────────────────────────────
 
     /**
@@ -668,9 +1102,10 @@ class Combate extends Component
 
         foreach ($changes as $cambio) {
             $label = $cambio->stat->label();
-            $combatant->setMultiplicadores($cambio->aplicadoEn($combatant->multiplicadores()));
-            $verb = $cambio->factor > 1.0 ? 'subió' : 'bajó';
-            $porcentaje = (int) round(abs($cambio->porcentaje()));
+            $factor = $cambio->factorTemporal();
+            $combatant->setMultiplicadores($cambio->aplicadoTemporalEn($combatant->multiplicadores()));
+            $verb = $factor > 1.0 ? 'subió' : 'bajó';
+            $porcentaje = (int) round(abs(($factor - 1.0) * 100));
             $this->log[] = "{$combatant->nombre()} {$verb} {$label} en {$porcentaje}%!";
         }
     }
@@ -825,7 +1260,10 @@ class Combate extends Component
             ->conAccionPendiente()
             ->all();
 
-        usort($pendientes, function (Combatiente $a, Combatiente $b): int {
+        $turnos = $battle->turnManager();
+        $invertir = $battle->trickRoomActivo();
+
+        usort($pendientes, function (Combatiente $a, Combatiente $b) use ($turnos, $invertir): int {
             if ($a->id() === $this->actingRefId) {
                 return -1;
             }
@@ -833,7 +1271,14 @@ class Combate extends Component
                 return 1;
             }
 
-            return $b->velocidadEfectiva() <=> $a->velocidadEfectiva();
+            if ($a->turnoRetrasado() !== $b->turnoRetrasado()) {
+                return $a->turnoRetrasado() ? 1 : -1;
+            }
+
+            $va = $turnos->velocidadEfectivaDe($a);
+            $vb = $turnos->velocidadEfectivaDe($b);
+
+            return $invertir ? $va <=> $vb : $vb <=> $va;
         });
 
         return array_map(fn (Combatiente $c) => $this->findPokemonViewData($c) ?? ['team' => 0, 'index' => 0], $pendientes);

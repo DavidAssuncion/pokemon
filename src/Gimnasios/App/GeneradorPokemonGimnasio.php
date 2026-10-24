@@ -6,10 +6,8 @@ namespace Src\Gimnasios\App;
 
 use App\Models\Pokemon;
 use Src\Battle\Domain\DatosPokemonBatalla;
-use Src\Battle\Domain\MovimientoBatalla;
 use Src\Battle\Domain\Posicion;
 use Src\CombateEntrenadores\App\MapeadorPokemonBatalla;
-use Src\CombateEntrenadores\Domain\GeneradorMovimientosTipo;
 use Src\Gimnasios\Domain\DataTransferObjects\EquipoEtapaGimnasio;
 use Src\Gimnasios\Domain\EvsRangoEntrenador;
 use Src\Shared\Domain\IvsRangoEntrenador;
@@ -31,7 +29,6 @@ final class GeneradorPokemonGimnasio
 {
     public function __construct(
         private readonly MapeadorPokemonBatalla $mapeador,
-        private readonly GeneradorMovimientosTipo $generadorMovimientos,
     ) {
     }
 
@@ -65,16 +62,17 @@ final class GeneradorPokemonGimnasio
                 speed: $statsBase->speed,
                 tipos: $this->mapeador->tiposDe($pokemon)->toList(),
                 posicion: $posicion,
-                moves: $this->movimientosDe($this->mapeador->tiposDe($pokemon)),
+                moves: $this->movimientosDe($pokemon, $this->mapeador->tiposDe($pokemon), $nivelRival),
                 shiny: false,
                 iconName: '',
-                effectKeys: [],
+                effectKeys: $this->mapeador->efectosDe($pokemon),
                 item: null,
                 speciesId: $pokemon->id,
                 formSuffix: '',
                 nivel: $nivelRival,
                 evs: $evs,
                 ivs: $ivs,
+                peso: max(0.0, (float) $pokemon->weight / 10.0),
             );
 
             $indice++;
@@ -176,20 +174,10 @@ final class GeneradorPokemonGimnasio
     }
 
     /**
-     * @return list<MovimientoBatalla>
+     * @return list<\Src\Battle\Domain\MovimientoBatalla>
      */
-    private function movimientosDe(TiposCollection $tipos): array
+    private function movimientosDe(Pokemon $pokemon, TiposCollection $tipos, int $nivel): array
     {
-        $movimientos = [];
-        foreach ($this->generadorMovimientos->generar($tipos) as $m) {
-            $movimientos[] = new MovimientoBatalla(
-                nombre: $m->nombre,
-                potencia: $m->potencia,
-                tipo: $m->tipo,
-                categoria: $m->categoria,
-            );
-        }
-
-        return $movimientos;
+        return $this->mapeador->movimientosDeConFallback($pokemon, $tipos, null, $nivel);
     }
 }

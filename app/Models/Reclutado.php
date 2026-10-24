@@ -21,7 +21,7 @@ class Reclutado extends Model
 
     protected $fillable = [
         'user_id', 'nombre', 'pokemon_id', 'exp', 'es_shiny', 'obj_equipados', 'movimientos', 'behavior',
-        'ivs', 'evs',
+        'ivs', 'evs', 'habilidad_activa_id',
     ];
 
     protected $casts = [
@@ -32,6 +32,7 @@ class Reclutado extends Model
         'behavior' => 'string',
         'ivs' => StatsReclutado::class,
         'evs' => StatsReclutado::class,
+        'habilidad_activa_id' => 'integer',
     ];
 
     /**
@@ -51,6 +52,14 @@ class Reclutado extends Model
     public function pokemon(): BelongsTo
     {
         return $this->belongsTo(Pokemon::class, 'pokemon_id');
+    }
+
+    /**
+     * @return BelongsTo<Ability, $this>
+     */
+    public function habilidadActiva(): BelongsTo
+    {
+        return $this->belongsTo(Ability::class, 'habilidad_activa_id');
     }
 
     /**

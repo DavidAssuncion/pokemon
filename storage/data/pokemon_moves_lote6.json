@@ -1,0 +1,4179 @@
+{
+  "1": [
+    "poison-powder",
+    "sleep-powder",
+    "take-down"
+  ],
+  "2": [
+    "poison-powder",
+    "sleep-powder",
+    "take-down"
+  ],
+  "3": [
+    "poison-powder",
+    "sleep-powder",
+    "take-down",
+    "petal-blizzard"
+  ],
+  "4": [
+    "inferno"
+  ],
+  "5": [
+    "inferno"
+  ],
+  "6": [
+    "inferno"
+  ],
+  "7": [
+    "iron-defense",
+    "shell-smash"
+  ],
+  "8": [
+    "iron-defense",
+    "shell-smash"
+  ],
+  "9": [
+    "iron-defense",
+    "shell-smash"
+  ],
+  "12": [
+    "poison-powder",
+    "stun-spore",
+    "sleep-powder",
+    "quiver-dance"
+  ],
+  "15": [
+    "agility"
+  ],
+  "16": [
+    "agility"
+  ],
+  "17": [
+    "agility"
+  ],
+  "18": [
+    "agility"
+  ],
+  "19": [
+    "take-down"
+  ],
+  "20": [
+    "swords-dance",
+    "take-down"
+  ],
+  "21": [
+    "agility",
+    "take-down"
+  ],
+  "22": [
+    "agility",
+    "drill-run",
+    "take-down"
+  ],
+  "23": [
+    "coil",
+    "slam",
+    "toxic"
+  ],
+  "24": [
+    "coil",
+    "slam",
+    "toxic"
+  ],
+  "25": [
+    "thunder-wave",
+    "agility",
+    "slam",
+    "wild-charge",
+    "nasty-plot",
+    "iron-tail"
+  ],
+  "26": [
+    "thunder-wave",
+    "slam",
+    "agility",
+    "nasty-plot",
+    "iron-tail"
+  ],
+  "27": [
+    "swords-dance",
+    "agility"
+  ],
+  "28": [
+    "crush-claw",
+    "swords-dance",
+    "agility"
+  ],
+  "29": [
+    "toxic"
+  ],
+  "30": [
+    "toxic"
+  ],
+  "31": [
+    "toxic"
+  ],
+  "32": [
+    "horn-attack",
+    "toxic"
+  ],
+  "33": [
+    "horn-attack",
+    "toxic"
+  ],
+  "34": [
+    "horn-attack",
+    "toxic"
+  ],
+  "37": [
+    "confuse-ray",
+    "will-o-wisp",
+    "inferno",
+    "nasty-plot"
+  ],
+  "38": [
+    "confuse-ray",
+    "nasty-plot",
+    "will-o-wisp",
+    "inferno"
+  ],
+  "39": [
+    "round"
+  ],
+  "40": [
+    "round"
+  ],
+  "41": [
+    "confuse-ray",
+    "toxic"
+  ],
+  "42": [
+    "confuse-ray",
+    "toxic"
+  ],
+  "43": [
+    "poison-powder",
+    "stun-spore",
+    "sleep-powder",
+    "toxic"
+  ],
+  "44": [
+    "poison-powder",
+    "stun-spore",
+    "sleep-powder",
+    "petal-blizzard",
+    "toxic"
+  ],
+  "45": [
+    "stun-spore",
+    "sleep-powder",
+    "poison-powder",
+    "petal-blizzard",
+    "toxic"
+  ],
+  "46": [
+    "stun-spore",
+    "poison-powder",
+    "sleep-powder"
+  ],
+  "47": [
+    "stun-spore",
+    "poison-powder",
+    "sleep-powder"
+  ],
+  "48": [
+    "poison-powder",
+    "stun-spore",
+    "sleep-powder"
+  ],
+  "49": [
+    "poison-powder",
+    "stun-spore",
+    "sleep-powder",
+    "quiver-dance",
+    "agility"
+  ],
+  "50": [
+    "agility"
+  ],
+  "51": [
+    "agility"
+  ],
+  "52": [
+    "nasty-plot"
+  ],
+  "53": [
+    "nasty-plot"
+  ],
+  "56": [
+    "cross-chop"
+  ],
+  "57": [
+    "cross-chop"
+  ],
+  "58": [
+    "take-down",
+    "agility"
+  ],
+  "59": [
+    "take-down",
+    "agility"
+  ],
+  "62": [
+    "dynamic-punch",
+    "bulk-up"
+  ],
+  "66": [
+    "vital-throw",
+    "cross-chop",
+    "dynamic-punch",
+    "bulk-up"
+  ],
+  "67": [
+    "vital-throw",
+    "cross-chop",
+    "dynamic-punch",
+    "bulk-up"
+  ],
+  "68": [
+    "vital-throw",
+    "cross-chop",
+    "dynamic-punch",
+    "bulk-up"
+  ],
+  "69": [
+    "poison-powder",
+    "sleep-powder",
+    "stun-spore",
+    "slam",
+    "wring-out"
+  ],
+  "70": [
+    "poison-powder",
+    "sleep-powder",
+    "stun-spore",
+    "slam",
+    "wring-out"
+  ],
+  "71": [
+    "stun-spore",
+    "sleep-powder",
+    "poison-powder",
+    "swords-dance",
+    "slam"
+  ],
+  "72": [
+    "wring-out"
+  ],
+  "73": [
+    "wring-out"
+  ],
+  "74": [
+    "rock-polish",
+    "take-down",
+    "iron-defense"
+  ],
+  "75": [
+    "rock-polish",
+    "take-down",
+    "iron-defense"
+  ],
+  "76": [
+    "rock-polish",
+    "steamroller",
+    "take-down",
+    "iron-defense"
+  ],
+  "77": [
+    "stomp",
+    "take-down",
+    "agility",
+    "inferno"
+  ],
+  "78": [
+    "stomp",
+    "take-down",
+    "agility",
+    "inferno"
+  ],
+  "80": [
+    "stomp"
+  ],
+  "81": [
+    "thunder-wave"
+  ],
+  "82": [
+    "thunder-wave"
+  ],
+  "83": [
+    "swords-dance",
+    "agility"
+  ],
+  "84": [
+    "agility",
+    "swords-dance"
+  ],
+  "85": [
+    "agility",
+    "swords-dance"
+  ],
+  "86": [
+    "take-down"
+  ],
+  "87": [
+    "take-down"
+  ],
+  "88": [
+    "toxic"
+  ],
+  "89": [
+    "toxic"
+  ],
+  "90": [
+    "iron-defense",
+    "shell-smash"
+  ],
+  "91": [
+    "shell-smash",
+    "iron-defense"
+  ],
+  "92": [
+    "confuse-ray",
+    "will-o-wisp",
+    "toxic"
+  ],
+  "93": [
+    "confuse-ray",
+    "will-o-wisp",
+    "toxic"
+  ],
+  "94": [
+    "confuse-ray",
+    "will-o-wisp",
+    "toxic"
+  ],
+  "95": [
+    "slam",
+    "iron-tail",
+    "rock-polish",
+    "high-horsepower"
+  ],
+  "96": [
+    "nasty-plot"
+  ],
+  "97": [
+    "nasty-plot"
+  ],
+  "98": [
+    "vice-grip",
+    "stomp",
+    "slam",
+    "swords-dance"
+  ],
+  "99": [
+    "vice-grip",
+    "stomp",
+    "slam",
+    "agility",
+    "hammer-arm",
+    "swords-dance"
+  ],
+  "102": [
+    "stun-spore",
+    "poison-powder",
+    "sleep-powder"
+  ],
+  "103": [
+    "stomp",
+    "egg-bomb",
+    "wood-hammer",
+    "stun-spore"
+  ],
+  "105": [
+    "swords-dance"
+  ],
+  "107": [
+    "agility",
+    "sky-uppercut",
+    "dizzy-punch"
+  ],
+  "108": [
+    "stomp",
+    "slam",
+    "wring-out"
+  ],
+  "109": [
+    "toxic"
+  ],
+  "110": [
+    "toxic"
+  ],
+  "111": [
+    "horn-attack",
+    "stomp",
+    "take-down",
+    "drill-run",
+    "high-horsepower"
+  ],
+  "112": [
+    "stomp",
+    "horn-attack",
+    "take-down",
+    "hammer-arm",
+    "drill-run",
+    "high-horsepower"
+  ],
+  "113": [
+    "egg-bomb",
+    "take-down"
+  ],
+  "114": [
+    "poison-powder",
+    "stun-spore",
+    "sleep-powder",
+    "slam",
+    "wring-out"
+  ],
+  "115": [
+    "dizzy-punch",
+    "stomp"
+  ],
+  "116": [
+    "agility",
+    "dragon-dance"
+  ],
+  "117": [
+    "agility",
+    "dragon-dance"
+  ],
+  "118": [
+    "horn-attack",
+    "agility"
+  ],
+  "119": [
+    "horn-attack",
+    "agility"
+  ],
+  "120": [
+    "confuse-ray"
+  ],
+  "121": [
+    "confuse-ray"
+  ],
+  "122": [
+    "iron-defense"
+  ],
+  "123": [
+    "swords-dance",
+    "agility"
+  ],
+  "124": [
+    "wring-out"
+  ],
+  "125": [
+    "thunder-wave"
+  ],
+  "126": [
+    "confuse-ray"
+  ],
+  "127": [
+    "vice-grip",
+    "swords-dance",
+    "vital-throw",
+    "storm-throw"
+  ],
+  "128": [
+    "stomp",
+    "take-down",
+    "horn-attack",
+    "work-up"
+  ],
+  "130": [
+    "dragon-dance"
+  ],
+  "131": [
+    "confuse-ray"
+  ],
+  "133": [
+    "take-down"
+  ],
+  "134": [
+    "take-down"
+  ],
+  "135": [
+    "thunder-wave",
+    "agility",
+    "take-down"
+  ],
+  "136": [
+    "take-down"
+  ],
+  "137": [
+    "agility",
+    "thunder-wave"
+  ],
+  "138": [
+    "horn-attack",
+    "shell-smash"
+  ],
+  "139": [
+    "horn-attack",
+    "shell-smash"
+  ],
+  "140": [
+    "wring-out",
+    "liquidation"
+  ],
+  "141": [
+    "wring-out",
+    "confuse-ray",
+    "swords-dance",
+    "liquidation"
+  ],
+  "142": [
+    "agility",
+    "take-down"
+  ],
+  "143": [
+    "high-horsepower",
+    "hammer-arm"
+  ],
+  "144": [
+    "agility"
+  ],
+  "145": [
+    "agility",
+    "thunder-wave"
+  ],
+  "146": [
+    "agility"
+  ],
+  "147": [
+    "thunder-wave",
+    "agility",
+    "slam",
+    "dragon-rush",
+    "dragon-dance"
+  ],
+  "148": [
+    "thunder-wave",
+    "agility",
+    "slam",
+    "dragon-rush",
+    "dragon-dance"
+  ],
+  "149": [
+    "thunder-wave",
+    "agility",
+    "slam",
+    "dragon-rush",
+    "dragon-dance"
+  ],
+  "150": [
+    "confuse-ray",
+    "agility"
+  ],
+  "151": [
+    "nasty-plot"
+  ],
+  "152": [
+    "poison-powder"
+  ],
+  "153": [
+    "poison-powder"
+  ],
+  "154": [
+    "poison-powder",
+    "petal-blizzard"
+  ],
+  "155": [
+    "eruption",
+    "inferno"
+  ],
+  "156": [
+    "eruption",
+    "inferno"
+  ],
+  "157": [
+    "eruption",
+    "inferno"
+  ],
+  "160": [
+    "agility"
+  ],
+  "161": [
+    "slam"
+  ],
+  "162": [
+    "slam",
+    "agility",
+    "coil"
+  ],
+  "163": [
+    "take-down"
+  ],
+  "164": [
+    "take-down"
+  ],
+  "165": [
+    "agility"
+  ],
+  "166": [
+    "agility"
+  ],
+  "167": [
+    "agility"
+  ],
+  "168": [
+    "agility",
+    "swords-dance"
+  ],
+  "169": [
+    "confuse-ray",
+    "toxic"
+  ],
+  "170": [
+    "thunder-wave",
+    "confuse-ray",
+    "take-down"
+  ],
+  "171": [
+    "thunder-wave",
+    "confuse-ray",
+    "take-down"
+  ],
+  "172": [
+    "thunder-wave",
+    "nasty-plot",
+    "iron-tail"
+  ],
+  "177": [
+    "confuse-ray"
+  ],
+  "178": [
+    "confuse-ray"
+  ],
+  "179": [
+    "thunder-wave",
+    "take-down",
+    "confuse-ray"
+  ],
+  "180": [
+    "thunder-wave",
+    "take-down",
+    "confuse-ray"
+  ],
+  "181": [
+    "thunder-wave",
+    "take-down",
+    "confuse-ray"
+  ],
+  "182": [
+    "stun-spore",
+    "petal-blizzard",
+    "quiver-dance",
+    "poison-powder",
+    "sleep-powder",
+    "toxic"
+  ],
+  "183": [
+    "slam"
+  ],
+  "184": [
+    "slam"
+  ],
+  "185": [
+    "slam",
+    "wood-hammer",
+    "hammer-arm",
+    "iron-defense"
+  ],
+  "187": [
+    "poison-powder",
+    "stun-spore",
+    "sleep-powder"
+  ],
+  "188": [
+    "poison-powder",
+    "stun-spore",
+    "sleep-powder"
+  ],
+  "189": [
+    "poison-powder",
+    "stun-spore",
+    "sleep-powder"
+  ],
+  "190": [
+    "agility",
+    "nasty-plot",
+    "iron-tail"
+  ],
+  "192": [
+    "petal-blizzard"
+  ],
+  "194": [
+    "slam",
+    "toxic"
+  ],
+  "195": [
+    "slam",
+    "toxic"
+  ],
+  "196": [
+    "take-down"
+  ],
+  "197": [
+    "confuse-ray",
+    "take-down"
+  ],
+  "198": [
+    "nasty-plot"
+  ],
+  "199": [
+    "nasty-plot"
+  ],
+  "200": [
+    "confuse-ray"
+  ],
+  "203": [
+    "stomp",
+    "agility",
+    "nasty-plot"
+  ],
+  "204": [
+    "take-down",
+    "iron-defense"
+  ],
+  "205": [
+    "take-down",
+    "iron-defense"
+  ],
+  "206": [
+    "take-down",
+    "coil",
+    "drill-run",
+    "dragon-rush",
+    "hyper-drill"
+  ],
+  "207": [
+    "swords-dance",
+    "sky-uppercut"
+  ],
+  "208": [
+    "slam",
+    "iron-tail",
+    "rock-polish",
+    "high-horsepower"
+  ],
+  "209": [
+    "take-down"
+  ],
+  "210": [
+    "take-down"
+  ],
+  "211": [
+    "take-down",
+    "toxic"
+  ],
+  "212": [
+    "agility",
+    "swords-dance",
+    "iron-defense"
+  ],
+  "213": [
+    "shell-smash"
+  ],
+  "214": [
+    "horn-attack",
+    "take-down",
+    "swords-dance"
+  ],
+  "215": [
+    "agility",
+    "hone-claws",
+    "swords-dance"
+  ],
+  "216": [
+    "high-horsepower"
+  ],
+  "217": [
+    "hammer-arm",
+    "high-horsepower"
+  ],
+  "219": [
+    "shell-smash"
+  ],
+  "220": [
+    "take-down",
+    "high-horsepower"
+  ],
+  "221": [
+    "horn-attack",
+    "take-down",
+    "high-horsepower"
+  ],
+  "222": [
+    "iron-defense"
+  ],
+  "224": [
+    "wring-out"
+  ],
+  "226": [
+    "take-down",
+    "agility",
+    "confuse-ray"
+  ],
+  "227": [
+    "agility",
+    "iron-defense"
+  ],
+  "228": [
+    "nasty-plot",
+    "inferno"
+  ],
+  "229": [
+    "nasty-plot",
+    "inferno"
+  ],
+  "230": [
+    "agility",
+    "dragon-dance"
+  ],
+  "231": [
+    "take-down",
+    "slam"
+  ],
+  "232": [
+    "horn-attack",
+    "slam",
+    "take-down"
+  ],
+  "233": [
+    "agility"
+  ],
+  "234": [
+    "stomp",
+    "take-down",
+    "confuse-ray",
+    "psyshield-bash"
+  ],
+  "237": [
+    "agility"
+  ],
+  "239": [
+    "thunder-wave"
+  ],
+  "240": [
+    "confuse-ray"
+  ],
+  "241": [
+    "stomp",
+    "high-horsepower"
+  ],
+  "242": [
+    "egg-bomb",
+    "take-down"
+  ],
+  "244": [
+    "stomp",
+    "eruption"
+  ],
+  "247": [
+    "iron-defense"
+  ],
+  "248": [
+    "iron-defense"
+  ],
+  "249": [
+    "dragon-rush"
+  ],
+  "252": [
+    "agility",
+    "slam"
+  ],
+  "253": [
+    "agility",
+    "slam"
+  ],
+  "254": [
+    "agility",
+    "slam"
+  ],
+  "256": [
+    "bulk-up",
+    "sky-uppercut"
+  ],
+  "257": [
+    "bulk-up",
+    "sky-uppercut"
+  ],
+  "258": [
+    "take-down"
+  ],
+  "259": [
+    "take-down"
+  ],
+  "260": [
+    "take-down",
+    "hammer-arm"
+  ],
+  "261": [
+    "take-down"
+  ],
+  "262": [
+    "take-down"
+  ],
+  "263": [
+    "take-down"
+  ],
+  "264": [
+    "hone-claws",
+    "take-down"
+  ],
+  "266": [
+    "iron-defense"
+  ],
+  "267": [
+    "stun-spore",
+    "quiver-dance",
+    "iron-defense"
+  ],
+  "268": [
+    "iron-defense"
+  ],
+  "269": [
+    "toxic",
+    "quiver-dance",
+    "poison-powder",
+    "iron-defense"
+  ],
+  "275": [
+    "nasty-plot"
+  ],
+  "276": [
+    "agility"
+  ],
+  "277": [
+    "agility"
+  ],
+  "278": [
+    "agility"
+  ],
+  "279": [
+    "agility"
+  ],
+  "283": [
+    "agility"
+  ],
+  "284": [
+    "stun-spore",
+    "quiver-dance",
+    "agility"
+  ],
+  "285": [
+    "stun-spore",
+    "poison-powder",
+    "toxic"
+  ],
+  "286": [
+    "stun-spore",
+    "sky-uppercut",
+    "dynamic-punch",
+    "poison-powder",
+    "toxic"
+  ],
+  "289": [
+    "hammer-arm"
+  ],
+  "291": [
+    "swords-dance",
+    "agility"
+  ],
+  "292": [
+    "confuse-ray"
+  ],
+  "293": [
+    "stomp"
+  ],
+  "294": [
+    "stomp"
+  ],
+  "295": [
+    "stomp"
+  ],
+  "296": [
+    "vital-throw",
+    "bulk-up"
+  ],
+  "297": [
+    "vital-throw",
+    "bulk-up"
+  ],
+  "298": [
+    "slam"
+  ],
+  "299": [
+    "thunder-wave",
+    "iron-defense"
+  ],
+  "302": [
+    "confuse-ray"
+  ],
+  "303": [
+    "vice-grip",
+    "iron-defense"
+  ],
+  "304": [
+    "iron-defense",
+    "take-down",
+    "iron-tail"
+  ],
+  "305": [
+    "iron-defense",
+    "take-down",
+    "iron-tail"
+  ],
+  "306": [
+    "iron-defense",
+    "take-down",
+    "iron-tail"
+  ],
+  "307": [
+    "work-up"
+  ],
+  "308": [
+    "work-up"
+  ],
+  "309": [
+    "thunder-wave",
+    "wild-charge"
+  ],
+  "310": [
+    "thunder-wave",
+    "wild-charge"
+  ],
+  "311": [
+    "thunder-wave",
+    "agility",
+    "nasty-plot"
+  ],
+  "312": [
+    "thunder-wave",
+    "agility",
+    "nasty-plot"
+  ],
+  "313": [
+    "confuse-ray"
+  ],
+  "315": [
+    "stun-spore",
+    "toxic",
+    "petal-blizzard",
+    "poison-powder"
+  ],
+  "316": [
+    "toxic",
+    "wring-out"
+  ],
+  "317": [
+    "toxic",
+    "wring-out"
+  ],
+  "318": [
+    "take-down",
+    "agility",
+    "liquidation"
+  ],
+  "319": [
+    "agility",
+    "liquidation",
+    "take-down"
+  ],
+  "320": [
+    "water-spout"
+  ],
+  "321": [
+    "water-spout"
+  ],
+  "322": [
+    "take-down"
+  ],
+  "323": [
+    "take-down",
+    "eruption"
+  ],
+  "324": [
+    "iron-defense",
+    "inferno",
+    "shell-smash",
+    "eruption"
+  ],
+  "325": [
+    "confuse-ray"
+  ],
+  "326": [
+    "confuse-ray"
+  ],
+  "327": [
+    "dizzy-punch"
+  ],
+  "329": [
+    "dragon-rush"
+  ],
+  "330": [
+    "dragon-rush",
+    "dragon-dance"
+  ],
+  "333": [
+    "take-down",
+    "round"
+  ],
+  "334": [
+    "take-down",
+    "dragon-dance",
+    "round"
+  ],
+  "335": [
+    "swords-dance",
+    "crush-claw",
+    "hone-claws"
+  ],
+  "336": [
+    "wring-out",
+    "coil",
+    "swords-dance"
+  ],
+  "337": [
+    "rock-polish"
+  ],
+  "338": [
+    "rock-polish"
+  ],
+  "341": [
+    "vice-grip",
+    "swords-dance"
+  ],
+  "342": [
+    "vice-grip",
+    "swords-dance"
+  ],
+  "345": [
+    "confuse-ray",
+    "wring-out"
+  ],
+  "346": [
+    "confuse-ray",
+    "wring-out"
+  ],
+  "347": [
+    "crush-claw"
+  ],
+  "348": [
+    "crush-claw"
+  ],
+  "350": [
+    "coil"
+  ],
+  "353": [
+    "will-o-wisp"
+  ],
+  "354": [
+    "will-o-wisp"
+  ],
+  "355": [
+    "confuse-ray",
+    "will-o-wisp"
+  ],
+  "356": [
+    "confuse-ray",
+    "will-o-wisp"
+  ],
+  "357": [
+    "stomp",
+    "dragon-dance"
+  ],
+  "358": [
+    "take-down"
+  ],
+  "359": [
+    "swords-dance"
+  ],
+  "363": [
+    "liquidation"
+  ],
+  "364": [
+    "liquidation"
+  ],
+  "365": [
+    "liquidation"
+  ],
+  "366": [
+    "iron-defense",
+    "shell-smash"
+  ],
+  "367": [
+    "coil",
+    "iron-defense",
+    "shell-smash"
+  ],
+  "368": [
+    "agility",
+    "coil",
+    "iron-defense",
+    "shell-smash"
+  ],
+  "369": [
+    "take-down"
+  ],
+  "370": [
+    "agility",
+    "take-down"
+  ],
+  "374": [
+    "take-down"
+  ],
+  "375": [
+    "take-down",
+    "iron-defense",
+    "agility",
+    "hone-claws"
+  ],
+  "376": [
+    "take-down",
+    "iron-defense",
+    "agility",
+    "hammer-arm"
+  ],
+  "377": [
+    "iron-defense",
+    "hammer-arm",
+    "stomp"
+  ],
+  "378": [
+    "hammer-arm",
+    "stomp"
+  ],
+  "379": [
+    "iron-defense",
+    "hammer-arm",
+    "stomp"
+  ],
+  "380": [
+    "mist-ball"
+  ],
+  "381": [
+    "luster-purge",
+    "dragon-dance"
+  ],
+  "382": [
+    "water-spout"
+  ],
+  "383": [
+    "bulk-up",
+    "eruption",
+    "hammer-arm"
+  ],
+  "384": [
+    "dragon-dance"
+  ],
+  "387": [
+    "sleep-powder"
+  ],
+  "388": [
+    "sleep-powder"
+  ],
+  "389": [
+    "wood-hammer",
+    "sleep-powder"
+  ],
+  "390": [
+    "nasty-plot"
+  ],
+  "391": [
+    "nasty-plot"
+  ],
+  "392": [
+    "nasty-plot"
+  ],
+  "393": [
+    "liquidation"
+  ],
+  "394": [
+    "liquidation"
+  ],
+  "395": [
+    "swords-dance",
+    "liquidation"
+  ],
+  "396": [
+    "take-down",
+    "agility"
+  ],
+  "397": [
+    "take-down",
+    "agility"
+  ],
+  "398": [
+    "take-down",
+    "agility"
+  ],
+  "399": [
+    "take-down",
+    "swords-dance"
+  ],
+  "400": [
+    "take-down",
+    "swords-dance"
+  ],
+  "402": [
+    "swords-dance"
+  ],
+  "403": [
+    "wild-charge",
+    "thunder-wave"
+  ],
+  "404": [
+    "wild-charge",
+    "thunder-wave"
+  ],
+  "405": [
+    "wild-charge",
+    "thunder-wave"
+  ],
+  "406": [
+    "stun-spore",
+    "poison-powder"
+  ],
+  "407": [
+    "stun-spore",
+    "toxic",
+    "petal-blizzard",
+    "poison-powder"
+  ],
+  "408": [
+    "take-down",
+    "rock-polish",
+    "swords-dance",
+    "slam"
+  ],
+  "409": [
+    "take-down",
+    "rock-polish",
+    "swords-dance",
+    "slam"
+  ],
+  "410": [
+    "take-down",
+    "iron-defense"
+  ],
+  "411": [
+    "take-down",
+    "iron-defense"
+  ],
+  "413": [
+    "quiver-dance"
+  ],
+  "414": [
+    "poison-powder",
+    "quiver-dance"
+  ],
+  "416": [
+    "confuse-ray",
+    "toxic",
+    "attack-order"
+  ],
+  "417": [
+    "thunder-wave"
+  ],
+  "418": [
+    "agility",
+    "liquidation"
+  ],
+  "419": [
+    "agility",
+    "liquidation"
+  ],
+  "420": [
+    "take-down",
+    "petal-blizzard",
+    "stun-spore",
+    "sleep-powder"
+  ],
+  "421": [
+    "take-down",
+    "petal-blizzard",
+    "stun-spore",
+    "sleep-powder"
+  ],
+  "424": [
+    "agility",
+    "nasty-plot",
+    "iron-tail"
+  ],
+  "427": [
+    "agility",
+    "dizzy-punch"
+  ],
+  "428": [
+    "agility",
+    "dizzy-punch"
+  ],
+  "429": [
+    "confuse-ray"
+  ],
+  "430": [
+    "nasty-plot"
+  ],
+  "431": [
+    "hone-claws",
+    "nasty-plot"
+  ],
+  "432": [
+    "hone-claws",
+    "nasty-plot"
+  ],
+  "434": [
+    "toxic"
+  ],
+  "435": [
+    "toxic"
+  ],
+  "436": [
+    "confuse-ray",
+    "iron-defense"
+  ],
+  "437": [
+    "confuse-ray",
+    "iron-defense"
+  ],
+  "438": [
+    "slam",
+    "iron-defense"
+  ],
+  "439": [
+    "iron-defense"
+  ],
+  "441": [
+    "chatter",
+    "round",
+    "nasty-plot"
+  ],
+  "442": [
+    "confuse-ray",
+    "nasty-plot"
+  ],
+  "443": [
+    "take-down",
+    "dragon-rush"
+  ],
+  "444": [
+    "take-down",
+    "dragon-rush"
+  ],
+  "445": [
+    "take-down",
+    "dragon-rush"
+  ],
+  "446": [
+    "high-horsepower"
+  ],
+  "447": [
+    "nasty-plot",
+    "work-up",
+    "swords-dance",
+    "iron-defense",
+    "bulk-up"
+  ],
+  "448": [
+    "swords-dance",
+    "work-up",
+    "nasty-plot",
+    "iron-defense",
+    "bulk-up"
+  ],
+  "449": [
+    "take-down",
+    "high-horsepower"
+  ],
+  "450": [
+    "take-down",
+    "high-horsepower"
+  ],
+  "451": [
+    "hone-claws",
+    "toxic",
+    "swords-dance"
+  ],
+  "452": [
+    "hone-claws",
+    "toxic",
+    "swords-dance"
+  ],
+  "453": [
+    "nasty-plot",
+    "toxic"
+  ],
+  "454": [
+    "nasty-plot",
+    "toxic"
+  ],
+  "455": [
+    "wring-out",
+    "stun-spore",
+    "sleep-powder"
+  ],
+  "458": [
+    "agility",
+    "take-down",
+    "confuse-ray"
+  ],
+  "459": [
+    "wood-hammer"
+  ],
+  "460": [
+    "wood-hammer"
+  ],
+  "461": [
+    "nasty-plot",
+    "hone-claws",
+    "agility",
+    "swords-dance"
+  ],
+  "462": [
+    "thunder-wave"
+  ],
+  "463": [
+    "stomp",
+    "slam",
+    "wring-out"
+  ],
+  "464": [
+    "stomp",
+    "horn-attack",
+    "take-down",
+    "hammer-arm",
+    "drill-run",
+    "high-horsepower"
+  ],
+  "465": [
+    "sleep-powder",
+    "poison-powder",
+    "stun-spore",
+    "slam",
+    "wring-out"
+  ],
+  "466": [
+    "thunder-wave",
+    "wild-charge"
+  ],
+  "467": [
+    "confuse-ray"
+  ],
+  "470": [
+    "swords-dance",
+    "take-down"
+  ],
+  "471": [
+    "take-down"
+  ],
+  "472": [
+    "swords-dance",
+    "sky-uppercut"
+  ],
+  "473": [
+    "take-down",
+    "high-horsepower"
+  ],
+  "474": [
+    "nasty-plot",
+    "agility",
+    "thunder-wave"
+  ],
+  "475": [
+    "swords-dance"
+  ],
+  "476": [
+    "iron-defense",
+    "thunder-wave"
+  ],
+  "477": [
+    "confuse-ray",
+    "will-o-wisp"
+  ],
+  "478": [
+    "confuse-ray",
+    "will-o-wisp"
+  ],
+  "479": [
+    "thunder-wave",
+    "confuse-ray"
+  ],
+  "480": [
+    "mystical-power"
+  ],
+  "481": [
+    "mystical-power"
+  ],
+  "482": [
+    "nasty-plot",
+    "mystical-power"
+  ],
+  "483": [
+    "iron-tail"
+  ],
+  "485": [
+    "iron-defense"
+  ],
+  "486": [
+    "stomp",
+    "confuse-ray",
+    "crush-grip",
+    "dizzy-punch",
+    "hammer-arm"
+  ],
+  "491": [
+    "nasty-plot"
+  ],
+  "492": [
+    "seed-flare",
+    "sleep-powder"
+  ],
+  "494": [
+    "searing-shot",
+    "inferno",
+    "work-up"
+  ],
+  "495": [
+    "slam",
+    "coil",
+    "wring-out"
+  ],
+  "496": [
+    "slam",
+    "coil",
+    "wring-out"
+  ],
+  "497": [
+    "slam",
+    "coil",
+    "wring-out"
+  ],
+  "498": [
+    "take-down"
+  ],
+  "499": [
+    "take-down"
+  ],
+  "500": [
+    "hammer-arm",
+    "take-down"
+  ],
+  "501": [
+    "swords-dance"
+  ],
+  "502": [
+    "swords-dance"
+  ],
+  "503": [
+    "swords-dance"
+  ],
+  "504": [
+    "work-up",
+    "slam",
+    "nasty-plot"
+  ],
+  "505": [
+    "confuse-ray",
+    "slam",
+    "nasty-plot"
+  ],
+  "506": [
+    "take-down",
+    "work-up"
+  ],
+  "507": [
+    "take-down",
+    "work-up"
+  ],
+  "508": [
+    "take-down",
+    "work-up"
+  ],
+  "509": [
+    "hone-claws",
+    "nasty-plot"
+  ],
+  "510": [
+    "hone-claws",
+    "nasty-plot"
+  ],
+  "522": [
+    "thunder-wave",
+    "stomp",
+    "agility",
+    "wild-charge"
+  ],
+  "523": [
+    "thunder-wave",
+    "stomp",
+    "agility",
+    "wild-charge"
+  ],
+  "524": [
+    "iron-defense"
+  ],
+  "525": [
+    "iron-defense"
+  ],
+  "526": [
+    "iron-defense"
+  ],
+  "529": [
+    "hone-claws",
+    "swords-dance",
+    "drill-run",
+    "crush-claw"
+  ],
+  "530": [
+    "hone-claws",
+    "swords-dance",
+    "drill-run",
+    "crush-claw"
+  ],
+  "531": [
+    "take-down"
+  ],
+  "532": [
+    "bulk-up",
+    "dynamic-punch",
+    "hammer-arm",
+    "slam"
+  ],
+  "533": [
+    "bulk-up",
+    "dynamic-punch",
+    "hammer-arm",
+    "slam"
+  ],
+  "534": [
+    "bulk-up",
+    "dynamic-punch",
+    "hammer-arm",
+    "slam"
+  ],
+  "535": [
+    "round"
+  ],
+  "536": [
+    "round"
+  ],
+  "537": [
+    "round"
+  ],
+  "538": [
+    "vital-throw",
+    "storm-throw",
+    "bulk-up"
+  ],
+  "539": [
+    "bulk-up"
+  ],
+  "542": [
+    "swords-dance"
+  ],
+  "543": [
+    "agility",
+    "steamroller",
+    "toxic",
+    "rock-climb",
+    "take-down"
+  ],
+  "544": [
+    "iron-defense",
+    "agility",
+    "steamroller",
+    "toxic",
+    "rock-climb",
+    "take-down"
+  ],
+  "545": [
+    "agility",
+    "steamroller",
+    "toxic",
+    "rock-climb",
+    "iron-defense",
+    "take-down"
+  ],
+  "546": [
+    "stun-spore",
+    "poison-powder"
+  ],
+  "547": [
+    "poison-powder",
+    "stun-spore"
+  ],
+  "548": [
+    "sleep-powder",
+    "stun-spore",
+    "poison-powder"
+  ],
+  "549": [
+    "quiver-dance",
+    "petal-blizzard",
+    "stun-spore",
+    "sleep-powder"
+  ],
+  "550": [
+    "take-down"
+  ],
+  "551": [
+    "hone-claws"
+  ],
+  "552": [
+    "hone-claws"
+  ],
+  "553": [
+    "hone-claws"
+  ],
+  "554": [
+    "work-up"
+  ],
+  "555": [
+    "work-up",
+    "hammer-arm"
+  ],
+  "556": [
+    "petal-blizzard"
+  ],
+  "557": [
+    "rock-polish",
+    "shell-smash"
+  ],
+  "558": [
+    "shell-smash",
+    "rock-polish"
+  ],
+  "559": [
+    "rock-climb"
+  ],
+  "560": [
+    "rock-climb"
+  ],
+  "562": [
+    "will-o-wisp"
+  ],
+  "563": [
+    "will-o-wisp"
+  ],
+  "564": [
+    "shell-smash",
+    "iron-defense"
+  ],
+  "565": [
+    "shell-smash",
+    "iron-defense"
+  ],
+  "566": [
+    "agility"
+  ],
+  "567": [
+    "agility"
+  ],
+  "568": [
+    "take-down",
+    "toxic"
+  ],
+  "569": [
+    "toxic",
+    "take-down"
+  ],
+  "570": [
+    "agility",
+    "nasty-plot",
+    "hone-claws"
+  ],
+  "571": [
+    "hone-claws",
+    "agility",
+    "nasty-plot"
+  ],
+  "572": [
+    "slam"
+  ],
+  "573": [
+    "slam"
+  ],
+  "579": [
+    "dizzy-punch",
+    "hammer-arm"
+  ],
+  "585": [
+    "take-down"
+  ],
+  "586": [
+    "take-down"
+  ],
+  "587": [
+    "agility"
+  ],
+  "588": [
+    "take-down",
+    "swords-dance"
+  ],
+  "589": [
+    "iron-defense",
+    "swords-dance",
+    "take-down"
+  ],
+  "590": [
+    "toxic",
+    "stun-spore"
+  ],
+  "591": [
+    "toxic",
+    "stun-spore"
+  ],
+  "592": [
+    "wring-out",
+    "water-spout"
+  ],
+  "593": [
+    "wring-out",
+    "water-spout"
+  ],
+  "595": [
+    "thunder-wave",
+    "agility"
+  ],
+  "596": [
+    "thunder-wave",
+    "agility"
+  ],
+  "597": [
+    "iron-defense"
+  ],
+  "598": [
+    "rock-climb",
+    "iron-defense"
+  ],
+  "599": [
+    "vice-grip"
+  ],
+  "600": [
+    "vice-grip"
+  ],
+  "601": [
+    "vice-grip"
+  ],
+  "602": [
+    "thunder-wave"
+  ],
+  "603": [
+    "thunder-wave",
+    "coil",
+    "wild-charge"
+  ],
+  "604": [
+    "crush-claw",
+    "coil",
+    "wild-charge"
+  ],
+  "607": [
+    "confuse-ray",
+    "will-o-wisp",
+    "inferno"
+  ],
+  "608": [
+    "confuse-ray",
+    "will-o-wisp",
+    "inferno"
+  ],
+  "609": [
+    "confuse-ray",
+    "will-o-wisp",
+    "inferno"
+  ],
+  "610": [
+    "dragon-dance",
+    "swords-dance"
+  ],
+  "611": [
+    "dragon-dance",
+    "swords-dance"
+  ],
+  "612": [
+    "dragon-dance",
+    "swords-dance"
+  ],
+  "615": [
+    "confuse-ray"
+  ],
+  "617": [
+    "agility",
+    "toxic"
+  ],
+  "619": [
+    "hone-claws"
+  ],
+  "620": [
+    "hone-claws"
+  ],
+  "621": [
+    "hone-claws",
+    "rock-climb"
+  ],
+  "622": [
+    "iron-defense",
+    "dynamic-punch",
+    "hammer-arm"
+  ],
+  "623": [
+    "iron-defense",
+    "dynamic-punch",
+    "hammer-arm",
+    "high-horsepower"
+  ],
+  "624": [
+    "iron-defense",
+    "swords-dance"
+  ],
+  "625": [
+    "iron-defense",
+    "swords-dance"
+  ],
+  "626": [
+    "horn-attack",
+    "swords-dance"
+  ],
+  "627": [
+    "hone-claws",
+    "crush-claw"
+  ],
+  "628": [
+    "hone-claws",
+    "crush-claw"
+  ],
+  "629": [
+    "nasty-plot",
+    "iron-defense"
+  ],
+  "630": [
+    "nasty-plot",
+    "toxic",
+    "iron-defense"
+  ],
+  "631": [
+    "inferno",
+    "hone-claws"
+  ],
+  "632": [
+    "vice-grip",
+    "agility",
+    "iron-defense"
+  ],
+  "633": [
+    "slam",
+    "work-up",
+    "dragon-rush",
+    "nasty-plot"
+  ],
+  "634": [
+    "slam",
+    "work-up",
+    "dragon-rush",
+    "nasty-plot"
+  ],
+  "635": [
+    "slam",
+    "work-up",
+    "dragon-rush",
+    "nasty-plot"
+  ],
+  "636": [
+    "take-down"
+  ],
+  "637": [
+    "quiver-dance",
+    "take-down"
+  ],
+  "638": [
+    "take-down",
+    "swords-dance",
+    "work-up"
+  ],
+  "639": [
+    "take-down",
+    "swords-dance",
+    "work-up"
+  ],
+  "640": [
+    "take-down",
+    "swords-dance",
+    "work-up"
+  ],
+  "641": [
+    "agility",
+    "hammer-arm",
+    "nasty-plot",
+    "bleakwind-storm"
+  ],
+  "642": [
+    "agility",
+    "nasty-plot",
+    "hammer-arm"
+  ],
+  "643": [
+    "fusion-flare"
+  ],
+  "644": [
+    "fusion-bolt"
+  ],
+  "645": [
+    "swords-dance",
+    "hammer-arm",
+    "bulk-up",
+    "sandsear-storm"
+  ],
+  "647": [
+    "take-down",
+    "swords-dance",
+    "work-up"
+  ],
+  "648": [
+    "round"
+  ],
+  "650": [
+    "take-down",
+    "bulk-up",
+    "wood-hammer"
+  ],
+  "651": [
+    "take-down",
+    "bulk-up",
+    "wood-hammer"
+  ],
+  "652": [
+    "hammer-arm",
+    "take-down",
+    "bulk-up",
+    "wood-hammer"
+  ],
+  "653": [
+    "will-o-wisp"
+  ],
+  "654": [
+    "will-o-wisp"
+  ],
+  "655": [
+    "will-o-wisp"
+  ],
+  "656": [
+    "round"
+  ],
+  "657": [
+    "round"
+  ],
+  "659": [
+    "agility",
+    "take-down",
+    "swords-dance"
+  ],
+  "660": [
+    "swords-dance",
+    "agility",
+    "hammer-arm",
+    "take-down"
+  ],
+  "661": [
+    "agility"
+  ],
+  "662": [
+    "agility"
+  ],
+  "663": [
+    "agility"
+  ],
+  "664": [
+    "stun-spore"
+  ],
+  "666": [
+    "poison-powder",
+    "stun-spore",
+    "sleep-powder",
+    "quiver-dance"
+  ],
+  "667": [
+    "work-up",
+    "take-down"
+  ],
+  "668": [
+    "work-up",
+    "take-down"
+  ],
+  "669": [
+    "petal-blizzard"
+  ],
+  "670": [
+    "petal-blizzard"
+  ],
+  "671": [
+    "petal-blizzard"
+  ],
+  "672": [
+    "take-down",
+    "bulk-up"
+  ],
+  "673": [
+    "take-down",
+    "bulk-up"
+  ],
+  "674": [
+    "work-up",
+    "vital-throw",
+    "sky-uppercut"
+  ],
+  "675": [
+    "hammer-arm",
+    "work-up",
+    "vital-throw",
+    "sky-uppercut"
+  ],
+  "676": [
+    "take-down"
+  ],
+  "679": [
+    "swords-dance",
+    "iron-defense"
+  ],
+  "680": [
+    "swords-dance",
+    "iron-defense"
+  ],
+  "681": [
+    "swords-dance",
+    "iron-defense"
+  ],
+  "684": [
+    "round"
+  ],
+  "685": [
+    "round"
+  ],
+  "688": [
+    "shell-smash",
+    "rock-polish",
+    "hone-claws",
+    "cross-chop"
+  ],
+  "689": [
+    "shell-smash",
+    "rock-polish",
+    "hone-claws",
+    "cross-chop"
+  ],
+  "690": [
+    "toxic"
+  ],
+  "691": [
+    "toxic"
+  ],
+  "692": [
+    "vice-grip",
+    "swords-dance",
+    "hone-claws"
+  ],
+  "693": [
+    "vice-grip",
+    "swords-dance",
+    "hone-claws"
+  ],
+  "694": [
+    "parabolic-charge",
+    "thunder-wave"
+  ],
+  "695": [
+    "parabolic-charge",
+    "thunder-wave"
+  ],
+  "696": [
+    "stomp"
+  ],
+  "697": [
+    "stomp"
+  ],
+  "698": [
+    "thunder-wave",
+    "take-down",
+    "round"
+  ],
+  "699": [
+    "thunder-wave",
+    "take-down",
+    "round"
+  ],
+  "700": [
+    "take-down"
+  ],
+  "701": [
+    "hone-claws",
+    "swords-dance"
+  ],
+  "702": [
+    "parabolic-charge",
+    "thunder-wave"
+  ],
+  "703": [
+    "rock-polish"
+  ],
+  "708": [
+    "confuse-ray",
+    "will-o-wisp",
+    "wood-hammer"
+  ],
+  "709": [
+    "confuse-ray",
+    "will-o-wisp",
+    "wood-hammer"
+  ],
+  "710": [
+    "confuse-ray"
+  ],
+  "711": [
+    "confuse-ray"
+  ],
+  "712": [
+    "take-down",
+    "iron-defense"
+  ],
+  "713": [
+    "iron-defense",
+    "take-down"
+  ],
+  "714": [
+    "agility"
+  ],
+  "715": [
+    "agility"
+  ],
+  "716": [
+    "take-down"
+  ],
+  "717": [
+    "oblivion-wing",
+    "dragon-rush"
+  ],
+  "718": [
+    "lands-wrath",
+    "dragon-dance",
+    "coil"
+  ],
+  "719": [
+    "diamond-storm",
+    "rock-polish"
+  ],
+  "720": [
+    "nasty-plot"
+  ],
+  "721": [
+    "take-down",
+    "steam-eruption",
+    "stomp"
+  ],
+  "722": [
+    "nasty-plot"
+  ],
+  "723": [
+    "nasty-plot"
+  ],
+  "724": [
+    "nasty-plot"
+  ],
+  "727": [
+    "bulk-up",
+    "cross-chop"
+  ],
+  "734": [
+    "take-down",
+    "work-up"
+  ],
+  "735": [
+    "take-down",
+    "work-up"
+  ],
+  "736": [
+    "vice-grip"
+  ],
+  "737": [
+    "vice-grip",
+    "iron-defense"
+  ],
+  "738": [
+    "vice-grip",
+    "agility",
+    "iron-defense"
+  ],
+  "739": [
+    "dizzy-punch",
+    "iron-defense",
+    "dynamic-punch",
+    "slam"
+  ],
+  "740": [
+    "dizzy-punch",
+    "ice-hammer",
+    "iron-defense",
+    "dynamic-punch",
+    "slam"
+  ],
+  "741": [
+    "agility"
+  ],
+  "742": [
+    "stun-spore",
+    "quiver-dance"
+  ],
+  "743": [
+    "stun-spore",
+    "quiver-dance"
+  ],
+  "744": [
+    "rock-climb"
+  ],
+  "745": [
+    "rock-climb"
+  ],
+  "746": [
+    "take-down"
+  ],
+  "747": [
+    "toxic",
+    "liquidation"
+  ],
+  "748": [
+    "toxic",
+    "liquidation"
+  ],
+  "749": [
+    "stomp",
+    "high-horsepower",
+    "iron-defense"
+  ],
+  "750": [
+    "stomp",
+    "high-horsepower",
+    "iron-defense"
+  ],
+  "751": [
+    "liquidation"
+  ],
+  "752": [
+    "liquidation"
+  ],
+  "754": [
+    "petal-blizzard"
+  ],
+  "755": [
+    "sleep-powder",
+    "confuse-ray"
+  ],
+  "756": [
+    "sleep-powder",
+    "confuse-ray"
+  ],
+  "757": [
+    "toxic",
+    "nasty-plot"
+  ],
+  "758": [
+    "toxic",
+    "nasty-plot"
+  ],
+  "759": [
+    "take-down",
+    "hammer-arm"
+  ],
+  "760": [
+    "take-down",
+    "hammer-arm"
+  ],
+  "762": [
+    "stomp"
+  ],
+  "763": [
+    "stomp"
+  ],
+  "764": [
+    "petal-blizzard"
+  ],
+  "765": [
+    "nasty-plot"
+  ],
+  "766": [
+    "take-down",
+    "bulk-up"
+  ],
+  "768": [
+    "swords-dance",
+    "iron-defense",
+    "liquidation"
+  ],
+  "769": [
+    "iron-defense"
+  ],
+  "770": [
+    "iron-defense"
+  ],
+  "771": [
+    "toxic"
+  ],
+  "772": [
+    "crush-claw",
+    "take-down"
+  ],
+  "773": [
+    "crush-claw",
+    "take-down"
+  ],
+  "774": [
+    "confuse-ray",
+    "take-down",
+    "shell-smash",
+    "rock-polish"
+  ],
+  "775": [
+    "slam",
+    "wood-hammer"
+  ],
+  "776": [
+    "iron-defense",
+    "shell-smash"
+  ],
+  "777": [
+    "zing-zap",
+    "wild-charge"
+  ],
+  "778": [
+    "wood-hammer",
+    "hone-claws"
+  ],
+  "781": [
+    "slam"
+  ],
+  "782": [
+    "work-up",
+    "iron-defense",
+    "dragon-dance"
+  ],
+  "783": [
+    "sky-uppercut",
+    "work-up",
+    "iron-defense",
+    "dragon-dance"
+  ],
+  "784": [
+    "clanging-scales",
+    "sky-uppercut",
+    "work-up",
+    "iron-defense",
+    "dragon-dance"
+  ],
+  "785": [
+    "wild-charge",
+    "agility"
+  ],
+  "787": [
+    "wood-hammer",
+    "horn-attack"
+  ],
+  "791": [
+    "wild-charge"
+  ],
+  "792": [
+    "confuse-ray"
+  ],
+  "794": [
+    "bulk-up",
+    "vital-throw",
+    "hammer-arm",
+    "dynamic-punch"
+  ],
+  "795": [
+    "quiver-dance",
+    "stomp",
+    "agility"
+  ],
+  "796": [
+    "thunder-wave"
+  ],
+  "797": [
+    "iron-defense"
+  ],
+  "798": [
+    "swords-dance"
+  ],
+  "799": [
+    "stomp",
+    "steamroller",
+    "iron-tail",
+    "hammer-arm",
+    "wring-out",
+    "dragon-rush"
+  ],
+  "800": [
+    "iron-defense",
+    "wring-out"
+  ],
+  "801": [
+    "fleur-cannon",
+    "iron-defense"
+  ],
+  "803": [
+    "nasty-plot",
+    "toxic"
+  ],
+  "804": [
+    "nasty-plot",
+    "toxic",
+    "dragon-rush"
+  ],
+  "805": [
+    "take-down",
+    "iron-defense",
+    "stomp"
+  ],
+  "806": [
+    "confuse-ray",
+    "will-o-wisp"
+  ],
+  "807": [
+    "hone-claws",
+    "wild-charge",
+    "agility"
+  ],
+  "808": [
+    "thunder-wave"
+  ],
+  "809": [
+    "thunder-wave",
+    "dynamic-punch"
+  ],
+  "810": [
+    "slam",
+    "wood-hammer"
+  ],
+  "811": [
+    "slam",
+    "wood-hammer"
+  ],
+  "812": [
+    "slam",
+    "wood-hammer"
+  ],
+  "813": [
+    "agility"
+  ],
+  "814": [
+    "agility"
+  ],
+  "815": [
+    "agility"
+  ],
+  "816": [
+    "liquidation"
+  ],
+  "817": [
+    "liquidation"
+  ],
+  "818": [
+    "liquidation"
+  ],
+  "821": [
+    "hone-claws"
+  ],
+  "822": [
+    "hone-claws"
+  ],
+  "823": [
+    "iron-defense",
+    "hone-claws"
+  ],
+  "826": [
+    "confuse-ray",
+    "agility"
+  ],
+  "827": [
+    "hone-claws",
+    "nasty-plot"
+  ],
+  "828": [
+    "hone-claws",
+    "nasty-plot"
+  ],
+  "829": [
+    "round"
+  ],
+  "830": [
+    "round"
+  ],
+  "831": [
+    "take-down"
+  ],
+  "832": [
+    "take-down"
+  ],
+  "833": [
+    "liquidation"
+  ],
+  "834": [
+    "rock-polish",
+    "liquidation"
+  ],
+  "835": [
+    "wild-charge"
+  ],
+  "836": [
+    "wild-charge"
+  ],
+  "837": [
+    "rock-polish"
+  ],
+  "838": [
+    "rock-polish"
+  ],
+  "839": [
+    "rock-polish"
+  ],
+  "841": [
+    "dragon-dance",
+    "grav-apple",
+    "iron-defense",
+    "dragon-rush"
+  ],
+  "842": [
+    "stomp",
+    "apple-acid",
+    "iron-defense"
+  ],
+  "843": [
+    "slam",
+    "coil"
+  ],
+  "844": [
+    "slam",
+    "coil"
+  ],
+  "846": [
+    "agility",
+    "liquidation"
+  ],
+  "847": [
+    "agility",
+    "liquidation"
+  ],
+  "849": [
+    "toxic",
+    "overdrive"
+  ],
+  "850": [
+    "coil",
+    "slam"
+  ],
+  "851": [
+    "inferno",
+    "coil",
+    "slam"
+  ],
+  "852": [
+    "bulk-up"
+  ],
+  "853": [
+    "bulk-up"
+  ],
+  "854": [
+    "nasty-plot",
+    "shell-smash"
+  ],
+  "855": [
+    "nasty-plot",
+    "shell-smash"
+  ],
+  "859": [
+    "nasty-plot"
+  ],
+  "860": [
+    "false-surrender",
+    "nasty-plot"
+  ],
+  "861": [
+    "bulk-up",
+    "false-surrender",
+    "nasty-plot",
+    "hammer-arm"
+  ],
+  "862": [
+    "cross-chop",
+    "hone-claws",
+    "take-down"
+  ],
+  "863": [
+    "iron-defense",
+    "hone-claws"
+  ],
+  "865": [
+    "iron-defense",
+    "swords-dance",
+    "slam"
+  ],
+  "867": [
+    "slam"
+  ],
+  "870": [
+    "bulk-up",
+    "iron-defense"
+  ],
+  "871": [
+    "zing-zap"
+  ],
+  "873": [
+    "stun-spore",
+    "quiver-dance"
+  ],
+  "874": [
+    "rock-polish",
+    "stomp"
+  ],
+  "877": [
+    "agility"
+  ],
+  "878": [
+    "stomp",
+    "iron-defense",
+    "high-horsepower"
+  ],
+  "879": [
+    "stomp",
+    "iron-defense",
+    "high-horsepower"
+  ],
+  "880": [
+    "stomp",
+    "slam",
+    "dragon-rush"
+  ],
+  "881": [
+    "slam"
+  ],
+  "882": [
+    "stomp",
+    "dragon-rush"
+  ],
+  "884": [
+    "hone-claws",
+    "iron-defense"
+  ],
+  "886": [
+    "agility",
+    "dragon-dance",
+    "take-down",
+    "dragon-rush"
+  ],
+  "887": [
+    "agility",
+    "dragon-dance",
+    "take-down",
+    "dragon-rush"
+  ],
+  "888": [
+    "swords-dance"
+  ],
+  "889": [
+    "iron-defense"
+  ],
+  "890": [
+    "agility",
+    "confuse-ray",
+    "toxic",
+    "dragon-dance"
+  ],
+  "891": [
+    "bulk-up",
+    "dynamic-punch"
+  ],
+  "892": [
+    "wicked-blow",
+    "bulk-up",
+    "dynamic-punch"
+  ],
+  "893": [
+    "hammer-arm"
+  ],
+  "894": [
+    "thunder-wave"
+  ],
+  "895": [
+    "vice-grip",
+    "hammer-arm",
+    "dragon-dance",
+    "dragon-energy"
+  ],
+  "896": [
+    "stomp",
+    "take-down",
+    "iron-defense",
+    "swords-dance"
+  ],
+  "897": [
+    "stomp",
+    "confuse-ray",
+    "take-down",
+    "agility",
+    "nasty-plot"
+  ],
+  "899": [
+    "psyshield-bash",
+    "stomp",
+    "take-down",
+    "confuse-ray"
+  ],
+  "900": [
+    "swords-dance",
+    "agility"
+  ],
+  "901": [
+    "high-horsepower",
+    "hammer-arm"
+  ],
+  "902": [
+    "take-down"
+  ],
+  "903": [
+    "swords-dance",
+    "hone-claws",
+    "agility"
+  ],
+  "904": [
+    "toxic"
+  ],
+  "905": [
+    "iron-defense",
+    "springtide-storm"
+  ],
+  "906": [
+    "hone-claws"
+  ],
+  "907": [
+    "hone-claws"
+  ],
+  "908": [
+    "hone-claws"
+  ],
+  "909": [
+    "round"
+  ],
+  "910": [
+    "round",
+    "will-o-wisp"
+  ],
+  "911": [
+    "torch-song",
+    "round",
+    "will-o-wisp"
+  ],
+  "912": [
+    "work-up",
+    "liquidation"
+  ],
+  "913": [
+    "work-up",
+    "liquidation"
+  ],
+  "914": [
+    "work-up",
+    "liquidation"
+  ],
+  "915": [
+    "take-down",
+    "work-up"
+  ],
+  "916": [
+    "take-down",
+    "work-up"
+  ],
+  "919": [
+    "agility"
+  ],
+  "920": [
+    "agility"
+  ],
+  "921": [
+    "thunder-wave",
+    "slam",
+    "agility",
+    "wild-charge"
+  ],
+  "922": [
+    "thunder-wave",
+    "slam",
+    "agility",
+    "wild-charge"
+  ],
+  "923": [
+    "wild-charge",
+    "thunder-wave",
+    "slam",
+    "agility"
+  ],
+  "926": [
+    "work-up"
+  ],
+  "927": [
+    "work-up"
+  ],
+  "930": [
+    "petal-blizzard"
+  ],
+  "932": [
+    "rock-polish",
+    "iron-defense"
+  ],
+  "933": [
+    "rock-polish",
+    "iron-defense"
+  ],
+  "934": [
+    "hammer-arm",
+    "rock-polish"
+  ],
+  "935": [
+    "will-o-wisp"
+  ],
+  "936": [
+    "will-o-wisp"
+  ],
+  "937": [
+    "will-o-wisp",
+    "swords-dance",
+    "bitter-blade"
+  ],
+  "940": [
+    "agility"
+  ],
+  "941": [
+    "agility"
+  ],
+  "942": [
+    "hone-claws"
+  ],
+  "943": [
+    "hone-claws"
+  ],
+  "948": [
+    "poison-powder",
+    "stun-spore"
+  ],
+  "949": [
+    "poison-powder",
+    "stun-spore"
+  ],
+  "950": [
+    "swords-dance",
+    "high-horsepower",
+    "iron-defense"
+  ],
+  "953": [
+    "take-down"
+  ],
+  "954": [
+    "take-down"
+  ],
+  "955": [
+    "agility"
+  ],
+  "956": [
+    "lumina-crash",
+    "agility"
+  ],
+  "957": [
+    "slam"
+  ],
+  "958": [
+    "slam"
+  ],
+  "959": [
+    "slam"
+  ],
+  "960": [
+    "slam",
+    "liquidation"
+  ],
+  "961": [
+    "slam",
+    "liquidation"
+  ],
+  "962": [
+    "hone-claws"
+  ],
+  "965": [
+    "spin-out"
+  ],
+  "966": [
+    "spin-out"
+  ],
+  "967": [
+    "dragon-rush"
+  ],
+  "968": [
+    "take-down",
+    "iron-defense",
+    "iron-tail"
+  ],
+  "969": [
+    "rock-polish"
+  ],
+  "970": [
+    "rock-polish"
+  ],
+  "974": [
+    "take-down"
+  ],
+  "975": [
+    "take-down"
+  ],
+  "976": [
+    "liquidation"
+  ],
+  "978": [
+    "nasty-plot"
+  ],
+  "979": [
+    "cross-chop"
+  ],
+  "980": [
+    "slam",
+    "toxic"
+  ],
+  "981": [
+    "stomp",
+    "agility",
+    "nasty-plot"
+  ],
+  "982": [
+    "drill-run",
+    "hyper-drill",
+    "dragon-rush",
+    "coil"
+  ],
+  "983": [
+    "kowtow-cleave",
+    "iron-defense",
+    "swords-dance"
+  ],
+  "984": [
+    "horn-attack"
+  ],
+  "986": [
+    "stun-spore"
+  ],
+  "987": [
+    "confuse-ray"
+  ],
+  "988": [
+    "poison-powder",
+    "stun-spore",
+    "stomp",
+    "bulk-up"
+  ],
+  "989": [
+    "thunder-wave"
+  ],
+  "990": [
+    "horn-attack",
+    "wild-charge"
+  ],
+  "991": [
+    "take-down",
+    "agility"
+  ],
+  "992": [
+    "slam",
+    "wild-charge"
+  ],
+  "993": [
+    "work-up"
+  ],
+  "994": [
+    "take-down"
+  ],
+  "995": [
+    "iron-defense",
+    "wild-charge"
+  ],
+  "996": [
+    "take-down"
+  ],
+  "997": [
+    "take-down"
+  ],
+  "998": [
+    "take-down"
+  ],
+  "1000": [
+    "confuse-ray",
+    "nasty-plot"
+  ],
+  "1001": [
+    "poison-powder",
+    "stun-spore"
+  ],
+  "1002": [
+    "swords-dance"
+  ],
+  "1003": [
+    "stomp"
+  ],
+  "1004": [
+    "will-o-wisp",
+    "confuse-ray",
+    "nasty-plot",
+    "inferno"
+  ],
+  "1005": [
+    "dragon-dance",
+    "dragon-rush"
+  ],
+  "1007": [
+    "agility"
+  ],
+  "1008": [
+    "parabolic-charge",
+    "agility"
+  ],
+  "1009": [
+    "dragon-rush"
+  ],
+  "1010": [
+    "work-up",
+    "swords-dance"
+  ],
+  "1012": [
+    "stun-spore"
+  ],
+  "1013": [
+    "matcha-gotcha",
+    "stun-spore"
+  ],
+  "1014": [
+    "bulk-up"
+  ],
+  "1015": [
+    "nasty-plot"
+  ],
+  "1017": [
+    "slam",
+    "wood-hammer"
+  ],
+  "1018": [
+    "hone-claws",
+    "iron-defense"
+  ],
+  "1020": [
+    "stomp",
+    "crush-claw",
+    "dragon-rush"
+  ],
+  "1021": [
+    "stomp"
+  ],
+  "1022": [
+    "horn-attack",
+    "agility",
+    "swords-dance"
+  ],
+  "1023": [
+    "iron-defense",
+    "tachyon-cutter"
+  ],
+  "1024": [
+    "rock-polish"
+  ],
+  "1025": [
+    "malignant-chain",
+    "toxic",
+    "nasty-plot"
+  ],
+  "10002": [
+    "iron-defense"
+  ],
+  "10003": [
+    "agility"
+  ],
+  "10004": [
+    "quiver-dance"
+  ],
+  "10005": [
+    "quiver-dance"
+  ],
+  "10006": [
+    "seed-flare"
+  ],
+  "10008": [
+    "thunder-wave",
+    "confuse-ray"
+  ],
+  "10009": [
+    "thunder-wave",
+    "confuse-ray"
+  ],
+  "10010": [
+    "thunder-wave",
+    "confuse-ray"
+  ],
+  "10011": [
+    "thunder-wave",
+    "confuse-ray"
+  ],
+  "10012": [
+    "thunder-wave",
+    "confuse-ray"
+  ],
+  "10016": [
+    "take-down"
+  ],
+  "10017": [
+    "work-up",
+    "hammer-arm"
+  ],
+  "10018": [
+    "round"
+  ],
+  "10019": [
+    "agility",
+    "hammer-arm",
+    "bleakwind-storm"
+  ],
+  "10020": [
+    "agility",
+    "nasty-plot",
+    "hammer-arm"
+  ],
+  "10021": [
+    "swords-dance",
+    "hammer-arm",
+    "sandsear-storm"
+  ],
+  "10022": [
+    "fusion-bolt"
+  ],
+  "10023": [
+    "fusion-flare"
+  ],
+  "10024": [
+    "take-down",
+    "swords-dance",
+    "work-up"
+  ],
+  "10026": [
+    "swords-dance",
+    "iron-defense"
+  ],
+  "10027": [
+    "confuse-ray"
+  ],
+  "10028": [
+    "confuse-ray"
+  ],
+  "10029": [
+    "confuse-ray"
+  ],
+  "10030": [
+    "confuse-ray"
+  ],
+  "10031": [
+    "confuse-ray"
+  ],
+  "10032": [
+    "confuse-ray"
+  ],
+  "10033": [
+    "poison-powder",
+    "sleep-powder",
+    "take-down",
+    "petal-blizzard"
+  ],
+  "10034": [
+    "inferno"
+  ],
+  "10035": [
+    "inferno"
+  ],
+  "10036": [
+    "iron-defense"
+  ],
+  "10038": [
+    "confuse-ray",
+    "will-o-wisp",
+    "toxic"
+  ],
+  "10039": [
+    "dizzy-punch"
+  ],
+  "10040": [
+    "vice-grip",
+    "vital-throw",
+    "storm-throw",
+    "swords-dance"
+  ],
+  "10041": [
+    "dragon-dance"
+  ],
+  "10042": [
+    "agility",
+    "take-down"
+  ],
+  "10043": [
+    "confuse-ray",
+    "agility"
+  ],
+  "10044": [
+    "confuse-ray",
+    "agility"
+  ],
+  "10045": [
+    "thunder-wave",
+    "take-down",
+    "confuse-ray"
+  ],
+  "10046": [
+    "agility",
+    "iron-defense",
+    "swords-dance"
+  ],
+  "10047": [
+    "horn-attack",
+    "take-down"
+  ],
+  "10048": [
+    "nasty-plot",
+    "inferno"
+  ],
+  "10050": [
+    "bulk-up",
+    "sky-uppercut"
+  ],
+  "10052": [
+    "vice-grip",
+    "iron-defense"
+  ],
+  "10053": [
+    "iron-defense",
+    "take-down",
+    "iron-tail"
+  ],
+  "10055": [
+    "thunder-wave",
+    "wild-charge"
+  ],
+  "10056": [
+    "will-o-wisp"
+  ],
+  "10057": [
+    "swords-dance"
+  ],
+  "10058": [
+    "take-down",
+    "dragon-rush"
+  ],
+  "10059": [
+    "swords-dance",
+    "work-up"
+  ],
+  "10060": [
+    "wood-hammer"
+  ],
+  "10061": [
+    "petal-blizzard",
+    "light-of-ruin"
+  ],
+  "10062": [
+    "mist-ball"
+  ],
+  "10063": [
+    "dragon-dance",
+    "luster-purge"
+  ],
+  "10064": [
+    "hammer-arm",
+    "take-down"
+  ],
+  "10065": [
+    "agility",
+    "slam"
+  ],
+  "10066": [
+    "confuse-ray"
+  ],
+  "10067": [
+    "round",
+    "take-down",
+    "dragon-dance"
+  ],
+  "10068": [
+    "swords-dance"
+  ],
+  "10069": [
+    "take-down"
+  ],
+  "10070": [
+    "agility"
+  ],
+  "10071": [
+    "stomp"
+  ],
+  "10072": [
+    "slam",
+    "iron-tail"
+  ],
+  "10073": [
+    "agility"
+  ],
+  "10075": [
+    "diamond-storm"
+  ],
+  "10076": [
+    "take-down",
+    "agility",
+    "hammer-arm",
+    "iron-defense"
+  ],
+  "10077": [
+    "water-spout"
+  ],
+  "10078": [
+    "bulk-up",
+    "hammer-arm",
+    "eruption"
+  ],
+  "10079": [
+    "dragon-dance"
+  ],
+  "10080": [
+    "thunder-wave",
+    "slam",
+    "agility",
+    "wild-charge"
+  ],
+  "10081": [
+    "thunder-wave",
+    "slam",
+    "agility",
+    "wild-charge"
+  ],
+  "10082": [
+    "thunder-wave",
+    "slam",
+    "agility",
+    "wild-charge"
+  ],
+  "10083": [
+    "thunder-wave",
+    "slam",
+    "agility",
+    "wild-charge"
+  ],
+  "10084": [
+    "thunder-wave",
+    "slam",
+    "agility",
+    "wild-charge"
+  ],
+  "10085": [
+    "thunder-wave",
+    "slam",
+    "agility",
+    "wild-charge"
+  ],
+  "10087": [
+    "eruption",
+    "take-down"
+  ],
+  "10088": [
+    "agility",
+    "dizzy-punch"
+  ],
+  "10090": [
+    "agility"
+  ],
+  "10092": [
+    "swords-dance"
+  ],
+  "10093": [
+    "swords-dance"
+  ],
+  "10094": [
+    "thunder-wave",
+    "slam",
+    "agility",
+    "wild-charge",
+    "nasty-plot",
+    "iron-tail"
+  ],
+  "10095": [
+    "thunder-wave",
+    "slam",
+    "agility",
+    "wild-charge",
+    "nasty-plot",
+    "iron-tail"
+  ],
+  "10096": [
+    "thunder-wave",
+    "slam",
+    "agility",
+    "wild-charge",
+    "nasty-plot",
+    "iron-tail"
+  ],
+  "10097": [
+    "thunder-wave",
+    "slam",
+    "agility",
+    "wild-charge",
+    "nasty-plot",
+    "iron-tail"
+  ],
+  "10098": [
+    "thunder-wave",
+    "slam",
+    "agility",
+    "wild-charge",
+    "nasty-plot",
+    "iron-tail"
+  ],
+  "10099": [
+    "thunder-wave",
+    "slam",
+    "agility",
+    "wild-charge",
+    "nasty-plot",
+    "iron-tail"
+  ],
+  "10100": [
+    "slam",
+    "thunder-wave",
+    "agility",
+    "nasty-plot",
+    "iron-tail"
+  ],
+  "10101": [
+    "iron-defense",
+    "swords-dance"
+  ],
+  "10102": [
+    "swords-dance",
+    "iron-defense"
+  ],
+  "10103": [
+    "confuse-ray"
+  ],
+  "10104": [
+    "confuse-ray",
+    "nasty-plot"
+  ],
+  "10105": [
+    "agility"
+  ],
+  "10106": [
+    "agility"
+  ],
+  "10107": [
+    "nasty-plot"
+  ],
+  "10108": [
+    "nasty-plot"
+  ],
+  "10109": [
+    "rock-polish",
+    "take-down"
+  ],
+  "10110": [
+    "rock-polish",
+    "take-down"
+  ],
+  "10111": [
+    "rock-polish",
+    "steamroller",
+    "take-down"
+  ],
+  "10112": [
+    "toxic"
+  ],
+  "10113": [
+    "toxic"
+  ],
+  "10114": [
+    "egg-bomb",
+    "wood-hammer",
+    "stun-spore"
+  ],
+  "10115": [
+    "will-o-wisp",
+    "swords-dance"
+  ],
+  "10118": [
+    "lands-wrath",
+    "coil"
+  ],
+  "10119": [
+    "lands-wrath",
+    "coil"
+  ],
+  "10120": [
+    "lands-wrath",
+    "coil"
+  ],
+  "10121": [
+    "take-down"
+  ],
+  "10122": [
+    "vice-grip",
+    "agility"
+  ],
+  "10123": [
+    "agility"
+  ],
+  "10124": [
+    "agility"
+  ],
+  "10125": [
+    "agility"
+  ],
+  "10126": [
+    "rock-climb"
+  ],
+  "10127": [
+    "take-down"
+  ],
+  "10128": [
+    "petal-blizzard"
+  ],
+  "10129": [
+    "toxic",
+    "nasty-plot"
+  ],
+  "10130": [
+    "confuse-ray",
+    "take-down",
+    "shell-smash",
+    "rock-polish"
+  ],
+  "10131": [
+    "confuse-ray",
+    "take-down",
+    "shell-smash",
+    "rock-polish"
+  ],
+  "10132": [
+    "confuse-ray",
+    "take-down",
+    "shell-smash",
+    "rock-polish"
+  ],
+  "10133": [
+    "confuse-ray",
+    "take-down",
+    "shell-smash",
+    "rock-polish"
+  ],
+  "10134": [
+    "confuse-ray",
+    "take-down",
+    "shell-smash",
+    "rock-polish"
+  ],
+  "10135": [
+    "confuse-ray",
+    "take-down",
+    "shell-smash",
+    "rock-polish"
+  ],
+  "10136": [
+    "confuse-ray",
+    "take-down",
+    "shell-smash",
+    "rock-polish"
+  ],
+  "10137": [
+    "confuse-ray",
+    "take-down",
+    "shell-smash",
+    "rock-polish"
+  ],
+  "10138": [
+    "confuse-ray",
+    "take-down",
+    "shell-smash",
+    "rock-polish"
+  ],
+  "10139": [
+    "confuse-ray",
+    "take-down",
+    "shell-smash",
+    "rock-polish"
+  ],
+  "10140": [
+    "confuse-ray",
+    "take-down",
+    "shell-smash",
+    "rock-polish"
+  ],
+  "10141": [
+    "confuse-ray",
+    "take-down",
+    "shell-smash",
+    "rock-polish"
+  ],
+  "10142": [
+    "confuse-ray",
+    "take-down",
+    "shell-smash",
+    "rock-polish"
+  ],
+  "10143": [
+    "wood-hammer",
+    "hone-claws"
+  ],
+  "10144": [
+    "wood-hammer",
+    "hone-claws"
+  ],
+  "10145": [
+    "wood-hammer",
+    "hone-claws"
+  ],
+  "10146": [
+    "clanging-scales",
+    "sky-uppercut",
+    "work-up",
+    "iron-defense",
+    "dragon-dance"
+  ],
+  "10147": [
+    "fleur-cannon",
+    "iron-defense"
+  ],
+  "10148": [
+    "thunder-wave",
+    "slam",
+    "agility",
+    "wild-charge",
+    "nasty-plot",
+    "iron-tail"
+  ],
+  "10149": [
+    "will-o-wisp"
+  ],
+  "10150": [
+    "stun-spore",
+    "quiver-dance"
+  ],
+  "10151": [
+    "rock-climb"
+  ],
+  "10152": [
+    "rock-climb",
+    "crush-claw"
+  ],
+  "10153": [
+    "liquidation"
+  ],
+  "10154": [
+    "zing-zap",
+    "wild-charge"
+  ],
+  "10155": [
+    "iron-defense",
+    "wring-out"
+  ],
+  "10156": [
+    "iron-defense",
+    "wring-out"
+  ],
+  "10157": [
+    "iron-defense",
+    "wring-out"
+  ],
+  "10158": [
+    "thunder-wave",
+    "slam",
+    "agility"
+  ],
+  "10159": [
+    "take-down"
+  ],
+  "10160": [
+    "nasty-plot",
+    "thunder-wave",
+    "agility",
+    "slam",
+    "iron-tail"
+  ],
+  "10161": [
+    "hone-claws"
+  ],
+  "10162": [
+    "agility",
+    "stomp",
+    "take-down"
+  ],
+  "10163": [
+    "agility",
+    "stomp",
+    "take-down"
+  ],
+  "10166": [
+    "swords-dance",
+    "slam"
+  ],
+  "10167": [
+    "toxic"
+  ],
+  "10169": [
+    "agility",
+    "freezing-glare"
+  ],
+  "10170": [
+    "agility",
+    "thunderous-kick",
+    "bulk-up"
+  ],
+  "10171": [
+    "agility",
+    "fiery-wrath",
+    "nasty-plot"
+  ],
+  "10172": [
+    "nasty-plot"
+  ],
+  "10174": [
+    "take-down"
+  ],
+  "10175": [
+    "hone-claws",
+    "take-down"
+  ],
+  "10176": [
+    "work-up"
+  ],
+  "10177": [
+    "work-up"
+  ],
+  "10178": [
+    "work-up"
+  ],
+  "10179": [
+    "slam"
+  ],
+  "10180": [
+    "iron-defense"
+  ],
+  "10181": [
+    "lands-wrath",
+    "coil"
+  ],
+  "10184": [
+    "toxic",
+    "overdrive"
+  ],
+  "10187": [
+    "agility"
+  ],
+  "10188": [
+    "swords-dance"
+  ],
+  "10189": [
+    "iron-defense"
+  ],
+  "10190": [
+    "agility",
+    "confuse-ray",
+    "toxic",
+    "dragon-dance"
+  ],
+  "10191": [
+    "bulk-up",
+    "dynamic-punch"
+  ],
+  "10192": [
+    "hammer-arm"
+  ],
+  "10193": [
+    "swords-dance",
+    "stomp",
+    "take-down",
+    "iron-defense",
+    "glacial-lance"
+  ],
+  "10194": [
+    "stomp",
+    "take-down",
+    "agility",
+    "confuse-ray",
+    "nasty-plot",
+    "astral-barrage"
+  ],
+  "10229": [
+    "take-down"
+  ],
+  "10230": [
+    "take-down",
+    "agility"
+  ],
+  "10231": [
+    "thunder-wave",
+    "stun-spore"
+  ],
+  "10232": [
+    "thunder-wave",
+    "stun-spore"
+  ],
+  "10233": [
+    "eruption",
+    "inferno"
+  ],
+  "10234": [
+    "toxic"
+  ],
+  "10235": [
+    "swords-dance",
+    "hone-claws",
+    "agility"
+  ],
+  "10236": [
+    "swords-dance"
+  ],
+  "10237": [
+    "stun-spore",
+    "poison-powder",
+    "sleep-powder",
+    "petal-blizzard"
+  ],
+  "10238": [
+    "bitter-malice",
+    "nasty-plot",
+    "hone-claws",
+    "agility"
+  ],
+  "10239": [
+    "bitter-malice",
+    "nasty-plot",
+    "hone-claws",
+    "agility"
+  ],
+  "10240": [
+    "esper-wing",
+    "hone-claws",
+    "crush-claw"
+  ],
+  "10242": [
+    "iron-tail"
+  ],
+  "10243": [
+    "iron-defense",
+    "mountain-gale",
+    "take-down"
+  ],
+  "10244": [
+    "bulk-up"
+  ],
+  "10245": [
+    "iron-tail"
+  ],
+  "10247": [
+    "take-down"
+  ],
+  "10248": [
+    "take-down"
+  ],
+  "10249": [
+    "iron-defense",
+    "springtide-storm"
+  ],
+  "10250": [
+    "work-up"
+  ],
+  "10251": [
+    "work-up"
+  ],
+  "10252": [
+    "work-up"
+  ],
+  "10253": [
+    "slam",
+    "toxic"
+  ],
+  "10254": [
+    "take-down",
+    "work-up"
+  ],
+  "10255": [
+    "drill-run",
+    "hyper-drill",
+    "dragon-rush",
+    "coil"
+  ],
+  "10258": [
+    "nasty-plot"
+  ],
+  "10259": [
+    "nasty-plot"
+  ],
+  "10264": [
+    "agility"
+  ],
+  "10265": [
+    "agility"
+  ],
+  "10266": [
+    "agility"
+  ],
+  "10267": [
+    "agility"
+  ],
+  "10268": [
+    "parabolic-charge",
+    "agility"
+  ],
+  "10269": [
+    "parabolic-charge",
+    "agility"
+  ],
+  "10270": [
+    "parabolic-charge",
+    "agility"
+  ],
+  "10271": [
+    "parabolic-charge",
+    "agility"
+  ],
+  "10272": [
+    "hammer-arm"
+  ],
+  "10273": [
+    "slam",
+    "wood-hammer"
+  ],
+  "10274": [
+    "slam",
+    "wood-hammer"
+  ],
+  "10275": [
+    "slam",
+    "wood-hammer"
+  ],
+  "10276": [
+    "rock-polish"
+  ],
+  "10277": [
+    "rock-polish"
+  ]
+}

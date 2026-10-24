@@ -6,6 +6,7 @@ namespace App\Support;
 
 use Src\Battle\Domain\AgregadoBatalla;
 use Src\Battle\Domain\DatosPokemonBatalla;
+use Src\Battle\Domain\Effects\FabricaEfectos;
 use Src\Battle\Domain\EquipoBatalla;
 
 /**
@@ -20,6 +21,7 @@ final class CreadorBatallaSesion
 {
     public function __construct(
         private readonly BattleSessionService $battleSession,
+        private readonly FabricaEfectos $fabricaEfectos,
     ) {
     }
 
@@ -36,8 +38,8 @@ final class CreadorBatallaSesion
         string $prefijoId,
         array $meta,
     ): string {
-        $team1 = EquipoBatalla::fromData($datosJugador, $nombreJugador);
-        $team2 = EquipoBatalla::fromData($datosRival, $nombreRival);
+        $team1 = EquipoBatalla::fromData($datosJugador, $nombreJugador, $this->fabricaEfectos);
+        $team2 = EquipoBatalla::fromData($datosRival, $nombreRival, $this->fabricaEfectos);
 
         $batalla = new AgregadoBatalla($team1, $team2);
         $batalla->triggerBattleStartEffects();

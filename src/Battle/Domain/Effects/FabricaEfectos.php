@@ -14,10 +14,10 @@ use Src\Battle\Domain\Enums\ClaveItem;
  */
 class FabricaEfectos
 {
-    /** @var array<string, array{clase: class-string<InterfazEfecto>, args: array}> */
+    /** @var array<string, list<array{clase: class-string<InterfazEfecto>, args: array<int, mixed>}>> */
     private array $efectosRegistrados = [];
 
-    /** @var array<string, class-string<InterfazEfecto>> */
+    /** @var array<string, array{clase: class-string<InterfazEfecto>, args: array<int, mixed>}> */
     private array $itemsRegistrados = [];
 
     /**
@@ -30,7 +30,7 @@ class FabricaEfectos
     public function registrarEfecto(string|ClaveEfecto $clave, string $clase, mixed ...$args): void
     {
         $key = $clave instanceof ClaveEfecto ? $clave->value : $clave;
-        $this->efectosRegistrados[$key] = ['clase' => $clase, 'args' => $args];
+        $this->efectosRegistrados[$key][] = ['clase' => $clase, 'args' => $args];
     }
 
     /**
@@ -38,30 +38,42 @@ class FabricaEfectos
      *
      * @param  string|ClaveItem  $clave
      */
-    public function registrarItem(string|ClaveItem $clave, string $clase): void
+    public function registrarItem(string|ClaveItem $clave, string $clase, mixed ...$args): void
     {
         $key = $clave instanceof ClaveItem ? $clave->value : $clave;
-        $this->itemsRegistrados[$key] = $clase;
+        $this->itemsRegistrados[$key] = ['clase' => $clase, 'args' => $args];
     }
 
     /**
-     * Crea un efecto de habilidad a partir de su clave.
+     * Crea todos los efectos registrados para una clave. Una habilidad puede
+     * componerse de varios efectos (inmunidad + boost, por ejemplo).
+     *
+     * @return list<InterfazEfecto>
+     */
+    public function crearEfectos(string|ClaveEfecto $clave): array
+    {
+        $key = $clave instanceof ClaveEfecto ? $clave->value : $clave;
+        $registros = $this->efectosRegistrados[$key] ?? [];
+        $efectos = [];
+
+        foreach ($registros as $registro) {
+            $clase = $registro['clase'];
+            $args = $registro['args'];
+            array_unshift($args, $key);
+            $efectos[] = new $clase(...$args);
+        }
+
+        return $efectos;
+    }
+
+    /**
+     * Crea el primer efecto de habilidad registrado para una clave.
      *
      * @param  string|ClaveEfecto  $clave
      */
     public function crearEfecto(string|ClaveEfecto $clave): ?InterfazEfecto
     {
-        $key = $clave instanceof ClaveEfecto ? $clave->value : $clave;
-        $registro = $this->efectosRegistrados[$key] ?? null;
-        if ($registro === null) {
-            return null;
-        }
-        $clase = $registro['clase'];
-        $args = $registro['args'];
-        // El primer argumento siempre es la clave
-        array_unshift($args, $key);
-
-        return new $clase(...$args);
+        return $this->crearEfectos($clave)[0] ?? null;
     }
 
     /**
@@ -72,12 +84,15 @@ class FabricaEfectos
     public function crearItem(string|ClaveItem $clave): ?InterfazEfecto
     {
         $key = $clave instanceof ClaveItem ? $clave->value : $clave;
-        $clase = $this->itemsRegistrados[$key] ?? null;
-        if ($clase === null) {
+        $registro = $this->itemsRegistrados[$key] ?? null;
+        if ($registro === null) {
             return null;
         }
 
-        return new $clase($key);
+        $args = $registro['args'];
+        array_unshift($args, $key);
+
+        return new $registro['clase'](...$args);
     }
 
     /**

@@ -53,4 +53,26 @@ class Pokemon extends Model
     {
         return $this->hasMany(PokemonType::class);
     }
+
+    /**
+     * @return BelongsToMany<Move, $this>
+     */
+    public function moves(): BelongsToMany
+    {
+        return $this->belongsToMany(Move::class, 'pokemon_moves')
+            ->withPivot(['slot', 'source'])
+            ->withTimestamps()
+            ->orderByPivot('slot');
+    }
+
+    /**
+     * @return BelongsToMany<Ability, $this>
+     */
+    public function abilities(): BelongsToMany
+    {
+        return $this->belongsToMany(Ability::class, 'ability_pokemon')
+            ->withPivot(['slot', 'source'])
+            ->withTimestamps()
+            ->orderByPivot('slot');
+    }
 }

@@ -26,6 +26,10 @@ class CalculadorDañoClima
             return 0;
         }
 
+        if ($c->esInmuneAClima($weather)) {
+            return 0;
+        }
+
         return match ($weather) {
             TipoClima::GRANIZO => $this->dañoSiNoInmune($c, self::INMUNES_GRANIZO),
             TipoClima::TORMENTA_ARENA => $this->dañoSiNoInmune($c, self::INMUNES_TORMENTA_ARENA),
@@ -38,7 +42,7 @@ class CalculadorDañoClima
      */
     private function dañoSiNoInmune(Combatiente $c, array $tiposInmunes): float
     {
-        foreach ($c->pokemon()->tiposCollection() as $tipo) {
+        foreach ($c->tiposDefensivos() as $tipo) {
             if (in_array($tipo, $tiposInmunes, true)) {
                 return 0;
             }

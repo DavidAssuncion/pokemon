@@ -12,18 +12,22 @@
         && ($p['canTarget'] ?? true)
         && ! $ventanaActiva;
     $blocked = ($phase === 'player_target' || $phase === 'player_move') && $team === 1 && ! ($p['canTarget'] ?? true);
-    $itemNames = ['leftovers' => 'Restos', 'focus_sash' => 'Banda Focus', 'life_orb' => 'Orbe Vida'];
-    $itemIcons = ['leftovers' => '🧴', 'focus_sash' => '🎗️', 'life_orb' => '🔮'];
-    $itemName = $itemNames[$p['item']] ?? $p['item'];
-    $itemIcon = $itemIcons[$p['item']] ?? '📦';
+    $itemName = \Src\Battle\Domain\Catalog\CatalogoObjetos::nombreDe((string) ($p['item'] ?? ''));
+    $itemIcon = \Src\Battle\Domain\Catalog\CatalogoObjetos::iconoDe((string) ($p['item'] ?? ''));
     $esShiny = ($p['es_shiny'] ?? false) || ($p['esShiny'] ?? false) || str_contains((string) ($p['icon'] ?? ''), '/shiny/');
     $iconoNormal = preg_replace('#/shiny/(\d+)[^/]*\.webp$#', '/images/iconos_webp/$1.webp', (string) ($p['icon'] ?? ''));
     $hpBaja = $p['alive'] && $hpPct <= 25;
     $hpCritica = $p['alive'] && $hpPct <= 10;
-    $esVanguardia = ($p['posicion'] ?? '') === 'vanguardia';
-    $claseVanguardia = $esVanguardia ? ($team === 0 ? 'vanguardia-jugador' : 'vanguardia-rival') : '';
+    $claseEquipo = $team === 0 ? 'equipo-jugador' : 'equipo-rival';
+    $postura = \Src\Battle\Domain\Enums\PosturaCombate::tryFrom((string) ($p['postura'] ?? ''))
+        ?? \Src\Battle\Domain\Enums\PosturaCombate::ATACAR;
+    $posturaClase = match ($postura) {
+        \Src\Battle\Domain\Enums\PosturaCombate::GUARDIA => 'bg-primary text-white',
+        \Src\Battle\Domain\Enums\PosturaCombate::CUBRIR => 'bg-success text-white',
+        default => 'bg-light border text-secondary',
+    };
 @endphp
-<div class="card w-100 mb-2 shadow-sm pokemon-card {{ $claseVanguardia }} {{ $p['alive'] ? '' : 'opacity-50' }} {{ $p['refId'] === $actingRefId ? 'border border-2 border-warning' : '' }} {{ $p['refId'] === $selectedTargetRefId ? 'targeted-card' : '' }} {{ $selectable ? 'cursor-pointer border-primary' : '' }} {{ $blocked ? 'opacity-50 cursor-not-allowed' : '' }} {{ $hpBaja ? 'hp-bajo' : '' }} {{ $hpCritica ? 'hp-critico' : '' }} {{ $p['refId'] === $animAttackerId ? 'anim-ataque' : '' }}"
+<div class="card w-100 mb-2 shadow-sm pokemon-card {{ $claseEquipo }} {{ $p['alive'] ? '' : 'opacity-50' }} {{ $p['refId'] === $actingRefId ? 'border border-2 border-warning' : '' }} {{ $p['refId'] === $selectedTargetRefId ? 'targeted-card' : '' }} {{ $selectable ? 'cursor-pointer border-primary' : '' }} {{ $blocked ? 'opacity-50 cursor-not-allowed' : '' }} {{ $hpBaja ? 'hp-bajo' : '' }} {{ $hpCritica ? 'hp-critico' : '' }} {{ $p['refId'] === $animAttackerId ? 'anim-ataque' : '' }}"
      data-ref-id="{{ $p['refId'] }}"
      data-team="{{ $team }}"
      @if($selectable) wire:click="previewTarget({{ $team }}, {{ $idx }})" role="button" tabindex="0" @endif>
@@ -33,8 +37,37 @@
             @if(! empty($p['cp']))
                 <span class="badge bg-purple-100 text-purple-700 small" title="Poder de combate">CP {{ number_format($p['cp']) }}</span>
             @endif
+            @if($p['alive'])
+                <span class="badge {{ $posturaClase }}"
+                      title="Postura de ronda: {{ $postura->label() }}">
+                    @if($postura === \Src\Battle\Domain\Enums\PosturaCombate::ATACAR) ATQ
+                    @elseif($postura === \Src\Battle\Domain\Enums\PosturaCombate::GUARDIA) GUARDIA
+                    @else CUBRE @endif
+                </span>
+            @endif
             @if(!empty($p['item']))
-                <span class="badge bg-light border text-dark" title="{{ $itemName }}">{{ $itemIcon }}</span>
+                <span class="badge bg-light border text-dark {{ ($p['itemActivo'] ?? true) ? '' : 'opacity-50' }}"
+                      title="{{ $itemName }}{{ ($p['itemActivo'] ?? true) ? '' : ' (bloqueado)' }}">
+                    {{ $itemIcon }}{{ !empty($p['itemBloqueado']) ? ' 🚫' : '' }}
+                </span>
+            @endif
+            @if(!empty($p['habilidadAnulada']))
+                <span class="badge bg-dark" title="Habilidad anulada">HAB ✖</span>
+            @endif
+            @if(!empty($p['esJefe']))
+                <span class="badge bg-danger" title="Jefe">JEFE</span>
+                <span class="badge bg-warning text-dark" title="Fase actual">
+                    {{ $p['jefe']['nombreFase'] ?? 'Fase 1' }}
+                </span>
+                @if(!empty($p['jefe']['enrage']))
+                    <span class="badge bg-danger" title="Enrage activo">ENRAGE</span>
+                @endif
+                @foreach(($p['jefe']['partes'] ?? []) as $parte)
+                    <span class="badge {{ $parte['roto'] ? 'bg-secondary text-decoration-line-through' : 'bg-dark' }}"
+                          title="{{ $parte['nombre'] }}: {{ ceil($parte['hp']) }}/{{ ceil($parte['hpMax']) }}">
+                        {{ $parte['nombre'] }} {{ $parte['roto'] ? '✖' : ceil($parte['hp']) }}
+                    </span>
+                @endforeach
             @endif
             @if(!empty($p['status']) && $p['status'] !== 'none')
                 @php
@@ -61,6 +94,21 @@
             @if(! $p['alive'])
                 <span class="badge bg-dark ko-badge">K.O.</span>
             @endif
+            @if(!empty($p['esInvocacion']))
+                <span class="badge bg-dark" title="Invocación temporal">INV {{ (int) ($p['turnosInvocacion'] ?? 0) }}</span>
+            @endif
+            @if(($p['combo'] ?? 0) > 0)
+                <span class="badge bg-info text-dark" title="Racha de combo">
+                    COMBO {{ (int) $p['combo'] }} · ×{{ number_format((float) ($p['comboMultiplicador'] ?? 1), 2) }}
+                </span>
+            @endif
+            @foreach(($p['condicionesDetalle'] ?? []) as $condicion)
+                @if($condicion['clave'] !== 'confusion')
+                    <span class="badge bg-secondary" title="{{ $condicion['turnos'] }} turnos">
+                        {{ $condicion['label'] }}
+                    </span>
+                @endif
+            @endforeach
             @if(!empty($p['stages']))
                 @php $hasStages = array_filter($p['stages'], fn($v) => $v !== 0); @endphp
                 @if(!empty($hasStages))

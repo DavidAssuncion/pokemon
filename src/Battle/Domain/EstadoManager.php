@@ -53,6 +53,7 @@ final class EstadoManager
         EstadoPokemon $estado,
         int $contadorVenenoGrave,
         float $hpMax,
+        int $cargasVeneno = 1,
     ): array {
         if (! $estado->causaDanoPorRonda()) {
             return ['dano' => 0.0, 'contadorNuevo' => $contadorVenenoGrave];
@@ -60,7 +61,7 @@ final class EstadoManager
 
         $daño = match ($estado) {
             EstadoPokemon::BURN => max(1, $hpMax * ReglasBatalla::FRACCION_HP_POR_RONDA),
-            EstadoPokemon::POISON => max(1, $hpMax * ReglasBatalla::FRACCION_HP_VENENO),
+            EstadoPokemon::POISON => max(1, $hpMax * max(1, $cargasVeneno) / 32),
             EstadoPokemon::BAD_POISON => max(1, $hpMax * $contadorVenenoGrave / ReglasBatalla::DIVISOR_VENENO_GRAVE),
             default => 0,
         };

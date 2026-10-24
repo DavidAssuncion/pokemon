@@ -1,0 +1,3360 @@
+{
+  "4": [
+    "flamethrower",
+    "flare-blitz"
+  ],
+  "5": [
+    "flamethrower",
+    "flare-blitz"
+  ],
+  "6": [
+    "flamethrower",
+    "flare-blitz"
+  ],
+  "7": [
+    "hydro-pump"
+  ],
+  "8": [
+    "hydro-pump"
+  ],
+  "9": [
+    "flash-cannon",
+    "hydro-pump"
+  ],
+  "23": [
+    "sludge-bomb",
+    "gunk-shot"
+  ],
+  "24": [
+    "sludge-bomb",
+    "gunk-shot"
+  ],
+  "25": [
+    "discharge",
+    "thunderbolt"
+  ],
+  "26": [
+    "discharge",
+    "thunderbolt"
+  ],
+  "27": [
+    "earthquake"
+  ],
+  "28": [
+    "earthquake"
+  ],
+  "29": [
+    "earth-power"
+  ],
+  "30": [
+    "earth-power"
+  ],
+  "31": [
+    "earth-power"
+  ],
+  "32": [
+    "earth-power"
+  ],
+  "33": [
+    "earth-power"
+  ],
+  "34": [
+    "earth-power"
+  ],
+  "35": [
+    "psychic",
+    "moonblast"
+  ],
+  "36": [
+    "moonblast",
+    "psychic"
+  ],
+  "37": [
+    "flamethrower",
+    "fire-blast"
+  ],
+  "38": [
+    "flamethrower",
+    "fire-blast"
+  ],
+  "39": [
+    "hyper-voice"
+  ],
+  "40": [
+    "hyper-voice"
+  ],
+  "43": [
+    "giga-drain",
+    "moonblast"
+  ],
+  "44": [
+    "giga-drain",
+    "moonblast"
+  ],
+  "45": [
+    "giga-drain",
+    "moonblast"
+  ],
+  "46": [
+    "giga-drain",
+    "energy-ball"
+  ],
+  "47": [
+    "giga-drain",
+    "energy-ball"
+  ],
+  "48": [
+    "psychic"
+  ],
+  "49": [
+    "psychic"
+  ],
+  "50": [
+    "earth-power",
+    "earthquake"
+  ],
+  "51": [
+    "earth-power",
+    "earthquake"
+  ],
+  "54": [
+    "surf",
+    "hydro-pump"
+  ],
+  "55": [
+    "surf",
+    "hydro-pump"
+  ],
+  "56": [
+    "close-combat"
+  ],
+  "57": [
+    "close-combat"
+  ],
+  "58": [
+    "flamethrower",
+    "flare-blitz"
+  ],
+  "59": [
+    "flare-blitz",
+    "flamethrower"
+  ],
+  "60": [
+    "earth-power",
+    "hydro-pump"
+  ],
+  "61": [
+    "earth-power",
+    "hydro-pump"
+  ],
+  "62": [
+    "earth-power",
+    "hydro-pump"
+  ],
+  "64": [
+    "psychic"
+  ],
+  "65": [
+    "psychic"
+  ],
+  "66": [
+    "bullet-punch",
+    "close-combat"
+  ],
+  "67": [
+    "bullet-punch",
+    "close-combat"
+  ],
+  "68": [
+    "bullet-punch",
+    "close-combat"
+  ],
+  "72": [
+    "surf",
+    "hydro-pump"
+  ],
+  "73": [
+    "surf",
+    "hydro-pump"
+  ],
+  "74": [
+    "rock-slide",
+    "earthquake",
+    "stone-edge"
+  ],
+  "75": [
+    "rock-slide",
+    "earthquake",
+    "stone-edge"
+  ],
+  "76": [
+    "rock-slide",
+    "earthquake",
+    "stone-edge"
+  ],
+  "77": [
+    "fire-blast",
+    "flare-blitz"
+  ],
+  "78": [
+    "fire-blast",
+    "flare-blitz"
+  ],
+  "79": [
+    "surf",
+    "psychic"
+  ],
+  "80": [
+    "surf",
+    "psychic"
+  ],
+  "81": [
+    "flash-cannon",
+    "thunderbolt",
+    "discharge"
+  ],
+  "82": [
+    "flash-cannon",
+    "thunderbolt",
+    "discharge"
+  ],
+  "83": [
+    "brave-bird"
+  ],
+  "86": [
+    "icy-wind",
+    "ice-beam"
+  ],
+  "87": [
+    "icy-wind",
+    "ice-beam"
+  ],
+  "88": [
+    "sludge-bomb",
+    "gunk-shot"
+  ],
+  "89": [
+    "moonblast",
+    "sludge-bomb",
+    "gunk-shot"
+  ],
+  "90": [
+    "hydro-pump",
+    "ice-beam"
+  ],
+  "91": [
+    "hydro-pump",
+    "ice-beam"
+  ],
+  "92": [
+    "dark-pulse",
+    "shadow-ball"
+  ],
+  "93": [
+    "dark-pulse",
+    "shadow-ball"
+  ],
+  "94": [
+    "dark-pulse",
+    "shadow-ball"
+  ],
+  "95": [
+    "rock-slide",
+    "earthquake",
+    "stone-edge"
+  ],
+  "96": [
+    "psychic"
+  ],
+  "97": [
+    "psychic"
+  ],
+  "100": [
+    "thunderbolt",
+    "discharge"
+  ],
+  "101": [
+    "thunderbolt",
+    "discharge"
+  ],
+  "102": [
+    "giga-drain",
+    "psychic"
+  ],
+  "103": [
+    "giga-drain"
+  ],
+  "106": [
+    "close-combat"
+  ],
+  "107": [
+    "bullet-punch",
+    "close-combat"
+  ],
+  "109": [
+    "sludge-bomb"
+  ],
+  "110": [
+    "sludge-bomb"
+  ],
+  "111": [
+    "rock-slide",
+    "earthquake",
+    "stone-edge"
+  ],
+  "112": [
+    "rock-slide",
+    "earthquake",
+    "stone-edge"
+  ],
+  "114": [
+    "energy-ball",
+    "giga-drain"
+  ],
+  "116": [
+    "hydro-pump"
+  ],
+  "117": [
+    "hydro-pump"
+  ],
+  "120": [
+    "psychic",
+    "surf",
+    "hydro-pump"
+  ],
+  "121": [
+    "hydro-pump",
+    "psychic",
+    "surf"
+  ],
+  "122": [
+    "psychic",
+    "dazzling-gleam"
+  ],
+  "123": [
+    "close-combat"
+  ],
+  "124": [
+    "psychic"
+  ],
+  "125": [
+    "discharge",
+    "thunderbolt"
+  ],
+  "126": [
+    "lava-plume",
+    "flamethrower",
+    "fire-blast"
+  ],
+  "130": [
+    "hydro-pump"
+  ],
+  "131": [
+    "ice-beam",
+    "surf",
+    "hydro-pump"
+  ],
+  "134": [
+    "hydro-pump"
+  ],
+  "135": [
+    "thunderbolt",
+    "discharge"
+  ],
+  "136": [
+    "lava-plume",
+    "fire-blast",
+    "flare-blitz",
+    "flamethrower"
+  ],
+  "137": [
+    "thunderbolt",
+    "discharge"
+  ],
+  "138": [
+    "rock-slide",
+    "surf",
+    "hydro-pump"
+  ],
+  "139": [
+    "rock-slide",
+    "hydro-pump",
+    "surf"
+  ],
+  "140": [
+    "rock-slide",
+    "hydro-pump",
+    "stone-edge"
+  ],
+  "141": [
+    "rock-slide",
+    "hydro-pump",
+    "stone-edge"
+  ],
+  "142": [
+    "rock-slide",
+    "iron-head",
+    "stone-edge"
+  ],
+  "144": [
+    "ice-beam"
+  ],
+  "145": [
+    "thunderbolt",
+    "discharge"
+  ],
+  "146": [
+    "flamethrower"
+  ],
+  "150": [
+    "psychic"
+  ],
+  "151": [
+    "psychic"
+  ],
+  "152": [
+    "giga-drain"
+  ],
+  "153": [
+    "giga-drain"
+  ],
+  "154": [
+    "giga-drain"
+  ],
+  "155": [
+    "lava-plume",
+    "flamethrower"
+  ],
+  "156": [
+    "lava-plume",
+    "flamethrower"
+  ],
+  "157": [
+    "lava-plume",
+    "flamethrower"
+  ],
+  "158": [
+    "hydro-pump"
+  ],
+  "159": [
+    "hydro-pump"
+  ],
+  "160": [
+    "hydro-pump"
+  ],
+  "161": [
+    "hyper-voice"
+  ],
+  "162": [
+    "hyper-voice"
+  ],
+  "163": [
+    "moonblast"
+  ],
+  "164": [
+    "moonblast"
+  ],
+  "167": [
+    "psychic"
+  ],
+  "168": [
+    "psychic"
+  ],
+  "170": [
+    "discharge",
+    "hydro-pump"
+  ],
+  "171": [
+    "discharge",
+    "hydro-pump"
+  ],
+  "172": [
+    "thunderbolt"
+  ],
+  "173": [
+    "psychic",
+    "moonblast"
+  ],
+  "175": [
+    "moonblast"
+  ],
+  "176": [
+    "moonblast"
+  ],
+  "177": [
+    "psychic"
+  ],
+  "178": [
+    "psychic"
+  ],
+  "179": [
+    "discharge",
+    "dazzling-gleam"
+  ],
+  "180": [
+    "discharge",
+    "dazzling-gleam"
+  ],
+  "181": [
+    "discharge",
+    "dazzling-gleam"
+  ],
+  "182": [
+    "giga-drain",
+    "moonblast"
+  ],
+  "183": [
+    "hydro-pump"
+  ],
+  "184": [
+    "hydro-pump"
+  ],
+  "185": [
+    "stone-edge",
+    "rock-slide"
+  ],
+  "186": [
+    "earth-power",
+    "hydro-pump",
+    "hyper-voice"
+  ],
+  "187": [
+    "giga-drain"
+  ],
+  "188": [
+    "giga-drain"
+  ],
+  "189": [
+    "giga-drain"
+  ],
+  "191": [
+    "giga-drain"
+  ],
+  "192": [
+    "giga-drain"
+  ],
+  "194": [
+    "earthquake"
+  ],
+  "195": [
+    "earthquake"
+  ],
+  "196": [
+    "psychic"
+  ],
+  "197": [
+    "dark-pulse"
+  ],
+  "198": [
+    "dark-pulse"
+  ],
+  "199": [
+    "surf",
+    "psychic"
+  ],
+  "200": [
+    "shadow-ball"
+  ],
+  "203": [
+    "psychic"
+  ],
+  "207": [
+    "earthquake"
+  ],
+  "208": [
+    "rock-slide",
+    "stone-edge"
+  ],
+  "211": [
+    "hydro-pump"
+  ],
+  "212": [
+    "bullet-punch",
+    "iron-head",
+    "close-combat"
+  ],
+  "213": [
+    "rock-slide",
+    "stone-edge"
+  ],
+  "214": [
+    "close-combat"
+  ],
+  "215": [
+    "icy-wind"
+  ],
+  "218": [
+    "rock-slide",
+    "lava-plume",
+    "flamethrower",
+    "earth-power"
+  ],
+  "219": [
+    "earth-power",
+    "rock-slide",
+    "lava-plume",
+    "flamethrower"
+  ],
+  "220": [
+    "icy-wind",
+    "earthquake"
+  ],
+  "221": [
+    "icy-wind",
+    "earthquake"
+  ],
+  "222": [
+    "earth-power"
+  ],
+  "223": [
+    "ice-beam",
+    "hydro-pump"
+  ],
+  "224": [
+    "gunk-shot",
+    "ice-beam",
+    "hydro-pump"
+  ],
+  "226": [
+    "hydro-pump"
+  ],
+  "227": [
+    "brave-bird"
+  ],
+  "228": [
+    "flamethrower"
+  ],
+  "229": [
+    "flamethrower"
+  ],
+  "230": [
+    "hydro-pump"
+  ],
+  "232": [
+    "earthquake"
+  ],
+  "233": [
+    "discharge"
+  ],
+  "237": [
+    "close-combat"
+  ],
+  "238": [
+    "psychic"
+  ],
+  "239": [
+    "discharge",
+    "thunderbolt"
+  ],
+  "240": [
+    "lava-plume",
+    "flamethrower",
+    "fire-blast"
+  ],
+  "243": [
+    "discharge"
+  ],
+  "244": [
+    "flamethrower",
+    "lava-plume",
+    "fire-blast"
+  ],
+  "245": [
+    "surf",
+    "hydro-pump"
+  ],
+  "246": [
+    "rock-slide",
+    "dark-pulse",
+    "earthquake",
+    "stone-edge"
+  ],
+  "247": [
+    "rock-slide",
+    "dark-pulse",
+    "earthquake",
+    "stone-edge"
+  ],
+  "248": [
+    "dark-pulse",
+    "rock-slide",
+    "earthquake",
+    "stone-edge"
+  ],
+  "249": [
+    "hydro-pump"
+  ],
+  "250": [
+    "brave-bird",
+    "fire-blast"
+  ],
+  "252": [
+    "giga-drain",
+    "energy-ball"
+  ],
+  "253": [
+    "energy-ball",
+    "giga-drain"
+  ],
+  "254": [
+    "energy-ball",
+    "giga-drain"
+  ],
+  "255": [
+    "flamethrower",
+    "flare-blitz"
+  ],
+  "256": [
+    "flamethrower",
+    "flare-blitz"
+  ],
+  "257": [
+    "close-combat",
+    "flamethrower",
+    "flare-blitz",
+    "brave-bird"
+  ],
+  "258": [
+    "rock-slide",
+    "surf",
+    "hydro-pump"
+  ],
+  "259": [
+    "earthquake",
+    "surf",
+    "rock-slide",
+    "hydro-pump"
+  ],
+  "260": [
+    "earthquake",
+    "surf",
+    "rock-slide",
+    "hydro-pump"
+  ],
+  "267": [
+    "giga-drain"
+  ],
+  "270": [
+    "giga-drain",
+    "energy-ball"
+  ],
+  "271": [
+    "giga-drain",
+    "energy-ball",
+    "hydro-pump"
+  ],
+  "272": [
+    "energy-ball",
+    "giga-drain",
+    "hydro-pump"
+  ],
+  "276": [
+    "brave-bird"
+  ],
+  "277": [
+    "brave-bird"
+  ],
+  "279": [
+    "hydro-pump"
+  ],
+  "280": [
+    "psychic"
+  ],
+  "281": [
+    "psychic"
+  ],
+  "282": [
+    "dazzling-gleam",
+    "psychic",
+    "moonblast"
+  ],
+  "284": [
+    "giga-drain"
+  ],
+  "285": [
+    "giga-drain"
+  ],
+  "286": [
+    "giga-drain"
+  ],
+  "292": [
+    "shadow-ball"
+  ],
+  "293": [
+    "hyper-voice"
+  ],
+  "294": [
+    "hyper-voice"
+  ],
+  "295": [
+    "hyper-voice"
+  ],
+  "296": [
+    "close-combat"
+  ],
+  "297": [
+    "close-combat"
+  ],
+  "299": [
+    "rock-slide",
+    "discharge",
+    "earth-power",
+    "stone-edge"
+  ],
+  "302": [
+    "shadow-ball"
+  ],
+  "303": [
+    "iron-head"
+  ],
+  "304": [
+    "rock-slide",
+    "iron-head"
+  ],
+  "305": [
+    "rock-slide",
+    "iron-head"
+  ],
+  "306": [
+    "rock-slide",
+    "iron-head"
+  ],
+  "309": [
+    "discharge"
+  ],
+  "310": [
+    "discharge"
+  ],
+  "311": [
+    "discharge"
+  ],
+  "312": [
+    "discharge"
+  ],
+  "315": [
+    "giga-drain",
+    "energy-ball"
+  ],
+  "316": [
+    "sludge-bomb",
+    "gunk-shot"
+  ],
+  "317": [
+    "gunk-shot",
+    "sludge-bomb"
+  ],
+  "320": [
+    "hydro-pump"
+  ],
+  "321": [
+    "hydro-pump"
+  ],
+  "322": [
+    "lava-plume",
+    "earth-power",
+    "earthquake",
+    "flamethrower"
+  ],
+  "323": [
+    "flamethrower",
+    "rock-slide",
+    "lava-plume",
+    "earth-power"
+  ],
+  "324": [
+    "lava-plume",
+    "flamethrower"
+  ],
+  "325": [
+    "psychic"
+  ],
+  "326": [
+    "psychic"
+  ],
+  "328": [
+    "rock-slide",
+    "earth-power",
+    "earthquake"
+  ],
+  "329": [
+    "rock-slide",
+    "earth-power",
+    "earthquake"
+  ],
+  "330": [
+    "rock-slide",
+    "earth-power",
+    "earthquake"
+  ],
+  "331": [
+    "energy-ball"
+  ],
+  "332": [
+    "energy-ball"
+  ],
+  "333": [
+    "moonblast"
+  ],
+  "334": [
+    "moonblast"
+  ],
+  "335": [
+    "close-combat"
+  ],
+  "336": [
+    "sludge-bomb"
+  ],
+  "337": [
+    "moonblast",
+    "rock-slide",
+    "psychic",
+    "stone-edge"
+  ],
+  "338": [
+    "flare-blitz",
+    "rock-slide",
+    "psychic",
+    "stone-edge"
+  ],
+  "339": [
+    "earthquake",
+    "earth-power"
+  ],
+  "340": [
+    "earthquake",
+    "earth-power"
+  ],
+  "343": [
+    "earth-power"
+  ],
+  "344": [
+    "earth-power"
+  ],
+  "345": [
+    "giga-drain",
+    "energy-ball"
+  ],
+  "346": [
+    "giga-drain",
+    "energy-ball"
+  ],
+  "350": [
+    "surf",
+    "hydro-pump"
+  ],
+  "351": [
+    "fire-blast",
+    "hydro-pump"
+  ],
+  "353": [
+    "shadow-ball"
+  ],
+  "354": [
+    "shadow-ball"
+  ],
+  "355": [
+    "dark-pulse",
+    "shadow-ball",
+    "psychic"
+  ],
+  "356": [
+    "dark-pulse",
+    "shadow-ball",
+    "psychic"
+  ],
+  "358": [
+    "psychic"
+  ],
+  "361": [
+    "icy-wind",
+    "ice-beam"
+  ],
+  "362": [
+    "icy-wind",
+    "ice-beam"
+  ],
+  "363": [
+    "ice-beam",
+    "surf"
+  ],
+  "364": [
+    "ice-beam",
+    "surf"
+  ],
+  "365": [
+    "ice-beam",
+    "surf"
+  ],
+  "367": [
+    "hydro-pump"
+  ],
+  "368": [
+    "psychic",
+    "hydro-pump"
+  ],
+  "369": [
+    "hydro-pump"
+  ],
+  "370": [
+    "hydro-pump"
+  ],
+  "371": [
+    "flamethrower"
+  ],
+  "372": [
+    "flamethrower"
+  ],
+  "373": [
+    "flamethrower"
+  ],
+  "375": [
+    "bullet-punch",
+    "flash-cannon",
+    "psychic"
+  ],
+  "376": [
+    "bullet-punch",
+    "flash-cannon",
+    "psychic"
+  ],
+  "377": [
+    "rock-slide",
+    "stone-edge"
+  ],
+  "378": [
+    "icy-wind",
+    "ice-beam"
+  ],
+  "379": [
+    "flash-cannon",
+    "iron-head"
+  ],
+  "380": [
+    "psychic"
+  ],
+  "381": [
+    "psychic"
+  ],
+  "382": [
+    "ice-beam",
+    "hydro-pump"
+  ],
+  "383": [
+    "lava-plume",
+    "earth-power",
+    "earthquake",
+    "fire-blast"
+  ],
+  "384": [
+    "hyper-voice"
+  ],
+  "385": [
+    "psychic"
+  ],
+  "386": [
+    "psychic"
+  ],
+  "387": [
+    "giga-drain"
+  ],
+  "388": [
+    "giga-drain"
+  ],
+  "389": [
+    "earthquake",
+    "giga-drain"
+  ],
+  "390": [
+    "flamethrower"
+  ],
+  "391": [
+    "flamethrower",
+    "close-combat",
+    "flare-blitz"
+  ],
+  "392": [
+    "close-combat",
+    "flamethrower",
+    "flare-blitz"
+  ],
+  "393": [
+    "hydro-pump"
+  ],
+  "394": [
+    "hydro-pump"
+  ],
+  "395": [
+    "flash-cannon",
+    "hydro-pump"
+  ],
+  "396": [
+    "brave-bird"
+  ],
+  "397": [
+    "brave-bird"
+  ],
+  "398": [
+    "close-combat",
+    "brave-bird"
+  ],
+  "403": [
+    "discharge"
+  ],
+  "404": [
+    "discharge"
+  ],
+  "405": [
+    "discharge"
+  ],
+  "406": [
+    "energy-ball"
+  ],
+  "407": [
+    "giga-drain",
+    "energy-ball"
+  ],
+  "408": [
+    "rock-slide",
+    "iron-head"
+  ],
+  "409": [
+    "rock-slide",
+    "iron-head"
+  ],
+  "410": [
+    "rock-slide",
+    "earth-power",
+    "iron-head"
+  ],
+  "411": [
+    "rock-slide",
+    "earth-power",
+    "iron-head"
+  ],
+  "413": [
+    "energy-ball",
+    "psychic"
+  ],
+  "414": [
+    "psychic"
+  ],
+  "417": [
+    "discharge"
+  ],
+  "418": [
+    "hydro-pump"
+  ],
+  "419": [
+    "hydro-pump"
+  ],
+  "420": [
+    "energy-ball"
+  ],
+  "421": [
+    "energy-ball"
+  ],
+  "422": [
+    "earth-power",
+    "hydro-pump"
+  ],
+  "423": [
+    "earth-power",
+    "hydro-pump"
+  ],
+  "425": [
+    "shadow-ball"
+  ],
+  "426": [
+    "shadow-ball"
+  ],
+  "428": [
+    "close-combat"
+  ],
+  "429": [
+    "shadow-ball"
+  ],
+  "430": [
+    "brave-bird",
+    "dark-pulse"
+  ],
+  "435": [
+    "flamethrower"
+  ],
+  "436": [
+    "flash-cannon"
+  ],
+  "437": [
+    "flash-cannon"
+  ],
+  "438": [
+    "rock-slide"
+  ],
+  "439": [
+    "psychic",
+    "dazzling-gleam"
+  ],
+  "441": [
+    "hyper-voice"
+  ],
+  "442": [
+    "shadow-ball",
+    "dark-pulse"
+  ],
+  "443": [
+    "earth-power"
+  ],
+  "444": [
+    "earth-power"
+  ],
+  "445": [
+    "earth-power"
+  ],
+  "447": [
+    "bullet-punch",
+    "close-combat"
+  ],
+  "448": [
+    "dark-pulse",
+    "bullet-punch",
+    "close-combat"
+  ],
+  "449": [
+    "earthquake"
+  ],
+  "450": [
+    "earthquake"
+  ],
+  "453": [
+    "earth-power",
+    "sludge-bomb",
+    "close-combat"
+  ],
+  "454": [
+    "earth-power",
+    "close-combat",
+    "sludge-bomb"
+  ],
+  "455": [
+    "energy-ball"
+  ],
+  "456": [
+    "hydro-pump"
+  ],
+  "457": [
+    "hydro-pump"
+  ],
+  "458": [
+    "hydro-pump"
+  ],
+  "459": [
+    "energy-ball",
+    "icy-wind"
+  ],
+  "460": [
+    "energy-ball",
+    "icy-wind"
+  ],
+  "461": [
+    "icy-wind",
+    "dark-pulse"
+  ],
+  "462": [
+    "flash-cannon",
+    "thunderbolt",
+    "discharge"
+  ],
+  "464": [
+    "rock-slide",
+    "earthquake",
+    "stone-edge"
+  ],
+  "465": [
+    "energy-ball",
+    "giga-drain",
+    "sludge-bomb"
+  ],
+  "466": [
+    "discharge",
+    "thunderbolt"
+  ],
+  "467": [
+    "lava-plume",
+    "flamethrower",
+    "fire-blast"
+  ],
+  "468": [
+    "moonblast"
+  ],
+  "470": [
+    "giga-drain"
+  ],
+  "471": [
+    "icy-wind",
+    "ice-beam"
+  ],
+  "472": [
+    "earthquake",
+    "earth-power"
+  ],
+  "473": [
+    "icy-wind",
+    "earthquake"
+  ],
+  "474": [
+    "thunderbolt",
+    "discharge"
+  ],
+  "475": [
+    "psychic",
+    "close-combat"
+  ],
+  "476": [
+    "rock-slide",
+    "discharge",
+    "earth-power",
+    "flash-cannon"
+  ],
+  "477": [
+    "dark-pulse",
+    "shadow-ball",
+    "psychic"
+  ],
+  "478": [
+    "icy-wind",
+    "shadow-ball"
+  ],
+  "479": [
+    "shadow-ball",
+    "thunderbolt",
+    "discharge"
+  ],
+  "480": [
+    "psychic"
+  ],
+  "481": [
+    "psychic"
+  ],
+  "482": [
+    "psychic"
+  ],
+  "483": [
+    "flash-cannon",
+    "earth-power"
+  ],
+  "484": [
+    "earth-power",
+    "hydro-pump"
+  ],
+  "485": [
+    "iron-head",
+    "lava-plume",
+    "earth-power",
+    "stone-edge"
+  ],
+  "486": [
+    "iron-head"
+  ],
+  "487": [
+    "earth-power"
+  ],
+  "488": [
+    "psychic",
+    "moonblast"
+  ],
+  "489": [
+    "moonblast",
+    "hydro-pump"
+  ],
+  "490": [
+    "moonblast",
+    "hydro-pump"
+  ],
+  "491": [
+    "shadow-ball",
+    "psychic",
+    "dark-pulse"
+  ],
+  "492": [
+    "earth-power",
+    "energy-ball"
+  ],
+  "493": [
+    "earth-power",
+    "hyper-voice"
+  ],
+  "494": [
+    "flare-blitz"
+  ],
+  "495": [
+    "giga-drain"
+  ],
+  "496": [
+    "giga-drain"
+  ],
+  "497": [
+    "giga-drain"
+  ],
+  "498": [
+    "flamethrower",
+    "flare-blitz"
+  ],
+  "499": [
+    "flamethrower",
+    "flare-blitz"
+  ],
+  "500": [
+    "flamethrower",
+    "flare-blitz"
+  ],
+  "501": [
+    "hydro-pump"
+  ],
+  "502": [
+    "hydro-pump"
+  ],
+  "503": [
+    "hydro-pump"
+  ],
+  "513": [
+    "fire-blast"
+  ],
+  "517": [
+    "psychic",
+    "moonblast"
+  ],
+  "518": [
+    "moonblast",
+    "psychic"
+  ],
+  "522": [
+    "discharge"
+  ],
+  "523": [
+    "discharge"
+  ],
+  "524": [
+    "rock-slide",
+    "stone-edge"
+  ],
+  "525": [
+    "rock-slide",
+    "stone-edge"
+  ],
+  "526": [
+    "rock-slide",
+    "stone-edge"
+  ],
+  "527": [
+    "psychic"
+  ],
+  "528": [
+    "psychic"
+  ],
+  "529": [
+    "rock-slide",
+    "earthquake"
+  ],
+  "530": [
+    "rock-slide",
+    "earthquake"
+  ],
+  "531": [
+    "hyper-voice"
+  ],
+  "532": [
+    "rock-slide",
+    "stone-edge"
+  ],
+  "533": [
+    "rock-slide",
+    "stone-edge"
+  ],
+  "534": [
+    "rock-slide",
+    "stone-edge"
+  ],
+  "535": [
+    "hyper-voice",
+    "hydro-pump"
+  ],
+  "536": [
+    "hyper-voice",
+    "hydro-pump"
+  ],
+  "537": [
+    "hyper-voice",
+    "hydro-pump"
+  ],
+  "539": [
+    "close-combat"
+  ],
+  "546": [
+    "giga-drain",
+    "energy-ball"
+  ],
+  "547": [
+    "energy-ball",
+    "giga-drain",
+    "moonblast"
+  ],
+  "548": [
+    "giga-drain",
+    "energy-ball"
+  ],
+  "549": [
+    "energy-ball",
+    "giga-drain"
+  ],
+  "551": [
+    "earthquake"
+  ],
+  "552": [
+    "earthquake"
+  ],
+  "553": [
+    "earthquake"
+  ],
+  "554": [
+    "flare-blitz"
+  ],
+  "555": [
+    "flare-blitz"
+  ],
+  "556": [
+    "giga-drain"
+  ],
+  "557": [
+    "rock-slide"
+  ],
+  "558": [
+    "rock-slide"
+  ],
+  "561": [
+    "psychic"
+  ],
+  "562": [
+    "shadow-ball",
+    "dark-pulse"
+  ],
+  "563": [
+    "shadow-ball",
+    "dark-pulse"
+  ],
+  "564": [
+    "rock-slide",
+    "hydro-pump"
+  ],
+  "565": [
+    "rock-slide",
+    "hydro-pump"
+  ],
+  "566": [
+    "rock-slide"
+  ],
+  "567": [
+    "rock-slide"
+  ],
+  "568": [
+    "sludge-bomb",
+    "gunk-shot"
+  ],
+  "569": [
+    "sludge-bomb",
+    "gunk-shot"
+  ],
+  "572": [
+    "hyper-voice"
+  ],
+  "573": [
+    "hyper-voice"
+  ],
+  "574": [
+    "psychic"
+  ],
+  "575": [
+    "psychic"
+  ],
+  "576": [
+    "psychic"
+  ],
+  "577": [
+    "psychic"
+  ],
+  "578": [
+    "psychic"
+  ],
+  "579": [
+    "psychic"
+  ],
+  "580": [
+    "brave-bird"
+  ],
+  "581": [
+    "brave-bird"
+  ],
+  "582": [
+    "icy-wind",
+    "ice-beam"
+  ],
+  "583": [
+    "icy-wind",
+    "ice-beam"
+  ],
+  "584": [
+    "icy-wind",
+    "ice-beam"
+  ],
+  "585": [
+    "energy-ball"
+  ],
+  "586": [
+    "energy-ball"
+  ],
+  "587": [
+    "discharge"
+  ],
+  "589": [
+    "iron-head"
+  ],
+  "590": [
+    "giga-drain"
+  ],
+  "591": [
+    "giga-drain"
+  ],
+  "592": [
+    "shadow-ball",
+    "hydro-pump"
+  ],
+  "593": [
+    "shadow-ball",
+    "hydro-pump"
+  ],
+  "594": [
+    "hydro-pump"
+  ],
+  "595": [
+    "discharge"
+  ],
+  "596": [
+    "discharge"
+  ],
+  "597": [
+    "flash-cannon",
+    "iron-head"
+  ],
+  "598": [
+    "flash-cannon",
+    "iron-head"
+  ],
+  "599": [
+    "discharge"
+  ],
+  "600": [
+    "discharge"
+  ],
+  "601": [
+    "discharge"
+  ],
+  "603": [
+    "discharge",
+    "thunderbolt"
+  ],
+  "604": [
+    "discharge"
+  ],
+  "605": [
+    "psychic"
+  ],
+  "606": [
+    "psychic"
+  ],
+  "607": [
+    "shadow-ball"
+  ],
+  "608": [
+    "shadow-ball"
+  ],
+  "609": [
+    "shadow-ball"
+  ],
+  "613": [
+    "icy-wind"
+  ],
+  "614": [
+    "icy-wind"
+  ],
+  "615": [
+    "icy-wind",
+    "ice-beam"
+  ],
+  "616": [
+    "giga-drain"
+  ],
+  "617": [
+    "giga-drain"
+  ],
+  "618": [
+    "discharge",
+    "thunderbolt"
+  ],
+  "621": [
+    "iron-head"
+  ],
+  "622": [
+    "shadow-ball",
+    "earthquake"
+  ],
+  "623": [
+    "shadow-ball",
+    "earthquake"
+  ],
+  "624": [
+    "iron-head"
+  ],
+  "625": [
+    "iron-head"
+  ],
+  "627": [
+    "brave-bird"
+  ],
+  "628": [
+    "brave-bird"
+  ],
+  "629": [
+    "dark-pulse",
+    "brave-bird"
+  ],
+  "630": [
+    "dark-pulse",
+    "brave-bird"
+  ],
+  "631": [
+    "flamethrower",
+    "flare-blitz"
+  ],
+  "632": [
+    "iron-head"
+  ],
+  "633": [
+    "hyper-voice"
+  ],
+  "634": [
+    "hyper-voice"
+  ],
+  "635": [
+    "hyper-voice"
+  ],
+  "636": [
+    "flare-blitz"
+  ],
+  "637": [
+    "flare-blitz",
+    "fire-blast"
+  ],
+  "638": [
+    "iron-head",
+    "close-combat"
+  ],
+  "639": [
+    "rock-slide",
+    "stone-edge",
+    "close-combat"
+  ],
+  "640": [
+    "giga-drain",
+    "close-combat"
+  ],
+  "641": [
+    "dark-pulse"
+  ],
+  "642": [
+    "discharge",
+    "dark-pulse"
+  ],
+  "643": [
+    "flamethrower",
+    "hyper-voice",
+    "fire-blast"
+  ],
+  "644": [
+    "thunderbolt",
+    "hyper-voice"
+  ],
+  "645": [
+    "rock-slide",
+    "earth-power",
+    "stone-edge",
+    "earthquake"
+  ],
+  "646": [
+    "icy-wind",
+    "ice-beam",
+    "hyper-voice"
+  ],
+  "647": [
+    "hydro-pump",
+    "close-combat"
+  ],
+  "648": [
+    "psychic",
+    "hyper-voice",
+    "close-combat"
+  ],
+  "653": [
+    "flamethrower",
+    "psychic",
+    "fire-blast"
+  ],
+  "654": [
+    "flamethrower",
+    "psychic",
+    "fire-blast"
+  ],
+  "655": [
+    "shadow-ball",
+    "flamethrower",
+    "psychic",
+    "fire-blast"
+  ],
+  "656": [
+    "hydro-pump"
+  ],
+  "657": [
+    "hydro-pump"
+  ],
+  "658": [
+    "hydro-pump"
+  ],
+  "659": [
+    "earthquake"
+  ],
+  "660": [
+    "earthquake"
+  ],
+  "663": [
+    "flare-blitz",
+    "brave-bird"
+  ],
+  "667": [
+    "flamethrower",
+    "hyper-voice"
+  ],
+  "668": [
+    "flamethrower",
+    "hyper-voice"
+  ],
+  "669": [
+    "moonblast"
+  ],
+  "670": [
+    "moonblast"
+  ],
+  "671": [
+    "moonblast"
+  ],
+  "673": [
+    "earthquake"
+  ],
+  "675": [
+    "bullet-punch"
+  ],
+  "678": [
+    "psychic"
+  ],
+  "679": [
+    "iron-head"
+  ],
+  "680": [
+    "iron-head"
+  ],
+  "681": [
+    "iron-head"
+  ],
+  "682": [
+    "psychic",
+    "moonblast"
+  ],
+  "683": [
+    "psychic",
+    "moonblast"
+  ],
+  "684": [
+    "energy-ball"
+  ],
+  "685": [
+    "energy-ball"
+  ],
+  "689": [
+    "stone-edge"
+  ],
+  "690": [
+    "sludge-bomb",
+    "hydro-pump"
+  ],
+  "691": [
+    "sludge-bomb",
+    "hydro-pump"
+  ],
+  "693": [
+    "dark-pulse"
+  ],
+  "694": [
+    "thunderbolt"
+  ],
+  "695": [
+    "discharge",
+    "thunderbolt"
+  ],
+  "696": [
+    "rock-slide",
+    "earthquake"
+  ],
+  "697": [
+    "rock-slide",
+    "earthquake"
+  ],
+  "698": [
+    "icy-wind",
+    "ice-beam"
+  ],
+  "699": [
+    "icy-wind",
+    "ice-beam"
+  ],
+  "700": [
+    "moonblast"
+  ],
+  "702": [
+    "discharge"
+  ],
+  "703": [
+    "rock-slide",
+    "moonblast",
+    "stone-edge"
+  ],
+  "704": [
+    "hydro-pump"
+  ],
+  "707": [
+    "flash-cannon"
+  ],
+  "710": [
+    "shadow-ball"
+  ],
+  "711": [
+    "moonblast",
+    "shadow-ball"
+  ],
+  "712": [
+    "icy-wind"
+  ],
+  "713": [
+    "icy-wind"
+  ],
+  "716": [
+    "moonblast",
+    "close-combat"
+  ],
+  "717": [
+    "dark-pulse",
+    "psychic",
+    "focus-blast"
+  ],
+  "718": [
+    "earthquake"
+  ],
+  "719": [
+    "rock-slide",
+    "moonblast",
+    "stone-edge"
+  ],
+  "720": [
+    "shadow-ball",
+    "psychic"
+  ],
+  "721": [
+    "hydro-pump",
+    "flare-blitz"
+  ],
+  "722": [
+    "brave-bird"
+  ],
+  "723": [
+    "brave-bird"
+  ],
+  "724": [
+    "brave-bird"
+  ],
+  "725": [
+    "flamethrower",
+    "flare-blitz"
+  ],
+  "726": [
+    "flamethrower",
+    "flare-blitz"
+  ],
+  "727": [
+    "flamethrower",
+    "flare-blitz"
+  ],
+  "728": [
+    "icy-wind",
+    "hyper-voice",
+    "moonblast",
+    "hydro-pump"
+  ],
+  "729": [
+    "icy-wind",
+    "hyper-voice",
+    "moonblast",
+    "hydro-pump"
+  ],
+  "730": [
+    "icy-wind",
+    "hyper-voice",
+    "moonblast",
+    "hydro-pump"
+  ],
+  "731": [
+    "hyper-voice"
+  ],
+  "732": [
+    "hyper-voice"
+  ],
+  "733": [
+    "hyper-voice"
+  ],
+  "737": [
+    "discharge"
+  ],
+  "738": [
+    "discharge",
+    "thunderbolt"
+  ],
+  "739": [
+    "close-combat"
+  ],
+  "740": [
+    "close-combat"
+  ],
+  "742": [
+    "dazzling-gleam"
+  ],
+  "743": [
+    "dazzling-gleam"
+  ],
+  "744": [
+    "rock-slide",
+    "stone-edge"
+  ],
+  "745": [
+    "rock-slide",
+    "stone-edge"
+  ],
+  "746": [
+    "hydro-pump"
+  ],
+  "749": [
+    "earthquake"
+  ],
+  "750": [
+    "earthquake"
+  ],
+  "755": [
+    "giga-drain",
+    "dazzling-gleam",
+    "moonblast"
+  ],
+  "756": [
+    "giga-drain",
+    "dazzling-gleam",
+    "moonblast"
+  ],
+  "757": [
+    "flamethrower"
+  ],
+  "758": [
+    "flamethrower"
+  ],
+  "765": [
+    "psychic"
+  ],
+  "766": [
+    "close-combat"
+  ],
+  "769": [
+    "giga-drain",
+    "shadow-ball",
+    "earth-power"
+  ],
+  "770": [
+    "giga-drain",
+    "shadow-ball",
+    "earth-power"
+  ],
+  "772": [
+    "iron-head"
+  ],
+  "773": [
+    "iron-head"
+  ],
+  "776": [
+    "flamethrower"
+  ],
+  "777": [
+    "discharge"
+  ],
+  "780": [
+    "hyper-voice"
+  ],
+  "781": [
+    "giga-drain",
+    "shadow-ball",
+    "energy-ball"
+  ],
+  "783": [
+    "close-combat"
+  ],
+  "784": [
+    "close-combat"
+  ],
+  "785": [
+    "discharge",
+    "brave-bird"
+  ],
+  "786": [
+    "moonblast"
+  ],
+  "787": [
+    "giga-drain"
+  ],
+  "788": [
+    "surf",
+    "moonblast",
+    "hydro-pump"
+  ],
+  "791": [
+    "iron-head",
+    "flash-cannon",
+    "flare-blitz"
+  ],
+  "792": [
+    "shadow-ball",
+    "psychic",
+    "moonblast"
+  ],
+  "796": [
+    "discharge",
+    "thunderbolt"
+  ],
+  "797": [
+    "iron-head",
+    "giga-drain",
+    "flash-cannon"
+  ],
+  "801": [
+    "iron-head",
+    "flash-cannon"
+  ],
+  "802": [
+    "close-combat"
+  ],
+  "805": [
+    "rock-slide",
+    "iron-head"
+  ],
+  "806": [
+    "shadow-ball",
+    "fire-blast"
+  ],
+  "807": [
+    "discharge",
+    "close-combat"
+  ],
+  "808": [
+    "flash-cannon"
+  ],
+  "809": [
+    "flash-cannon",
+    "discharge"
+  ],
+  "818": [
+    "hydro-pump"
+  ],
+  "821": [
+    "brave-bird"
+  ],
+  "822": [
+    "brave-bird"
+  ],
+  "823": [
+    "brave-bird"
+  ],
+  "826": [
+    "psychic"
+  ],
+  "829": [
+    "hyper-voice"
+  ],
+  "830": [
+    "hyper-voice"
+  ],
+  "838": [
+    "stone-edge"
+  ],
+  "839": [
+    "stone-edge"
+  ],
+  "842": [
+    "energy-ball"
+  ],
+  "845": [
+    "hydro-pump"
+  ],
+  "849": [
+    "discharge"
+  ],
+  "854": [
+    "giga-drain",
+    "shadow-ball"
+  ],
+  "855": [
+    "giga-drain",
+    "shadow-ball"
+  ],
+  "856": [
+    "dazzling-gleam",
+    "psychic"
+  ],
+  "857": [
+    "dazzling-gleam",
+    "psychic"
+  ],
+  "858": [
+    "dazzling-gleam",
+    "psychic"
+  ],
+  "859": [
+    "dark-pulse"
+  ],
+  "860": [
+    "dark-pulse"
+  ],
+  "861": [
+    "dark-pulse"
+  ],
+  "863": [
+    "iron-head"
+  ],
+  "865": [
+    "brave-bird"
+  ],
+  "866": [
+    "dazzling-gleam",
+    "icy-wind",
+    "psychic"
+  ],
+  "867": [
+    "shadow-ball",
+    "earthquake"
+  ],
+  "868": [
+    "dazzling-gleam"
+  ],
+  "869": [
+    "dazzling-gleam"
+  ],
+  "870": [
+    "close-combat"
+  ],
+  "871": [
+    "discharge"
+  ],
+  "873": [
+    "icy-wind"
+  ],
+  "874": [
+    "rock-slide",
+    "stone-edge"
+  ],
+  "875": [
+    "icy-wind",
+    "surf"
+  ],
+  "876": [
+    "psychic"
+  ],
+  "878": [
+    "iron-head"
+  ],
+  "879": [
+    "iron-head"
+  ],
+  "880": [
+    "discharge"
+  ],
+  "881": [
+    "discharge"
+  ],
+  "883": [
+    "icy-wind"
+  ],
+  "884": [
+    "flash-cannon"
+  ],
+  "888": [
+    "iron-head",
+    "moonblast",
+    "close-combat"
+  ],
+  "889": [
+    "iron-head",
+    "moonblast",
+    "close-combat"
+  ],
+  "890": [
+    "flamethrower"
+  ],
+  "891": [
+    "iron-head",
+    "close-combat"
+  ],
+  "892": [
+    "iron-head",
+    "close-combat"
+  ],
+  "893": [
+    "energy-ball"
+  ],
+  "894": [
+    "thunderbolt"
+  ],
+  "897": [
+    "shadow-ball"
+  ],
+  "898": [
+    "giga-drain",
+    "energy-ball",
+    "psychic"
+  ],
+  "900": [
+    "rock-slide",
+    "close-combat"
+  ],
+  "902": [
+    "shadow-ball"
+  ],
+  "903": [
+    "close-combat"
+  ],
+  "904": [
+    "dark-pulse"
+  ],
+  "905": [
+    "dazzling-gleam",
+    "moonblast"
+  ],
+  "906": [
+    "energy-ball"
+  ],
+  "907": [
+    "energy-ball"
+  ],
+  "908": [
+    "energy-ball"
+  ],
+  "909": [
+    "flamethrower",
+    "hyper-voice",
+    "fire-blast"
+  ],
+  "910": [
+    "flamethrower",
+    "hyper-voice",
+    "fire-blast"
+  ],
+  "911": [
+    "flamethrower",
+    "shadow-ball",
+    "hyper-voice",
+    "fire-blast"
+  ],
+  "914": [
+    "close-combat"
+  ],
+  "916": [
+    "earth-power"
+  ],
+  "921": [
+    "discharge"
+  ],
+  "922": [
+    "discharge"
+  ],
+  "923": [
+    "close-combat",
+    "discharge"
+  ],
+  "924": [
+    "hyper-voice"
+  ],
+  "925": [
+    "hyper-voice"
+  ],
+  "928": [
+    "energy-ball"
+  ],
+  "929": [
+    "energy-ball"
+  ],
+  "930": [
+    "energy-ball"
+  ],
+  "931": [
+    "brave-bird"
+  ],
+  "932": [
+    "rock-slide",
+    "earthquake",
+    "stone-edge"
+  ],
+  "933": [
+    "rock-slide",
+    "earthquake",
+    "stone-edge"
+  ],
+  "934": [
+    "rock-slide",
+    "earthquake",
+    "stone-edge"
+  ],
+  "935": [
+    "lava-plume"
+  ],
+  "936": [
+    "lava-plume",
+    "flamethrower"
+  ],
+  "937": [
+    "lava-plume",
+    "flare-blitz"
+  ],
+  "938": [
+    "discharge"
+  ],
+  "939": [
+    "discharge"
+  ],
+  "940": [
+    "discharge"
+  ],
+  "941": [
+    "discharge"
+  ],
+  "944": [
+    "gunk-shot"
+  ],
+  "945": [
+    "gunk-shot"
+  ],
+  "946": [
+    "giga-drain"
+  ],
+  "947": [
+    "giga-drain"
+  ],
+  "948": [
+    "giga-drain",
+    "earth-power"
+  ],
+  "949": [
+    "giga-drain",
+    "earth-power"
+  ],
+  "950": [
+    "rock-slide"
+  ],
+  "952": [
+    "flamethrower"
+  ],
+  "954": [
+    "psychic"
+  ],
+  "956": [
+    "dazzling-gleam",
+    "psychic"
+  ],
+  "957": [
+    "flash-cannon"
+  ],
+  "958": [
+    "flash-cannon"
+  ],
+  "959": [
+    "flash-cannon"
+  ],
+  "962": [
+    "rock-slide"
+  ],
+  "963": [
+    "hydro-pump"
+  ],
+  "964": [
+    "hydro-pump"
+  ],
+  "965": [
+    "iron-head",
+    "gunk-shot"
+  ],
+  "966": [
+    "iron-head",
+    "gunk-shot"
+  ],
+  "968": [
+    "iron-head",
+    "earthquake"
+  ],
+  "969": [
+    "rock-slide"
+  ],
+  "970": [
+    "rock-slide"
+  ],
+  "973": [
+    "brave-bird"
+  ],
+  "979": [
+    "close-combat"
+  ],
+  "980": [
+    "earthquake"
+  ],
+  "981": [
+    "psychic"
+  ],
+  "983": [
+    "iron-head"
+  ],
+  "984": [
+    "earthquake",
+    "close-combat"
+  ],
+  "985": [
+    "hyper-voice"
+  ],
+  "986": [
+    "giga-drain"
+  ],
+  "987": [
+    "dazzling-gleam",
+    "shadow-ball",
+    "moonblast"
+  ],
+  "989": [
+    "discharge",
+    "earth-power"
+  ],
+  "990": [
+    "iron-head",
+    "earthquake"
+  ],
+  "991": [
+    "ice-beam",
+    "hydro-pump"
+  ],
+  "992": [
+    "close-combat"
+  ],
+  "993": [
+    "hyper-voice",
+    "dark-pulse"
+  ],
+  "994": [
+    "discharge"
+  ],
+  "995": [
+    "rock-slide",
+    "earthquake",
+    "stone-edge"
+  ],
+  "996": [
+    "icy-wind",
+    "ice-beam"
+  ],
+  "997": [
+    "icy-wind",
+    "ice-beam"
+  ],
+  "998": [
+    "icy-wind",
+    "ice-beam"
+  ],
+  "1000": [
+    "shadow-ball"
+  ],
+  "1001": [
+    "dark-pulse",
+    "giga-drain"
+  ],
+  "1002": [
+    "icy-wind",
+    "dark-pulse"
+  ],
+  "1003": [
+    "dark-pulse",
+    "rock-slide",
+    "earthquake"
+  ],
+  "1004": [
+    "dark-pulse",
+    "lava-plume"
+  ],
+  "1005": [
+    "flamethrower"
+  ],
+  "1006": [
+    "dazzling-gleam",
+    "moonblast",
+    "close-combat"
+  ],
+  "1007": [
+    "flamethrower",
+    "close-combat",
+    "flare-blitz"
+  ],
+  "1008": [
+    "discharge"
+  ],
+  "1009": [
+    "flamethrower",
+    "hydro-pump"
+  ],
+  "1010": [
+    "close-combat"
+  ],
+  "1011": [
+    "energy-ball"
+  ],
+  "1012": [
+    "giga-drain",
+    "shadow-ball"
+  ],
+  "1013": [
+    "shadow-ball"
+  ],
+  "1015": [
+    "psychic"
+  ],
+  "1016": [
+    "moonblast"
+  ],
+  "1018": [
+    "flash-cannon"
+  ],
+  "1019": [
+    "energy-ball"
+  ],
+  "1020": [
+    "fire-blast",
+    "lava-plume",
+    "flare-blitz"
+  ],
+  "1021": [
+    "discharge"
+  ],
+  "1022": [
+    "stone-edge"
+  ],
+  "1023": [
+    "flash-cannon"
+  ],
+  "1024": [
+    "earth-power"
+  ],
+  "1025": [
+    "shadow-ball"
+  ],
+  "10001": [
+    "psychic"
+  ],
+  "10002": [
+    "psychic"
+  ],
+  "10003": [
+    "psychic"
+  ],
+  "10004": [
+    "earth-power",
+    "psychic"
+  ],
+  "10005": [
+    "iron-head",
+    "psychic"
+  ],
+  "10006": [
+    "energy-ball"
+  ],
+  "10007": [
+    "shadow-ball",
+    "earth-power"
+  ],
+  "10008": [
+    "discharge"
+  ],
+  "10009": [
+    "discharge"
+  ],
+  "10010": [
+    "discharge"
+  ],
+  "10011": [
+    "discharge"
+  ],
+  "10012": [
+    "discharge"
+  ],
+  "10013": [
+    "fire-blast",
+    "hydro-pump"
+  ],
+  "10014": [
+    "fire-blast",
+    "hydro-pump"
+  ],
+  "10015": [
+    "fire-blast",
+    "hydro-pump"
+  ],
+  "10017": [
+    "flare-blitz"
+  ],
+  "10018": [
+    "psychic",
+    "hyper-voice",
+    "close-combat"
+  ],
+  "10019": [
+    "dark-pulse"
+  ],
+  "10020": [
+    "discharge",
+    "dark-pulse"
+  ],
+  "10021": [
+    "rock-slide",
+    "earth-power",
+    "stone-edge",
+    "earthquake"
+  ],
+  "10022": [
+    "icy-wind",
+    "ice-beam",
+    "hyper-voice"
+  ],
+  "10023": [
+    "icy-wind",
+    "ice-beam",
+    "hyper-voice"
+  ],
+  "10024": [
+    "hydro-pump",
+    "close-combat"
+  ],
+  "10025": [
+    "shadow-ball",
+    "psychic"
+  ],
+  "10026": [
+    "iron-head"
+  ],
+  "10027": [
+    "shadow-ball"
+  ],
+  "10028": [
+    "shadow-ball"
+  ],
+  "10029": [
+    "shadow-ball"
+  ],
+  "10030": [
+    "moonblast",
+    "shadow-ball"
+  ],
+  "10031": [
+    "moonblast",
+    "shadow-ball"
+  ],
+  "10032": [
+    "moonblast",
+    "shadow-ball"
+  ],
+  "10034": [
+    "flamethrower",
+    "flare-blitz"
+  ],
+  "10035": [
+    "flamethrower",
+    "flare-blitz"
+  ],
+  "10036": [
+    "flash-cannon",
+    "hydro-pump"
+  ],
+  "10037": [
+    "psychic"
+  ],
+  "10038": [
+    "shadow-ball",
+    "dark-pulse"
+  ],
+  "10041": [
+    "hydro-pump"
+  ],
+  "10042": [
+    "rock-slide",
+    "iron-head"
+  ],
+  "10043": [
+    "psychic"
+  ],
+  "10044": [
+    "psychic"
+  ],
+  "10045": [
+    "discharge"
+  ],
+  "10046": [
+    "bullet-punch",
+    "iron-head"
+  ],
+  "10047": [
+    "close-combat"
+  ],
+  "10048": [
+    "flamethrower"
+  ],
+  "10049": [
+    "rock-slide",
+    "dark-pulse",
+    "earthquake",
+    "stone-edge"
+  ],
+  "10050": [
+    "brave-bird",
+    "flare-blitz"
+  ],
+  "10051": [
+    "psychic",
+    "moonblast"
+  ],
+  "10052": [
+    "iron-head"
+  ],
+  "10053": [
+    "iron-head",
+    "rock-slide"
+  ],
+  "10055": [
+    "discharge"
+  ],
+  "10056": [
+    "shadow-ball"
+  ],
+  "10059": [
+    "close-combat"
+  ],
+  "10060": [
+    "icy-wind"
+  ],
+  "10061": [
+    "moonblast"
+  ],
+  "10062": [
+    "psychic"
+  ],
+  "10063": [
+    "psychic"
+  ],
+  "10064": [
+    "rock-slide",
+    "earthquake"
+  ],
+  "10066": [
+    "shadow-ball"
+  ],
+  "10067": [
+    "moonblast"
+  ],
+  "10068": [
+    "close-combat"
+  ],
+  "10069": [
+    "hyper-voice"
+  ],
+  "10071": [
+    "surf",
+    "psychic"
+  ],
+  "10072": [
+    "rock-slide",
+    "stone-edge"
+  ],
+  "10074": [
+    "icy-wind"
+  ],
+  "10075": [
+    "stone-edge",
+    "moonblast"
+  ],
+  "10076": [
+    "bullet-punch",
+    "psychic"
+  ],
+  "10077": [
+    "ice-beam",
+    "hydro-pump"
+  ],
+  "10078": [
+    "earth-power",
+    "lava-plume",
+    "earthquake",
+    "fire-blast"
+  ],
+  "10079": [
+    "hyper-voice"
+  ],
+  "10080": [
+    "discharge",
+    "thunderbolt"
+  ],
+  "10081": [
+    "discharge",
+    "thunderbolt"
+  ],
+  "10082": [
+    "discharge",
+    "thunderbolt"
+  ],
+  "10083": [
+    "discharge",
+    "thunderbolt"
+  ],
+  "10084": [
+    "discharge",
+    "thunderbolt"
+  ],
+  "10085": [
+    "discharge",
+    "thunderbolt"
+  ],
+  "10086": [
+    "dark-pulse",
+    "psychic"
+  ],
+  "10087": [
+    "rock-slide",
+    "lava-plume",
+    "earth-power",
+    "earthquake"
+  ],
+  "10089": [
+    "flamethrower"
+  ],
+  "10094": [
+    "discharge",
+    "thunderbolt"
+  ],
+  "10095": [
+    "discharge",
+    "thunderbolt"
+  ],
+  "10096": [
+    "discharge",
+    "thunderbolt"
+  ],
+  "10097": [
+    "discharge",
+    "thunderbolt"
+  ],
+  "10098": [
+    "discharge",
+    "thunderbolt"
+  ],
+  "10099": [
+    "discharge",
+    "thunderbolt"
+  ],
+  "10100": [
+    "discharge",
+    "psychic",
+    "thunderbolt"
+  ],
+  "10101": [
+    "iron-head"
+  ],
+  "10102": [
+    "iron-head"
+  ],
+  "10103": [
+    "icy-wind",
+    "dazzling-gleam",
+    "ice-beam"
+  ],
+  "10104": [
+    "dazzling-gleam",
+    "ice-beam",
+    "icy-wind"
+  ],
+  "10105": [
+    "iron-head",
+    "earth-power",
+    "earthquake"
+  ],
+  "10106": [
+    "iron-head",
+    "earth-power",
+    "earthquake"
+  ],
+  "10107": [
+    "dark-pulse"
+  ],
+  "10108": [
+    "dark-pulse"
+  ],
+  "10109": [
+    "rock-slide",
+    "discharge",
+    "stone-edge"
+  ],
+  "10110": [
+    "rock-slide",
+    "discharge",
+    "stone-edge"
+  ],
+  "10111": [
+    "rock-slide",
+    "discharge",
+    "stone-edge"
+  ],
+  "10112": [
+    "gunk-shot",
+    "sludge-bomb"
+  ],
+  "10113": [
+    "moonblast",
+    "gunk-shot",
+    "sludge-bomb"
+  ],
+  "10114": [
+    "giga-drain"
+  ],
+  "10115": [
+    "flare-blitz"
+  ],
+  "10116": [
+    "hydro-pump"
+  ],
+  "10117": [
+    "hydro-pump"
+  ],
+  "10118": [
+    "earthquake"
+  ],
+  "10119": [
+    "earthquake"
+  ],
+  "10120": [
+    "earthquake"
+  ],
+  "10122": [
+    "thunderbolt"
+  ],
+  "10126": [
+    "rock-slide",
+    "stone-edge"
+  ],
+  "10127": [
+    "hydro-pump"
+  ],
+  "10129": [
+    "flamethrower"
+  ],
+  "10146": [
+    "close-combat"
+  ],
+  "10147": [
+    "iron-head",
+    "flash-cannon"
+  ],
+  "10148": [
+    "discharge",
+    "thunderbolt"
+  ],
+  "10149": [
+    "flare-blitz"
+  ],
+  "10150": [
+    "dazzling-gleam"
+  ],
+  "10151": [
+    "rock-slide",
+    "stone-edge"
+  ],
+  "10152": [
+    "rock-slide",
+    "stone-edge"
+  ],
+  "10154": [
+    "discharge"
+  ],
+  "10158": [
+    "thunderbolt"
+  ],
+  "10160": [
+    "discharge",
+    "thunderbolt"
+  ],
+  "10162": [
+    "dazzling-gleam",
+    "psychic"
+  ],
+  "10163": [
+    "dazzling-gleam",
+    "psychic"
+  ],
+  "10164": [
+    "surf",
+    "psychic"
+  ],
+  "10165": [
+    "surf",
+    "psychic"
+  ],
+  "10166": [
+    "brave-bird"
+  ],
+  "10167": [
+    "sludge-bomb"
+  ],
+  "10168": [
+    "dazzling-gleam",
+    "icy-wind",
+    "psychic"
+  ],
+  "10170": [
+    "close-combat"
+  ],
+  "10172": [
+    "surf",
+    "psychic"
+  ],
+  "10179": [
+    "shadow-ball",
+    "earthquake"
+  ],
+  "10181": [
+    "earthquake"
+  ],
+  "10182": [
+    "hydro-pump"
+  ],
+  "10183": [
+    "hydro-pump"
+  ],
+  "10184": [
+    "discharge"
+  ],
+  "10185": [
+    "icy-wind",
+    "surf"
+  ],
+  "10186": [
+    "psychic"
+  ],
+  "10188": [
+    "iron-head",
+    "moonblast",
+    "close-combat"
+  ],
+  "10189": [
+    "iron-head",
+    "moonblast",
+    "close-combat"
+  ],
+  "10190": [
+    "flamethrower"
+  ],
+  "10191": [
+    "iron-head",
+    "close-combat"
+  ],
+  "10192": [
+    "energy-ball"
+  ],
+  "10193": [
+    "giga-drain",
+    "energy-ball",
+    "psychic"
+  ],
+  "10194": [
+    "shadow-ball",
+    "giga-drain",
+    "energy-ball",
+    "psychic"
+  ],
+  "10229": [
+    "flamethrower",
+    "rock-slide",
+    "flare-blitz"
+  ],
+  "10230": [
+    "flare-blitz",
+    "rock-slide",
+    "flamethrower"
+  ],
+  "10231": [
+    "energy-ball",
+    "thunderbolt",
+    "discharge"
+  ],
+  "10232": [
+    "energy-ball",
+    "thunderbolt",
+    "discharge"
+  ],
+  "10233": [
+    "lava-plume",
+    "shadow-ball",
+    "flamethrower"
+  ],
+  "10234": [
+    "dark-pulse"
+  ],
+  "10235": [
+    "close-combat"
+  ],
+  "10236": [
+    "dark-pulse",
+    "hydro-pump"
+  ],
+  "10237": [
+    "energy-ball",
+    "giga-drain",
+    "close-combat"
+  ],
+  "10238": [
+    "shadow-ball"
+  ],
+  "10239": [
+    "shadow-ball"
+  ],
+  "10240": [
+    "brave-bird"
+  ],
+  "10241": [
+    "hydro-pump",
+    "iron-head"
+  ],
+  "10242": [
+    "hydro-pump",
+    "iron-head"
+  ],
+  "10243": [
+    "rock-slide",
+    "icy-wind",
+    "earth-power",
+    "stone-edge"
+  ],
+  "10244": [
+    "brave-bird"
+  ],
+  "10245": [
+    "flash-cannon",
+    "earth-power"
+  ],
+  "10246": [
+    "earth-power",
+    "hydro-pump"
+  ],
+  "10248": [
+    "shadow-ball"
+  ],
+  "10249": [
+    "dazzling-gleam",
+    "moonblast"
+  ],
+  "10250": [
+    "close-combat"
+  ],
+  "10251": [
+    "flare-blitz",
+    "close-combat"
+  ],
+  "10252": [
+    "close-combat"
+  ],
+  "10253": [
+    "earthquake"
+  ],
+  "10254": [
+    "earth-power"
+  ],
+  "10256": [
+    "hydro-pump"
+  ],
+  "10257": [
+    "hyper-voice"
+  ],
+  "10260": [
+    "brave-bird"
+  ],
+  "10261": [
+    "brave-bird"
+  ],
+  "10262": [
+    "brave-bird"
+  ],
+  "10264": [
+    "flamethrower",
+    "close-combat",
+    "flare-blitz"
+  ],
+  "10265": [
+    "flamethrower",
+    "close-combat",
+    "flare-blitz"
+  ],
+  "10266": [
+    "flamethrower",
+    "close-combat",
+    "flare-blitz"
+  ],
+  "10267": [
+    "flamethrower",
+    "close-combat",
+    "flare-blitz"
+  ],
+  "10268": [
+    "discharge"
+  ],
+  "10269": [
+    "discharge"
+  ],
+  "10270": [
+    "discharge"
+  ],
+  "10271": [
+    "discharge"
+  ],
+  "10272": [
+    "earth-power",
+    "moonblast"
+  ],
+  "10276": [
+    "earth-power"
+  ],
+  "10277": [
+    "earth-power"
+  ]
+}

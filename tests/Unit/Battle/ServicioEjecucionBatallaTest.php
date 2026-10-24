@@ -16,7 +16,6 @@ use Src\Battle\Domain\MovimientoBatalla;
 use Src\Battle\Domain\Posicion;
 use Src\Battle\Domain\ServicioEjecucionBatalla;
 use Src\Battle\Domain\ValueObjects\CambioStat;
-use Src\Battle\Domain\ValueObjects\MultiplicadoresStats;
 use Src\Battle\Presentation\DTOResultadoDanio;
 use Src\Shared\Tipos\TipoPokemon;
 
@@ -207,13 +206,14 @@ class ServicioEjecucionBatallaTest extends TestCase
         $this->servicio->aplicarStatChanges($actor, $objetivo, $movimiento);
 
         $this->assertSame(
-            MultiplicadoresStats::factorDesdeStages(2),
+            1.30 ** 2,
             $actor->multiplicadores()->obtenerMultiplicador(StatClave::ATAQUE),
         );
         $this->assertSame(
-            MultiplicadoresStats::factorDesdeStages(-1),
+            0.70,
             $objetivo->multiplicadores()->obtenerMultiplicador(StatClave::DEFENSA),
         );
+        $this->assertSame(5, $actor->multiplicadores()->turnosTemporales());
     }
 
     public function test_generar_log_movimiento_formato_correcto(): void

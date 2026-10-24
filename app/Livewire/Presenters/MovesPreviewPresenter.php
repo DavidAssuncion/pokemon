@@ -41,6 +41,17 @@ final class MovesPreviewPresenter
      *     statusEffect: string,
      *     selfStatChanges: array<int, array{stat: string, factor: float}>,
      *     targetStatChanges: array<int, array{stat: string, factor: float}>,
+     *     golpes: int,
+     *     golpesMin: int,
+     *     golpesMax: int,
+     *     disponible: bool,
+     *     motivoNoDisponible: string|null,
+     *     cargaActual: int,
+     *     cargaMaxima: int,
+     *     usosRestantes: int,
+     *     usosMaximos: int,
+     *     comboActual: int,
+     *     comboMultiplicador: float,
      * }>
      */
     public static function para(Combatiente $actor, AgregadoBatalla $battle, Combatiente $target): array
@@ -71,6 +82,17 @@ final class MovesPreviewPresenter
      *     statusEffect: string,
      *     selfStatChanges: array<int, array{stat: string, factor: float}>,
      *     targetStatChanges: array<int, array{stat: string, factor: float}>,
+     *     golpes: int,
+     *     golpesMin: int,
+     *     golpesMax: int,
+     *     disponible: bool,
+     *     motivoNoDisponible: string|null,
+     *     cargaActual: int,
+     *     cargaMaxima: int,
+     *     usosRestantes: int,
+     *     usosMaximos: int,
+     *     comboActual: int,
+     *     comboMultiplicador: float,
      * }
      */
     private static function previewDe(
@@ -89,31 +111,53 @@ final class MovesPreviewPresenter
             defenderTeamHasVanguard: $defenderTeam->tieneVanguardiaViva(),
             weather: $battle->weather(),
             isPreview: true,
+            equipoDefensor: $defenderTeam,
+            terreno: $battle->terreno(),
         );
 
         $daño = $battle->damageChain()->calculate($action);
-        $directPct = $actor->obtenerPorcentajeDanioDirecto();
+        $directPct = min(1.0, $actor->obtenerPorcentajeDanioDirecto() + $move->perfil->danoDirectoFraccion);
         $barreraActual = $move->esEspecial()
             ? $target->defensaEspHpActual()
             : $target->defensaHpActual();
-        $desglose = (new BarrerasVidaManager())->desglosarDaño($daño, $barreraActual, $directPct);
+        $desglose = (new BarrerasVidaManager())->desglosarDaño(
+            $daño,
+            $barreraActual,
+            $directPct,
+            $move->perfil->multiplicadorDanoEscudo * $actor->multiplicadorDanioEscudo($action),
+            $move->perfil->multiplicadorDanoSalud,
+        );
+        $tipoEfectivo = $actor->tipoEfectivoMovimiento($action);
+        $ajusteGolpes = $actor->ajustarGolpes($action);
+        $golpes = $ajusteGolpes['golpes'] ?? $move->perfil->golpesMax;
 
         return [
             'nombre' => $move->nombre,
-            'tipo' => $move->tipo->value,
+            'tipo' => $tipoEfectivo->value,
             'potencia' => $move->potencia,
             'categoria' => $categoria->value,
             'daño' => $daño,
-            'danoHp' => $desglose['danoHp'],
-            'danoBarrera' => $desglose['absorbido'],
+            'danoHp' => $desglose->danoHp,
+            'danoBarrera' => $desglose->danoEscudo,
             'barreraLabel' => $move->esEspecial() ? 'DEF.ESP' : 'DEF',
-            'letal' => $daño > 0 && $desglose['danoHp'] >= $target->hpActual(),
-            'efectividad' => $move->esEstado() ? 1.0 : $move->tipo->effectiveness($target->pokemon()),
-            'stab' => ManejadorSTAB::tieneStab($actor, $move),
+            'letal' => $daño > 0 && $desglose->danoHp >= $target->hpActual(),
+            'efectividad' => $move->esEstado() ? 1.0 : $target->efectividadContra($tipoEfectivo),
+            'stab' => ManejadorSTAB::tieneStabDeTipo($actor, $tipoEfectivo),
             'directo' => ! $move->esEstado() && $directPct > 0,
             'statusEffect' => $move->statusEffect->value,
             'selfStatChanges' => self::cambiosParaArray($move->selfStatChanges),
             'targetStatChanges' => self::cambiosParaArray($move->targetStatChanges),
+            'golpes' => $golpes,
+            'golpesMin' => $ajusteGolpes['golpes'] ?? $move->perfil->golpesMin,
+            'golpesMax' => $golpes,
+            'disponible' => $actor->movimientoDisponible($move),
+            'motivoNoDisponible' => $actor->motivoMovimientoNoDisponible($move),
+            'cargaActual' => $actor->cargaMovimiento($move),
+            'cargaMaxima' => $move->perfil->cargaMaxima,
+            'usosRestantes' => $actor->usosRestantes($move),
+            'usosMaximos' => $move->perfil->usosMaximos,
+            'comboActual' => $actor->comboMovimiento() === $move->nombre ? $actor->combo() : 0,
+            'comboMultiplicador' => $actor->comboMultiplicadorPara($move),
         ];
     }
 
@@ -124,7 +168,7 @@ final class MovesPreviewPresenter
     {
         $resultado = [];
         foreach ($cambios as $cambio) {
-            $resultado[] = ['stat' => $cambio->statValue(), 'factor' => $cambio->factor];
+            $resultado[] = ['stat' => $cambio->statValue(), 'factor' => $cambio->factorTemporal()];
         }
 
         return $resultado;

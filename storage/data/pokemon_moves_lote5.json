@@ -1,0 +1,3460 @@
+{
+  "1": [
+    "growl",
+    "synthesis"
+  ],
+  "2": [
+    "growl",
+    "synthesis"
+  ],
+  "3": [
+    "growl",
+    "synthesis"
+  ],
+  "4": [
+    "growl",
+    "leer",
+    "smokescreen",
+    "scary-face"
+  ],
+  "5": [
+    "growl",
+    "leer",
+    "smokescreen",
+    "scary-face"
+  ],
+  "6": [
+    "leer",
+    "growl",
+    "smokescreen",
+    "scary-face"
+  ],
+  "7": [
+    "tail-whip"
+  ],
+  "8": [
+    "tail-whip"
+  ],
+  "9": [
+    "tail-whip"
+  ],
+  "16": [
+    "sand-attack",
+    "roost"
+  ],
+  "17": [
+    "sand-attack",
+    "roost"
+  ],
+  "18": [
+    "sand-attack",
+    "roost"
+  ],
+  "19": [
+    "tail-whip"
+  ],
+  "20": [
+    "tail-whip",
+    "scary-face"
+  ],
+  "21": [
+    "growl",
+    "leer",
+    "roost"
+  ],
+  "22": [
+    "leer",
+    "growl",
+    "roost"
+  ],
+  "23": [
+    "leer",
+    "screech"
+  ],
+  "24": [
+    "leer",
+    "screech"
+  ],
+  "25": [
+    "growl",
+    "tail-whip",
+    "charm"
+  ],
+  "26": [
+    "growl",
+    "tail-whip",
+    "charm"
+  ],
+  "27": [
+    "sand-attack"
+  ],
+  "28": [
+    "sand-attack"
+  ],
+  "29": [
+    "growl",
+    "tail-whip"
+  ],
+  "30": [
+    "growl",
+    "tail-whip"
+  ],
+  "31": [
+    "tail-whip",
+    "growl"
+  ],
+  "32": [
+    "leer"
+  ],
+  "33": [
+    "leer"
+  ],
+  "34": [
+    "leer"
+  ],
+  "35": [
+    "growl",
+    "moonlight",
+    "charm",
+    "baby-doll-eyes"
+  ],
+  "36": [
+    "moonlight",
+    "growl",
+    "charm",
+    "baby-doll-eyes"
+  ],
+  "37": [
+    "tail-whip",
+    "baby-doll-eyes"
+  ],
+  "38": [
+    "tail-whip"
+  ],
+  "39": [
+    "charm"
+  ],
+  "40": [
+    "charm"
+  ],
+  "42": [
+    "screech"
+  ],
+  "43": [
+    "moonlight"
+  ],
+  "44": [
+    "moonlight"
+  ],
+  "45": [
+    "moonlight"
+  ],
+  "47": [
+    "screech"
+  ],
+  "49": [
+    "screech"
+  ],
+  "50": [
+    "growl",
+    "sand-attack"
+  ],
+  "51": [
+    "growl",
+    "sand-attack",
+    "screech"
+  ],
+  "52": [
+    "growl",
+    "screech"
+  ],
+  "53": [
+    "growl",
+    "screech"
+  ],
+  "54": [
+    "tail-whip",
+    "screech"
+  ],
+  "55": [
+    "tail-whip",
+    "screech"
+  ],
+  "56": [
+    "leer",
+    "screech"
+  ],
+  "57": [
+    "leer",
+    "screech"
+  ],
+  "58": [
+    "leer"
+  ],
+  "59": [
+    "leer"
+  ],
+  "64": [
+    "recover"
+  ],
+  "65": [
+    "recover"
+  ],
+  "66": [
+    "leer",
+    "scary-face"
+  ],
+  "67": [
+    "leer",
+    "scary-face"
+  ],
+  "68": [
+    "leer",
+    "scary-face"
+  ],
+  "72": [
+    "screech"
+  ],
+  "73": [
+    "screech"
+  ],
+  "74": [
+    "sand-attack"
+  ],
+  "75": [
+    "sand-attack"
+  ],
+  "76": [
+    "sand-attack"
+  ],
+  "77": [
+    "tail-whip",
+    "growl"
+  ],
+  "78": [
+    "tail-whip",
+    "growl"
+  ],
+  "79": [
+    "growl"
+  ],
+  "80": [
+    "growl"
+  ],
+  "81": [
+    "screech",
+    "metal-sound"
+  ],
+  "82": [
+    "screech",
+    "metal-sound"
+  ],
+  "83": [
+    "sand-attack",
+    "leer"
+  ],
+  "84": [
+    "growl",
+    "leer"
+  ],
+  "85": [
+    "growl",
+    "leer"
+  ],
+  "86": [
+    "growl",
+    "charm"
+  ],
+  "87": [
+    "growl"
+  ],
+  "88": [
+    "screech"
+  ],
+  "89": [
+    "screech"
+  ],
+  "90": [
+    "leer"
+  ],
+  "91": [
+    "leer"
+  ],
+  "95": [
+    "screech"
+  ],
+  "98": [
+    "leer"
+  ],
+  "99": [
+    "leer"
+  ],
+  "100": [
+    "screech"
+  ],
+  "101": [
+    "screech"
+  ],
+  "102": [
+    "synthesis"
+  ],
+  "103": [
+    "synthesis"
+  ],
+  "104": [
+    "growl",
+    "leer",
+    "tail-whip"
+  ],
+  "105": [
+    "leer",
+    "growl",
+    "tail-whip",
+    "screech"
+  ],
+  "107": [
+    "leer"
+  ],
+  "108": [
+    "screech"
+  ],
+  "109": [
+    "smokescreen"
+  ],
+  "110": [
+    "smokescreen",
+    "screech"
+  ],
+  "111": [
+    "tail-whip",
+    "leer",
+    "scary-face",
+    "sand-attack"
+  ],
+  "112": [
+    "tail-whip",
+    "leer",
+    "scary-face",
+    "sand-attack"
+  ],
+  "113": [
+    "growl",
+    "tail-whip",
+    "charm",
+    "baby-doll-eyes"
+  ],
+  "115": [
+    "tail-whip",
+    "leer",
+    "growl"
+  ],
+  "116": [
+    "smokescreen",
+    "leer"
+  ],
+  "117": [
+    "smokescreen",
+    "leer"
+  ],
+  "118": [
+    "tail-whip"
+  ],
+  "119": [
+    "tail-whip"
+  ],
+  "120": [
+    "recover"
+  ],
+  "121": [
+    "recover"
+  ],
+  "123": [
+    "leer"
+  ],
+  "124": [
+    "screech"
+  ],
+  "125": [
+    "leer",
+    "screech"
+  ],
+  "126": [
+    "leer",
+    "smokescreen",
+    "scary-face"
+  ],
+  "128": [
+    "tail-whip",
+    "leer",
+    "scary-face"
+  ],
+  "130": [
+    "leer",
+    "scary-face"
+  ],
+  "131": [
+    "growl"
+  ],
+  "133": [
+    "sand-attack",
+    "tail-whip",
+    "growl",
+    "charm",
+    "baby-doll-eyes"
+  ],
+  "134": [
+    "sand-attack",
+    "tail-whip",
+    "baby-doll-eyes",
+    "growl",
+    "charm"
+  ],
+  "135": [
+    "sand-attack",
+    "tail-whip",
+    "baby-doll-eyes",
+    "growl",
+    "charm"
+  ],
+  "136": [
+    "sand-attack",
+    "tail-whip",
+    "leer",
+    "scary-face",
+    "baby-doll-eyes",
+    "growl",
+    "charm"
+  ],
+  "137": [
+    "recover"
+  ],
+  "138": [
+    "leer",
+    "sand-attack"
+  ],
+  "139": [
+    "leer",
+    "sand-attack"
+  ],
+  "140": [
+    "leer",
+    "sand-attack",
+    "metal-sound"
+  ],
+  "141": [
+    "leer",
+    "sand-attack",
+    "metal-sound",
+    "screech"
+  ],
+  "142": [
+    "scary-face"
+  ],
+  "143": [
+    "screech"
+  ],
+  "144": [
+    "roost",
+    "leer"
+  ],
+  "145": [
+    "roost",
+    "leer"
+  ],
+  "146": [
+    "leer",
+    "roost"
+  ],
+  "147": [
+    "leer"
+  ],
+  "148": [
+    "leer"
+  ],
+  "149": [
+    "leer",
+    "roost"
+  ],
+  "150": [
+    "recover"
+  ],
+  "152": [
+    "growl",
+    "synthesis"
+  ],
+  "153": [
+    "growl",
+    "synthesis"
+  ],
+  "154": [
+    "growl",
+    "synthesis"
+  ],
+  "155": [
+    "leer",
+    "smokescreen"
+  ],
+  "156": [
+    "leer",
+    "smokescreen"
+  ],
+  "157": [
+    "leer",
+    "smokescreen"
+  ],
+  "158": [
+    "leer",
+    "scary-face",
+    "screech"
+  ],
+  "159": [
+    "leer",
+    "scary-face",
+    "screech"
+  ],
+  "160": [
+    "leer",
+    "scary-face",
+    "screech"
+  ],
+  "161": [
+    "growl"
+  ],
+  "162": [
+    "growl"
+  ],
+  "163": [
+    "growl",
+    "roost"
+  ],
+  "164": [
+    "growl",
+    "roost"
+  ],
+  "165": [
+    "roost"
+  ],
+  "166": [
+    "roost"
+  ],
+  "167": [
+    "scary-face",
+    "screech"
+  ],
+  "168": [
+    "scary-face",
+    "screech"
+  ],
+  "169": [
+    "screech"
+  ],
+  "172": [
+    "charm",
+    "tail-whip"
+  ],
+  "173": [
+    "charm",
+    "baby-doll-eyes"
+  ],
+  "174": [
+    "charm"
+  ],
+  "175": [
+    "growl",
+    "charm",
+    "baby-doll-eyes"
+  ],
+  "176": [
+    "growl",
+    "charm",
+    "baby-doll-eyes"
+  ],
+  "177": [
+    "leer"
+  ],
+  "178": [
+    "leer"
+  ],
+  "179": [
+    "growl"
+  ],
+  "180": [
+    "growl"
+  ],
+  "181": [
+    "growl"
+  ],
+  "182": [
+    "moonlight"
+  ],
+  "183": [
+    "tail-whip",
+    "charm"
+  ],
+  "184": [
+    "tail-whip",
+    "charm"
+  ],
+  "187": [
+    "synthesis",
+    "tail-whip"
+  ],
+  "188": [
+    "tail-whip",
+    "synthesis"
+  ],
+  "189": [
+    "tail-whip",
+    "synthesis"
+  ],
+  "190": [
+    "tail-whip",
+    "sand-attack",
+    "screech"
+  ],
+  "191": [
+    "synthesis"
+  ],
+  "192": [
+    "synthesis"
+  ],
+  "193": [
+    "screech"
+  ],
+  "194": [
+    "tail-whip"
+  ],
+  "195": [
+    "tail-whip"
+  ],
+  "196": [
+    "tail-whip",
+    "sand-attack",
+    "morning-sun",
+    "baby-doll-eyes",
+    "growl",
+    "charm"
+  ],
+  "197": [
+    "tail-whip",
+    "sand-attack",
+    "screech",
+    "moonlight",
+    "baby-doll-eyes",
+    "growl",
+    "charm"
+  ],
+  "198": [
+    "roost"
+  ],
+  "199": [
+    "growl"
+  ],
+  "200": [
+    "growl"
+  ],
+  "202": [
+    "charm"
+  ],
+  "203": [
+    "growl"
+  ],
+  "206": [
+    "screech",
+    "roost"
+  ],
+  "207": [
+    "sand-attack",
+    "screech"
+  ],
+  "208": [
+    "screech"
+  ],
+  "209": [
+    "scary-face",
+    "tail-whip",
+    "charm",
+    "growl"
+  ],
+  "210": [
+    "scary-face",
+    "tail-whip",
+    "charm",
+    "growl"
+  ],
+  "212": [
+    "leer"
+  ],
+  "214": [
+    "leer"
+  ],
+  "215": [
+    "leer",
+    "screech"
+  ],
+  "216": [
+    "leer",
+    "charm",
+    "baby-doll-eyes"
+  ],
+  "217": [
+    "leer",
+    "scary-face",
+    "baby-doll-eyes",
+    "charm"
+  ],
+  "218": [
+    "recover"
+  ],
+  "219": [
+    "recover"
+  ],
+  "222": [
+    "recover"
+  ],
+  "226": [
+    "roost"
+  ],
+  "227": [
+    "leer",
+    "sand-attack",
+    "metal-sound"
+  ],
+  "228": [
+    "leer"
+  ],
+  "229": [
+    "leer"
+  ],
+  "230": [
+    "leer",
+    "smokescreen"
+  ],
+  "231": [
+    "growl",
+    "charm"
+  ],
+  "232": [
+    "growl",
+    "scary-face",
+    "charm"
+  ],
+  "233": [
+    "recover"
+  ],
+  "234": [
+    "leer",
+    "sand-attack"
+  ],
+  "239": [
+    "leer",
+    "screech"
+  ],
+  "240": [
+    "leer",
+    "smokescreen",
+    "scary-face"
+  ],
+  "241": [
+    "growl",
+    "charm"
+  ],
+  "242": [
+    "growl",
+    "tail-whip",
+    "charm",
+    "baby-doll-eyes"
+  ],
+  "243": [
+    "leer"
+  ],
+  "244": [
+    "leer",
+    "smokescreen",
+    "scary-face"
+  ],
+  "245": [
+    "leer"
+  ],
+  "246": [
+    "leer",
+    "screech",
+    "scary-face"
+  ],
+  "247": [
+    "leer",
+    "screech",
+    "scary-face"
+  ],
+  "248": [
+    "leer",
+    "screech",
+    "scary-face"
+  ],
+  "249": [
+    "recover"
+  ],
+  "250": [
+    "recover"
+  ],
+  "251": [
+    "recover"
+  ],
+  "252": [
+    "leer",
+    "screech"
+  ],
+  "253": [
+    "leer",
+    "screech"
+  ],
+  "254": [
+    "leer",
+    "screech"
+  ],
+  "255": [
+    "growl",
+    "sand-attack"
+  ],
+  "256": [
+    "growl",
+    "sand-attack"
+  ],
+  "257": [
+    "growl",
+    "sand-attack"
+  ],
+  "258": [
+    "growl",
+    "screech"
+  ],
+  "259": [
+    "growl",
+    "screech"
+  ],
+  "260": [
+    "growl",
+    "screech"
+  ],
+  "261": [
+    "sand-attack",
+    "scary-face",
+    "leer"
+  ],
+  "262": [
+    "sand-attack",
+    "scary-face",
+    "leer"
+  ],
+  "263": [
+    "growl",
+    "tail-whip",
+    "sand-attack",
+    "baby-doll-eyes"
+  ],
+  "264": [
+    "tail-whip",
+    "growl",
+    "sand-attack",
+    "baby-doll-eyes"
+  ],
+  "267": [
+    "morning-sun"
+  ],
+  "269": [
+    "moonlight"
+  ],
+  "270": [
+    "growl"
+  ],
+  "271": [
+    "growl"
+  ],
+  "272": [
+    "growl"
+  ],
+  "273": [
+    "synthesis"
+  ],
+  "274": [
+    "synthesis"
+  ],
+  "275": [
+    "synthesis"
+  ],
+  "276": [
+    "growl"
+  ],
+  "277": [
+    "growl"
+  ],
+  "278": [
+    "growl",
+    "roost"
+  ],
+  "279": [
+    "growl",
+    "roost"
+  ],
+  "280": [
+    "growl",
+    "charm"
+  ],
+  "281": [
+    "growl",
+    "charm"
+  ],
+  "282": [
+    "growl",
+    "charm",
+    "recover"
+  ],
+  "284": [
+    "scary-face"
+  ],
+  "290": [
+    "sand-attack"
+  ],
+  "291": [
+    "sand-attack",
+    "screech"
+  ],
+  "292": [
+    "sand-attack"
+  ],
+  "293": [
+    "screech"
+  ],
+  "294": [
+    "screech"
+  ],
+  "295": [
+    "screech"
+  ],
+  "296": [
+    "sand-attack"
+  ],
+  "297": [
+    "sand-attack"
+  ],
+  "298": [
+    "charm",
+    "tail-whip"
+  ],
+  "300": [
+    "growl",
+    "tail-whip",
+    "charm",
+    "baby-doll-eyes"
+  ],
+  "301": [
+    "growl",
+    "baby-doll-eyes",
+    "charm",
+    "tail-whip"
+  ],
+  "302": [
+    "leer"
+  ],
+  "303": [
+    "growl"
+  ],
+  "304": [
+    "metal-sound"
+  ],
+  "305": [
+    "metal-sound"
+  ],
+  "306": [
+    "metal-sound"
+  ],
+  "307": [
+    "recover"
+  ],
+  "308": [
+    "recover"
+  ],
+  "309": [
+    "leer"
+  ],
+  "310": [
+    "leer"
+  ],
+  "311": [
+    "growl",
+    "charm"
+  ],
+  "312": [
+    "growl",
+    "charm"
+  ],
+  "313": [
+    "moonlight"
+  ],
+  "314": [
+    "charm",
+    "moonlight"
+  ],
+  "315": [
+    "synthesis"
+  ],
+  "318": [
+    "leer",
+    "scary-face",
+    "screech"
+  ],
+  "319": [
+    "leer",
+    "scary-face",
+    "screech"
+  ],
+  "320": [
+    "growl"
+  ],
+  "321": [
+    "growl"
+  ],
+  "322": [
+    "growl"
+  ],
+  "323": [
+    "growl"
+  ],
+  "324": [
+    "smokescreen"
+  ],
+  "325": [
+    "growl"
+  ],
+  "326": [
+    "growl"
+  ],
+  "328": [
+    "sand-attack"
+  ],
+  "329": [
+    "sand-attack",
+    "screech"
+  ],
+  "330": [
+    "sand-attack",
+    "screech"
+  ],
+  "331": [
+    "leer",
+    "sand-attack"
+  ],
+  "332": [
+    "leer",
+    "sand-attack"
+  ],
+  "333": [
+    "growl"
+  ],
+  "334": [
+    "growl"
+  ],
+  "335": [
+    "leer"
+  ],
+  "336": [
+    "screech"
+  ],
+  "337": [
+    "moonlight"
+  ],
+  "338": [
+    "morning-sun"
+  ],
+  "341": [
+    "leer"
+  ],
+  "342": [
+    "leer"
+  ],
+  "350": [
+    "recover"
+  ],
+  "352": [
+    "tail-whip",
+    "screech"
+  ],
+  "353": [
+    "screech"
+  ],
+  "354": [
+    "screech"
+  ],
+  "355": [
+    "leer"
+  ],
+  "356": [
+    "leer"
+  ],
+  "357": [
+    "leer",
+    "synthesis"
+  ],
+  "358": [
+    "growl",
+    "recover"
+  ],
+  "359": [
+    "leer"
+  ],
+  "360": [
+    "charm"
+  ],
+  "361": [
+    "leer"
+  ],
+  "362": [
+    "leer"
+  ],
+  "363": [
+    "growl"
+  ],
+  "364": [
+    "growl"
+  ],
+  "365": [
+    "growl"
+  ],
+  "367": [
+    "screech",
+    "scary-face"
+  ],
+  "370": [
+    "charm",
+    "baby-doll-eyes"
+  ],
+  "371": [
+    "leer",
+    "scary-face"
+  ],
+  "372": [
+    "leer",
+    "scary-face"
+  ],
+  "373": [
+    "leer",
+    "scary-face",
+    "roost"
+  ],
+  "375": [
+    "scary-face"
+  ],
+  "376": [
+    "scary-face"
+  ],
+  "380": [
+    "recover",
+    "charm"
+  ],
+  "381": [
+    "recover"
+  ],
+  "382": [
+    "scary-face"
+  ],
+  "383": [
+    "scary-face"
+  ],
+  "384": [
+    "scary-face"
+  ],
+  "386": [
+    "leer",
+    "recover"
+  ],
+  "387": [
+    "synthesis"
+  ],
+  "388": [
+    "synthesis"
+  ],
+  "389": [
+    "synthesis"
+  ],
+  "390": [
+    "leer"
+  ],
+  "391": [
+    "leer"
+  ],
+  "392": [
+    "leer"
+  ],
+  "393": [
+    "growl",
+    "charm",
+    "roost"
+  ],
+  "394": [
+    "growl",
+    "charm",
+    "roost"
+  ],
+  "395": [
+    "growl",
+    "charm",
+    "roost"
+  ],
+  "396": [
+    "growl",
+    "roost"
+  ],
+  "397": [
+    "growl",
+    "roost"
+  ],
+  "398": [
+    "growl",
+    "roost"
+  ],
+  "399": [
+    "growl"
+  ],
+  "400": [
+    "growl"
+  ],
+  "401": [
+    "growl"
+  ],
+  "402": [
+    "growl",
+    "screech"
+  ],
+  "403": [
+    "leer",
+    "scary-face",
+    "baby-doll-eyes"
+  ],
+  "404": [
+    "leer",
+    "scary-face"
+  ],
+  "405": [
+    "leer",
+    "scary-face"
+  ],
+  "407": [
+    "synthesis"
+  ],
+  "408": [
+    "leer",
+    "scary-face",
+    "screech"
+  ],
+  "409": [
+    "leer",
+    "scary-face",
+    "screech"
+  ],
+  "410": [
+    "metal-sound"
+  ],
+  "411": [
+    "metal-sound"
+  ],
+  "414": [
+    "roost"
+  ],
+  "416": [
+    "recover",
+    "roost"
+  ],
+  "417": [
+    "growl",
+    "charm",
+    "baby-doll-eyes"
+  ],
+  "418": [
+    "growl",
+    "tail-whip"
+  ],
+  "419": [
+    "growl",
+    "tail-whip"
+  ],
+  "420": [
+    "morning-sun"
+  ],
+  "421": [
+    "morning-sun"
+  ],
+  "422": [
+    "recover"
+  ],
+  "423": [
+    "recover"
+  ],
+  "424": [
+    "sand-attack",
+    "tail-whip",
+    "screech"
+  ],
+  "427": [
+    "charm",
+    "baby-doll-eyes"
+  ],
+  "428": [
+    "charm",
+    "baby-doll-eyes"
+  ],
+  "429": [
+    "growl"
+  ],
+  "430": [
+    "roost"
+  ],
+  "431": [
+    "growl",
+    "charm"
+  ],
+  "432": [
+    "growl",
+    "charm"
+  ],
+  "433": [
+    "growl",
+    "recover"
+  ],
+  "434": [
+    "screech",
+    "smokescreen"
+  ],
+  "435": [
+    "screech",
+    "smokescreen"
+  ],
+  "436": [
+    "metal-sound"
+  ],
+  "437": [
+    "metal-sound"
+  ],
+  "440": [
+    "charm",
+    "baby-doll-eyes"
+  ],
+  "441": [
+    "growl",
+    "roost",
+    "confide"
+  ],
+  "443": [
+    "sand-attack"
+  ],
+  "444": [
+    "sand-attack"
+  ],
+  "445": [
+    "sand-attack"
+  ],
+  "446": [
+    "screech"
+  ],
+  "447": [
+    "screech"
+  ],
+  "448": [
+    "metal-sound",
+    "screech"
+  ],
+  "449": [
+    "sand-attack"
+  ],
+  "450": [
+    "sand-attack"
+  ],
+  "451": [
+    "leer",
+    "scary-face"
+  ],
+  "452": [
+    "leer",
+    "scary-face"
+  ],
+  "456": [
+    "roost"
+  ],
+  "457": [
+    "roost"
+  ],
+  "458": [
+    "roost"
+  ],
+  "459": [
+    "leer"
+  ],
+  "460": [
+    "leer"
+  ],
+  "461": [
+    "leer",
+    "screech"
+  ],
+  "462": [
+    "metal-sound",
+    "screech"
+  ],
+  "463": [
+    "screech"
+  ],
+  "464": [
+    "tail-whip",
+    "scary-face"
+  ],
+  "466": [
+    "leer",
+    "screech"
+  ],
+  "467": [
+    "leer",
+    "smokescreen",
+    "scary-face"
+  ],
+  "468": [
+    "growl",
+    "charm",
+    "baby-doll-eyes"
+  ],
+  "469": [
+    "screech"
+  ],
+  "470": [
+    "tail-whip",
+    "sand-attack",
+    "synthesis",
+    "baby-doll-eyes",
+    "growl",
+    "charm"
+  ],
+  "471": [
+    "tail-whip",
+    "sand-attack",
+    "baby-doll-eyes",
+    "growl",
+    "charm"
+  ],
+  "472": [
+    "sand-attack",
+    "screech"
+  ],
+  "473": [
+    "scary-face"
+  ],
+  "474": [
+    "recover"
+  ],
+  "475": [
+    "leer",
+    "growl",
+    "charm"
+  ],
+  "477": [
+    "leer"
+  ],
+  "478": [
+    "leer"
+  ],
+  "481": [
+    "charm",
+    "recover"
+  ],
+  "483": [
+    "scary-face"
+  ],
+  "484": [
+    "scary-face"
+  ],
+  "485": [
+    "leer",
+    "metal-sound",
+    "scary-face"
+  ],
+  "487": [
+    "scary-face"
+  ],
+  "488": [
+    "moonlight",
+    "recover"
+  ],
+  "489": [
+    "charm"
+  ],
+  "490": [
+    "charm"
+  ],
+  "492": [
+    "synthesis",
+    "recover"
+  ],
+  "493": [
+    "recover"
+  ],
+  "495": [
+    "leer"
+  ],
+  "496": [
+    "leer"
+  ],
+  "497": [
+    "leer"
+  ],
+  "498": [
+    "tail-whip"
+  ],
+  "499": [
+    "tail-whip"
+  ],
+  "500": [
+    "tail-whip"
+  ],
+  "501": [
+    "tail-whip"
+  ],
+  "502": [
+    "tail-whip"
+  ],
+  "503": [
+    "tail-whip"
+  ],
+  "504": [
+    "leer",
+    "sand-attack"
+  ],
+  "505": [
+    "leer",
+    "sand-attack"
+  ],
+  "506": [
+    "leer",
+    "baby-doll-eyes"
+  ],
+  "507": [
+    "leer",
+    "baby-doll-eyes"
+  ],
+  "508": [
+    "leer",
+    "baby-doll-eyes"
+  ],
+  "509": [
+    "growl",
+    "sand-attack"
+  ],
+  "510": [
+    "sand-attack",
+    "growl"
+  ],
+  "511": [
+    "leer"
+  ],
+  "512": [
+    "leer"
+  ],
+  "513": [
+    "leer"
+  ],
+  "514": [
+    "leer"
+  ],
+  "515": [
+    "leer"
+  ],
+  "516": [
+    "leer"
+  ],
+  "517": [
+    "moonlight"
+  ],
+  "518": [
+    "moonlight"
+  ],
+  "519": [
+    "growl",
+    "leer",
+    "roost"
+  ],
+  "520": [
+    "leer",
+    "growl",
+    "roost"
+  ],
+  "521": [
+    "leer",
+    "growl",
+    "roost"
+  ],
+  "522": [
+    "tail-whip"
+  ],
+  "523": [
+    "tail-whip"
+  ],
+  "524": [
+    "sand-attack"
+  ],
+  "525": [
+    "sand-attack"
+  ],
+  "526": [
+    "sand-attack"
+  ],
+  "531": [
+    "growl",
+    "baby-doll-eyes"
+  ],
+  "532": [
+    "leer",
+    "scary-face"
+  ],
+  "533": [
+    "leer",
+    "scary-face"
+  ],
+  "534": [
+    "leer",
+    "scary-face"
+  ],
+  "535": [
+    "growl"
+  ],
+  "536": [
+    "growl"
+  ],
+  "537": [
+    "growl"
+  ],
+  "538": [
+    "leer"
+  ],
+  "539": [
+    "leer"
+  ],
+  "543": [
+    "screech"
+  ],
+  "544": [
+    "screech"
+  ],
+  "545": [
+    "screech"
+  ],
+  "546": [
+    "charm"
+  ],
+  "547": [
+    "charm"
+  ],
+  "548": [
+    "synthesis",
+    "recover",
+    "charm"
+  ],
+  "549": [
+    "synthesis",
+    "charm"
+  ],
+  "550": [
+    "scary-face",
+    "tail-whip"
+  ],
+  "551": [
+    "leer",
+    "sand-attack",
+    "scary-face"
+  ],
+  "552": [
+    "sand-attack",
+    "leer",
+    "scary-face"
+  ],
+  "553": [
+    "sand-attack",
+    "leer",
+    "scary-face"
+  ],
+  "556": [
+    "synthesis"
+  ],
+  "557": [
+    "sand-attack"
+  ],
+  "558": [
+    "sand-attack"
+  ],
+  "559": [
+    "leer",
+    "sand-attack",
+    "scary-face"
+  ],
+  "560": [
+    "sand-attack",
+    "leer",
+    "scary-face"
+  ],
+  "563": [
+    "scary-face"
+  ],
+  "566": [
+    "leer",
+    "scary-face"
+  ],
+  "567": [
+    "leer",
+    "scary-face"
+  ],
+  "570": [
+    "leer",
+    "scary-face"
+  ],
+  "571": [
+    "leer",
+    "scary-face"
+  ],
+  "572": [
+    "growl",
+    "charm",
+    "baby-doll-eyes"
+  ],
+  "573": [
+    "charm",
+    "baby-doll-eyes"
+  ],
+  "574": [
+    "charm"
+  ],
+  "575": [
+    "charm"
+  ],
+  "576": [
+    "charm"
+  ],
+  "577": [
+    "charm",
+    "recover"
+  ],
+  "578": [
+    "charm",
+    "recover"
+  ],
+  "579": [
+    "charm",
+    "recover"
+  ],
+  "580": [
+    "roost"
+  ],
+  "581": [
+    "roost"
+  ],
+  "585": [
+    "growl",
+    "sand-attack",
+    "charm"
+  ],
+  "586": [
+    "sand-attack",
+    "growl",
+    "charm"
+  ],
+  "587": [
+    "tail-whip"
+  ],
+  "588": [
+    "leer",
+    "scary-face"
+  ],
+  "589": [
+    "leer",
+    "scary-face"
+  ],
+  "590": [
+    "synthesis"
+  ],
+  "591": [
+    "synthesis"
+  ],
+  "592": [
+    "recover"
+  ],
+  "593": [
+    "recover"
+  ],
+  "595": [
+    "screech"
+  ],
+  "596": [
+    "screech"
+  ],
+  "599": [
+    "screech",
+    "metal-sound"
+  ],
+  "600": [
+    "screech",
+    "metal-sound"
+  ],
+  "601": [
+    "screech",
+    "metal-sound"
+  ],
+  "605": [
+    "growl",
+    "recover"
+  ],
+  "606": [
+    "growl",
+    "recover"
+  ],
+  "610": [
+    "leer",
+    "scary-face"
+  ],
+  "611": [
+    "leer",
+    "scary-face"
+  ],
+  "612": [
+    "leer",
+    "scary-face"
+  ],
+  "613": [
+    "growl",
+    "charm"
+  ],
+  "614": [
+    "growl",
+    "charm"
+  ],
+  "615": [
+    "recover"
+  ],
+  "616": [
+    "recover"
+  ],
+  "617": [
+    "recover"
+  ],
+  "621": [
+    "leer",
+    "scary-face"
+  ],
+  "624": [
+    "leer",
+    "scary-face",
+    "metal-sound"
+  ],
+  "625": [
+    "leer",
+    "scary-face",
+    "metal-sound"
+  ],
+  "626": [
+    "leer",
+    "scary-face"
+  ],
+  "627": [
+    "leer",
+    "scary-face",
+    "roost"
+  ],
+  "628": [
+    "leer",
+    "scary-face"
+  ],
+  "629": [
+    "leer"
+  ],
+  "630": [
+    "leer"
+  ],
+  "632": [
+    "sand-attack",
+    "metal-sound"
+  ],
+  "633": [
+    "scary-face"
+  ],
+  "634": [
+    "scary-face"
+  ],
+  "635": [
+    "scary-face"
+  ],
+  "636": [
+    "screech"
+  ],
+  "637": [
+    "screech"
+  ],
+  "638": [
+    "leer"
+  ],
+  "639": [
+    "leer"
+  ],
+  "640": [
+    "leer",
+    "synthesis"
+  ],
+  "641": [
+    "leer"
+  ],
+  "642": [
+    "leer"
+  ],
+  "645": [
+    "leer"
+  ],
+  "646": [
+    "scary-face"
+  ],
+  "647": [
+    "leer"
+  ],
+  "649": [
+    "screech",
+    "metal-sound"
+  ],
+  "650": [
+    "growl"
+  ],
+  "651": [
+    "growl"
+  ],
+  "652": [
+    "growl"
+  ],
+  "653": [
+    "tail-whip"
+  ],
+  "654": [
+    "tail-whip"
+  ],
+  "655": [
+    "tail-whip"
+  ],
+  "656": [
+    "growl",
+    "smokescreen"
+  ],
+  "657": [
+    "growl",
+    "smokescreen"
+  ],
+  "658": [
+    "growl",
+    "smokescreen"
+  ],
+  "659": [
+    "leer"
+  ],
+  "660": [
+    "leer"
+  ],
+  "661": [
+    "growl",
+    "roost"
+  ],
+  "662": [
+    "growl",
+    "roost"
+  ],
+  "663": [
+    "growl",
+    "roost"
+  ],
+  "667": [
+    "leer"
+  ],
+  "668": [
+    "leer"
+  ],
+  "669": [
+    "synthesis"
+  ],
+  "670": [
+    "synthesis"
+  ],
+  "671": [
+    "synthesis"
+  ],
+  "672": [
+    "tail-whip",
+    "synthesis"
+  ],
+  "673": [
+    "tail-whip",
+    "synthesis"
+  ],
+  "674": [
+    "leer"
+  ],
+  "675": [
+    "leer"
+  ],
+  "676": [
+    "growl",
+    "sand-attack",
+    "baby-doll-eyes",
+    "tail-whip",
+    "charm"
+  ],
+  "677": [
+    "leer"
+  ],
+  "678": [
+    "leer",
+    "charm"
+  ],
+  "679": [
+    "metal-sound"
+  ],
+  "680": [
+    "metal-sound"
+  ],
+  "681": [
+    "metal-sound"
+  ],
+  "682": [
+    "charm"
+  ],
+  "683": [
+    "charm"
+  ],
+  "688": [
+    "sand-attack"
+  ],
+  "689": [
+    "sand-attack"
+  ],
+  "690": [
+    "smokescreen",
+    "tail-whip"
+  ],
+  "691": [
+    "smokescreen",
+    "tail-whip"
+  ],
+  "694": [
+    "tail-whip"
+  ],
+  "695": [
+    "tail-whip"
+  ],
+  "696": [
+    "tail-whip",
+    "charm"
+  ],
+  "697": [
+    "tail-whip",
+    "charm"
+  ],
+  "698": [
+    "growl"
+  ],
+  "699": [
+    "growl"
+  ],
+  "700": [
+    "tail-whip",
+    "sand-attack",
+    "baby-doll-eyes",
+    "growl",
+    "charm"
+  ],
+  "701": [
+    "roost"
+  ],
+  "702": [
+    "tail-whip",
+    "charm"
+  ],
+  "707": [
+    "metal-sound"
+  ],
+  "710": [
+    "scary-face"
+  ],
+  "711": [
+    "scary-face"
+  ],
+  "712": [
+    "recover"
+  ],
+  "713": [
+    "recover"
+  ],
+  "714": [
+    "screech",
+    "roost"
+  ],
+  "715": [
+    "screech",
+    "moonlight",
+    "roost"
+  ],
+  "717": [
+    "roost"
+  ],
+  "721": [
+    "leer",
+    "scary-face"
+  ],
+  "722": [
+    "growl",
+    "synthesis",
+    "roost"
+  ],
+  "723": [
+    "growl",
+    "synthesis",
+    "roost"
+  ],
+  "724": [
+    "growl",
+    "synthesis"
+  ],
+  "725": [
+    "growl",
+    "leer",
+    "scary-face"
+  ],
+  "726": [
+    "growl",
+    "leer",
+    "scary-face"
+  ],
+  "727": [
+    "growl",
+    "leer",
+    "scary-face"
+  ],
+  "728": [
+    "growl",
+    "baby-doll-eyes"
+  ],
+  "729": [
+    "growl",
+    "baby-doll-eyes"
+  ],
+  "730": [
+    "growl",
+    "baby-doll-eyes"
+  ],
+  "731": [
+    "growl",
+    "roost",
+    "screech"
+  ],
+  "732": [
+    "growl",
+    "roost",
+    "screech"
+  ],
+  "733": [
+    "growl",
+    "roost",
+    "screech"
+  ],
+  "734": [
+    "leer",
+    "sand-attack",
+    "scary-face"
+  ],
+  "735": [
+    "sand-attack",
+    "leer",
+    "scary-face"
+  ],
+  "739": [
+    "leer"
+  ],
+  "740": [
+    "leer"
+  ],
+  "741": [
+    "growl",
+    "roost"
+  ],
+  "744": [
+    "leer",
+    "sand-attack",
+    "scary-face"
+  ],
+  "745": [
+    "sand-attack",
+    "leer",
+    "scary-face"
+  ],
+  "746": [
+    "growl"
+  ],
+  "747": [
+    "recover"
+  ],
+  "748": [
+    "recover"
+  ],
+  "753": [
+    "synthesis"
+  ],
+  "754": [
+    "synthesis"
+  ],
+  "755": [
+    "moonlight"
+  ],
+  "756": [
+    "moonlight"
+  ],
+  "759": [
+    "leer",
+    "baby-doll-eyes"
+  ],
+  "760": [
+    "leer",
+    "baby-doll-eyes"
+  ],
+  "764": [
+    "synthesis",
+    "charm"
+  ],
+  "766": [
+    "leer",
+    "scary-face"
+  ],
+  "767": [
+    "sand-attack"
+  ],
+  "768": [
+    "sand-attack"
+  ],
+  "769": [
+    "sand-attack"
+  ],
+  "770": [
+    "sand-attack"
+  ],
+  "771": [
+    "recover"
+  ],
+  "772": [
+    "scary-face",
+    "metal-sound"
+  ],
+  "773": [
+    "scary-face",
+    "metal-sound"
+  ],
+  "778": [
+    "baby-doll-eyes",
+    "charm"
+  ],
+  "779": [
+    "screech"
+  ],
+  "781": [
+    "metal-sound"
+  ],
+  "782": [
+    "leer",
+    "scary-face",
+    "screech"
+  ],
+  "783": [
+    "leer",
+    "scary-face",
+    "screech"
+  ],
+  "784": [
+    "leer",
+    "scary-face",
+    "screech"
+  ],
+  "785": [
+    "screech"
+  ],
+  "787": [
+    "scary-face"
+  ],
+  "791": [
+    "metal-sound",
+    "morning-sun"
+  ],
+  "792": [
+    "moonlight"
+  ],
+  "795": [
+    "leer"
+  ],
+  "797": [
+    "metal-sound"
+  ],
+  "798": [
+    "synthesis"
+  ],
+  "800": [
+    "morning-sun",
+    "moonlight"
+  ],
+  "803": [
+    "growl",
+    "charm"
+  ],
+  "804": [
+    "growl",
+    "charm"
+  ],
+  "808": [
+    "tail-whip"
+  ],
+  "809": [
+    "tail-whip"
+  ],
+  "810": [
+    "growl",
+    "screech"
+  ],
+  "811": [
+    "growl",
+    "screech"
+  ],
+  "812": [
+    "growl",
+    "screech"
+  ],
+  "813": [
+    "growl"
+  ],
+  "814": [
+    "growl"
+  ],
+  "815": [
+    "growl"
+  ],
+  "816": [
+    "growl"
+  ],
+  "817": [
+    "growl"
+  ],
+  "818": [
+    "growl"
+  ],
+  "819": [
+    "tail-whip"
+  ],
+  "820": [
+    "tail-whip"
+  ],
+  "821": [
+    "leer",
+    "scary-face"
+  ],
+  "822": [
+    "leer",
+    "scary-face"
+  ],
+  "823": [
+    "leer",
+    "metal-sound",
+    "scary-face",
+    "screech"
+  ],
+  "827": [
+    "tail-whip"
+  ],
+  "828": [
+    "tail-whip"
+  ],
+  "829": [
+    "synthesis"
+  ],
+  "830": [
+    "synthesis"
+  ],
+  "831": [
+    "growl"
+  ],
+  "832": [
+    "growl"
+  ],
+  "835": [
+    "tail-whip",
+    "charm"
+  ],
+  "836": [
+    "tail-whip",
+    "charm"
+  ],
+  "837": [
+    "smokescreen"
+  ],
+  "838": [
+    "smokescreen"
+  ],
+  "839": [
+    "smokescreen"
+  ],
+  "842": [
+    "recover"
+  ],
+  "843": [
+    "sand-attack"
+  ],
+  "844": [
+    "sand-attack"
+  ],
+  "848": [
+    "growl"
+  ],
+  "849": [
+    "leer",
+    "growl",
+    "scary-face",
+    "screech"
+  ],
+  "850": [
+    "smokescreen"
+  ],
+  "851": [
+    "smokescreen"
+  ],
+  "852": [
+    "leer"
+  ],
+  "853": [
+    "leer"
+  ],
+  "859": [
+    "confide"
+  ],
+  "860": [
+    "confide"
+  ],
+  "861": [
+    "confide"
+  ],
+  "862": [
+    "sand-attack",
+    "leer",
+    "baby-doll-eyes",
+    "scary-face"
+  ],
+  "863": [
+    "growl",
+    "screech",
+    "metal-sound"
+  ],
+  "865": [
+    "sand-attack",
+    "leer"
+  ],
+  "867": [
+    "scary-face"
+  ],
+  "868": [
+    "recover",
+    "charm"
+  ],
+  "869": [
+    "recover",
+    "charm"
+  ],
+  "871": [
+    "recover"
+  ],
+  "877": [
+    "tail-whip",
+    "leer"
+  ],
+  "878": [
+    "growl"
+  ],
+  "879": [
+    "growl"
+  ],
+  "884": [
+    "leer",
+    "metal-sound"
+  ],
+  "890": [
+    "recover"
+  ],
+  "891": [
+    "leer",
+    "scary-face"
+  ],
+  "892": [
+    "leer",
+    "scary-face"
+  ],
+  "893": [
+    "leer",
+    "scary-face",
+    "synthesis"
+  ],
+  "896": [
+    "tail-whip"
+  ],
+  "897": [
+    "tail-whip"
+  ],
+  "899": [
+    "leer",
+    "sand-attack"
+  ],
+  "900": [
+    "leer"
+  ],
+  "901": [
+    "baby-doll-eyes",
+    "leer",
+    "scary-face"
+  ],
+  "902": [
+    "tail-whip",
+    "scary-face"
+  ],
+  "903": [
+    "leer",
+    "screech"
+  ],
+  "906": [
+    "tail-whip"
+  ],
+  "907": [
+    "tail-whip"
+  ],
+  "908": [
+    "tail-whip"
+  ],
+  "909": [
+    "leer"
+  ],
+  "910": [
+    "leer"
+  ],
+  "911": [
+    "leer",
+    "scary-face"
+  ],
+  "912": [
+    "growl"
+  ],
+  "913": [
+    "growl"
+  ],
+  "914": [
+    "growl"
+  ],
+  "915": [
+    "tail-whip"
+  ],
+  "916": [
+    "tail-whip"
+  ],
+  "919": [
+    "leer",
+    "screech"
+  ],
+  "920": [
+    "leer",
+    "screech"
+  ],
+  "921": [
+    "growl"
+  ],
+  "922": [
+    "growl"
+  ],
+  "923": [
+    "growl"
+  ],
+  "924": [
+    "baby-doll-eyes",
+    "charm"
+  ],
+  "925": [
+    "baby-doll-eyes",
+    "charm"
+  ],
+  "926": [
+    "growl",
+    "tail-whip",
+    "baby-doll-eyes",
+    "charm"
+  ],
+  "927": [
+    "growl",
+    "tail-whip",
+    "baby-doll-eyes",
+    "charm"
+  ],
+  "931": [
+    "growl",
+    "roost"
+  ],
+  "932": [
+    "recover"
+  ],
+  "933": [
+    "recover"
+  ],
+  "934": [
+    "recover"
+  ],
+  "935": [
+    "leer"
+  ],
+  "936": [
+    "leer"
+  ],
+  "937": [
+    "leer"
+  ],
+  "940": [
+    "growl",
+    "roost"
+  ],
+  "941": [
+    "growl",
+    "roost"
+  ],
+  "942": [
+    "leer",
+    "scary-face"
+  ],
+  "943": [
+    "leer",
+    "scary-face"
+  ],
+  "944": [
+    "leer"
+  ],
+  "945": [
+    "leer"
+  ],
+  "948": [
+    "screech"
+  ],
+  "949": [
+    "screech"
+  ],
+  "951": [
+    "leer"
+  ],
+  "952": [
+    "leer"
+  ],
+  "953": [
+    "sand-attack"
+  ],
+  "954": [
+    "sand-attack"
+  ],
+  "955": [
+    "growl",
+    "baby-doll-eyes"
+  ],
+  "956": [
+    "growl",
+    "baby-doll-eyes"
+  ],
+  "957": [
+    "baby-doll-eyes"
+  ],
+  "958": [
+    "baby-doll-eyes"
+  ],
+  "959": [
+    "baby-doll-eyes"
+  ],
+  "960": [
+    "sand-attack"
+  ],
+  "961": [
+    "sand-attack"
+  ],
+  "962": [
+    "leer"
+  ],
+  "963": [
+    "charm"
+  ],
+  "964": [
+    "charm"
+  ],
+  "965": [
+    "screech"
+  ],
+  "966": [
+    "screech"
+  ],
+  "967": [
+    "growl"
+  ],
+  "971": [
+    "growl",
+    "tail-whip",
+    "charm"
+  ],
+  "972": [
+    "growl",
+    "tail-whip",
+    "charm"
+  ],
+  "973": [
+    "roost"
+  ],
+  "974": [
+    "growl"
+  ],
+  "975": [
+    "growl"
+  ],
+  "979": [
+    "leer",
+    "screech"
+  ],
+  "980": [
+    "tail-whip"
+  ],
+  "981": [
+    "growl"
+  ],
+  "982": [
+    "screech",
+    "roost"
+  ],
+  "983": [
+    "leer",
+    "scary-face",
+    "metal-sound"
+  ],
+  "986": [
+    "synthesis"
+  ],
+  "988": [
+    "morning-sun"
+  ],
+  "989": [
+    "screech",
+    "metal-sound"
+  ],
+  "992": [
+    "sand-attack"
+  ],
+  "994": [
+    "screech",
+    "metal-sound",
+    "morning-sun"
+  ],
+  "995": [
+    "screech"
+  ],
+  "996": [
+    "leer"
+  ],
+  "997": [
+    "leer"
+  ],
+  "998": [
+    "leer"
+  ],
+  "1000": [
+    "metal-sound",
+    "recover"
+  ],
+  "1002": [
+    "recover"
+  ],
+  "1005": [
+    "leer",
+    "scary-face",
+    "roost"
+  ],
+  "1007": [
+    "screech"
+  ],
+  "1008": [
+    "metal-sound"
+  ],
+  "1009": [
+    "leer"
+  ],
+  "1010": [
+    "leer"
+  ],
+  "1011": [
+    "recover"
+  ],
+  "1016": [
+    "roost"
+  ],
+  "1017": [
+    "synthesis"
+  ],
+  "1018": [
+    "leer",
+    "metal-sound"
+  ],
+  "1019": [
+    "recover"
+  ],
+  "1020": [
+    "leer",
+    "morning-sun"
+  ],
+  "1022": [
+    "leer"
+  ],
+  "1023": [
+    "leer"
+  ],
+  "1025": [
+    "recover"
+  ],
+  "10001": [
+    "leer"
+  ],
+  "10002": [
+    "leer",
+    "recover"
+  ],
+  "10003": [
+    "leer",
+    "recover"
+  ],
+  "10005": [
+    "metal-sound"
+  ],
+  "10007": [
+    "scary-face"
+  ],
+  "10016": [
+    "scary-face",
+    "tail-whip"
+  ],
+  "10019": [
+    "leer"
+  ],
+  "10020": [
+    "leer"
+  ],
+  "10021": [
+    "leer"
+  ],
+  "10024": [
+    "leer"
+  ],
+  "10025": [
+    "leer"
+  ],
+  "10026": [
+    "metal-sound"
+  ],
+  "10027": [
+    "scary-face"
+  ],
+  "10028": [
+    "scary-face"
+  ],
+  "10029": [
+    "scary-face"
+  ],
+  "10030": [
+    "scary-face"
+  ],
+  "10031": [
+    "scary-face"
+  ],
+  "10032": [
+    "scary-face"
+  ],
+  "10033": [
+    "growl",
+    "synthesis"
+  ],
+  "10034": [
+    "growl",
+    "smokescreen",
+    "scary-face"
+  ],
+  "10035": [
+    "growl",
+    "smokescreen",
+    "scary-face"
+  ],
+  "10036": [
+    "tail-whip"
+  ],
+  "10037": [
+    "recover"
+  ],
+  "10039": [
+    "leer",
+    "tail-whip"
+  ],
+  "10041": [
+    "leer",
+    "scary-face"
+  ],
+  "10042": [
+    "scary-face"
+  ],
+  "10043": [
+    "recover"
+  ],
+  "10044": [
+    "recover"
+  ],
+  "10045": [
+    "growl"
+  ],
+  "10046": [
+    "leer"
+  ],
+  "10047": [
+    "leer"
+  ],
+  "10048": [
+    "leer"
+  ],
+  "10049": [
+    "leer",
+    "screech",
+    "scary-face"
+  ],
+  "10050": [
+    "growl",
+    "sand-attack"
+  ],
+  "10051": [
+    "growl"
+  ],
+  "10052": [
+    "growl"
+  ],
+  "10053": [
+    "metal-sound"
+  ],
+  "10054": [
+    "recover"
+  ],
+  "10055": [
+    "leer"
+  ],
+  "10056": [
+    "screech"
+  ],
+  "10057": [
+    "leer"
+  ],
+  "10058": [
+    "sand-attack"
+  ],
+  "10059": [
+    "metal-sound"
+  ],
+  "10060": [
+    "leer"
+  ],
+  "10062": [
+    "charm",
+    "recover"
+  ],
+  "10063": [
+    "recover"
+  ],
+  "10064": [
+    "growl"
+  ],
+  "10065": [
+    "leer",
+    "screech"
+  ],
+  "10066": [
+    "leer"
+  ],
+  "10067": [
+    "growl"
+  ],
+  "10068": [
+    "leer"
+  ],
+  "10069": [
+    "growl",
+    "baby-doll-eyes"
+  ],
+  "10070": [
+    "leer",
+    "screech",
+    "scary-face"
+  ],
+  "10071": [
+    "growl"
+  ],
+  "10072": [
+    "screech"
+  ],
+  "10073": [
+    "sand-attack",
+    "roost"
+  ],
+  "10074": [
+    "leer"
+  ],
+  "10076": [
+    "scary-face"
+  ],
+  "10077": [
+    "scary-face"
+  ],
+  "10078": [
+    "scary-face"
+  ],
+  "10079": [
+    "scary-face"
+  ],
+  "10080": [
+    "tail-whip",
+    "growl"
+  ],
+  "10081": [
+    "tail-whip",
+    "growl"
+  ],
+  "10082": [
+    "tail-whip",
+    "growl"
+  ],
+  "10083": [
+    "tail-whip",
+    "growl"
+  ],
+  "10084": [
+    "tail-whip",
+    "growl"
+  ],
+  "10085": [
+    "tail-whip",
+    "growl"
+  ],
+  "10087": [
+    "growl"
+  ],
+  "10088": [
+    "charm",
+    "baby-doll-eyes"
+  ],
+  "10089": [
+    "leer",
+    "scary-face"
+  ],
+  "10091": [
+    "tail-whip"
+  ],
+  "10092": [
+    "scary-face",
+    "tail-whip"
+  ],
+  "10093": [
+    "scary-face",
+    "tail-whip"
+  ],
+  "10094": [
+    "tail-whip",
+    "growl",
+    "charm"
+  ],
+  "10095": [
+    "tail-whip",
+    "growl",
+    "charm"
+  ],
+  "10096": [
+    "tail-whip",
+    "growl",
+    "charm"
+  ],
+  "10097": [
+    "tail-whip",
+    "growl",
+    "charm"
+  ],
+  "10098": [
+    "tail-whip",
+    "growl",
+    "charm"
+  ],
+  "10099": [
+    "tail-whip",
+    "growl",
+    "charm"
+  ],
+  "10100": [
+    "tail-whip",
+    "growl",
+    "charm"
+  ],
+  "10103": [
+    "tail-whip",
+    "baby-doll-eyes"
+  ],
+  "10104": [
+    "tail-whip"
+  ],
+  "10105": [
+    "sand-attack",
+    "growl"
+  ],
+  "10106": [
+    "sand-attack",
+    "growl",
+    "screech"
+  ],
+  "10107": [
+    "growl",
+    "screech"
+  ],
+  "10108": [
+    "growl",
+    "screech"
+  ],
+  "10112": [
+    "screech"
+  ],
+  "10113": [
+    "screech"
+  ],
+  "10114": [
+    "synthesis"
+  ],
+  "10115": [
+    "tail-whip",
+    "growl",
+    "leer",
+    "screech"
+  ],
+  "10116": [
+    "growl",
+    "smokescreen"
+  ],
+  "10117": [
+    "growl",
+    "smokescreen"
+  ],
+  "10121": [
+    "sand-attack",
+    "leer",
+    "scary-face"
+  ],
+  "10123": [
+    "growl",
+    "roost"
+  ],
+  "10124": [
+    "growl",
+    "roost"
+  ],
+  "10125": [
+    "growl",
+    "roost"
+  ],
+  "10126": [
+    "sand-attack",
+    "leer",
+    "scary-face"
+  ],
+  "10127": [
+    "growl"
+  ],
+  "10128": [
+    "synthesis"
+  ],
+  "10143": [
+    "baby-doll-eyes",
+    "charm"
+  ],
+  "10144": [
+    "baby-doll-eyes",
+    "charm"
+  ],
+  "10145": [
+    "baby-doll-eyes",
+    "charm"
+  ],
+  "10146": [
+    "leer",
+    "scary-face",
+    "screech"
+  ],
+  "10148": [
+    "tail-whip",
+    "growl",
+    "charm"
+  ],
+  "10149": [
+    "tail-whip",
+    "growl",
+    "leer"
+  ],
+  "10151": [
+    "leer",
+    "sand-attack",
+    "scary-face"
+  ],
+  "10152": [
+    "sand-attack",
+    "leer",
+    "scary-face"
+  ],
+  "10155": [
+    "morning-sun",
+    "moonlight"
+  ],
+  "10156": [
+    "morning-sun",
+    "moonlight"
+  ],
+  "10157": [
+    "morning-sun",
+    "moonlight"
+  ],
+  "10158": [
+    "growl",
+    "tail-whip"
+  ],
+  "10159": [
+    "growl",
+    "tail-whip",
+    "sand-attack"
+  ],
+  "10160": [
+    "tail-whip",
+    "growl",
+    "charm"
+  ],
+  "10161": [
+    "growl",
+    "screech",
+    "metal-sound"
+  ],
+  "10162": [
+    "growl",
+    "tail-whip"
+  ],
+  "10163": [
+    "tail-whip",
+    "growl"
+  ],
+  "10164": [
+    "growl"
+  ],
+  "10165": [
+    "growl"
+  ],
+  "10166": [
+    "sand-attack",
+    "leer"
+  ],
+  "10167": [
+    "smokescreen"
+  ],
+  "10169": [
+    "recover"
+  ],
+  "10171": [
+    "leer"
+  ],
+  "10172": [
+    "growl"
+  ],
+  "10174": [
+    "leer",
+    "sand-attack",
+    "baby-doll-eyes",
+    "scary-face"
+  ],
+  "10175": [
+    "sand-attack",
+    "leer",
+    "baby-doll-eyes",
+    "scary-face"
+  ],
+  "10180": [
+    "metal-sound"
+  ],
+  "10184": [
+    "leer",
+    "growl",
+    "scary-face",
+    "screech"
+  ],
+  "10187": [
+    "tail-whip",
+    "leer"
+  ],
+  "10190": [
+    "recover"
+  ],
+  "10191": [
+    "leer",
+    "scary-face"
+  ],
+  "10192": [
+    "leer",
+    "scary-face",
+    "synthesis"
+  ],
+  "10193": [
+    "tail-whip"
+  ],
+  "10194": [
+    "tail-whip"
+  ],
+  "10229": [
+    "leer"
+  ],
+  "10230": [
+    "leer"
+  ],
+  "10231": [
+    "screech"
+  ],
+  "10232": [
+    "screech"
+  ],
+  "10233": [
+    "smokescreen",
+    "leer"
+  ],
+  "10235": [
+    "leer",
+    "screech"
+  ],
+  "10236": [
+    "tail-whip"
+  ],
+  "10237": [
+    "recover",
+    "synthesis"
+  ],
+  "10238": [
+    "leer"
+  ],
+  "10239": [
+    "leer"
+  ],
+  "10240": [
+    "roost",
+    "leer",
+    "scary-face"
+  ],
+  "10243": [
+    "recover"
+  ],
+  "10244": [
+    "roost",
+    "growl",
+    "synthesis"
+  ],
+  "10245": [
+    "scary-face"
+  ],
+  "10246": [
+    "scary-face"
+  ],
+  "10247": [
+    "tail-whip",
+    "scary-face"
+  ],
+  "10248": [
+    "tail-whip",
+    "scary-face"
+  ],
+  "10250": [
+    "tail-whip",
+    "scary-face"
+  ],
+  "10251": [
+    "tail-whip",
+    "scary-face"
+  ],
+  "10252": [
+    "tail-whip",
+    "scary-face"
+  ],
+  "10253": [
+    "tail-whip"
+  ],
+  "10254": [
+    "tail-whip"
+  ],
+  "10255": [
+    "screech",
+    "roost"
+  ],
+  "10256": [
+    "charm"
+  ],
+  "10257": [
+    "baby-doll-eyes",
+    "charm"
+  ],
+  "10260": [
+    "growl",
+    "roost"
+  ],
+  "10261": [
+    "growl",
+    "roost"
+  ],
+  "10262": [
+    "growl",
+    "roost"
+  ],
+  "10264": [
+    "screech"
+  ],
+  "10265": [
+    "screech"
+  ],
+  "10266": [
+    "screech"
+  ],
+  "10267": [
+    "screech"
+  ],
+  "10268": [
+    "metal-sound"
+  ],
+  "10269": [
+    "metal-sound"
+  ],
+  "10270": [
+    "metal-sound"
+  ],
+  "10271": [
+    "metal-sound"
+  ],
+  "10272": [
+    "leer",
+    "scary-face"
+  ],
+  "10273": [
+    "synthesis"
+  ],
+  "10274": [
+    "synthesis"
+  ],
+  "10275": [
+    "synthesis"
+  ]
+}

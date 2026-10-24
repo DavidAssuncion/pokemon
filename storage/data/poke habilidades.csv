@@ -1,0 +1,289 @@
+id,name,habilidades,movimientos
+3,venusaur,"Fotosíntesis, Flor Aromática, Espesura",Drenadoras
+6,charizard,"Alma Dragon, Mar Llamas",
+9,blastoise,"Cañones, Torrente",
+12,butterfree,"Punto Toxico, Evasion",
+15,beedrill,"Enjambre, Refuerzos, Doble Ataque",Doble Ataque
+18,pidgeot,"Evasion, Evasion","Tornado, Danza Pluma"
+20,raticate,Refuerzos,"Hipercolmillo, Superdiente"
+22,fearow,"Evasion, Demoledor",Pico Taladro
+24,arbok,"Intimidacion, Punto Toxico",
+26,raichu,Pararrayos,Placaje Eléctrico
+28,sandslash,"Impetu arena, Espinas",
+31,nidoqueen,"Punto Toxico, Protector",
+34,nidoking,"Punto Toxico, Demoledor",
+36,clefable,Muro Mágico,
+38,ninetales,"Absorción Fuego, Sequia",Llama Embrujada
+40,wigglytuff,Muro Mágico,
+45,vileplume,"Clorofila, Efecto Espora ",
+47,parasect,Efecto Espora ,Espora
+49,venomoth,"Enjambre, Punto Toxico",
+51,dugtrio,"Impetu arena, Triple Ataque",
+53,persian,"Refuerzos, Crueldad",
+55,golduck,Llovizna,
+59,arcanine,"Absorción Fuego, Intimidacion",Velocidad Extrema
+62,poliwrath,"Velo Agua, Doble Ataque",
+65,alakazam,Prediccion,
+68,machamp,Cuadruple Ataque,
+71,victreebel,"Baba Toxica, Sintesis",
+73,tentacruel,Punto Toxico,
+76,golem,"Detonacion, Cabeza Roca","Testarazo, Desenrrollar, rizo defensa"
+78,rapidash,Absorción Fuego,"Cuerno Certero, Envite Igneo"
+80,slowbro,Regeneracion,
+85,dodrio,Triple Ataque,
+87,dewgong,Granizo,
+89,muk,Baba Toxica,
+91,cloyster,Caparazon,"Carambano, puas"
+94,gengar,Sombra Traviesa,Puño sombra
+97,hypno,Hypnotizador,
+99,kingler,Demoledor,Martillazo
+101,electrode,"Electricidad estática, Detonacion",
+103,exeggutor,"Enredaderas, Sintesis",
+105,marowak,Impetu arena,"Ataque Óseo, Huesomerang"
+106,hitmonlee,Flexibilidad,Patada Salto Alta
+107,hitmonchan,Doble Ataque,
+110,weezing,Detonacion,
+115,kangaskhan,Ira,
+119,seaking,Velo Agua,
+121,starmie,Velo Agua,
+124,jynx,Manto Helado,
+127,pinsir,Demoledor,
+128,tauros,Ira,
+130,gyarados,"Intimidacion, Ira Gyarados",
+131,lapras,"Caparazon, Absorción Agua",Canto Mortal
+134,vaporeon,Absorción Agua,
+135,jolteon,Absorción Electricidad,
+136,flareon,Absorción Fuego,
+139,omastar,"Velo Agua, Impetu arena, Caparazon",
+141,kabutops,"Velo Agua, Impetu arena, Depredador Prehistórico",
+142,aerodactyl,"Cabeza Roca, Garra Dura, Depredador Prehistórico",
+143,snorlax,Dormilon,
+144,articuno,"Presion, Granizo",
+145,zapdos,"Presion, Llovizna",
+146,moltres,"Presion, Sequia",
+149,dragonite,Escamas,Velocidad Extrema
+150,mewtwo,Presion,Onda Mental
+151,mew,Presion,
+154,meganium,"Sintesis, Espsura",
+157,typhlosion,Absorción Fuego,
+160,feraligatr,"Alma Dragon, Mandíbula Hidráulica",
+162,furret,Evasion,
+164,noctowl,Evasion,
+166,ledian,Enjambre,
+168,ariados,"Enjambre, Prediccion",Hilo Venenoso
+169,crobat,Refuerzos,
+171,lanturn,"Absorción Agua, Absorción Electricidad ",
+178,xatu,Evasion,
+181,ampharos,"Electricidad estática, Alma dragon",
+182,bellossom,Clorofila,
+184,azumarill,Llovizna,
+185,sudowoodo,"Cabeza roca, espinas",
+186,politoed,Velo Agua,
+189,jumpluff,Clorofila,
+192,sunflora,Clorofila,
+195,quagsire,Velo Agua,
+196,espeon,Predicion,
+197,umbreon,Protector,
+199,slowking,Regeneracion,
+202,wobbuffet,Protector,
+205,forretress,"Caparazon, Detonacion",
+208,steelix,"Tormenta Arena, Velo Arena",Represión Metal
+210,granbull,Demoledor,
+212,scizor,Demoledor,
+213,shuckle,Caparazon,
+214,heracross,Demoledor,
+219,magcargo,Caparazon,
+224,octillery,Prediccion,
+226,mantine,Veleta,
+227,skarmory,"Cabeza Roca, Garra Dura",Puas
+229,houndoom,"Absorción Fuego, Intimidacion",
+230,kingdra,"Velo Agua, Prediccion",
+232,donphan,Caparazon,
+237,hitmontop,Triple Ataque,
+241,miltank,Protector,
+242,blissey,Protector,
+243,raikou,Presion,
+244,entei,Presion,
+245,suicune,Presion,
+248,tyranitar,Tormenta Arena,
+249,lugia,"Presion, Guardian de los mares, Alma Dragon",Aerochorro
+250,ho-oh,"Presion, Regeneracion",Fuego Sagrado
+251,celebi,Presion,
+254,sceptile,Alma Dragon,Hoja Aguda
+257,blaziken,Flexibilidad,"Patada Salto Alto, Patada Ígnea"
+260,swampert,Velo Agua,Agua Lodosa
+262,mightyena,"Refuerzos, Intimidacion",
+267,beautifly,Enjambre,
+269,dustox,Enjambre,
+272,ludicolo,Llovizna,
+275,shiftry,Crueldad,
+277,swellow,Evasion,
+279,pelipper,Llovizna,
+282,gardevoir,Protector,
+284,masquerain,Enjambre,
+286,breloom,"Clorofila, Doble Ataque",
+289,slaking,Dormilon,
+291,ninjask,"Enjambre, Evasion",
+295,exploud,Dormilon,
+297,hariyama,Cabeza roca,Empujón
+301,delcatty,Evasion,
+302,sableye,"Divide Dolor, Bromista",Llama Embrujada
+303,mawile,"Demoledor, Malvado",
+306,aggron,Cabeza roca,
+308,medicham,Meditacion,"Paz mental, Onda Vacío"
+310,manectric,Pararrayos,
+311,plusle,"Electricidad estática, evasion",
+312,minun,"Electricidad estática, evasion",
+313,volbeat,Enjambre,
+314,illumise,Enjambre,
+317,swalot,Punto Toxico,
+319,sharpedo,"Depredador Marino, Velo Agua, Mandíbula Hidráulica",
+321,wailord,Llovizna,
+323,camerupt,Sequia,
+324,torkoal,"Caparazon, Sequia",
+326,grumpig,Evasion,
+327,spinda,Evasion,
+330,flygon,Impetu arena,
+332,cacturne,"Velo Arena, Absorción Agua",Brazo Pincho
+334,altaria,Bendicion,
+335,zangoose,Garra dura,
+336,seviper,"Crueldad, Punto toxico",Cola Veneno
+337,lunatone,Tormenta arena,
+338,solrock,Tormenta arena,
+340,whiscash,Tormenta arena,
+342,crawdaunt,Demoledor,Martillazo
+344,claydol,Detonacion,
+346,cradily,"Sintesis, Colector",
+348,armaldo,Armadura Batalla,
+350,milotic,"Llovizna, Bendicion",
+354,banette,"Divide Dolor, Bromista",
+357,tropius,"Sequia, Clorofila",
+359,absol,Prediccion,Persecucion
+362,glalie,Granizo,Vaho gélido
+365,walrein,Manto Helado,Bola Hielo
+367,huntail,Velo Agua,
+368,gorebyss,Velo Agua,
+369,relicanth,Velo Agua,
+370,luvdisc,Velo Agua,
+373,salamence,"Intimidacion, Depredador",
+376,metagross,Detonacion,"Puño Meteoro, Foco Resplandor"
+377,regirock,"Presion, Detonacion, Tormenta Arena",
+378,regice,"Presion, Detonacion, Granizo",
+379,registeel,"Presion, Detonacion, Tormenta Arena",Foco Resplandor
+380,latias,Presion,
+381,latios,Presion,
+382,kyogre,"Presion, Llovizna",Pulso Primigenio
+383,groudon,"Presion, Sequia",Filo del Abismo
+384,rayquaza,Presion,Ascenso Draco
+385,jirachi,Presion,
+386,deoxys-normal,Presion,
+389,torterra,Caparazón,
+392,infernape,Flexibilidad,
+395,empoleon,"Manto Helado, Granizo","Foco Resplandor, Agua Fría"
+398,staraptor,Intimidacion,
+400,bibarel,"Velo agua, evasion","Hipercolmillo, Superdiente"
+402,kricketune,Enjambre,
+405,luxray,Intimidacion,
+407,roserade,Clorofila,
+409,rampardos,Cabeza Roca,
+411,bastiodon,Cabeza Roca,Represión Metal
+413,wormadam-plant,Enjambre,
+414,mothim,Enjambre,
+416,vespiquen,Enjambre,
+417,pachirisu,Electricidad estatica,
+419,floatzel,Velo Agua,
+421,cherrim,sequia,
+423,gastrodon,Colector,
+424,ambipom,Evasion,
+426,drifblim,Detonacion,
+428,lopunny,Evasion,
+429,mismagius,"Crueldad, Malvado",
+430,honchkrow,Evasion,
+432,purugly,Evasion,
+435,skuntank,"Detonacion, Punto Toxico",
+437,bronzong,Detonacion,Foco Resplandor
+441,chatot,Evasion,
+445,garchomp,Depredador de Arena,
+448,lucario,Flexibilidad,"Puño Incremento, Persecucion"
+450,hippowdon,Tormenta Arena,
+452,drapion,"Crueldad, Prediccion","Puas, Puas Toxicas"
+454,toxicroak,Punto Toxico,
+455,carnivine,Clorofila,
+457,lumineon,Velo agua,
+460,abomasnow,Granizo,
+461,weavile,"Refuerzos, Evasion, Crueldad",Persecucion
+462,magnezone,"Detonacion, Campo Magnetico",Foco Resplandor
+463,lickilicky,Enredaderas,
+464,rhyperior,Pararrayos,"Romperrocas, Represión Metal"
+465,tangrowth,"Regeneracion, Enredaderas",
+466,electivire,"Electricidad estática, Pararrayos",
+467,magmortar,"Cañones, Demoledor",
+468,togekiss,Protector,
+469,yanmega,Depredador Prehistorico,
+470,leafeon,Sequia,
+471,glaceon,Granizo,
+472,gliscor,Antidoto,Martillazo
+473,mamoswine,Manto helado,
+474,porygon-z,"Campo Magnetico,Actualizacion software",
+475,gallade,Demoledor,
+476,probopass,"Detonacion, Campo Magnetico",Foco Resplandor
+477,dusknoir,Comealmas,Marioneta Inerte
+478,froslass,"Granizo, Manto helado",
+479,rotom,Presion,
+480,uxie,Presion,
+481,mesprit,Presion,
+482,azelf,Presion,
+483,dialga,Presion,Distorsión
+484,palkia,Presion,Corte Vacío
+485,heatran,"Presion, Absorción Fuego",Lluvia Ígnea
+486,regigigas,"Presion, Detonacion",
+487,giratina,Presion,Golpe Umbrío
+488,cresselia,"Presion, Danza Lunar",
+489,phione,Presion,
+490,manaphy,Presion,
+491,darkrai,"Presion, Mal Sueño",Brecha Negra
+492,shaymin-land,Presion,
+493,arceus,Presion,Sentencia
+530,excadrill,"Impetu arena, Velo Arena",
+560,scrafty,Crueldad,
+563,cofagrigus,Sombra traviesa,
+579,reuniclus,Protector,
+596,galvantula,Electricidad estatica,
+609,chandelure,Cuerpo llama,
+623,golurk,Detonacion,
+630,mandibuzz,Depredador,
+641,tornadus,Presion,
+642,thundurus,Presion,
+643,reshiram,Presion,
+644,zekrom,Presion,
+645,landorus,"Presion, Impetu arena, Velo Arena",
+646,kyurem,Presion,
+652,chesnaught,"Caparazon, demoledor",
+660,diggersby,"Velo arena, impetu arena",
+689,barbaracle,Cuadruple ataque,
+691,dragalge,Escamas,
+697,tyrantrum,Mandíbula Hidráulica,
+699,aurorus,"Protector, Cabeza roca",
+706,goodra,Baba Toxica,
+768,golisopod,Demoledor,
+781,dhelmise,Acero templado,
+849,toxtricity,"Electricidad estática, Punto Toxico",
+861,grimmsnarl,"Bromista, Demoledor",
+862,obstagoon,Detonacion,Desafio
+863,perrserker,Crueldad,
+864,cursola,"Divide dolor, Comealmas",
+866,mr-rime,Pantallista,
+900,kleavor,Demoledor,
+901,ursaluna,Demoledor,
+936,armarouge,Cuerpo llama,
+937,ceruledge,Sombra traviesa,
+959,tinkaton,Acero templado,
+975,cetitan,Granizo,
+979,annihilape,Ira,
+980,clodsire,Punto toxico,
+981,farigiraf,Malvado,
+1006,iron-valiant,Demoledor,
+1007,koraidon,Presion,
+1008,miraidon,Presion,
+1009,walking-wake,Presion,
+1021,raging-bolt,Presion,

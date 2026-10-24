@@ -33,6 +33,19 @@ class CombatientesCollection extends Collection
     }
 
     /**
+     * Retira un combatiente mutando la colección actual. Es importante no
+     * reasignar la colección en EquipoBatalla: GestorTurnos conserva la
+     * referencia y debe ver las bajas de invocaciones.
+     */
+    public function quitar(Combatiente $combatiente): void
+    {
+        $this->items = array_values(array_filter(
+            $this->items,
+            static fn (Combatiente $actual): bool => $actual->id() !== $combatiente->id(),
+        ));
+    }
+
+    /**
      * Retorna solo los combatientes vivos (hp > 0).
      */
     public function vivos(): static

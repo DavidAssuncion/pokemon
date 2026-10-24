@@ -45,13 +45,13 @@ class SimuladorAccionIA
             move: $accion->move,
             defenderTeamHasVanguard: $accion->defenderTeamHasVanguard,
             weather: $accion->weather,
+            terreno: $accion->terreno,
         );
 
         $servicio = new ServicioEjecucionBatalla($this->cadenaDanio);
         $resultadoDanio = $servicio->calcularYAplicarDano($accionClon);
 
-        $servicio->aplicarEstado($defensor, $accion->move);
-        $servicio->aplicarStatChanges($atacante, $defensor, $accion->move);
+        $servicio->aplicarEstadoYStatChanges($accionClon, null, $resultadoDanio->objetivos);
 
         $dano = $resultadoDanio->dano;
         $objetivoDerrotado = ! $defensor->estaVivo();

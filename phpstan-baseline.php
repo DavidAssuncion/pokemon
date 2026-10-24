@@ -380,7 +380,7 @@ $ignoreErrors[] = [
 $ignoreErrors[] = [
     'message' => '#^Dynamic call to static method Illuminate\\\\Contracts\\\\Auth\\\\Guard\\:\\:user\\(\\)\\.$#',
     'identifier' => 'staticMethod.dynamicCall',
-    'count' => 3,
+    'count' => 4,
     'path' => __DIR__ . '/app/Http/Controllers/ReclutadoController.php',
 ];
 $ignoreErrors[] = [
@@ -404,7 +404,7 @@ $ignoreErrors[] = [
 $ignoreErrors[] = [
     'message' => '#^Dynamic call to static method Illuminate\\\\Http\\\\Request\\:\\:validate\\(\\)\\.$#',
     'identifier' => 'staticMethod.dynamicCall',
-    'count' => 5,
+    'count' => 6,
     'path' => __DIR__ . '/app/Http/Controllers/ReclutadoController.php',
 ];
 $ignoreErrors[] = [
@@ -752,12 +752,6 @@ $ignoreErrors[] = [
     'path' => __DIR__ . '/src/Battle/Domain/Combatiente.php',
 ];
 $ignoreErrors[] = [
-    'message' => '#^Method Src\\\\Battle\\\\Domain\\\\Combatiente\\:\\:aArrayVista\\(\\) return type has no value type specified in iterable type array\\.$#',
-    'identifier' => 'missingType.iterableValue',
-    'count' => 1,
-    'path' => __DIR__ . '/src/Battle/Domain/Combatiente.php',
-];
-$ignoreErrors[] = [
     'message' => '#^Instanceof between Src\\\\Battle\\\\Domain\\\\MovimientoBatalla and Src\\\\Battle\\\\Domain\\\\MovimientoBatalla will always evaluate to true\\.$#',
     'identifier' => 'instanceof.alwaysTrue',
     'count' => 1,
@@ -780,12 +774,6 @@ $ignoreErrors[] = [
     'identifier' => 'missingType.iterableValue',
     'count' => 1,
     'path' => __DIR__ . '/src/Battle/Domain/Effects/ColeccionEfectos.php',
-];
-$ignoreErrors[] = [
-    'message' => '#^Property Src\\\\Battle\\\\Domain\\\\Effects\\\\FabricaEfectos\\:\\:\\$efectosRegistrados type has no value type specified in iterable type array\\.$#',
-    'identifier' => 'missingType.iterableValue',
-    'count' => 1,
-    'path' => __DIR__ . '/src/Battle/Domain/Effects/FabricaEfectos.php',
 ];
 $ignoreErrors[] = [
     'message' => '#^Method Src\\\\Battle\\\\Domain\\\\EstadoManager\\:\\:procesarConfusion\\(\\) return type has no value type specified in iterable type array\\.$#',
@@ -834,12 +822,6 @@ $ignoreErrors[] = [
     'identifier' => 'missingType.generics',
     'count' => 1,
     'path' => __DIR__ . '/src/Battle/Domain/ValueObjects/ColeccionMovimientos.php',
-];
-$ignoreErrors[] = [
-    'message' => '#^Casting to int something that\'s already int\\.$#',
-    'identifier' => 'cast.useless',
-    'count' => 1,
-    'path' => __DIR__ . '/src/Battle/Domain/ValueObjects/MultiplicadoresStats.php',
 ];
 $ignoreErrors[] = [
     'message' => '#^Method Src\\\\Battle\\\\Presentation\\\\DTOAccionBatalla\\:\\:fromLivewire\\(\\) has parameter \\$value with no type specified\\.$#',

@@ -83,7 +83,7 @@ class EstadoPokemonTest extends TestCase
         $this->assertTrue($result->esPermitida());
     }
 
-    public function test_poison_causa_dano_por_ronda_12_5(): void
+    public function test_poison_causa_dano_por_ronda(): void
     {
         $combatiente = $this->combatiente(
             stats: ['hp' => 160, 'atk' => 100, 'def' => 100],
@@ -92,13 +92,14 @@ class EstadoPokemonTest extends TestCase
             nombre: 'Envenenado',
         );
         $combatiente->setEstado(EstadoPokemon::POISON);
+        $combatiente->aplicarCargaVeneno(1);
 
         $maxHp = $combatiente->hpActual();
         $spDefInicial = $combatiente->defensaEspHpActual();
         $daño = $combatiente->aplicarDañoStatus();
 
-        // Daño = max(1, maxHp * 12.5%): golpea primero la barrera especial
-        $this->assertSame(max(1.0, $combatiente->pokemon()->battleStats()->hp * 0.125), $daño);
+        // Daño = max(1, maxHp * 1/32 por carga): golpea primero la barrera especial
+        $this->assertSame(max(1.0, $combatiente->pokemon()->battleStats()->hp / 32), $daño);
         $this->assertSame($spDefInicial - $daño, $combatiente->defensaEspHpActual());
         $this->assertSame($maxHp, $combatiente->hpActual());
     }

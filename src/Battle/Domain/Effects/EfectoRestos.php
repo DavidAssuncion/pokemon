@@ -27,7 +27,7 @@ class EfectoRestos implements InterfazEfecto
 
     public function onRoundEnd(Combatiente $portador, AgregadoBatalla $battle): void
     {
-        if (! $portador->estaVivo()) {
+        if (! $portador->estaVivo() || ! $portador->itemActivo()) {
             return;
         }
 

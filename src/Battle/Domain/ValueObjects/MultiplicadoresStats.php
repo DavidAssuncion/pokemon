@@ -7,15 +7,13 @@ namespace Src\Battle\Domain\ValueObjects;
 use Src\Battle\Domain\Enums\StatClave;
 
 /**
- * Value Object inmutable que encapsula modificadores multiplicativos
- * de precisión/estadísticas (float) para un combatiente.
+ * Modificadores multiplicativos de estadísticas de un combatiente.
  *
- * Cada estadística tiene un factor float (default 1.0 = sin cambio).
- * Los factores se clampean entre MIN y MAX por defecto (0.25–4.0),
- * equivalente a las etapas −6..+6 del sistema clásico.
+ * Tiene DOS capas dentro del MISMO objeto:
+ * - base: etapas permanentes, habilidades y objetos.
+ * - temporal: stacks de buffs/debuffs, con duración compartida.
  *
- * Permiten reducciones parciales (ej: ×0.9375 por turno) y
- * en el futuro bonus de daño (+15% eléctrico, medallas).
+ * El multiplicador final es base × temporal y se limita a 0.25–4.0 (25 %–400 %).
  */
 final class MultiplicadoresStats
 {
@@ -23,40 +21,51 @@ final class MultiplicadoresStats
 
     public const float DEFAULT_MAX = 4.0;
 
+    public const int TURNOS_TEMPORALES = 5;
+
     /** @var array<string, float> */
     private array $factores;
+
+    /** @var array<string, float> */
+    private array $temporales;
+
+    private int $turnosTemporales;
 
     private float $limiteInferior;
 
     private float $limiteSuperior;
 
     /**
-     * Constructor interno. Usa `desdeEtapas` o `desdeSerializado` para crear instancias.
-     *
-     * @param  array<string, float>  $factores  Claves StatClave->value, valores float.
+     * @param  array<string, float>  $factores  Claves StatClave->value.
+     * @param  array<string, float>  $temporales  Claves StatClave->value.
      */
     private function __construct(
         array $factores,
         float $limiteInferior = self::DEFAULT_MIN,
         float $limiteSuperior = self::DEFAULT_MAX,
+        array $temporales = [],
+        int $turnosTemporales = 0,
     ) {
         $this->limiteInferior = $limiteInferior;
         $this->limiteSuperior = $limiteSuperior;
+        $this->turnosTemporales = max(0, $turnosTemporales);
         $this->factores = [];
+        $this->temporales = [];
 
         foreach ($factores as $clave => $factor) {
             StatClave::from($clave);
             $this->factores[$clave] = $this->clampear($factor);
         }
+
+        foreach ($temporales as $clave => $factor) {
+            if (StatClave::tryFrom($clave) !== null) {
+                $this->temporales[$clave] = $factor;
+            }
+        }
     }
 
     // ─── Fábricas ──────────────────────────────────────────────
 
-    /**
-     * Convierte una etapa entera (-6..+6) a su factor multiplicativo exacto:
-     *  n >= 0: (2+n)/2   (ej: +1 → ×1.5, +6 → ×4.0)
-     *  n < 0:  2/(2-n)   (ej: -1 → ×0.667, -6 → ×0.25)
-     */
     public static function factorDesdeStages(int $n): float
     {
         return $n >= 0
@@ -64,9 +73,6 @@ final class MultiplicadoresStats
             : 2 / (2 - $n);
     }
 
-    /**
-     * Crea una instancia vacía (todos los factores en 1.0) con los stat claves por defecto.
-     */
     public static function vacia(): self
     {
         return new self([
@@ -81,30 +87,45 @@ final class MultiplicadoresStats
     }
 
     /**
-     * Crea una instancia desde un array serializado de factores float.
-     * Acepta claves válidas de StatClave; ignora claves desconocidas.
+     * Acepta el formato actual {base, temporales, turnos} y el legacy de solo
+     * factores planos.
      *
-     * @param  array<string, float>  $factores
+     * @param  array<string, mixed>  $datos
      */
-    public static function desdeSerializado(array $factores): self
+    public static function desdeSerializado(array $datos): self
     {
-        $normalizados = [];
-        foreach ($factores as $clave => $factor) {
+        if (isset($datos['base']) && is_array($datos['base'])) {
+            $base = [];
+            foreach ($datos['base'] as $clave => $factor) {
+                if (StatClave::tryFrom((string) $clave) !== null) {
+                    $base[(string) $clave] = (float) $factor;
+                }
+            }
+
+            $temporales = [];
+            if (isset($datos['temporales']) && is_array($datos['temporales'])) {
+                foreach ($datos['temporales'] as $clave => $factor) {
+                    if (StatClave::tryFrom((string) $clave) !== null) {
+                        $temporales[(string) $clave] = (float) $factor;
+                    }
+                }
+            }
+
+            return new self($base, self::DEFAULT_MIN, self::DEFAULT_MAX, $temporales, (int) ($datos['turnos'] ?? 0));
+        }
+
+        $base = [];
+        foreach ($datos as $clave => $factor) {
             if (StatClave::tryFrom($clave) !== null) {
-                $normalizados[$clave] = $factor;
+                $base[$clave] = (float) $factor;
             }
         }
 
-        return new self($normalizados);
+        return new self($base);
     }
 
     /**
-     * Migra desde el formato antiguo de etapas enteras (−6..+6)
-     * usando la tabla exacta de conversión:
-     *  n >= 0: (2+n)/2   (ej: +1 → 1.5, +6 → 4.0)
-     *  n < 0:  2/(2−n)   (ej: -1 → 0.667, -6 → 0.25).
-     *
-     * @param  array<string, int>  $etapasInt  Claves StatClave->value, valores int −6..+6.
+     * @param  array<string, int>  $etapasInt
      */
     public static function desdeEtapas(array $etapasInt): self
     {
@@ -113,17 +134,14 @@ final class MultiplicadoresStats
             if (StatClave::tryFrom($clave) === null) {
                 continue;
             }
-            $factores[$clave] = self::factorDesdeStages((int) $etapa);
+            $factores[$clave] = self::factorDesdeStages($etapa);
         }
 
         return new self($factores);
     }
 
-    // ─── Operaciones inmutables ────────────────────────────────
+    // ─── Operaciones inmutables (capa base) ───────────────────
 
-    /**
-     * Multiplica el factor actual de una estadística por el factor dado.
-     */
     public function aplicarFactor(StatClave $stat, float $factor): self
     {
         $nuevos = $this->factores;
@@ -131,21 +149,64 @@ final class MultiplicadoresStats
         $actual = $nuevos[$clave] ?? 1.0;
         $nuevos[$clave] = $this->clampear($actual * $factor);
 
-        return new self($nuevos, $this->limiteInferior, $this->limiteSuperior);
+        return new self($nuevos, $this->limiteInferior, $this->limiteSuperior, $this->temporales, $this->turnosTemporales);
     }
 
-    /**
-     * Aplica un porcentaje de cambio a una estadística.
-     * Ejemplo: +15 → ×1.15; −6.25 → ×0.9375.
-     */
     public function aplicarPorcentaje(StatClave $stat, float $porcentaje): self
     {
         return $this->aplicarFactor($stat, 1 + $porcentaje / 100);
     }
 
+    // ─── Operaciones inmutables (capa temporal) ───────────────
+
     /**
-     * Combina con otro conjunto de multiplicadores: producto por clave.
+     * Añade un stack temporal y reinicia la duración compartida a 5 turnos.
      */
+    public function aplicarTemporal(StatClave $stat, float $factor): self
+    {
+        $temporales = $this->temporales;
+        $clave = $stat->value;
+        $temporales[$clave] = ($temporales[$clave] ?? 1.0) * $factor;
+
+        return new self(
+            $this->factores,
+            $this->limiteInferior,
+            $this->limiteSuperior,
+            $temporales,
+            self::TURNOS_TEMPORALES,
+        );
+    }
+
+    public function aplicarPorcentajeTemporal(StatClave $stat, float $porcentaje): self
+    {
+        return $this->aplicarTemporal($stat, 1 + $porcentaje / 100);
+    }
+
+    /**
+     * Descuenta un turno. Si llega a 0, elimina todos los temporales.
+     */
+    public function avanzarTemporales(): self
+    {
+        if ($this->turnosTemporales <= 0) {
+            return $this;
+        }
+
+        $turnos = $this->turnosTemporales - 1;
+
+        return new self(
+            $this->factores,
+            $this->limiteInferior,
+            $this->limiteSuperior,
+            $turnos > 0 ? $this->temporales : [],
+            $turnos,
+        );
+    }
+
+    public function reiniciarTemporales(): self
+    {
+        return new self($this->factores, $this->limiteInferior, $this->limiteSuperior);
+    }
+
     public function combinar(self $otros): self
     {
         $nuevos = $this->factores;
@@ -154,13 +215,20 @@ final class MultiplicadoresStats
             $nuevos[$clave] = $this->clampear($actual * $factor);
         }
 
-        return new self($nuevos, $this->limiteInferior, $this->limiteSuperior);
+        $temporales = $this->temporales;
+        foreach ($otros->temporales as $clave => $factor) {
+            $temporales[$clave] = ($temporales[$clave] ?? 1.0) * $factor;
+        }
+
+        return new self(
+            $nuevos,
+            $this->limiteInferior,
+            $this->limiteSuperior,
+            $temporales,
+            max($this->turnosTemporales, $otros->turnosTemporales),
+        );
     }
 
-    /**
-     * Crea una nueva instancia con límites personalizados por StatClave.
-     * Útil si en el futuro se necesitan ranges distintos por stat.
-     */
     public function conLimites(float $min, float $max): self
     {
         $nuevos = [];
@@ -168,26 +236,23 @@ final class MultiplicadoresStats
             $nuevos[$clave] = max($min, min($max, $factor));
         }
 
-        return new self($nuevos, $min, $max);
+        return new self($nuevos, $min, $max, $this->temporales, $this->turnosTemporales);
     }
 
     // ─── Consultas ─────────────────────────────────────────────
 
-    /**
-     * Obtiene el factor multiplicador para una estadística (default 1.0).
-     */
     public function obtenerMultiplicador(StatClave $stat): float
     {
-        return $this->factores[$stat->value] ?? 1.0;
+        $base = $this->factores[$stat->value] ?? 1.0;
+        $temporal = $this->temporales[$stat->value] ?? 1.0;
+
+        return $this->clampear($base * $temporal);
     }
 
-    /**
-     * Indica si todos los factores son 1.0 (sin modificaciones).
-     */
     public function esNeutro(): bool
     {
-        foreach ($this->factores as $factor) {
-            if ($factor !== 1.0) {
+        foreach (StatClave::cases() as $stat) {
+            if ($this->obtenerMultiplicador($stat) !== 1.0) {
                 return false;
             }
         }
@@ -195,52 +260,60 @@ final class MultiplicadoresStats
         return true;
     }
 
-    /**
-     * Retorna la colección tipada de modificadores.
-     */
     public function obtenerModificadores(): ModificadoresStatsCollection
     {
         $items = [];
-        foreach ($this->factores as $clave => $factor) {
-            $items[] = new ModificadorStat(StatClave::from($clave), $factor);
+        foreach (StatClave::cases() as $stat) {
+            $items[] = new ModificadorStat($stat, $this->obtenerMultiplicador($stat));
         }
 
         return new ModificadoresStatsCollection($items);
     }
 
     /**
-     * Convierte factores actuales a enteros de etapa equivalentes (−6..+6)
-     * para mantener compatibilidad visual con la UI (blades).
-     *
      * @return array<string, int>
      */
     public function obtenerEtapas(): array
     {
         $etapas = [];
-        foreach ($this->factores as $clave => $factor) {
-            $etapas[$clave] = $this->factorAEtapa($factor);
+        foreach (StatClave::cases() as $stat) {
+            $etapas[$stat->value] = $this->factorAEtapa($this->obtenerMultiplicador($stat));
         }
 
         return $etapas;
     }
 
     /**
-     * Convierte un factor a la etapa entera más cercana.
+     * @return array{base: array<string, float>, temporales: array<string, float>, turnos: int}
      */
+    public function toArray(): array
+    {
+        return [
+            'base' => $this->factores,
+            'temporales' => $this->temporales,
+            'turnos' => $this->turnosTemporales,
+        ];
+    }
+
+    public function turnosTemporales(): int
+    {
+        return $this->turnosTemporales;
+    }
+
+    public function tieneTemporales(): bool
+    {
+        return $this->temporales !== [];
+    }
+
     private function factorAEtapa(float $factor): int
     {
         if ($factor >= 1.0) {
-            // n >= 0: factor = (2+n)/2 → n = 2*factor - 2
             return (int) round(2 * $factor - 2);
         }
 
-        // n < 0: factor = 2/(2-n) → n = 2 - 2/factor
         return (int) round(2 - 2 / $factor);
     }
 
-    /**
-     * Clampea un factor entre los límites configurados.
-     */
     private function clampear(float $factor): float
     {
         return max($this->limiteInferior, min($this->limiteSuperior, $factor));

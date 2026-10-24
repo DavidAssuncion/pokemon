@@ -28,7 +28,7 @@ Permite al jugador enfrentarse a entrenadores procedurales desde la vista de un 
 1. Un entrenador bloqueado (`won=true` hoy) no puede ser desafiado hasta el día siguiente.
 2. Si se pierde, no se registra victoria → se puede repetir.
 3. La generación del rival es determinista por fecha: todos los jugadores ven el mismo equipo cada día.
-4. Los movimientos son temporales (sintéticos) — no persisten en BD.
+4. Los movimientos se cargan del catálogo (`pokemon_moves`); si la especie no tiene movimientos ofensivos asignados se añade el generador sintético por tipos como fallback.
 5. No hay captura de pokémon rivales al ganar.
 
 ## Casos especiales
@@ -38,7 +38,7 @@ Permite al jugador enfrentarse a entrenadores procedurales desde la vista de un 
   `IniciarCombateEntrenador` lanza `ViolacionReglaNegocio` 422 («No hay Pokémon disponibles para este
   entrenador.») **sin persistir sesión** (guard post-Arquitecto).
 - `OtorgarRecompensasEntrenador` filtra `speciesIdsRival <= 0` y solo procesa los que existen en BD.
-- `SESSION_VERSION` vive en `app/Support/BattleSessionService.php` (**11**, mínimo compatible 9);
+- `SESSION_VERSION` vive en `app/Support/BattleSessionService.php` (**20**, mínimo compatible 9);
   `IniciarCombateEntrenador` no la duplica: usa `CreadorBatallaSesion`/`BattleSessionService`.
 
 ## Referencias

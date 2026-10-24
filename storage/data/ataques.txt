@@ -1,0 +1,31 @@
+nombre	desc
+Agua fria	50 potencia baja 1 nivel ataque objetivo
+Arenas Ardientes	60 potencia especial tiene una probabilidad del 30 % de quemar al objetivo
+Brecha Negra	Ataque especial con potencia de 60. En caso de que no tenga escudo especial, duerme al oponente hasta su siguiente turno mientras hace recuperar salud al usuario, calculando el 50 % del daño infligido. Si el oponente ya está adormecido, la potencia del movimiento sube a 100.
+Canto mortal	 mueres, en 3 turnos muere el rival
+carambano	
+Cuerno certero	
+Desafio	El rival solo puede seleccionarte a ti como objetivo (salvo que sea imposible por vanguarda/retaguardia)
+Desenrrollar	
+Drenadoras	Una planta se fija al objetivo. Cada final de turno roba una pequeña cantidad de HP y recupera esa cantidad. Solo recupera el daño infligido a la vida, no al escudo fisico. No se puede usar Drenadoras en un pokemon que ya tenga
+Envite igneo	
+Foco resplandor	 Doble de daño a escudos, la mitad a la salud, potencia 100
+Llama Embrujada	60 potencia baja 1 nivel ataque especial objetivo
+Maldición	 sacrifica vida para maldecir. Pierde HP. El objetivo queda maldito. La maldición hace daño al final de cada turno. 1/16 Puede permanecer aunque el pokemon sea debilitado.
+Marioneta Inerte	Toma el control de un aliado derrotado para atacar
+Pantalla de luz / Reflejo	generan un escudo de daño fisico o especial reduce a la mitad el daño recibido dura 10 turnos, o hasta agotar su capacidad. La capacidad se obtiene de los stats del usuario que lo ejecuta (def / def sp), como si calculase un ataque de potencia 70 x5
+Persecución	 potencia 50 / aumenta su daño porcentualmente segun la vida que le falte al objetivo
+Pico Taladro	Mas daño a armadura, si la rompe, hace mas daño
+Poder pasado	10 % de aumentar el Ataque, Defensa, Ataque Especial, Defensa Especial y Velocidad del usuario en un nivel cada uno
+Puas	 1/12 de daño al inicio del turno (se acumular hasta 3 veces), 1/6 al escudo
+Puas Toxicas	 1/12 de daño al inicio del turno (se acumular hasta 3 veces), 1/6 al escudo, el daño es tipo veneno
+Puño Meteoro	 Doble de daño a escudos, la mitad a la salud, potencia 100
+Puño Sombra	El 33% del daño aplica a la salud, salta barrera fisica
+Represión Metal	Represión Metal devuelve el 150 % del daño recibido del último movimiento del oponente en ese turno
+Rizo defensa	
+Testarazo	
+Trampa Rocas	 1/12 de daño al inicio del turno (se acumular hasta 3 veces), 1/6 al escudo, el daño es tipo roca
+Velocidad Extrema	ataque que gasta un 25% menos de velocidad para golpear
+Onda Mental	
+Hilo Venenoso	
+Tenaza	Tenaza causa 1/8 fisico de daño durante 2-5 turnos. El movimiento tiene una probabilidad del 37,5 % de atacar 2 turnos, un 37,5 % de hacerlo 3 turnos, un 12,5 % de 4 turnos, y un 12,5 % de 5 turnos

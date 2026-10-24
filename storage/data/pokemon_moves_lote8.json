@@ -1,0 +1,1690 @@
+{
+  "15": [
+    "focus-energy",
+    "fell-stinger",
+    "laser-focus"
+  ],
+  "19": [
+    "focus-energy",
+    "laser-focus"
+  ],
+  "20": [
+    "focus-energy",
+    "laser-focus"
+  ],
+  "21": [
+    "focus-energy"
+  ],
+  "22": [
+    "focus-energy"
+  ],
+  "23": [
+    "haze"
+  ],
+  "24": [
+    "haze"
+  ],
+  "32": [
+    "focus-energy"
+  ],
+  "33": [
+    "focus-energy"
+  ],
+  "34": [
+    "focus-energy"
+  ],
+  "39": [
+    "rest"
+  ],
+  "40": [
+    "rest"
+  ],
+  "41": [
+    "haze"
+  ],
+  "42": [
+    "haze"
+  ],
+  "45": [
+    "aromatherapy"
+  ],
+  "46": [
+    "aromatherapy"
+  ],
+  "47": [
+    "aromatherapy"
+  ],
+  "52": [
+    "taunt"
+  ],
+  "53": [
+    "taunt"
+  ],
+  "54": [
+    "psych-up"
+  ],
+  "55": [
+    "psych-up"
+  ],
+  "56": [
+    "focus-energy",
+    "taunt"
+  ],
+  "57": [
+    "focus-energy",
+    "taunt"
+  ],
+  "62": [
+    "haze"
+  ],
+  "66": [
+    "focus-energy",
+    "revenge"
+  ],
+  "67": [
+    "focus-energy",
+    "revenge"
+  ],
+  "68": [
+    "focus-energy",
+    "revenge"
+  ],
+  "71": [
+    "clear-smog"
+  ],
+  "73": [
+    "haze"
+  ],
+  "79": [
+    "psych-up",
+    "rest"
+  ],
+  "80": [
+    "psych-up",
+    "rest"
+  ],
+  "83": [
+    "focus-energy"
+  ],
+  "86": [
+    "rest"
+  ],
+  "87": [
+    "rest",
+    "sheer-cold"
+  ],
+  "89": [
+    "haze"
+  ],
+  "94": [
+    "haze"
+  ],
+  "96": [
+    "psych-up"
+  ],
+  "97": [
+    "psych-up"
+  ],
+  "104": [
+    "focus-energy"
+  ],
+  "105": [
+    "focus-energy"
+  ],
+  "106": [
+    "focus-energy",
+    "revenge"
+  ],
+  "107": [
+    "revenge",
+    "focus-energy"
+  ],
+  "108": [
+    "refresh",
+    "rest"
+  ],
+  "109": [
+    "haze",
+    "clear-smog"
+  ],
+  "110": [
+    "haze",
+    "clear-smog"
+  ],
+  "113": [
+    "refresh"
+  ],
+  "115": [
+    "focus-energy"
+  ],
+  "116": [
+    "focus-energy",
+    "laser-focus"
+  ],
+  "117": [
+    "focus-energy",
+    "clear-smog",
+    "laser-focus"
+  ],
+  "122": [
+    "power-swap",
+    "guard-swap"
+  ],
+  "123": [
+    "focus-energy",
+    "laser-focus"
+  ],
+  "126": [
+    "clear-smog"
+  ],
+  "127": [
+    "focus-energy",
+    "revenge"
+  ],
+  "128": [
+    "rest",
+    "focus-energy"
+  ],
+  "130": [
+    "focus-energy"
+  ],
+  "131": [
+    "sheer-cold"
+  ],
+  "133": [
+    "focus-energy",
+    "refresh"
+  ],
+  "134": [
+    "haze"
+  ],
+  "136": [
+    "focus-energy"
+  ],
+  "143": [
+    "rest"
+  ],
+  "144": [
+    "sheer-cold",
+    "haze"
+  ],
+  "150": [
+    "psych-up",
+    "power-swap",
+    "guard-swap",
+    "laser-focus"
+  ],
+  "152": [
+    "aromatherapy"
+  ],
+  "153": [
+    "aromatherapy"
+  ],
+  "154": [
+    "aromatherapy"
+  ],
+  "161": [
+    "rest"
+  ],
+  "162": [
+    "rest"
+  ],
+  "168": [
+    "fell-stinger",
+    "focus-energy"
+  ],
+  "169": [
+    "haze"
+  ],
+  "177": [
+    "power-swap",
+    "guard-swap"
+  ],
+  "178": [
+    "power-swap",
+    "guard-swap"
+  ],
+  "194": [
+    "haze"
+  ],
+  "195": [
+    "haze"
+  ],
+  "196": [
+    "psych-up",
+    "power-swap"
+  ],
+  "197": [
+    "guard-swap"
+  ],
+  "198": [
+    "haze",
+    "taunt"
+  ],
+  "199": [
+    "psych-up"
+  ],
+  "200": [
+    "pain-split"
+  ],
+  "203": [
+    "power-swap",
+    "guard-swap"
+  ],
+  "209": [
+    "taunt"
+  ],
+  "210": [
+    "taunt"
+  ],
+  "211": [
+    "revenge",
+    "fell-stinger"
+  ],
+  "212": [
+    "focus-energy",
+    "laser-focus"
+  ],
+  "213": [
+    "rest"
+  ],
+  "215": [
+    "taunt"
+  ],
+  "216": [
+    "rest"
+  ],
+  "217": [
+    "rest"
+  ],
+  "218": [
+    "clear-smog"
+  ],
+  "219": [
+    "clear-smog"
+  ],
+  "222": [
+    "refresh"
+  ],
+  "223": [
+    "focus-energy"
+  ],
+  "224": [
+    "focus-energy"
+  ],
+  "228": [
+    "taunt"
+  ],
+  "229": [
+    "taunt"
+  ],
+  "230": [
+    "focus-energy",
+    "laser-focus"
+  ],
+  "236": [
+    "focus-energy"
+  ],
+  "237": [
+    "focus-energy",
+    "revenge"
+  ],
+  "240": [
+    "clear-smog"
+  ],
+  "241": [
+    "heal-bell"
+  ],
+  "242": [
+    "refresh"
+  ],
+  "245": [
+    "sheer-cold"
+  ],
+  "251": [
+    "heal-bell"
+  ],
+  "255": [
+    "focus-energy"
+  ],
+  "256": [
+    "focus-energy"
+  ],
+  "257": [
+    "focus-energy"
+  ],
+  "261": [
+    "taunt"
+  ],
+  "262": [
+    "taunt"
+  ],
+  "263": [
+    "rest"
+  ],
+  "264": [
+    "rest"
+  ],
+  "276": [
+    "focus-energy"
+  ],
+  "277": [
+    "focus-energy"
+  ],
+  "283": [
+    "haze"
+  ],
+  "284": [
+    "haze"
+  ],
+  "287": [
+    "rest"
+  ],
+  "288": [
+    "focus-energy",
+    "rest"
+  ],
+  "289": [
+    "focus-energy",
+    "rest"
+  ],
+  "293": [
+    "rest"
+  ],
+  "294": [
+    "rest"
+  ],
+  "295": [
+    "rest"
+  ],
+  "296": [
+    "focus-energy"
+  ],
+  "297": [
+    "focus-energy"
+  ],
+  "299": [
+    "rest"
+  ],
+  "300": [
+    "heal-bell"
+  ],
+  "301": [
+    "heal-bell"
+  ],
+  "303": [
+    "taunt"
+  ],
+  "307": [
+    "psych-up"
+  ],
+  "308": [
+    "psych-up"
+  ],
+  "315": [
+    "aromatherapy"
+  ],
+  "316": [
+    "pain-split"
+  ],
+  "317": [
+    "pain-split"
+  ],
+  "318": [
+    "focus-energy"
+  ],
+  "319": [
+    "focus-energy",
+    "taunt"
+  ],
+  "320": [
+    "rest"
+  ],
+  "321": [
+    "rest"
+  ],
+  "322": [
+    "focus-energy"
+  ],
+  "323": [
+    "focus-energy"
+  ],
+  "324": [
+    "clear-smog"
+  ],
+  "325": [
+    "psych-up",
+    "rest"
+  ],
+  "326": [
+    "psych-up",
+    "rest"
+  ],
+  "327": [
+    "psych-up"
+  ],
+  "328": [
+    "laser-focus"
+  ],
+  "329": [
+    "laser-focus"
+  ],
+  "330": [
+    "laser-focus"
+  ],
+  "332": [
+    "revenge"
+  ],
+  "333": [
+    "refresh"
+  ],
+  "334": [
+    "refresh"
+  ],
+  "335": [
+    "taunt",
+    "revenge"
+  ],
+  "336": [
+    "haze"
+  ],
+  "339": [
+    "rest"
+  ],
+  "340": [
+    "rest"
+  ],
+  "341": [
+    "taunt"
+  ],
+  "342": [
+    "taunt"
+  ],
+  "350": [
+    "refresh"
+  ],
+  "353": [
+    "pain-split"
+  ],
+  "354": [
+    "pain-split"
+  ],
+  "358": [
+    "heal-bell"
+  ],
+  "359": [
+    "taunt",
+    "focus-energy"
+  ],
+  "362": [
+    "sheer-cold"
+  ],
+  "363": [
+    "rest",
+    "sheer-cold"
+  ],
+  "364": [
+    "rest",
+    "sheer-cold"
+  ],
+  "365": [
+    "rest",
+    "sheer-cold"
+  ],
+  "369": [
+    "rest"
+  ],
+  "371": [
+    "focus-energy"
+  ],
+  "372": [
+    "focus-energy"
+  ],
+  "373": [
+    "focus-energy"
+  ],
+  "380": [
+    "refresh"
+  ],
+  "381": [
+    "refresh"
+  ],
+  "382": [
+    "rest",
+    "sheer-cold"
+  ],
+  "383": [
+    "rest"
+  ],
+  "384": [
+    "rest"
+  ],
+  "385": [
+    "rest",
+    "refresh"
+  ],
+  "390": [
+    "taunt"
+  ],
+  "391": [
+    "taunt"
+  ],
+  "392": [
+    "taunt"
+  ],
+  "399": [
+    "taunt",
+    "rest"
+  ],
+  "400": [
+    "taunt",
+    "rest"
+  ],
+  "402": [
+    "focus-energy",
+    "taunt",
+    "fell-stinger"
+  ],
+  "407": [
+    "aromatherapy"
+  ],
+  "408": [
+    "focus-energy"
+  ],
+  "409": [
+    "focus-energy"
+  ],
+  "410": [
+    "taunt"
+  ],
+  "411": [
+    "taunt"
+  ],
+  "416": [
+    "fell-stinger",
+    "aromatherapy"
+  ],
+  "425": [
+    "focus-energy"
+  ],
+  "426": [
+    "focus-energy"
+  ],
+  "429": [
+    "pain-split"
+  ],
+  "430": [
+    "haze",
+    "taunt"
+  ],
+  "431": [
+    "taunt"
+  ],
+  "432": [
+    "taunt"
+  ],
+  "434": [
+    "focus-energy"
+  ],
+  "435": [
+    "focus-energy"
+  ],
+  "440": [
+    "refresh"
+  ],
+  "441": [
+    "taunt"
+  ],
+  "446": [
+    "rest"
+  ],
+  "448": [
+    "laser-focus"
+  ],
+  "449": [
+    "rest"
+  ],
+  "450": [
+    "rest"
+  ],
+  "451": [
+    "fell-stinger"
+  ],
+  "452": [
+    "fell-stinger"
+  ],
+  "453": [
+    "taunt",
+    "revenge"
+  ],
+  "454": [
+    "taunt",
+    "revenge"
+  ],
+  "459": [
+    "sheer-cold"
+  ],
+  "460": [
+    "sheer-cold"
+  ],
+  "461": [
+    "taunt",
+    "revenge"
+  ],
+  "463": [
+    "refresh",
+    "rest"
+  ],
+  "467": [
+    "clear-smog"
+  ],
+  "476": [
+    "rest"
+  ],
+  "480": [
+    "rest"
+  ],
+  "481": [
+    "rest"
+  ],
+  "482": [
+    "rest"
+  ],
+  "486": [
+    "revenge"
+  ],
+  "487": [
+    "pain-split"
+  ],
+  "491": [
+    "haze"
+  ],
+  "492": [
+    "aromatherapy"
+  ],
+  "493": [
+    "refresh"
+  ],
+  "494": [
+    "focus-energy"
+  ],
+  "501": [
+    "focus-energy",
+    "revenge"
+  ],
+  "502": [
+    "focus-energy",
+    "revenge"
+  ],
+  "503": [
+    "focus-energy",
+    "revenge"
+  ],
+  "504": [
+    "focus-energy"
+  ],
+  "505": [
+    "psych-up",
+    "focus-energy"
+  ],
+  "510": [
+    "taunt"
+  ],
+  "515": [
+    "taunt"
+  ],
+  "519": [
+    "taunt"
+  ],
+  "520": [
+    "taunt"
+  ],
+  "521": [
+    "taunt"
+  ],
+  "531": [
+    "refresh"
+  ],
+  "532": [
+    "focus-energy"
+  ],
+  "533": [
+    "focus-energy"
+  ],
+  "534": [
+    "focus-energy"
+  ],
+  "538": [
+    "focus-energy",
+    "revenge"
+  ],
+  "539": [
+    "focus-energy"
+  ],
+  "542": [
+    "fell-stinger"
+  ],
+  "548": [
+    "aromatherapy"
+  ],
+  "549": [
+    "aromatherapy"
+  ],
+  "554": [
+    "taunt"
+  ],
+  "555": [
+    "taunt"
+  ],
+  "562": [
+    "haze"
+  ],
+  "563": [
+    "haze"
+  ],
+  "568": [
+    "clear-smog",
+    "pain-split"
+  ],
+  "569": [
+    "clear-smog",
+    "pain-split"
+  ],
+  "570": [
+    "taunt"
+  ],
+  "571": [
+    "taunt"
+  ],
+  "574": [
+    "psych-up"
+  ],
+  "575": [
+    "psych-up"
+  ],
+  "576": [
+    "psych-up"
+  ],
+  "577": [
+    "pain-split"
+  ],
+  "578": [
+    "pain-split"
+  ],
+  "579": [
+    "pain-split"
+  ],
+  "582": [
+    "taunt",
+    "sheer-cold"
+  ],
+  "583": [
+    "taunt",
+    "sheer-cold"
+  ],
+  "584": [
+    "taunt",
+    "sheer-cold"
+  ],
+  "585": [
+    "aromatherapy"
+  ],
+  "586": [
+    "aromatherapy"
+  ],
+  "589": [
+    "fell-stinger"
+  ],
+  "590": [
+    "clear-smog"
+  ],
+  "591": [
+    "clear-smog"
+  ],
+  "605": [
+    "psych-up"
+  ],
+  "606": [
+    "psych-up"
+  ],
+  "607": [
+    "pain-split"
+  ],
+  "608": [
+    "pain-split"
+  ],
+  "609": [
+    "pain-split"
+  ],
+  "610": [
+    "taunt",
+    "laser-focus",
+    "focus-energy"
+  ],
+  "611": [
+    "taunt",
+    "laser-focus",
+    "focus-energy"
+  ],
+  "612": [
+    "taunt",
+    "laser-focus",
+    "focus-energy"
+  ],
+  "613": [
+    "rest",
+    "sheer-cold"
+  ],
+  "614": [
+    "rest",
+    "sheer-cold"
+  ],
+  "615": [
+    "haze",
+    "sheer-cold",
+    "laser-focus"
+  ],
+  "616": [
+    "guard-swap"
+  ],
+  "617": [
+    "power-swap",
+    "guard-swap"
+  ],
+  "618": [
+    "revenge"
+  ],
+  "621": [
+    "revenge"
+  ],
+  "624": [
+    "laser-focus"
+  ],
+  "625": [
+    "laser-focus"
+  ],
+  "626": [
+    "revenge",
+    "focus-energy"
+  ],
+  "633": [
+    "focus-energy"
+  ],
+  "634": [
+    "focus-energy"
+  ],
+  "635": [
+    "focus-energy"
+  ],
+  "641": [
+    "revenge"
+  ],
+  "642": [
+    "revenge"
+  ],
+  "646": [
+    "sheer-cold"
+  ],
+  "649": [
+    "fell-stinger"
+  ],
+  "650": [
+    "pain-split"
+  ],
+  "651": [
+    "pain-split"
+  ],
+  "652": [
+    "pain-split"
+  ],
+  "658": [
+    "haze"
+  ],
+  "659": [
+    "laser-focus"
+  ],
+  "660": [
+    "laser-focus"
+  ],
+  "666": [
+    "aromatherapy"
+  ],
+  "669": [
+    "aromatherapy"
+  ],
+  "670": [
+    "aromatherapy"
+  ],
+  "671": [
+    "aromatherapy"
+  ],
+  "674": [
+    "taunt"
+  ],
+  "675": [
+    "taunt"
+  ],
+  "682": [
+    "aromatherapy"
+  ],
+  "683": [
+    "aromatherapy",
+    "psych-up"
+  ],
+  "684": [
+    "aromatherapy"
+  ],
+  "685": [
+    "aromatherapy"
+  ],
+  "700": [
+    "psych-up"
+  ],
+  "701": [
+    "taunt"
+  ],
+  "702": [
+    "rest"
+  ],
+  "710": [
+    "pain-split"
+  ],
+  "711": [
+    "pain-split"
+  ],
+  "716": [
+    "aromatherapy",
+    "psych-up"
+  ],
+  "717": [
+    "taunt"
+  ],
+  "718": [
+    "haze"
+  ],
+  "721": [
+    "haze"
+  ],
+  "730": [
+    "sparkling-aria"
+  ],
+  "734": [
+    "rest"
+  ],
+  "735": [
+    "rest"
+  ],
+  "742": [
+    "aromatherapy"
+  ],
+  "743": [
+    "aromatherapy"
+  ],
+  "759": [
+    "pain-split"
+  ],
+  "760": [
+    "pain-split"
+  ],
+  "761": [
+    "aromatherapy"
+  ],
+  "762": [
+    "aromatherapy"
+  ],
+  "763": [
+    "aromatherapy"
+  ],
+  "764": [
+    "aromatherapy"
+  ],
+  "765": [
+    "taunt",
+    "psych-up"
+  ],
+  "766": [
+    "focus-energy"
+  ],
+  "771": [
+    "taunt",
+    "pain-split"
+  ],
+  "775": [
+    "psych-up"
+  ],
+  "777": [
+    "fell-stinger"
+  ],
+  "778": [
+    "pain-split"
+  ],
+  "785": [
+    "power-swap"
+  ],
+  "786": [
+    "aromatherapy"
+  ],
+  "788": [
+    "haze",
+    "refresh"
+  ],
+  "793": [
+    "clear-smog"
+  ],
+  "794": [
+    "focus-energy",
+    "fell-stinger",
+    "taunt"
+  ],
+  "795": [
+    "speed-swap"
+  ],
+  "798": [
+    "laser-focus"
+  ],
+  "801": [
+    "pain-split"
+  ],
+  "802": [
+    "laser-focus",
+    "psych-up"
+  ],
+  "803": [
+    "fell-stinger"
+  ],
+  "804": [
+    "fell-stinger"
+  ],
+  "810": [
+    "taunt"
+  ],
+  "811": [
+    "taunt"
+  ],
+  "812": [
+    "taunt"
+  ],
+  "819": [
+    "rest"
+  ],
+  "820": [
+    "rest"
+  ],
+  "821": [
+    "taunt"
+  ],
+  "822": [
+    "taunt"
+  ],
+  "823": [
+    "taunt"
+  ],
+  "829": [
+    "aromatherapy"
+  ],
+  "830": [
+    "aromatherapy"
+  ],
+  "831": [
+    "guard-swap"
+  ],
+  "832": [
+    "guard-swap"
+  ],
+  "846": [
+    "laser-focus",
+    "focus-energy"
+  ],
+  "847": [
+    "laser-focus",
+    "focus-energy"
+  ],
+  "849": [
+    "taunt"
+  ],
+  "852": [
+    "taunt"
+  ],
+  "853": [
+    "taunt"
+  ],
+  "854": [
+    "aromatherapy"
+  ],
+  "855": [
+    "aromatherapy"
+  ],
+  "856": [
+    "aromatherapy"
+  ],
+  "857": [
+    "aromatherapy"
+  ],
+  "858": [
+    "aromatherapy"
+  ],
+  "862": [
+    "rest",
+    "taunt"
+  ],
+  "863": [
+    "taunt"
+  ],
+  "867": [
+    "haze"
+  ],
+  "868": [
+    "aromatherapy"
+  ],
+  "869": [
+    "aromatherapy"
+  ],
+  "870": [
+    "focus-energy"
+  ],
+  "876": [
+    "aromatherapy"
+  ],
+  "880": [
+    "bolt-beak"
+  ],
+  "881": [
+    "bolt-beak"
+  ],
+  "882": [
+    "fishious-rend"
+  ],
+  "883": [
+    "fishious-rend"
+  ],
+  "884": [
+    "laser-focus",
+    "focus-energy"
+  ],
+  "888": [
+    "laser-focus"
+  ],
+  "889": [
+    "laser-focus"
+  ],
+  "891": [
+    "focus-energy"
+  ],
+  "892": [
+    "focus-energy"
+  ],
+  "895": [
+    "focus-energy",
+    "laser-focus"
+  ],
+  "896": [
+    "taunt"
+  ],
+  "897": [
+    "haze"
+  ],
+  "898": [
+    "aromatherapy"
+  ],
+  "900": [
+    "focus-energy"
+  ],
+  "901": [
+    "rest"
+  ],
+  "903": [
+    "taunt"
+  ],
+  "904": [
+    "fell-stinger"
+  ],
+  "912": [
+    "focus-energy"
+  ],
+  "913": [
+    "focus-energy"
+  ],
+  "914": [
+    "focus-energy"
+  ],
+  "931": [
+    "taunt"
+  ],
+  "935": [
+    "clear-smog"
+  ],
+  "936": [
+    "clear-smog"
+  ],
+  "937": [
+    "clear-smog"
+  ],
+  "944": [
+    "taunt"
+  ],
+  "945": [
+    "taunt"
+  ],
+  "946": [
+    "pain-split"
+  ],
+  "947": [
+    "pain-split"
+  ],
+  "954": [
+    "power-swap",
+    "guard-swap",
+    "speed-swap"
+  ],
+  "963": [
+    "focus-energy"
+  ],
+  "964": [
+    "focus-energy"
+  ],
+  "965": [
+    "taunt"
+  ],
+  "966": [
+    "taunt"
+  ],
+  "967": [
+    "taunt"
+  ],
+  "971": [
+    "rest"
+  ],
+  "972": [
+    "rest"
+  ],
+  "973": [
+    "focus-energy"
+  ],
+  "974": [
+    "rest"
+  ],
+  "975": [
+    "rest"
+  ],
+  "976": [
+    "focus-energy"
+  ],
+  "977": [
+    "rest"
+  ],
+  "978": [
+    "taunt"
+  ],
+  "979": [
+    "focus-energy"
+  ],
+  "981": [
+    "power-swap",
+    "guard-swap"
+  ],
+  "984": [
+    "taunt"
+  ],
+  "985": [
+    "rest"
+  ],
+  "986": [
+    "clear-smog"
+  ],
+  "987": [
+    "pain-split"
+  ],
+  "992": [
+    "focus-energy"
+  ],
+  "993": [
+    "focus-energy"
+  ],
+  "996": [
+    "focus-energy"
+  ],
+  "997": [
+    "focus-energy"
+  ],
+  "998": [
+    "focus-energy"
+  ],
+  "1002": [
+    "haze",
+    "sheer-cold"
+  ],
+  "1003": [
+    "taunt"
+  ],
+  "1005": [
+    "focus-energy"
+  ],
+  "1015": [
+    "clear-smog"
+  ],
+  "1017": [
+    "focus-energy"
+  ],
+  "1018": [
+    "focus-energy"
+  ],
+  "10001": [
+    "taunt"
+  ],
+  "10007": [
+    "pain-split"
+  ],
+  "10017": [
+    "taunt"
+  ],
+  "10019": [
+    "revenge"
+  ],
+  "10020": [
+    "revenge"
+  ],
+  "10022": [
+    "sheer-cold"
+  ],
+  "10023": [
+    "sheer-cold"
+  ],
+  "10027": [
+    "pain-split"
+  ],
+  "10028": [
+    "pain-split"
+  ],
+  "10029": [
+    "pain-split"
+  ],
+  "10030": [
+    "pain-split"
+  ],
+  "10031": [
+    "pain-split"
+  ],
+  "10032": [
+    "pain-split"
+  ],
+  "10038": [
+    "haze"
+  ],
+  "10040": [
+    "focus-energy",
+    "revenge"
+  ],
+  "10043": [
+    "psych-up",
+    "power-swap",
+    "guard-swap",
+    "laser-focus"
+  ],
+  "10044": [
+    "psych-up",
+    "power-swap",
+    "guard-swap",
+    "laser-focus"
+  ],
+  "10046": [
+    "focus-energy"
+  ],
+  "10050": [
+    "focus-energy"
+  ],
+  "10052": [
+    "taunt"
+  ],
+  "10054": [
+    "psych-up"
+  ],
+  "10057": [
+    "taunt"
+  ],
+  "10059": [
+    "laser-focus"
+  ],
+  "10060": [
+    "sheer-cold"
+  ],
+  "10061": [
+    "aromatherapy"
+  ],
+  "10062": [
+    "refresh"
+  ],
+  "10063": [
+    "refresh"
+  ],
+  "10067": [
+    "refresh"
+  ],
+  "10069": [
+    "refresh"
+  ],
+  "10070": [
+    "focus-energy",
+    "taunt"
+  ],
+  "10071": [
+    "psych-up",
+    "rest"
+  ],
+  "10074": [
+    "sheer-cold"
+  ],
+  "10077": [
+    "sheer-cold"
+  ],
+  "10078": [
+    "rest"
+  ],
+  "10079": [
+    "rest"
+  ],
+  "10087": [
+    "focus-energy"
+  ],
+  "10089": [
+    "focus-energy"
+  ],
+  "10090": [
+    "focus-energy",
+    "fell-stinger"
+  ],
+  "10091": [
+    "focus-energy"
+  ],
+  "10092": [
+    "focus-energy"
+  ],
+  "10093": [
+    "focus-energy"
+  ],
+  "10100": [
+    "speed-swap"
+  ],
+  "10103": [
+    "sheer-cold"
+  ],
+  "10104": [
+    "sheer-cold"
+  ],
+  "10107": [
+    "taunt"
+  ],
+  "10108": [
+    "taunt"
+  ],
+  "10113": [
+    "haze"
+  ],
+  "10115": [
+    "focus-energy"
+  ],
+  "10116": [
+    "haze"
+  ],
+  "10117": [
+    "haze"
+  ],
+  "10118": [
+    "haze"
+  ],
+  "10119": [
+    "haze"
+  ],
+  "10120": [
+    "haze"
+  ],
+  "10121": [
+    "rest"
+  ],
+  "10126": [
+    "taunt"
+  ],
+  "10143": [
+    "pain-split"
+  ],
+  "10144": [
+    "pain-split"
+  ],
+  "10145": [
+    "pain-split"
+  ],
+  "10147": [
+    "pain-split"
+  ],
+  "10150": [
+    "aromatherapy"
+  ],
+  "10152": [
+    "taunt"
+  ],
+  "10154": [
+    "fell-stinger"
+  ],
+  "10161": [
+    "taunt"
+  ],
+  "10164": [
+    "psych-up"
+  ],
+  "10165": [
+    "psych-up"
+  ],
+  "10167": [
+    "haze",
+    "clear-smog",
+    "aromatherapy"
+  ],
+  "10170": [
+    "focus-energy"
+  ],
+  "10172": [
+    "psych-up"
+  ],
+  "10174": [
+    "rest",
+    "taunt"
+  ],
+  "10175": [
+    "rest",
+    "taunt"
+  ],
+  "10176": [
+    "taunt"
+  ],
+  "10177": [
+    "taunt"
+  ],
+  "10178": [
+    "taunt"
+  ],
+  "10179": [
+    "haze"
+  ],
+  "10180": [
+    "revenge"
+  ],
+  "10181": [
+    "haze"
+  ],
+  "10184": [
+    "taunt"
+  ],
+  "10186": [
+    "aromatherapy"
+  ],
+  "10188": [
+    "laser-focus"
+  ],
+  "10189": [
+    "laser-focus"
+  ],
+  "10191": [
+    "focus-energy"
+  ],
+  "10193": [
+    "taunt",
+    "aromatherapy"
+  ],
+  "10194": [
+    "haze",
+    "aromatherapy"
+  ],
+  "10234": [
+    "fell-stinger"
+  ],
+  "10235": [
+    "taunt"
+  ],
+  "10236": [
+    "focus-energy"
+  ],
+  "10238": [
+    "taunt"
+  ],
+  "10239": [
+    "taunt"
+  ],
+  "10250": [
+    "rest"
+  ],
+  "10251": [
+    "rest"
+  ],
+  "10252": [
+    "rest"
+  ],
+  "10256": [
+    "focus-energy"
+  ],
+  "10258": [
+    "taunt"
+  ],
+  "10259": [
+    "taunt"
+  ],
+  "10260": [
+    "taunt"
+  ],
+  "10261": [
+    "taunt"
+  ],
+  "10262": [
+    "taunt"
+  ],
+  "10272": [
+    "rest"
+  ],
+  "10273": [
+    "focus-energy"
+  ],
+  "10274": [
+    "focus-energy"
+  ],
+  "10275": [
+    "focus-energy"
+  ]
+}

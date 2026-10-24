@@ -7,6 +7,7 @@ namespace App\Http\Controllers;
 use App\Enums\StatEnum;
 use App\Jobs\ActualizarPokedexJob;
 use App\Models\Favorito;
+use App\Models\Move;
 use App\Models\PlayerInventory;
 use App\Models\Pokemon;
 use App\Models\Reclutado;
@@ -283,6 +284,82 @@ class ReclutadoController extends Controller
     }
 
     /**
+     * Actualiza el loadout del reclutado: hasta 6 movimientos del catálogo de
+     * su especie y una habilidad activa.
+     */
+    public function actualizarLoadout(Request $request, Reclutado $reclutado): JsonResponse
+    {
+        if ($reclutado->teamMember?->team?->isExploring()) {
+            return response()->json([
+                'error' => 'No se puede modificar el loadout de un Pokémon en exploración',
+            ], 422);
+        }
+
+        $data = $request->validate([
+            'habilidad_id' => 'nullable|integer',
+            'movimientos' => 'sometimes|array|max:6',
+            'movimientos.*' => 'string',
+        ]);
+
+        $reclutado->loadMissing('pokemon.abilities', 'pokemon.moves');
+        $pokemon = $reclutado->pokemon;
+
+        if ($pokemon === null) {
+            return response()->json(['error' => 'El reclutado no tiene Pokémon asociado'], 422);
+        }
+
+        // Distinguir "campo omitido" (conservar) de "null explícito" (volver a
+        // la habilidad automática de la especie).
+        $habilidadEnviada = array_key_exists('habilidad_id', $data);
+        $habilidadId = $habilidadEnviada
+            ? $data['habilidad_id']
+            : $reclutado->habilidad_activa_id;
+        if ($habilidadEnviada
+            && $habilidadId !== null
+            && ! $pokemon->abilities->contains('id', $habilidadId)) {
+            return response()->json(['error' => 'La habilidad no pertenece a este Pokémon'], 422);
+        }
+
+        $slugs = array_values(array_unique(
+            array_key_exists('movimientos', $data)
+                ? $data['movimientos']
+                : (is_array($reclutado->movimientos) ? $reclutado->movimientos : []),
+        ));
+        $disponibles = $pokemon->moves->pluck('slug')->all();
+        $invalidos = array_values(array_diff($slugs, $disponibles));
+        if ($invalidos !== []) {
+            return response()->json([
+                'error' => 'Movimientos no disponibles para este Pokémon: '.implode(', ', $invalidos),
+            ], 422);
+        }
+
+        $nivelUsuario = $request->user()?->nivel() ?? 1;
+        $bloqueados = $pokemon->moves
+            ->whereIn('slug', $slugs)
+            ->filter(static fn (Move $move): bool => $move->nivel_requerido > $nivelUsuario)
+            ->map(static fn (Move $move): string => "{$move->name} (nivel {$move->nivel_requerido})")
+            ->values()
+            ->all();
+        if ($bloqueados !== []) {
+            return response()->json([
+                'error' => 'Movimientos bloqueados por nivel: '.implode(', ', $bloqueados),
+            ], 422);
+        }
+
+        $reclutado->update([
+            'habilidad_activa_id' => $habilidadId,
+            'movimientos' => $slugs,
+        ]);
+
+        $reclutado->load('pokemon.abilities', 'pokemon.moves', 'pokemon.types', 'pokemon.stats');
+
+        return response()->json([
+            'success' => true,
+            'reclutado' => ReclutadoSerializer::serializar($reclutado, auth()->user()?->nivel()),
+        ]);
+    }
+
+    /**
      * Libera (elimina) un reclutado del usuario.
      *
      * Anti-IDOR: el route-model binding + global scope BelongsToUser de Reclutado
@@ -360,7 +437,12 @@ class ReclutadoController extends Controller
         $habitatId = $request->integer('habitat_id');
         $userId = (int) auth()->id();
 
-        $query = Favorito::with(['reclutado.pokemon.types', 'reclutado.pokemon.stats']);
+        $query = Favorito::with([
+            'reclutado.pokemon.types',
+            'reclutado.pokemon.stats',
+            'reclutado.pokemon.abilities',
+            'reclutado.pokemon.moves',
+        ]);
 
         if ($habitatId > 0) {
             $query->paraHabitat($habitatId);
@@ -387,7 +469,12 @@ class ReclutadoController extends Controller
      */
     public function listarTodos(): JsonResponse
     {
-        $reclutados = Reclutado::with(['pokemon.types', 'pokemon.stats'])
+        $reclutados = Reclutado::with([
+            'pokemon.types',
+            'pokemon.stats',
+            'pokemon.abilities',
+            'pokemon.moves',
+        ])
             ->get()
             ->map(fn (Reclutado $reclutado): array => ReclutadoSerializer::serializar($reclutado, auth()->user()?->nivel()))
             ->values();

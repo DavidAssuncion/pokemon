@@ -5,6 +5,9 @@
 @section('content')
 @php
     $tipos = \App\Enums\TipoEnum::options();
+    $objetos = collect(\Src\Battle\Domain\Catalog\CatalogoObjetos::claves())
+        ->mapWithKeys(fn (string $clave): array => [$clave => \Src\Battle\Domain\Catalog\CatalogoObjetos::nombreDe($clave)])
+        ->all();
 @endphp
 <div x-data="favoritosApp()" x-init="init()">
     <!-- Header -->
@@ -123,8 +126,12 @@
                                                         loading="lazy"
                                                         decoding="async"
                                                         :alt="nombreFormateado(getMember(team, slot))"
-                                                        :title="nombreFormateado(getMember(team, slot))"
-                                                        class="w-full h-16 object-contain mx-auto"
+                                                        :title="'Ver detalle de ' + nombreFormateado(getMember(team, slot))"
+                                                        class="w-full h-16 object-contain mx-auto cursor-pointer"
+                                                        @click="openMemberDetail(team, slot)"
+                                                        role="button"
+                                                        tabindex="0"
+                                                        @keydown.enter="openMemberDetail(team, slot)"
                                                         onerror="this.style.display='none'"
                                                     >
                                                     <button
@@ -136,7 +143,12 @@
                                                         ✕
                                                     </button>
                                                     <!-- Nombre del Pokémon -->
-                                                    <p class="text-[10px] leading-tight text-gray-500 dark:text-gray-400 mt-0.5" x-text="nombreFormateado(getMember(team, slot))"></p>
+                                                    <p
+                                                        class="text-[10px] leading-tight text-gray-500 dark:text-gray-400 mt-0.5 cursor-pointer hover:text-blue-600 dark:hover:text-blue-400"
+                                                        @click="openMemberDetail(team, slot)"
+                                                        :title="'Ver detalle de ' + nombreFormateado(getMember(team, slot))"
+                                                        x-text="nombreFormateado(getMember(team, slot))"
+                                                    ></p>
                                                     <!-- Formación: iconos seleccionables -->
                                                      <div class="flex flex-row items-center justify-center gap-1">
                                                         <button
@@ -166,6 +178,32 @@
                                                             </svg>
                                                         </button>
                                                     </div>
+                                                    <!-- Postura de ronda -->
+                                                    <select
+                                                        :value="posturaDe(team, slot)"
+                                                        @change="setPosturaSlot(team, slot, $event.target.value)"
+                                                        :disabled="isInExploration(team.id)"
+                                                        class="mt-1 w-full rounded border border-gray-300 bg-white px-1 py-0.5 text-[9px] text-gray-700 disabled:opacity-40 disabled:cursor-not-allowed dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200"
+                                                        :aria-label="'Postura de ' + nombreFormateado(getMember(team, slot))"
+                                                        :title="'Postura de ronda de ' + nombreFormateado(getMember(team, slot))"
+                                                    >
+                                                        <option value="atacar">Atacar</option>
+                                                        <option value="guardia">Guardia</option>
+                                                        <option value="cubrir">Cubrir</option>
+                                                    </select>
+                                                    <select
+                                                        :value="itemDe(team, slot)"
+                                                        @change="guardarItemSlot(team, slot, $event.target.value)"
+                                                        :disabled="isInExploration(team.id) || itemSavingTeamId === team.id"
+                                                        class="mt-1 w-full rounded border border-gray-300 bg-white px-1 py-0.5 text-[9px] text-gray-700 disabled:opacity-40 disabled:cursor-not-allowed dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200"
+                                                        :aria-label="'Objeto de ' + nombreFormateado(getMember(team, slot))"
+                                                        :title="'Objeto equipado de ' + nombreFormateado(getMember(team, slot))"
+                                                    >
+                                                        <option value="">Sin objeto</option>
+                                                        @foreach($objetos as $clave => $nombre)
+                                                            <option value="{{ $clave }}">{{ $nombre }}</option>
+                                                        @endforeach
+                                                    </select>
                                                 </div>
                                             </template>
                                             <template x-if="!getMember(team, slot)">
@@ -192,6 +230,18 @@
                                 </div>
                                 <div x-show="formacionSaveError" x-cloak role="alert" class="mt-1 text-[10px] text-red-600 dark:text-red-400" x-text="formacionSaveError"></div>
                                 <div x-show="formacionSaveSuccess" x-cloak role="status" class="mt-1 text-[10px] text-green-600 dark:text-green-400" x-text="formacionSaveSuccess"></div>
+                                <div class="flex items-center gap-2 mt-2">
+                                    <button
+                                        @click="guardarPosturas(team)"
+                                        :disabled="isInExploration(team.id) || posturaSavingTeamId === team.id"
+                                        class="flex-1 px-3 py-1.5 bg-blue-600 dark:bg-blue-500 text-white rounded-lg text-[10px] font-bold uppercase tracking-wide hover:bg-blue-700 dark:hover:bg-blue-400 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                                        x-text="posturaSavingTeamId === team.id ? 'Guardando...' : 'Guardar posturas'"
+                                    ></button>
+                                </div>
+                                <div x-show="posturaSaveError" x-cloak role="alert" class="mt-1 text-[10px] text-red-600 dark:text-red-400" x-text="posturaSaveError"></div>
+                                <div x-show="posturaSaveSuccess" x-cloak role="status" class="mt-1 text-[10px] text-green-600 dark:text-green-400" x-text="posturaSaveSuccess"></div>
+                                <div x-show="itemSaveError" x-cloak role="alert" class="mt-1 text-[10px] text-red-600 dark:text-red-400" x-text="itemSaveError"></div>
+                                <div x-show="itemSaveSuccess" x-cloak role="status" class="mt-1 text-[10px] text-green-600 dark:text-green-400" x-text="itemSaveSuccess"></div>
                             </div>
                         </div>
                     </template>
@@ -748,7 +798,7 @@
     <template x-if="showDetailModal">
         <div class="fixed inset-0 z-50 flex items-center justify-center p-4" @keydown.escape.window="closeDetail()" role="dialog" aria-modal="true" aria-labelledby="detail-modal-title">
             <div class="absolute inset-0 bg-black/60" @click="closeDetail()"></div>
-            <div class="relative bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
+            <div class="relative bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-6xl max-h-[94vh] overflow-y-auto">
                 <!-- Header -->
                 <div class="flex items-start gap-4 p-6 border-b border-gray-100 dark:border-gray-700">
                     <div class="w-24 h-24 shrink-0 rounded-lg bg-gray-50 dark:bg-gray-900/50 flex items-center justify-center overflow-hidden">
@@ -771,6 +821,13 @@
                             </template>
                         </div>
                         <p class="text-xs text-gray-400 dark:text-gray-500" x-text="detailPokemon.pokemon_id ? '#' + detailPokemon.pokemon_id : ''"></p>
+                        <div class="flex items-center gap-1.5 mt-1.5 flex-wrap">
+                            <template x-if="detailPokemon.pokemon?.types?.length">
+                                <template x-for="t in detailPokemon.pokemon.types" :key="'header-type-'+(t.id ?? t.slot ?? t.type)">
+                                    <span class="px-2 py-0.5 text-[11px] font-semibold rounded-full inline-flex items-center" :class="tipoClase(tipoLabelDel(t))" x-text="tipoLabelDel(t)"></span>
+                                </template>
+                            </template>
+                        </div>
                         <div class="flex items-center gap-2 mt-1 flex-wrap">
                             <span class="px-2 py-0.5 bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-400 text-xs font-bold rounded-full">Nv <span x-text="nivelDe(detailPokemon)"></span></span>
                             <template x-if="cpDe(detailPokemon) != null">
@@ -790,104 +847,189 @@
                     </button>
                 </div>
 
-                <div class="p-6 space-y-5">
-                    <!-- Types -->
-                    <template x-if="detailPokemon.pokemon?.types?.length">
-                        <div class="flex items-center gap-2 flex-wrap">
-                            <template x-for="t in detailPokemon.pokemon.types" :key="t.id ?? t.slot ?? t.type">
-                                <span class="px-2 py-0.5 text-xs font-medium rounded-full inline-flex items-center" :class="tipoClase(tipoLabelDel(t))" x-text="tipoLabelDel(t)"></span>
-                            </template>
-                        </div>
-                    </template>
-
-                    <!-- Base experience -->
-                    <template x-if="baseExperienceDe(detailPokemon) != null">
-                        <div class="flex items-center justify-between text-sm">
-                            <span class="text-gray-500 dark:text-gray-400">Exp. base</span>
-                            <span class="font-medium text-gray-800 dark:text-gray-200" x-text="formatExp(baseExperienceDe(detailPokemon))"></span>
-                        </div>
-                    </template>
-
-                    <!-- Base stats -->
-                    <template x-if="statsDe(detailPokemon).length > 0">
-                        <div>
-                            <h4 class="text-xs font-bold uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-2">Stats base</h4>
-                            <div class="space-y-1.5">
-                                <template x-for="stat in statsDe(detailPokemon)" :key="stat.name">
-                                    <div class="flex items-center gap-2">
-                                        <span class="text-[10px] text-gray-500 dark:text-gray-400 w-20 text-right truncate" x-text="stat.name"></span>
-                                        <div class="flex-1 h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
-                                            <div class="h-full bg-blue-500 rounded-full" :style="'width: ' + Math.min((stat.value / 255) * 100, 100) + '%'"></div>
-                                        </div>
-                                        <span class="text-[10px] font-medium text-gray-700 dark:text-gray-300 w-6" x-text="stat.value"></span>
+                <div class="p-6">
+                    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                        <div class="lg:col-span-7 space-y-5">
+                            <!-- Movimientos -->
+                            <div>
+                                <div class="flex items-center justify-between mb-2">
+                                    <h4 class="text-xs font-bold uppercase tracking-wide text-gray-500 dark:text-gray-400">Movimientos</h4>
+                                    <span class="text-[10px] text-gray-400 dark:text-gray-500" x-text="loadoutMovimientos.length + ' seleccionados'"></span>
+                                </div>
+                                <template x-if="(detailPokemon.movimientos_disponibles || []).length > 0">
+                                    <div class="space-y-2">
+                                        <template x-for="mov in detailPokemon.movimientos_disponibles" :key="'detail-mov-'+mov.slug">
+                                            <div class="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900/30 p-3"
+                                                 :class="mov.desbloqueado === false ? 'opacity-60' : ''">
+                                                <div class="flex items-start justify-between gap-3">
+                                                    <div class="min-w-0">
+                                                        <p class="text-sm font-semibold text-gray-900 dark:text-white" x-text="mov.name"></p>
+                                                        <p class="text-[10px] text-gray-400 dark:text-gray-500">
+                                                            <span x-text="mov.category"></span>
+                                                            <span x-show="mov.base_power > 0" x-text="' · ' + mov.base_power + ' potencia'"></span>
+                                                            <span class="ml-1" x-show="mov.desbloqueado === false"
+                                                                  x-text="' · Nivel ' + mov.nivel_requerido"></span>
+                                                        </p>
+                                                    </div>
+                                                    <button
+                                                        type="button"
+                                                        @click="toggleLoadoutMovimiento(mov.slug)"
+                                                        :disabled="mov.desbloqueado === false"
+                                                        class="shrink-0 px-2 py-1 rounded-md text-[10px] font-bold border transition-colors disabled:cursor-not-allowed"
+                                                        :class="mov.desbloqueado === false
+                                                            ? 'border-gray-200 dark:border-gray-700 text-gray-400 dark:text-gray-500'
+                                                            : (loadoutMovimientos.includes(mov.slug)
+                                                                ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
+                                                                : 'border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400 hover:border-blue-300')"
+                                                        x-text="mov.desbloqueado === false ? ('Nivel ' + mov.nivel_requerido) : (loadoutMovimientos.includes(mov.slug) ? 'Quitar' : 'Añadir')"
+                                                    ></button>
+                                                </div>
+                                                <p class="mt-1.5 text-[11px] leading-snug text-gray-500 dark:text-gray-400" x-text="mov.description || 'Sin descripción.'"></p>
+                                            </div>
+                                        </template>
                                     </div>
                                 </template>
-                            </div>
-                        </div>
-                    </template>
-
-                    <!-- Habilidades -->
-                    <template x-if="habilidadesDe(detailPokemon).length > 0">
-                        <div>
-                            <h4 class="text-xs font-bold uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-2">Habilidades</h4>
-                            <div class="flex flex-wrap gap-1.5">
-                                <template x-for="(hab, index) in habilidadesDe(detailPokemon)" :key="index">
-                                    <span class="px-2 py-0.5 text-xs font-medium rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 capitalize" x-text="hab"></span>
+                                <template x-if="(detailPokemon.movimientos_disponibles || []).length === 0">
+                                    <p class="text-[11px] text-gray-400 dark:text-gray-500">Esta especie no tiene movimientos de catálogo.</p>
                                 </template>
                             </div>
-                        </div>
-                    </template>
 
-                    <!-- IVs -->
-                    <template x-if="detailPokemon && (detailPokemon.ivs || detailPokemon.iv)">
-                        <div>
-                            <h4 class="text-xs font-bold uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-2">Valores Individuales (IV)</h4>
-                            <div class="grid grid-cols-2 gap-x-4 gap-y-1.5">
-                                <template x-for="stat in evStats" :key="stat.key">
-                                    <div class="flex items-center justify-between">
-                                        <span class="text-[10px] text-gray-500 dark:text-gray-400" x-text="stat.label"></span>
-                                        <span class="text-xs font-bold" :class="ivValue(detailPokemon, stat.key) >= 15 ? 'text-green-600 dark:text-green-400' : 'text-gray-700 dark:text-gray-300'" x-text="ivValue(detailPokemon, stat.key) + '/15'"></span>
+                            <!-- Habilidades -->
+                            <div>
+                                <h4 class="text-xs font-bold uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-2">Habilidades</h4>
+                                <template x-if="(detailPokemon.habilidades_disponibles || []).length > 0">
+                                    <div class="space-y-2">
+                                        <template x-for="hab in detailPokemon.habilidades_disponibles" :key="'detail-hab-'+hab.id">
+                                            <button
+                                                type="button"
+                                                @click="loadoutHabilidadId = (loadoutHabilidadId == hab.id ? '' : hab.id)"
+                                                class="w-full text-left rounded-xl border p-3 transition-colors"
+                                                :class="loadoutHabilidadId == hab.id
+                                                    ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20'
+                                                    : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900/30 hover:border-emerald-300'"
+                                            >
+                                                <div class="flex items-center justify-between gap-2">
+                                                    <span class="text-sm font-semibold text-gray-900 dark:text-white" x-text="hab.name"></span>
+                                                    <span x-show="loadoutHabilidadId == hab.id" class="text-[10px] font-bold text-emerald-600 dark:text-emerald-400">ACTIVA</span>
+                                                </div>
+                                                <p class="mt-1 text-[11px] leading-snug text-gray-500 dark:text-gray-400" x-text="hab.description || 'Sin descripción.'"></p>
+                                            </button>
+                                        </template>
                                     </div>
                                 </template>
+                                <template x-if="(detailPokemon.habilidades_disponibles || []).length === 0">
+                                    <p class="text-[11px] text-gray-400 dark:text-gray-500">Esta especie no tiene habilidades registradas.</p>
+                                </template>
                             </div>
-                            <p class="text-[10px] text-gray-400 dark:text-gray-500 mt-1">Los IV perfectos (15) se muestran en verde.</p>
-                        </div>
-                    </template>
 
-                    <!-- EVs -->
-                    <template x-if="detailPokemon && (detailPokemon.evs || detailPokemon.ev)">
-                        <div>
-                            <h4 class="text-xs font-bold uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-2">Esfuerzo (EV)</h4>
-                            <template x-if="detailEvFeedback.mensaje">
-                                <div class="px-3 py-2 rounded-lg text-xs mb-2" role="status"
-                                    :class="detailEvFeedback.tipo === 'error'
+                            <!-- Loadout de combate -->
+                            <div class="rounded-2xl border border-blue-200 dark:border-blue-900/60 bg-blue-50/50 dark:bg-blue-900/10 p-4">
+                                <div class="flex items-center justify-between mb-2">
+                                    <h4 class="text-xs font-bold uppercase tracking-wide text-blue-700 dark:text-blue-300">Loadout de combate</h4>
+                                    <span class="text-[10px] text-blue-600/70 dark:text-blue-300/70" x-text="loadoutMovimientos.length + '/6 movimientos'"></span>
+                                </div>
+                                <p class="text-[11px] text-gray-600 dark:text-gray-300 mb-2">
+                                    Habilidad activa:
+                                    <strong x-text="nombreHabilidadLoadout()"></strong>
+                                </p>
+                                <div class="flex flex-wrap gap-1.5 mb-3">
+                                    <template x-for="slug in loadoutMovimientos" :key="'loadout-chip-'+slug">
+                                        <span class="px-2 py-0.5 rounded-full bg-white dark:bg-gray-800 border border-blue-200 dark:border-blue-800 text-[10px] text-blue-700 dark:text-blue-300" x-text="nombreMovimientoLoadout(slug) || slug"></span>
+                                    </template>
+                                    <span x-show="loadoutMovimientos.length === 0" class="text-[10px] text-gray-400 dark:text-gray-500">Sin selección: se usa el catálogo desbloqueado completo.</span>
+                                </div>
+                                <button
+                                    type="button"
+                                    @click="guardarLoadout()"
+                                    :disabled="loadoutSaving"
+                                    class="w-full px-3 py-2 bg-blue-600 text-white rounded-lg text-xs font-bold hover:bg-blue-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                                    x-text="loadoutSaving ? 'Guardando…' : 'Guardar loadout'"
+                                ></button>
+                                <div
+                                    x-show="loadoutFeedback.mensaje"
+                                    x-cloak
+                                    role="status"
+                                    class="mt-2 px-2 py-1.5 rounded text-[10px]"
+                                    :class="loadoutFeedback.tipo === 'error'
                                         ? 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400'
                                         : 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400'"
-                                    x-text="detailEvFeedback.mensaje">
-                                </div>
-                            </template>
-                            <div class="space-y-2">
-                                <template x-for="stat in evStats" :key="'ev-'+stat.key">
-                                    <div class="flex items-center gap-2">
-                                        <span class="text-[10px] text-gray-500 dark:text-gray-400 w-20 text-right truncate" x-text="stat.label"></span>
-                                        <div class="flex-1 h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
-                                            <div class="h-full bg-amber-500 rounded-full" :style="'width: ' + evPct(evValue(detailPokemon, stat.key)) + '%'"></div>
-                                        </div>
-                                        <span class="text-[10px] font-medium text-gray-700 dark:text-gray-300 w-8 flex-shrink-0" x-text="evValue(detailPokemon, stat.key) + '/255'"></span>
-                                        <button
-                                            @click="darEv(stat.key)"
-                                            :disabled="!puedeDarEv(detailPokemon, stat.key)"
-                                            :title="!puedeDarEv(detailPokemon, stat.key) ? 'No puedes dar caramelos EV ahora mismo' : 'Dar caramelo EV (+10 a ' + stat.label + ')'"
-                                            class="shrink-0 px-2 py-1 bg-amber-500 text-white rounded-md text-[10px] font-bold hover:bg-amber-600 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-                                        >
-                                            🍬 <span x-text="evCandyLabel(detailPokemon, stat.key)"></span>
-                                        </button>
-                                    </div>
-                                </template>
+                                    x-text="loadoutFeedback.mensaje"
+                                ></div>
                             </div>
                         </div>
-                    </template>
 
+                        <div class="lg:col-span-5 space-y-5">
+                            <!-- Stats base + chart hexagonal -->
+                            <div class="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900/30 p-4">
+                                <h4 class="text-xs font-bold uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-2">Stats base</h4>
+                                <div class="relative w-full max-w-[270px] mx-auto" style="height: 220px;">
+                                    <canvas id="detail-stats-chart" role="img" aria-label="Gráfico hexagonal de stats base"></canvas>
+                                </div>
+                                <div class="mt-3 space-y-1.5">
+                                    <template x-for="(stat, index) in hexStats(detailPokemon)" :key="'base-stat-'+stat.label">
+                                        <div class="grid grid-cols-[3.5rem_1fr_2.5rem] items-center gap-2">
+                                            <span class="text-[10px] text-gray-500 dark:text-gray-400 truncate" x-text="stat.label"></span>
+                                            <div class="h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                                                <div class="h-full bg-blue-500 rounded-full" :style="'width: ' + Math.min((stat.value / 255) * 100, 100) + '%'"></div>
+                                            </div>
+                                            <span class="text-[10px] font-semibold text-right text-gray-700 dark:text-gray-300" x-text="stat.value"></span>
+                                        </div>
+                                    </template>
+                                </div>
+                            </div>
+
+                            <!-- EVs -->
+                            <template x-if="detailPokemon && (detailPokemon.evs || detailPokemon.ev)">
+                                <div>
+                                    <h4 class="text-xs font-bold uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-2">Entrenamiento (EV)</h4>
+                                    <template x-if="detailEvFeedback.mensaje">
+                                        <div class="px-3 py-2 rounded-lg text-xs mb-2" role="status"
+                                            :class="detailEvFeedback.tipo === 'error'
+                                                ? 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400'
+                                                : 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400'"
+                                            x-text="detailEvFeedback.mensaje">
+                                        </div>
+                                    </template>
+                                    <div class="space-y-2">
+                                        <template x-for="stat in evStats" :key="'ev-'+stat.key">
+                                            <div class="flex items-center gap-2">
+                                                <span class="text-[10px] text-gray-500 dark:text-gray-400 w-20 text-right truncate" x-text="stat.label"></span>
+                                                <div class="flex-1 h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                                                    <div class="h-full bg-amber-500 rounded-full" :style="'width: ' + evPct(evValue(detailPokemon, stat.key)) + '%'"></div>
+                                                </div>
+                                                <span class="text-[10px] font-medium text-gray-700 dark:text-gray-300 w-8 flex-shrink-0" x-text="evValue(detailPokemon, stat.key) + '/255'"></span>
+                                                <button
+                                                    @click="darEv(stat.key)"
+                                                    :disabled="!puedeDarEv(detailPokemon, stat.key)"
+                                                    :title="!puedeDarEv(detailPokemon, stat.key) ? 'No puedes dar caramelos EV ahora mismo' : 'Dar caramelo EV (+10 a ' + stat.label + ')'"
+                                                    class="shrink-0 px-2 py-1 bg-amber-500 text-white rounded-md text-[10px] font-bold hover:bg-amber-600 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                                                >
+                                                    🍬 <span x-text="evCandyLabel(detailPokemon, stat.key)"></span>
+                                                </button>
+                                            </div>
+                                        </template>
+                                    </div>
+                                </div>
+                            </template>
+                            <!-- IVs -->
+                            <template x-if="detailPokemon && (detailPokemon.ivs || detailPokemon.iv)">
+                                <div>
+                                    <h4 class="text-xs font-bold uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-2">Valores Individuales (IV)</h4>
+                                    <div class="grid grid-cols-2 gap-x-4 gap-y-1.5">
+                                        <template x-for="stat in evStats" :key="'iv-'+stat.key">
+                                            <div class="flex items-center justify-between">
+                                                <span class="text-[10px] text-gray-500 dark:text-gray-400" x-text="stat.label"></span>
+                                                <span class="text-xs font-bold" :class="ivValue(detailPokemon, stat.key) >= 15 ? 'text-green-600 dark:text-green-400' : 'text-gray-700 dark:text-gray-300'" x-text="ivValue(detailPokemon, stat.key) + '/15'"></span>
+                                            </div>
+                                        </template>
+                                    </div>
+                                </div>
+                            </template>
+
+                        </div>
+                    </div>
+
+                    <div class="mt-6 space-y-5">
                     <!-- Locked while exploring (individual or team) -->
                     <template x-if="detailPokemon && (enExploracion(detailPokemon.id) || pokemonEnExploracion(detailPokemon))">
                         <div class="px-3 py-2 rounded-lg bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400 text-xs" role="status">
@@ -1009,6 +1151,7 @@
                             </div>
                         </template>
                     </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -1016,43 +1159,6 @@
 </div>
 
 @push('scripts')
-<script>
-    window.addEventListener('error', (e) => console.error('[equipos:trace] window error:', e.message, e.filename + ':' + e.lineno, e.error || ''));
-    window.addEventListener('unhandledrejection', (e) => console.error('[equipos:trace] unhandled rejection:', e.reason));
-    document.addEventListener('alpine:init', () => console.log('[equipos:trace] alpine:init'));
-    document.addEventListener('alpine:initialized', () => console.log('[equipos:trace] alpine:initialized'));
-    window.addEventListener('load', () => {
-        console.log('[equipos:trace] load — Alpine:', typeof window.Alpine, '| Livewire:', typeof window.Livewire, '| x-data presente:', !!document.querySelector('[x-data]'));
-        setTimeout(() => {
-            try {
-                const gridAudit = (titulo) => {
-                    const h = [...document.querySelectorAll('h2')].find(x => x.textContent.includes(titulo));
-                    if (!h) return { encontrado: false };
-                    const grid = h.closest('div').nextElementSibling;
-                    const imgs = [...grid.querySelectorAll('img')];
-                    return {
-                        encontrado: true,
-                        hijos: grid.children.length,
-                        texto: (grid.textContent || '').trim().slice(0, 140),
-                        imgs: imgs.length,
-                        imgsCargadas: imgs.filter(i => i.naturalWidth > 0).length,
-                        imgsOcultas: imgs.filter(i => getComputedStyle(i).display === 'none').length,
-                        alto: grid.offsetHeight,
-                        display: getComputedStyle(grid).display,
-                    };
-                };
-                console.log('[equipos:trace] DOM audit', {
-                    disponibles: gridAudit('Reclutados Disponibles'),
-                    asignados: gridAudit('Asignados'),
-                    imgsEquipos: document.querySelectorAll('.grid-cols-3 img').length,
-                    imgsPagina: document.images.length,
-                });
-            } catch (e) {
-                console.error('[equipos:trace] DOM audit error', e);
-            }
-        }, 2000);
-    });
-</script>
 <script>
 function favoritosApp() {
     return {
@@ -1071,6 +1177,19 @@ function favoritosApp() {
         formacionSavingTeamId: null,
         formacionSaveError: '',
         formacionSaveSuccess: '',
+
+        // ─── Posturas persistentes por miembro ─────────────────────────────
+        // Draft local: {teamId: {slot: 'atacar'|'guardia'|'cubrir'}}.
+        posturasDraft: {},
+        posturaSavingTeamId: null,
+        posturaSaveError: '',
+        posturaSaveSuccess: '',
+
+        // ─── Objetos equipados por miembro ──────────────────────────────────
+        itemsDraft: {},
+        itemSavingTeamId: null,
+        itemSaveError: '',
+        itemSaveSuccess: '',
 
         // ─── UI: Equipos ───────────────────────────────────────────────────
         // ─── UI: Buscar/filtro ─────────────────────────────────────────────
@@ -1092,6 +1211,13 @@ function favoritosApp() {
         detailEvolucionesLoading: false,
         detailEvolucionesError: false,
         selectedEvolucionId: null,
+        detailChartInstance: null,
+
+        // ─── Detail: loadout de combate ─────────────────────────────────────
+        loadoutHabilidadId: '',
+        loadoutMovimientos: [],
+        loadoutSaving: false,
+        loadoutFeedback: { tipo: '', mensaje: '' },
 
         // ─── Detail: EV feeding (caramelos EV / IVs) ─────────────────────────
         evStats: [
@@ -1176,32 +1302,6 @@ function favoritosApp() {
         // ═══════════════════════════════════════════════════════════════════════
 
         init() {
-            try {
-                const baseSinAsignar = Array.isArray(this.reclutados)
-                    ? this.reclutados.filter(r => !this.teamPokemonIds.includes(r.id))
-                    : null;
-                console.log('[equipos:trace] init()', {
-                    reclutadosTipo: Array.isArray(this.reclutados) ? 'array' : typeof this.reclutados,
-                    reclutadosTotal: Array.isArray(this.reclutados) ? this.reclutados.length : null,
-                    reclutadosIds: Array.isArray(this.reclutados) ? this.reclutados.map(r => r.id) : null,
-                    teamPokemonIds: this.teamPokemonIds,
-                    teams: this.teams.map(t => ({
-                        id: t.id,
-                        name: t.name,
-                        members: t.members ? t.members.length : null,
-                        slots: t.members ? t.members.map(m => m.slot) : null,
-                        pokemonIds: t.members ? t.members.map(m => m.pokemon_id) : null,
-                        formacion: t.formacion,
-                    })),
-                    searchQuery: this.searchQuery,
-                    typeFilter: this.typeFilter,
-                    disponiblesSinFiltros: baseSinAsignar ? baseSinAsignar.length : null,
-                    disponibles: this.availablePokemonsTeams.length,
-                    asignados: this.assignedPokemons.length,
-                });
-            } catch (traceError) {
-                console.error('[equipos:trace] init() error', traceError);
-            }
             document.addEventListener('click', (e) => {
                 if (!e.target.closest('[x-data]')?.contains(e.target)) {
                     this.showTypeFilter = false;
@@ -1307,6 +1407,85 @@ function favoritosApp() {
             return [];
         },
 
+        // ═══════════════════════════════════════════════════════════════════════
+        // DETAIL: chart hexagonal
+        // ═══════════════════════════════════════════════════════════════════════
+
+        hexStats(pokemon) {
+            const stats = this.statsDe(pokemon);
+            return [
+                { label: 'PS', value: Number(stats[0]?.value ?? 0) },
+                { label: 'ATK', value: Number(stats[1]?.value ?? 0) },
+                { label: 'DEF', value: Number(stats[2]?.value ?? 0) },
+                { label: 'VEL', value: Number(stats[5]?.value ?? 0) },
+                { label: 'SpD', value: Number(stats[4]?.value ?? 0) },
+                { label: 'SpA', value: Number(stats[3]?.value ?? 0) },
+            ];
+        },
+
+        renderDetailChart() {
+            const canvas = document.getElementById('detail-stats-chart');
+            if (!canvas || typeof window.Chart === 'undefined' || !this.detailPokemon) return;
+
+            if (this.detailChartInstance) {
+                this.detailChartInstance.destroy();
+                this.detailChartInstance = null;
+            }
+
+            const stats = this.hexStats(this.detailPokemon);
+            const dark = document.documentElement.classList.contains('dark');
+            const labelColor = dark ? '#9ca3af' : '#6b7280';
+            const gridColor = dark ? 'rgba(107,114,128,0.35)' : 'rgba(209,213,219,0.9)';
+
+            this.detailChartInstance = new window.Chart(canvas.getContext('2d'), {
+                type: 'radar',
+                data: {
+                    labels: stats.map(stat => stat.label),
+                    datasets: [{
+                        data: stats.map(stat => stat.value),
+                        borderColor: '#3b82f6',
+                        backgroundColor: 'rgba(59,130,246,0.18)',
+                        pointBackgroundColor: '#3b82f6',
+                        pointBorderColor: '#3b82f6',
+                        pointRadius: 3,
+                        borderWidth: 2,
+                    }],
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    animation: false,
+                    scales: {
+                        r: {
+                            min: 0,
+                            max: 255,
+                            ticks: { display: false },
+                            grid: { color: gridColor },
+                            angleLines: { color: gridColor },
+                            pointLabels: {
+                                color: labelColor,
+                                font: { size: 10, weight: '600' },
+                            },
+                        },
+                    },
+                    plugins: {
+                        legend: { display: false },
+                    },
+                },
+            });
+        },
+
+        nombreMovimientoLoadout(slug) {
+            const mov = (this.detailPokemon?.movimientos_disponibles || []).find(m => m.slug === slug);
+            return mov ? mov.name : slug;
+        },
+
+        nombreHabilidadLoadout() {
+            if (!this.loadoutHabilidadId) return 'Automática (todas las de la especie)';
+            const hab = (this.detailPokemon?.habilidades_disponibles || []).find(h => String(h.id) === String(this.loadoutHabilidadId));
+            return hab ? hab.name : 'Automática';
+        },
+
         baseExperienceDe(pokemon) {
             if (!pokemon) return null;
             if (typeof pokemon.base_experience === 'number') return pokemon.base_experience;
@@ -1366,11 +1545,26 @@ function favoritosApp() {
         // DETAIL MODAL (shared)
         // ═══════════════════════════════════════════════════════════════════════
 
+        openMemberDetail(team, slot) {
+            const member = this.getMember(team, slot);
+            const reclutado = member?.reclutado;
+            if (!reclutado) return;
+            this.openDetail(
+                this.reclutados.find(r => String(r.id) === String(reclutado.id)) || reclutado
+            );
+        },
+
         openDetail(pokemon) {
             this.detailPokemon = pokemon;
             this.detailLoading = false;
             this.showDetailModal = true;
+            this.loadoutHabilidadId = pokemon?.habilidad_activa_id ?? '';
+            this.loadoutMovimientos = Array.isArray(pokemon?.movimientos_seleccionados)
+                ? [...pokemon.movimientos_seleccionados]
+                : [];
+            this.loadoutFeedback = { tipo: '', mensaje: '' };
             this.cargarEvoluciones(pokemon);
+            setTimeout(() => this.renderDetailChart(), 0);
         },
 
         closeDetail() {
@@ -1383,6 +1577,82 @@ function favoritosApp() {
             this.selectedEvolucionId = null;
             this.detailEvFeedback = { tipo: '', mensaje: '' };
             this.detailEvsFeeding = false;
+            this.loadoutHabilidadId = '';
+            this.loadoutMovimientos = [];
+            this.loadoutFeedback = { tipo: '', mensaje: '' };
+            if (this.detailChartInstance) {
+                this.detailChartInstance.destroy();
+                this.detailChartInstance = null;
+            }
+        },
+
+        toggleLoadoutMovimiento(slug) {
+            const movimiento = (this.detailPokemon?.movimientos_disponibles || [])
+                .find(m => m.slug === slug);
+            if (movimiento?.desbloqueado === false) {
+                this.loadoutFeedback = {
+                    tipo: 'error',
+                    mensaje: 'Este movimiento requiere nivel ' + movimiento.nivel_requerido + '.',
+                };
+                return;
+            }
+
+            if (this.loadoutMovimientos.includes(slug)) {
+                this.loadoutMovimientos = this.loadoutMovimientos.filter(s => s !== slug);
+                return;
+            }
+            if (this.loadoutMovimientos.length >= 6) {
+                this.loadoutFeedback = { tipo: 'error', mensaje: 'Máximo 6 movimientos.' };
+                return;
+            }
+            this.loadoutMovimientos.push(slug);
+        },
+
+        async guardarLoadout() {
+            if (!this.detailPokemon || this.loadoutSaving) return;
+            this.loadoutSaving = true;
+            this.loadoutFeedback = { tipo: '', mensaje: '' };
+            try {
+                const response = await fetch('/reclutado/' + this.detailPokemon.id + '/loadout', {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '',
+                        'Accept': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        habilidad_id: this.loadoutHabilidadId || null,
+                        movimientos: this.loadoutMovimientos,
+                    }),
+                });
+                const data = await response.json().catch(() => ({}));
+                if (!response.ok) {
+                    this.loadoutFeedback = {
+                        tipo: 'error',
+                        mensaje: data.error || data.message || 'No se pudo guardar el loadout.',
+                    };
+                    return;
+                }
+                if (data.reclutado) {
+                    const idx = this.reclutados.findIndex(r => String(r.id) === String(data.reclutado.id));
+                    if (idx >= 0) {
+                        this.reclutados[idx] = { ...this.reclutados[idx], ...data.reclutado };
+                        this.detailPokemon = this.reclutados[idx];
+                    } else {
+                        this.detailPokemon = data.reclutado;
+                    }
+                    this.loadoutHabilidadId = data.reclutado.habilidad_activa_id ?? '';
+                    this.loadoutMovimientos = Array.isArray(data.reclutado.movimientos_seleccionados)
+                        ? [...data.reclutado.movimientos_seleccionados]
+                        : [];
+                }
+                this.loadoutFeedback = { tipo: 'ok', mensaje: '✓ Loadout guardado' };
+            } catch (err) {
+                console.error('Error saving loadout:', err);
+                this.loadoutFeedback = { tipo: 'error', mensaje: 'Error de conexión al guardar el loadout.' };
+            } finally {
+                this.loadoutSaving = false;
+            }
         },
 
         async cargarEvoluciones(pokemon) {
@@ -1438,6 +1708,17 @@ function favoritosApp() {
                 if (typeof h === 'string') return h;
                 if (h && (h.nombre || h.name)) return h.nombre || h.name;
                 return Object.values(h || {})[0] || '';
+            }).filter(Boolean);
+        },
+
+        movimientosDe(pokemon) {
+            if (!pokemon) return [];
+            const fuente = pokemon.movimientos_pokemon || pokemon.movimientos || pokemon.moves || [];
+            const lista = Array.isArray(fuente) ? fuente : Object.values(fuente || []);
+            return lista.map(m => {
+                if (typeof m === 'string') return m;
+                if (m && (m.nombre || m.name)) return m.nombre || m.name;
+                return '';
             }).filter(Boolean);
         },
 
@@ -2005,6 +2286,133 @@ function favoritosApp() {
                 this.formacionSaveError = 'Error de conexión al guardar la formación.';
             } finally {
                 this.formacionSavingTeamId = null;
+            }
+        },
+
+        // ─── Objetos equipados (combate 3v3) ─────────────────────────────────
+
+        itemDe(team, slot) {
+            const draft = this.itemsDraft[team.id]?.[slot];
+            if (draft !== undefined) return draft;
+
+            const member = this.getMember(team, slot);
+            const items = member?.reclutado?.obj_equipados;
+            const item = Array.isArray(items) ? items[0] : '';
+
+            return typeof item === 'string' ? item : '';
+        },
+
+        async guardarItemSlot(team, slot, itemKey) {
+            if (this.isInExploration(team.id)) return;
+
+            if (!this.itemsDraft[team.id]) this.itemsDraft[team.id] = {};
+            this.itemsDraft[team.id][slot] = itemKey;
+            this.itemSavingTeamId = team.id;
+            this.itemSaveError = '';
+            this.itemSaveSuccess = '';
+
+            try {
+                const response = await fetch('/teams/' + team.id + '/items', {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '',
+                        'Accept': 'application/json',
+                    },
+                    body: JSON.stringify({ items: { [slot]: itemKey } }),
+                });
+                const data = await response.json().catch(() => ({}));
+                if (!response.ok) {
+                    this.itemSaveError = data.error || data.message || 'No se pudo guardar el objeto.';
+                    return;
+                }
+
+                const member = this.getMember(team, slot);
+                if (member?.reclutado) {
+                    member.reclutado.obj_equipados = itemKey !== '' ? [itemKey] : [];
+                }
+                this.itemsDraft[team.id] = {};
+                this.itemSaveSuccess = '✓ Objeto guardado';
+                setTimeout(() => {
+                    this.itemSaveSuccess = '';
+                }, 2500);
+            } catch (err) {
+                console.error('Error saving item:', err);
+                this.itemSaveError = 'Error de conexión al guardar el objeto.';
+            } finally {
+                this.itemSavingTeamId = null;
+            }
+        },
+
+        // ─── Posturas (combate 3v3) ──────────────────────────────────────────
+
+        /** Postura del slot: draft local > postura persistida > 'atacar'. */
+        posturaDe(team, slot) {
+            return this.posturasDraft[team.id]?.[slot]
+                || team.posturas?.[slot]
+                || 'atacar';
+        },
+
+        setPosturaSlot(team, slot, postura) {
+            if (this.isInExploration(team.id)) return;
+            if (!this.posturasDraft[team.id]) this.posturasDraft[team.id] = {};
+            this.posturasDraft[team.id][slot] = postura;
+            this.posturaSaveError = '';
+            this.posturaSaveSuccess = '';
+        },
+
+        async guardarPosturas(team) {
+            if (this.isInExploration(team.id)) {
+                alert('No se puede modificar un equipo con exploraciones activas');
+                return;
+            }
+
+            const base = team.posturas || {};
+            const draft = this.posturasDraft[team.id] || {};
+            const posturasCompletas = {};
+            for (let slot = 1; slot <= 3; slot++) {
+                if (!this.getMember(team, slot)) continue;
+                posturasCompletas[slot] = draft[slot] || base[slot] || 'atacar';
+            }
+
+            if (Object.keys(posturasCompletas).length === 0) {
+                alert('No hay posturas para guardar.');
+                return;
+            }
+
+            this.posturaSavingTeamId = team.id;
+            this.posturaSaveError = '';
+            this.posturaSaveSuccess = '';
+
+            try {
+                const response = await fetch('/teams/' + team.id + '/posturas', {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '',
+                        'Accept': 'application/json',
+                    },
+                    body: JSON.stringify({ posturas: posturasCompletas }),
+                });
+                const data = await response.json().catch(() => ({}));
+                if (!response.ok) {
+                    this.posturaSaveError = data.error || data.message || 'No se pudieron guardar las posturas.';
+                    return;
+                }
+                if (data.team) {
+                    // Contrato: { team: { id, posturas: {slot: postura} } }.
+                    this.posturasDraft[team.id] = {};
+                    team.posturas = data.team.posturas || {};
+                    this.posturaSaveSuccess = '✓ Posturas guardadas';
+                    setTimeout(() => {
+                        this.posturaSaveSuccess = '';
+                    }, 3000);
+                }
+            } catch (err) {
+                console.error('Error saving postures:', err);
+                this.posturaSaveError = 'Error de conexión al guardar las posturas.';
+            } finally {
+                this.posturaSavingTeamId = null;
             }
         },
 

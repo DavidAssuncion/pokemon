@@ -28,12 +28,21 @@ class ManejadorObjetosEquipados extends ManejadorDanioAbstracto
 
     protected function process(AccionBatalla $action, float $daño): float
     {
-        $multiplicador = $this->multiplicadores[$action->attacker->item()] ?? 1.0;
-
-        if ($action->attacker->estaVivo()) {
-            $daño *= $multiplicador;
+        if (! $action->attacker->estaVivo() || ! $action->attacker->itemActivo()) {
+            return $daño;
         }
 
-        return $daño;
+        $item = $action->attacker->item();
+        $multiplicador = $this->multiplicadores[$item] ?? 1.0;
+
+        if ($item === ClaveItem::CINTA_ELECCION->value && $action->move->esFisico()) {
+            $multiplicador *= 1.30;
+        }
+
+        if ($item === ClaveItem::GAFAS_ELECCION->value && $action->move->esEspecial()) {
+            $multiplicador *= 1.30;
+        }
+
+        return $daño * $multiplicador;
     }
 }

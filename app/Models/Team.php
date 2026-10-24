@@ -18,6 +18,7 @@ class Team extends Model
         'user_id',
         'name',
         'formacion',
+        'posturas',
     ];
 
     /**
@@ -27,6 +28,7 @@ class Team extends Model
     {
         return [
             'formacion' => 'array',
+            'posturas' => 'array',
         ];
     }
 

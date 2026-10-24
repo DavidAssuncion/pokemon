@@ -1,0 +1,11760 @@
+{
+  "12": [
+    "intercambio",
+    "ladron",
+    "maldicion",
+    "reflejo",
+    "sustituto",
+    "tailwind",
+    "tornado"
+  ],
+  "16": [
+    "danza_pluma",
+    "ladron",
+    "maldicion",
+    "persecucion",
+    "reflejo",
+    "sustituto",
+    "tailwind",
+    "tornado"
+  ],
+  "17": [
+    "danza_pluma",
+    "ladron",
+    "maldicion",
+    "reflejo",
+    "sustituto",
+    "tailwind",
+    "tornado"
+  ],
+  "18": [
+    "danza_pluma",
+    "ladron",
+    "maldicion",
+    "reflejo",
+    "sustituto",
+    "tailwind",
+    "tornado"
+  ],
+  "41": [
+    "ladron",
+    "maldicion",
+    "persecucion",
+    "sustituto",
+    "tailwind",
+    "tornado"
+  ],
+  "42": [
+    "ladron",
+    "maldicion",
+    "sustituto",
+    "tailwind",
+    "tornado"
+  ],
+  "49": [
+    "intercambio",
+    "ladron",
+    "maldicion",
+    "puas_toxicas",
+    "reflejo",
+    "sustituto",
+    "tailwind",
+    "tornado"
+  ],
+  "83": [
+    "danza_pluma",
+    "desarme",
+    "hoja_aguda",
+    "ladron",
+    "maldicion",
+    "reflejo",
+    "sustituto",
+    "tailwind",
+    "tornado"
+  ],
+  "144": [
+    "carambano",
+    "danza_pluma",
+    "maldicion",
+    "pantalla_de_luz",
+    "poder_pasado",
+    "reflejo",
+    "sustituto",
+    "tailwind",
+    "tornado",
+    "triple-axel",
+    "vaho_gelido"
+  ],
+  "146": [
+    "arenas_ardientes",
+    "burning-jealousy",
+    "envite_igneo",
+    "llama_embrujada",
+    "maldicion",
+    "poder_pasado",
+    "reflejo",
+    "sustituto",
+    "tailwind",
+    "tornado"
+  ],
+  "169": [
+    "ladron",
+    "maldicion",
+    "sustituto",
+    "tailwind",
+    "tornado"
+  ],
+  "193": [
+    "ladron",
+    "maldicion",
+    "persecucion",
+    "poder_pasado",
+    "sustituto",
+    "tailwind",
+    "tornado"
+  ],
+  "198": [
+    "canto_mortal",
+    "danza_pluma",
+    "embargo",
+    "ladron",
+    "maldicion",
+    "paz_mental",
+    "persecucion",
+    "pico_taladro",
+    "sustituto",
+    "tailwind",
+    "tornado"
+  ],
+  "245": [
+    "agua_fria",
+    "maldicion",
+    "paz_mental",
+    "reflejo",
+    "sustituto",
+    "tailwind",
+    "tornado",
+    "trailblaze",
+    "velocidad_extrema"
+  ],
+  "249": [
+    "aerochorro",
+    "agua_fria",
+    "danza_pluma",
+    "intercambio",
+    "maldicion",
+    "pantalla_de_luz",
+    "paz_mental",
+    "poder_pasado",
+    "reflejo",
+    "scale-shot",
+    "sustituto",
+    "tailwind",
+    "tornado",
+    "truco"
+  ],
+  "250": [
+    "arenas_ardientes",
+    "envite_igneo",
+    "fuego_sagrado",
+    "llama_embrujada",
+    "maldicion",
+    "pantalla_de_luz",
+    "paz_mental",
+    "poder_pasado",
+    "reflejo",
+    "sustituto",
+    "tailwind",
+    "tornado"
+  ],
+  "267": [
+    "ladron",
+    "sustituto",
+    "tailwind",
+    "tornado"
+  ],
+  "269": [
+    "ladron",
+    "pantalla_de_luz",
+    "sustituto",
+    "tailwind",
+    "tornado"
+  ],
+  "278": [
+    "agua_fria",
+    "danza_pluma",
+    "desarme",
+    "ladron",
+    "persecucion",
+    "sustituto",
+    "tailwind",
+    "tornado"
+  ],
+  "284": [
+    "agua_fria",
+    "ladron",
+    "sustituto",
+    "tailwind",
+    "tornado"
+  ],
+  "290": [
+    "sustituto",
+    "tornado"
+  ],
+  "328": [
+    "arenas_ardientes",
+    "sustituto",
+    "tornado",
+    "trampa_rocas"
+  ],
+  "329": [
+    "arenas_ardientes",
+    "draco-meteor",
+    "sustituto",
+    "tailwind",
+    "tornado",
+    "trampa_rocas"
+  ],
+  "330": [
+    "alluring-voice",
+    "arenas_ardientes",
+    "draco-meteor",
+    "onda_vacio",
+    "puno_incremento",
+    "scale-shot",
+    "sustituto",
+    "tailwind",
+    "tornado",
+    "trampa_rocas"
+  ],
+  "357": [
+    "drenadoras",
+    "hoja_aguda",
+    "maldicion",
+    "sustituto",
+    "tailwind",
+    "tornado",
+    "trailblaze"
+  ],
+  "396": [
+    "danza_pluma",
+    "ladron",
+    "persecucion",
+    "sustituto",
+    "tailwind",
+    "tornado"
+  ],
+  "397": [
+    "danza_pluma",
+    "ladron",
+    "sustituto",
+    "tailwind",
+    "tornado"
+  ],
+  "398": [
+    "danza_pluma",
+    "ladron",
+    "patada_ignea",
+    "sustituto",
+    "tailwind",
+    "tornado"
+  ],
+  "413": [
+    "intercambio",
+    "ladron",
+    "sustituto",
+    "tornado"
+  ],
+  "414": [
+    "camuflaje",
+    "intercambio",
+    "ladron",
+    "sustituto",
+    "tailwind",
+    "tornado"
+  ],
+  "415": [
+    "tailwind",
+    "tornado"
+  ],
+  "416": [
+    "ladron",
+    "persecucion",
+    "puas",
+    "puas_toxicas",
+    "sustituto",
+    "tailwind",
+    "tornado"
+  ],
+  "425": [
+    "autodestruccion",
+    "desarme",
+    "embargo",
+    "explosion",
+    "intercambio",
+    "ladron",
+    "llama_embrujada",
+    "maldicion",
+    "paz_mental",
+    "reciclaje",
+    "sustituto",
+    "tailwind",
+    "tornado",
+    "trick_room",
+    "truco"
+  ],
+  "426": [
+    "autodestruccion",
+    "desarme",
+    "embargo",
+    "explosion",
+    "intercambio",
+    "ladron",
+    "llama_embrujada",
+    "maldicion",
+    "paz_mental",
+    "reciclaje",
+    "sustituto",
+    "tailwind",
+    "tornado",
+    "trick_room",
+    "truco"
+  ],
+  "430": [
+    "agua_fria",
+    "danza_pluma",
+    "embargo",
+    "ladron",
+    "paz_mental",
+    "persecucion",
+    "sustituto",
+    "tailwind",
+    "tornado"
+  ],
+  "441": [
+    "danza_pluma",
+    "imitacion",
+    "ladron",
+    "sustituto",
+    "tailwind",
+    "tornado"
+  ],
+  "456": [
+    "agua_fria",
+    "alluring-voice",
+    "ladron",
+    "sustituto",
+    "tailwind",
+    "tornado"
+  ],
+  "457": [
+    "agua_fria",
+    "alluring-voice",
+    "ladron",
+    "sustituto",
+    "tailwind",
+    "tornado"
+  ],
+  "469": [
+    "ladron",
+    "persecucion",
+    "poder_pasado",
+    "sustituto",
+    "tailwind",
+    "tornado"
+  ],
+  "519": [
+    "danza_pluma",
+    "sustituto",
+    "tailwind",
+    "tornado"
+  ],
+  "520": [
+    "danza_pluma",
+    "sustituto",
+    "tailwind",
+    "tornado"
+  ],
+  "521": [
+    "danza_pluma",
+    "sustituto",
+    "tailwind",
+    "tornado"
+  ],
+  "527": [
+    "desarme",
+    "embargo",
+    "intercambio",
+    "ladron",
+    "pantalla_de_luz",
+    "paz_mental",
+    "reflejo",
+    "sustituto",
+    "tailwind",
+    "tornado",
+    "trick_room",
+    "truco"
+  ],
+  "528": [
+    "desarme",
+    "embargo",
+    "intercambio",
+    "ladron",
+    "pantalla_de_luz",
+    "paz_mental",
+    "reflejo",
+    "sustituto",
+    "tailwind",
+    "tornado",
+    "trick_room",
+    "truco"
+  ],
+  "547": [
+    "desarme",
+    "drenadoras",
+    "ladron",
+    "pantalla_de_luz",
+    "sustituto",
+    "tailwind",
+    "tornado",
+    "trick_room"
+  ],
+  "561": [
+    "intercambio",
+    "ladron",
+    "pantalla_de_luz",
+    "paz_mental",
+    "poder_pasado",
+    "reflejo",
+    "sustituto",
+    "tailwind",
+    "tornado",
+    "trick_room",
+    "truco",
+    "zona_magica"
+  ],
+  "580": [
+    "agua_fria",
+    "danza_pluma",
+    "sustituto",
+    "tailwind",
+    "tornado",
+    "trailblaze"
+  ],
+  "581": [
+    "agua_fria",
+    "alluring-voice",
+    "danza_pluma",
+    "desarme",
+    "sustituto",
+    "tailwind",
+    "tornado",
+    "trailblaze"
+  ],
+  "629": [
+    "danza_pluma",
+    "desarme",
+    "embargo",
+    "ladron",
+    "sustituto",
+    "tailwind",
+    "tornado"
+  ],
+  "630": [
+    "ataque_oseo",
+    "danza_pluma",
+    "desarme",
+    "embargo",
+    "ladron",
+    "sustituto",
+    "tailwind",
+    "tornado"
+  ],
+  "637": [
+    "envite_igneo",
+    "llama_embrujada",
+    "pantalla_de_luz",
+    "paz_mental",
+    "sustituto",
+    "tailwind",
+    "tornado",
+    "trailblaze"
+  ],
+  "641": [
+    "agua_fria",
+    "desarme",
+    "embargo",
+    "imitacion",
+    "ladron",
+    "sustituto",
+    "tailwind",
+    "tornado"
+  ],
+  "666": [
+    "ladron",
+    "pantalla_de_luz",
+    "paz_mental",
+    "sustituto",
+    "tailwind",
+    "tornado"
+  ],
+  "714": [
+    "draco-meteor",
+    "ladron",
+    "sustituto",
+    "tailwind",
+    "tornado"
+  ],
+  "715": [
+    "draco-meteor",
+    "ladron",
+    "sustituto",
+    "tailwind",
+    "tornado"
+  ],
+  "717": [
+    "desarme",
+    "embargo",
+    "ladron",
+    "sustituto",
+    "tailwind",
+    "tornado"
+  ],
+  "722": [
+    "danza_pluma",
+    "desarme",
+    "hoja_aguda",
+    "maldicion",
+    "pantalla_de_luz",
+    "sustituto",
+    "tornado",
+    "trailblaze"
+  ],
+  "723": [
+    "danza_pluma",
+    "desarme",
+    "hoja_aguda",
+    "pantalla_de_luz",
+    "sustituto",
+    "tailwind",
+    "tornado",
+    "trailblaze"
+  ],
+  "988": [
+    "envite_igneo",
+    "maldicion",
+    "sustituto",
+    "tornado",
+    "trailblaze"
+  ],
+  "994": [
+    "envite_igneo",
+    "pantalla_de_luz",
+    "puas_toxicas",
+    "sustituto",
+    "tornado"
+  ],
+  "10004": [
+    "intercambio",
+    "ladron",
+    "sustituto",
+    "tornado",
+    "trampa_rocas"
+  ],
+  "10005": [
+    "intercambio",
+    "ladron",
+    "represion_metal",
+    "steel-beam",
+    "sustituto",
+    "tornado",
+    "trampa_rocas"
+  ],
+  "10019": [
+    "agua_fria",
+    "desarme",
+    "embargo",
+    "imitacion",
+    "ladron",
+    "sustituto",
+    "tailwind",
+    "tornado"
+  ],
+  "10073": [
+    "danza_pluma",
+    "ladron",
+    "reflejo",
+    "sustituto",
+    "tailwind",
+    "tornado"
+  ],
+  "10169": [
+    "intercambio",
+    "pantalla_de_luz",
+    "paz_mental",
+    "poder_pasado",
+    "reflejo",
+    "sustituto",
+    "tailwind",
+    "tornado",
+    "trick_room",
+    "truco"
+  ],
+  "10171": [
+    "ladron",
+    "poder_pasado",
+    "sustituto",
+    "tailwind",
+    "tornado"
+  ],
+  "10244": [
+    "danza_pluma",
+    "desarme",
+    "hoja_aguda",
+    "pantalla_de_luz",
+    "puas",
+    "sustituto",
+    "tailwind",
+    "tornado",
+    "trailblaze"
+  ],
+  "15": [
+    "desarme",
+    "doble_ataque",
+    "ladron",
+    "maldicion",
+    "persecucion",
+    "puas_toxicas",
+    "reflejo",
+    "sustituto",
+    "tailwind"
+  ],
+  "90": [
+    "agua_fria",
+    "autodestruccion",
+    "carambano",
+    "doble_ataque",
+    "explosion",
+    "maldicion",
+    "puas",
+    "puas_toxicas",
+    "reflejo",
+    "sustituto",
+    "tenaza"
+  ],
+  "91": [
+    "agua_fria",
+    "autodestruccion",
+    "carambano",
+    "cuerno_certero",
+    "doble_ataque",
+    "explosion",
+    "maldicion",
+    "pantalla_de_luz",
+    "puas",
+    "puas_toxicas",
+    "reflejo",
+    "sustituto",
+    "tenaza",
+    "vaho_gelido"
+  ],
+  "167": [
+    "desarme",
+    "doble_ataque",
+    "hilo_venenoso",
+    "ladron",
+    "maldicion",
+    "persecucion",
+    "puas_toxicas",
+    "sustituto",
+    "trailblaze"
+  ],
+  "451": [
+    "cola_veneno",
+    "desarme",
+    "doble_ataque",
+    "ladron",
+    "persecucion",
+    "puas_toxicas",
+    "sustituto"
+  ],
+  "543": [
+    "cola_veneno",
+    "doble_ataque",
+    "persecucion",
+    "puas",
+    "puas_toxicas",
+    "rizo_defensa",
+    "sustituto"
+  ],
+  "589": [
+    "cuerno_certero",
+    "desarme",
+    "doble_ataque",
+    "represion_metal",
+    "steel-beam",
+    "sustituto"
+  ],
+  "777": [
+    "doble_ataque",
+    "imitacion",
+    "ladron",
+    "reflejo",
+    "rizo_defensa",
+    "steel-beam",
+    "sustituto"
+  ],
+  "10090": [
+    "desarme",
+    "doble_ataque",
+    "ladron",
+    "persecucion",
+    "puas_toxicas",
+    "reflejo",
+    "sustituto",
+    "tailwind"
+  ],
+  "10154": [
+    "doble_ataque",
+    "imitacion",
+    "ladron",
+    "reflejo",
+    "rizo_defensa",
+    "sustituto"
+  ],
+  "21": [
+    "danza_pluma",
+    "ladron",
+    "maldicion",
+    "persecucion",
+    "pico_taladro",
+    "sustituto",
+    "tailwind"
+  ],
+  "22": [
+    "ladron",
+    "maldicion",
+    "persecucion",
+    "pico_taladro",
+    "sustituto",
+    "tailwind"
+  ],
+  "84": [
+    "danza_pluma",
+    "desarme",
+    "ladron",
+    "maldicion",
+    "persecucion",
+    "pico_taladro",
+    "reflejo",
+    "sustituto",
+    "tailwind"
+  ],
+  "85": [
+    "danza_pluma",
+    "desarme",
+    "ladron",
+    "maldicion",
+    "persecucion",
+    "pico_taladro",
+    "reflejo",
+    "sustituto",
+    "tailwind",
+    "trailblaze"
+  ],
+  "145": [
+    "maldicion",
+    "pantalla_de_luz",
+    "pico_taladro",
+    "poder_pasado",
+    "reflejo",
+    "sustituto",
+    "tailwind"
+  ],
+  "177": [
+    "danza_pluma",
+    "intercambio",
+    "ladron",
+    "maldicion",
+    "pantalla_de_luz",
+    "paz_mental",
+    "pico_taladro",
+    "reflejo",
+    "sustituto",
+    "tailwind",
+    "trick_room",
+    "truco",
+    "zona_magica"
+  ],
+  "225": [
+    "agua_fria",
+    "carambano",
+    "danza_pluma",
+    "ladron",
+    "maldicion",
+    "pico_taladro",
+    "puas",
+    "puno_incremento",
+    "reciclaje",
+    "sustituto",
+    "tailwind",
+    "trailblaze",
+    "triple-axel",
+    "vaho_gelido"
+  ],
+  "227": [
+    "ladron",
+    "maldicion",
+    "persecucion",
+    "pico_taladro",
+    "puas",
+    "steel-beam",
+    "sustituto",
+    "tailwind",
+    "trampa_rocas"
+  ],
+  "393": [
+    "agua_fria",
+    "danza_pluma",
+    "pico_taladro",
+    "sustituto",
+    "trampa_rocas",
+    "triple-axel"
+  ],
+  "394": [
+    "agua_fria",
+    "danza_pluma",
+    "pico_taladro",
+    "sustituto",
+    "trampa_rocas",
+    "triple-axel"
+  ],
+  "395": [
+    "agua_fria",
+    "danza_pluma",
+    "desarme",
+    "onda_vacio",
+    "pico_taladro",
+    "steel-beam",
+    "sustituto",
+    "trampa_rocas",
+    "triple-axel"
+  ],
+  "731": [
+    "danza_pluma",
+    "desarme",
+    "ladron",
+    "pico_taladro",
+    "sustituto",
+    "tailwind"
+  ],
+  "732": [
+    "danza_pluma",
+    "desarme",
+    "ladron",
+    "pico_taladro",
+    "sustituto",
+    "tailwind"
+  ],
+  "733": [
+    "danza_pluma",
+    "desarme",
+    "ladron",
+    "pico_taladro",
+    "sustituto",
+    "tailwind"
+  ],
+  "821": [
+    "ladron",
+    "pico_taladro",
+    "sustituto",
+    "tailwind"
+  ],
+  "822": [
+    "ladron",
+    "pico_taladro",
+    "sustituto",
+    "tailwind"
+  ],
+  "823": [
+    "danza_pluma",
+    "ladron",
+    "maldicion",
+    "pantalla_de_luz",
+    "pico_taladro",
+    "reflejo",
+    "steel-beam",
+    "sustituto",
+    "tailwind"
+  ],
+  "845": [
+    "agua_fria",
+    "danza_pluma",
+    "ladron",
+    "pico_taladro",
+    "sustituto",
+    "tailwind"
+  ],
+  "956": [
+    "danza_pluma",
+    "intercambio",
+    "ladron",
+    "pantalla_de_luz",
+    "paz_mental",
+    "pico_taladro",
+    "reflejo",
+    "sustituto",
+    "trick_room",
+    "truco"
+  ],
+  "991": [
+    "agua_fria",
+    "ladron",
+    "pico_taladro",
+    "sustituto"
+  ],
+  "10170": [
+    "desarme",
+    "pantalla_de_luz",
+    "patada_ignea",
+    "pico_taladro",
+    "poder_pasado",
+    "sustituto",
+    "tailwind",
+    "trailblaze"
+  ],
+  "10182": [
+    "danza_pluma",
+    "ladron",
+    "pico_taladro",
+    "sustituto"
+  ],
+  "10183": [
+    "danza_pluma",
+    "ladron",
+    "pico_taladro",
+    "sustituto"
+  ],
+  "10284": [
+    "ladron",
+    "maldicion",
+    "pico_taladro",
+    "puas",
+    "steel-beam",
+    "sustituto",
+    "tailwind",
+    "trampa_rocas"
+  ],
+  "1": [
+    "desarme",
+    "drenadoras",
+    "maldicion",
+    "pantalla_de_luz",
+    "reflejo",
+    "rizo_defensa",
+    "sustituto",
+    "trailblaze"
+  ],
+  "2": [
+    "desarme",
+    "drenadoras",
+    "maldicion",
+    "pantalla_de_luz",
+    "reflejo",
+    "rizo_defensa",
+    "sustituto",
+    "trailblaze"
+  ],
+  "3": [
+    "desarme",
+    "drenadoras",
+    "maldicion",
+    "pantalla_de_luz",
+    "reflejo",
+    "rizo_defensa",
+    "sustituto",
+    "trailblaze"
+  ],
+  "43": [
+    "drenadoras",
+    "jugo_gastrico",
+    "maldicion",
+    "reflejo",
+    "sustituto",
+    "trailblaze"
+  ],
+  "44": [
+    "drenadoras",
+    "jugo_gastrico",
+    "maldicion",
+    "reflejo",
+    "sustituto",
+    "trailblaze"
+  ],
+  "45": [
+    "drenadoras",
+    "jugo_gastrico",
+    "maldicion",
+    "reflejo",
+    "sustituto",
+    "trailblaze"
+  ],
+  "46": [
+    "desarme",
+    "drenadoras",
+    "espora",
+    "ladron",
+    "maldicion",
+    "pantalla_de_luz",
+    "persecucion",
+    "reflejo",
+    "sustituto"
+  ],
+  "47": [
+    "desarme",
+    "drenadoras",
+    "espora",
+    "ladron",
+    "maldicion",
+    "pantalla_de_luz",
+    "reflejo",
+    "sustituto"
+  ],
+  "102": [
+    "autodestruccion",
+    "drenadoras",
+    "explosion",
+    "intercambio",
+    "ladron",
+    "maldicion",
+    "pantalla_de_luz",
+    "poder_pasado",
+    "reflejo",
+    "sustituto",
+    "trick_room",
+    "truco"
+  ],
+  "103": [
+    "autodestruccion",
+    "drenadoras",
+    "explosion",
+    "intercambio",
+    "ladron",
+    "maldicion",
+    "pantalla_de_luz",
+    "paz_mental",
+    "poder_pasado",
+    "reflejo",
+    "sustituto",
+    "trick_room",
+    "truco"
+  ],
+  "114": [
+    "desarme",
+    "drenadoras",
+    "ladron",
+    "maldicion",
+    "poder_pasado",
+    "reflejo",
+    "sustituto"
+  ],
+  "152": [
+    "drenadoras",
+    "maldicion",
+    "pantalla_de_luz",
+    "poder_pasado",
+    "reflejo",
+    "sustituto",
+    "trailblaze"
+  ],
+  "153": [
+    "desarme",
+    "drenadoras",
+    "maldicion",
+    "pantalla_de_luz",
+    "poder_pasado",
+    "reflejo",
+    "sustituto",
+    "trailblaze"
+  ],
+  "154": [
+    "desarme",
+    "drenadoras",
+    "hoja_aguda",
+    "maldicion",
+    "pantalla_de_luz",
+    "poder_pasado",
+    "reflejo",
+    "sustituto",
+    "trailblaze"
+  ],
+  "182": [
+    "drenadoras",
+    "hoja_aguda",
+    "jugo_gastrico",
+    "maldicion",
+    "sustituto",
+    "trailblaze",
+    "triple-axel"
+  ],
+  "187": [
+    "drenadoras",
+    "ladron",
+    "maldicion",
+    "pantalla_de_luz",
+    "reflejo",
+    "rizo_defensa",
+    "sustituto",
+    "tailwind",
+    "trailblaze"
+  ],
+  "188": [
+    "drenadoras",
+    "ladron",
+    "maldicion",
+    "pantalla_de_luz",
+    "reflejo",
+    "rizo_defensa",
+    "sustituto",
+    "tailwind",
+    "trailblaze"
+  ],
+  "189": [
+    "drenadoras",
+    "ladron",
+    "maldicion",
+    "pantalla_de_luz",
+    "reflejo",
+    "rizo_defensa",
+    "sustituto",
+    "tailwind",
+    "trailblaze"
+  ],
+  "191": [
+    "drenadoras",
+    "maldicion",
+    "pantalla_de_luz",
+    "sustituto",
+    "trailblaze"
+  ],
+  "192": [
+    "drenadoras",
+    "maldicion",
+    "pantalla_de_luz",
+    "sustituto",
+    "trailblaze"
+  ],
+  "251": [
+    "canto_mortal",
+    "drenadoras",
+    "hoja_aguda",
+    "intercambio",
+    "maldicion",
+    "pantalla_de_luz",
+    "paz_mental",
+    "poder_pasado",
+    "reflejo",
+    "rizo_defensa",
+    "sustituto",
+    "trampa_rocas",
+    "trick_room",
+    "truco",
+    "zona_magica"
+  ],
+  "252": [
+    "drenadoras",
+    "ladron",
+    "persecucion",
+    "puno_incremento",
+    "sustituto",
+    "trailblaze"
+  ],
+  "253": [
+    "drenadoras",
+    "hoja_aguda",
+    "ladron",
+    "onda_vacio",
+    "persecucion",
+    "puno_incremento",
+    "sustituto",
+    "trailblaze"
+  ],
+  "254": [
+    "drenadoras",
+    "hoja_aguda",
+    "ladron",
+    "onda_vacio",
+    "persecucion",
+    "puno_incremento",
+    "scale-shot",
+    "sustituto",
+    "trailblaze"
+  ],
+  "270": [
+    "agua_fria",
+    "drenadoras",
+    "ladron",
+    "sustituto",
+    "trailblaze"
+  ],
+  "271": [
+    "agua_fria",
+    "desarme",
+    "drenadoras",
+    "ladron",
+    "puno_incremento",
+    "sustituto",
+    "trailblaze"
+  ],
+  "273": [
+    "autodestruccion",
+    "drenadoras",
+    "explosion",
+    "maldicion",
+    "rizo_defensa",
+    "sustituto",
+    "trailblaze"
+  ],
+  "274": [
+    "agua_fria",
+    "autodestruccion",
+    "desarme",
+    "drenadoras",
+    "embargo",
+    "explosion",
+    "hoja_aguda",
+    "ladron",
+    "maldicion",
+    "puno_incremento",
+    "rizo_defensa",
+    "sustituto",
+    "trailblaze"
+  ],
+  "275": [
+    "agua_fria",
+    "autodestruccion",
+    "desarme",
+    "drenadoras",
+    "embargo",
+    "explosion",
+    "hoja_aguda",
+    "ladron",
+    "maldicion",
+    "onda_vacio",
+    "puas_toxicas",
+    "puno_incremento",
+    "rizo_defensa",
+    "sustituto",
+    "tailwind",
+    "trailblaze"
+  ],
+  "285": [
+    "drenadoras",
+    "espora",
+    "sustituto"
+  ],
+  "286": [
+    "drenadoras",
+    "espora",
+    "onda_vacio",
+    "puno_incremento",
+    "sustituto"
+  ],
+  "315": [
+    "drenadoras",
+    "puas",
+    "puas_toxicas",
+    "sustituto"
+  ],
+  "331": [
+    "brazo_pincho",
+    "drenadoras",
+    "imitacion",
+    "ladron",
+    "maldicion",
+    "puas",
+    "puas_toxicas",
+    "puno_incremento",
+    "sustituto",
+    "trailblaze"
+  ],
+  "332": [
+    "brazo_pincho",
+    "desarme",
+    "drenadoras",
+    "embargo",
+    "imitacion",
+    "ladron",
+    "maldicion",
+    "puas",
+    "puas_toxicas",
+    "puno_incremento",
+    "sustituto",
+    "trailblaze"
+  ],
+  "346": [
+    "drenadoras",
+    "jugo_gastrico",
+    "poder_pasado",
+    "sustituto",
+    "trampa_rocas"
+  ],
+  "387": [
+    "drenadoras",
+    "hoja_aguda",
+    "maldicion",
+    "pantalla_de_luz",
+    "reflejo",
+    "sustituto",
+    "trailblaze",
+    "trampa_rocas"
+  ],
+  "388": [
+    "drenadoras",
+    "hoja_aguda",
+    "maldicion",
+    "pantalla_de_luz",
+    "reflejo",
+    "sustituto",
+    "trailblaze",
+    "trampa_rocas"
+  ],
+  "389": [
+    "arenas_ardientes",
+    "drenadoras",
+    "hoja_aguda",
+    "maldicion",
+    "pantalla_de_luz",
+    "reflejo",
+    "sustituto",
+    "trailblaze",
+    "trampa_rocas"
+  ],
+  "407": [
+    "drenadoras",
+    "puas",
+    "puas_toxicas",
+    "sustituto",
+    "trailblaze"
+  ],
+  "420": [
+    "drenadoras",
+    "rizo_defensa",
+    "sustituto"
+  ],
+  "421": [
+    "drenadoras",
+    "sustituto"
+  ],
+  "455": [
+    "desarme",
+    "drenadoras",
+    "jugo_gastrico",
+    "ladron",
+    "sustituto"
+  ],
+  "459": [
+    "agua_fria",
+    "carambano",
+    "drenadoras",
+    "imitacion",
+    "maldicion",
+    "pantalla_de_luz",
+    "sustituto",
+    "trailblaze",
+    "vaho_gelido"
+  ],
+  "460": [
+    "agua_fria",
+    "carambano",
+    "drenadoras",
+    "imitacion",
+    "maldicion",
+    "pantalla_de_luz",
+    "sustituto",
+    "trailblaze",
+    "vaho_gelido"
+  ],
+  "470": [
+    "alluring-voice",
+    "desarme",
+    "drenadoras",
+    "hoja_aguda",
+    "maldicion",
+    "paz_mental",
+    "sustituto",
+    "trailblaze"
+  ],
+  "492": [
+    "drenadoras",
+    "rizo_defensa",
+    "sustituto",
+    "tailwind",
+    "trailblaze"
+  ],
+  "495": [
+    "desarme",
+    "drenadoras",
+    "hoja_aguda",
+    "jugo_gastrico",
+    "pantalla_de_luz",
+    "paz_mental",
+    "persecucion",
+    "reflejo",
+    "sustituto",
+    "trailblaze"
+  ],
+  "496": [
+    "desarme",
+    "drenadoras",
+    "hoja_aguda",
+    "jugo_gastrico",
+    "pantalla_de_luz",
+    "paz_mental",
+    "reflejo",
+    "sustituto",
+    "trailblaze"
+  ],
+  "497": [
+    "desarme",
+    "drenadoras",
+    "hoja_aguda",
+    "jugo_gastrico",
+    "pantalla_de_luz",
+    "paz_mental",
+    "reflejo",
+    "scale-shot",
+    "sustituto",
+    "trailblaze"
+  ],
+  "511": [
+    "desarme",
+    "drenadoras",
+    "imitacion",
+    "jugo_gastrico",
+    "ladron",
+    "reciclaje",
+    "sustituto"
+  ],
+  "512": [
+    "desarme",
+    "drenadoras",
+    "imitacion",
+    "jugo_gastrico",
+    "ladron",
+    "puno_incremento",
+    "reciclaje",
+    "sustituto",
+    "trailblaze"
+  ],
+  "546": [
+    "desarme",
+    "drenadoras",
+    "sustituto",
+    "tailwind"
+  ],
+  "548": [
+    "drenadoras",
+    "sustituto",
+    "trailblaze"
+  ],
+  "549": [
+    "alluring-voice",
+    "drenadoras",
+    "hoja_aguda",
+    "imitacion",
+    "pantalla_de_luz",
+    "sustituto",
+    "trailblaze"
+  ],
+  "556": [
+    "brazo_pincho",
+    "desarme",
+    "drenadoras",
+    "puas",
+    "sustituto"
+  ],
+  "585": [
+    "camuflaje",
+    "drenadoras",
+    "pantalla_de_luz",
+    "sustituto",
+    "trailblaze"
+  ],
+  "586": [
+    "camuflaje",
+    "cuerno_certero",
+    "drenadoras",
+    "maldicion",
+    "pantalla_de_luz",
+    "sustituto",
+    "trailblaze"
+  ],
+  "597": [
+    "autodestruccion",
+    "desarme",
+    "drenadoras",
+    "explosion",
+    "maldicion",
+    "puas",
+    "steel-beam",
+    "sustituto",
+    "trampa_rocas"
+  ],
+  "650": [
+    "drenadoras",
+    "maldicion",
+    "puas",
+    "puno_incremento",
+    "reflejo",
+    "rizo_defensa",
+    "sustituto",
+    "trailblaze"
+  ],
+  "651": [
+    "brazo_pincho",
+    "drenadoras",
+    "maldicion",
+    "puas",
+    "puno_incremento",
+    "reflejo",
+    "sustituto",
+    "trailblaze"
+  ],
+  "652": [
+    "brazo_pincho",
+    "desarme",
+    "drenadoras",
+    "maldicion",
+    "puas",
+    "puno_incremento",
+    "reflejo",
+    "sustituto",
+    "trailblaze"
+  ],
+  "672": [
+    "drenadoras",
+    "hoja_aguda",
+    "rizo_defensa",
+    "sustituto",
+    "trailblaze"
+  ],
+  "673": [
+    "drenadoras",
+    "hoja_aguda",
+    "sustituto",
+    "trailblaze"
+  ],
+  "708": [
+    "drenadoras",
+    "imitacion",
+    "intercambio",
+    "ladron",
+    "maldicion",
+    "puno_incremento",
+    "reflejo",
+    "sustituto",
+    "trailblaze",
+    "trick_room",
+    "truco"
+  ],
+  "709": [
+    "burning-jealousy",
+    "desarme",
+    "drenadoras",
+    "imitacion",
+    "intercambio",
+    "ladron",
+    "maldicion",
+    "paz_mental",
+    "puno_incremento",
+    "puno_sombra",
+    "reflejo",
+    "sustituto",
+    "trailblaze",
+    "trick_room",
+    "truco"
+  ],
+  "710": [
+    "drenadoras",
+    "explosion",
+    "imitacion",
+    "intercambio",
+    "ladron",
+    "llama_embrujada",
+    "maldicion",
+    "pantalla_de_luz",
+    "sustituto",
+    "trick_room",
+    "truco"
+  ],
+  "711": [
+    "autodestruccion",
+    "drenadoras",
+    "explosion",
+    "imitacion",
+    "intercambio",
+    "ladron",
+    "llama_embrujada",
+    "maldicion",
+    "pantalla_de_luz",
+    "sustituto",
+    "trick_room",
+    "truco"
+  ],
+  "755": [
+    "drenadoras",
+    "espora",
+    "pantalla_de_luz",
+    "reciclaje",
+    "sustituto",
+    "zona_magica"
+  ],
+  "764": [
+    "alluring-voice",
+    "desarme",
+    "drenadoras",
+    "imitacion",
+    "ladron",
+    "pantalla_de_luz",
+    "paz_mental",
+    "sustituto",
+    "tailwind",
+    "trailblaze",
+    "trick_room",
+    "truco"
+  ],
+  "787": [
+    "cuerno_certero",
+    "drenadoras",
+    "pantalla_de_luz",
+    "paz_mental",
+    "reflejo",
+    "sustituto"
+  ],
+  "797": [
+    "autodestruccion",
+    "cuerno_certero",
+    "drenadoras",
+    "explosion",
+    "steel-beam",
+    "sustituto"
+  ],
+  "810": [
+    "desarme",
+    "drenadoras",
+    "ladron",
+    "sustituto",
+    "trailblaze"
+  ],
+  "811": [
+    "desarme",
+    "drenadoras",
+    "ladron",
+    "sustituto",
+    "trailblaze"
+  ],
+  "812": [
+    "desarme",
+    "drenadoras",
+    "ladron",
+    "sustituto",
+    "trailblaze"
+  ],
+  "829": [
+    "drenadoras",
+    "pantalla_de_luz",
+    "sustituto"
+  ],
+  "841": [
+    "draco-meteor",
+    "drenadoras",
+    "reciclaje",
+    "sustituto",
+    "trailblaze"
+  ],
+  "842": [
+    "draco-meteor",
+    "drenadoras",
+    "maldicion",
+    "pantalla_de_luz",
+    "reciclaje",
+    "reflejo",
+    "sustituto",
+    "trailblaze"
+  ],
+  "898": [
+    "astral-barrage",
+    "drenadoras",
+    "glacial-lance",
+    "intercambio",
+    "pantalla_de_luz",
+    "paz_mental",
+    "reflejo",
+    "sustituto",
+    "trick_room",
+    "truco",
+    "zona_magica"
+  ],
+  "906": [
+    "drenadoras",
+    "sustituto",
+    "trailblaze"
+  ],
+  "908": [
+    "agua_fria",
+    "desarme",
+    "drenadoras",
+    "intercambio",
+    "ladron",
+    "puas",
+    "puas_toxicas",
+    "sustituto",
+    "trailblaze",
+    "trick_room",
+    "triple-axel",
+    "truco"
+  ],
+  "928": [
+    "drenadoras",
+    "sustituto",
+    "trailblaze"
+  ],
+  "929": [
+    "drenadoras",
+    "sustituto",
+    "trailblaze"
+  ],
+  "930": [
+    "alluring-voice",
+    "drenadoras",
+    "pantalla_de_luz",
+    "reflejo",
+    "sustituto",
+    "trailblaze"
+  ],
+  "946": [
+    "drenadoras",
+    "ladron",
+    "maldicion",
+    "puas",
+    "rizo_defensa",
+    "sustituto",
+    "trailblaze"
+  ],
+  "947": [
+    "drenadoras",
+    "ladron",
+    "maldicion",
+    "puas",
+    "rizo_defensa",
+    "sustituto",
+    "trailblaze"
+  ],
+  "948": [
+    "desarme",
+    "drenadoras",
+    "espora",
+    "pantalla_de_luz",
+    "puas",
+    "puas_toxicas",
+    "reflejo",
+    "sustituto",
+    "trailblaze",
+    "trick_room"
+  ],
+  "951": [
+    "drenadoras",
+    "ladron",
+    "sustituto",
+    "trailblaze"
+  ],
+  "952": [
+    "burning-jealousy",
+    "drenadoras",
+    "envite_igneo",
+    "ladron",
+    "sustituto",
+    "trailblaze"
+  ],
+  "1001": [
+    "desarme",
+    "drenadoras",
+    "pantalla_de_luz",
+    "reflejo",
+    "sustituto",
+    "trailblaze"
+  ],
+  "1017": [
+    "desarme",
+    "drenadoras",
+    "puas",
+    "sustituto",
+    "trailblaze"
+  ],
+  "10006": [
+    "drenadoras",
+    "sustituto",
+    "tailwind",
+    "trailblaze"
+  ],
+  "10027": [
+    "drenadoras",
+    "explosion",
+    "imitacion",
+    "intercambio",
+    "ladron",
+    "llama_embrujada",
+    "maldicion",
+    "pantalla_de_luz",
+    "sustituto",
+    "trick_room",
+    "truco"
+  ],
+  "10028": [
+    "drenadoras",
+    "explosion",
+    "imitacion",
+    "intercambio",
+    "ladron",
+    "llama_embrujada",
+    "maldicion",
+    "pantalla_de_luz",
+    "sustituto",
+    "trick_room",
+    "truco"
+  ],
+  "10029": [
+    "drenadoras",
+    "explosion",
+    "imitacion",
+    "intercambio",
+    "ladron",
+    "llama_embrujada",
+    "maldicion",
+    "pantalla_de_luz",
+    "sustituto",
+    "trick_room",
+    "truco"
+  ],
+  "10030": [
+    "autodestruccion",
+    "drenadoras",
+    "explosion",
+    "imitacion",
+    "intercambio",
+    "ladron",
+    "llama_embrujada",
+    "maldicion",
+    "pantalla_de_luz",
+    "sustituto",
+    "trick_room",
+    "truco"
+  ],
+  "10031": [
+    "autodestruccion",
+    "drenadoras",
+    "explosion",
+    "imitacion",
+    "intercambio",
+    "ladron",
+    "llama_embrujada",
+    "maldicion",
+    "pantalla_de_luz",
+    "sustituto",
+    "trick_room",
+    "truco"
+  ],
+  "10032": [
+    "autodestruccion",
+    "drenadoras",
+    "explosion",
+    "imitacion",
+    "intercambio",
+    "ladron",
+    "llama_embrujada",
+    "maldicion",
+    "pantalla_de_luz",
+    "sustituto",
+    "trick_room",
+    "truco"
+  ],
+  "10033": [
+    "desarme",
+    "drenadoras",
+    "maldicion",
+    "pantalla_de_luz",
+    "reflejo",
+    "sustituto",
+    "trailblaze"
+  ],
+  "10060": [
+    "agua_fria",
+    "carambano",
+    "drenadoras",
+    "imitacion",
+    "maldicion",
+    "pantalla_de_luz",
+    "sustituto",
+    "trailblaze",
+    "vaho_gelido"
+  ],
+  "10065": [
+    "drenadoras",
+    "hoja_aguda",
+    "ladron",
+    "onda_vacio",
+    "persecucion",
+    "puno_incremento",
+    "scale-shot",
+    "sustituto",
+    "trailblaze"
+  ],
+  "10114": [
+    "autodestruccion",
+    "desarme",
+    "draco-meteor",
+    "drenadoras",
+    "explosion",
+    "intercambio",
+    "ladron",
+    "maldicion",
+    "pantalla_de_luz",
+    "paz_mental",
+    "reflejo",
+    "sustituto",
+    "trailblaze",
+    "trick_room",
+    "truco"
+  ],
+  "10193": [
+    "carambano",
+    "cuerno_certero",
+    "drenadoras",
+    "intercambio",
+    "pantalla_de_luz",
+    "paz_mental",
+    "reflejo",
+    "sustituto",
+    "trailblaze",
+    "trick_room",
+    "truco",
+    "zona_magica"
+  ],
+  "10194": [
+    "drenadoras",
+    "intercambio",
+    "pantalla_de_luz",
+    "paz_mental",
+    "reflejo",
+    "sustituto",
+    "trick_room",
+    "truco",
+    "zona_magica"
+  ],
+  "10231": [
+    "autodestruccion",
+    "drenadoras",
+    "explosion",
+    "ladron",
+    "reciclaje",
+    "reflejo",
+    "sustituto"
+  ],
+  "10237": [
+    "drenadoras",
+    "hoja_aguda",
+    "onda_vacio",
+    "sustituto",
+    "trailblaze",
+    "triple-axel"
+  ],
+  "10273": [
+    "desarme",
+    "drenadoras",
+    "puas",
+    "sustituto",
+    "trailblaze"
+  ],
+  "10274": [
+    "desarme",
+    "drenadoras",
+    "puas",
+    "sustituto",
+    "trailblaze"
+  ],
+  "10275": [
+    "desarme",
+    "drenadoras",
+    "puas",
+    "sustituto",
+    "trailblaze"
+  ],
+  "10282": [
+    "desarme",
+    "drenadoras",
+    "hoja_aguda",
+    "maldicion",
+    "pantalla_de_luz",
+    "poder_pasado",
+    "reflejo",
+    "sustituto",
+    "trailblaze"
+  ],
+  "10292": [
+    "desarme",
+    "drenadoras",
+    "maldicion",
+    "puas",
+    "reflejo",
+    "sustituto",
+    "trailblaze"
+  ],
+  "10320": [
+    "burning-jealousy",
+    "drenadoras",
+    "envite_igneo",
+    "ladron",
+    "sustituto",
+    "trailblaze"
+  ],
+  "4": [
+    "envite_igneo",
+    "maldicion",
+    "poder_pasado",
+    "puno_incremento",
+    "reflejo",
+    "rizo_defensa",
+    "sustituto"
+  ],
+  "5": [
+    "envite_igneo",
+    "maldicion",
+    "poder_pasado",
+    "puno_incremento",
+    "reflejo",
+    "rizo_defensa",
+    "sustituto"
+  ],
+  "6": [
+    "arenas_ardientes",
+    "envite_igneo",
+    "llama_embrujada",
+    "maldicion",
+    "patada_ignea",
+    "poder_pasado",
+    "puno_incremento",
+    "reflejo",
+    "rizo_defensa",
+    "scale-shot",
+    "sustituto",
+    "tailwind"
+  ],
+  "7": [
+    "agua_fria",
+    "maldicion",
+    "puno_incremento",
+    "reflejo",
+    "rizo_defensa",
+    "sustituto"
+  ],
+  "8": [
+    "agua_fria",
+    "maldicion",
+    "puno_incremento",
+    "reflejo",
+    "rizo_defensa",
+    "sustituto"
+  ],
+  "9": [
+    "agua_fria",
+    "maldicion",
+    "puno_incremento",
+    "reflejo",
+    "rizo_defensa",
+    "sustituto"
+  ],
+  "19": [
+    "hipercolmillo",
+    "ladron",
+    "maldicion",
+    "persecucion",
+    "rizo_defensa",
+    "sustituto"
+  ],
+  "20": [
+    "hipercolmillo",
+    "ladron",
+    "maldicion",
+    "persecucion",
+    "rizo_defensa",
+    "sustituto"
+  ],
+  "25": [
+    "alluring-voice",
+    "desarme",
+    "ladron",
+    "maldicion",
+    "pantalla_de_luz",
+    "paz_mental",
+    "placaje_electrico",
+    "reflejo",
+    "rizo_defensa",
+    "sustituto",
+    "trailblaze",
+    "splishy-splash",
+    "buzzy-buzz"
+  ],
+  "26": [
+    "alluring-voice",
+    "desarme",
+    "ladron",
+    "maldicion",
+    "pantalla_de_luz",
+    "paz_mental",
+    "placaje_electrico",
+    "reflejo",
+    "rizo_defensa",
+    "sustituto",
+    "trailblaze"
+  ],
+  "27": [
+    "arenas_ardientes",
+    "desarme",
+    "ladron",
+    "maldicion",
+    "puas",
+    "rizo_defensa",
+    "sustituto",
+    "trampa_rocas"
+  ],
+  "28": [
+    "arenas_ardientes",
+    "desarme",
+    "ladron",
+    "maldicion",
+    "puas",
+    "rizo_defensa",
+    "sustituto",
+    "trampa_rocas"
+  ],
+  "29": [
+    "cola_veneno",
+    "ladron",
+    "maldicion",
+    "persecucion",
+    "puas_toxicas",
+    "reflejo",
+    "rizo_defensa",
+    "sustituto"
+  ],
+  "30": [
+    "ladron",
+    "maldicion",
+    "puas_toxicas",
+    "reflejo",
+    "rizo_defensa",
+    "sustituto"
+  ],
+  "31": [
+    "arenas_ardientes",
+    "ladron",
+    "maldicion",
+    "puas_toxicas",
+    "puno_incremento",
+    "reflejo",
+    "rizo_defensa",
+    "sustituto",
+    "trampa_rocas"
+  ],
+  "32": [
+    "cola_veneno",
+    "cuerno_certero",
+    "ladron",
+    "maldicion",
+    "puas_toxicas",
+    "reflejo",
+    "rizo_defensa",
+    "sustituto",
+    "testarazo"
+  ],
+  "33": [
+    "cuerno_certero",
+    "ladron",
+    "maldicion",
+    "puas_toxicas",
+    "reflejo",
+    "rizo_defensa",
+    "sustituto"
+  ],
+  "34": [
+    "arenas_ardientes",
+    "cuerno_certero",
+    "ladron",
+    "maldicion",
+    "puas_toxicas",
+    "puno_incremento",
+    "reflejo",
+    "rizo_defensa",
+    "sustituto",
+    "trampa_rocas"
+  ],
+  "35": [
+    "agua_fria",
+    "alluring-voice",
+    "desarme",
+    "imitacion",
+    "intercambio",
+    "ladron",
+    "llama_embrujada",
+    "maldicion",
+    "misty-explosion",
+    "pantalla_de_luz",
+    "paz_mental",
+    "puno_incremento",
+    "puno_meteoro",
+    "reciclaje",
+    "reflejo",
+    "rizo_defensa",
+    "sustituto",
+    "trampa_rocas",
+    "truco"
+  ],
+  "36": [
+    "agua_fria",
+    "alluring-voice",
+    "desarme",
+    "imitacion",
+    "intercambio",
+    "ladron",
+    "llama_embrujada",
+    "maldicion",
+    "misty-explosion",
+    "pantalla_de_luz",
+    "paz_mental",
+    "puno_incremento",
+    "puno_meteoro",
+    "reciclaje",
+    "reflejo",
+    "rizo_defensa",
+    "sustituto",
+    "trampa_rocas",
+    "truco"
+  ],
+  "39": [
+    "agua_fria",
+    "alluring-voice",
+    "autodestruccion",
+    "desarme",
+    "imitacion",
+    "intercambio",
+    "ladron",
+    "maldicion",
+    "misty-explosion",
+    "pantalla_de_luz",
+    "paz_mental",
+    "puno_incremento",
+    "reciclaje",
+    "reflejo",
+    "rizo_defensa",
+    "sustituto",
+    "trailblaze",
+    "trampa_rocas"
+  ],
+  "40": [
+    "agua_fria",
+    "alluring-voice",
+    "autodestruccion",
+    "desarme",
+    "imitacion",
+    "intercambio",
+    "ladron",
+    "maldicion",
+    "misty-explosion",
+    "pantalla_de_luz",
+    "paz_mental",
+    "puno_incremento",
+    "reciclaje",
+    "reflejo",
+    "rizo_defensa",
+    "sustituto",
+    "trailblaze",
+    "trampa_rocas",
+    "zona_magica"
+  ],
+  "52": [
+    "agua_fria",
+    "desarme",
+    "ladron",
+    "maldicion",
+    "rizo_defensa",
+    "sustituto",
+    "trailblaze"
+  ],
+  "53": [
+    "agua_fria",
+    "desarme",
+    "embargo",
+    "ladron",
+    "maldicion",
+    "rizo_defensa",
+    "sustituto",
+    "trailblaze"
+  ],
+  "56": [
+    "imitacion",
+    "ladron",
+    "maldicion",
+    "onda_vacio",
+    "persecucion",
+    "puno_incremento",
+    "rizo_defensa",
+    "sustituto"
+  ],
+  "57": [
+    "imitacion",
+    "ladron",
+    "maldicion",
+    "onda_vacio",
+    "persecucion",
+    "puno_incremento",
+    "rizo_defensa",
+    "sustituto",
+    "trampa_rocas"
+  ],
+  "60": [
+    "agua_fria",
+    "ladron",
+    "maldicion",
+    "rizo_defensa",
+    "sustituto"
+  ],
+  "61": [
+    "agua_fria",
+    "ladron",
+    "maldicion",
+    "puno_incremento",
+    "rizo_defensa",
+    "sustituto"
+  ],
+  "62": [
+    "agua_fria",
+    "desarme",
+    "ladron",
+    "maldicion",
+    "onda_vacio",
+    "puno_incremento",
+    "rizo_defensa",
+    "sustituto"
+  ],
+  "74": [
+    "autodestruccion",
+    "explosion",
+    "maldicion",
+    "poder_pasado",
+    "puno_incremento",
+    "rizo_defensa",
+    "sustituto",
+    "trampa_rocas"
+  ],
+  "75": [
+    "autodestruccion",
+    "explosion",
+    "maldicion",
+    "poder_pasado",
+    "puno_incremento",
+    "rizo_defensa",
+    "sustituto",
+    "trampa_rocas"
+  ],
+  "76": [
+    "autodestruccion",
+    "explosion",
+    "maldicion",
+    "poder_pasado",
+    "puno_incremento",
+    "rizo_defensa",
+    "sustituto",
+    "trampa_rocas"
+  ],
+  "95": [
+    "arenas_ardientes",
+    "autodestruccion",
+    "explosion",
+    "maldicion",
+    "poder_pasado",
+    "rizo_defensa",
+    "sustituto",
+    "testarazo",
+    "trampa_rocas"
+  ],
+  "108": [
+    "desarme",
+    "ladron",
+    "maldicion",
+    "puno_incremento",
+    "rizo_defensa",
+    "sustituto"
+  ],
+  "113": [
+    "agua_fria",
+    "intercambio",
+    "ladron",
+    "maldicion",
+    "pantalla_de_luz",
+    "paz_mental",
+    "puno_incremento",
+    "reciclaje",
+    "reflejo",
+    "rizo_defensa",
+    "sustituto",
+    "trailblaze",
+    "trampa_rocas"
+  ],
+  "143": [
+    "agua_fria",
+    "autodestruccion",
+    "jugo_gastrico",
+    "maldicion",
+    "persecucion",
+    "puno_incremento",
+    "reciclaje",
+    "reflejo",
+    "rizo_defensa",
+    "sustituto",
+    "trailblaze"
+  ],
+  "151": [
+    "agua_fria",
+    "alluring-voice",
+    "arenas_ardientes",
+    "autodestruccion",
+    "burning-jealousy",
+    "carambano",
+    "cola_veneno",
+    "cuerno_certero",
+    "danza_pluma",
+    "desarme",
+    "draco-meteor",
+    "embargo",
+    "envite_igneo",
+    "explosion",
+    "hoja_aguda",
+    "imitacion",
+    "intercambio",
+    "jugo_gastrico",
+    "ladron",
+    "llama_embrujada",
+    "maldicion",
+    "misty-explosion",
+    "onda_vacio",
+    "pantalla_de_luz",
+    "patada_ignea",
+    "paz_mental",
+    "poder_pasado",
+    "puas",
+    "puas_toxicas",
+    "puno_incremento",
+    "reciclaje",
+    "reflejo",
+    "rizo_defensa",
+    "scale-shot",
+    "steel-beam",
+    "sustituto",
+    "tailwind",
+    "trailblaze",
+    "trampa_rocas",
+    "trick_room",
+    "triple-axel",
+    "truco",
+    "vaho_gelido",
+    "zona_magica"
+  ],
+  "155": [
+    "burning-jealousy",
+    "envite_igneo",
+    "maldicion",
+    "rizo_defensa",
+    "sustituto"
+  ],
+  "156": [
+    "burning-jealousy",
+    "envite_igneo",
+    "maldicion",
+    "rizo_defensa",
+    "sustituto"
+  ],
+  "157": [
+    "arenas_ardientes",
+    "burning-jealousy",
+    "envite_igneo",
+    "maldicion",
+    "paz_mental",
+    "puno_incremento",
+    "rizo_defensa",
+    "sustituto"
+  ],
+  "161": [
+    "agua_fria",
+    "desarme",
+    "ladron",
+    "maldicion",
+    "persecucion",
+    "puno_incremento",
+    "rizo_defensa",
+    "sustituto",
+    "trailblaze",
+    "truco"
+  ],
+  "162": [
+    "agua_fria",
+    "desarme",
+    "ladron",
+    "maldicion",
+    "puno_incremento",
+    "rizo_defensa",
+    "sustituto",
+    "trailblaze",
+    "truco"
+  ],
+  "172": [
+    "maldicion",
+    "pantalla_de_luz",
+    "placaje_electrico",
+    "reflejo",
+    "rizo_defensa",
+    "sustituto",
+    "trailblaze"
+  ],
+  "173": [
+    "agua_fria",
+    "alluring-voice",
+    "imitacion",
+    "maldicion",
+    "pantalla_de_luz",
+    "paz_mental",
+    "reciclaje",
+    "reflejo",
+    "rizo_defensa",
+    "sustituto",
+    "truco"
+  ],
+  "174": [
+    "alluring-voice",
+    "canto_mortal",
+    "imitacion",
+    "maldicion",
+    "pantalla_de_luz",
+    "reciclaje",
+    "reflejo",
+    "rizo_defensa",
+    "sustituto",
+    "trailblaze"
+  ],
+  "175": [
+    "llama_embrujada",
+    "maldicion",
+    "pantalla_de_luz",
+    "paz_mental",
+    "poder_pasado",
+    "reflejo",
+    "rizo_defensa",
+    "sustituto",
+    "truco"
+  ],
+  "176": [
+    "cuerno_certero",
+    "llama_embrujada",
+    "maldicion",
+    "pantalla_de_luz",
+    "paz_mental",
+    "poder_pasado",
+    "reflejo",
+    "rizo_defensa",
+    "sustituto",
+    "tailwind",
+    "truco"
+  ],
+  "179": [
+    "maldicion",
+    "pantalla_de_luz",
+    "reflejo",
+    "rizo_defensa",
+    "sustituto",
+    "trailblaze"
+  ],
+  "180": [
+    "maldicion",
+    "pantalla_de_luz",
+    "puno_incremento",
+    "reflejo",
+    "rizo_defensa",
+    "sustituto",
+    "trailblaze"
+  ],
+  "181": [
+    "maldicion",
+    "pantalla_de_luz",
+    "puno_incremento",
+    "reflejo",
+    "rizo_defensa",
+    "sustituto",
+    "trailblaze"
+  ],
+  "183": [
+    "agua_fria",
+    "alluring-voice",
+    "camuflaje",
+    "canto_mortal",
+    "desarme",
+    "maldicion",
+    "misty-explosion",
+    "pantalla_de_luz",
+    "puno_incremento",
+    "rizo_defensa",
+    "sustituto",
+    "trailblaze"
+  ],
+  "184": [
+    "agua_fria",
+    "alluring-voice",
+    "canto_mortal",
+    "desarme",
+    "maldicion",
+    "misty-explosion",
+    "pantalla_de_luz",
+    "puno_incremento",
+    "rizo_defensa",
+    "sustituto",
+    "trailblaze"
+  ],
+  "185": [
+    "autodestruccion",
+    "explosion",
+    "imitacion",
+    "ladron",
+    "maldicion",
+    "paz_mental",
+    "puas",
+    "puno_incremento",
+    "rizo_defensa",
+    "sustituto",
+    "testarazo",
+    "trailblaze",
+    "trampa_rocas"
+  ],
+  "186": [
+    "agua_fria",
+    "canto_mortal",
+    "ladron",
+    "maldicion",
+    "puno_incremento",
+    "rizo_defensa",
+    "sustituto"
+  ],
+  "190": [
+    "agua_fria",
+    "desarme",
+    "imitacion",
+    "ladron",
+    "maldicion",
+    "persecucion",
+    "puno_incremento",
+    "rizo_defensa",
+    "sustituto",
+    "trailblaze"
+  ],
+  "194": [
+    "agua_fria",
+    "maldicion",
+    "poder_pasado",
+    "puas",
+    "puno_incremento",
+    "rizo_defensa",
+    "sustituto",
+    "trailblaze",
+    "trampa_rocas"
+  ],
+  "195": [
+    "agua_fria",
+    "ladron",
+    "maldicion",
+    "poder_pasado",
+    "puas",
+    "puas_toxicas",
+    "puno_incremento",
+    "rizo_defensa",
+    "sustituto",
+    "trailblaze",
+    "trampa_rocas"
+  ],
+  "200": [
+    "burning-jealousy",
+    "canto_mortal",
+    "embargo",
+    "intercambio",
+    "ladron",
+    "maldicion",
+    "paz_mental",
+    "rizo_defensa",
+    "sustituto",
+    "trick_room",
+    "truco",
+    "zona_magica"
+  ],
+  "204": [
+    "autodestruccion",
+    "explosion",
+    "maldicion",
+    "pantalla_de_luz",
+    "puas",
+    "puas_toxicas",
+    "reflejo",
+    "rizo_defensa",
+    "sustituto",
+    "trampa_rocas"
+  ],
+  "205": [
+    "autodestruccion",
+    "cuerno_certero",
+    "explosion",
+    "maldicion",
+    "pantalla_de_luz",
+    "puas",
+    "puas_toxicas",
+    "reflejo",
+    "rizo_defensa",
+    "steel-beam",
+    "sustituto",
+    "trampa_rocas"
+  ],
+  "206": [
+    "agua_fria",
+    "cola_veneno",
+    "cuerno_certero",
+    "ladron",
+    "maldicion",
+    "paz_mental",
+    "persecucion",
+    "poder_pasado",
+    "rizo_defensa",
+    "scale-shot",
+    "sustituto",
+    "trampa_rocas"
+  ],
+  "208": [
+    "arenas_ardientes",
+    "autodestruccion",
+    "explosion",
+    "maldicion",
+    "poder_pasado",
+    "rizo_defensa",
+    "steel-beam",
+    "sustituto",
+    "testarazo",
+    "trampa_rocas"
+  ],
+  "209": [
+    "ladron",
+    "maldicion",
+    "puno_incremento",
+    "reflejo",
+    "rizo_defensa",
+    "sustituto",
+    "trailblaze"
+  ],
+  "210": [
+    "ladron",
+    "maldicion",
+    "puno_incremento",
+    "reflejo",
+    "rizo_defensa",
+    "sustituto",
+    "trailblaze"
+  ],
+  "211": [
+    "agua_fria",
+    "autodestruccion",
+    "cola_veneno",
+    "explosion",
+    "maldicion",
+    "puas",
+    "puas_toxicas",
+    "rizo_defensa",
+    "scale-shot",
+    "sustituto"
+  ],
+  "213": [
+    "desarme",
+    "jugo_gastrico",
+    "maldicion",
+    "poder_pasado",
+    "rizo_defensa",
+    "sustituto",
+    "trampa_rocas"
+  ],
+  "215": [
+    "carambano",
+    "desarme",
+    "embargo",
+    "ladron",
+    "maldicion",
+    "paz_mental",
+    "persecucion",
+    "puno_incremento",
+    "reflejo",
+    "rizo_defensa",
+    "sustituto",
+    "trailblaze",
+    "triple-axel"
+  ],
+  "216": [
+    "ladron",
+    "maldicion",
+    "puno_incremento",
+    "rizo_defensa",
+    "sustituto",
+    "trailblaze"
+  ],
+  "217": [
+    "ladron",
+    "maldicion",
+    "puno_incremento",
+    "rizo_defensa",
+    "sustituto",
+    "trailblaze"
+  ],
+  "218": [
+    "autodestruccion",
+    "maldicion",
+    "pantalla_de_luz",
+    "poder_pasado",
+    "reflejo",
+    "rizo_defensa",
+    "sustituto",
+    "trampa_rocas"
+  ],
+  "219": [
+    "arenas_ardientes",
+    "autodestruccion",
+    "burning-jealousy",
+    "envite_igneo",
+    "explosion",
+    "maldicion",
+    "pantalla_de_luz",
+    "poder_pasado",
+    "reflejo",
+    "rizo_defensa",
+    "sustituto",
+    "trampa_rocas"
+  ],
+  "220": [
+    "carambano",
+    "maldicion",
+    "pantalla_de_luz",
+    "poder_pasado",
+    "reflejo",
+    "rizo_defensa",
+    "sustituto",
+    "trailblaze",
+    "trampa_rocas"
+  ],
+  "221": [
+    "carambano",
+    "maldicion",
+    "pantalla_de_luz",
+    "poder_pasado",
+    "reflejo",
+    "rizo_defensa",
+    "sustituto",
+    "trailblaze",
+    "trampa_rocas"
+  ],
+  "222": [
+    "autodestruccion",
+    "camuflaje",
+    "carambano",
+    "explosion",
+    "maldicion",
+    "pantalla_de_luz",
+    "paz_mental",
+    "poder_pasado",
+    "reflejo",
+    "rizo_defensa",
+    "sustituto",
+    "testarazo",
+    "trampa_rocas"
+  ],
+  "223": [
+    "ladron",
+    "maldicion",
+    "rizo_defensa",
+    "sustituto"
+  ],
+  "224": [
+    "ladron",
+    "maldicion",
+    "rizo_defensa",
+    "sustituto"
+  ],
+  "231": [
+    "desarme",
+    "ladron",
+    "maldicion",
+    "poder_pasado",
+    "rizo_defensa",
+    "sustituto",
+    "testarazo",
+    "trailblaze",
+    "trampa_rocas"
+  ],
+  "232": [
+    "cuerno_certero",
+    "desarme",
+    "ladron",
+    "maldicion",
+    "poder_pasado",
+    "rizo_defensa",
+    "sustituto",
+    "trailblaze",
+    "trampa_rocas"
+  ],
+  "233": [
+    "ladron",
+    "maldicion",
+    "reciclaje",
+    "rizo_defensa",
+    "sustituto",
+    "trick_room",
+    "truco"
+  ],
+  "241": [
+    "maldicion",
+    "puno_incremento",
+    "rizo_defensa",
+    "sustituto",
+    "trampa_rocas"
+  ],
+  "242": [
+    "agua_fria",
+    "alluring-voice",
+    "intercambio",
+    "ladron",
+    "maldicion",
+    "pantalla_de_luz",
+    "paz_mental",
+    "puno_incremento",
+    "reciclaje",
+    "rizo_defensa",
+    "sustituto",
+    "trailblaze",
+    "trampa_rocas",
+    "truco"
+  ],
+  "258": [
+    "agua_fria",
+    "maldicion",
+    "poder_pasado",
+    "rizo_defensa",
+    "sustituto"
+  ],
+  "259": [
+    "agua_fria",
+    "maldicion",
+    "poder_pasado",
+    "puno_incremento",
+    "rizo_defensa",
+    "sustituto",
+    "trampa_rocas"
+  ],
+  "260": [
+    "agua_fria",
+    "desarme",
+    "maldicion",
+    "poder_pasado",
+    "puno_incremento",
+    "rizo_defensa",
+    "sustituto",
+    "trampa_rocas"
+  ],
+  "263": [
+    "ladron",
+    "persecucion",
+    "rizo_defensa",
+    "sustituto",
+    "truco",
+    "velocidad_extrema"
+  ],
+  "264": [
+    "ladron",
+    "rizo_defensa",
+    "sustituto",
+    "truco"
+  ],
+  "280": [
+    "alluring-voice",
+    "desarme",
+    "intercambio",
+    "ladron",
+    "llama_embrujada",
+    "pantalla_de_luz",
+    "paz_mental",
+    "reciclaje",
+    "reflejo",
+    "rizo_defensa",
+    "sustituto",
+    "trick_room",
+    "truco",
+    "zona_magica"
+  ],
+  "281": [
+    "alluring-voice",
+    "desarme",
+    "intercambio",
+    "ladron",
+    "pantalla_de_luz",
+    "paz_mental",
+    "reciclaje",
+    "reflejo",
+    "rizo_defensa",
+    "sustituto",
+    "trick_room",
+    "triple-axel",
+    "truco",
+    "zona_magica"
+  ],
+  "282": [
+    "alluring-voice",
+    "desarme",
+    "intercambio",
+    "ladron",
+    "llama_embrujada",
+    "misty-explosion",
+    "onda_vacio",
+    "pantalla_de_luz",
+    "paz_mental",
+    "reciclaje",
+    "reflejo",
+    "rizo_defensa",
+    "sustituto",
+    "trick_room",
+    "triple-axel",
+    "truco",
+    "zona_magica"
+  ],
+  "293": [
+    "rizo_defensa",
+    "sustituto"
+  ],
+  "294": [
+    "puno_incremento",
+    "rizo_defensa",
+    "sustituto"
+  ],
+  "295": [
+    "puno_incremento",
+    "rizo_defensa",
+    "sustituto"
+  ],
+  "298": [
+    "alluring-voice",
+    "camuflaje",
+    "canto_mortal",
+    "desarme",
+    "pantalla_de_luz",
+    "rizo_defensa",
+    "sustituto"
+  ],
+  "299": [
+    "autodestruccion",
+    "explosion",
+    "maldicion",
+    "poder_pasado",
+    "rizo_defensa",
+    "steel-beam",
+    "sustituto",
+    "testarazo",
+    "trampa_rocas"
+  ],
+  "300": [
+    "paz_mental",
+    "rizo_defensa",
+    "sustituto"
+  ],
+  "301": [
+    "paz_mental",
+    "rizo_defensa",
+    "sustituto"
+  ],
+  "304": [
+    "maldicion",
+    "poder_pasado",
+    "represion_metal",
+    "rizo_defensa",
+    "steel-beam",
+    "sustituto",
+    "testarazo",
+    "trampa_rocas"
+  ],
+  "305": [
+    "poder_pasado",
+    "represion_metal",
+    "rizo_defensa",
+    "steel-beam",
+    "sustituto",
+    "trampa_rocas"
+  ],
+  "306": [
+    "cuerno_certero",
+    "maldicion",
+    "poder_pasado",
+    "puno_incremento",
+    "represion_metal",
+    "rizo_defensa",
+    "steel-beam",
+    "sustituto",
+    "testarazo",
+    "trampa_rocas"
+  ],
+  "311": [
+    "alluring-voice",
+    "intercambio",
+    "pantalla_de_luz",
+    "rizo_defensa",
+    "sustituto",
+    "trailblaze"
+  ],
+  "312": [
+    "alluring-voice",
+    "pantalla_de_luz",
+    "rizo_defensa",
+    "sustituto",
+    "trailblaze"
+  ],
+  "316": [
+    "autodestruccion",
+    "explosion",
+    "jugo_gastrico",
+    "ladron",
+    "maldicion",
+    "puas_toxicas",
+    "puno_incremento",
+    "rizo_defensa",
+    "sustituto"
+  ],
+  "317": [
+    "autodestruccion",
+    "desarme",
+    "explosion",
+    "jugo_gastrico",
+    "ladron",
+    "maldicion",
+    "puas_toxicas",
+    "puno_incremento",
+    "rizo_defensa",
+    "sustituto"
+  ],
+  "320": [
+    "autodestruccion",
+    "maldicion",
+    "rizo_defensa",
+    "sustituto"
+  ],
+  "321": [
+    "autodestruccion",
+    "rizo_defensa",
+    "sustituto"
+  ],
+  "322": [
+    "arenas_ardientes",
+    "envite_igneo",
+    "maldicion",
+    "poder_pasado",
+    "rizo_defensa",
+    "sustituto",
+    "trailblaze",
+    "trampa_rocas"
+  ],
+  "323": [
+    "arenas_ardientes",
+    "autodestruccion",
+    "burning-jealousy",
+    "envite_igneo",
+    "explosion",
+    "maldicion",
+    "poder_pasado",
+    "rizo_defensa",
+    "sustituto",
+    "trailblaze",
+    "trampa_rocas"
+  ],
+  "327": [
+    "imitacion",
+    "intercambio",
+    "ladron",
+    "paz_mental",
+    "puno_incremento",
+    "reciclaje",
+    "rizo_defensa",
+    "sustituto",
+    "trick_room",
+    "truco"
+  ],
+  "335": [
+    "desarme",
+    "embargo",
+    "ladron",
+    "maldicion",
+    "persecucion",
+    "puno_incremento",
+    "rizo_defensa",
+    "sustituto"
+  ],
+  "337": [
+    "autodestruccion",
+    "embargo",
+    "explosion",
+    "intercambio",
+    "pantalla_de_luz",
+    "paz_mental",
+    "poder_pasado",
+    "reciclaje",
+    "reflejo",
+    "rizo_defensa",
+    "sustituto",
+    "trampa_rocas",
+    "trick_room",
+    "zona_magica"
+  ],
+  "338": [
+    "autodestruccion",
+    "embargo",
+    "envite_igneo",
+    "explosion",
+    "intercambio",
+    "pantalla_de_luz",
+    "paz_mental",
+    "poder_pasado",
+    "reciclaje",
+    "reflejo",
+    "rizo_defensa",
+    "sustituto",
+    "trampa_rocas",
+    "trick_room"
+  ],
+  "351": [
+    "agua_fria",
+    "ladron",
+    "rizo_defensa",
+    "sustituto",
+    "tailwind"
+  ],
+  "352": [
+    "camuflaje",
+    "desarme",
+    "imitacion",
+    "intercambio",
+    "ladron",
+    "poder_pasado",
+    "puno_incremento",
+    "reciclaje",
+    "rizo_defensa",
+    "sustituto",
+    "trampa_rocas",
+    "trick_room",
+    "truco"
+  ],
+  "358": [
+    "autodestruccion",
+    "canto_mortal",
+    "desarme",
+    "intercambio",
+    "maldicion",
+    "pantalla_de_luz",
+    "paz_mental",
+    "reciclaje",
+    "reflejo",
+    "rizo_defensa",
+    "sustituto",
+    "trick_room",
+    "truco"
+  ],
+  "362": [
+    "agua_fria",
+    "autodestruccion",
+    "carambano",
+    "explosion",
+    "pantalla_de_luz",
+    "puas",
+    "rizo_defensa",
+    "sustituto",
+    "trailblaze",
+    "vaho_gelido"
+  ],
+  "363": [
+    "maldicion",
+    "rizo_defensa",
+    "sustituto",
+    "vaho_gelido"
+  ],
+  "364": [
+    "carambano",
+    "rizo_defensa",
+    "sustituto",
+    "vaho_gelido"
+  ],
+  "365": [
+    "carambano",
+    "rizo_defensa",
+    "sustituto",
+    "vaho_gelido"
+  ],
+  "371": [
+    "draco-meteor",
+    "rizo_defensa",
+    "sustituto"
+  ],
+  "372": [
+    "draco-meteor",
+    "rizo_defensa",
+    "sustituto"
+  ],
+  "373": [
+    "draco-meteor",
+    "rizo_defensa",
+    "sustituto",
+    "tailwind"
+  ],
+  "375": [
+    "autodestruccion",
+    "explosion",
+    "pantalla_de_luz",
+    "persecucion",
+    "puno_incremento",
+    "puno_meteoro",
+    "reflejo",
+    "rizo_defensa",
+    "steel-beam",
+    "sustituto",
+    "trailblaze",
+    "trampa_rocas",
+    "truco"
+  ],
+  "376": [
+    "autodestruccion",
+    "desarme",
+    "explosion",
+    "pantalla_de_luz",
+    "persecucion",
+    "puno_incremento",
+    "puno_meteoro",
+    "puno_sombra",
+    "reflejo",
+    "rizo_defensa",
+    "steel-beam",
+    "sustituto",
+    "trailblaze",
+    "trampa_rocas",
+    "truco"
+  ],
+  "377": [
+    "autodestruccion",
+    "explosion",
+    "maldicion",
+    "poder_pasado",
+    "puno_incremento",
+    "rizo_defensa",
+    "sustituto",
+    "trampa_rocas"
+  ],
+  "378": [
+    "autodestruccion",
+    "carambano",
+    "explosion",
+    "maldicion",
+    "poder_pasado",
+    "puno_incremento",
+    "rizo_defensa",
+    "sustituto",
+    "vaho_gelido"
+  ],
+  "379": [
+    "autodestruccion",
+    "explosion",
+    "maldicion",
+    "poder_pasado",
+    "puno_incremento",
+    "rizo_defensa",
+    "steel-beam",
+    "sustituto",
+    "trampa_rocas"
+  ],
+  "382": [
+    "agua_fria",
+    "paz_mental",
+    "poder_pasado",
+    "pulso_primigenio",
+    "rizo_defensa",
+    "sustituto"
+  ],
+  "383": [
+    "arenas_ardientes",
+    "filo_del_abismo",
+    "poder_pasado",
+    "puas",
+    "puno_incremento",
+    "rizo_defensa",
+    "sustituto",
+    "trampa_rocas"
+  ],
+  "385": [
+    "intercambio",
+    "pantalla_de_luz",
+    "paz_mental",
+    "poder_pasado",
+    "puno_incremento",
+    "puno_meteoro",
+    "reciclaje",
+    "reflejo",
+    "rizo_defensa",
+    "steel-beam",
+    "sustituto",
+    "trampa_rocas",
+    "trick_room",
+    "truco",
+    "zona_magica"
+  ],
+  "399": [
+    "hipercolmillo",
+    "ladron",
+    "maldicion",
+    "rizo_defensa",
+    "sustituto",
+    "trampa_rocas"
+  ],
+  "400": [
+    "hipercolmillo",
+    "ladron",
+    "maldicion",
+    "rizo_defensa",
+    "sustituto",
+    "trampa_rocas"
+  ],
+  "417": [
+    "alluring-voice",
+    "hipercolmillo",
+    "ladron",
+    "pantalla_de_luz",
+    "rizo_defensa",
+    "sustituto",
+    "trailblaze"
+  ],
+  "427": [
+    "puno_incremento",
+    "rizo_defensa",
+    "sustituto",
+    "triple-axel"
+  ],
+  "428": [
+    "patada_salto_alta",
+    "puno_incremento",
+    "rizo_defensa",
+    "sustituto",
+    "trailblaze",
+    "triple-axel"
+  ],
+  "438": [
+    "autodestruccion",
+    "explosion",
+    "imitacion",
+    "ladron",
+    "maldicion",
+    "paz_mental",
+    "puas",
+    "rizo_defensa",
+    "sustituto",
+    "testarazo",
+    "trailblaze",
+    "trampa_rocas"
+  ],
+  "440": [
+    "pantalla_de_luz",
+    "paz_mental",
+    "reciclaje",
+    "rizo_defensa",
+    "sustituto"
+  ],
+  "446": [
+    "agua_fria",
+    "autodestruccion",
+    "maldicion",
+    "persecucion",
+    "puno_incremento",
+    "reciclaje",
+    "rizo_defensa",
+    "sustituto",
+    "trailblaze"
+  ],
+  "463": [
+    "autodestruccion",
+    "desarme",
+    "explosion",
+    "ladron",
+    "puno_incremento",
+    "rizo_defensa",
+    "sustituto"
+  ],
+  "474": [
+    "embargo",
+    "ladron",
+    "reciclaje",
+    "rizo_defensa",
+    "sustituto",
+    "trick_room",
+    "truco"
+  ],
+  "498": [
+    "envite_igneo",
+    "maldicion",
+    "rizo_defensa",
+    "sustituto",
+    "testarazo",
+    "trailblaze"
+  ],
+  "499": [
+    "desarme",
+    "empujon",
+    "envite_igneo",
+    "maldicion",
+    "puno_incremento",
+    "rizo_defensa",
+    "sustituto",
+    "testarazo",
+    "trailblaze"
+  ],
+  "500": [
+    "arenas_ardientes",
+    "desarme",
+    "empujon",
+    "envite_igneo",
+    "maldicion",
+    "puno_incremento",
+    "rizo_defensa",
+    "sustituto",
+    "testarazo",
+    "trailblaze"
+  ],
+  "517": [
+    "intercambio",
+    "maldicion",
+    "pantalla_de_luz",
+    "paz_mental",
+    "reflejo",
+    "rizo_defensa",
+    "sustituto",
+    "trick_room",
+    "truco"
+  ],
+  "518": [
+    "intercambio",
+    "maldicion",
+    "misty-explosion",
+    "pantalla_de_luz",
+    "paz_mental",
+    "reflejo",
+    "rizo_defensa",
+    "sustituto",
+    "trick_room",
+    "truco"
+  ],
+  "544": [
+    "cola_veneno",
+    "persecucion",
+    "puas",
+    "puas_toxicas",
+    "rizo_defensa",
+    "sustituto"
+  ],
+  "545": [
+    "cola_veneno",
+    "cuerno_certero",
+    "persecucion",
+    "puas",
+    "puas_toxicas",
+    "rizo_defensa",
+    "sustituto",
+    "trailblaze"
+  ],
+  "590": [
+    "espora",
+    "jugo_gastrico",
+    "rizo_defensa",
+    "sustituto"
+  ],
+  "622": [
+    "arenas_ardientes",
+    "autodestruccion",
+    "desarme",
+    "ladron",
+    "maldicion",
+    "puno_incremento",
+    "puno_sombra",
+    "reflejo",
+    "rizo_defensa",
+    "sustituto",
+    "trampa_rocas"
+  ],
+  "623": [
+    "arenas_ardientes",
+    "autodestruccion",
+    "desarme",
+    "ladron",
+    "maldicion",
+    "puno_incremento",
+    "puno_sombra",
+    "reflejo",
+    "rizo_defensa",
+    "sustituto",
+    "trampa_rocas",
+    "truco"
+  ],
+  "659": [
+    "ladron",
+    "puas",
+    "puno_incremento",
+    "reciclaje",
+    "rizo_defensa",
+    "sustituto"
+  ],
+  "759": [
+    "imitacion",
+    "rizo_defensa",
+    "sustituto"
+  ],
+  "767": [
+    "puas",
+    "rizo_defensa",
+    "sustituto"
+  ],
+  "768": [
+    "desarme",
+    "puas",
+    "rizo_defensa",
+    "sustituto",
+    "vaho_gelido"
+  ],
+  "774": [
+    "arenas_ardientes",
+    "autodestruccion",
+    "explosion",
+    "pantalla_de_luz",
+    "paz_mental",
+    "poder_pasado",
+    "reflejo",
+    "rizo_defensa",
+    "sustituto",
+    "trampa_rocas"
+  ],
+  "775": [
+    "desarme",
+    "ladron",
+    "maldicion",
+    "paz_mental",
+    "rizo_defensa",
+    "sustituto",
+    "trailblaze"
+  ],
+  "801": [
+    "autodestruccion",
+    "embargo",
+    "explosion",
+    "intercambio",
+    "misty-explosion",
+    "pantalla_de_luz",
+    "paz_mental",
+    "puas",
+    "reflejo",
+    "rizo_defensa",
+    "steel-beam",
+    "sustituto",
+    "trick_room",
+    "truco"
+  ],
+  "819": [
+    "ladron",
+    "maldicion",
+    "rizo_defensa",
+    "sustituto",
+    "trailblaze"
+  ],
+  "831": [
+    "rizo_defensa",
+    "sustituto"
+  ],
+  "832": [
+    "rizo_defensa",
+    "sustituto"
+  ],
+  "840": [
+    "draco-meteor",
+    "reciclaje",
+    "rizo_defensa"
+  ],
+  "850": [
+    "arenas_ardientes",
+    "desarme",
+    "rizo_defensa",
+    "sustituto"
+  ],
+  "878": [
+    "maldicion",
+    "rizo_defensa",
+    "steel-beam",
+    "sustituto",
+    "trampa_rocas"
+  ],
+  "953": [
+    "ladron",
+    "rizo_defensa",
+    "sustituto"
+  ],
+  "954": [
+    "intercambio",
+    "ladron",
+    "pantalla_de_luz",
+    "paz_mental",
+    "reflejo",
+    "rizo_defensa",
+    "sustituto",
+    "trick_room",
+    "truco"
+  ],
+  "982": [
+    "agua_fria",
+    "cola_veneno",
+    "cuerno_certero",
+    "ladron",
+    "maldicion",
+    "paz_mental",
+    "poder_pasado",
+    "rizo_defensa",
+    "scale-shot",
+    "sustituto",
+    "tailwind",
+    "trampa_rocas"
+  ],
+  "984": [
+    "cuerno_certero",
+    "desarme",
+    "rizo_defensa",
+    "sustituto",
+    "testarazo",
+    "trampa_rocas"
+  ],
+  "990": [
+    "cuerno_certero",
+    "desarme",
+    "rizo_defensa",
+    "steel-beam",
+    "sustituto",
+    "trampa_rocas"
+  ],
+  "1011": [
+    "draco-meteor",
+    "reciclaje",
+    "reflejo",
+    "rizo_defensa",
+    "sustituto"
+  ],
+  "1019": [
+    "draco-meteor",
+    "maldicion",
+    "reciclaje",
+    "reflejo",
+    "rizo_defensa",
+    "sustituto"
+  ],
+  "1025": [
+    "maldicion",
+    "rizo_defensa",
+    "sustituto"
+  ],
+  "10013": [
+    "agua_fria",
+    "ladron",
+    "rizo_defensa",
+    "sustituto",
+    "tailwind"
+  ],
+  "10014": [
+    "agua_fria",
+    "ladron",
+    "rizo_defensa",
+    "sustituto",
+    "tailwind"
+  ],
+  "10015": [
+    "agua_fria",
+    "ladron",
+    "rizo_defensa",
+    "sustituto",
+    "tailwind"
+  ],
+  "10088": [
+    "patada_salto_alta",
+    "puno_incremento",
+    "rizo_defensa",
+    "sustituto",
+    "trailblaze",
+    "triple-axel"
+  ],
+  "10101": [
+    "carambano",
+    "desarme",
+    "ladron",
+    "maldicion",
+    "rizo_defensa",
+    "steel-beam",
+    "sustituto",
+    "trampa_rocas",
+    "triple-axel",
+    "vaho_gelido"
+  ],
+  "10102": [
+    "carambano",
+    "desarme",
+    "ladron",
+    "maldicion",
+    "puas",
+    "represion_metal",
+    "rizo_defensa",
+    "steel-beam",
+    "sustituto",
+    "trampa_rocas",
+    "triple-axel",
+    "vaho_gelido"
+  ],
+  "10109": [
+    "autodestruccion",
+    "explosion",
+    "maldicion",
+    "rizo_defensa",
+    "sustituto",
+    "trampa_rocas"
+  ],
+  "10110": [
+    "autodestruccion",
+    "explosion",
+    "maldicion",
+    "rizo_defensa",
+    "sustituto",
+    "trampa_rocas"
+  ],
+  "10111": [
+    "autodestruccion",
+    "explosion",
+    "maldicion",
+    "rizo_defensa",
+    "sustituto",
+    "trampa_rocas"
+  ],
+  "10130": [
+    "arenas_ardientes",
+    "autodestruccion",
+    "explosion",
+    "pantalla_de_luz",
+    "paz_mental",
+    "poder_pasado",
+    "reflejo",
+    "rizo_defensa",
+    "sustituto",
+    "trampa_rocas"
+  ],
+  "10131": [
+    "arenas_ardientes",
+    "autodestruccion",
+    "explosion",
+    "pantalla_de_luz",
+    "paz_mental",
+    "poder_pasado",
+    "reflejo",
+    "rizo_defensa",
+    "sustituto",
+    "trampa_rocas"
+  ],
+  "10132": [
+    "arenas_ardientes",
+    "autodestruccion",
+    "explosion",
+    "pantalla_de_luz",
+    "paz_mental",
+    "poder_pasado",
+    "reflejo",
+    "rizo_defensa",
+    "sustituto",
+    "trampa_rocas"
+  ],
+  "10133": [
+    "arenas_ardientes",
+    "autodestruccion",
+    "explosion",
+    "pantalla_de_luz",
+    "paz_mental",
+    "poder_pasado",
+    "reflejo",
+    "rizo_defensa",
+    "sustituto",
+    "trampa_rocas"
+  ],
+  "10134": [
+    "arenas_ardientes",
+    "autodestruccion",
+    "explosion",
+    "pantalla_de_luz",
+    "paz_mental",
+    "poder_pasado",
+    "reflejo",
+    "rizo_defensa",
+    "sustituto",
+    "trampa_rocas"
+  ],
+  "10135": [
+    "arenas_ardientes",
+    "autodestruccion",
+    "explosion",
+    "pantalla_de_luz",
+    "paz_mental",
+    "poder_pasado",
+    "reflejo",
+    "rizo_defensa",
+    "sustituto",
+    "trampa_rocas"
+  ],
+  "10136": [
+    "arenas_ardientes",
+    "autodestruccion",
+    "explosion",
+    "pantalla_de_luz",
+    "paz_mental",
+    "poder_pasado",
+    "reflejo",
+    "rizo_defensa",
+    "sustituto",
+    "trampa_rocas"
+  ],
+  "10137": [
+    "arenas_ardientes",
+    "autodestruccion",
+    "explosion",
+    "pantalla_de_luz",
+    "paz_mental",
+    "poder_pasado",
+    "reflejo",
+    "rizo_defensa",
+    "sustituto",
+    "trampa_rocas"
+  ],
+  "10138": [
+    "arenas_ardientes",
+    "autodestruccion",
+    "explosion",
+    "pantalla_de_luz",
+    "paz_mental",
+    "poder_pasado",
+    "reflejo",
+    "rizo_defensa",
+    "sustituto",
+    "trampa_rocas"
+  ],
+  "10139": [
+    "arenas_ardientes",
+    "autodestruccion",
+    "explosion",
+    "pantalla_de_luz",
+    "paz_mental",
+    "poder_pasado",
+    "reflejo",
+    "rizo_defensa",
+    "sustituto",
+    "trampa_rocas"
+  ],
+  "10140": [
+    "arenas_ardientes",
+    "autodestruccion",
+    "explosion",
+    "pantalla_de_luz",
+    "paz_mental",
+    "poder_pasado",
+    "reflejo",
+    "rizo_defensa",
+    "sustituto",
+    "trampa_rocas"
+  ],
+  "10141": [
+    "arenas_ardientes",
+    "autodestruccion",
+    "explosion",
+    "pantalla_de_luz",
+    "paz_mental",
+    "poder_pasado",
+    "reflejo",
+    "rizo_defensa",
+    "sustituto",
+    "trampa_rocas"
+  ],
+  "10142": [
+    "arenas_ardientes",
+    "autodestruccion",
+    "explosion",
+    "pantalla_de_luz",
+    "paz_mental",
+    "poder_pasado",
+    "reflejo",
+    "rizo_defensa",
+    "sustituto",
+    "trampa_rocas"
+  ],
+  "10147": [
+    "autodestruccion",
+    "embargo",
+    "explosion",
+    "intercambio",
+    "misty-explosion",
+    "pantalla_de_luz",
+    "paz_mental",
+    "puas",
+    "reflejo",
+    "rizo_defensa",
+    "steel-beam",
+    "sustituto",
+    "trick_room",
+    "truco"
+  ],
+  "10233": [
+    "burning-jealousy",
+    "envite_igneo",
+    "llama_embrujada",
+    "maldicion",
+    "paz_mental",
+    "rizo_defensa",
+    "sustituto"
+  ],
+  "10255": [
+    "agua_fria",
+    "cola_veneno",
+    "cuerno_certero",
+    "ladron",
+    "maldicion",
+    "paz_mental",
+    "poder_pasado",
+    "rizo_defensa",
+    "scale-shot",
+    "sustituto",
+    "tailwind",
+    "trampa_rocas"
+  ],
+  "54": [
+    "agua_fria",
+    "desarme",
+    "imitacion",
+    "intercambio",
+    "ladron",
+    "maldicion",
+    "onda_vacio",
+    "pantalla_de_luz",
+    "paz_mental",
+    "puno_incremento",
+    "sustituto",
+    "trailblaze"
+  ],
+  "55": [
+    "agua_fria",
+    "desarme",
+    "imitacion",
+    "intercambio",
+    "ladron",
+    "maldicion",
+    "onda_vacio",
+    "pantalla_de_luz",
+    "paz_mental",
+    "puno_incremento",
+    "sustituto",
+    "trailblaze"
+  ],
+  "63": [
+    "desarme",
+    "embargo",
+    "imitacion",
+    "intercambio",
+    "ladron",
+    "maldicion",
+    "pantalla_de_luz",
+    "paz_mental",
+    "reciclaje",
+    "reflejo",
+    "sustituto",
+    "trick_room",
+    "truco",
+    "zona_magica"
+  ],
+  "64": [
+    "desarme",
+    "embargo",
+    "imitacion",
+    "intercambio",
+    "ladron",
+    "maldicion",
+    "pantalla_de_luz",
+    "paz_mental",
+    "reciclaje",
+    "reflejo",
+    "sustituto",
+    "trick_room",
+    "truco",
+    "zona_magica"
+  ],
+  "65": [
+    "desarme",
+    "embargo",
+    "imitacion",
+    "intercambio",
+    "ladron",
+    "maldicion",
+    "pantalla_de_luz",
+    "paz_mental",
+    "reciclaje",
+    "reflejo",
+    "sustituto",
+    "trick_room",
+    "truco",
+    "zona_magica"
+  ],
+  "66": [
+    "desarme",
+    "imitacion",
+    "ladron",
+    "maldicion",
+    "onda_vacio",
+    "pantalla_de_luz",
+    "puno_incremento",
+    "sustituto"
+  ],
+  "67": [
+    "desarme",
+    "imitacion",
+    "ladron",
+    "maldicion",
+    "onda_vacio",
+    "pantalla_de_luz",
+    "puno_incremento",
+    "sustituto"
+  ],
+  "68": [
+    "desarme",
+    "imitacion",
+    "ladron",
+    "maldicion",
+    "onda_vacio",
+    "pantalla_de_luz",
+    "puno_incremento",
+    "sustituto"
+  ],
+  "79": [
+    "agua_fria",
+    "intercambio",
+    "maldicion",
+    "pantalla_de_luz",
+    "paz_mental",
+    "reciclaje",
+    "reflejo",
+    "sustituto",
+    "trick_room",
+    "truco"
+  ],
+  "80": [
+    "agua_fria",
+    "intercambio",
+    "maldicion",
+    "pantalla_de_luz",
+    "paz_mental",
+    "reciclaje",
+    "reflejo",
+    "sustituto",
+    "trick_room",
+    "truco"
+  ],
+  "81": [
+    "explosion",
+    "maldicion",
+    "pantalla_de_luz",
+    "reciclaje",
+    "reflejo",
+    "steel-beam",
+    "sustituto"
+  ],
+  "82": [
+    "explosion",
+    "maldicion",
+    "pantalla_de_luz",
+    "reciclaje",
+    "reflejo",
+    "steel-beam",
+    "sustituto"
+  ],
+  "96": [
+    "desarme",
+    "imitacion",
+    "intercambio",
+    "ladron",
+    "maldicion",
+    "pantalla_de_luz",
+    "paz_mental",
+    "puno_incremento",
+    "reciclaje",
+    "reflejo",
+    "sustituto",
+    "trailblaze",
+    "trick_room",
+    "truco",
+    "zona_magica"
+  ],
+  "97": [
+    "desarme",
+    "imitacion",
+    "intercambio",
+    "ladron",
+    "maldicion",
+    "pantalla_de_luz",
+    "paz_mental",
+    "puno_incremento",
+    "reciclaje",
+    "reflejo",
+    "sustituto",
+    "trailblaze",
+    "trick_room",
+    "truco",
+    "zona_magica"
+  ],
+  "100": [
+    "autodestruccion",
+    "explosion",
+    "ladron",
+    "maldicion",
+    "pantalla_de_luz",
+    "reciclaje",
+    "reflejo",
+    "sustituto"
+  ],
+  "101": [
+    "autodestruccion",
+    "explosion",
+    "ladron",
+    "maldicion",
+    "pantalla_de_luz",
+    "reflejo",
+    "sustituto"
+  ],
+  "120": [
+    "camuflaje",
+    "maldicion",
+    "pantalla_de_luz",
+    "reciclaje",
+    "reflejo",
+    "sustituto"
+  ],
+  "121": [
+    "agua_fria",
+    "autodestruccion",
+    "intercambio",
+    "maldicion",
+    "pantalla_de_luz",
+    "poder_pasado",
+    "reciclaje",
+    "reflejo",
+    "sustituto",
+    "trick_room",
+    "truco"
+  ],
+  "122": [
+    "imitacion",
+    "intercambio",
+    "ladron",
+    "llama_embrujada",
+    "maldicion",
+    "pantalla_de_luz",
+    "paz_mental",
+    "puno_incremento",
+    "reciclaje",
+    "reflejo",
+    "sustituto",
+    "trick_room",
+    "truco",
+    "zona_magica"
+  ],
+  "123": [
+    "desarme",
+    "ladron",
+    "maldicion",
+    "onda_vacio",
+    "pantalla_de_luz",
+    "persecucion",
+    "sustituto",
+    "tailwind",
+    "trailblaze"
+  ],
+  "124": [
+    "canto_mortal",
+    "carambano",
+    "imitacion",
+    "intercambio",
+    "ladron",
+    "maldicion",
+    "pantalla_de_luz",
+    "paz_mental",
+    "puno_incremento",
+    "reciclaje",
+    "reflejo",
+    "sustituto",
+    "trick_room",
+    "triple-axel",
+    "truco",
+    "vaho_gelido",
+    "zona_magica"
+  ],
+  "125": [
+    "desarme",
+    "ladron",
+    "maldicion",
+    "pantalla_de_luz",
+    "puno_incremento",
+    "reflejo",
+    "sustituto",
+    "trailblaze"
+  ],
+  "135": [
+    "alluring-voice",
+    "maldicion",
+    "pantalla_de_luz",
+    "paz_mental",
+    "reflejo",
+    "sustituto",
+    "trailblaze"
+  ],
+  "147": [
+    "agua_fria",
+    "draco-meteor",
+    "maldicion",
+    "pantalla_de_luz",
+    "reflejo",
+    "scale-shot",
+    "sustituto",
+    "velocidad_extrema"
+  ],
+  "148": [
+    "agua_fria",
+    "draco-meteor",
+    "maldicion",
+    "pantalla_de_luz",
+    "reflejo",
+    "scale-shot",
+    "sustituto"
+  ],
+  "149": [
+    "agua_fria",
+    "draco-meteor",
+    "maldicion",
+    "pantalla_de_luz",
+    "puno_incremento",
+    "reflejo",
+    "scale-shot",
+    "sustituto",
+    "tailwind",
+    "velocidad_extrema"
+  ],
+  "150": [
+    "agua_fria",
+    "autodestruccion",
+    "desarme",
+    "embargo",
+    "imitacion",
+    "intercambio",
+    "maldicion",
+    "onda_mental",
+    "pantalla_de_luz",
+    "paz_mental",
+    "poder_pasado",
+    "puno_incremento",
+    "reciclaje",
+    "reflejo",
+    "sustituto",
+    "trailblaze",
+    "trick_room",
+    "truco",
+    "zona_magica"
+  ],
+  "165": [
+    "desarme",
+    "ladron",
+    "maldicion",
+    "pantalla_de_luz",
+    "puno_incremento",
+    "reflejo",
+    "sustituto",
+    "tailwind"
+  ],
+  "166": [
+    "desarme",
+    "ladron",
+    "maldicion",
+    "pantalla_de_luz",
+    "puno_incremento",
+    "reflejo",
+    "sustituto",
+    "tailwind"
+  ],
+  "178": [
+    "intercambio",
+    "ladron",
+    "maldicion",
+    "pantalla_de_luz",
+    "paz_mental",
+    "reflejo",
+    "sustituto",
+    "tailwind",
+    "trick_room",
+    "truco",
+    "zona_magica"
+  ],
+  "196": [
+    "alluring-voice",
+    "intercambio",
+    "maldicion",
+    "pantalla_de_luz",
+    "paz_mental",
+    "reflejo",
+    "sustituto",
+    "trailblaze",
+    "trick_room",
+    "truco",
+    "zona_magica"
+  ],
+  "197": [
+    "alluring-voice",
+    "intercambio",
+    "ladron",
+    "maldicion",
+    "pantalla_de_luz",
+    "paz_mental",
+    "persecucion",
+    "reflejo",
+    "sustituto",
+    "trailblaze"
+  ],
+  "199": [
+    "agua_fria",
+    "intercambio",
+    "maldicion",
+    "pantalla_de_luz",
+    "paz_mental",
+    "puno_incremento",
+    "reciclaje",
+    "reflejo",
+    "sustituto",
+    "trick_room",
+    "truco"
+  ],
+  "203": [
+    "intercambio",
+    "ladron",
+    "maldicion",
+    "pantalla_de_luz",
+    "paz_mental",
+    "reciclaje",
+    "reflejo",
+    "sustituto",
+    "trailblaze",
+    "trick_room",
+    "truco"
+  ],
+  "212": [
+    "desarme",
+    "ladron",
+    "maldicion",
+    "onda_vacio",
+    "pantalla_de_luz",
+    "persecucion",
+    "steel-beam",
+    "sustituto",
+    "tailwind",
+    "trailblaze"
+  ],
+  "234": [
+    "imitacion",
+    "intercambio",
+    "ladron",
+    "maldicion",
+    "pantalla_de_luz",
+    "paz_mental",
+    "reflejo",
+    "sustituto",
+    "trailblaze",
+    "trick_room",
+    "truco",
+    "zona_magica"
+  ],
+  "238": [
+    "canto_mortal",
+    "imitacion",
+    "intercambio",
+    "ladron",
+    "maldicion",
+    "pantalla_de_luz",
+    "paz_mental",
+    "reciclaje",
+    "reflejo",
+    "sustituto",
+    "trick_room",
+    "truco",
+    "vaho_gelido",
+    "zona_magica"
+  ],
+  "239": [
+    "desarme",
+    "ladron",
+    "maldicion",
+    "pantalla_de_luz",
+    "puno_incremento",
+    "sustituto",
+    "trailblaze"
+  ],
+  "243": [
+    "maldicion",
+    "pantalla_de_luz",
+    "paz_mental",
+    "reflejo",
+    "sustituto",
+    "trailblaze",
+    "velocidad_extrema"
+  ],
+  "302": [
+    "desarme",
+    "embargo",
+    "imitacion",
+    "intercambio",
+    "ladron",
+    "pantalla_de_luz",
+    "paz_mental",
+    "puno_incremento",
+    "puno_sombra",
+    "reflejo",
+    "represion_metal",
+    "sustituto",
+    "truco"
+  ],
+  "307": [
+    "imitacion",
+    "intercambio",
+    "ladron",
+    "onda_vacio",
+    "pantalla_de_luz",
+    "patada_salto_alta",
+    "paz_mental",
+    "puno_incremento",
+    "reciclaje",
+    "reflejo",
+    "sustituto",
+    "trailblaze",
+    "trick_room",
+    "truco"
+  ],
+  "308": [
+    "imitacion",
+    "intercambio",
+    "ladron",
+    "onda_vacio",
+    "pantalla_de_luz",
+    "patada_ignea",
+    "patada_salto_alta",
+    "paz_mental",
+    "puno_incremento",
+    "reciclaje",
+    "reflejo",
+    "sustituto",
+    "trailblaze",
+    "trick_room",
+    "truco"
+  ],
+  "309": [
+    "ladron",
+    "maldicion",
+    "pantalla_de_luz",
+    "sustituto"
+  ],
+  "310": [
+    "ladron",
+    "maldicion",
+    "pantalla_de_luz",
+    "sustituto",
+    "trailblaze"
+  ],
+  "313": [
+    "agua_fria",
+    "ladron",
+    "pantalla_de_luz",
+    "puno_incremento",
+    "sustituto",
+    "tailwind",
+    "trailblaze",
+    "truco"
+  ],
+  "314": [
+    "ladron",
+    "pantalla_de_luz",
+    "puno_incremento",
+    "sustituto",
+    "tailwind",
+    "trailblaze",
+    "truco"
+  ],
+  "325": [
+    "agua_fria",
+    "imitacion",
+    "intercambio",
+    "ladron",
+    "pantalla_de_luz",
+    "paz_mental",
+    "reciclaje",
+    "reflejo",
+    "sustituto",
+    "trailblaze",
+    "trick_room",
+    "truco"
+  ],
+  "326": [
+    "agua_fria",
+    "imitacion",
+    "intercambio",
+    "ladron",
+    "pantalla_de_luz",
+    "paz_mental",
+    "puno_incremento",
+    "reciclaje",
+    "reflejo",
+    "sustituto",
+    "trailblaze",
+    "trick_room",
+    "truco"
+  ],
+  "343": [
+    "arenas_ardientes",
+    "autodestruccion",
+    "explosion",
+    "intercambio",
+    "pantalla_de_luz",
+    "paz_mental",
+    "poder_pasado",
+    "reciclaje",
+    "reflejo",
+    "sustituto",
+    "trampa_rocas",
+    "trick_room",
+    "truco"
+  ],
+  "344": [
+    "arenas_ardientes",
+    "autodestruccion",
+    "explosion",
+    "intercambio",
+    "pantalla_de_luz",
+    "paz_mental",
+    "poder_pasado",
+    "reciclaje",
+    "reflejo",
+    "sustituto",
+    "trampa_rocas",
+    "trick_room",
+    "truco"
+  ],
+  "349": [
+    "agua_fria",
+    "pantalla_de_luz",
+    "scale-shot",
+    "sustituto"
+  ],
+  "350": [
+    "agua_fria",
+    "alluring-voice",
+    "pantalla_de_luz",
+    "scale-shot",
+    "sustituto",
+    "triple-axel"
+  ],
+  "361": [
+    "agua_fria",
+    "carambano",
+    "pantalla_de_luz",
+    "puas",
+    "sustituto",
+    "trailblaze",
+    "vaho_gelido"
+  ],
+  "380": [
+    "agua_fria",
+    "alluring-voice",
+    "draco-meteor",
+    "imitacion",
+    "llama_embrujada",
+    "pantalla_de_luz",
+    "paz_mental",
+    "reflejo",
+    "scale-shot",
+    "sustituto",
+    "tailwind",
+    "truco",
+    "zona_magica"
+  ],
+  "381": [
+    "agua_fria",
+    "draco-meteor",
+    "llama_embrujada",
+    "pantalla_de_luz",
+    "paz_mental",
+    "reflejo",
+    "scale-shot",
+    "sustituto",
+    "tailwind",
+    "truco"
+  ],
+  "386": [
+    "desarme",
+    "imitacion",
+    "intercambio",
+    "pantalla_de_luz",
+    "paz_mental",
+    "persecucion",
+    "puno_incremento",
+    "reciclaje",
+    "reflejo",
+    "sustituto",
+    "trampa_rocas",
+    "trick_room",
+    "truco"
+  ],
+  "403": [
+    "ladron",
+    "pantalla_de_luz",
+    "sustituto",
+    "trailblaze"
+  ],
+  "404": [
+    "ladron",
+    "pantalla_de_luz",
+    "sustituto",
+    "trailblaze"
+  ],
+  "405": [
+    "ladron",
+    "pantalla_de_luz",
+    "sustituto",
+    "trailblaze"
+  ],
+  "433": [
+    "desarme",
+    "intercambio",
+    "maldicion",
+    "pantalla_de_luz",
+    "paz_mental",
+    "reciclaje",
+    "reflejo",
+    "sustituto",
+    "trick_room",
+    "truco"
+  ],
+  "436": [
+    "intercambio",
+    "pantalla_de_luz",
+    "paz_mental",
+    "poder_pasado",
+    "reciclaje",
+    "reflejo",
+    "steel-beam",
+    "sustituto",
+    "trampa_rocas",
+    "trick_room",
+    "truco"
+  ],
+  "437": [
+    "explosion",
+    "intercambio",
+    "pantalla_de_luz",
+    "paz_mental",
+    "poder_pasado",
+    "reciclaje",
+    "reflejo",
+    "steel-beam",
+    "sustituto",
+    "trampa_rocas",
+    "trick_room",
+    "truco"
+  ],
+  "439": [
+    "imitacion",
+    "intercambio",
+    "ladron",
+    "pantalla_de_luz",
+    "paz_mental",
+    "reciclaje",
+    "reflejo",
+    "sustituto",
+    "trick_room",
+    "truco",
+    "zona_magica"
+  ],
+  "462": [
+    "autodestruccion",
+    "explosion",
+    "pantalla_de_luz",
+    "reciclaje",
+    "reflejo",
+    "steel-beam",
+    "sustituto"
+  ],
+  "466": [
+    "desarme",
+    "ladron",
+    "pantalla_de_luz",
+    "puno_incremento",
+    "reflejo",
+    "sustituto",
+    "trailblaze"
+  ],
+  "468": [
+    "cuerno_certero",
+    "llama_embrujada",
+    "pantalla_de_luz",
+    "paz_mental",
+    "poder_pasado",
+    "reflejo",
+    "sustituto",
+    "tailwind",
+    "truco",
+    "velocidad_extrema"
+  ],
+  "473": [
+    "carambano",
+    "desarme",
+    "maldicion",
+    "pantalla_de_luz",
+    "poder_pasado",
+    "reflejo",
+    "sustituto",
+    "trailblaze",
+    "trampa_rocas"
+  ],
+  "475": [
+    "alluring-voice",
+    "desarme",
+    "hoja_aguda",
+    "intercambio",
+    "ladron",
+    "llama_embrujada",
+    "onda_vacio",
+    "pantalla_de_luz",
+    "paz_mental",
+    "puno_incremento",
+    "reciclaje",
+    "reflejo",
+    "sustituto",
+    "trick_room",
+    "triple-axel",
+    "truco",
+    "zona_magica"
+  ],
+  "478": [
+    "agua_fria",
+    "carambano",
+    "embargo",
+    "maldicion",
+    "pantalla_de_luz",
+    "puas",
+    "reflejo",
+    "sustituto",
+    "trailblaze",
+    "triple-axel",
+    "truco",
+    "vaho_gelido"
+  ],
+  "479": [
+    "ladron",
+    "pantalla_de_luz",
+    "reflejo",
+    "sustituto",
+    "truco"
+  ],
+  "480": [
+    "desarme",
+    "imitacion",
+    "intercambio",
+    "pantalla_de_luz",
+    "paz_mental",
+    "puno_incremento",
+    "reciclaje",
+    "reflejo",
+    "sustituto",
+    "trampa_rocas",
+    "trick_room",
+    "truco",
+    "zona_magica"
+  ],
+  "481": [
+    "desarme",
+    "imitacion",
+    "intercambio",
+    "pantalla_de_luz",
+    "paz_mental",
+    "puno_incremento",
+    "reciclaje",
+    "reflejo",
+    "sustituto",
+    "trampa_rocas",
+    "trick_room",
+    "truco",
+    "zona_magica"
+  ],
+  "482": [
+    "autodestruccion",
+    "desarme",
+    "explosion",
+    "imitacion",
+    "intercambio",
+    "pantalla_de_luz",
+    "paz_mental",
+    "puno_incremento",
+    "reciclaje",
+    "reflejo",
+    "sustituto",
+    "trampa_rocas",
+    "trick_room",
+    "truco",
+    "zona_magica"
+  ],
+  "488": [
+    "intercambio",
+    "pantalla_de_luz",
+    "paz_mental",
+    "reciclaje",
+    "reflejo",
+    "sustituto",
+    "trick_room",
+    "truco",
+    "zona_magica"
+  ],
+  "490": [
+    "agua_fria",
+    "alluring-voice",
+    "desarme",
+    "intercambio",
+    "pantalla_de_luz",
+    "paz_mental",
+    "poder_pasado",
+    "reflejo",
+    "sustituto"
+  ],
+  "493": [
+    "agua_fria",
+    "arenas_ardientes",
+    "canto_mortal",
+    "draco-meteor",
+    "envite_igneo",
+    "pantalla_de_luz",
+    "paz_mental",
+    "poder_pasado",
+    "reciclaje",
+    "reflejo",
+    "sentencia",
+    "steel-beam",
+    "sustituto",
+    "tailwind",
+    "trailblaze",
+    "trampa_rocas",
+    "trick_room",
+    "truco",
+    "velocidad_extrema"
+  ],
+  "494": [
+    "arenas_ardientes",
+    "embargo",
+    "envite_igneo",
+    "imitacion",
+    "intercambio",
+    "llama_embrujada",
+    "pantalla_de_luz",
+    "patada_ignea",
+    "puno_incremento",
+    "sustituto",
+    "trick_room",
+    "truco"
+  ],
+  "505": [
+    "desarme",
+    "hipercolmillo",
+    "pantalla_de_luz",
+    "puno_incremento",
+    "sustituto",
+    "trailblaze"
+  ],
+  "522": [
+    "cuerno_certero",
+    "pantalla_de_luz",
+    "persecucion",
+    "sustituto",
+    "trailblaze"
+  ],
+  "523": [
+    "cuerno_certero",
+    "pantalla_de_luz",
+    "persecucion",
+    "sustituto",
+    "trailblaze"
+  ],
+  "531": [
+    "agua_fria",
+    "desarme",
+    "imitacion",
+    "intercambio",
+    "pantalla_de_luz",
+    "paz_mental",
+    "puno_incremento",
+    "reflejo",
+    "sustituto",
+    "trick_room"
+  ],
+  "540": [
+    "camuflaje",
+    "pantalla_de_luz",
+    "paz_mental",
+    "sustituto",
+    "trailblaze"
+  ],
+  "541": [
+    "pantalla_de_luz",
+    "paz_mental",
+    "sustituto",
+    "trailblaze"
+  ],
+  "542": [
+    "desarme",
+    "hoja_aguda",
+    "pantalla_de_luz",
+    "paz_mental",
+    "reflejo",
+    "sustituto",
+    "trailblaze",
+    "triple-axel"
+  ],
+  "573": [
+    "agua_fria",
+    "alluring-voice",
+    "desarme",
+    "ladron",
+    "pantalla_de_luz",
+    "paz_mental",
+    "sustituto",
+    "trailblaze",
+    "triple-axel"
+  ],
+  "574": [
+    "embargo",
+    "imitacion",
+    "intercambio",
+    "ladron",
+    "pantalla_de_luz",
+    "paz_mental",
+    "reciclaje",
+    "reflejo",
+    "sustituto",
+    "trick_room",
+    "truco",
+    "zona_magica"
+  ],
+  "575": [
+    "embargo",
+    "imitacion",
+    "intercambio",
+    "ladron",
+    "pantalla_de_luz",
+    "paz_mental",
+    "reciclaje",
+    "reflejo",
+    "sustituto",
+    "trick_room",
+    "truco",
+    "zona_magica"
+  ],
+  "576": [
+    "embargo",
+    "imitacion",
+    "intercambio",
+    "ladron",
+    "pantalla_de_luz",
+    "paz_mental",
+    "puno_incremento",
+    "reciclaje",
+    "reflejo",
+    "sustituto",
+    "trick_room",
+    "truco",
+    "zona_magica"
+  ],
+  "577": [
+    "embargo",
+    "explosion",
+    "imitacion",
+    "intercambio",
+    "pantalla_de_luz",
+    "paz_mental",
+    "reflejo",
+    "sustituto",
+    "trick_room",
+    "truco"
+  ],
+  "578": [
+    "embargo",
+    "explosion",
+    "imitacion",
+    "intercambio",
+    "pantalla_de_luz",
+    "paz_mental",
+    "reflejo",
+    "sustituto",
+    "trick_room",
+    "truco"
+  ],
+  "579": [
+    "desarme",
+    "embargo",
+    "explosion",
+    "imitacion",
+    "intercambio",
+    "pantalla_de_luz",
+    "paz_mental",
+    "puno_incremento",
+    "reflejo",
+    "sustituto",
+    "trick_room",
+    "truco"
+  ],
+  "582": [
+    "autodestruccion",
+    "carambano",
+    "explosion",
+    "pantalla_de_luz",
+    "sustituto",
+    "vaho_gelido"
+  ],
+  "583": [
+    "autodestruccion",
+    "carambano",
+    "explosion",
+    "pantalla_de_luz",
+    "sustituto",
+    "vaho_gelido"
+  ],
+  "584": [
+    "agua_fria",
+    "autodestruccion",
+    "carambano",
+    "explosion",
+    "pantalla_de_luz",
+    "sustituto",
+    "vaho_gelido"
+  ],
+  "587": [
+    "desarme",
+    "pantalla_de_luz",
+    "persecucion",
+    "sustituto",
+    "tailwind"
+  ],
+  "594": [
+    "agua_fria",
+    "alluring-voice",
+    "desarme",
+    "intercambio",
+    "pantalla_de_luz",
+    "paz_mental",
+    "scale-shot",
+    "sustituto"
+  ],
+  "595": [
+    "camuflaje",
+    "jugo_gastrico",
+    "ladron",
+    "pantalla_de_luz",
+    "persecucion",
+    "sustituto"
+  ],
+  "596": [
+    "jugo_gastrico",
+    "ladron",
+    "pantalla_de_luz",
+    "sustituto"
+  ],
+  "603": [
+    "desarme",
+    "jugo_gastrico",
+    "pantalla_de_luz",
+    "sustituto"
+  ],
+  "604": [
+    "desarme",
+    "jugo_gastrico",
+    "pantalla_de_luz",
+    "puno_incremento",
+    "sustituto"
+  ],
+  "605": [
+    "embargo",
+    "imitacion",
+    "intercambio",
+    "ladron",
+    "pantalla_de_luz",
+    "paz_mental",
+    "reciclaje",
+    "reflejo",
+    "sustituto",
+    "trick_room",
+    "truco"
+  ],
+  "606": [
+    "embargo",
+    "imitacion",
+    "intercambio",
+    "ladron",
+    "pantalla_de_luz",
+    "paz_mental",
+    "reciclaje",
+    "reflejo",
+    "sustituto",
+    "trick_room",
+    "truco"
+  ],
+  "615": [
+    "agua_fria",
+    "autodestruccion",
+    "carambano",
+    "desarme",
+    "explosion",
+    "pantalla_de_luz",
+    "poder_pasado",
+    "reflejo",
+    "sustituto",
+    "triple-axel",
+    "vaho_gelido"
+  ],
+  "636": [
+    "envite_igneo",
+    "pantalla_de_luz",
+    "paz_mental",
+    "sustituto",
+    "trailblaze"
+  ],
+  "640": [
+    "cuerno_certero",
+    "hoja_aguda",
+    "onda_vacio",
+    "pantalla_de_luz",
+    "paz_mental",
+    "reflejo",
+    "sustituto",
+    "trailblaze"
+  ],
+  "643": [
+    "arenas_ardientes",
+    "draco-meteor",
+    "envite_igneo",
+    "llama_embrujada",
+    "pantalla_de_luz",
+    "poder_pasado",
+    "reflejo",
+    "scale-shot",
+    "sustituto",
+    "tailwind"
+  ],
+  "644": [
+    "draco-meteor",
+    "pantalla_de_luz",
+    "poder_pasado",
+    "reflejo",
+    "scale-shot",
+    "sustituto",
+    "tailwind",
+    "trampa_rocas"
+  ],
+  "646": [
+    "carambano",
+    "draco-meteor",
+    "pantalla_de_luz",
+    "poder_pasado",
+    "reflejo",
+    "scale-shot",
+    "sustituto"
+  ],
+  "648": [
+    "alluring-voice",
+    "canto_mortal",
+    "desarme",
+    "embargo",
+    "imitacion",
+    "intercambio",
+    "pantalla_de_luz",
+    "paz_mental",
+    "puno_incremento",
+    "reciclaje",
+    "sustituto",
+    "trick_room",
+    "triple-axel",
+    "truco",
+    "zona_magica"
+  ],
+  "649": [
+    "autodestruccion",
+    "explosion",
+    "pantalla_de_luz",
+    "patada_ignea",
+    "reciclaje",
+    "reflejo",
+    "steel-beam",
+    "sustituto"
+  ],
+  "653": [
+    "burning-jealousy",
+    "embargo",
+    "envite_igneo",
+    "intercambio",
+    "ladron",
+    "pantalla_de_luz",
+    "paz_mental",
+    "puno_incremento",
+    "sustituto",
+    "trick_room",
+    "truco",
+    "zona_magica"
+  ],
+  "654": [
+    "burning-jealousy",
+    "embargo",
+    "envite_igneo",
+    "intercambio",
+    "ladron",
+    "pantalla_de_luz",
+    "paz_mental",
+    "puno_incremento",
+    "reciclaje",
+    "sustituto",
+    "trick_room",
+    "truco",
+    "zona_magica"
+  ],
+  "655": [
+    "arenas_ardientes",
+    "burning-jealousy",
+    "embargo",
+    "envite_igneo",
+    "imitacion",
+    "intercambio",
+    "ladron",
+    "llama_embrujada",
+    "pantalla_de_luz",
+    "paz_mental",
+    "puno_incremento",
+    "reciclaje",
+    "reflejo",
+    "sustituto",
+    "trick_room",
+    "truco",
+    "zona_magica"
+  ],
+  "669": [
+    "agua_fria",
+    "alluring-voice",
+    "camuflaje",
+    "pantalla_de_luz",
+    "paz_mental",
+    "sustituto",
+    "trailblaze"
+  ],
+  "670": [
+    "agua_fria",
+    "alluring-voice",
+    "intercambio",
+    "pantalla_de_luz",
+    "paz_mental",
+    "sustituto",
+    "trailblaze",
+    "truco",
+    "light-of-ruin"
+  ],
+  "671": [
+    "agua_fria",
+    "alluring-voice",
+    "intercambio",
+    "misty-explosion",
+    "pantalla_de_luz",
+    "paz_mental",
+    "sustituto",
+    "trailblaze",
+    "truco"
+  ],
+  "677": [
+    "imitacion",
+    "intercambio",
+    "pantalla_de_luz",
+    "paz_mental",
+    "reciclaje",
+    "reflejo",
+    "sustituto",
+    "trick_room",
+    "truco",
+    "zona_magica"
+  ],
+  "678": [
+    "alluring-voice",
+    "imitacion",
+    "intercambio",
+    "pantalla_de_luz",
+    "paz_mental",
+    "puno_incremento",
+    "reciclaje",
+    "reflejo",
+    "sustituto",
+    "trailblaze",
+    "trick_room",
+    "truco",
+    "zona_magica"
+  ],
+  "682": [
+    "intercambio",
+    "misty-explosion",
+    "pantalla_de_luz",
+    "paz_mental",
+    "reflejo",
+    "sustituto",
+    "trick_room"
+  ],
+  "683": [
+    "alluring-voice",
+    "intercambio",
+    "misty-explosion",
+    "pantalla_de_luz",
+    "paz_mental",
+    "reflejo",
+    "sustituto",
+    "trick_room"
+  ],
+  "684": [
+    "jugo_gastrico",
+    "ladron",
+    "misty-explosion",
+    "pantalla_de_luz",
+    "paz_mental",
+    "sustituto"
+  ],
+  "685": [
+    "jugo_gastrico",
+    "ladron",
+    "misty-explosion",
+    "pantalla_de_luz",
+    "paz_mental",
+    "sustituto"
+  ],
+  "686": [
+    "camuflaje",
+    "desarme",
+    "embargo",
+    "imitacion",
+    "intercambio",
+    "ladron",
+    "pantalla_de_luz",
+    "paz_mental",
+    "reflejo",
+    "sustituto",
+    "trick_room",
+    "truco"
+  ],
+  "687": [
+    "desarme",
+    "embargo",
+    "imitacion",
+    "intercambio",
+    "ladron",
+    "pantalla_de_luz",
+    "paz_mental",
+    "reflejo",
+    "sustituto",
+    "trailblaze",
+    "trick_room",
+    "truco"
+  ],
+  "694": [
+    "camuflaje",
+    "pantalla_de_luz",
+    "scale-shot",
+    "sustituto"
+  ],
+  "695": [
+    "pantalla_de_luz",
+    "scale-shot",
+    "sustituto",
+    "trailblaze"
+  ],
+  "698": [
+    "pantalla_de_luz",
+    "paz_mental",
+    "poder_pasado",
+    "reflejo",
+    "sustituto",
+    "trampa_rocas",
+    "vaho_gelido"
+  ],
+  "699": [
+    "agua_fria",
+    "carambano",
+    "pantalla_de_luz",
+    "paz_mental",
+    "poder_pasado",
+    "reflejo",
+    "sustituto",
+    "trampa_rocas",
+    "vaho_gelido"
+  ],
+  "700": [
+    "alluring-voice",
+    "intercambio",
+    "llama_embrujada",
+    "maldicion",
+    "misty-explosion",
+    "pantalla_de_luz",
+    "paz_mental",
+    "reflejo",
+    "sustituto",
+    "trailblaze"
+  ],
+  "702": [
+    "ladron",
+    "pantalla_de_luz",
+    "reciclaje",
+    "sustituto",
+    "trailblaze"
+  ],
+  "703": [
+    "explosion",
+    "intercambio",
+    "misty-explosion",
+    "pantalla_de_luz",
+    "paz_mental",
+    "poder_pasado",
+    "puas",
+    "reflejo",
+    "sustituto",
+    "trampa_rocas",
+    "trick_room"
+  ],
+  "707": [
+    "ladron",
+    "pantalla_de_luz",
+    "paz_mental",
+    "puas",
+    "reciclaje",
+    "reflejo",
+    "steel-beam",
+    "sustituto",
+    "trick_room",
+    "zona_magica"
+  ],
+  "716": [
+    "cuerno_certero",
+    "misty-explosion",
+    "pantalla_de_luz",
+    "paz_mental",
+    "reflejo",
+    "sustituto"
+  ],
+  "719": [
+    "arenas_ardientes",
+    "explosion",
+    "intercambio",
+    "llama_embrujada",
+    "misty-explosion",
+    "pantalla_de_luz",
+    "paz_mental",
+    "poder_pasado",
+    "puas",
+    "reflejo",
+    "sustituto",
+    "trampa_rocas",
+    "trick_room"
+  ],
+  "720": [
+    "desarme",
+    "embargo",
+    "imitacion",
+    "intercambio",
+    "ladron",
+    "pantalla_de_luz",
+    "paz_mental",
+    "puno_incremento",
+    "reciclaje",
+    "reflejo",
+    "sustituto",
+    "trick_room",
+    "truco",
+    "zona_magica"
+  ],
+  "724": [
+    "danza_pluma",
+    "desarme",
+    "hoja_aguda",
+    "maldicion",
+    "pantalla_de_luz",
+    "sustituto",
+    "tailwind",
+    "trailblaze"
+  ],
+  "730": [
+    "agua_fria",
+    "alluring-voice",
+    "canto_mortal",
+    "misty-explosion",
+    "pantalla_de_luz",
+    "paz_mental",
+    "reflejo",
+    "sustituto",
+    "triple-axel"
+  ],
+  "736": [
+    "pantalla_de_luz",
+    "sustituto"
+  ],
+  "737": [
+    "pantalla_de_luz",
+    "sustituto"
+  ],
+  "738": [
+    "pantalla_de_luz",
+    "sustituto"
+  ],
+  "742": [
+    "intercambio",
+    "ladron",
+    "pantalla_de_luz",
+    "paz_mental",
+    "reflejo",
+    "sustituto",
+    "tailwind",
+    "trailblaze",
+    "truco",
+    "zona_magica"
+  ],
+  "743": [
+    "alluring-voice",
+    "intercambio",
+    "ladron",
+    "pantalla_de_luz",
+    "paz_mental",
+    "reflejo",
+    "sustituto",
+    "tailwind",
+    "trailblaze",
+    "truco",
+    "zona_magica"
+  ],
+  "748": [
+    "agua_fria",
+    "desarme",
+    "jugo_gastrico",
+    "pantalla_de_luz",
+    "puas_toxicas",
+    "sustituto",
+    "vaho_gelido"
+  ],
+  "756": [
+    "espora",
+    "pantalla_de_luz",
+    "reciclaje",
+    "sustituto",
+    "zona_magica"
+  ],
+  "761": [
+    "pantalla_de_luz",
+    "reflejo",
+    "sustituto",
+    "trailblaze"
+  ],
+  "762": [
+    "desarme",
+    "pantalla_de_luz",
+    "reflejo",
+    "sustituto",
+    "trailblaze",
+    "triple-axel"
+  ],
+  "763": [
+    "desarme",
+    "pantalla_de_luz",
+    "patada_salto_alta",
+    "reflejo",
+    "sustituto",
+    "trailblaze",
+    "triple-axel"
+  ],
+  "765": [
+    "agua_fria",
+    "desarme",
+    "embargo",
+    "intercambio",
+    "pantalla_de_luz",
+    "paz_mental",
+    "reflejo",
+    "sustituto",
+    "trailblaze",
+    "trick_room",
+    "truco",
+    "zona_magica"
+  ],
+  "771": [
+    "jugo_gastrico",
+    "maldicion",
+    "pantalla_de_luz",
+    "reciclaje",
+    "reflejo",
+    "sustituto"
+  ],
+  "778": [
+    "burning-jealousy",
+    "embargo",
+    "ladron",
+    "maldicion",
+    "pantalla_de_luz",
+    "sustituto",
+    "trailblaze",
+    "trick_room",
+    "truco",
+    "zona_magica"
+  ],
+  "779": [
+    "agua_fria",
+    "embargo",
+    "pantalla_de_luz",
+    "paz_mental",
+    "reflejo",
+    "sustituto",
+    "trick_room",
+    "vaho_gelido",
+    "zona_magica"
+  ],
+  "780": [
+    "draco-meteor",
+    "pantalla_de_luz",
+    "paz_mental",
+    "scale-shot",
+    "sustituto",
+    "tailwind"
+  ],
+  "785": [
+    "ladron",
+    "pantalla_de_luz",
+    "paz_mental",
+    "reflejo",
+    "sustituto"
+  ],
+  "786": [
+    "intercambio",
+    "ladron",
+    "pantalla_de_luz",
+    "paz_mental",
+    "reflejo",
+    "sustituto",
+    "zona_magica"
+  ],
+  "788": [
+    "cuerno_certero",
+    "desarme",
+    "pantalla_de_luz",
+    "paz_mental",
+    "reflejo",
+    "sustituto",
+    "truco",
+    "zona_magica"
+  ],
+  "791": [
+    "desarme",
+    "envite_igneo",
+    "llama_embrujada",
+    "pantalla_de_luz",
+    "paz_mental",
+    "reflejo",
+    "represion_metal",
+    "steel-beam",
+    "sustituto",
+    "trick_room"
+  ],
+  "792": [
+    "pantalla_de_luz",
+    "paz_mental",
+    "reflejo",
+    "sustituto",
+    "tailwind",
+    "trick_room",
+    "truco",
+    "zona_magica"
+  ],
+  "793": [
+    "desarme",
+    "imitacion",
+    "pantalla_de_luz",
+    "puas_toxicas",
+    "reflejo",
+    "sustituto",
+    "testarazo",
+    "trampa_rocas",
+    "trick_room"
+  ],
+  "796": [
+    "pantalla_de_luz",
+    "paz_mental",
+    "reflejo",
+    "sustituto"
+  ],
+  "800": [
+    "cuerno_certero",
+    "desarme",
+    "embargo",
+    "ladron",
+    "pantalla_de_luz",
+    "paz_mental",
+    "reciclaje",
+    "reflejo",
+    "sustituto",
+    "trampa_rocas",
+    "trick_room"
+  ],
+  "805": [
+    "imitacion",
+    "intercambio",
+    "pantalla_de_luz",
+    "reciclaje",
+    "reflejo",
+    "steel-beam",
+    "sustituto",
+    "trampa_rocas",
+    "trick_room",
+    "zona_magica"
+  ],
+  "806": [
+    "autodestruccion",
+    "desarme",
+    "explosion",
+    "ladron",
+    "llama_embrujada",
+    "pantalla_de_luz",
+    "paz_mental",
+    "reciclaje",
+    "sustituto",
+    "truco"
+  ],
+  "816": [
+    "agua_fria",
+    "pantalla_de_luz",
+    "reflejo",
+    "sustituto"
+  ],
+  "817": [
+    "agua_fria",
+    "pantalla_de_luz",
+    "reflejo",
+    "sustituto"
+  ],
+  "818": [
+    "agua_fria",
+    "carambano",
+    "onda_vacio",
+    "pantalla_de_luz",
+    "reflejo",
+    "scale-shot",
+    "sustituto"
+  ],
+  "825": [
+    "intercambio",
+    "pantalla_de_luz",
+    "paz_mental",
+    "reflejo",
+    "sustituto",
+    "trick_room",
+    "truco",
+    "zona_magica"
+  ],
+  "826": [
+    "intercambio",
+    "pantalla_de_luz",
+    "paz_mental",
+    "reflejo",
+    "sustituto",
+    "trick_room",
+    "truco",
+    "zona_magica"
+  ],
+  "830": [
+    "pantalla_de_luz",
+    "sustituto"
+  ],
+  "855": [
+    "autodestruccion",
+    "intercambio",
+    "maldicion",
+    "pantalla_de_luz",
+    "paz_mental",
+    "reflejo",
+    "sustituto",
+    "trick_room",
+    "truco"
+  ],
+  "856": [
+    "intercambio",
+    "llama_embrujada",
+    "pantalla_de_luz",
+    "paz_mental",
+    "reflejo",
+    "sustituto",
+    "trick_room",
+    "truco"
+  ],
+  "857": [
+    "intercambio",
+    "llama_embrujada",
+    "pantalla_de_luz",
+    "paz_mental",
+    "reflejo",
+    "sustituto",
+    "trick_room",
+    "truco"
+  ],
+  "858": [
+    "intercambio",
+    "llama_embrujada",
+    "misty-explosion",
+    "pantalla_de_luz",
+    "paz_mental",
+    "reflejo",
+    "sustituto",
+    "trick_room",
+    "truco",
+    "zona_magica"
+  ],
+  "859": [
+    "agua_fria",
+    "burning-jealousy",
+    "ladron",
+    "pantalla_de_luz",
+    "reflejo",
+    "sustituto",
+    "trailblaze",
+    "truco"
+  ],
+  "860": [
+    "agua_fria",
+    "burning-jealousy",
+    "ladron",
+    "pantalla_de_luz",
+    "reflejo",
+    "sustituto",
+    "trailblaze",
+    "truco"
+  ],
+  "861": [
+    "agua_fria",
+    "burning-jealousy",
+    "ladron",
+    "pantalla_de_luz",
+    "puno_incremento",
+    "reflejo",
+    "sustituto",
+    "trailblaze",
+    "truco"
+  ],
+  "864": [
+    "autodestruccion",
+    "burning-jealousy",
+    "canto_mortal",
+    "carambano",
+    "maldicion",
+    "pantalla_de_luz",
+    "paz_mental",
+    "poder_pasado",
+    "reflejo",
+    "sustituto",
+    "trampa_rocas"
+  ],
+  "866": [
+    "agua_fria",
+    "carambano",
+    "imitacion",
+    "intercambio",
+    "ladron",
+    "pantalla_de_luz",
+    "paz_mental",
+    "reciclaje",
+    "reflejo",
+    "sustituto",
+    "trick_room",
+    "triple-axel",
+    "truco",
+    "vaho_gelido",
+    "zona_magica"
+  ],
+  "869": [
+    "alluring-voice",
+    "llama_embrujada",
+    "misty-explosion",
+    "pantalla_de_luz",
+    "paz_mental",
+    "sustituto",
+    "zona_magica"
+  ],
+  "873": [
+    "carambano",
+    "danza_pluma",
+    "pantalla_de_luz",
+    "paz_mental",
+    "reflejo",
+    "sustituto",
+    "tailwind",
+    "triple-axel"
+  ],
+  "884": [
+    "draco-meteor",
+    "pantalla_de_luz",
+    "reflejo",
+    "represion_metal",
+    "steel-beam",
+    "sustituto",
+    "trampa_rocas"
+  ],
+  "886": [
+    "draco-meteor",
+    "ladron",
+    "maldicion",
+    "pantalla_de_luz",
+    "reflejo",
+    "sustituto"
+  ],
+  "887": [
+    "draco-meteor",
+    "ladron",
+    "maldicion",
+    "pantalla_de_luz",
+    "reflejo",
+    "sustituto"
+  ],
+  "889": [
+    "pantalla_de_luz",
+    "reflejo",
+    "represion_metal",
+    "steel-beam",
+    "sustituto",
+    "trailblaze"
+  ],
+  "890": [
+    "cola_veneno",
+    "draco-meteor",
+    "llama_embrujada",
+    "pantalla_de_luz",
+    "puas_toxicas",
+    "reflejo",
+    "sustituto"
+  ],
+  "894": [
+    "autodestruccion",
+    "explosion",
+    "pantalla_de_luz",
+    "poder_pasado",
+    "reflejo",
+    "sustituto",
+    "velocidad_extrema"
+  ],
+  "895": [
+    "autodestruccion",
+    "draco-meteor",
+    "explosion",
+    "pantalla_de_luz",
+    "poder_pasado",
+    "reflejo",
+    "scale-shot",
+    "sustituto"
+  ],
+  "899": [
+    "imitacion",
+    "intercambio",
+    "ladron",
+    "maldicion",
+    "pantalla_de_luz",
+    "paz_mental",
+    "reflejo",
+    "sustituto",
+    "trailblaze",
+    "trick_room",
+    "truco"
+  ],
+  "900": [
+    "ladron",
+    "onda_vacio",
+    "pantalla_de_luz",
+    "poder_pasado",
+    "sustituto",
+    "tailwind",
+    "trailblaze",
+    "trampa_rocas"
+  ],
+  "936": [
+    "arenas_ardientes",
+    "envite_igneo",
+    "llama_embrujada",
+    "pantalla_de_luz",
+    "paz_mental",
+    "reflejo",
+    "sustituto",
+    "trick_room",
+    "truco"
+  ],
+  "937": [
+    "envite_igneo",
+    "maldicion",
+    "onda_vacio",
+    "pantalla_de_luz",
+    "reflejo",
+    "sustituto"
+  ],
+  "938": [
+    "agua_fria",
+    "pantalla_de_luz",
+    "reflejo",
+    "sustituto"
+  ],
+  "939": [
+    "agua_fria",
+    "pantalla_de_luz",
+    "reflejo",
+    "sustituto"
+  ],
+  "949": [
+    "desarme",
+    "espora",
+    "pantalla_de_luz",
+    "puas",
+    "puas_toxicas",
+    "reflejo",
+    "sustituto",
+    "trailblaze",
+    "trick_room"
+  ],
+  "955": [
+    "intercambio",
+    "ladron",
+    "pantalla_de_luz",
+    "paz_mental",
+    "reflejo",
+    "sustituto",
+    "trick_room",
+    "truco"
+  ],
+  "957": [
+    "desarme",
+    "intercambio",
+    "ladron",
+    "pantalla_de_luz",
+    "reflejo",
+    "steel-beam",
+    "sustituto",
+    "trampa_rocas"
+  ],
+  "958": [
+    "desarme",
+    "intercambio",
+    "ladron",
+    "pantalla_de_luz",
+    "reflejo",
+    "steel-beam",
+    "sustituto",
+    "trampa_rocas"
+  ],
+  "959": [
+    "desarme",
+    "intercambio",
+    "ladron",
+    "pantalla_de_luz",
+    "reflejo",
+    "steel-beam",
+    "sustituto",
+    "trampa_rocas"
+  ],
+  "969": [
+    "autodestruccion",
+    "explosion",
+    "pantalla_de_luz",
+    "poder_pasado",
+    "puas",
+    "puas_toxicas",
+    "reflejo",
+    "sustituto",
+    "trampa_rocas"
+  ],
+  "970": [
+    "autodestruccion",
+    "explosion",
+    "pantalla_de_luz",
+    "poder_pasado",
+    "puas",
+    "puas_toxicas",
+    "reflejo",
+    "sustituto",
+    "trampa_rocas"
+  ],
+  "981": [
+    "intercambio",
+    "ladron",
+    "maldicion",
+    "pantalla_de_luz",
+    "paz_mental",
+    "reflejo",
+    "sustituto",
+    "trailblaze",
+    "trick_room",
+    "truco"
+  ],
+  "985": [
+    "canto_mortal",
+    "misty-explosion",
+    "pantalla_de_luz",
+    "paz_mental",
+    "reflejo",
+    "sustituto",
+    "trampa_rocas",
+    "trick_room",
+    "truco"
+  ],
+  "989": [
+    "arenas_ardientes",
+    "pantalla_de_luz",
+    "puas",
+    "reflejo",
+    "sustituto",
+    "trampa_rocas"
+  ],
+  "999": [
+    "ladron",
+    "pantalla_de_luz",
+    "reflejo",
+    "sustituto"
+  ],
+  "1000": [
+    "ladron",
+    "pantalla_de_luz",
+    "puno_sombra",
+    "reflejo",
+    "steel-beam",
+    "sustituto",
+    "truco"
+  ],
+  "1004": [
+    "burning-jealousy",
+    "envite_igneo",
+    "pantalla_de_luz",
+    "reflejo",
+    "sustituto"
+  ],
+  "1006": [
+    "desarme",
+    "hoja_aguda",
+    "intercambio",
+    "onda_vacio",
+    "pantalla_de_luz",
+    "paz_mental",
+    "reflejo",
+    "sustituto",
+    "trick_room",
+    "truco"
+  ],
+  "1008": [
+    "draco-meteor",
+    "pantalla_de_luz",
+    "paz_mental",
+    "reflejo",
+    "sustituto"
+  ],
+  "1015": [
+    "ladron",
+    "pantalla_de_luz",
+    "paz_mental",
+    "sustituto",
+    "trailblaze",
+    "truco"
+  ],
+  "1016": [
+    "alluring-voice",
+    "cola_veneno",
+    "ladron",
+    "pantalla_de_luz",
+    "paz_mental",
+    "sustituto",
+    "tailwind"
+  ],
+  "1018": [
+    "draco-meteor",
+    "pantalla_de_luz",
+    "reflejo",
+    "represion_metal",
+    "steel-beam",
+    "sustituto",
+    "trampa_rocas"
+  ],
+  "10001": [
+    "desarme",
+    "imitacion",
+    "intercambio",
+    "pantalla_de_luz",
+    "paz_mental",
+    "persecucion",
+    "puno_incremento",
+    "reciclaje",
+    "reflejo",
+    "sustituto",
+    "trampa_rocas",
+    "trick_room",
+    "truco"
+  ],
+  "10002": [
+    "desarme",
+    "imitacion",
+    "intercambio",
+    "pantalla_de_luz",
+    "paz_mental",
+    "puas",
+    "puno_incremento",
+    "reciclaje",
+    "reflejo",
+    "sustituto",
+    "trampa_rocas",
+    "trick_room",
+    "truco"
+  ],
+  "10003": [
+    "desarme",
+    "imitacion",
+    "intercambio",
+    "pantalla_de_luz",
+    "paz_mental",
+    "persecucion",
+    "puno_incremento",
+    "reciclaje",
+    "reflejo",
+    "sustituto",
+    "trampa_rocas",
+    "trick_room",
+    "truco",
+    "velocidad_extrema"
+  ],
+  "10008": [
+    "ladron",
+    "pantalla_de_luz",
+    "reflejo",
+    "sustituto",
+    "truco"
+  ],
+  "10009": [
+    "ladron",
+    "pantalla_de_luz",
+    "reflejo",
+    "sustituto",
+    "truco"
+  ],
+  "10010": [
+    "ladron",
+    "pantalla_de_luz",
+    "reflejo",
+    "sustituto",
+    "truco"
+  ],
+  "10011": [
+    "ladron",
+    "pantalla_de_luz",
+    "reflejo",
+    "sustituto",
+    "truco"
+  ],
+  "10012": [
+    "ladron",
+    "pantalla_de_luz",
+    "reflejo",
+    "sustituto",
+    "truco"
+  ],
+  "10018": [
+    "alluring-voice",
+    "canto_mortal",
+    "desarme",
+    "embargo",
+    "imitacion",
+    "intercambio",
+    "pantalla_de_luz",
+    "paz_mental",
+    "puno_incremento",
+    "reciclaje",
+    "sustituto",
+    "trick_room",
+    "triple-axel",
+    "truco",
+    "zona_magica"
+  ],
+  "10022": [
+    "carambano",
+    "draco-meteor",
+    "pantalla_de_luz",
+    "poder_pasado",
+    "reflejo",
+    "scale-shot",
+    "sustituto"
+  ],
+  "10023": [
+    "carambano",
+    "draco-meteor",
+    "pantalla_de_luz",
+    "poder_pasado",
+    "reflejo",
+    "scale-shot",
+    "sustituto"
+  ],
+  "10025": [
+    "alluring-voice",
+    "imitacion",
+    "intercambio",
+    "pantalla_de_luz",
+    "paz_mental",
+    "puno_incremento",
+    "reciclaje",
+    "reflejo",
+    "sustituto",
+    "trailblaze",
+    "trick_room",
+    "truco",
+    "zona_magica"
+  ],
+  "10037": [
+    "desarme",
+    "embargo",
+    "imitacion",
+    "intercambio",
+    "ladron",
+    "pantalla_de_luz",
+    "paz_mental",
+    "reciclaje",
+    "reflejo",
+    "sustituto",
+    "trick_room",
+    "truco",
+    "zona_magica"
+  ],
+  "10043": [
+    "autodestruccion",
+    "embargo",
+    "imitacion",
+    "intercambio",
+    "onda_mental",
+    "pantalla_de_luz",
+    "paz_mental",
+    "puno_incremento",
+    "reciclaje",
+    "reflejo",
+    "sustituto",
+    "trick_room",
+    "truco",
+    "zona_magica"
+  ],
+  "10044": [
+    "autodestruccion",
+    "embargo",
+    "imitacion",
+    "intercambio",
+    "onda_mental",
+    "pantalla_de_luz",
+    "paz_mental",
+    "puno_incremento",
+    "reciclaje",
+    "reflejo",
+    "sustituto",
+    "trick_room",
+    "truco",
+    "zona_magica"
+  ],
+  "10045": [
+    "pantalla_de_luz",
+    "puno_incremento",
+    "reflejo",
+    "sustituto",
+    "trailblaze"
+  ],
+  "10046": [
+    "desarme",
+    "ladron",
+    "maldicion",
+    "onda_vacio",
+    "pantalla_de_luz",
+    "persecucion",
+    "steel-beam",
+    "sustituto",
+    "tailwind",
+    "trailblaze"
+  ],
+  "10051": [
+    "alluring-voice",
+    "desarme",
+    "intercambio",
+    "ladron",
+    "llama_embrujada",
+    "misty-explosion",
+    "onda_vacio",
+    "pantalla_de_luz",
+    "paz_mental",
+    "reciclaje",
+    "reflejo",
+    "sustituto",
+    "trick_room",
+    "triple-axel",
+    "truco",
+    "zona_magica"
+  ],
+  "10054": [
+    "imitacion",
+    "intercambio",
+    "ladron",
+    "onda_vacio",
+    "pantalla_de_luz",
+    "patada_ignea",
+    "patada_salto_alta",
+    "paz_mental",
+    "puno_incremento",
+    "reciclaje",
+    "reflejo",
+    "sustituto",
+    "trailblaze",
+    "trick_room",
+    "truco"
+  ],
+  "10055": [
+    "ladron",
+    "maldicion",
+    "pantalla_de_luz",
+    "sustituto",
+    "trailblaze"
+  ],
+  "10061": [
+    "agua_fria",
+    "alluring-voice",
+    "intercambio",
+    "pantalla_de_luz",
+    "paz_mental",
+    "sustituto",
+    "trailblaze",
+    "truco"
+  ],
+  "10062": [
+    "draco-meteor",
+    "imitacion",
+    "pantalla_de_luz",
+    "paz_mental",
+    "reflejo",
+    "sustituto",
+    "tailwind",
+    "truco",
+    "zona_magica"
+  ],
+  "10063": [
+    "draco-meteor",
+    "pantalla_de_luz",
+    "paz_mental",
+    "reflejo",
+    "sustituto",
+    "tailwind",
+    "truco"
+  ],
+  "10066": [
+    "desarme",
+    "embargo",
+    "imitacion",
+    "intercambio",
+    "ladron",
+    "pantalla_de_luz",
+    "paz_mental",
+    "puno_incremento",
+    "puno_sombra",
+    "reflejo",
+    "represion_metal",
+    "sustituto",
+    "truco"
+  ],
+  "10068": [
+    "alluring-voice",
+    "desarme",
+    "hoja_aguda",
+    "intercambio",
+    "ladron",
+    "llama_embrujada",
+    "onda_vacio",
+    "pantalla_de_luz",
+    "paz_mental",
+    "puno_incremento",
+    "reciclaje",
+    "reflejo",
+    "sustituto",
+    "trick_room",
+    "triple-axel",
+    "truco",
+    "zona_magica"
+  ],
+  "10069": [
+    "agua_fria",
+    "desarme",
+    "imitacion",
+    "intercambio",
+    "pantalla_de_luz",
+    "paz_mental",
+    "puno_incremento",
+    "reflejo",
+    "sustituto",
+    "trick_room"
+  ],
+  "10071": [
+    "agua_fria",
+    "intercambio",
+    "maldicion",
+    "pantalla_de_luz",
+    "paz_mental",
+    "reciclaje",
+    "reflejo",
+    "sustituto",
+    "trick_room",
+    "truco"
+  ],
+  "10074": [
+    "agua_fria",
+    "autodestruccion",
+    "carambano",
+    "explosion",
+    "pantalla_de_luz",
+    "puas",
+    "sustituto",
+    "trailblaze",
+    "vaho_gelido"
+  ],
+  "10075": [
+    "explosion",
+    "intercambio",
+    "pantalla_de_luz",
+    "paz_mental",
+    "poder_pasado",
+    "reflejo",
+    "sustituto",
+    "trampa_rocas",
+    "trick_room"
+  ],
+  "10076": [
+    "autodestruccion",
+    "explosion",
+    "pantalla_de_luz",
+    "persecucion",
+    "puno_incremento",
+    "puno_meteoro",
+    "puno_sombra",
+    "reflejo",
+    "steel-beam",
+    "sustituto",
+    "trailblaze",
+    "trampa_rocas",
+    "truco"
+  ],
+  "10080": [
+    "desarme",
+    "pantalla_de_luz",
+    "puno_meteoro",
+    "sustituto"
+  ],
+  "10081": [
+    "desarme",
+    "pantalla_de_luz",
+    "sustituto"
+  ],
+  "10082": [
+    "desarme",
+    "pantalla_de_luz",
+    "sustituto"
+  ],
+  "10083": [
+    "desarme",
+    "pantalla_de_luz",
+    "sustituto"
+  ],
+  "10084": [
+    "desarme",
+    "pantalla_de_luz",
+    "sustituto"
+  ],
+  "10085": [
+    "desarme",
+    "pantalla_de_luz",
+    "sustituto"
+  ],
+  "10086": [
+    "desarme",
+    "embargo",
+    "imitacion",
+    "intercambio",
+    "ladron",
+    "pantalla_de_luz",
+    "paz_mental",
+    "puno_incremento",
+    "reciclaje",
+    "reflejo",
+    "sustituto",
+    "trick_room",
+    "truco",
+    "zona_magica"
+  ],
+  "10094": [
+    "desarme",
+    "ladron",
+    "pantalla_de_luz",
+    "placaje_electrico",
+    "reflejo",
+    "sustituto",
+    "trailblaze"
+  ],
+  "10095": [
+    "desarme",
+    "ladron",
+    "pantalla_de_luz",
+    "placaje_electrico",
+    "reflejo",
+    "sustituto",
+    "trailblaze"
+  ],
+  "10096": [
+    "desarme",
+    "ladron",
+    "pantalla_de_luz",
+    "placaje_electrico",
+    "reflejo",
+    "sustituto",
+    "trailblaze"
+  ],
+  "10097": [
+    "desarme",
+    "ladron",
+    "pantalla_de_luz",
+    "placaje_electrico",
+    "reflejo",
+    "sustituto",
+    "trailblaze"
+  ],
+  "10098": [
+    "cola_veneno",
+    "desarme",
+    "ladron",
+    "pantalla_de_luz",
+    "persecucion",
+    "placaje_electrico",
+    "reflejo",
+    "sustituto",
+    "trailblaze"
+  ],
+  "10099": [
+    "desarme",
+    "ladron",
+    "pantalla_de_luz",
+    "placaje_electrico",
+    "reflejo",
+    "sustituto",
+    "trailblaze"
+  ],
+  "10100": [
+    "alluring-voice",
+    "desarme",
+    "intercambio",
+    "ladron",
+    "pantalla_de_luz",
+    "paz_mental",
+    "placaje_electrico",
+    "reciclaje",
+    "reflejo",
+    "sustituto",
+    "trailblaze",
+    "zona_magica"
+  ],
+  "10122": [
+    "pantalla_de_luz",
+    "sustituto"
+  ],
+  "10143": [
+    "burning-jealousy",
+    "embargo",
+    "ladron",
+    "maldicion",
+    "pantalla_de_luz",
+    "sustituto",
+    "trailblaze",
+    "trick_room",
+    "truco",
+    "zona_magica"
+  ],
+  "10144": [
+    "embargo",
+    "ladron",
+    "pantalla_de_luz",
+    "sustituto",
+    "trick_room",
+    "truco",
+    "zona_magica"
+  ],
+  "10145": [
+    "embargo",
+    "ladron",
+    "pantalla_de_luz",
+    "sustituto",
+    "trick_room",
+    "truco",
+    "zona_magica"
+  ],
+  "10148": [
+    "desarme",
+    "ladron",
+    "pantalla_de_luz",
+    "placaje_electrico",
+    "reflejo",
+    "sustituto",
+    "trailblaze"
+  ],
+  "10150": [
+    "intercambio",
+    "ladron",
+    "pantalla_de_luz",
+    "paz_mental",
+    "reflejo",
+    "sustituto",
+    "tailwind",
+    "truco",
+    "zona_magica"
+  ],
+  "10155": [
+    "cuerno_certero",
+    "desarme",
+    "embargo",
+    "ladron",
+    "pantalla_de_luz",
+    "paz_mental",
+    "reciclaje",
+    "reflejo",
+    "sustituto",
+    "trampa_rocas",
+    "trick_room"
+  ],
+  "10156": [
+    "cuerno_certero",
+    "desarme",
+    "embargo",
+    "ladron",
+    "pantalla_de_luz",
+    "paz_mental",
+    "reciclaje",
+    "reflejo",
+    "sustituto",
+    "trampa_rocas",
+    "trick_room"
+  ],
+  "10157": [
+    "cuerno_certero",
+    "desarme",
+    "embargo",
+    "ladron",
+    "pantalla_de_luz",
+    "paz_mental",
+    "reciclaje",
+    "reflejo",
+    "sustituto",
+    "trampa_rocas",
+    "trick_room"
+  ],
+  "10158": [
+    "pantalla_de_luz",
+    "paz_mental",
+    "reflejo",
+    "splishy-splash",
+    "sustituto"
+  ],
+  "10160": [
+    "ladron",
+    "pantalla_de_luz",
+    "reflejo",
+    "sustituto",
+    "trailblaze"
+  ],
+  "10164": [
+    "agua_fria",
+    "intercambio",
+    "maldicion",
+    "pantalla_de_luz",
+    "paz_mental",
+    "sustituto",
+    "trick_room",
+    "truco"
+  ],
+  "10165": [
+    "agua_fria",
+    "intercambio",
+    "maldicion",
+    "pantalla_de_luz",
+    "paz_mental",
+    "puas_toxicas",
+    "sustituto",
+    "trick_room",
+    "truco"
+  ],
+  "10168": [
+    "carambano",
+    "imitacion",
+    "intercambio",
+    "ladron",
+    "pantalla_de_luz",
+    "paz_mental",
+    "reciclaje",
+    "reflejo",
+    "sustituto",
+    "trick_room",
+    "triple-axel",
+    "truco",
+    "zona_magica"
+  ],
+  "10172": [
+    "agua_fria",
+    "intercambio",
+    "maldicion",
+    "pantalla_de_luz",
+    "paz_mental",
+    "puas_toxicas",
+    "sustituto",
+    "trick_room",
+    "truco"
+  ],
+  "10173": [
+    "autodestruccion",
+    "carambano",
+    "maldicion",
+    "pantalla_de_luz",
+    "paz_mental",
+    "poder_pasado",
+    "reflejo",
+    "sustituto",
+    "testarazo",
+    "trampa_rocas"
+  ],
+  "10186": [
+    "intercambio",
+    "llama_embrujada",
+    "pantalla_de_luz",
+    "paz_mental",
+    "reflejo",
+    "sustituto",
+    "trick_room",
+    "truco"
+  ],
+  "10189": [
+    "pantalla_de_luz",
+    "reflejo",
+    "represion_metal",
+    "steel-beam",
+    "sustituto",
+    "trailblaze"
+  ],
+  "10190": [
+    "cola_veneno",
+    "draco-meteor",
+    "llama_embrujada",
+    "pantalla_de_luz",
+    "puas_toxicas",
+    "reflejo",
+    "sustituto"
+  ],
+  "10263": [
+    "ladron",
+    "pantalla_de_luz",
+    "reflejo",
+    "sustituto"
+  ],
+  "10268": [
+    "draco-meteor",
+    "pantalla_de_luz",
+    "paz_mental",
+    "reflejo",
+    "sustituto"
+  ],
+  "10269": [
+    "draco-meteor",
+    "pantalla_de_luz",
+    "paz_mental",
+    "reflejo",
+    "sustituto"
+  ],
+  "10270": [
+    "draco-meteor",
+    "pantalla_de_luz",
+    "paz_mental",
+    "reflejo",
+    "sustituto"
+  ],
+  "10271": [
+    "draco-meteor",
+    "pantalla_de_luz",
+    "paz_mental",
+    "reflejo",
+    "sustituto"
+  ],
+  "10278": [
+    "agua_fria",
+    "alluring-voice",
+    "desarme",
+    "intercambio",
+    "ladron",
+    "llama_embrujada",
+    "misty-explosion",
+    "pantalla_de_luz",
+    "paz_mental",
+    "puno_meteoro",
+    "reflejo",
+    "sustituto",
+    "trampa_rocas",
+    "truco"
+  ],
+  "10280": [
+    "agua_fria",
+    "autodestruccion",
+    "intercambio",
+    "pantalla_de_luz",
+    "poder_pasado",
+    "reflejo",
+    "sustituto",
+    "trick_room",
+    "truco"
+  ],
+  "10281": [
+    "agua_fria",
+    "draco-meteor",
+    "pantalla_de_luz",
+    "scale-shot",
+    "sustituto",
+    "tailwind",
+    "velocidad_extrema"
+  ],
+  "10285": [
+    "agua_fria",
+    "carambano",
+    "maldicion",
+    "pantalla_de_luz",
+    "puas",
+    "reflejo",
+    "sustituto",
+    "trailblaze",
+    "triple-axel",
+    "truco",
+    "vaho_gelido"
+  ],
+  "10290": [
+    "desarme",
+    "jugo_gastrico",
+    "pantalla_de_luz",
+    "sustituto"
+  ],
+  "10293": [
+    "arenas_ardientes",
+    "burning-jealousy",
+    "envite_igneo",
+    "imitacion",
+    "intercambio",
+    "ladron",
+    "llama_embrujada",
+    "pantalla_de_luz",
+    "paz_mental",
+    "reflejo",
+    "sustituto",
+    "trick_room",
+    "truco",
+    "zona_magica"
+  ],
+  "10296": [
+    "agua_fria",
+    "alluring-voice",
+    "intercambio",
+    "pantalla_de_luz",
+    "paz_mental",
+    "sustituto",
+    "trailblaze",
+    "truco"
+  ],
+  "10297": [
+    "desarme",
+    "intercambio",
+    "ladron",
+    "pantalla_de_luz",
+    "paz_mental",
+    "reflejo",
+    "sustituto",
+    "trailblaze",
+    "trick_room",
+    "truco"
+  ],
+  "10302": [
+    "draco-meteor",
+    "pantalla_de_luz",
+    "paz_mental",
+    "scale-shot",
+    "sustituto"
+  ],
+  "10304": [
+    "alluring-voice",
+    "desarme",
+    "ladron",
+    "pantalla_de_luz",
+    "placaje_electrico",
+    "reflejo",
+    "sustituto",
+    "trailblaze"
+  ],
+  "10305": [
+    "alluring-voice",
+    "desarme",
+    "ladron",
+    "pantalla_de_luz",
+    "placaje_electrico",
+    "reflejo",
+    "sustituto",
+    "trailblaze"
+  ],
+  "10306": [
+    "autodestruccion",
+    "desarme",
+    "intercambio",
+    "maldicion",
+    "pantalla_de_luz",
+    "paz_mental",
+    "reciclaje",
+    "reflejo",
+    "sustituto",
+    "trick_room",
+    "truco"
+  ],
+  "10314": [
+    "alluring-voice",
+    "imitacion",
+    "intercambio",
+    "pantalla_de_luz",
+    "paz_mental",
+    "reflejo",
+    "sustituto",
+    "trailblaze",
+    "trick_room",
+    "truco",
+    "zona_magica"
+  ],
+  "10321": [
+    "autodestruccion",
+    "explosion",
+    "pantalla_de_luz",
+    "poder_pasado",
+    "puas",
+    "puas_toxicas",
+    "reflejo",
+    "sustituto",
+    "trampa_rocas"
+  ],
+  "10326": [
+    "alluring-voice",
+    "imitacion",
+    "intercambio",
+    "pantalla_de_luz",
+    "paz_mental",
+    "reflejo",
+    "sustituto",
+    "trailblaze",
+    "trick_room",
+    "truco",
+    "zona_magica"
+  ],
+  "37": [
+    "burning-jealousy",
+    "envite_igneo",
+    "imitacion",
+    "llama_embrujada",
+    "maldicion",
+    "reflejo",
+    "sustituto"
+  ],
+  "38": [
+    "arenas_ardientes",
+    "burning-jealousy",
+    "envite_igneo",
+    "imitacion",
+    "llama_embrujada",
+    "maldicion",
+    "paz_mental",
+    "reflejo",
+    "sustituto"
+  ],
+  "48": [
+    "intercambio",
+    "ladron",
+    "maldicion",
+    "puas_toxicas",
+    "reflejo",
+    "sustituto"
+  ],
+  "58": [
+    "envite_igneo",
+    "ladron",
+    "maldicion",
+    "reflejo",
+    "sustituto"
+  ],
+  "59": [
+    "arenas_ardientes",
+    "envite_igneo",
+    "ladron",
+    "maldicion",
+    "reflejo",
+    "sustituto",
+    "velocidad_extrema"
+  ],
+  "69": [
+    "desarme",
+    "jugo_gastrico",
+    "ladron",
+    "maldicion",
+    "reflejo",
+    "sustituto",
+    "trailblaze"
+  ],
+  "70": [
+    "desarme",
+    "jugo_gastrico",
+    "ladron",
+    "maldicion",
+    "reflejo",
+    "sustituto",
+    "trailblaze"
+  ],
+  "71": [
+    "desarme",
+    "hoja_aguda",
+    "jugo_gastrico",
+    "ladron",
+    "maldicion",
+    "puas_toxicas",
+    "reflejo",
+    "sustituto",
+    "trailblaze"
+  ],
+  "72": [
+    "agua_fria",
+    "desarme",
+    "ladron",
+    "maldicion",
+    "puas_toxicas",
+    "reflejo",
+    "sustituto"
+  ],
+  "73": [
+    "agua_fria",
+    "desarme",
+    "ladron",
+    "maldicion",
+    "puas_toxicas",
+    "reflejo",
+    "sustituto"
+  ],
+  "77": [
+    "envite_igneo",
+    "llama_embrujada",
+    "maldicion",
+    "reflejo",
+    "sustituto"
+  ],
+  "78": [
+    "arenas_ardientes",
+    "cuerno_certero",
+    "envite_igneo",
+    "llama_embrujada",
+    "maldicion",
+    "reflejo",
+    "sustituto"
+  ],
+  "130": [
+    "agua_fria",
+    "maldicion",
+    "reflejo",
+    "scale-shot",
+    "sustituto"
+  ],
+  "131": [
+    "agua_fria",
+    "alluring-voice",
+    "canto_mortal",
+    "carambano",
+    "cuerno_certero",
+    "maldicion",
+    "poder_pasado",
+    "reflejo",
+    "sustituto",
+    "vaho_gelido"
+  ],
+  "133": [
+    "alluring-voice",
+    "maldicion",
+    "paz_mental",
+    "reflejo",
+    "sustituto",
+    "trailblaze",
+    "sappy-seed"
+  ],
+  "134": [
+    "agua_fria",
+    "alluring-voice",
+    "maldicion",
+    "paz_mental",
+    "reflejo",
+    "sustituto",
+    "trailblaze"
+  ],
+  "136": [
+    "alluring-voice",
+    "arenas_ardientes",
+    "burning-jealousy",
+    "envite_igneo",
+    "llama_embrujada",
+    "maldicion",
+    "paz_mental",
+    "reflejo",
+    "sustituto",
+    "trailblaze"
+  ],
+  "137": [
+    "ladron",
+    "maldicion",
+    "reciclaje",
+    "reflejo",
+    "sustituto",
+    "trick_room",
+    "truco"
+  ],
+  "138": [
+    "desarme",
+    "ladron",
+    "maldicion",
+    "poder_pasado",
+    "puas",
+    "puas_toxicas",
+    "reflejo",
+    "sustituto",
+    "trampa_rocas"
+  ],
+  "139": [
+    "desarme",
+    "ladron",
+    "maldicion",
+    "poder_pasado",
+    "puas",
+    "puas_toxicas",
+    "reflejo",
+    "sustituto",
+    "trampa_rocas"
+  ],
+  "140": [
+    "desarme",
+    "ladron",
+    "maldicion",
+    "poder_pasado",
+    "reflejo",
+    "sustituto",
+    "trampa_rocas"
+  ],
+  "141": [
+    "desarme",
+    "ladron",
+    "maldicion",
+    "poder_pasado",
+    "reflejo",
+    "sustituto",
+    "trampa_rocas"
+  ],
+  "142": [
+    "ladron",
+    "maldicion",
+    "persecucion",
+    "poder_pasado",
+    "reflejo",
+    "sustituto",
+    "tailwind",
+    "trampa_rocas"
+  ],
+  "163": [
+    "danza_pluma",
+    "intercambio",
+    "ladron",
+    "maldicion",
+    "paz_mental",
+    "reciclaje",
+    "reflejo",
+    "sustituto",
+    "tailwind"
+  ],
+  "164": [
+    "danza_pluma",
+    "intercambio",
+    "ladron",
+    "maldicion",
+    "paz_mental",
+    "reciclaje",
+    "reflejo",
+    "sustituto",
+    "tailwind"
+  ],
+  "244": [
+    "arenas_ardientes",
+    "envite_igneo",
+    "fuego_sagrado",
+    "maldicion",
+    "paz_mental",
+    "reflejo",
+    "sustituto",
+    "trailblaze",
+    "velocidad_extrema"
+  ],
+  "411": [
+    "arenas_ardientes",
+    "maldicion",
+    "poder_pasado",
+    "reflejo",
+    "represion_metal",
+    "steel-beam",
+    "sustituto",
+    "trailblaze",
+    "trampa_rocas"
+  ],
+  "461": [
+    "agua_fria",
+    "carambano",
+    "desarme",
+    "embargo",
+    "ladron",
+    "paz_mental",
+    "puno_incremento",
+    "reflejo",
+    "sustituto",
+    "trailblaze",
+    "triple-axel"
+  ],
+  "465": [
+    "desarme",
+    "ladron",
+    "poder_pasado",
+    "reflejo",
+    "sustituto"
+  ],
+  "619": [
+    "desarme",
+    "imitacion",
+    "patada_salto_alta",
+    "paz_mental",
+    "puno_incremento",
+    "reflejo",
+    "sustituto",
+    "trailblaze"
+  ],
+  "620": [
+    "desarme",
+    "imitacion",
+    "onda_vacio",
+    "patada_ignea",
+    "patada_salto_alta",
+    "paz_mental",
+    "puno_incremento",
+    "reflejo",
+    "sustituto",
+    "trailblaze",
+    "triple-axel"
+  ],
+  "635": [
+    "draco-meteor",
+    "ladron",
+    "reflejo",
+    "scale-shot",
+    "sustituto",
+    "tailwind",
+    "testarazo",
+    "trampa_rocas"
+  ],
+  "638": [
+    "cuerno_certero",
+    "onda_vacio",
+    "paz_mental",
+    "reflejo",
+    "represion_metal",
+    "steel-beam",
+    "sustituto",
+    "trampa_rocas"
+  ],
+  "639": [
+    "cuerno_certero",
+    "paz_mental",
+    "reflejo",
+    "sustituto",
+    "trampa_rocas"
+  ],
+  "647": [
+    "agua_fria",
+    "cuerno_certero",
+    "onda_vacio",
+    "paz_mental",
+    "reflejo",
+    "sustituto",
+    "trailblaze"
+  ],
+  "679": [
+    "persecucion",
+    "reflejo",
+    "steel-beam",
+    "sustituto"
+  ],
+  "680": [
+    "persecucion",
+    "reflejo",
+    "steel-beam",
+    "sustituto"
+  ],
+  "681": [
+    "persecucion",
+    "reflejo",
+    "steel-beam",
+    "sustituto",
+    "testarazo"
+  ],
+  "752": [
+    "agua_fria",
+    "reflejo",
+    "sustituto",
+    "trailblaze",
+    "vaho_gelido",
+    "zona_magica"
+  ],
+  "837": [
+    "autodestruccion",
+    "explosion",
+    "maldicion",
+    "poder_pasado",
+    "puas",
+    "reflejo",
+    "sustituto",
+    "trampa_rocas"
+  ],
+  "838": [
+    "arenas_ardientes",
+    "autodestruccion",
+    "envite_igneo",
+    "maldicion",
+    "poder_pasado",
+    "puas",
+    "reflejo",
+    "sustituto",
+    "trampa_rocas"
+  ],
+  "839": [
+    "arenas_ardientes",
+    "autodestruccion",
+    "envite_igneo",
+    "maldicion",
+    "poder_pasado",
+    "puas",
+    "reflejo",
+    "sustituto",
+    "trampa_rocas"
+  ],
+  "875": [
+    "agua_fria",
+    "carambano",
+    "danza_pluma",
+    "reflejo",
+    "sustituto",
+    "testarazo"
+  ],
+  "1012": [
+    "maldicion",
+    "paz_mental",
+    "reflejo",
+    "sustituto",
+    "trick_room"
+  ],
+  "1013": [
+    "maldicion",
+    "paz_mental",
+    "reflejo",
+    "sustituto",
+    "trick_room"
+  ],
+  "10024": [
+    "agua_fria",
+    "cuerno_certero",
+    "onda_vacio",
+    "paz_mental",
+    "reflejo",
+    "sustituto",
+    "trailblaze"
+  ],
+  "10026": [
+    "persecucion",
+    "reflejo",
+    "steel-beam",
+    "sustituto",
+    "testarazo"
+  ],
+  "10034": [
+    "arenas_ardientes",
+    "envite_igneo",
+    "poder_pasado",
+    "puno_incremento",
+    "reflejo",
+    "scale-shot",
+    "sustituto",
+    "tailwind"
+  ],
+  "10035": [
+    "arenas_ardientes",
+    "envite_igneo",
+    "poder_pasado",
+    "puno_incremento",
+    "reflejo",
+    "scale-shot",
+    "sustituto",
+    "tailwind"
+  ],
+  "10036": [
+    "agua_fria",
+    "puno_incremento",
+    "reflejo",
+    "sustituto"
+  ],
+  "10041": [
+    "agua_fria",
+    "reflejo",
+    "scale-shot",
+    "sustituto"
+  ],
+  "10042": [
+    "ladron",
+    "maldicion",
+    "persecucion",
+    "poder_pasado",
+    "reflejo",
+    "sustituto",
+    "tailwind",
+    "trampa_rocas"
+  ],
+  "10103": [
+    "agua_fria",
+    "carambano",
+    "imitacion",
+    "reflejo",
+    "sustituto",
+    "vaho_gelido"
+  ],
+  "10104": [
+    "agua_fria",
+    "carambano",
+    "imitacion",
+    "paz_mental",
+    "reflejo",
+    "sustituto",
+    "triple-axel",
+    "vaho_gelido"
+  ],
+  "10153": [
+    "reflejo",
+    "sustituto",
+    "vaho_gelido",
+    "zona_magica"
+  ],
+  "10159": [
+    "buzzy-buzz",
+    "reflejo",
+    "sappy-seed",
+    "sustituto"
+  ],
+  "10185": [
+    "agua_fria",
+    "carambano",
+    "danza_pluma",
+    "reflejo",
+    "sustituto",
+    "testarazo"
+  ],
+  "10232": [
+    "autodestruccion",
+    "explosion",
+    "ladron",
+    "maldicion",
+    "reflejo",
+    "sustituto"
+  ],
+  "10279": [
+    "desarme",
+    "hoja_aguda",
+    "jugo_gastrico",
+    "ladron",
+    "puas_toxicas",
+    "reflejo",
+    "sustituto",
+    "trailblaze"
+  ],
+  "10313": [
+    "arenas_ardientes",
+    "autodestruccion",
+    "desarme",
+    "ladron",
+    "maldicion",
+    "puno_sombra",
+    "reflejo",
+    "sustituto",
+    "trampa_rocas",
+    "truco"
+  ],
+  "88": [
+    "autodestruccion",
+    "explosion",
+    "ladron",
+    "maldicion",
+    "puno_incremento",
+    "puno_sombra",
+    "sustituto"
+  ],
+  "89": [
+    "autodestruccion",
+    "desarme",
+    "explosion",
+    "ladron",
+    "maldicion",
+    "puas_toxicas",
+    "puno_incremento",
+    "sustituto"
+  ],
+  "92": [
+    "autodestruccion",
+    "canto_mortal",
+    "desarme",
+    "embargo",
+    "explosion",
+    "intercambio",
+    "ladron",
+    "maldicion",
+    "sustituto",
+    "trick_room",
+    "truco"
+  ],
+  "93": [
+    "autodestruccion",
+    "desarme",
+    "embargo",
+    "explosion",
+    "intercambio",
+    "ladron",
+    "maldicion",
+    "puas_toxicas",
+    "puno_sombra",
+    "sustituto",
+    "trick_room",
+    "truco"
+  ],
+  "94": [
+    "autodestruccion",
+    "canto_mortal",
+    "desarme",
+    "embargo",
+    "explosion",
+    "imitacion",
+    "intercambio",
+    "ladron",
+    "maldicion",
+    "puas_toxicas",
+    "puno_incremento",
+    "puno_sombra",
+    "sustituto",
+    "trick_room",
+    "truco"
+  ],
+  "109": [
+    "autodestruccion",
+    "explosion",
+    "ladron",
+    "maldicion",
+    "puas_toxicas",
+    "sustituto"
+  ],
+  "110": [
+    "autodestruccion",
+    "explosion",
+    "ladron",
+    "maldicion",
+    "puas_toxicas",
+    "sustituto"
+  ],
+  "324": [
+    "arenas_ardientes",
+    "autodestruccion",
+    "burning-jealousy",
+    "envite_igneo",
+    "explosion",
+    "maldicion",
+    "poder_pasado",
+    "sustituto",
+    "trampa_rocas"
+  ],
+  "485": [
+    "arenas_ardientes",
+    "autodestruccion",
+    "burning-jealousy",
+    "envite_igneo",
+    "explosion",
+    "lluvia_ignea",
+    "poder_pasado",
+    "steel-beam",
+    "sustituto",
+    "trampa_rocas"
+  ],
+  "526": [
+    "autodestruccion",
+    "explosion",
+    "sustituto",
+    "trampa_rocas"
+  ],
+  "563": [
+    "autodestruccion",
+    "desarme",
+    "embargo",
+    "imitacion",
+    "intercambio",
+    "ladron",
+    "maldicion",
+    "paz_mental",
+    "puas_toxicas",
+    "puno_sombra",
+    "sustituto",
+    "trick_room",
+    "truco"
+  ],
+  "568": [
+    "autodestruccion",
+    "explosion",
+    "ladron",
+    "maldicion",
+    "puas",
+    "puas_toxicas",
+    "reciclaje",
+    "sustituto"
+  ],
+  "569": [
+    "autodestruccion",
+    "explosion",
+    "ladron",
+    "maldicion",
+    "poder_pasado",
+    "puas",
+    "puas_toxicas",
+    "reciclaje",
+    "sustituto"
+  ],
+  "598": [
+    "autodestruccion",
+    "desarme",
+    "explosion",
+    "maldicion",
+    "puas",
+    "steel-beam",
+    "sustituto",
+    "trampa_rocas"
+  ],
+  "645": [
+    "arenas_ardientes",
+    "autodestruccion",
+    "desarme",
+    "explosion",
+    "imitacion",
+    "paz_mental",
+    "sustituto",
+    "trampa_rocas"
+  ],
+  "721": [
+    "arenas_ardientes",
+    "autodestruccion",
+    "envite_igneo",
+    "explosion",
+    "sustituto"
+  ],
+  "773": [
+    "autodestruccion",
+    "draco-meteor",
+    "explosion",
+    "persecucion",
+    "steel-beam",
+    "sustituto",
+    "tailwind"
+  ],
+  "809": [
+    "autodestruccion",
+    "steel-beam",
+    "sustituto"
+  ],
+  "867": [
+    "autodestruccion",
+    "intercambio",
+    "ladron",
+    "maldicion",
+    "paz_mental",
+    "puas_toxicas",
+    "puno_sombra",
+    "sustituto",
+    "trampa_rocas",
+    "trick_room",
+    "truco"
+  ],
+  "871": [
+    "agua_fria",
+    "autodestruccion",
+    "maldicion",
+    "puas",
+    "puas_toxicas",
+    "sustituto"
+  ],
+  "874": [
+    "autodestruccion",
+    "maldicion",
+    "poder_pasado",
+    "sustituto",
+    "trampa_rocas"
+  ],
+  "904": [
+    "agua_fria",
+    "autodestruccion",
+    "cola_veneno",
+    "cuerno_certero",
+    "maldicion",
+    "puas",
+    "puas_toxicas",
+    "scale-shot",
+    "sustituto"
+  ],
+  "965": [
+    "autodestruccion",
+    "ladron",
+    "maldicion",
+    "puas_toxicas",
+    "steel-beam",
+    "sustituto"
+  ],
+  "10021": [
+    "arenas_ardientes",
+    "autodestruccion",
+    "desarme",
+    "explosion",
+    "imitacion",
+    "paz_mental",
+    "sustituto",
+    "trampa_rocas"
+  ],
+  "10038": [
+    "autodestruccion",
+    "canto_mortal",
+    "desarme",
+    "embargo",
+    "explosion",
+    "imitacion",
+    "intercambio",
+    "ladron",
+    "maldicion",
+    "puas_toxicas",
+    "puno_incremento",
+    "puno_sombra",
+    "sustituto",
+    "trick_room",
+    "truco"
+  ],
+  "10072": [
+    "arenas_ardientes",
+    "autodestruccion",
+    "explosion",
+    "maldicion",
+    "poder_pasado",
+    "steel-beam",
+    "sustituto",
+    "testarazo",
+    "trampa_rocas"
+  ],
+  "10087": [
+    "arenas_ardientes",
+    "autodestruccion",
+    "burning-jealousy",
+    "envite_igneo",
+    "explosion",
+    "maldicion",
+    "poder_pasado",
+    "sustituto",
+    "trailblaze",
+    "trampa_rocas"
+  ],
+  "10112": [
+    "autodestruccion",
+    "desarme",
+    "embargo",
+    "explosion",
+    "jugo_gastrico",
+    "ladron",
+    "maldicion",
+    "persecucion",
+    "puno_incremento",
+    "reciclaje",
+    "sustituto"
+  ],
+  "10113": [
+    "autodestruccion",
+    "desarme",
+    "embargo",
+    "explosion",
+    "jugo_gastrico",
+    "ladron",
+    "maldicion",
+    "reciclaje",
+    "sustituto"
+  ],
+  "10167": [
+    "autodestruccion",
+    "explosion",
+    "ladron",
+    "maldicion",
+    "misty-explosion",
+    "puas_toxicas",
+    "sustituto"
+  ],
+  "10234": [
+    "agua_fria",
+    "autodestruccion",
+    "cola_veneno",
+    "maldicion",
+    "puas",
+    "puas_toxicas",
+    "scale-shot",
+    "sustituto"
+  ],
+  "366": [
+    "sustituto",
+    "tenaza"
+  ],
+  "688": [
+    "embargo",
+    "ladron",
+    "poder_pasado",
+    "puno_incremento",
+    "sustituto",
+    "tenaza",
+    "trampa_rocas"
+  ],
+  "689": [
+    "agua_fria",
+    "embargo",
+    "ladron",
+    "poder_pasado",
+    "puno_incremento",
+    "sustituto",
+    "tenaza",
+    "trampa_rocas"
+  ],
+  "106": [
+    "desarme",
+    "imitacion",
+    "ladron",
+    "maldicion",
+    "onda_vacio",
+    "patada_ignea",
+    "patada_salto_alta",
+    "puno_incremento",
+    "sustituto"
+  ],
+  "107": [
+    "desarme",
+    "imitacion",
+    "ladron",
+    "maldicion",
+    "onda_vacio",
+    "patada_salto_alta",
+    "persecucion",
+    "puno_incremento",
+    "sustituto",
+    "trailblaze"
+  ],
+  "236": [
+    "imitacion",
+    "ladron",
+    "maldicion",
+    "onda_vacio",
+    "patada_salto_alta",
+    "persecucion",
+    "sustituto"
+  ],
+  "237": [
+    "imitacion",
+    "ladron",
+    "maldicion",
+    "onda_vacio",
+    "patada_salto_alta",
+    "persecucion",
+    "sustituto",
+    "triple-axel"
+  ],
+  "257": [
+    "arenas_ardientes",
+    "danza_pluma",
+    "desarme",
+    "envite_igneo",
+    "imitacion",
+    "ladron",
+    "maldicion",
+    "onda_vacio",
+    "patada_ignea",
+    "patada_salto_alta",
+    "puno_incremento",
+    "sustituto"
+  ],
+  "447": [
+    "imitacion",
+    "onda_vacio",
+    "patada_ignea",
+    "patada_salto_alta",
+    "puno_incremento",
+    "puno_meteoro",
+    "sustituto",
+    "trailblaze"
+  ],
+  "448": [
+    "ataque_oseo",
+    "imitacion",
+    "onda_vacio",
+    "patada_ignea",
+    "patada_salto_alta",
+    "paz_mental",
+    "puno_incremento",
+    "puno_meteoro",
+    "steel-beam",
+    "sustituto",
+    "trailblaze",
+    "velocidad_extrema"
+  ],
+  "559": [
+    "desarme",
+    "ladron",
+    "maldicion",
+    "patada_salto_alta",
+    "puno_incremento",
+    "sustituto",
+    "testarazo",
+    "trailblaze"
+  ],
+  "560": [
+    "desarme",
+    "ladron",
+    "maldicion",
+    "patada_salto_alta",
+    "puno_incremento",
+    "sustituto",
+    "testarazo",
+    "trailblaze"
+  ],
+  "701": [
+    "danza_pluma",
+    "ladron",
+    "patada_salto_alta",
+    "puno_incremento",
+    "sustituto",
+    "tailwind",
+    "trailblaze"
+  ],
+  "795": [
+    "patada_salto_alta",
+    "sustituto",
+    "triple-axel"
+  ],
+  "813": [
+    "burning-jealousy",
+    "envite_igneo",
+    "patada_ignea",
+    "patada_salto_alta",
+    "sustituto",
+    "trailblaze"
+  ],
+  "814": [
+    "burning-jealousy",
+    "envite_igneo",
+    "patada_ignea",
+    "patada_salto_alta",
+    "sustituto",
+    "trailblaze"
+  ],
+  "815": [
+    "arenas_ardientes",
+    "burning-jealousy",
+    "envite_igneo",
+    "patada_ignea",
+    "patada_salto_alta",
+    "sustituto",
+    "trailblaze"
+  ],
+  "10050": [
+    "arenas_ardientes",
+    "danza_pluma",
+    "desarme",
+    "envite_igneo",
+    "imitacion",
+    "ladron",
+    "maldicion",
+    "onda_vacio",
+    "patada_ignea",
+    "patada_salto_alta",
+    "puno_incremento",
+    "sustituto"
+  ],
+  "10059": [
+    "ataque_oseo",
+    "imitacion",
+    "onda_vacio",
+    "patada_ignea",
+    "patada_salto_alta",
+    "paz_mental",
+    "puno_incremento",
+    "puno_meteoro",
+    "steel-beam",
+    "sustituto",
+    "trailblaze",
+    "velocidad_extrema"
+  ],
+  "10289": [
+    "desarme",
+    "ladron",
+    "maldicion",
+    "patada_salto_alta",
+    "sustituto",
+    "testarazo",
+    "trailblaze"
+  ],
+  "10300": [
+    "danza_pluma",
+    "ladron",
+    "patada_salto_alta",
+    "sustituto",
+    "trailblaze"
+  ],
+  "591": [
+    "espora",
+    "jugo_gastrico",
+    "sustituto"
+  ],
+  "986": [
+    "espora",
+    "ladron",
+    "sustituto",
+    "trailblaze"
+  ],
+  "98": [
+    "desarme",
+    "ladron",
+    "maldicion",
+    "martillazo",
+    "poder_pasado",
+    "sustituto"
+  ],
+  "99": [
+    "desarme",
+    "ladron",
+    "maldicion",
+    "martillazo",
+    "poder_pasado",
+    "sustituto"
+  ],
+  "207": [
+    "cola_veneno",
+    "desarme",
+    "ladron",
+    "maldicion",
+    "martillazo",
+    "puas",
+    "puas_toxicas",
+    "scale-shot",
+    "sustituto",
+    "tailwind",
+    "trampa_rocas"
+  ],
+  "341": [
+    "agua_fria",
+    "desarme",
+    "ladron",
+    "martillazo",
+    "poder_pasado",
+    "sustituto"
+  ],
+  "342": [
+    "agua_fria",
+    "desarme",
+    "ladron",
+    "martillazo",
+    "poder_pasado",
+    "sustituto"
+  ],
+  "472": [
+    "cola_veneno",
+    "desarme",
+    "ladron",
+    "martillazo",
+    "puas",
+    "puas_toxicas",
+    "scale-shot",
+    "sustituto",
+    "tailwind",
+    "trampa_rocas"
+  ],
+  "692": [
+    "agua_fria",
+    "ladron",
+    "martillazo",
+    "sustituto"
+  ],
+  "693": [
+    "agua_fria",
+    "ladron",
+    "martillazo",
+    "sustituto"
+  ],
+  "739": [
+    "agua_fria",
+    "desarme",
+    "ladron",
+    "martillazo",
+    "persecucion",
+    "puno_incremento",
+    "sustituto",
+    "vaho_gelido"
+  ],
+  "740": [
+    "agua_fria",
+    "carambano",
+    "desarme",
+    "ladron",
+    "martillazo",
+    "persecucion",
+    "puno_incremento",
+    "sustituto",
+    "vaho_gelido"
+  ],
+  "950": [
+    "desarme",
+    "ladron",
+    "martillazo",
+    "poder_pasado",
+    "sustituto",
+    "trailblaze",
+    "trampa_rocas"
+  ],
+  "10315": [
+    "agua_fria",
+    "carambano",
+    "desarme",
+    "ladron",
+    "martillazo",
+    "sustituto"
+  ],
+  "434": [
+    "cola_veneno",
+    "desarme",
+    "explosion",
+    "ladron",
+    "persecucion",
+    "puas_toxicas",
+    "sustituto",
+    "trailblaze"
+  ],
+  "435": [
+    "burning-jealousy",
+    "cola_veneno",
+    "desarme",
+    "explosion",
+    "ladron",
+    "puas_toxicas",
+    "sustituto",
+    "trailblaze"
+  ],
+  "476": [
+    "explosion",
+    "maldicion",
+    "poder_pasado",
+    "steel-beam",
+    "sustituto",
+    "testarazo",
+    "trampa_rocas"
+  ],
+  "524": [
+    "explosion",
+    "maldicion",
+    "sustituto",
+    "trampa_rocas"
+  ],
+  "525": [
+    "explosion",
+    "sustituto",
+    "trampa_rocas"
+  ],
+  "776": [
+    "arenas_ardientes",
+    "burning-jealousy",
+    "draco-meteor",
+    "explosion",
+    "maldicion",
+    "scale-shot",
+    "sustituto",
+    "testarazo"
+  ],
+  "934": [
+    "explosion",
+    "maldicion",
+    "poder_pasado",
+    "sustituto",
+    "trampa_rocas"
+  ],
+  "104": [
+    "arenas_ardientes",
+    "ataque_oseo",
+    "canto_mortal",
+    "desarme",
+    "huesomerang",
+    "ladron",
+    "maldicion",
+    "poder_pasado",
+    "puno_incremento",
+    "sustituto",
+    "trampa_rocas"
+  ],
+  "105": [
+    "arenas_ardientes",
+    "ataque_oseo",
+    "desarme",
+    "huesomerang",
+    "ladron",
+    "maldicion",
+    "puno_incremento",
+    "sustituto",
+    "trampa_rocas"
+  ],
+  "10115": [
+    "arenas_ardientes",
+    "ataque_oseo",
+    "burning-jealousy",
+    "desarme",
+    "envite_igneo",
+    "huesomerang",
+    "ladron",
+    "sustituto",
+    "trampa_rocas"
+  ],
+  "10149": [
+    "ataque_oseo",
+    "desarme",
+    "envite_igneo",
+    "huesomerang",
+    "ladron",
+    "sustituto",
+    "trampa_rocas"
+  ],
+  "504": [
+    "hipercolmillo",
+    "persecucion",
+    "sustituto"
+  ],
+  "734": [
+    "agua_fria",
+    "hipercolmillo",
+    "ladron",
+    "persecucion",
+    "sustituto",
+    "trailblaze"
+  ],
+  "735": [
+    "agua_fria",
+    "desarme",
+    "hipercolmillo",
+    "ladron",
+    "maldicion",
+    "persecucion",
+    "sustituto",
+    "trailblaze"
+  ],
+  "10091": [
+    "embargo",
+    "hipercolmillo",
+    "ladron",
+    "persecucion",
+    "sustituto"
+  ],
+  "10092": [
+    "desarme",
+    "embargo",
+    "hipercolmillo",
+    "ladron",
+    "persecucion",
+    "sustituto"
+  ],
+  "10093": [
+    "desarme",
+    "embargo",
+    "hipercolmillo",
+    "ladron",
+    "persecucion",
+    "sustituto"
+  ],
+  "10121": [
+    "hipercolmillo",
+    "ladron",
+    "persecucion",
+    "sustituto"
+  ],
+  "23": [
+    "cola_veneno",
+    "desarme",
+    "jugo_gastrico",
+    "ladron",
+    "maldicion",
+    "persecucion",
+    "puas_toxicas",
+    "scale-shot",
+    "sustituto",
+    "trailblaze"
+  ],
+  "24": [
+    "cola_veneno",
+    "desarme",
+    "jugo_gastrico",
+    "ladron",
+    "maldicion",
+    "puas_toxicas",
+    "scale-shot",
+    "sustituto",
+    "trailblaze"
+  ],
+  "50": [
+    "arenas_ardientes",
+    "ladron",
+    "maldicion",
+    "persecucion",
+    "poder_pasado",
+    "sustituto",
+    "trampa_rocas"
+  ],
+  "51": [
+    "arenas_ardientes",
+    "ladron",
+    "maldicion",
+    "sustituto",
+    "trampa_rocas"
+  ],
+  "86": [
+    "agua_fria",
+    "canto_mortal",
+    "carambano",
+    "cuerno_certero",
+    "ladron",
+    "maldicion",
+    "sustituto",
+    "triple-axel"
+  ],
+  "87": [
+    "agua_fria",
+    "alluring-voice",
+    "canto_mortal",
+    "carambano",
+    "cuerno_certero",
+    "desarme",
+    "ladron",
+    "maldicion",
+    "sustituto",
+    "triple-axel",
+    "vaho_gelido"
+  ],
+  "111": [
+    "arenas_ardientes",
+    "cuerno_certero",
+    "ladron",
+    "maldicion",
+    "persecucion",
+    "poder_pasado",
+    "represion_metal",
+    "sustituto",
+    "trampa_rocas"
+  ],
+  "112": [
+    "arenas_ardientes",
+    "cuerno_certero",
+    "ladron",
+    "maldicion",
+    "poder_pasado",
+    "puno_incremento",
+    "represion_metal",
+    "sustituto",
+    "trampa_rocas"
+  ],
+  "115": [
+    "ladron",
+    "maldicion",
+    "puno_incremento",
+    "sustituto"
+  ],
+  "116": [
+    "agua_fria",
+    "maldicion",
+    "scale-shot",
+    "sustituto"
+  ],
+  "117": [
+    "agua_fria",
+    "maldicion",
+    "scale-shot",
+    "sustituto"
+  ],
+  "118": [
+    "cuerno_certero",
+    "desarme",
+    "maldicion",
+    "scale-shot",
+    "sustituto"
+  ],
+  "119": [
+    "cuerno_certero",
+    "desarme",
+    "maldicion",
+    "scale-shot",
+    "sustituto"
+  ],
+  "126": [
+    "arenas_ardientes",
+    "burning-jealousy",
+    "desarme",
+    "envite_igneo",
+    "ladron",
+    "maldicion",
+    "puno_incremento",
+    "sustituto"
+  ],
+  "127": [
+    "desarme",
+    "ladron",
+    "maldicion",
+    "sustituto",
+    "trampa_rocas"
+  ],
+  "128": [
+    "cuerno_certero",
+    "imitacion",
+    "ladron",
+    "maldicion",
+    "persecucion",
+    "sustituto",
+    "trailblaze"
+  ],
+  "158": [
+    "agua_fria",
+    "ladron",
+    "maldicion",
+    "poder_pasado",
+    "puno_incremento",
+    "sustituto",
+    "trailblaze"
+  ],
+  "159": [
+    "agua_fria",
+    "ladron",
+    "maldicion",
+    "poder_pasado",
+    "puno_incremento",
+    "sustituto",
+    "trailblaze"
+  ],
+  "160": [
+    "agua_fria",
+    "ladron",
+    "maldicion",
+    "poder_pasado",
+    "puno_incremento",
+    "scale-shot",
+    "sustituto",
+    "trailblaze"
+  ],
+  "168": [
+    "cuerno_certero",
+    "desarme",
+    "hilo_venenoso",
+    "ladron",
+    "maldicion",
+    "puas_toxicas",
+    "sustituto",
+    "trailblaze"
+  ],
+  "170": [
+    "agua_fria",
+    "maldicion",
+    "sustituto"
+  ],
+  "171": [
+    "agua_fria",
+    "maldicion",
+    "sustituto"
+  ],
+  "214": [
+    "cuerno_certero",
+    "desarme",
+    "empujon",
+    "ladron",
+    "maldicion",
+    "onda_vacio",
+    "persecucion",
+    "puas",
+    "sustituto",
+    "trailblaze"
+  ],
+  "226": [
+    "maldicion",
+    "sustituto",
+    "tailwind"
+  ],
+  "228": [
+    "burning-jealousy",
+    "embargo",
+    "envite_igneo",
+    "imitacion",
+    "ladron",
+    "maldicion",
+    "persecucion",
+    "sustituto",
+    "trailblaze"
+  ],
+  "229": [
+    "arenas_ardientes",
+    "burning-jealousy",
+    "embargo",
+    "envite_igneo",
+    "imitacion",
+    "ladron",
+    "maldicion",
+    "sustituto",
+    "trailblaze"
+  ],
+  "230": [
+    "agua_fria",
+    "draco-meteor",
+    "maldicion",
+    "scale-shot",
+    "sustituto"
+  ],
+  "240": [
+    "burning-jealousy",
+    "envite_igneo",
+    "ladron",
+    "maldicion",
+    "puno_incremento",
+    "sustituto"
+  ],
+  "246": [
+    "maldicion",
+    "persecucion",
+    "poder_pasado",
+    "puno_incremento",
+    "sustituto",
+    "trampa_rocas"
+  ],
+  "247": [
+    "maldicion",
+    "poder_pasado",
+    "puno_incremento",
+    "sustituto",
+    "trampa_rocas"
+  ],
+  "248": [
+    "desarme",
+    "maldicion",
+    "poder_pasado",
+    "puno_incremento",
+    "sustituto",
+    "trampa_rocas"
+  ],
+  "255": [
+    "danza_pluma",
+    "envite_igneo",
+    "maldicion",
+    "sustituto"
+  ],
+  "256": [
+    "danza_pluma",
+    "envite_igneo",
+    "ladron",
+    "maldicion",
+    "onda_vacio",
+    "patada_ignea",
+    "puno_incremento",
+    "sustituto"
+  ],
+  "261": [
+    "embargo",
+    "ladron",
+    "sustituto",
+    "trailblaze"
+  ],
+  "262": [
+    "embargo",
+    "ladron",
+    "sustituto",
+    "trailblaze"
+  ],
+  "272": [
+    "agua_fria",
+    "desarme",
+    "ladron",
+    "puno_incremento",
+    "sustituto",
+    "trailblaze"
+  ],
+  "276": [
+    "ladron",
+    "persecucion",
+    "sustituto",
+    "tailwind"
+  ],
+  "277": [
+    "ladron",
+    "sustituto",
+    "tailwind"
+  ],
+  "279": [
+    "agua_fria",
+    "danza_pluma",
+    "desarme",
+    "ladron",
+    "sustituto",
+    "tailwind"
+  ],
+  "283": [
+    "agua_fria",
+    "ladron",
+    "sustituto"
+  ],
+  "287": [
+    "agua_fria",
+    "ladron",
+    "maldicion",
+    "persecucion",
+    "puno_incremento",
+    "sustituto"
+  ],
+  "288": [
+    "agua_fria",
+    "desarme",
+    "ladron",
+    "maldicion",
+    "puno_incremento",
+    "sustituto",
+    "trailblaze"
+  ],
+  "289": [
+    "agua_fria",
+    "desarme",
+    "ladron",
+    "maldicion",
+    "puno_incremento",
+    "sustituto",
+    "trailblaze"
+  ],
+  "291": [
+    "ladron",
+    "sustituto"
+  ],
+  "292": [
+    "ladron",
+    "sustituto",
+    "truco"
+  ],
+  "296": [
+    "agua_fria",
+    "desarme",
+    "empujon",
+    "imitacion",
+    "ladron",
+    "onda_vacio",
+    "puno_incremento",
+    "sustituto"
+  ],
+  "297": [
+    "agua_fria",
+    "desarme",
+    "empujon",
+    "imitacion",
+    "ladron",
+    "maldicion",
+    "onda_vacio",
+    "puno_incremento",
+    "sustituto"
+  ],
+  "303": [
+    "desarme",
+    "embargo",
+    "poder_pasado",
+    "puno_incremento",
+    "represion_metal",
+    "steel-beam",
+    "sustituto",
+    "trampa_rocas"
+  ],
+  "318": [
+    "ladron",
+    "poder_pasado",
+    "scale-shot",
+    "sustituto"
+  ],
+  "319": [
+    "agua_fria",
+    "ladron",
+    "poder_pasado",
+    "scale-shot",
+    "sustituto"
+  ],
+  "333": [
+    "canto_mortal",
+    "danza_pluma",
+    "ladron",
+    "persecucion",
+    "sustituto",
+    "tailwind",
+    "trailblaze"
+  ],
+  "334": [
+    "alluring-voice",
+    "canto_mortal",
+    "danza_pluma",
+    "draco-meteor",
+    "ladron",
+    "sustituto",
+    "tailwind",
+    "trailblaze"
+  ],
+  "336": [
+    "cola_veneno",
+    "desarme",
+    "jugo_gastrico",
+    "ladron",
+    "maldicion",
+    "sustituto",
+    "trailblaze"
+  ],
+  "339": [
+    "agua_fria",
+    "sustituto",
+    "trampa_rocas"
+  ],
+  "340": [
+    "agua_fria",
+    "maldicion",
+    "puas",
+    "sustituto",
+    "trampa_rocas"
+  ],
+  "345": [
+    "jugo_gastrico",
+    "maldicion",
+    "poder_pasado",
+    "sustituto",
+    "trampa_rocas"
+  ],
+  "347": [
+    "desarme",
+    "maldicion",
+    "poder_pasado",
+    "sustituto",
+    "trampa_rocas"
+  ],
+  "348": [
+    "desarme",
+    "poder_pasado",
+    "sustituto",
+    "trampa_rocas"
+  ],
+  "353": [
+    "desarme",
+    "embargo",
+    "imitacion",
+    "intercambio",
+    "ladron",
+    "maldicion",
+    "paz_mental",
+    "persecucion",
+    "sustituto",
+    "trick_room",
+    "truco",
+    "zona_magica"
+  ],
+  "354": [
+    "burning-jealousy",
+    "desarme",
+    "embargo",
+    "imitacion",
+    "intercambio",
+    "ladron",
+    "maldicion",
+    "paz_mental",
+    "puno_sombra",
+    "sustituto",
+    "trailblaze",
+    "trick_room",
+    "truco",
+    "zona_magica"
+  ],
+  "355": [
+    "embargo",
+    "intercambio",
+    "ladron",
+    "maldicion",
+    "paz_mental",
+    "persecucion",
+    "sustituto",
+    "trick_room",
+    "truco"
+  ],
+  "356": [
+    "embargo",
+    "intercambio",
+    "ladron",
+    "maldicion",
+    "paz_mental",
+    "persecucion",
+    "puno_incremento",
+    "puno_sombra",
+    "sustituto",
+    "trick_room",
+    "truco"
+  ],
+  "359": [
+    "canto_mortal",
+    "desarme",
+    "imitacion",
+    "ladron",
+    "maldicion",
+    "paz_mental",
+    "persecucion",
+    "sustituto",
+    "trailblaze"
+  ],
+  "367": [
+    "sustituto"
+  ],
+  "368": [
+    "sustituto"
+  ],
+  "369": [
+    "paz_mental",
+    "poder_pasado",
+    "scale-shot",
+    "sustituto",
+    "testarazo",
+    "trampa_rocas"
+  ],
+  "370": [
+    "scale-shot",
+    "sustituto"
+  ],
+  "384": [
+    "ascenso_draco",
+    "draco-meteor",
+    "poder_pasado",
+    "scale-shot",
+    "sustituto",
+    "tailwind",
+    "trampa_rocas",
+    "velocidad_extrema"
+  ],
+  "390": [
+    "burning-jealousy",
+    "desarme",
+    "envite_igneo",
+    "imitacion",
+    "ladron",
+    "onda_vacio",
+    "patada_ignea",
+    "puno_incremento",
+    "sustituto",
+    "trampa_rocas"
+  ],
+  "391": [
+    "burning-jealousy",
+    "desarme",
+    "envite_igneo",
+    "imitacion",
+    "ladron",
+    "onda_vacio",
+    "puno_incremento",
+    "sustituto",
+    "trampa_rocas"
+  ],
+  "392": [
+    "arenas_ardientes",
+    "burning-jealousy",
+    "desarme",
+    "envite_igneo",
+    "imitacion",
+    "ladron",
+    "onda_vacio",
+    "patada_ignea",
+    "paz_mental",
+    "puno_incremento",
+    "sustituto",
+    "trampa_rocas"
+  ],
+  "402": [
+    "canto_mortal",
+    "desarme",
+    "puno_incremento",
+    "sustituto",
+    "trailblaze"
+  ],
+  "406": [
+    "puas",
+    "sustituto"
+  ],
+  "408": [
+    "ladron",
+    "maldicion",
+    "persecucion",
+    "poder_pasado",
+    "puno_incremento",
+    "sustituto",
+    "testarazo",
+    "trailblaze",
+    "trampa_rocas"
+  ],
+  "409": [
+    "ladron",
+    "maldicion",
+    "persecucion",
+    "poder_pasado",
+    "puno_incremento",
+    "sustituto",
+    "testarazo",
+    "trailblaze",
+    "trampa_rocas"
+  ],
+  "410": [
+    "arenas_ardientes",
+    "maldicion",
+    "poder_pasado",
+    "represion_metal",
+    "steel-beam",
+    "sustituto",
+    "trailblaze",
+    "trampa_rocas"
+  ],
+  "418": [
+    "agua_fria",
+    "ladron",
+    "persecucion",
+    "puno_incremento",
+    "sustituto"
+  ],
+  "419": [
+    "agua_fria",
+    "ladron",
+    "persecucion",
+    "puno_incremento",
+    "sustituto"
+  ],
+  "422": [
+    "agua_fria",
+    "maldicion",
+    "poder_pasado",
+    "sustituto",
+    "trampa_rocas"
+  ],
+  "423": [
+    "agua_fria",
+    "maldicion",
+    "poder_pasado",
+    "puas",
+    "sustituto",
+    "trampa_rocas"
+  ],
+  "424": [
+    "agua_fria",
+    "desarme",
+    "imitacion",
+    "ladron",
+    "puno_incremento",
+    "sustituto",
+    "trailblaze",
+    "triple-axel"
+  ],
+  "429": [
+    "burning-jealousy",
+    "canto_mortal",
+    "embargo",
+    "intercambio",
+    "ladron",
+    "llama_embrujada",
+    "maldicion",
+    "paz_mental",
+    "sustituto",
+    "trick_room",
+    "truco",
+    "zona_magica"
+  ],
+  "431": [
+    "desarme",
+    "ladron",
+    "sustituto"
+  ],
+  "432": [
+    "desarme",
+    "ladron",
+    "sustituto"
+  ],
+  "442": [
+    "burning-jealousy",
+    "embargo",
+    "intercambio",
+    "ladron",
+    "maldicion",
+    "paz_mental",
+    "persecucion",
+    "sustituto",
+    "trick_room",
+    "truco"
+  ],
+  "443": [
+    "arenas_ardientes",
+    "draco-meteor",
+    "scale-shot",
+    "sustituto",
+    "trampa_rocas"
+  ],
+  "444": [
+    "arenas_ardientes",
+    "draco-meteor",
+    "scale-shot",
+    "sustituto",
+    "trampa_rocas"
+  ],
+  "445": [
+    "arenas_ardientes",
+    "draco-meteor",
+    "puas",
+    "scale-shot",
+    "sustituto",
+    "trampa_rocas"
+  ],
+  "449": [
+    "arenas_ardientes",
+    "maldicion",
+    "sustituto",
+    "trampa_rocas"
+  ],
+  "450": [
+    "arenas_ardientes",
+    "maldicion",
+    "sustituto",
+    "trampa_rocas"
+  ],
+  "452": [
+    "desarme",
+    "ladron",
+    "persecucion",
+    "puas_toxicas",
+    "sustituto"
+  ],
+  "453": [
+    "agua_fria",
+    "desarme",
+    "embargo",
+    "imitacion",
+    "ladron",
+    "onda_vacio",
+    "persecucion",
+    "puno_incremento",
+    "sustituto"
+  ],
+  "454": [
+    "agua_fria",
+    "desarme",
+    "embargo",
+    "imitacion",
+    "ladron",
+    "onda_vacio",
+    "persecucion",
+    "puno_incremento",
+    "sustituto"
+  ],
+  "458": [
+    "sustituto",
+    "tailwind"
+  ],
+  "464": [
+    "arenas_ardientes",
+    "cuerno_certero",
+    "ladron",
+    "maldicion",
+    "poder_pasado",
+    "puno_incremento",
+    "represion_metal",
+    "romperrocas",
+    "sustituto",
+    "trampa_rocas"
+  ],
+  "467": [
+    "arenas_ardientes",
+    "burning-jealousy",
+    "desarme",
+    "envite_igneo",
+    "ladron",
+    "llama_embrujada",
+    "maldicion",
+    "puno_incremento",
+    "sustituto"
+  ],
+  "471": [
+    "agua_fria",
+    "alluring-voice",
+    "carambano",
+    "maldicion",
+    "paz_mental",
+    "sustituto",
+    "trailblaze",
+    "triple-axel",
+    "vaho_gelido"
+  ],
+  "477": [
+    "embargo",
+    "intercambio",
+    "ladron",
+    "maldicion",
+    "paz_mental",
+    "persecucion",
+    "puno_incremento",
+    "puno_sombra",
+    "sustituto",
+    "trick_room",
+    "truco"
+  ],
+  "483": [
+    "distorsion",
+    "draco-meteor",
+    "poder_pasado",
+    "represion_metal",
+    "scale-shot",
+    "steel-beam",
+    "sustituto",
+    "trampa_rocas",
+    "trick_room",
+    "truco"
+  ],
+  "484": [
+    "agua_fria",
+    "corte_vacio",
+    "draco-meteor",
+    "poder_pasado",
+    "scale-shot",
+    "sustituto",
+    "trick_room",
+    "truco"
+  ],
+  "486": [
+    "desarme",
+    "poder_pasado",
+    "puno_incremento",
+    "sustituto"
+  ],
+  "487": [
+    "draco-meteor",
+    "golpe_umbrio",
+    "maldicion",
+    "paz_mental",
+    "poder_pasado",
+    "sustituto"
+  ],
+  "489": [
+    "agua_fria",
+    "alluring-voice",
+    "desarme",
+    "poder_pasado",
+    "sustituto"
+  ],
+  "491": [
+    "brecha_negra",
+    "desarme",
+    "embargo",
+    "ladron",
+    "maldicion",
+    "paz_mental",
+    "persecucion",
+    "puno_incremento",
+    "sustituto",
+    "truco"
+  ],
+  "501": [
+    "agua_fria",
+    "desarme",
+    "ladron",
+    "sustituto"
+  ],
+  "502": [
+    "agua_fria",
+    "desarme",
+    "ladron",
+    "onda_vacio",
+    "sustituto"
+  ],
+  "503": [
+    "agua_fria",
+    "cuerno_certero",
+    "desarme",
+    "ladron",
+    "onda_vacio",
+    "sustituto"
+  ],
+  "506": [
+    "persecucion",
+    "sustituto"
+  ],
+  "507": [
+    "sustituto"
+  ],
+  "508": [
+    "sustituto"
+  ],
+  "509": [
+    "desarme",
+    "embargo",
+    "imitacion",
+    "ladron",
+    "persecucion",
+    "sustituto",
+    "truco"
+  ],
+  "510": [
+    "burning-jealousy",
+    "desarme",
+    "embargo",
+    "imitacion",
+    "ladron",
+    "persecucion",
+    "sustituto",
+    "trailblaze",
+    "truco"
+  ],
+  "513": [
+    "desarme",
+    "envite_igneo",
+    "imitacion",
+    "jugo_gastrico",
+    "ladron",
+    "reciclaje",
+    "sustituto"
+  ],
+  "514": [
+    "arenas_ardientes",
+    "burning-jealousy",
+    "desarme",
+    "envite_igneo",
+    "imitacion",
+    "jugo_gastrico",
+    "ladron",
+    "patada_ignea",
+    "puno_incremento",
+    "reciclaje",
+    "sustituto"
+  ],
+  "515": [
+    "desarme",
+    "imitacion",
+    "jugo_gastrico",
+    "ladron",
+    "reciclaje",
+    "sustituto"
+  ],
+  "516": [
+    "agua_fria",
+    "desarme",
+    "imitacion",
+    "jugo_gastrico",
+    "ladron",
+    "puno_incremento",
+    "reciclaje",
+    "sustituto"
+  ],
+  "529": [
+    "arenas_ardientes",
+    "maldicion",
+    "sustituto",
+    "trampa_rocas"
+  ],
+  "530": [
+    "arenas_ardientes",
+    "cuerno_certero",
+    "maldicion",
+    "steel-beam",
+    "sustituto",
+    "trampa_rocas"
+  ],
+  "532": [
+    "desarme",
+    "ladron",
+    "maldicion",
+    "puno_incremento",
+    "sustituto"
+  ],
+  "533": [
+    "desarme",
+    "ladron",
+    "maldicion",
+    "puno_incremento",
+    "sustituto"
+  ],
+  "534": [
+    "desarme",
+    "ladron",
+    "maldicion",
+    "puno_incremento",
+    "sustituto"
+  ],
+  "535": [
+    "sustituto"
+  ],
+  "536": [
+    "jugo_gastrico",
+    "sustituto",
+    "trampa_rocas"
+  ],
+  "537": [
+    "desarme",
+    "jugo_gastrico",
+    "puno_incremento",
+    "sustituto",
+    "trampa_rocas"
+  ],
+  "538": [
+    "desarme",
+    "puno_incremento",
+    "sustituto"
+  ],
+  "539": [
+    "desarme",
+    "puno_incremento",
+    "sustituto"
+  ],
+  "550": [
+    "agua_fria",
+    "scale-shot",
+    "sustituto",
+    "testarazo"
+  ],
+  "551": [
+    "arenas_ardientes",
+    "embargo",
+    "ladron",
+    "maldicion",
+    "persecucion",
+    "sustituto",
+    "trampa_rocas"
+  ],
+  "552": [
+    "arenas_ardientes",
+    "desarme",
+    "embargo",
+    "ladron",
+    "maldicion",
+    "puno_incremento",
+    "scale-shot",
+    "sustituto",
+    "trampa_rocas"
+  ],
+  "553": [
+    "arenas_ardientes",
+    "desarme",
+    "embargo",
+    "ladron",
+    "maldicion",
+    "puno_incremento",
+    "scale-shot",
+    "sustituto",
+    "trampa_rocas"
+  ],
+  "554": [
+    "envite_igneo",
+    "ladron",
+    "puno_incremento",
+    "sustituto"
+  ],
+  "555": [
+    "burning-jealousy",
+    "envite_igneo",
+    "ladron",
+    "llama_embrujada",
+    "puno_incremento",
+    "sustituto",
+    "truco"
+  ],
+  "557": [
+    "desarme",
+    "maldicion",
+    "puas",
+    "romperrocas",
+    "sustituto",
+    "trampa_rocas"
+  ],
+  "558": [
+    "desarme",
+    "puas",
+    "romperrocas",
+    "sustituto",
+    "trampa_rocas"
+  ],
+  "562": [
+    "desarme",
+    "embargo",
+    "imitacion",
+    "intercambio",
+    "ladron",
+    "maldicion",
+    "paz_mental",
+    "puas_toxicas",
+    "sustituto",
+    "trick_room",
+    "truco"
+  ],
+  "564": [
+    "desarme",
+    "maldicion",
+    "poder_pasado",
+    "sustituto",
+    "trampa_rocas"
+  ],
+  "565": [
+    "desarme",
+    "maldicion",
+    "poder_pasado",
+    "sustituto",
+    "trampa_rocas"
+  ],
+  "566": [
+    "desarme",
+    "poder_pasado",
+    "sustituto",
+    "tailwind",
+    "testarazo",
+    "trampa_rocas"
+  ],
+  "567": [
+    "desarme",
+    "poder_pasado",
+    "sustituto",
+    "tailwind",
+    "trampa_rocas"
+  ],
+  "570": [
+    "burning-jealousy",
+    "desarme",
+    "embargo",
+    "ladron",
+    "paz_mental",
+    "persecucion",
+    "sustituto",
+    "truco"
+  ],
+  "571": [
+    "burning-jealousy",
+    "desarme",
+    "embargo",
+    "ladron",
+    "paz_mental",
+    "persecucion",
+    "sustituto",
+    "truco"
+  ],
+  "572": [
+    "agua_fria",
+    "alluring-voice",
+    "desarme",
+    "ladron",
+    "paz_mental",
+    "sustituto",
+    "trailblaze",
+    "triple-axel"
+  ],
+  "588": [
+    "desarme",
+    "persecucion",
+    "sustituto"
+  ],
+  "592": [
+    "sustituto",
+    "trick_room",
+    "truco"
+  ],
+  "593": [
+    "sustituto",
+    "trick_room",
+    "truco"
+  ],
+  "599": [
+    "reciclaje",
+    "steel-beam",
+    "sustituto"
+  ],
+  "600": [
+    "reciclaje",
+    "steel-beam",
+    "sustituto"
+  ],
+  "601": [
+    "reciclaje",
+    "steel-beam",
+    "sustituto",
+    "trick_room"
+  ],
+  "607": [
+    "burning-jealousy",
+    "embargo",
+    "envite_igneo",
+    "ladron",
+    "llama_embrujada",
+    "maldicion",
+    "paz_mental",
+    "sustituto",
+    "trick_room",
+    "truco"
+  ],
+  "608": [
+    "burning-jealousy",
+    "embargo",
+    "envite_igneo",
+    "ladron",
+    "llama_embrujada",
+    "maldicion",
+    "paz_mental",
+    "sustituto",
+    "trick_room",
+    "truco"
+  ],
+  "609": [
+    "burning-jealousy",
+    "embargo",
+    "envite_igneo",
+    "ladron",
+    "llama_embrujada",
+    "maldicion",
+    "paz_mental",
+    "sustituto",
+    "trailblaze",
+    "trick_room",
+    "truco"
+  ],
+  "610": [
+    "draco-meteor",
+    "scale-shot",
+    "sustituto",
+    "trailblaze"
+  ],
+  "611": [
+    "draco-meteor",
+    "scale-shot",
+    "sustituto",
+    "trailblaze"
+  ],
+  "612": [
+    "draco-meteor",
+    "scale-shot",
+    "sustituto",
+    "trailblaze"
+  ],
+  "613": [
+    "agua_fria",
+    "carambano",
+    "ladron",
+    "puno_incremento",
+    "sustituto",
+    "trailblaze",
+    "vaho_gelido"
+  ],
+  "614": [
+    "agua_fria",
+    "carambano",
+    "ladron",
+    "maldicion",
+    "puno_incremento",
+    "sustituto",
+    "trailblaze",
+    "vaho_gelido"
+  ],
+  "616": [
+    "jugo_gastrico",
+    "maldicion",
+    "persecucion",
+    "puas",
+    "puas_toxicas",
+    "sustituto"
+  ],
+  "617": [
+    "desarme",
+    "jugo_gastrico",
+    "maldicion",
+    "puas",
+    "puas_toxicas",
+    "sustituto"
+  ],
+  "618": [
+    "camuflaje",
+    "maldicion",
+    "sustituto",
+    "trampa_rocas"
+  ],
+  "621": [
+    "cola_veneno",
+    "draco-meteor",
+    "persecucion",
+    "puno_incremento",
+    "scale-shot",
+    "sustituto",
+    "trampa_rocas"
+  ],
+  "624": [
+    "desarme",
+    "embargo",
+    "imitacion",
+    "ladron",
+    "persecucion",
+    "puno_incremento",
+    "steel-beam",
+    "sustituto",
+    "trampa_rocas"
+  ],
+  "625": [
+    "desarme",
+    "embargo",
+    "imitacion",
+    "ladron",
+    "puno_incremento",
+    "represion_metal",
+    "steel-beam",
+    "sustituto",
+    "trampa_rocas"
+  ],
+  "626": [
+    "cuerno_certero",
+    "persecucion",
+    "sustituto"
+  ],
+  "627": [
+    "danza_pluma",
+    "sustituto",
+    "tailwind"
+  ],
+  "628": [
+    "danza_pluma",
+    "sustituto",
+    "tailwind"
+  ],
+  "631": [
+    "arenas_ardientes",
+    "burning-jealousy",
+    "desarme",
+    "envite_igneo",
+    "jugo_gastrico",
+    "ladron",
+    "maldicion",
+    "persecucion",
+    "puno_incremento",
+    "reciclaje",
+    "sustituto"
+  ],
+  "632": [
+    "represion_metal",
+    "steel-beam",
+    "sustituto"
+  ],
+  "633": [
+    "draco-meteor",
+    "ladron",
+    "sustituto",
+    "testarazo"
+  ],
+  "634": [
+    "draco-meteor",
+    "ladron",
+    "sustituto"
+  ],
+  "642": [
+    "cuerno_certero",
+    "desarme",
+    "embargo",
+    "imitacion",
+    "ladron",
+    "sustituto"
+  ],
+  "656": [
+    "agua_fria",
+    "camuflaje",
+    "imitacion",
+    "ladron",
+    "puas",
+    "puas_toxicas",
+    "puno_incremento",
+    "sustituto",
+    "trailblaze"
+  ],
+  "657": [
+    "agua_fria",
+    "imitacion",
+    "ladron",
+    "puas",
+    "puas_toxicas",
+    "puno_incremento",
+    "sustituto",
+    "trailblaze"
+  ],
+  "658": [
+    "agua_fria",
+    "imitacion",
+    "ladron",
+    "puas",
+    "puas_toxicas",
+    "puno_incremento",
+    "sustituto",
+    "trailblaze"
+  ],
+  "660": [
+    "arenas_ardientes",
+    "desarme",
+    "jugo_gastrico",
+    "ladron",
+    "puas",
+    "puno_incremento",
+    "reciclaje",
+    "sustituto",
+    "trailblaze"
+  ],
+  "661": [
+    "danza_pluma",
+    "envite_igneo",
+    "ladron",
+    "sustituto",
+    "tailwind"
+  ],
+  "662": [
+    "danza_pluma",
+    "envite_igneo",
+    "ladron",
+    "sustituto",
+    "tailwind"
+  ],
+  "663": [
+    "danza_pluma",
+    "envite_igneo",
+    "ladron",
+    "patada_ignea",
+    "sustituto",
+    "tailwind"
+  ],
+  "667": [
+    "envite_igneo",
+    "ladron",
+    "sustituto",
+    "trailblaze"
+  ],
+  "668": [
+    "arenas_ardientes",
+    "burning-jealousy",
+    "envite_igneo",
+    "ladron",
+    "sustituto",
+    "trailblaze"
+  ],
+  "674": [
+    "desarme",
+    "empujon",
+    "puno_incremento",
+    "sustituto"
+  ],
+  "675": [
+    "desarme",
+    "embargo",
+    "empujon",
+    "ladron",
+    "puno_incremento",
+    "sustituto"
+  ],
+  "676": [
+    "imitacion",
+    "sustituto",
+    "trailblaze"
+  ],
+  "690": [
+    "agua_fria",
+    "camuflaje",
+    "cola_veneno",
+    "ladron",
+    "puas_toxicas",
+    "scale-shot",
+    "sustituto"
+  ],
+  "691": [
+    "agua_fria",
+    "camuflaje",
+    "cola_veneno",
+    "draco-meteor",
+    "ladron",
+    "puas_toxicas",
+    "scale-shot",
+    "sustituto"
+  ],
+  "696": [
+    "draco-meteor",
+    "maldicion",
+    "poder_pasado",
+    "scale-shot",
+    "sustituto",
+    "trampa_rocas"
+  ],
+  "697": [
+    "draco-meteor",
+    "maldicion",
+    "poder_pasado",
+    "scale-shot",
+    "sustituto",
+    "testarazo",
+    "trampa_rocas"
+  ],
+  "704": [
+    "agua_fria",
+    "cola_veneno",
+    "draco-meteor",
+    "maldicion",
+    "sustituto"
+  ],
+  "705": [
+    "agua_fria",
+    "draco-meteor",
+    "maldicion",
+    "sustituto"
+  ],
+  "706": [
+    "agua_fria",
+    "cola_veneno",
+    "desarme",
+    "draco-meteor",
+    "maldicion",
+    "sustituto"
+  ],
+  "712": [
+    "agua_fria",
+    "carambano",
+    "maldicion",
+    "sustituto",
+    "vaho_gelido"
+  ],
+  "713": [
+    "agua_fria",
+    "carambano",
+    "maldicion",
+    "sustituto",
+    "vaho_gelido"
+  ],
+  "718": [
+    "arenas_ardientes",
+    "camuflaje",
+    "draco-meteor",
+    "scale-shot",
+    "sustituto",
+    "velocidad_extrema"
+  ],
+  "725": [
+    "envite_igneo",
+    "sustituto",
+    "trailblaze"
+  ],
+  "726": [
+    "envite_igneo",
+    "sustituto",
+    "trailblaze"
+  ],
+  "727": [
+    "arenas_ardientes",
+    "burning-jealousy",
+    "desarme",
+    "embargo",
+    "envite_igneo",
+    "ladron",
+    "patada_ignea",
+    "sustituto",
+    "trailblaze"
+  ],
+  "728": [
+    "agua_fria",
+    "canto_mortal",
+    "sustituto",
+    "triple-axel"
+  ],
+  "729": [
+    "agua_fria",
+    "canto_mortal",
+    "sustituto",
+    "triple-axel"
+  ],
+  "741": [
+    "alluring-voice",
+    "danza_pluma",
+    "embargo",
+    "imitacion",
+    "paz_mental",
+    "sustituto",
+    "tailwind",
+    "trailblaze"
+  ],
+  "744": [
+    "sustituto",
+    "trailblaze",
+    "trampa_rocas"
+  ],
+  "745": [
+    "sustituto",
+    "trailblaze",
+    "trampa_rocas"
+  ],
+  "746": [
+    "scale-shot",
+    "sustituto"
+  ],
+  "747": [
+    "agua_fria",
+    "desarme",
+    "jugo_gastrico",
+    "puas_toxicas",
+    "sustituto",
+    "vaho_gelido"
+  ],
+  "749": [
+    "maldicion",
+    "sustituto",
+    "trampa_rocas"
+  ],
+  "750": [
+    "maldicion",
+    "sustituto",
+    "trampa_rocas"
+  ],
+  "751": [
+    "agua_fria",
+    "sustituto",
+    "trailblaze",
+    "vaho_gelido",
+    "zona_magica"
+  ],
+  "753": [
+    "hoja_aguda",
+    "sustituto",
+    "trailblaze"
+  ],
+  "754": [
+    "desarme",
+    "hoja_aguda",
+    "sustituto",
+    "trailblaze"
+  ],
+  "757": [
+    "burning-jealousy",
+    "cola_veneno",
+    "desarme",
+    "envite_igneo",
+    "ladron",
+    "puas_toxicas",
+    "scale-shot",
+    "sustituto",
+    "trailblaze"
+  ],
+  "758": [
+    "burning-jealousy",
+    "cola_veneno",
+    "desarme",
+    "envite_igneo",
+    "ladron",
+    "puas_toxicas",
+    "scale-shot",
+    "sustituto",
+    "trailblaze"
+  ],
+  "760": [
+    "imitacion",
+    "sustituto"
+  ],
+  "766": [
+    "agua_fria",
+    "desarme",
+    "ladron",
+    "maldicion",
+    "onda_vacio",
+    "sustituto",
+    "trailblaze"
+  ],
+  "769": [
+    "agua_fria",
+    "arenas_ardientes",
+    "imitacion",
+    "intercambio",
+    "maldicion",
+    "poder_pasado",
+    "reciclaje",
+    "sustituto",
+    "trampa_rocas",
+    "truco"
+  ],
+  "770": [
+    "agua_fria",
+    "arenas_ardientes",
+    "embargo",
+    "imitacion",
+    "intercambio",
+    "maldicion",
+    "reciclaje",
+    "sustituto",
+    "trampa_rocas",
+    "truco"
+  ],
+  "772": [
+    "persecucion",
+    "sustituto"
+  ],
+  "781": [
+    "desarme",
+    "embargo",
+    "imitacion",
+    "ladron",
+    "sustituto"
+  ],
+  "782": [
+    "draco-meteor",
+    "scale-shot",
+    "sustituto"
+  ],
+  "783": [
+    "draco-meteor",
+    "onda_vacio",
+    "scale-shot",
+    "sustituto"
+  ],
+  "784": [
+    "draco-meteor",
+    "onda_vacio",
+    "scale-shot",
+    "sustituto",
+    "trampa_rocas"
+  ],
+  "794": [
+    "puno_incremento",
+    "sustituto"
+  ],
+  "798": [
+    "cuerno_certero",
+    "desarme",
+    "hoja_aguda",
+    "onda_vacio",
+    "paz_mental",
+    "steel-beam",
+    "sustituto",
+    "tailwind"
+  ],
+  "799": [
+    "desarme",
+    "draco-meteor",
+    "jugo_gastrico",
+    "ladron",
+    "sustituto"
+  ],
+  "802": [
+    "desarme",
+    "imitacion",
+    "ladron",
+    "patada_ignea",
+    "paz_mental",
+    "persecucion",
+    "puno_sombra",
+    "sustituto"
+  ],
+  "803": [
+    "jugo_gastrico",
+    "puas_toxicas",
+    "sustituto"
+  ],
+  "804": [
+    "cuerno_certero",
+    "draco-meteor",
+    "jugo_gastrico",
+    "ladron",
+    "puas",
+    "puas_toxicas",
+    "scale-shot",
+    "sustituto",
+    "tailwind"
+  ],
+  "807": [
+    "desarme",
+    "patada_ignea",
+    "paz_mental",
+    "puno_incremento",
+    "sustituto"
+  ],
+  "808": [
+    "steel-beam",
+    "sustituto"
+  ],
+  "820": [
+    "desarme",
+    "ladron",
+    "maldicion",
+    "sustituto"
+  ],
+  "827": [
+    "desarme",
+    "ladron",
+    "sustituto"
+  ],
+  "828": [
+    "burning-jealousy",
+    "ladron",
+    "sustituto"
+  ],
+  "833": [
+    "agua_fria",
+    "jugo_gastrico",
+    "scale-shot",
+    "sustituto"
+  ],
+  "834": [
+    "agua_fria",
+    "cuerno_certero",
+    "scale-shot",
+    "sustituto",
+    "testarazo",
+    "trampa_rocas"
+  ],
+  "835": [
+    "sustituto"
+  ],
+  "836": [
+    "sustituto"
+  ],
+  "843": [
+    "arenas_ardientes",
+    "cola_veneno",
+    "scale-shot",
+    "sustituto",
+    "trampa_rocas"
+  ],
+  "844": [
+    "arenas_ardientes",
+    "cola_veneno",
+    "scale-shot",
+    "sustituto",
+    "trampa_rocas"
+  ],
+  "846": [
+    "agua_fria",
+    "scale-shot",
+    "sustituto"
+  ],
+  "847": [
+    "agua_fria",
+    "scale-shot",
+    "sustituto"
+  ],
+  "848": [
+    "puno_incremento",
+    "sustituto"
+  ],
+  "849": [
+    "cola_veneno",
+    "ladron",
+    "puas_toxicas",
+    "sustituto",
+    "trailblaze"
+  ],
+  "851": [
+    "arenas_ardientes",
+    "envite_igneo",
+    "llama_embrujada",
+    "sustituto"
+  ],
+  "852": [
+    "puno_incremento",
+    "sustituto"
+  ],
+  "853": [
+    "sustituto"
+  ],
+  "854": [
+    "intercambio",
+    "maldicion",
+    "paz_mental",
+    "sustituto",
+    "trick_room",
+    "truco"
+  ],
+  "862": [
+    "ladron",
+    "sustituto",
+    "truco"
+  ],
+  "863": [
+    "agua_fria",
+    "desarme",
+    "ladron",
+    "maldicion",
+    "represion_metal",
+    "steel-beam",
+    "sustituto",
+    "trailblaze",
+    "trampa_rocas"
+  ],
+  "865": [
+    "desarme",
+    "hoja_aguda",
+    "sustituto"
+  ],
+  "868": [
+    "sustituto"
+  ],
+  "870": [
+    "cuerno_certero",
+    "desarme",
+    "sustituto",
+    "trailblaze"
+  ],
+  "872": [
+    "carambano",
+    "sustituto"
+  ],
+  "876": [
+    "intercambio",
+    "llama_embrujada",
+    "paz_mental",
+    "sustituto",
+    "trick_room",
+    "truco",
+    "zona_magica"
+  ],
+  "877": [
+    "desarme",
+    "ladron",
+    "sustituto"
+  ],
+  "879": [
+    "desarme",
+    "maldicion",
+    "steel-beam",
+    "sustituto",
+    "trampa_rocas"
+  ],
+  "880": [
+    "draco-meteor",
+    "poder_pasado",
+    "sustituto"
+  ],
+  "881": [
+    "carambano",
+    "poder_pasado",
+    "sustituto"
+  ],
+  "882": [
+    "draco-meteor",
+    "poder_pasado",
+    "sustituto"
+  ],
+  "883": [
+    "carambano",
+    "poder_pasado",
+    "sustituto"
+  ],
+  "885": [
+    "draco-meteor",
+    "maldicion",
+    "sustituto"
+  ],
+  "888": [
+    "steel-beam",
+    "sustituto",
+    "trailblaze"
+  ],
+  "891": [
+    "sustituto"
+  ],
+  "892": [
+    "sustituto",
+    "trailblaze"
+  ],
+  "893": [
+    "desarme",
+    "ladron",
+    "sustituto",
+    "trailblaze"
+  ],
+  "896": [
+    "carambano",
+    "cuerno_certero",
+    "maldicion",
+    "sustituto",
+    "trailblaze"
+  ],
+  "897": [
+    "maldicion",
+    "paz_mental",
+    "sustituto"
+  ],
+  "901": [
+    "ladron",
+    "maldicion",
+    "onda_vacio",
+    "sustituto",
+    "trailblaze"
+  ],
+  "902": [
+    "agua_fria",
+    "scale-shot",
+    "sustituto",
+    "testarazo"
+  ],
+  "903": [
+    "cola_veneno",
+    "ladron",
+    "onda_vacio",
+    "paz_mental",
+    "puas_toxicas",
+    "sustituto",
+    "trailblaze"
+  ],
+  "905": [
+    "alluring-voice",
+    "llama_embrujada",
+    "misty-explosion",
+    "paz_mental",
+    "sustituto",
+    "tailwind"
+  ],
+  "907": [
+    "sustituto",
+    "trailblaze"
+  ],
+  "909": [
+    "envite_igneo",
+    "maldicion",
+    "sustituto"
+  ],
+  "910": [
+    "envite_igneo",
+    "maldicion",
+    "sustituto"
+  ],
+  "911": [
+    "alluring-voice",
+    "arenas_ardientes",
+    "envite_igneo",
+    "maldicion",
+    "sustituto"
+  ],
+  "914": [
+    "agua_fria",
+    "danza_pluma",
+    "desarme",
+    "sustituto",
+    "triple-axel"
+  ],
+  "915": [
+    "agua_fria",
+    "ladron",
+    "maldicion",
+    "sustituto",
+    "trailblaze"
+  ],
+  "916": [
+    "agua_fria",
+    "ladron",
+    "maldicion",
+    "sustituto",
+    "trailblaze"
+  ],
+  "917": [
+    "desarme",
+    "jugo_gastrico",
+    "ladron",
+    "puas",
+    "puas_toxicas",
+    "sustituto",
+    "trailblaze"
+  ],
+  "918": [
+    "desarme",
+    "jugo_gastrico",
+    "ladron",
+    "puas",
+    "puas_toxicas",
+    "sustituto",
+    "trailblaze"
+  ],
+  "919": [
+    "ladron",
+    "sustituto",
+    "trailblaze"
+  ],
+  "920": [
+    "desarme",
+    "ladron",
+    "sustituto",
+    "trailblaze"
+  ],
+  "921": [
+    "ladron",
+    "sustituto"
+  ],
+  "922": [
+    "desarme",
+    "empujon",
+    "ladron",
+    "sustituto"
+  ],
+  "923": [
+    "desarme",
+    "empujon",
+    "ladron",
+    "sustituto"
+  ],
+  "924": [
+    "ladron",
+    "sustituto"
+  ],
+  "925": [
+    "agua_fria",
+    "ladron",
+    "sustituto",
+    "trailblaze"
+  ],
+  "926": [
+    "alluring-voice",
+    "sustituto",
+    "trailblaze"
+  ],
+  "927": [
+    "alluring-voice",
+    "sustituto",
+    "trailblaze"
+  ],
+  "931": [
+    "danza_pluma",
+    "ladron",
+    "sustituto",
+    "tailwind"
+  ],
+  "932": [
+    "maldicion",
+    "poder_pasado",
+    "sustituto",
+    "trampa_rocas"
+  ],
+  "933": [
+    "maldicion",
+    "sustituto",
+    "trampa_rocas"
+  ],
+  "935": [
+    "envite_igneo",
+    "sustituto"
+  ],
+  "940": [
+    "danza_pluma",
+    "sustituto",
+    "tailwind"
+  ],
+  "941": [
+    "danza_pluma",
+    "sustituto",
+    "tailwind"
+  ],
+  "942": [
+    "ladron",
+    "sustituto",
+    "trailblaze"
+  ],
+  "943": [
+    "ladron",
+    "maldicion",
+    "sustituto",
+    "trailblaze"
+  ],
+  "944": [
+    "desarme",
+    "ladron",
+    "sustituto",
+    "trailblaze"
+  ],
+  "945": [
+    "cola_veneno",
+    "desarme",
+    "ladron",
+    "sustituto",
+    "trailblaze"
+  ],
+  "960": [
+    "agua_fria",
+    "sustituto"
+  ],
+  "961": [
+    "agua_fria",
+    "sustituto"
+  ],
+  "962": [
+    "danza_pluma",
+    "desarme",
+    "ladron",
+    "maldicion",
+    "sustituto",
+    "tailwind",
+    "trampa_rocas"
+  ],
+  "963": [
+    "agua_fria",
+    "sustituto"
+  ],
+  "964": [
+    "agua_fria",
+    "sustituto"
+  ],
+  "966": [
+    "ladron",
+    "magical-torque",
+    "maldicion",
+    "noxious-torque",
+    "puas_toxicas",
+    "steel-beam",
+    "sustituto"
+  ],
+  "967": [
+    "desarme",
+    "draco-meteor",
+    "ladron",
+    "scale-shot",
+    "sustituto",
+    "trailblaze"
+  ],
+  "968": [
+    "maldicion",
+    "puas",
+    "represion_metal",
+    "steel-beam",
+    "sustituto",
+    "trampa_rocas"
+  ],
+  "971": [
+    "ladron",
+    "sustituto",
+    "truco"
+  ],
+  "972": [
+    "ladron",
+    "sustituto",
+    "truco"
+  ],
+  "973": [
+    "agua_fria",
+    "danza_pluma",
+    "ladron",
+    "sustituto",
+    "tailwind"
+  ],
+  "974": [
+    "agua_fria",
+    "carambano",
+    "desarme",
+    "maldicion",
+    "sustituto"
+  ],
+  "975": [
+    "agua_fria",
+    "carambano",
+    "desarme",
+    "maldicion",
+    "sustituto"
+  ],
+  "976": [
+    "agua_fria",
+    "scale-shot",
+    "sustituto"
+  ],
+  "977": [
+    "agua_fria",
+    "maldicion",
+    "sustituto"
+  ],
+  "978": [
+    "agua_fria",
+    "draco-meteor",
+    "sustituto"
+  ],
+  "979": [
+    "ladron",
+    "maldicion",
+    "onda_vacio",
+    "puno_sombra",
+    "sustituto",
+    "trampa_rocas"
+  ],
+  "980": [
+    "agua_fria",
+    "cola_veneno",
+    "maldicion",
+    "puas",
+    "puas_toxicas",
+    "sustituto",
+    "trailblaze",
+    "trampa_rocas"
+  ],
+  "983": [
+    "ladron",
+    "represion_metal",
+    "steel-beam",
+    "sustituto",
+    "trampa_rocas"
+  ],
+  "987": [
+    "canto_mortal",
+    "llama_embrujada",
+    "paz_mental",
+    "sustituto",
+    "trick_room"
+  ],
+  "992": [
+    "empujon",
+    "sustituto"
+  ],
+  "993": [
+    "desarme",
+    "sustituto",
+    "tailwind"
+  ],
+  "995": [
+    "maldicion",
+    "puas",
+    "sustituto",
+    "trampa_rocas"
+  ],
+  "996": [
+    "carambano",
+    "draco-meteor",
+    "sustituto"
+  ],
+  "997": [
+    "carambano",
+    "draco-meteor",
+    "sustituto"
+  ],
+  "998": [
+    "carambano",
+    "draco-meteor",
+    "scale-shot",
+    "sustituto"
+  ],
+  "1002": [
+    "sustituto"
+  ],
+  "1003": [
+    "puas",
+    "sustituto",
+    "trampa_rocas"
+  ],
+  "1005": [
+    "desarme",
+    "draco-meteor",
+    "scale-shot",
+    "sustituto",
+    "tailwind"
+  ],
+  "1007": [
+    "draco-meteor",
+    "envite_igneo",
+    "poder_pasado",
+    "scale-shot",
+    "sustituto"
+  ],
+  "1009": [
+    "agua_fria",
+    "desarme",
+    "draco-meteor",
+    "sustituto"
+  ],
+  "1010": [
+    "cuerno_certero",
+    "hoja_aguda",
+    "paz_mental",
+    "sustituto",
+    "trailblaze"
+  ],
+  "1014": [
+    "cola_veneno",
+    "desarme",
+    "ladron",
+    "maldicion",
+    "sustituto"
+  ],
+  "1020": [
+    "arenas_ardientes",
+    "cuerno_certero",
+    "draco-meteor",
+    "envite_igneo",
+    "poder_pasado",
+    "scale-shot",
+    "sustituto"
+  ],
+  "1021": [
+    "draco-meteor",
+    "paz_mental",
+    "poder_pasado",
+    "sustituto"
+  ],
+  "1022": [
+    "sustituto"
+  ],
+  "1023": [
+    "cuerno_certero",
+    "paz_mental",
+    "represion_metal",
+    "steel-beam",
+    "sustituto"
+  ],
+  "1024": [
+    "arenas_ardientes",
+    "envite_igneo",
+    "paz_mental",
+    "poder_pasado",
+    "sustituto",
+    "trampa_rocas"
+  ],
+  "10007": [
+    "draco-meteor",
+    "golpe_umbrio",
+    "maldicion",
+    "paz_mental",
+    "poder_pasado",
+    "sustituto",
+    "tailwind"
+  ],
+  "10016": [
+    "agua_fria",
+    "scale-shot",
+    "sustituto",
+    "testarazo"
+  ],
+  "10017": [
+    "burning-jealousy",
+    "envite_igneo",
+    "ladron",
+    "llama_embrujada",
+    "puno_incremento",
+    "sustituto",
+    "truco"
+  ],
+  "10020": [
+    "cuerno_certero",
+    "desarme",
+    "embargo",
+    "imitacion",
+    "ladron",
+    "sustituto"
+  ],
+  "10039": [
+    "ladron",
+    "puno_incremento",
+    "sustituto"
+  ],
+  "10040": [
+    "desarme",
+    "ladron",
+    "sustituto",
+    "trampa_rocas"
+  ],
+  "10047": [
+    "cuerno_certero",
+    "desarme",
+    "empujon",
+    "ladron",
+    "maldicion",
+    "onda_vacio",
+    "persecucion",
+    "puas",
+    "sustituto",
+    "trailblaze"
+  ],
+  "10048": [
+    "arenas_ardientes",
+    "burning-jealousy",
+    "embargo",
+    "envite_igneo",
+    "imitacion",
+    "ladron",
+    "sustituto",
+    "trailblaze"
+  ],
+  "10049": [
+    "desarme",
+    "maldicion",
+    "poder_pasado",
+    "puno_incremento",
+    "sustituto",
+    "trampa_rocas"
+  ],
+  "10052": [
+    "desarme",
+    "embargo",
+    "poder_pasado",
+    "puno_incremento",
+    "represion_metal",
+    "steel-beam",
+    "sustituto",
+    "trampa_rocas"
+  ],
+  "10053": [
+    "cuerno_certero",
+    "maldicion",
+    "poder_pasado",
+    "puno_incremento",
+    "represion_metal",
+    "steel-beam",
+    "sustituto",
+    "testarazo",
+    "trampa_rocas"
+  ],
+  "10056": [
+    "burning-jealousy",
+    "desarme",
+    "embargo",
+    "imitacion",
+    "intercambio",
+    "ladron",
+    "maldicion",
+    "paz_mental",
+    "puno_sombra",
+    "sustituto",
+    "trailblaze",
+    "trick_room",
+    "truco",
+    "zona_magica"
+  ],
+  "10057": [
+    "canto_mortal",
+    "desarme",
+    "imitacion",
+    "ladron",
+    "maldicion",
+    "paz_mental",
+    "persecucion",
+    "sustituto",
+    "trailblaze"
+  ],
+  "10058": [
+    "arenas_ardientes",
+    "draco-meteor",
+    "puas",
+    "scale-shot",
+    "sustituto",
+    "trampa_rocas"
+  ],
+  "10064": [
+    "agua_fria",
+    "desarme",
+    "maldicion",
+    "poder_pasado",
+    "puno_incremento",
+    "sustituto",
+    "trampa_rocas"
+  ],
+  "10067": [
+    "alluring-voice",
+    "canto_mortal",
+    "danza_pluma",
+    "draco-meteor",
+    "ladron",
+    "sustituto",
+    "tailwind",
+    "trailblaze"
+  ],
+  "10070": [
+    "agua_fria",
+    "ladron",
+    "poder_pasado",
+    "scale-shot",
+    "sustituto"
+  ],
+  "10077": [
+    "paz_mental",
+    "poder_pasado",
+    "pulso_primigenio",
+    "sustituto"
+  ],
+  "10078": [
+    "filo_del_abismo",
+    "poder_pasado",
+    "puno_incremento",
+    "sustituto",
+    "trampa_rocas"
+  ],
+  "10079": [
+    "ascenso_draco",
+    "draco-meteor",
+    "poder_pasado",
+    "sustituto",
+    "tailwind",
+    "velocidad_extrema"
+  ],
+  "10089": [
+    "draco-meteor",
+    "sustituto",
+    "tailwind"
+  ],
+  "10105": [
+    "arenas_ardientes",
+    "ladron",
+    "persecucion",
+    "poder_pasado",
+    "steel-beam",
+    "sustituto",
+    "trampa_rocas"
+  ],
+  "10106": [
+    "arenas_ardientes",
+    "ladron",
+    "maldicion",
+    "steel-beam",
+    "sustituto",
+    "trampa_rocas"
+  ],
+  "10107": [
+    "agua_fria",
+    "desarme",
+    "embargo",
+    "ladron",
+    "maldicion",
+    "sustituto",
+    "trailblaze"
+  ],
+  "10108": [
+    "agua_fria",
+    "burning-jealousy",
+    "desarme",
+    "embargo",
+    "ladron",
+    "maldicion",
+    "sustituto",
+    "trailblaze"
+  ],
+  "10116": [
+    "imitacion",
+    "ladron",
+    "puas",
+    "sustituto"
+  ],
+  "10117": [
+    "agua_fria",
+    "imitacion",
+    "ladron",
+    "puas",
+    "puas_toxicas",
+    "sustituto",
+    "trailblaze"
+  ],
+  "10118": [
+    "arenas_ardientes",
+    "camuflaje",
+    "draco-meteor",
+    "scale-shot",
+    "sustituto",
+    "velocidad_extrema"
+  ],
+  "10119": [
+    "arenas_ardientes",
+    "camuflaje",
+    "draco-meteor",
+    "scale-shot",
+    "sustituto",
+    "velocidad_extrema"
+  ],
+  "10120": [
+    "arenas_ardientes",
+    "camuflaje",
+    "draco-meteor",
+    "scale-shot",
+    "sustituto",
+    "velocidad_extrema"
+  ],
+  "10123": [
+    "alluring-voice",
+    "danza_pluma",
+    "embargo",
+    "imitacion",
+    "paz_mental",
+    "sustituto",
+    "tailwind",
+    "trailblaze"
+  ],
+  "10124": [
+    "alluring-voice",
+    "danza_pluma",
+    "embargo",
+    "imitacion",
+    "paz_mental",
+    "sustituto",
+    "tailwind",
+    "trailblaze"
+  ],
+  "10125": [
+    "alluring-voice",
+    "danza_pluma",
+    "embargo",
+    "imitacion",
+    "paz_mental",
+    "sustituto",
+    "tailwind",
+    "trailblaze"
+  ],
+  "10126": [
+    "desarme",
+    "sustituto",
+    "trailblaze",
+    "trampa_rocas"
+  ],
+  "10127": [
+    "scale-shot",
+    "sustituto"
+  ],
+  "10128": [
+    "desarme",
+    "hoja_aguda",
+    "sustituto"
+  ],
+  "10129": [
+    "desarme",
+    "ladron",
+    "sustituto"
+  ],
+  "10146": [
+    "draco-meteor",
+    "sustituto",
+    "trampa_rocas"
+  ],
+  "10151": [
+    "sustituto",
+    "trailblaze",
+    "trampa_rocas"
+  ],
+  "10152": [
+    "sustituto",
+    "trailblaze",
+    "trampa_rocas"
+  ],
+  "10161": [
+    "desarme",
+    "ladron",
+    "maldicion",
+    "steel-beam",
+    "sustituto",
+    "trailblaze",
+    "trampa_rocas"
+  ],
+  "10162": [
+    "llama_embrujada",
+    "paz_mental",
+    "sustituto"
+  ],
+  "10163": [
+    "cuerno_certero",
+    "llama_embrujada",
+    "paz_mental",
+    "sustituto",
+    "trick_room",
+    "zona_magica"
+  ],
+  "10166": [
+    "desarme",
+    "hoja_aguda",
+    "maldicion",
+    "sustituto"
+  ],
+  "10174": [
+    "desarme",
+    "ladron",
+    "sustituto",
+    "truco"
+  ],
+  "10175": [
+    "ladron",
+    "sustituto",
+    "truco"
+  ],
+  "10176": [
+    "envite_igneo",
+    "ladron",
+    "puno_incremento",
+    "sustituto"
+  ],
+  "10177": [
+    "burning-jealousy",
+    "envite_igneo",
+    "ladron",
+    "sustituto"
+  ],
+  "10178": [
+    "burning-jealousy",
+    "envite_igneo",
+    "ladron",
+    "sustituto"
+  ],
+  "10179": [
+    "intercambio",
+    "ladron",
+    "maldicion",
+    "paz_mental",
+    "puas_toxicas",
+    "sustituto",
+    "trick_room",
+    "truco"
+  ],
+  "10180": [
+    "maldicion",
+    "steel-beam",
+    "sustituto",
+    "trampa_rocas"
+  ],
+  "10181": [
+    "arenas_ardientes",
+    "camuflaje",
+    "draco-meteor",
+    "scale-shot",
+    "sustituto",
+    "velocidad_extrema"
+  ],
+  "10184": [
+    "cola_veneno",
+    "ladron",
+    "puas_toxicas",
+    "sustituto",
+    "trailblaze"
+  ],
+  "10187": [
+    "desarme",
+    "ladron",
+    "sustituto"
+  ],
+  "10188": [
+    "steel-beam",
+    "sustituto",
+    "trailblaze"
+  ],
+  "10191": [
+    "agua_fria",
+    "sustituto",
+    "trailblaze"
+  ],
+  "10192": [
+    "desarme",
+    "ladron",
+    "sustituto",
+    "trailblaze"
+  ],
+  "10229": [
+    "arenas_ardientes",
+    "cuerno_certero",
+    "envite_igneo",
+    "sustituto",
+    "testarazo",
+    "trampa_rocas"
+  ],
+  "10230": [
+    "arenas_ardientes",
+    "cuerno_certero",
+    "envite_igneo",
+    "ladron",
+    "sustituto",
+    "testarazo",
+    "trampa_rocas",
+    "velocidad_extrema"
+  ],
+  "10235": [
+    "cola_veneno",
+    "ladron",
+    "onda_vacio",
+    "paz_mental",
+    "puas_toxicas",
+    "sustituto",
+    "trailblaze"
+  ],
+  "10236": [
+    "agua_fria",
+    "cuerno_certero",
+    "desarme",
+    "ladron",
+    "onda_vacio",
+    "sustituto"
+  ],
+  "10238": [
+    "burning-jealousy",
+    "desarme",
+    "ladron",
+    "maldicion",
+    "paz_mental",
+    "sustituto",
+    "truco"
+  ],
+  "10239": [
+    "burning-jealousy",
+    "desarme",
+    "ladron",
+    "maldicion",
+    "paz_mental",
+    "sustituto",
+    "truco"
+  ],
+  "10240": [
+    "danza_pluma",
+    "llama_embrujada",
+    "onda_vacio",
+    "paz_mental",
+    "sustituto",
+    "tailwind"
+  ],
+  "10241": [
+    "agua_fria",
+    "draco-meteor",
+    "maldicion",
+    "steel-beam",
+    "sustituto"
+  ],
+  "10242": [
+    "agua_fria",
+    "desarme",
+    "draco-meteor",
+    "maldicion",
+    "poder_pasado",
+    "steel-beam",
+    "sustituto"
+  ],
+  "10243": [
+    "agua_fria",
+    "carambano",
+    "maldicion",
+    "poder_pasado",
+    "sustituto",
+    "trampa_rocas"
+  ],
+  "10245": [
+    "distorsion",
+    "draco-meteor",
+    "poder_pasado",
+    "represion_metal",
+    "steel-beam",
+    "sustituto",
+    "trampa_rocas",
+    "trick_room",
+    "truco"
+  ],
+  "10246": [
+    "agua_fria",
+    "corte_vacio",
+    "draco-meteor",
+    "poder_pasado",
+    "sustituto",
+    "trick_room",
+    "truco"
+  ],
+  "10247": [
+    "agua_fria",
+    "scale-shot",
+    "sustituto",
+    "testarazo"
+  ],
+  "10248": [
+    "agua_fria",
+    "scale-shot",
+    "sustituto",
+    "testarazo"
+  ],
+  "10249": [
+    "alluring-voice",
+    "llama_embrujada",
+    "misty-explosion",
+    "paz_mental",
+    "sustituto",
+    "tailwind"
+  ],
+  "10250": [
+    "cuerno_certero",
+    "ladron",
+    "maldicion",
+    "sustituto",
+    "trailblaze"
+  ],
+  "10251": [
+    "cuerno_certero",
+    "envite_igneo",
+    "ladron",
+    "maldicion",
+    "sustituto",
+    "trailblaze"
+  ],
+  "10252": [
+    "agua_fria",
+    "cuerno_certero",
+    "ladron",
+    "maldicion",
+    "sustituto",
+    "trailblaze"
+  ],
+  "10253": [
+    "agua_fria",
+    "cola_veneno",
+    "maldicion",
+    "poder_pasado",
+    "puas",
+    "puas_toxicas",
+    "sustituto",
+    "trailblaze",
+    "trampa_rocas"
+  ],
+  "10254": [
+    "agua_fria",
+    "ladron",
+    "maldicion",
+    "sustituto",
+    "trailblaze"
+  ],
+  "10256": [
+    "agua_fria",
+    "sustituto"
+  ],
+  "10257": [
+    "agua_fria",
+    "ladron",
+    "sustituto",
+    "trailblaze"
+  ],
+  "10258": [
+    "agua_fria",
+    "draco-meteor",
+    "sustituto"
+  ],
+  "10259": [
+    "agua_fria",
+    "draco-meteor",
+    "sustituto"
+  ],
+  "10260": [
+    "danza_pluma",
+    "ladron",
+    "sustituto",
+    "tailwind"
+  ],
+  "10261": [
+    "danza_pluma",
+    "ladron",
+    "sustituto",
+    "tailwind"
+  ],
+  "10262": [
+    "danza_pluma",
+    "ladron",
+    "sustituto",
+    "tailwind"
+  ],
+  "10264": [
+    "draco-meteor",
+    "envite_igneo",
+    "poder_pasado",
+    "scale-shot",
+    "sustituto"
+  ],
+  "10265": [
+    "draco-meteor",
+    "envite_igneo",
+    "poder_pasado",
+    "scale-shot",
+    "sustituto"
+  ],
+  "10266": [
+    "draco-meteor",
+    "envite_igneo",
+    "poder_pasado",
+    "scale-shot",
+    "sustituto"
+  ],
+  "10267": [
+    "draco-meteor",
+    "envite_igneo",
+    "poder_pasado",
+    "scale-shot",
+    "sustituto"
+  ],
+  "10272": [
+    "ladron",
+    "onda_vacio",
+    "paz_mental",
+    "sustituto",
+    "trailblaze"
+  ],
+  "10276": [
+    "arenas_ardientes",
+    "envite_igneo",
+    "paz_mental",
+    "poder_pasado",
+    "sustituto",
+    "trampa_rocas"
+  ],
+  "10277": [
+    "arenas_ardientes",
+    "envite_igneo",
+    "paz_mental",
+    "poder_pasado",
+    "sustituto",
+    "trampa_rocas"
+  ],
+  "10283": [
+    "agua_fria",
+    "ladron",
+    "maldicion",
+    "poder_pasado",
+    "scale-shot",
+    "sustituto",
+    "trailblaze"
+  ],
+  "10286": [
+    "arenas_ardientes",
+    "desarme",
+    "envite_igneo",
+    "maldicion",
+    "sustituto",
+    "testarazo",
+    "trailblaze"
+  ],
+  "10287": [
+    "arenas_ardientes",
+    "cuerno_certero",
+    "maldicion",
+    "steel-beam",
+    "sustituto",
+    "trampa_rocas"
+  ],
+  "10288": [
+    "cuerno_certero",
+    "puas",
+    "puas_toxicas",
+    "sustituto",
+    "trailblaze"
+  ],
+  "10291": [
+    "burning-jealousy",
+    "envite_igneo",
+    "ladron",
+    "llama_embrujada",
+    "maldicion",
+    "paz_mental",
+    "sustituto",
+    "trailblaze",
+    "trick_room",
+    "truco"
+  ],
+  "10294": [
+    "agua_fria",
+    "imitacion",
+    "ladron",
+    "puas",
+    "puas_toxicas",
+    "sustituto",
+    "trailblaze"
+  ],
+  "10295": [
+    "arenas_ardientes",
+    "burning-jealousy",
+    "envite_igneo",
+    "ladron",
+    "sustituto",
+    "trailblaze"
+  ],
+  "10298": [
+    "agua_fria",
+    "ladron",
+    "poder_pasado",
+    "sustituto",
+    "trampa_rocas"
+  ],
+  "10299": [
+    "agua_fria",
+    "draco-meteor",
+    "ladron",
+    "puas_toxicas",
+    "scale-shot",
+    "sustituto"
+  ],
+  "10303": [
+    "cuerno_certero",
+    "desarme",
+    "sustituto",
+    "trailblaze"
+  ],
+  "10308": [
+    "danza_pluma",
+    "ladron",
+    "patada_ignea",
+    "sustituto",
+    "tailwind"
+  ],
+  "602": [
+    "desarme"
+  ],
+  "913": [
+    "agua_fria",
+    "danza_pluma",
+    "triple-axel"
+  ],
+  "374": [
+    "steel-beam"
+  ],
+  "912": [
+    "agua_fria"
+  ]
+}

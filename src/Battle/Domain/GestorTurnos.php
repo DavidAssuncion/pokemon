@@ -10,6 +10,8 @@ class GestorTurnos
 {
     private int $round = 0;
 
+    private bool $invertirVelocidad = false;
+
     private CombatientesCollection $teamA;
 
     private CombatientesCollection $teamB;
@@ -56,7 +58,18 @@ class GestorTurnos
 
         foreach ($this->allCombatants() as $combatant) {
             $combatant->setVecesActuadoEstaRonda(0);
+            $combatant->reiniciarAccionExtra();
+            $combatant->reiniciarRetraso();
+            $combatant->limpiarPrioridad();
+            $combatant->setRondaActual($this->round);
+
+            if ($combatant->estaVivo()) {
+                $combatant->avanzarCargasMovimiento();
+            }
         }
+
+        $this->team1->normalizarCubridores();
+        $this->team2->normalizarCubridores();
     }
 
     /**
@@ -67,13 +80,46 @@ class GestorTurnos
      */
     public function getNextActor(): ?Combatiente
     {
+        $normal = $this->seleccionarMasRapido(
+            $this->combatientesVivos()->filter(
+                static fn (Combatiente $c): bool => $c->vecesActuadoEstaRonda() === 0 && ! $c->turnoRetrasado(),
+            ),
+        );
+
+        if ($normal !== null) {
+            return $normal;
+        }
+
+        $retrasado = $this->seleccionarMasRapido(
+            $this->combatientesVivos()->filter(
+                static fn (Combatiente $c): bool => $c->vecesActuadoEstaRonda() === 0 && $c->turnoRetrasado(),
+            ),
+        );
+
+        if ($retrasado !== null) {
+            return $retrasado;
+        }
+
+        return $this->seleccionarMasRapido(
+            $this->combatientesVivos()->filter(
+                static fn (Combatiente $c): bool => $c->accionesExtra() > 0,
+            ),
+        );
+    }
+
+    private function seleccionarMasRapido(CombatientesCollection $candidatos): ?Combatiente
+    {
         $seleccionado = null;
         $mejorVelocidad = null;
 
-        foreach ($this->combatientesVivos()->conAccionPendiente() as $candidato) {
-            $velocidad = $candidato->velocidadEfectiva();
+        foreach ($candidatos as $candidato) {
+            $velocidad = $candidato->velocidadEfectiva()
+                * ($this->equipoDe($candidato)?->multiplicadorVelocidad() ?? 1.0);
 
-            if ($mejorVelocidad === null || $velocidad > $mejorVelocidad) {
+            $mejor = $mejorVelocidad === null
+                || ($this->invertirVelocidad ? $velocidad < $mejorVelocidad : $velocidad > $mejorVelocidad);
+
+            if ($mejor) {
                 $seleccionado = $candidato;
                 $mejorVelocidad = $velocidad;
             }
@@ -82,12 +128,44 @@ class GestorTurnos
         return $seleccionado;
     }
 
+    public function setInvertirVelocidad(bool $invertir): void
+    {
+        $this->invertirVelocidad = $invertir;
+    }
+
+    public function velocidadEfectivaDe(Combatiente $combatiente): float
+    {
+        return $combatiente->velocidadEfectiva()
+            * ($this->equipoDe($combatiente)?->multiplicadorVelocidad() ?? 1.0);
+    }
+
+    private function equipoDe(Combatiente $combatiente): ?EquipoBatalla
+    {
+        if ($this->team1->findCombatant($combatiente) !== null) {
+            return $this->team1;
+        }
+
+        if ($this->team2->findCombatant($combatiente) !== null) {
+            return $this->team2;
+        }
+
+        return null;
+    }
+
     /**
      * Marca la acción del actor en la ronda actual. No altera velocidades:
      * cada combatiente vivo actúa exactamente una vez por ronda.
      */
     public function consumeAction(Combatiente $actor): void
     {
+        $actor->limpiarRetraso();
+
+        if ($actor->accionesExtra() > 0) {
+            $actor->setAccionesExtra($actor->accionesExtra() - 1);
+
+            return;
+        }
+
         $actor->setVecesActuadoEstaRonda($actor->vecesActuadoEstaRonda() + 1);
     }
 

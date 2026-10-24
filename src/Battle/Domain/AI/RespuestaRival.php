@@ -66,6 +66,7 @@ class RespuestaRival
                         move: $movimiento,
                         defenderTeamHasVanguard: $equipoAliado->tieneVanguardiaViva(),
                         weather: $estadoSimulado->weather(),
+                        terreno: $estadoSimulado->terreno(),
                     ));
                 }
             }

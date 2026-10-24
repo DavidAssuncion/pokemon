@@ -1,0 +1,3491 @@
+{
+  "1": [
+    "growth"
+  ],
+  "2": [
+    "growth"
+  ],
+  "3": [
+    "growth",
+    "amnesia"
+  ],
+  "4": [
+    "dragon-rage"
+  ],
+  "5": [
+    "dragon-rage"
+  ],
+  "6": [
+    "dragon-rage"
+  ],
+  "7": [
+    "withdraw",
+    "wave-crash"
+  ],
+  "8": [
+    "withdraw",
+    "wave-crash"
+  ],
+  "9": [
+    "withdraw",
+    "wave-crash"
+  ],
+  "11": [
+    "harden"
+  ],
+  "12": [
+    "supersonic",
+    "harden"
+  ],
+  "14": [
+    "harden"
+  ],
+  "15": [
+    "harden"
+  ],
+  "23": [
+    "glare"
+  ],
+  "24": [
+    "glare"
+  ],
+  "25": [
+    "double-team",
+    "sweet-kiss"
+  ],
+  "26": [
+    "double-team",
+    "sweet-kiss"
+  ],
+  "29": [
+    "flatter"
+  ],
+  "30": [
+    "flatter"
+  ],
+  "31": [
+    "supersonic",
+    "flatter"
+  ],
+  "32": [
+    "flatter"
+  ],
+  "33": [
+    "flatter"
+  ],
+  "34": [
+    "supersonic",
+    "flatter"
+  ],
+  "35": [
+    "sing",
+    "minimize",
+    "cosmic-power",
+    "amnesia",
+    "sweet-kiss"
+  ],
+  "36": [
+    "sing",
+    "minimize",
+    "sweet-kiss",
+    "cosmic-power"
+  ],
+  "38": [
+    "hypnosis"
+  ],
+  "39": [
+    "sing",
+    "sweet-kiss"
+  ],
+  "40": [
+    "sing",
+    "minimize",
+    "sweet-kiss"
+  ],
+  "41": [
+    "supersonic",
+    "hypnosis"
+  ],
+  "42": [
+    "supersonic",
+    "hypnosis"
+  ],
+  "43": [
+    "grassy-terrain",
+    "growth"
+  ],
+  "44": [
+    "grassy-terrain",
+    "growth"
+  ],
+  "45": [
+    "growth",
+    "grassy-terrain"
+  ],
+  "46": [
+    "growth"
+  ],
+  "47": [
+    "growth"
+  ],
+  "48": [
+    "supersonic",
+    "struggle-bug"
+  ],
+  "49": [
+    "supersonic",
+    "struggle-bug"
+  ],
+  "51": [
+    "rototiller"
+  ],
+  "52": [
+    "swagger"
+  ],
+  "53": [
+    "swagger",
+    "hypnosis",
+    "amnesia"
+  ],
+  "54": [
+    "amnesia",
+    "hypnosis"
+  ],
+  "55": [
+    "amnesia",
+    "hypnosis"
+  ],
+  "56": [
+    "seismic-toss",
+    "swagger"
+  ],
+  "57": [
+    "seismic-toss",
+    "swagger"
+  ],
+  "58": [
+    "reversal"
+  ],
+  "59": [
+    "reversal"
+  ],
+  "60": [
+    "hypnosis",
+    "amnesia"
+  ],
+  "61": [
+    "hypnosis",
+    "amnesia"
+  ],
+  "62": [
+    "hypnosis"
+  ],
+  "64": [
+    "night-shade",
+    "hypnosis"
+  ],
+  "65": [
+    "barrier",
+    "night-shade",
+    "hypnosis"
+  ],
+  "66": [
+    "seismic-toss"
+  ],
+  "67": [
+    "seismic-toss"
+  ],
+  "68": [
+    "seismic-toss"
+  ],
+  "69": [
+    "growth"
+  ],
+  "70": [
+    "growth"
+  ],
+  "71": [
+    "growth"
+  ],
+  "72": [
+    "supersonic",
+    "barrier",
+    "acid-armor"
+  ],
+  "73": [
+    "supersonic",
+    "barrier",
+    "acid-armor"
+  ],
+  "74": [
+    "harden",
+    "mud-sport",
+    "smack-down"
+  ],
+  "75": [
+    "harden",
+    "mud-sport",
+    "smack-down"
+  ],
+  "76": [
+    "harden",
+    "mud-sport",
+    "smack-down"
+  ],
+  "77": [
+    "hypnosis"
+  ],
+  "78": [
+    "hypnosis"
+  ],
+  "79": [
+    "amnesia"
+  ],
+  "80": [
+    "withdraw",
+    "amnesia"
+  ],
+  "81": [
+    "sonic-boom",
+    "supersonic"
+  ],
+  "82": [
+    "sonic-boom",
+    "supersonic",
+    "electric-terrain"
+  ],
+  "85": [
+    "supersonic"
+  ],
+  "88": [
+    "poison-gas",
+    "minimize",
+    "harden",
+    "acid-armor",
+    "memento"
+  ],
+  "89": [
+    "poison-gas",
+    "minimize",
+    "harden",
+    "acid-armor",
+    "memento",
+    "venom-drench"
+  ],
+  "90": [
+    "withdraw",
+    "supersonic"
+  ],
+  "91": [
+    "supersonic",
+    "withdraw",
+    "barrier"
+  ],
+  "92": [
+    "night-shade",
+    "hypnosis",
+    "dream-eater",
+    "poison-gas"
+  ],
+  "93": [
+    "night-shade",
+    "hypnosis",
+    "dream-eater",
+    "poison-gas"
+  ],
+  "94": [
+    "night-shade",
+    "hypnosis",
+    "dream-eater",
+    "poison-gas"
+  ],
+  "95": [
+    "harden",
+    "mud-sport",
+    "smack-down"
+  ],
+  "96": [
+    "hypnosis",
+    "poison-gas",
+    "meditate",
+    "swagger",
+    "dream-eater"
+  ],
+  "97": [
+    "hypnosis",
+    "poison-gas",
+    "meditate",
+    "swagger",
+    "barrier",
+    "dream-eater"
+  ],
+  "98": [
+    "harden",
+    "flail",
+    "mud-sport"
+  ],
+  "99": [
+    "harden",
+    "flail",
+    "mud-sport",
+    "amnesia"
+  ],
+  "100": [
+    "sonic-boom",
+    "charge",
+    "eerie-impulse"
+  ],
+  "101": [
+    "sonic-boom",
+    "charge",
+    "magnetic-flux",
+    "eerie-impulse"
+  ],
+  "102": [
+    "hypnosis"
+  ],
+  "103": [
+    "hypnosis"
+  ],
+  "106": [
+    "meditate",
+    "reversal"
+  ],
+  "108": [
+    "supersonic"
+  ],
+  "109": [
+    "poison-gas",
+    "memento"
+  ],
+  "110": [
+    "poison-gas",
+    "memento"
+  ],
+  "111": [
+    "smack-down"
+  ],
+  "112": [
+    "smack-down"
+  ],
+  "113": [
+    "sing",
+    "minimize",
+    "sweet-kiss"
+  ],
+  "114": [
+    "growth",
+    "grassy-terrain",
+    "amnesia"
+  ],
+  "115": [
+    "reversal"
+  ],
+  "118": [
+    "supersonic",
+    "flail"
+  ],
+  "119": [
+    "supersonic",
+    "flail"
+  ],
+  "120": [
+    "harden",
+    "minimize",
+    "cosmic-power",
+    "psywave"
+  ],
+  "121": [
+    "harden",
+    "psywave",
+    "minimize",
+    "cosmic-power"
+  ],
+  "122": [
+    "barrier",
+    "meditate",
+    "psywave",
+    "misty-terrain",
+    "teeter-dance",
+    "hypnosis"
+  ],
+  "123": [
+    "double-team"
+  ],
+  "124": [
+    "lovely-kiss",
+    "sweet-kiss",
+    "sing"
+  ],
+  "125": [
+    "charge"
+  ],
+  "126": [
+    "poison-gas"
+  ],
+  "127": [
+    "seismic-toss",
+    "harden"
+  ],
+  "128": [
+    "swagger"
+  ],
+  "129": [
+    "flail"
+  ],
+  "130": [
+    "dragon-rage",
+    "flail"
+  ],
+  "131": [
+    "sing"
+  ],
+  "134": [
+    "acid-armor"
+  ],
+  "137": [
+    "sharpen",
+    "barrier"
+  ],
+  "138": [
+    "withdraw"
+  ],
+  "139": [
+    "withdraw",
+    "supersonic"
+  ],
+  "140": [
+    "harden"
+  ],
+  "141": [
+    "harden"
+  ],
+  "142": [
+    "supersonic"
+  ],
+  "143": [
+    "amnesia",
+    "harden",
+    "flail"
+  ],
+  "145": [
+    "charge",
+    "magnetic-flux"
+  ],
+  "147": [
+    "dragon-rage"
+  ],
+  "148": [
+    "dragon-rage"
+  ],
+  "149": [
+    "dragon-rage"
+  ],
+  "150": [
+    "barrier",
+    "amnesia",
+    "psywave"
+  ],
+  "151": [
+    "barrier",
+    "amnesia",
+    "psywave"
+  ],
+  "158": [
+    "flail"
+  ],
+  "159": [
+    "flail"
+  ],
+  "160": [
+    "flail"
+  ],
+  "161": [
+    "amnesia",
+    "reversal"
+  ],
+  "162": [
+    "amnesia",
+    "reversal"
+  ],
+  "163": [
+    "hypnosis",
+    "dream-eater"
+  ],
+  "164": [
+    "hypnosis",
+    "dream-eater"
+  ],
+  "165": [
+    "supersonic",
+    "struggle-bug"
+  ],
+  "166": [
+    "supersonic",
+    "struggle-bug"
+  ],
+  "167": [
+    "night-shade"
+  ],
+  "168": [
+    "night-shade",
+    "venom-drench"
+  ],
+  "169": [
+    "supersonic",
+    "hypnosis"
+  ],
+  "170": [
+    "supersonic",
+    "flail",
+    "charge"
+  ],
+  "171": [
+    "supersonic",
+    "flail",
+    "charge",
+    "eerie-impulse"
+  ],
+  "172": [
+    "sweet-kiss"
+  ],
+  "173": [
+    "sing",
+    "sweet-kiss"
+  ],
+  "174": [
+    "sing",
+    "sweet-kiss"
+  ],
+  "175": [
+    "sweet-kiss"
+  ],
+  "176": [
+    "sweet-kiss"
+  ],
+  "177": [
+    "night-shade"
+  ],
+  "178": [
+    "night-shade"
+  ],
+  "179": [
+    "charge"
+  ],
+  "180": [
+    "charge"
+  ],
+  "181": [
+    "charge",
+    "magnetic-flux"
+  ],
+  "182": [
+    "growth",
+    "grassy-terrain"
+  ],
+  "185": [
+    "flail"
+  ],
+  "186": [
+    "hypnosis",
+    "swagger"
+  ],
+  "187": [
+    "memento"
+  ],
+  "188": [
+    "memento"
+  ],
+  "189": [
+    "memento"
+  ],
+  "191": [
+    "growth",
+    "grass-whistle"
+  ],
+  "192": [
+    "growth",
+    "grass-whistle"
+  ],
+  "193": [
+    "double-team",
+    "sonic-boom",
+    "supersonic",
+    "hypnosis"
+  ],
+  "194": [
+    "amnesia",
+    "mud-sport"
+  ],
+  "195": [
+    "amnesia",
+    "mud-sport"
+  ],
+  "198": [
+    "night-shade"
+  ],
+  "199": [
+    "swagger",
+    "amnesia"
+  ],
+  "200": [
+    "psywave",
+    "hypnosis"
+  ],
+  "202": [
+    "amnesia"
+  ],
+  "206": [
+    "glare",
+    "flail"
+  ],
+  "207": [
+    "harden"
+  ],
+  "208": [
+    "harden",
+    "mud-sport",
+    "smack-down"
+  ],
+  "211": [
+    "harden",
+    "minimize"
+  ],
+  "212": [
+    "double-team"
+  ],
+  "213": [
+    "withdraw",
+    "struggle-bug"
+  ],
+  "214": [
+    "reversal"
+  ],
+  "218": [
+    "harden",
+    "amnesia"
+  ],
+  "219": [
+    "harden",
+    "amnesia"
+  ],
+  "220": [
+    "amnesia",
+    "mud-sport",
+    "flail"
+  ],
+  "221": [
+    "amnesia",
+    "mud-sport",
+    "flail"
+  ],
+  "222": [
+    "harden",
+    "flail"
+  ],
+  "226": [
+    "supersonic"
+  ],
+  "230": [
+    "wave-crash"
+  ],
+  "231": [
+    "flail"
+  ],
+  "232": [
+    "flail"
+  ],
+  "234": [
+    "hypnosis"
+  ],
+  "238": [
+    "sweet-kiss",
+    "sing"
+  ],
+  "239": [
+    "charge"
+  ],
+  "240": [
+    "poison-gas"
+  ],
+  "242": [
+    "minimize",
+    "sing",
+    "sweet-kiss"
+  ],
+  "243": [
+    "charge"
+  ],
+  "244": [
+    "swagger"
+  ],
+  "246": [
+    "smack-down"
+  ],
+  "247": [
+    "smack-down"
+  ],
+  "248": [
+    "smack-down"
+  ],
+  "252": [
+    "double-team"
+  ],
+  "253": [
+    "double-team"
+  ],
+  "254": [
+    "double-team"
+  ],
+  "255": [
+    "reversal"
+  ],
+  "256": [
+    "reversal"
+  ],
+  "257": [
+    "reversal"
+  ],
+  "258": [
+    "mud-sport",
+    "supersonic",
+    "amnesia"
+  ],
+  "259": [
+    "mud-sport",
+    "supersonic",
+    "amnesia"
+  ],
+  "260": [
+    "mud-sport",
+    "supersonic",
+    "amnesia"
+  ],
+  "261": [
+    "swagger"
+  ],
+  "262": [
+    "swagger"
+  ],
+  "263": [
+    "mud-sport",
+    "flail"
+  ],
+  "264": [
+    "mud-sport",
+    "rototiller",
+    "flail"
+  ],
+  "266": [
+    "harden"
+  ],
+  "267": [
+    "harden"
+  ],
+  "268": [
+    "harden"
+  ],
+  "269": [
+    "harden"
+  ],
+  "270": [
+    "flail"
+  ],
+  "271": [
+    "flail",
+    "teeter-dance"
+  ],
+  "272": [
+    "flail",
+    "teeter-dance"
+  ],
+  "273": [
+    "harden",
+    "growth"
+  ],
+  "274": [
+    "harden",
+    "growth",
+    "swagger"
+  ],
+  "275": [
+    "growth",
+    "harden",
+    "swagger"
+  ],
+  "276": [
+    "double-team",
+    "reversal"
+  ],
+  "277": [
+    "double-team",
+    "reversal"
+  ],
+  "278": [
+    "supersonic"
+  ],
+  "279": [
+    "supersonic"
+  ],
+  "280": [
+    "double-team",
+    "hypnosis",
+    "dream-eater"
+  ],
+  "281": [
+    "double-team",
+    "hypnosis",
+    "dream-eater"
+  ],
+  "282": [
+    "double-team",
+    "hypnosis",
+    "dream-eater",
+    "misty-terrain"
+  ],
+  "284": [
+    "supersonic"
+  ],
+  "285": [
+    "growth"
+  ],
+  "286": [
+    "growth"
+  ],
+  "287": [
+    "amnesia",
+    "flail"
+  ],
+  "288": [
+    "reversal",
+    "amnesia",
+    "flail"
+  ],
+  "289": [
+    "amnesia",
+    "swagger",
+    "flail",
+    "reversal"
+  ],
+  "290": [
+    "harden"
+  ],
+  "291": [
+    "harden",
+    "double-team"
+  ],
+  "292": [
+    "harden"
+  ],
+  "293": [
+    "supersonic"
+  ],
+  "294": [
+    "supersonic"
+  ],
+  "295": [
+    "supersonic"
+  ],
+  "296": [
+    "seismic-toss",
+    "reversal"
+  ],
+  "297": [
+    "seismic-toss",
+    "reversal"
+  ],
+  "299": [
+    "harden"
+  ],
+  "300": [
+    "sing"
+  ],
+  "301": [
+    "sing"
+  ],
+  "302": [
+    "night-shade"
+  ],
+  "304": [
+    "harden"
+  ],
+  "305": [
+    "harden"
+  ],
+  "306": [
+    "harden"
+  ],
+  "307": [
+    "meditate",
+    "reversal",
+    "swagger"
+  ],
+  "308": [
+    "meditate",
+    "reversal",
+    "swagger"
+  ],
+  "309": [
+    "charge"
+  ],
+  "310": [
+    "charge",
+    "electric-terrain"
+  ],
+  "311": [
+    "charge"
+  ],
+  "312": [
+    "charge"
+  ],
+  "313": [
+    "double-team",
+    "tail-glow",
+    "struggle-bug"
+  ],
+  "314": [
+    "flatter",
+    "struggle-bug"
+  ],
+  "315": [
+    "growth",
+    "grass-whistle"
+  ],
+  "316": [
+    "poison-gas",
+    "amnesia"
+  ],
+  "317": [
+    "poison-gas",
+    "amnesia",
+    "venom-drench"
+  ],
+  "318": [
+    "swagger"
+  ],
+  "319": [
+    "swagger"
+  ],
+  "320": [
+    "amnesia"
+  ],
+  "321": [
+    "amnesia"
+  ],
+  "322": [
+    "amnesia"
+  ],
+  "323": [
+    "amnesia"
+  ],
+  "324": [
+    "amnesia",
+    "flail",
+    "withdraw"
+  ],
+  "325": [
+    "psywave"
+  ],
+  "326": [
+    "psywave",
+    "teeter-dance"
+  ],
+  "327": [
+    "hypnosis",
+    "teeter-dance",
+    "flail"
+  ],
+  "329": [
+    "sonic-boom",
+    "supersonic"
+  ],
+  "330": [
+    "sonic-boom",
+    "supersonic"
+  ],
+  "331": [
+    "growth"
+  ],
+  "332": [
+    "growth"
+  ],
+  "333": [
+    "sing"
+  ],
+  "334": [
+    "sing"
+  ],
+  "336": [
+    "glare",
+    "swagger",
+    "venom-drench"
+  ],
+  "337": [
+    "harden",
+    "hypnosis",
+    "psywave",
+    "cosmic-power"
+  ],
+  "338": [
+    "harden",
+    "psywave",
+    "cosmic-power",
+    "hypnosis"
+  ],
+  "339": [
+    "mud-sport",
+    "amnesia"
+  ],
+  "340": [
+    "mud-sport",
+    "amnesia"
+  ],
+  "341": [
+    "harden"
+  ],
+  "342": [
+    "harden"
+  ],
+  "343": [
+    "harden",
+    "cosmic-power"
+  ],
+  "344": [
+    "harden",
+    "cosmic-power"
+  ],
+  "345": [
+    "amnesia"
+  ],
+  "346": [
+    "amnesia"
+  ],
+  "347": [
+    "harden",
+    "mud-sport",
+    "smack-down"
+  ],
+  "348": [
+    "harden",
+    "mud-sport",
+    "smack-down"
+  ],
+  "349": [
+    "flail"
+  ],
+  "350": [
+    "flail"
+  ],
+  "353": [
+    "night-shade"
+  ],
+  "354": [
+    "night-shade"
+  ],
+  "355": [
+    "night-shade"
+  ],
+  "356": [
+    "night-shade"
+  ],
+  "357": [
+    "growth"
+  ],
+  "358": [
+    "psywave",
+    "hypnosis"
+  ],
+  "359": [
+    "double-team"
+  ],
+  "360": [
+    "amnesia"
+  ],
+  "361": [
+    "double-team"
+  ],
+  "362": [
+    "double-team"
+  ],
+  "364": [
+    "swagger"
+  ],
+  "365": [
+    "swagger"
+  ],
+  "368": [
+    "amnesia"
+  ],
+  "369": [
+    "harden",
+    "mud-sport",
+    "flail"
+  ],
+  "370": [
+    "sweet-kiss",
+    "flail"
+  ],
+  "378": [
+    "amnesia"
+  ],
+  "379": [
+    "amnesia"
+  ],
+  "380": [
+    "psywave"
+  ],
+  "381": [
+    "psywave",
+    "memento"
+  ],
+  "385": [
+    "cosmic-power"
+  ],
+  "386": [
+    "night-shade",
+    "cosmic-power",
+    "psycho-boost"
+  ],
+  "387": [
+    "withdraw",
+    "growth"
+  ],
+  "388": [
+    "withdraw",
+    "growth"
+  ],
+  "389": [
+    "withdraw",
+    "growth"
+  ],
+  "393": [
+    "swagger"
+  ],
+  "394": [
+    "swagger"
+  ],
+  "395": [
+    "swagger",
+    "wave-crash"
+  ],
+  "396": [
+    "double-team"
+  ],
+  "397": [
+    "double-team"
+  ],
+  "398": [
+    "double-team"
+  ],
+  "399": [
+    "amnesia"
+  ],
+  "400": [
+    "amnesia",
+    "rototiller"
+  ],
+  "401": [
+    "struggle-bug"
+  ],
+  "402": [
+    "sing",
+    "struggle-bug"
+  ],
+  "403": [
+    "charge",
+    "swagger"
+  ],
+  "404": [
+    "charge",
+    "swagger"
+  ],
+  "405": [
+    "charge",
+    "swagger",
+    "electric-terrain"
+  ],
+  "406": [
+    "growth"
+  ],
+  "407": [
+    "grassy-terrain",
+    "venom-drench",
+    "growth"
+  ],
+  "410": [
+    "swagger"
+  ],
+  "411": [
+    "swagger"
+  ],
+  "412": [
+    "struggle-bug"
+  ],
+  "413": [
+    "growth",
+    "flail",
+    "struggle-bug"
+  ],
+  "414": [
+    "struggle-bug"
+  ],
+  "415": [
+    "struggle-bug"
+  ],
+  "416": [
+    "defend-order",
+    "heal-order",
+    "swagger",
+    "struggle-bug"
+  ],
+  "417": [
+    "sweet-kiss"
+  ],
+  "418": [
+    "sonic-boom",
+    "wave-crash"
+  ],
+  "419": [
+    "sonic-boom",
+    "wave-crash"
+  ],
+  "420": [
+    "growth"
+  ],
+  "421": [
+    "growth"
+  ],
+  "422": [
+    "mud-sport",
+    "harden",
+    "memento"
+  ],
+  "423": [
+    "harden",
+    "mud-sport",
+    "memento"
+  ],
+  "425": [
+    "minimize",
+    "amnesia",
+    "hypnosis"
+  ],
+  "426": [
+    "minimize",
+    "amnesia",
+    "hypnosis"
+  ],
+  "427": [
+    "flatter"
+  ],
+  "428": [
+    "rototiller",
+    "flatter"
+  ],
+  "429": [
+    "psywave",
+    "hypnosis"
+  ],
+  "430": [
+    "swagger",
+    "night-shade"
+  ],
+  "431": [
+    "hypnosis"
+  ],
+  "432": [
+    "hypnosis",
+    "swagger"
+  ],
+  "433": [
+    "hypnosis"
+  ],
+  "434": [
+    "poison-gas",
+    "memento",
+    "venom-drench"
+  ],
+  "435": [
+    "poison-gas",
+    "memento",
+    "venom-drench"
+  ],
+  "436": [
+    "hypnosis",
+    "psywave"
+  ],
+  "437": [
+    "hypnosis",
+    "psywave"
+  ],
+  "438": [
+    "flail"
+  ],
+  "439": [
+    "barrier",
+    "meditate",
+    "teeter-dance",
+    "hypnosis"
+  ],
+  "440": [
+    "sweet-kiss",
+    "minimize"
+  ],
+  "441": [
+    "sing"
+  ],
+  "442": [
+    "hypnosis",
+    "dream-eater",
+    "memento",
+    "night-shade"
+  ],
+  "443": [
+    "dragon-rage"
+  ],
+  "444": [
+    "dragon-rage"
+  ],
+  "445": [
+    "dragon-rage"
+  ],
+  "446": [
+    "amnesia",
+    "flail"
+  ],
+  "447": [
+    "reversal"
+  ],
+  "448": [
+    "reversal"
+  ],
+  "453": [
+    "swagger",
+    "flatter"
+  ],
+  "454": [
+    "swagger",
+    "flatter"
+  ],
+  "455": [
+    "growth"
+  ],
+  "456": [
+    "flail"
+  ],
+  "457": [
+    "flail"
+  ],
+  "458": [
+    "supersonic"
+  ],
+  "459": [
+    "grass-whistle",
+    "swagger"
+  ],
+  "460": [
+    "grass-whistle",
+    "swagger",
+    "aurora-veil"
+  ],
+  "462": [
+    "supersonic",
+    "barrier",
+    "sonic-boom",
+    "magnetic-flux",
+    "electric-terrain"
+  ],
+  "463": [
+    "supersonic"
+  ],
+  "464": [
+    "smack-down"
+  ],
+  "465": [
+    "growth",
+    "grassy-terrain"
+  ],
+  "466": [
+    "electric-terrain",
+    "charge"
+  ],
+  "467": [
+    "poison-gas"
+  ],
+  "468": [
+    "sweet-kiss"
+  ],
+  "469": [
+    "double-team",
+    "sonic-boom",
+    "supersonic",
+    "hypnosis"
+  ],
+  "470": [
+    "grass-whistle"
+  ],
+  "471": [
+    "barrier"
+  ],
+  "472": [
+    "harden"
+  ],
+  "473": [
+    "mud-sport",
+    "flail",
+    "amnesia"
+  ],
+  "475": [
+    "double-team",
+    "hypnosis",
+    "dream-eater"
+  ],
+  "476": [
+    "magnetic-flux",
+    "harden",
+    "smack-down"
+  ],
+  "477": [
+    "night-shade"
+  ],
+  "478": [
+    "double-team",
+    "aurora-veil"
+  ],
+  "479": [
+    "double-team",
+    "charge"
+  ],
+  "480": [
+    "amnesia",
+    "flail",
+    "memento",
+    "hypnosis"
+  ],
+  "481": [
+    "flatter"
+  ],
+  "488": [
+    "double-team"
+  ],
+  "489": [
+    "supersonic",
+    "acid-armor"
+  ],
+  "490": [
+    "tail-glow",
+    "supersonic",
+    "acid-armor"
+  ],
+  "491": [
+    "night-shade",
+    "hypnosis",
+    "double-team",
+    "dream-eater"
+  ],
+  "492": [
+    "grass-whistle",
+    "growth",
+    "sweet-kiss",
+    "grassy-terrain"
+  ],
+  "493": [
+    "seismic-toss",
+    "cosmic-power"
+  ],
+  "494": [
+    "reversal",
+    "v-create"
+  ],
+  "495": [
+    "growth"
+  ],
+  "496": [
+    "growth"
+  ],
+  "497": [
+    "growth"
+  ],
+  "504": [
+    "hypnosis"
+  ],
+  "505": [
+    "hypnosis",
+    "rototiller"
+  ],
+  "506": [
+    "reversal"
+  ],
+  "507": [
+    "reversal"
+  ],
+  "508": [
+    "reversal"
+  ],
+  "513": [
+    "amnesia"
+  ],
+  "517": [
+    "psywave",
+    "hypnosis",
+    "dream-eater"
+  ],
+  "518": [
+    "hypnosis",
+    "psychic-terrain",
+    "dream-eater"
+  ],
+  "519": [
+    "swagger"
+  ],
+  "520": [
+    "swagger"
+  ],
+  "521": [
+    "swagger"
+  ],
+  "522": [
+    "charge"
+  ],
+  "523": [
+    "charge"
+  ],
+  "524": [
+    "harden",
+    "smack-down"
+  ],
+  "525": [
+    "harden",
+    "smack-down"
+  ],
+  "526": [
+    "harden",
+    "smack-down"
+  ],
+  "527": [
+    "amnesia"
+  ],
+  "528": [
+    "amnesia"
+  ],
+  "529": [
+    "mud-sport"
+  ],
+  "530": [
+    "mud-sport",
+    "rototiller"
+  ],
+  "531": [
+    "misty-terrain"
+  ],
+  "535": [
+    "supersonic",
+    "flail"
+  ],
+  "536": [
+    "supersonic",
+    "flail"
+  ],
+  "537": [
+    "supersonic",
+    "flail"
+  ],
+  "538": [
+    "seismic-toss",
+    "reversal"
+  ],
+  "539": [
+    "reversal"
+  ],
+  "540": [
+    "struggle-bug",
+    "flail"
+  ],
+  "541": [
+    "grass-whistle",
+    "struggle-bug",
+    "flail"
+  ],
+  "542": [
+    "struggle-bug"
+  ],
+  "543": [
+    "venom-drench"
+  ],
+  "544": [
+    "venom-drench"
+  ],
+  "545": [
+    "venom-drench"
+  ],
+  "546": [
+    "growth"
+  ],
+  "547": [
+    "growth",
+    "memento"
+  ],
+  "548": [
+    "growth"
+  ],
+  "549": [
+    "growth",
+    "teeter-dance"
+  ],
+  "550": [
+    "flail",
+    "wave-crash"
+  ],
+  "551": [
+    "swagger"
+  ],
+  "552": [
+    "swagger"
+  ],
+  "553": [
+    "swagger"
+  ],
+  "555": [
+    "swagger"
+  ],
+  "556": [
+    "growth"
+  ],
+  "557": [
+    "withdraw",
+    "smack-down",
+    "flail"
+  ],
+  "558": [
+    "withdraw",
+    "smack-down",
+    "flail"
+  ],
+  "559": [
+    "swagger"
+  ],
+  "560": [
+    "swagger"
+  ],
+  "561": [
+    "hypnosis",
+    "psywave",
+    "cosmic-power"
+  ],
+  "562": [
+    "night-shade"
+  ],
+  "563": [
+    "night-shade"
+  ],
+  "564": [
+    "withdraw",
+    "smack-down"
+  ],
+  "565": [
+    "withdraw",
+    "smack-down"
+  ],
+  "566": [
+    "double-team"
+  ],
+  "567": [
+    "double-team"
+  ],
+  "568": [
+    "poison-gas",
+    "amnesia"
+  ],
+  "569": [
+    "poison-gas",
+    "amnesia"
+  ],
+  "572": [
+    "sing"
+  ],
+  "573": [
+    "sing"
+  ],
+  "574": [
+    "flatter",
+    "hypnosis"
+  ],
+  "575": [
+    "flatter",
+    "hypnosis"
+  ],
+  "576": [
+    "flatter",
+    "hypnosis"
+  ],
+  "577": [
+    "psywave"
+  ],
+  "578": [
+    "psywave"
+  ],
+  "579": [
+    "psywave"
+  ],
+  "582": [
+    "harden",
+    "acid-armor"
+  ],
+  "583": [
+    "harden",
+    "acid-armor"
+  ],
+  "584": [
+    "harden",
+    "acid-armor"
+  ],
+  "587": [
+    "charge",
+    "double-team"
+  ],
+  "588": [
+    "flail"
+  ],
+  "589": [
+    "reversal",
+    "flail"
+  ],
+  "590": [
+    "growth"
+  ],
+  "591": [
+    "growth"
+  ],
+  "592": [
+    "night-shade"
+  ],
+  "593": [
+    "night-shade",
+    "acid-armor"
+  ],
+  "597": [
+    "harden"
+  ],
+  "598": [
+    "harden"
+  ],
+  "599": [
+    "charge"
+  ],
+  "600": [
+    "charge"
+  ],
+  "601": [
+    "charge",
+    "magnetic-flux",
+    "electric-terrain"
+  ],
+  "606": [
+    "psychic-terrain"
+  ],
+  "607": [
+    "minimize",
+    "night-shade",
+    "memento"
+  ],
+  "608": [
+    "minimize",
+    "night-shade",
+    "memento"
+  ],
+  "609": [
+    "night-shade",
+    "minimize",
+    "memento"
+  ],
+  "610": [
+    "dragon-rage",
+    "breaking-swipe"
+  ],
+  "611": [
+    "dragon-rage",
+    "breaking-swipe"
+  ],
+  "612": [
+    "dragon-rage",
+    "breaking-swipe"
+  ],
+  "613": [
+    "flail"
+  ],
+  "614": [
+    "swagger",
+    "flail"
+  ],
+  "615": [
+    "sharpen",
+    "acid-armor"
+  ],
+  "616": [
+    "struggle-bug",
+    "acid-armor"
+  ],
+  "617": [
+    "double-team",
+    "struggle-bug",
+    "acid-armor"
+  ],
+  "618": [
+    "mud-sport",
+    "flail",
+    "charge",
+    "electric-terrain"
+  ],
+  "619": [
+    "meditate",
+    "reversal"
+  ],
+  "620": [
+    "meditate",
+    "reversal"
+  ],
+  "621": [
+    "dragon-rage"
+  ],
+  "622": [
+    "night-shade"
+  ],
+  "623": [
+    "night-shade"
+  ],
+  "626": [
+    "head-charge",
+    "reversal"
+  ],
+  "629": [
+    "flatter"
+  ],
+  "630": [
+    "flatter"
+  ],
+  "631": [
+    "amnesia",
+    "fire-lash"
+  ],
+  "633": [
+    "dragon-rage"
+  ],
+  "634": [
+    "dragon-rage"
+  ],
+  "635": [
+    "dragon-rage"
+  ],
+  "636": [
+    "amnesia",
+    "struggle-bug"
+  ],
+  "637": [
+    "amnesia",
+    "struggle-bug"
+  ],
+  "639": [
+    "smack-down"
+  ],
+  "641": [
+    "swagger"
+  ],
+  "642": [
+    "swagger",
+    "charge"
+  ],
+  "643": [
+    "dragon-rage",
+    "blue-flare"
+  ],
+  "644": [
+    "dragon-rage"
+  ],
+  "645": [
+    "smack-down"
+  ],
+  "646": [
+    "dragon-rage"
+  ],
+  "648": [
+    "sing",
+    "teeter-dance"
+  ],
+  "656": [
+    "smack-down",
+    "double-team"
+  ],
+  "657": [
+    "smack-down",
+    "double-team"
+  ],
+  "658": [
+    "double-team"
+  ],
+  "659": [
+    "flail"
+  ],
+  "660": [
+    "rototiller",
+    "flail"
+  ],
+  "661": [
+    "flail"
+  ],
+  "662": [
+    "flail"
+  ],
+  "663": [
+    "flail"
+  ],
+  "665": [
+    "harden"
+  ],
+  "666": [
+    "struggle-bug",
+    "supersonic"
+  ],
+  "669": [
+    "grassy-terrain",
+    "misty-terrain"
+  ],
+  "670": [
+    "grassy-terrain",
+    "misty-terrain"
+  ],
+  "671": [
+    "grassy-terrain",
+    "misty-terrain"
+  ],
+  "672": [
+    "growth"
+  ],
+  "673": [
+    "growth"
+  ],
+  "678": [
+    "misty-terrain"
+  ],
+  "682": [
+    "sweet-kiss",
+    "flail",
+    "misty-terrain"
+  ],
+  "683": [
+    "sweet-kiss",
+    "flail",
+    "misty-terrain"
+  ],
+  "686": [
+    "swagger",
+    "psywave",
+    "hypnosis"
+  ],
+  "687": [
+    "reversal",
+    "swagger",
+    "psywave",
+    "hypnosis"
+  ],
+  "688": [
+    "withdraw"
+  ],
+  "689": [
+    "withdraw"
+  ],
+  "690": [
+    "double-team"
+  ],
+  "691": [
+    "double-team"
+  ],
+  "692": [
+    "flail",
+    "smack-down"
+  ],
+  "693": [
+    "flail",
+    "smack-down"
+  ],
+  "694": [
+    "charge"
+  ],
+  "695": [
+    "charge",
+    "eerie-impulse"
+  ],
+  "700": [
+    "misty-terrain"
+  ],
+  "702": [
+    "charge"
+  ],
+  "703": [
+    "harden",
+    "sharpen",
+    "smack-down",
+    "flail"
+  ],
+  "704": [
+    "flail",
+    "acid-armor"
+  ],
+  "705": [
+    "flail",
+    "acid-armor"
+  ],
+  "706": [
+    "flail"
+  ],
+  "708": [
+    "growth"
+  ],
+  "709": [
+    "growth"
+  ],
+  "712": [
+    "harden",
+    "sharpen"
+  ],
+  "713": [
+    "harden",
+    "sharpen"
+  ],
+  "714": [
+    "supersonic",
+    "double-team"
+  ],
+  "715": [
+    "supersonic",
+    "double-team"
+  ],
+  "716": [
+    "misty-terrain"
+  ],
+  "717": [
+    "double-team"
+  ],
+  "718": [
+    "glare"
+  ],
+  "719": [
+    "harden",
+    "sharpen",
+    "smack-down",
+    "flail"
+  ],
+  "725": [
+    "swagger"
+  ],
+  "726": [
+    "swagger"
+  ],
+  "727": [
+    "swagger"
+  ],
+  "728": [
+    "sing",
+    "misty-terrain"
+  ],
+  "729": [
+    "sing",
+    "misty-terrain"
+  ],
+  "730": [
+    "sing",
+    "misty-terrain"
+  ],
+  "731": [
+    "supersonic"
+  ],
+  "732": [
+    "supersonic"
+  ],
+  "733": [
+    "supersonic"
+  ],
+  "737": [
+    "charge"
+  ],
+  "738": [
+    "charge"
+  ],
+  "739": [
+    "reversal"
+  ],
+  "740": [
+    "reversal"
+  ],
+  "741": [
+    "teeter-dance",
+    "flatter"
+  ],
+  "742": [
+    "struggle-bug"
+  ],
+  "743": [
+    "struggle-bug"
+  ],
+  "744": [
+    "double-team"
+  ],
+  "745": [
+    "double-team"
+  ],
+  "747": [
+    "venom-drench"
+  ],
+  "748": [
+    "venom-drench"
+  ],
+  "749": [
+    "mud-sport",
+    "rototiller"
+  ],
+  "750": [
+    "mud-sport",
+    "rototiller"
+  ],
+  "753": [
+    "growth"
+  ],
+  "754": [
+    "growth"
+  ],
+  "755": [
+    "dream-eater"
+  ],
+  "756": [
+    "dream-eater"
+  ],
+  "757": [
+    "poison-gas",
+    "dragon-rage",
+    "venom-drench"
+  ],
+  "758": [
+    "poison-gas",
+    "swagger",
+    "dragon-rage",
+    "venom-drench",
+    "fire-lash"
+  ],
+  "759": [
+    "flail"
+  ],
+  "760": [
+    "flail"
+  ],
+  "761": [
+    "teeter-dance",
+    "flail"
+  ],
+  "762": [
+    "teeter-dance",
+    "flail"
+  ],
+  "763": [
+    "swagger",
+    "teeter-dance",
+    "flail"
+  ],
+  "764": [
+    "growth",
+    "sweet-kiss",
+    "grassy-terrain"
+  ],
+  "766": [
+    "reversal"
+  ],
+  "767": [
+    "struggle-bug"
+  ],
+  "768": [
+    "struggle-bug"
+  ],
+  "769": [
+    "harden",
+    "hypnosis",
+    "shore-up"
+  ],
+  "770": [
+    "harden",
+    "hypnosis",
+    "shore-up"
+  ],
+  "771": [
+    "harden",
+    "mud-sport",
+    "memento"
+  ],
+  "774": [
+    "cosmic-power"
+  ],
+  "775": [
+    "flail"
+  ],
+  "776": [
+    "flail"
+  ],
+  "777": [
+    "charge",
+    "electric-terrain"
+  ],
+  "778": [
+    "double-team"
+  ],
+  "779": [
+    "psywave",
+    "wave-crash"
+  ],
+  "780": [
+    "glare",
+    "dragon-rage"
+  ],
+  "781": [
+    "growth"
+  ],
+  "785": [
+    "withdraw",
+    "electric-terrain",
+    "charge"
+  ],
+  "786": [
+    "withdraw",
+    "psychic-terrain",
+    "psywave",
+    "flatter"
+  ],
+  "787": [
+    "withdraw",
+    "grassy-terrain",
+    "rototiller"
+  ],
+  "788": [
+    "withdraw",
+    "misty-terrain"
+  ],
+  "790": [
+    "cosmic-power"
+  ],
+  "791": [
+    "cosmic-power"
+  ],
+  "792": [
+    "hypnosis",
+    "cosmic-power",
+    "night-shade",
+    "dream-eater"
+  ],
+  "793": [
+    "psywave",
+    "venom-drench"
+  ],
+  "794": [
+    "harden",
+    "reversal"
+  ],
+  "796": [
+    "charge",
+    "tail-glow",
+    "eerie-impulse",
+    "hypnosis",
+    "electric-terrain"
+  ],
+  "797": [
+    "harden",
+    "smack-down"
+  ],
+  "799": [
+    "dragon-rage"
+  ],
+  "801": [
+    "sonic-boom",
+    "magnetic-flux"
+  ],
+  "803": [
+    "venom-drench"
+  ],
+  "804": [
+    "venom-drench"
+  ],
+  "805": [
+    "harden"
+  ],
+  "806": [
+    "night-shade",
+    "hypnosis"
+  ],
+  "807": [
+    "charge"
+  ],
+  "808": [
+    "harden",
+    "acid-armor"
+  ],
+  "809": [
+    "harden",
+    "acid-armor"
+  ],
+  "812": [
+    "grassy-terrain"
+  ],
+  "815": [
+    "pyro-ball"
+  ],
+  "818": [
+    "snipe-shot"
+  ],
+  "821": [
+    "swagger"
+  ],
+  "822": [
+    "swagger"
+  ],
+  "823": [
+    "swagger"
+  ],
+  "824": [
+    "struggle-bug"
+  ],
+  "825": [
+    "struggle-bug"
+  ],
+  "826": [
+    "struggle-bug",
+    "hypnosis",
+    "psychic-terrain"
+  ],
+  "829": [
+    "sing"
+  ],
+  "830": [
+    "sing"
+  ],
+  "831": [
+    "reversal"
+  ],
+  "832": [
+    "reversal"
+  ],
+  "835": [
+    "charge"
+  ],
+  "836": [
+    "charge",
+    "electric-terrain"
+  ],
+  "837": [
+    "smack-down"
+  ],
+  "838": [
+    "smack-down"
+  ],
+  "839": [
+    "smack-down"
+  ],
+  "840": [
+    "withdraw"
+  ],
+  "841": [
+    "growth",
+    "withdraw"
+  ],
+  "842": [
+    "growth",
+    "withdraw"
+  ],
+  "843": [
+    "minimize",
+    "glare"
+  ],
+  "844": [
+    "minimize",
+    "glare"
+  ],
+  "845": [
+    "amnesia"
+  ],
+  "848": [
+    "flail"
+  ],
+  "849": [
+    "flail",
+    "eerie-impulse",
+    "charge",
+    "swagger"
+  ],
+  "850": [
+    "fire-lash"
+  ],
+  "851": [
+    "fire-lash"
+  ],
+  "852": [
+    "reversal"
+  ],
+  "853": [
+    "reversal"
+  ],
+  "854": [
+    "withdraw",
+    "memento"
+  ],
+  "855": [
+    "withdraw",
+    "memento"
+  ],
+  "859": [
+    "flatter",
+    "swagger"
+  ],
+  "860": [
+    "flatter",
+    "swagger"
+  ],
+  "861": [
+    "flatter",
+    "swagger"
+  ],
+  "863": [
+    "swagger"
+  ],
+  "864": [
+    "harden",
+    "night-shade"
+  ],
+  "866": [
+    "misty-terrain",
+    "hypnosis",
+    "teeter-dance"
+  ],
+  "867": [
+    "night-shade"
+  ],
+  "868": [
+    "sweet-kiss",
+    "acid-armor",
+    "misty-terrain"
+  ],
+  "869": [
+    "decorate",
+    "sweet-kiss",
+    "acid-armor",
+    "misty-terrain"
+  ],
+  "870": [
+    "reversal"
+  ],
+  "871": [
+    "charge",
+    "electric-terrain"
+  ],
+  "872": [
+    "struggle-bug"
+  ],
+  "873": [
+    "struggle-bug",
+    "aurora-veil"
+  ],
+  "875": [
+    "amnesia",
+    "aurora-veil"
+  ],
+  "876": [
+    "psychic-terrain"
+  ],
+  "877": [
+    "flatter"
+  ],
+  "880": [
+    "charge"
+  ],
+  "881": [
+    "charge"
+  ],
+  "883": [
+    "aurora-veil"
+  ],
+  "884": [
+    "breaking-swipe"
+  ],
+  "890": [
+    "cosmic-power"
+  ],
+  "893": [
+    "growth",
+    "swagger"
+  ],
+  "898": [
+    "growth",
+    "grassy-terrain",
+    "psychic-terrain"
+  ],
+  "899": [
+    "hypnosis"
+  ],
+  "900": [
+    "smack-down",
+    "double-team"
+  ],
+  "902": [
+    "wave-crash",
+    "flail"
+  ],
+  "904": [
+    "harden",
+    "minimize"
+  ],
+  "905": [
+    "flatter"
+  ],
+  "908": [
+    "grassy-terrain"
+  ],
+  "914": [
+    "aqua-step",
+    "wave-crash"
+  ],
+  "917": [
+    "struggle-bug"
+  ],
+  "918": [
+    "struggle-bug"
+  ],
+  "919": [
+    "struggle-bug"
+  ],
+  "920": [
+    "struggle-bug"
+  ],
+  "921": [
+    "charge"
+  ],
+  "922": [
+    "charge"
+  ],
+  "923": [
+    "charge"
+  ],
+  "928": [
+    "growth",
+    "flail",
+    "grassy-terrain"
+  ],
+  "929": [
+    "growth",
+    "flail",
+    "grassy-terrain"
+  ],
+  "930": [
+    "growth",
+    "flail",
+    "grassy-terrain"
+  ],
+  "931": [
+    "swagger",
+    "reversal"
+  ],
+  "932": [
+    "harden",
+    "smack-down"
+  ],
+  "933": [
+    "harden",
+    "smack-down"
+  ],
+  "934": [
+    "harden"
+  ],
+  "935": [
+    "night-shade"
+  ],
+  "936": [
+    "night-shade"
+  ],
+  "937": [
+    "night-shade"
+  ],
+  "938": [
+    "charge",
+    "flail",
+    "electric-terrain"
+  ],
+  "939": [
+    "charge",
+    "flail",
+    "electric-terrain"
+  ],
+  "942": [
+    "swagger",
+    "reversal"
+  ],
+  "943": [
+    "swagger",
+    "reversal"
+  ],
+  "944": [
+    "flatter"
+  ],
+  "945": [
+    "flatter"
+  ],
+  "948": [
+    "supersonic",
+    "growth"
+  ],
+  "949": [
+    "supersonic",
+    "growth"
+  ],
+  "950": [
+    "harden",
+    "flail"
+  ],
+  "951": [
+    "growth"
+  ],
+  "952": [
+    "growth"
+  ],
+  "953": [
+    "struggle-bug"
+  ],
+  "954": [
+    "struggle-bug"
+  ],
+  "957": [
+    "sweet-kiss",
+    "flatter"
+  ],
+  "958": [
+    "sweet-kiss",
+    "flatter"
+  ],
+  "959": [
+    "sweet-kiss",
+    "flatter"
+  ],
+  "961": [
+    "triple-dive"
+  ],
+  "962": [
+    "memento"
+  ],
+  "963": [
+    "supersonic"
+  ],
+  "964": [
+    "jet-punch",
+    "supersonic",
+    "wave-crash"
+  ],
+  "965": [
+    "poison-gas",
+    "swagger"
+  ],
+  "966": [
+    "poison-gas",
+    "swagger"
+  ],
+  "967": [
+    "breaking-swipe"
+  ],
+  "968": [
+    "harden",
+    "smack-down"
+  ],
+  "969": [
+    "harden",
+    "smack-down",
+    "acid-armor"
+  ],
+  "970": [
+    "smack-down",
+    "harden",
+    "acid-armor"
+  ],
+  "974": [
+    "flail",
+    "amnesia",
+    "ice-spinner"
+  ],
+  "975": [
+    "flail",
+    "amnesia",
+    "ice-spinner"
+  ],
+  "977": [
+    "supersonic",
+    "flail",
+    "wave-crash"
+  ],
+  "978": [
+    "harden",
+    "memento"
+  ],
+  "979": [
+    "seismic-toss",
+    "swagger"
+  ],
+  "980": [
+    "amnesia"
+  ],
+  "982": [
+    "flail",
+    "glare"
+  ],
+  "985": [
+    "sing"
+  ],
+  "986": [
+    "growth"
+  ],
+  "987": [
+    "memento"
+  ],
+  "989": [
+    "electric-terrain",
+    "supersonic",
+    "magnetic-flux"
+  ],
+  "990": [
+    "electric-terrain"
+  ],
+  "991": [
+    "aurora-veil"
+  ],
+  "992": [
+    "seismic-toss",
+    "charge"
+  ],
+  "993": [
+    "electric-terrain"
+  ],
+  "994": [
+    "struggle-bug"
+  ],
+  "995": [
+    "charge"
+  ],
+  "998": [
+    "breaking-swipe"
+  ],
+  "1000": [
+    "night-shade",
+    "memento"
+  ],
+  "1001": [
+    "growth",
+    "grassy-terrain"
+  ],
+  "1003": [
+    "memento"
+  ],
+  "1004": [
+    "swagger",
+    "memento"
+  ],
+  "1006": [
+    "double-team",
+    "hypnosis"
+  ],
+  "1007": [
+    "breaking-swipe"
+  ],
+  "1008": [
+    "electric-terrain",
+    "charge"
+  ],
+  "1009": [
+    "breaking-swipe"
+  ],
+  "1011": [
+    "withdraw",
+    "growth"
+  ],
+  "1012": [
+    "withdraw",
+    "memento"
+  ],
+  "1013": [
+    "withdraw",
+    "memento"
+  ],
+  "1015": [
+    "flatter"
+  ],
+  "1016": [
+    "poison-gas",
+    "swagger",
+    "flatter"
+  ],
+  "1017": [
+    "growth"
+  ],
+  "1018": [
+    "breaking-swipe"
+  ],
+  "1019": [
+    "withdraw",
+    "growth"
+  ],
+  "1021": [
+    "charge",
+    "electric-terrain"
+  ],
+  "1022": [
+    "electric-terrain",
+    "mighty-cleave"
+  ],
+  "1023": [
+    "electric-terrain"
+  ],
+  "1024": [
+    "withdraw"
+  ],
+  "1025": [
+    "poison-gas",
+    "memento",
+    "withdraw"
+  ],
+  "10001": [
+    "night-shade",
+    "cosmic-power",
+    "psycho-boost"
+  ],
+  "10002": [
+    "night-shade",
+    "amnesia",
+    "psycho-boost"
+  ],
+  "10003": [
+    "night-shade",
+    "double-team",
+    "psycho-boost"
+  ],
+  "10004": [
+    "harden",
+    "flail",
+    "struggle-bug"
+  ],
+  "10005": [
+    "flail",
+    "struggle-bug"
+  ],
+  "10006": [
+    "growth",
+    "sweet-kiss"
+  ],
+  "10008": [
+    "double-team",
+    "charge"
+  ],
+  "10009": [
+    "double-team",
+    "charge"
+  ],
+  "10010": [
+    "double-team",
+    "charge"
+  ],
+  "10011": [
+    "double-team",
+    "charge"
+  ],
+  "10012": [
+    "double-team",
+    "charge"
+  ],
+  "10016": [
+    "flail",
+    "wave-crash"
+  ],
+  "10017": [
+    "swagger"
+  ],
+  "10018": [
+    "sing",
+    "teeter-dance"
+  ],
+  "10019": [
+    "swagger"
+  ],
+  "10020": [
+    "swagger",
+    "charge"
+  ],
+  "10021": [
+    "smack-down"
+  ],
+  "10022": [
+    "dragon-rage"
+  ],
+  "10023": [
+    "dragon-rage"
+  ],
+  "10033": [
+    "growth",
+    "amnesia"
+  ],
+  "10034": [
+    "dragon-rage"
+  ],
+  "10035": [
+    "dragon-rage"
+  ],
+  "10036": [
+    "withdraw"
+  ],
+  "10037": [
+    "barrier",
+    "night-shade"
+  ],
+  "10038": [
+    "hypnosis",
+    "night-shade",
+    "dream-eater",
+    "poison-gas"
+  ],
+  "10039": [
+    "reversal"
+  ],
+  "10040": [
+    "seismic-toss",
+    "harden"
+  ],
+  "10041": [
+    "dragon-rage"
+  ],
+  "10042": [
+    "supersonic"
+  ],
+  "10043": [
+    "barrier",
+    "amnesia",
+    "psywave"
+  ],
+  "10044": [
+    "barrier",
+    "amnesia",
+    "psywave"
+  ],
+  "10045": [
+    "magnetic-flux",
+    "charge"
+  ],
+  "10047": [
+    "reversal"
+  ],
+  "10051": [
+    "double-team",
+    "misty-terrain",
+    "hypnosis",
+    "dream-eater"
+  ],
+  "10053": [
+    "harden"
+  ],
+  "10054": [
+    "meditate",
+    "reversal"
+  ],
+  "10055": [
+    "electric-terrain",
+    "charge"
+  ],
+  "10056": [
+    "night-shade"
+  ],
+  "10057": [
+    "double-team"
+  ],
+  "10058": [
+    "dragon-rage"
+  ],
+  "10060": [
+    "grass-whistle",
+    "swagger"
+  ],
+  "10061": [
+    "grassy-terrain",
+    "misty-terrain"
+  ],
+  "10062": [
+    "psywave"
+  ],
+  "10063": [
+    "psywave",
+    "memento"
+  ],
+  "10066": [
+    "night-shade"
+  ],
+  "10067": [
+    "sing"
+  ],
+  "10068": [
+    "double-team"
+  ],
+  "10069": [
+    "misty-terrain"
+  ],
+  "10070": [
+    "swagger"
+  ],
+  "10071": [
+    "withdraw",
+    "amnesia"
+  ],
+  "10072": [
+    "harden",
+    "mud-sport",
+    "smack-down"
+  ],
+  "10074": [
+    "double-team"
+  ],
+  "10075": [
+    "harden",
+    "sharpen",
+    "smack-down",
+    "flail"
+  ],
+  "10080": [
+    "double-team"
+  ],
+  "10081": [
+    "double-team"
+  ],
+  "10082": [
+    "double-team"
+  ],
+  "10083": [
+    "double-team"
+  ],
+  "10084": [
+    "double-team"
+  ],
+  "10085": [
+    "double-team"
+  ],
+  "10087": [
+    "amnesia"
+  ],
+  "10088": [
+    "rototiller"
+  ],
+  "10094": [
+    "double-team",
+    "sweet-kiss"
+  ],
+  "10095": [
+    "double-team",
+    "sweet-kiss"
+  ],
+  "10096": [
+    "double-team",
+    "sweet-kiss"
+  ],
+  "10097": [
+    "double-team",
+    "sweet-kiss"
+  ],
+  "10098": [
+    "double-team",
+    "sweet-kiss"
+  ],
+  "10099": [
+    "double-team",
+    "sweet-kiss"
+  ],
+  "10100": [
+    "double-team",
+    "sweet-kiss"
+  ],
+  "10103": [
+    "aurora-veil"
+  ],
+  "10104": [
+    "hypnosis",
+    "aurora-veil"
+  ],
+  "10106": [
+    "rototiller"
+  ],
+  "10108": [
+    "hypnosis",
+    "amnesia"
+  ],
+  "10109": [
+    "charge",
+    "smack-down"
+  ],
+  "10110": [
+    "charge",
+    "smack-down"
+  ],
+  "10111": [
+    "charge",
+    "smack-down"
+  ],
+  "10112": [
+    "poison-gas",
+    "harden",
+    "minimize",
+    "acid-armor",
+    "memento"
+  ],
+  "10113": [
+    "venom-drench",
+    "harden",
+    "poison-gas",
+    "minimize",
+    "acid-armor",
+    "memento"
+  ],
+  "10114": [
+    "hypnosis"
+  ],
+  "10116": [
+    "double-team"
+  ],
+  "10117": [
+    "double-team"
+  ],
+  "10118": [
+    "glare"
+  ],
+  "10119": [
+    "glare"
+  ],
+  "10120": [
+    "glare"
+  ],
+  "10122": [
+    "charge"
+  ],
+  "10123": [
+    "teeter-dance",
+    "flatter"
+  ],
+  "10124": [
+    "teeter-dance",
+    "flatter"
+  ],
+  "10125": [
+    "teeter-dance",
+    "flatter"
+  ],
+  "10126": [
+    "reversal",
+    "double-team"
+  ],
+  "10128": [
+    "growth"
+  ],
+  "10129": [
+    "poison-gas",
+    "swagger",
+    "dragon-rage",
+    "venom-drench"
+  ],
+  "10130": [
+    "cosmic-power"
+  ],
+  "10131": [
+    "cosmic-power"
+  ],
+  "10132": [
+    "cosmic-power"
+  ],
+  "10133": [
+    "cosmic-power"
+  ],
+  "10134": [
+    "cosmic-power"
+  ],
+  "10135": [
+    "cosmic-power"
+  ],
+  "10136": [
+    "cosmic-power"
+  ],
+  "10137": [
+    "cosmic-power"
+  ],
+  "10138": [
+    "cosmic-power"
+  ],
+  "10139": [
+    "cosmic-power"
+  ],
+  "10140": [
+    "cosmic-power"
+  ],
+  "10141": [
+    "cosmic-power"
+  ],
+  "10142": [
+    "cosmic-power"
+  ],
+  "10143": [
+    "double-team"
+  ],
+  "10144": [
+    "double-team"
+  ],
+  "10145": [
+    "double-team"
+  ],
+  "10147": [
+    "sonic-boom",
+    "magnetic-flux"
+  ],
+  "10148": [
+    "double-team",
+    "sweet-kiss"
+  ],
+  "10150": [
+    "struggle-bug"
+  ],
+  "10151": [
+    "double-team"
+  ],
+  "10152": [
+    "double-team",
+    "reversal"
+  ],
+  "10154": [
+    "charge",
+    "electric-terrain"
+  ],
+  "10158": [
+    "double-team"
+  ],
+  "10160": [
+    "sweet-kiss",
+    "double-team"
+  ],
+  "10161": [
+    "swagger"
+  ],
+  "10164": [
+    "amnesia"
+  ],
+  "10165": [
+    "withdraw",
+    "amnesia"
+  ],
+  "10167": [
+    "poison-gas",
+    "memento",
+    "misty-terrain"
+  ],
+  "10168": [
+    "misty-terrain",
+    "hypnosis",
+    "teeter-dance"
+  ],
+  "10169": [
+    "hypnosis",
+    "dream-eater",
+    "double-team"
+  ],
+  "10170": [
+    "reversal"
+  ],
+  "10171": [
+    "memento"
+  ],
+  "10172": [
+    "swagger",
+    "amnesia"
+  ],
+  "10173": [
+    "harden",
+    "night-shade"
+  ],
+  "10179": [
+    "night-shade"
+  ],
+  "10180": [
+    "flail"
+  ],
+  "10181": [
+    "glare"
+  ],
+  "10182": [
+    "amnesia"
+  ],
+  "10183": [
+    "amnesia"
+  ],
+  "10184": [
+    "flail",
+    "eerie-impulse",
+    "charge",
+    "venom-drench",
+    "swagger",
+    "magnetic-flux"
+  ],
+  "10185": [
+    "amnesia",
+    "aurora-veil"
+  ],
+  "10186": [
+    "psychic-terrain"
+  ],
+  "10187": [
+    "flatter"
+  ],
+  "10190": [
+    "cosmic-power"
+  ],
+  "10192": [
+    "growth",
+    "swagger"
+  ],
+  "10193": [
+    "growth",
+    "grassy-terrain",
+    "psychic-terrain"
+  ],
+  "10194": [
+    "growth",
+    "grassy-terrain",
+    "psychic-terrain"
+  ],
+  "10229": [
+    "reversal"
+  ],
+  "10230": [
+    "reversal"
+  ],
+  "10231": [
+    "charge",
+    "grassy-terrain"
+  ],
+  "10232": [
+    "charge",
+    "grassy-terrain"
+  ],
+  "10234": [
+    "harden",
+    "minimize"
+  ],
+  "10237": [
+    "teeter-dance",
+    "growth"
+  ],
+  "10241": [
+    "acid-armor",
+    "flail"
+  ],
+  "10242": [
+    "acid-armor",
+    "flail"
+  ],
+  "10243": [
+    "harden"
+  ],
+  "10247": [
+    "wave-crash",
+    "flail"
+  ],
+  "10248": [
+    "flail",
+    "wave-crash"
+  ],
+  "10249": [
+    "flatter"
+  ],
+  "10250": [
+    "swagger"
+  ],
+  "10251": [
+    "swagger"
+  ],
+  "10252": [
+    "swagger",
+    "wave-crash"
+  ],
+  "10253": [
+    "amnesia"
+  ],
+  "10255": [
+    "flail",
+    "glare"
+  ],
+  "10256": [
+    "jet-punch",
+    "supersonic",
+    "wave-crash"
+  ],
+  "10258": [
+    "harden",
+    "memento"
+  ],
+  "10259": [
+    "harden",
+    "memento"
+  ],
+  "10260": [
+    "swagger",
+    "reversal"
+  ],
+  "10261": [
+    "swagger",
+    "reversal"
+  ],
+  "10262": [
+    "swagger",
+    "reversal"
+  ],
+  "10264": [
+    "breaking-swipe"
+  ],
+  "10265": [
+    "breaking-swipe"
+  ],
+  "10266": [
+    "breaking-swipe"
+  ],
+  "10267": [
+    "breaking-swipe"
+  ],
+  "10268": [
+    "electric-terrain",
+    "charge"
+  ],
+  "10269": [
+    "electric-terrain",
+    "charge"
+  ],
+  "10270": [
+    "electric-terrain",
+    "charge"
+  ],
+  "10271": [
+    "electric-terrain",
+    "charge"
+  ],
+  "10272": [
+    "harden"
+  ],
+  "10273": [
+    "growth"
+  ],
+  "10274": [
+    "growth"
+  ],
+  "10275": [
+    "growth"
+  ],
+  "10276": [
+    "withdraw"
+  ],
+  "10277": [
+    "withdraw"
+  ]
+}

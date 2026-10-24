@@ -58,8 +58,11 @@ final class IniciarCombateMazmorra
             throw new \Src\Mazmorras\Domain\Exceptions\PisoNoDisponible('El piso no tiene un jefe configurado.');
         }
 
-        $equipo = Team::with('members.reclutado.pokemon.stats', 'members.reclutado.pokemon.types')
-            ->findOrFail($teamId);
+        $equipo = Team::with(
+            'members.reclutado.pokemon.stats',
+            'members.reclutado.pokemon.types',
+            'members.reclutado.pokemon.abilities',
+        )->findOrFail($teamId);
 
         $datosJugador = $this->construirEquipoJugador->desdeEquipo($equipo, $formacion, $nivelJugador);
 

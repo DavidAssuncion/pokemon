@@ -36,6 +36,10 @@ trait ComportamientosPorDefecto
     {
     }
 
+    public function onRoundEndFinal(Combatiente $portador, AgregadoBatalla $battle): void
+    {
+    }
+
     public function onDamageDealt(Combatiente $portador, Combatiente $target, float $daño, AgregadoBatalla $battle): void
     {
     }

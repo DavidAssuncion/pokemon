@@ -7,6 +7,7 @@ namespace Src\CombateEntrenadores\App;
 use App\Models\Pokemon;
 use App\Models\Team;
 use Src\Battle\Domain\DatosPokemonBatalla;
+use Src\Battle\Domain\Enums\PosturaCombate;
 use Src\Battle\Domain\Posicion;
 use Src\Shared\Domain\ClasificadorOfensivaDefensiva;
 use Src\Shared\Domain\Exceptions\ViolacionReglaNegocio;
@@ -58,15 +59,27 @@ class ConstruirEquipoJugador
             $slot = (int) $miembro->slot;
             $posicion = $this->posicionPara($slot, $formacion, $formacionPersistida, $pokemon);
 
+            /** @var array<int, string> $posturasPersistidas */
+            $posturasPersistidas = $equipo->getAttribute('posturas') ?? [];
+            $postura = PosturaCombate::tryFrom($posturasPersistidas[$slot] ?? '')
+                ?? PosturaCombate::ATACAR;
+
+            $items = $reclutado->obj_equipados;
+            $item = is_array($items) ? (array_values($items)[0] ?? null) : null;
+
             $combatientes[] = $this->mapeador->desdePokemon(
                 pokemon: $pokemon,
                 id: "jugador_{$reclutado->id}",
                 nombre: $reclutado->nombre ?: $pokemon->name,
                 posicion: $posicion,
                 shiny: (bool) $reclutado->es_shiny,
+                item: is_string($item) ? $item : null,
                 nivel: $nivel,
                 evs: $reclutado->evs,
                 ivs: $reclutado->ivs,
+                postura: $postura,
+                movimientosSeleccionados: is_array($reclutado->movimientos) ? $reclutado->movimientos : null,
+                habilidadActivaId: $reclutado->habilidad_activa_id,
             );
         }
 

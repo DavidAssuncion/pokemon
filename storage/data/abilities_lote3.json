@@ -1,0 +1,2390 @@
+{
+  "definitions": [
+    {
+      "name": "Cálculo Final",
+      "effect": "",
+      "effect_keys": [
+        "calculo_final"
+      ],
+      "identifier": "analytic"
+    },
+    {
+      "name": "Rompeaura",
+      "effect": "",
+      "effect_keys": [
+        "rompeaura"
+      ],
+      "identifier": "aura-break"
+    },
+    {
+      "name": "Abalorio Debacle",
+      "effect": "",
+      "effect_keys": [
+        "abalorio_debacle"
+      ],
+      "identifier": "beads-of-ruin"
+    },
+    {
+      "name": "Relincho Blanco",
+      "effect": "",
+      "effect_keys": [
+        "relincho_blanco"
+      ],
+      "identifier": "chilling-neigh"
+    },
+    {
+      "name": "Cambio Color",
+      "effect": "",
+      "effect_keys": [
+        "cambio_color"
+      ],
+      "identifier": "color-change"
+    },
+    {
+      "name": "Letargo Perenne",
+      "effect": "",
+      "effect_keys": [
+        "letargo_perenne"
+      ],
+      "identifier": "comatose"
+    },
+    {
+      "name": "Corrosión",
+      "effect": "",
+      "effect_keys": [
+        "corrosion"
+      ],
+      "identifier": "corrosion"
+    },
+    {
+      "name": "Unísono",
+      "effect": "",
+      "effect_keys": [
+        "unisono"
+      ],
+      "identifier": "costar"
+    },
+    {
+      "name": "Pelusa",
+      "effect": "",
+      "effect_keys": [
+        "pelusa"
+      ],
+      "identifier": "cotton-down"
+    },
+    {
+      "name": "Medicina Extraña",
+      "effect": "",
+      "effect_keys": [
+        "medicina_extrana"
+      ],
+      "identifier": "curious-medicine"
+    },
+    {
+      "name": "Cuerpo Maldito",
+      "effect": "",
+      "effect_keys": [
+        "cuerpo_maldito"
+      ],
+      "identifier": "cursed-body"
+    },
+    {
+      "name": "Humedad",
+      "effect": "",
+      "effect_keys": [
+        "humedad"
+      ],
+      "identifier": "damp"
+    },
+    {
+      "name": "Aura Oscura",
+      "effect": "",
+      "effect_keys": [
+        "aura_oscura"
+      ],
+      "identifier": "dark-aura"
+    },
+    {
+      "name": "Escudo Recio",
+      "effect": "",
+      "effect_keys": [
+        "escudo_recio"
+      ],
+      "identifier": "dauntless-shield"
+    },
+    {
+      "name": "Flaqueza",
+      "effect": "",
+      "effect_keys": [
+        "flaqueza"
+      ],
+      "identifier": "defeatist"
+    },
+    {
+      "name": "Descarga",
+      "effect": "",
+      "effect_keys": [
+        "descarga"
+      ],
+      "identifier": "download"
+    },
+    {
+      "name": "Piel Dragontina",
+      "effect": "",
+      "effect_keys": [
+        "piel_dragontina"
+      ],
+      "identifier": "dragonize"
+    },
+    {
+      "name": "Piel Seca",
+      "effect": "",
+      "effect_keys": [
+        "piel_seca"
+      ],
+      "identifier": "dry-skin"
+    },
+    {
+      "name": "Madrugar",
+      "effect": "",
+      "effect_keys": [
+        "madrugar"
+      ],
+      "identifier": "early-bird"
+    },
+    {
+      "name": "Dinamo",
+      "effect": "",
+      "effect_keys": [
+        "dinamo"
+      ],
+      "identifier": "electromorphosis"
+    },
+    {
+      "name": "Aura Feérica",
+      "effect": "",
+      "effect_keys": [
+        "aura_feerica"
+      ],
+      "identifier": "fairy-aura"
+    },
+    {
+      "name": "Absorbe Fuego",
+      "effect": "",
+      "effect_keys": [
+        "absorcion_fuego"
+      ],
+      "identifier": "flash-fire"
+    },
+    {
+      "name": "Guardia Metálica",
+      "effect": "",
+      "effect_keys": [
+        "guardia_metalica"
+      ],
+      "identifier": "full-metal-body"
+    },
+    {
+      "name": "Manto Frondoso",
+      "effect": "",
+      "effect_keys": [
+        "manto_frondoso"
+      ],
+      "identifier": "grass-pelt"
+    },
+    {
+      "name": "Relincho Negro",
+      "effect": "",
+      "effect_keys": [
+        "relincho_negro"
+      ],
+      "identifier": "grim-neigh"
+    },
+    {
+      "name": "Motor Hadrónico",
+      "effect": "",
+      "effect_keys": [
+        "motor_hadronico"
+      ],
+      "identifier": "hadron-engine"
+    },
+    {
+      "name": "Metal Pesado",
+      "effect": "",
+      "effect_keys": [
+        "metal_pesado"
+      ],
+      "identifier": "heavy-metal"
+    },
+    {
+      "name": "Hospitalidad",
+      "effect": "",
+      "effect_keys": [
+        "hospitalidad"
+      ],
+      "identifier": "hospitality"
+    },
+    {
+      "name": "Potencia",
+      "effect": "",
+      "effect_keys": [
+        "potencia"
+      ],
+      "identifier": "huge-power"
+    },
+    {
+      "name": "Gélido",
+      "effect": "",
+      "effect_keys": [
+        "gelido"
+      ],
+      "identifier": "ice-body"
+    },
+    {
+      "name": "Allanamiento",
+      "effect": "",
+      "effect_keys": [
+        "allanamiento"
+      ],
+      "identifier": "infiltrator"
+    },
+    {
+      "name": "Revés",
+      "effect": "",
+      "effect_keys": [
+        "reves"
+      ],
+      "identifier": "innards-out"
+    },
+    {
+      "name": "Espada Indómita",
+      "effect": "",
+      "effect_keys": [
+        "espada_indomita"
+      ],
+      "identifier": "intrepid-sword"
+    },
+    {
+      "name": "Punta Acero",
+      "effect": "",
+      "effect_keys": [
+        "punta_acero"
+      ],
+      "identifier": "iron-barbs"
+    },
+    {
+      "name": "Defensa Hoja",
+      "effect": "",
+      "effect_keys": [
+        "defensa_hoja"
+      ],
+      "identifier": "leaf-guard"
+    },
+    {
+      "name": "Líbero",
+      "effect": "",
+      "effect_keys": [
+        "libero"
+      ],
+      "identifier": "libero"
+    },
+    {
+      "name": "Metal Liviano",
+      "effect": "",
+      "effect_keys": [
+        "metal_liviano"
+      ],
+      "identifier": "light-metal"
+    },
+    {
+      "name": "Lodo Líquido",
+      "effect": "",
+      "effect_keys": [
+        "lodo_liquido"
+      ],
+      "identifier": "liquid-ooze"
+    },
+    {
+      "name": "Remoto",
+      "effect": "",
+      "effect_keys": [
+        "remoto"
+      ],
+      "identifier": "long-reach"
+    },
+    {
+      "name": "Megadisparador",
+      "effect": "",
+      "effect_keys": [
+        "megadisparador"
+      ],
+      "identifier": "mega-launcher"
+    },
+    {
+      "name": "Ensañamiento",
+      "effect": "",
+      "effect_keys": [
+        "ensañamiento"
+      ],
+      "identifier": "merciless"
+    },
+    {
+      "name": "Mimetismo",
+      "effect": "",
+      "effect_keys": [
+        "mimetismo"
+      ],
+      "identifier": "mimicry"
+    },
+    {
+      "name": "Ojo Mental",
+      "effect": "",
+      "effect_keys": [
+        "ojo_mental"
+      ],
+      "identifier": "minds-eye"
+    },
+    {
+      "name": "Coraza Reflejo",
+      "effect": "",
+      "effect_keys": [
+        "coraza_reflejo"
+      ],
+      "identifier": "mirror-armor"
+    },
+    {
+      "name": "Rompemoldes",
+      "effect": "",
+      "effect_keys": [
+        "rompemoldes"
+      ],
+      "identifier": "mold-breaker"
+    },
+    {
+      "name": "Autoestima",
+      "effect": "",
+      "effect_keys": [
+        "autoestima"
+      ],
+      "identifier": "moxie"
+    },
+    {
+      "name": "Fuerza Cerebral",
+      "effect": "",
+      "effect_keys": [
+        "fuerza_cerebral"
+      ],
+      "identifier": "neuroforce"
+    },
+    {
+      "name": "Gas Reactivo",
+      "effect": "",
+      "effect_keys": [
+        "gas_reactivo"
+      ],
+      "identifier": "neutralizing-gas"
+    },
+    {
+      "name": "Indefenso",
+      "effect": "",
+      "effect_keys": [
+        "indefenso"
+      ],
+      "identifier": "no-guard"
+    },
+    {
+      "name": "Oportunista",
+      "effect": "",
+      "effect_keys": [
+        "oportunista"
+      ],
+      "identifier": "opportunist"
+    },
+    {
+      "name": "Latido Oricalco",
+      "effect": "",
+      "effect_keys": [
+        "latido_oricalco"
+      ],
+      "identifier": "orichalcum-pulse"
+    },
+    {
+      "name": "Amor Filial",
+      "effect": "",
+      "effect_keys": [
+        "amor_filial"
+      ],
+      "identifier": "parental-bond"
+    },
+    {
+      "name": "Cuerpo Mortal",
+      "effect": "",
+      "effect_keys": [
+        "cuerpo_mortal"
+      ],
+      "identifier": "perish-body"
+    },
+    {
+      "name": "Títere Tóxico",
+      "effect": "",
+      "effect_keys": [
+        "titere_toxico"
+      ],
+      "identifier": "poison-puppeteer"
+    },
+    {
+      "name": "Toque Tóxico",
+      "effect": "",
+      "effect_keys": [
+        "toque_toxico"
+      ],
+      "identifier": "poison-touch"
+    },
+    {
+      "name": "Mutatipo",
+      "effect": "",
+      "effect_keys": [
+        "mutatipo"
+      ],
+      "identifier": "protean"
+    },
+    {
+      "name": "Paleosíntesis",
+      "effect": "",
+      "effect_keys": [
+        "paleosintesis"
+      ],
+      "identifier": "protosynthesis"
+    },
+    {
+      "name": "Energía Pura",
+      "effect": "",
+      "effect_keys": [
+        "energia_pura"
+      ],
+      "identifier": "pure-power"
+    },
+    {
+      "name": "Carga Cuark",
+      "effect": "",
+      "effect_keys": [
+        "carga_cuark"
+      ],
+      "identifier": "quark-drive"
+    },
+    {
+      "name": "Audaz",
+      "effect": "",
+      "effect_keys": [
+        "audaz"
+      ],
+      "identifier": "reckless"
+    },
+    {
+      "name": "Chorro Arena",
+      "effect": "",
+      "effect_keys": [
+        "chorro_arena"
+      ],
+      "identifier": "sand-stream"
+    },
+    {
+      "name": "Antibarrera",
+      "effect": "",
+      "effect_keys": [
+        "antibarrera"
+      ],
+      "identifier": "screen-cleaner"
+    },
+    {
+      "name": "Dicha",
+      "effect": "",
+      "effect_keys": [
+        "dicha"
+      ],
+      "identifier": "serene-grace"
+    },
+    {
+      "name": "Cortante",
+      "effect": "",
+      "effect_keys": [
+        "cortante"
+      ],
+      "identifier": "sharpness"
+    },
+    {
+      "name": "Polvo Escudo",
+      "effect": "",
+      "effect_keys": [
+        "polvo_escudo"
+      ],
+      "identifier": "shield-dust"
+    },
+    {
+      "name": "Inicio Lento",
+      "effect": "",
+      "effect_keys": [
+        "inicio_lento"
+      ],
+      "identifier": "slow-start"
+    },
+    {
+      "name": "Salpicante",
+      "effect": "",
+      "effect_keys": [
+        "salpicante"
+      ],
+      "identifier": "spicy-spray"
+    },
+    {
+      "name": "Impasible",
+      "effect": "",
+      "effect_keys": [
+        "impasible"
+      ],
+      "identifier": "steadfast"
+    },
+    {
+      "name": "Hedor",
+      "effect": "",
+      "effect_keys": [
+        "contacto_condicion"
+      ],
+      "identifier": "stench"
+    },
+    {
+      "name": "Robustez",
+      "effect": "",
+      "effect_keys": [
+        "robustez"
+      ],
+      "identifier": "sturdy"
+    },
+    {
+      "name": "Néctar Dulce",
+      "effect": "",
+      "effect_keys": [
+        "nectar_dulce"
+      ],
+      "identifier": "supersweet-syrup"
+    },
+    {
+      "name": "General Supremo",
+      "effect": "",
+      "effect_keys": [
+        "general_supremo"
+      ],
+      "identifier": "supreme-overlord"
+    },
+    {
+      "name": "Cola Surf",
+      "effect": "",
+      "effect_keys": [
+        "cola_surf"
+      ],
+      "identifier": "surge-surfer"
+    },
+    {
+      "name": "Espada Debacle",
+      "effect": "",
+      "effect_keys": [
+        "espada_debacle"
+      ],
+      "identifier": "sword-of-ruin"
+    },
+    {
+      "name": "Sincronía",
+      "effect": "",
+      "effect_keys": [
+        "sincronia"
+      ],
+      "identifier": "synchronize"
+    },
+    {
+      "name": "Tablilla Debacle",
+      "effect": "",
+      "effect_keys": [
+        "tablilla_debacle"
+      ],
+      "identifier": "tablets-of-ruin"
+    },
+    {
+      "name": "Tumbos",
+      "effect": "",
+      "effect_keys": [
+        "tumbos"
+      ],
+      "identifier": "tangled-feet"
+    },
+    {
+      "name": "Terravoltaje",
+      "effect": "",
+      "effect_keys": [
+        "terravoltaje"
+      ],
+      "identifier": "teravolt"
+    },
+    {
+      "name": "Cromolente",
+      "effect": "",
+      "effect_keys": [
+        "cromolente"
+      ],
+      "identifier": "tinted-lens"
+    },
+    {
+      "name": "Cadena Tóxica",
+      "effect": "",
+      "effect_keys": [
+        "cadena_toxica"
+      ],
+      "identifier": "toxic-chain"
+    },
+    {
+      "name": "Capa Tóxica",
+      "effect": "",
+      "effect_keys": [
+        "capa_toxica"
+      ],
+      "identifier": "toxic-debris"
+    },
+    {
+      "name": "Ausente",
+      "effect": "",
+      "effect_keys": [
+        "ausente"
+      ],
+      "identifier": "truant"
+    },
+    {
+      "name": "Turbollama",
+      "effect": "",
+      "effect_keys": [
+        "turbollama"
+      ],
+      "identifier": "turboblaze"
+    },
+    {
+      "name": "Caldero Debacle",
+      "effect": "",
+      "effect_keys": [
+        "caldero_debacle"
+      ],
+      "identifier": "vessel-of-ruin"
+    },
+    {
+      "name": "Tinovictoria",
+      "effect": "",
+      "effect_keys": [
+        "tinovictoria"
+      ],
+      "identifier": "victory-star"
+    },
+    {
+      "name": "Absorbe Electricidad",
+      "effect": "",
+      "effect_keys": [
+        "absorcion_electricidad"
+      ],
+      "identifier": "volt-absorb"
+    },
+    {
+      "name": "Absorbe Agua",
+      "effect": "",
+      "effect_keys": [
+        "absorcion_agua"
+      ],
+      "identifier": "water-absorb"
+    },
+    {
+      "name": "Energía Eólica",
+      "effect": "",
+      "effect_keys": [
+        "energia_eolica"
+      ],
+      "identifier": "wind-power"
+    }
+  ],
+  "assignments": {
+    "10": [
+      "polvo_escudo"
+    ],
+    "12": [
+      "cromolente"
+    ],
+    "13": [
+      "polvo_escudo"
+    ],
+    "16": [
+      "tumbos"
+    ],
+    "17": [
+      "tumbos"
+    ],
+    "18": [
+      "tumbos"
+    ],
+    "37": [
+      "absorcion_fuego"
+    ],
+    "38": [
+      "absorcion_fuego"
+    ],
+    "41": [
+      "allanamiento"
+    ],
+    "42": [
+      "allanamiento"
+    ],
+    "44": [
+      "contacto_condicion"
+    ],
+    "46": [
+      "piel_seca",
+      "humedad"
+    ],
+    "47": [
+      "piel_seca",
+      "humedad"
+    ],
+    "48": [
+      "cromolente"
+    ],
+    "49": [
+      "polvo_escudo",
+      "cromolente"
+    ],
+    "54": [
+      "humedad"
+    ],
+    "55": [
+      "humedad"
+    ],
+    "58": [
+      "absorcion_fuego"
+    ],
+    "59": [
+      "absorcion_fuego"
+    ],
+    "60": [
+      "absorcion_agua",
+      "humedad"
+    ],
+    "61": [
+      "absorcion_agua",
+      "humedad"
+    ],
+    "62": [
+      "absorcion_agua",
+      "humedad"
+    ],
+    "63": [
+      "sincronia"
+    ],
+    "64": [
+      "sincronia"
+    ],
+    "65": [
+      "sincronia"
+    ],
+    "66": [
+      "indefenso",
+      "impasible"
+    ],
+    "67": [
+      "indefenso",
+      "impasible"
+    ],
+    "68": [
+      "indefenso",
+      "impasible"
+    ],
+    "72": [
+      "lodo_liquido"
+    ],
+    "73": [
+      "lodo_liquido"
+    ],
+    "74": [
+      "robustez"
+    ],
+    "75": [
+      "robustez"
+    ],
+    "76": [
+      "robustez"
+    ],
+    "77": [
+      "absorcion_fuego"
+    ],
+    "78": [
+      "absorcion_fuego"
+    ],
+    "81": [
+      "robustez",
+      "calculo_final"
+    ],
+    "82": [
+      "robustez",
+      "calculo_final"
+    ],
+    "84": [
+      "madrugar",
+      "tumbos"
+    ],
+    "85": [
+      "madrugar",
+      "tumbos"
+    ],
+    "86": [
+      "gelido"
+    ],
+    "87": [
+      "gelido"
+    ],
+    "88": [
+      "contacto_condicion",
+      "toque_toxico"
+    ],
+    "89": [
+      "contacto_condicion",
+      "toque_toxico"
+    ],
+    "94": [
+      "cuerpo_maldito"
+    ],
+    "95": [
+      "robustez"
+    ],
+    "106": [
+      "audaz"
+    ],
+    "109": [
+      "gas_reactivo",
+      "contacto_condicion"
+    ],
+    "110": [
+      "gas_reactivo",
+      "contacto_condicion"
+    ],
+    "111": [
+      "audaz"
+    ],
+    "112": [
+      "audaz"
+    ],
+    "113": [
+      "dicha"
+    ],
+    "114": [
+      "defensa_hoja"
+    ],
+    "115": [
+      "madrugar",
+      "amor_filial"
+    ],
+    "116": [
+      "humedad"
+    ],
+    "117": [
+      "humedad"
+    ],
+    "120": [
+      "calculo_final"
+    ],
+    "121": [
+      "calculo_final"
+    ],
+    "123": [
+      "impasible"
+    ],
+    "124": [
+      "piel_seca"
+    ],
+    "127": [
+      "rompemoldes",
+      "autoestima",
+      "aerilacion"
+    ],
+    "130": [
+      "autoestima"
+    ],
+    "131": [
+      "absorcion_agua"
+    ],
+    "134": [
+      "absorcion_agua"
+    ],
+    "135": [
+      "absorcion_electricidad"
+    ],
+    "136": [
+      "absorcion_fuego"
+    ],
+    "137": [
+      "descarga",
+      "calculo_final"
+    ],
+    "151": [
+      "sincronia"
+    ],
+    "152": [
+      "defensa_hoja"
+    ],
+    "153": [
+      "defensa_hoja"
+    ],
+    "154": [
+      "defensa_hoja"
+    ],
+    "155": [
+      "absorcion_fuego"
+    ],
+    "156": [
+      "absorcion_fuego"
+    ],
+    "157": [
+      "absorcion_fuego"
+    ],
+    "163": [
+      "cromolente"
+    ],
+    "164": [
+      "cromolente"
+    ],
+    "165": [
+      "madrugar"
+    ],
+    "166": [
+      "madrugar"
+    ],
+    "169": [
+      "allanamiento"
+    ],
+    "170": [
+      "absorcion_electricidad",
+      "absorcion_agua"
+    ],
+    "171": [
+      "absorcion_electricidad",
+      "absorcion_agua"
+    ],
+    "175": [
+      "dicha"
+    ],
+    "176": [
+      "dicha"
+    ],
+    "177": [
+      "sincronia",
+      "madrugar"
+    ],
+    "178": [
+      "sincronia",
+      "madrugar"
+    ],
+    "183": [
+      "potencia"
+    ],
+    "184": [
+      "potencia"
+    ],
+    "185": [
+      "robustez"
+    ],
+    "186": [
+      "absorcion_agua",
+      "humedad"
+    ],
+    "187": [
+      "defensa_hoja",
+      "allanamiento"
+    ],
+    "188": [
+      "defensa_hoja",
+      "allanamiento"
+    ],
+    "189": [
+      "defensa_hoja",
+      "allanamiento"
+    ],
+    "191": [
+      "madrugar"
+    ],
+    "192": [
+      "madrugar"
+    ],
+    "194": [
+      "humedad",
+      "absorcion_agua"
+    ],
+    "195": [
+      "humedad",
+      "absorcion_agua"
+    ],
+    "196": [
+      "sincronia"
+    ],
+    "197": [
+      "sincronia"
+    ],
+    "203": [
+      "madrugar"
+    ],
+    "204": [
+      "robustez"
+    ],
+    "205": [
+      "robustez"
+    ],
+    "206": [
+      "dicha"
+    ],
+    "208": [
+      "robustez"
+    ],
+    "212": [
+      "metal_liviano"
+    ],
+    "213": [
+      "robustez"
+    ],
+    "214": [
+      "autoestima"
+    ],
+    "226": [
+      "absorcion_agua"
+    ],
+    "227": [
+      "robustez"
+    ],
+    "228": [
+      "madrugar",
+      "absorcion_fuego"
+    ],
+    "229": [
+      "madrugar",
+      "absorcion_fuego"
+    ],
+    "230": [
+      "humedad"
+    ],
+    "232": [
+      "robustez"
+    ],
+    "233": [
+      "descarga",
+      "calculo_final"
+    ],
+    "236": [
+      "impasible"
+    ],
+    "237": [
+      "impasible"
+    ],
+    "242": [
+      "dicha"
+    ],
+    "248": [
+      "chorro_arena"
+    ],
+    "258": [
+      "humedad"
+    ],
+    "259": [
+      "humedad"
+    ],
+    "260": [
+      "humedad"
+    ],
+    "262": [
+      "autoestima"
+    ],
+    "265": [
+      "polvo_escudo"
+    ],
+    "269": [
+      "polvo_escudo"
+    ],
+    "273": [
+      "madrugar"
+    ],
+    "274": [
+      "madrugar"
+    ],
+    "280": [
+      "sincronia"
+    ],
+    "281": [
+      "sincronia"
+    ],
+    "282": [
+      "sincronia"
+    ],
+    "287": [
+      "ausente"
+    ],
+    "289": [
+      "ausente"
+    ],
+    "291": [
+      "allanamiento"
+    ],
+    "298": [
+      "potencia"
+    ],
+    "299": [
+      "robustez"
+    ],
+    "304": [
+      "robustez",
+      "metal_pesado"
+    ],
+    "305": [
+      "robustez",
+      "metal_pesado"
+    ],
+    "306": [
+      "robustez",
+      "metal_pesado"
+    ],
+    "307": [
+      "energia_pura"
+    ],
+    "308": [
+      "energia_pura"
+    ],
+    "312": [
+      "absorcion_electricidad"
+    ],
+    "314": [
+      "cromolente"
+    ],
+    "315": [
+      "defensa_hoja"
+    ],
+    "316": [
+      "lodo_liquido"
+    ],
+    "317": [
+      "lodo_liquido"
+    ],
+    "327": [
+      "tumbos"
+    ],
+    "331": [
+      "absorcion_agua"
+    ],
+    "332": [
+      "absorcion_agua"
+    ],
+    "336": [
+      "allanamiento"
+    ],
+    "352": [
+      "cambio_color",
+      "mutatipo"
+    ],
+    "353": [
+      "cuerpo_maldito"
+    ],
+    "354": [
+      "cuerpo_maldito"
+    ],
+    "361": [
+      "gelido"
+    ],
+    "362": [
+      "gelido"
+    ],
+    "363": [
+      "gelido"
+    ],
+    "364": [
+      "gelido"
+    ],
+    "365": [
+      "gelido"
+    ],
+    "369": [
+      "robustez"
+    ],
+    "373": [
+      "autoestima"
+    ],
+    "374": [
+      "metal_liviano"
+    ],
+    "375": [
+      "metal_liviano"
+    ],
+    "376": [
+      "metal_liviano"
+    ],
+    "377": [
+      "robustez"
+    ],
+    "378": [
+      "gelido"
+    ],
+    "379": [
+      "metal_liviano"
+    ],
+    "385": [
+      "dicha"
+    ],
+    "396": [
+      "audaz"
+    ],
+    "397": [
+      "audaz"
+    ],
+    "398": [
+      "audaz"
+    ],
+    "406": [
+      "defensa_hoja"
+    ],
+    "408": [
+      "rompemoldes"
+    ],
+    "409": [
+      "rompemoldes"
+    ],
+    "410": [
+      "robustez"
+    ],
+    "411": [
+      "robustez"
+    ],
+    "414": [
+      "cromolente"
+    ],
+    "417": [
+      "absorcion_electricidad"
+    ],
+    "430": [
+      "autoestima"
+    ],
+    "434": [
+      "contacto_condicion"
+    ],
+    "435": [
+      "contacto_condicion"
+    ],
+    "436": [
+      "metal_pesado"
+    ],
+    "437": [
+      "metal_pesado"
+    ],
+    "438": [
+      "robustez"
+    ],
+    "440": [
+      "dicha"
+    ],
+    "441": [
+      "tumbos"
+    ],
+    "442": [
+      "allanamiento"
+    ],
+    "447": [
+      "impasible"
+    ],
+    "448": [
+      "impasible"
+    ],
+    "449": [
+      "chorro_arena"
+    ],
+    "450": [
+      "chorro_arena"
+    ],
+    "453": [
+      "piel_seca",
+      "toque_toxico"
+    ],
+    "454": [
+      "piel_seca",
+      "toque_toxico"
+    ],
+    "458": [
+      "absorcion_agua"
+    ],
+    "462": [
+      "robustez",
+      "calculo_final"
+    ],
+    "464": [
+      "audaz"
+    ],
+    "465": [
+      "defensa_hoja"
+    ],
+    "468": [
+      "dicha"
+    ],
+    "469": [
+      "cromolente"
+    ],
+    "470": [
+      "defensa_hoja"
+    ],
+    "471": [
+      "gelido"
+    ],
+    "474": [
+      "descarga",
+      "calculo_final"
+    ],
+    "475": [
+      "impasible",
+      "cortante"
+    ],
+    "476": [
+      "robustez"
+    ],
+    "478": [
+      "cuerpo_maldito"
+    ],
+    "485": [
+      "absorcion_fuego"
+    ],
+    "486": [
+      "inicio_lento"
+    ],
+    "494": [
+      "tinovictoria"
+    ],
+    "500": [
+      "audaz"
+    ],
+    "504": [
+      "calculo_final"
+    ],
+    "505": [
+      "calculo_final"
+    ],
+    "517": [
+      "sincronia"
+    ],
+    "518": [
+      "sincronia"
+    ],
+    "524": [
+      "robustez"
+    ],
+    "525": [
+      "robustez"
+    ],
+    "526": [
+      "robustez",
+      "chorro_arena"
+    ],
+    "529": [
+      "rompemoldes"
+    ],
+    "530": [
+      "rompemoldes"
+    ],
+    "535": [
+      "absorcion_agua"
+    ],
+    "536": [
+      "absorcion_agua"
+    ],
+    "537": [
+      "toque_toxico",
+      "absorcion_agua"
+    ],
+    "538": [
+      "rompemoldes"
+    ],
+    "539": [
+      "robustez",
+      "rompemoldes"
+    ],
+    "541": [
+      "defensa_hoja"
+    ],
+    "546": [
+      "allanamiento"
+    ],
+    "547": [
+      "allanamiento"
+    ],
+    "548": [
+      "defensa_hoja"
+    ],
+    "549": [
+      "defensa_hoja"
+    ],
+    "550": [
+      "audaz",
+      "rompemoldes"
+    ],
+    "551": [
+      "autoestima"
+    ],
+    "552": [
+      "autoestima"
+    ],
+    "553": [
+      "autoestima"
+    ],
+    "556": [
+      "absorcion_agua"
+    ],
+    "557": [
+      "robustez"
+    ],
+    "558": [
+      "robustez"
+    ],
+    "559": [
+      "autoestima"
+    ],
+    "560": [
+      "autoestima"
+    ],
+    "561": [
+      "cromolente"
+    ],
+    "564": [
+      "robustez"
+    ],
+    "565": [
+      "robustez"
+    ],
+    "566": [
+      "flaqueza"
+    ],
+    "567": [
+      "flaqueza"
+    ],
+    "568": [
+      "contacto_condicion"
+    ],
+    "569": [
+      "contacto_condicion"
+    ],
+    "582": [
+      "gelido"
+    ],
+    "583": [
+      "gelido"
+    ],
+    "584": [
+      "gelido"
+    ],
+    "585": [
+      "dicha"
+    ],
+    "586": [
+      "dicha"
+    ],
+    "588": [
+      "indefenso"
+    ],
+    "592": [
+      "absorcion_agua",
+      "cuerpo_maldito",
+      "humedad"
+    ],
+    "593": [
+      "absorcion_agua",
+      "cuerpo_maldito",
+      "humedad"
+    ],
+    "597": [
+      "punta_acero"
+    ],
+    "598": [
+      "punta_acero"
+    ],
+    "605": [
+      "sincronia",
+      "calculo_final"
+    ],
+    "606": [
+      "sincronia",
+      "calculo_final"
+    ],
+    "607": [
+      "absorcion_fuego",
+      "allanamiento"
+    ],
+    "608": [
+      "absorcion_fuego",
+      "allanamiento"
+    ],
+    "609": [
+      "absorcion_fuego",
+      "allanamiento"
+    ],
+    "610": [
+      "rompemoldes"
+    ],
+    "611": [
+      "rompemoldes"
+    ],
+    "612": [
+      "rompemoldes"
+    ],
+    "619": [
+      "audaz"
+    ],
+    "620": [
+      "audaz"
+    ],
+    "621": [
+      "rompemoldes"
+    ],
+    "622": [
+      "indefenso"
+    ],
+    "623": [
+      "indefenso"
+    ],
+    "626": [
+      "audaz"
+    ],
+    "631": [
+      "absorcion_fuego"
+    ],
+    "632": [
+      "ausente"
+    ],
+    "643": [
+      "turbollama"
+    ],
+    "644": [
+      "terravoltaje"
+    ],
+    "648": [
+      "dicha"
+    ],
+    "649": [
+      "descarga"
+    ],
+    "656": [
+      "mutatipo"
+    ],
+    "657": [
+      "mutatipo"
+    ],
+    "658": [
+      "mutatipo"
+    ],
+    "659": [
+      "potencia"
+    ],
+    "660": [
+      "potencia"
+    ],
+    "664": [
+      "polvo_escudo"
+    ],
+    "666": [
+      "polvo_escudo"
+    ],
+    "667": [
+      "autoestima"
+    ],
+    "668": [
+      "autoestima"
+    ],
+    "672": [
+      "manto_frondoso"
+    ],
+    "673": [
+      "manto_frondoso"
+    ],
+    "674": [
+      "rompemoldes"
+    ],
+    "675": [
+      "rompemoldes"
+    ],
+    "677": [
+      "allanamiento"
+    ],
+    "678": [
+      "allanamiento"
+    ],
+    "679": [
+      "indefenso"
+    ],
+    "680": [
+      "indefenso"
+    ],
+    "686": [
+      "allanamiento"
+    ],
+    "687": [
+      "allanamiento"
+    ],
+    "690": [
+      "toque_toxico"
+    ],
+    "691": [
+      "toque_toxico"
+    ],
+    "692": [
+      "megadisparador"
+    ],
+    "693": [
+      "megadisparador"
+    ],
+    "694": [
+      "piel_seca"
+    ],
+    "695": [
+      "piel_seca"
+    ],
+    "696": [
+      "robustez"
+    ],
+    "701": [
+      "rompemoldes"
+    ],
+    "703": [
+      "robustez"
+    ],
+    "712": [
+      "gelido",
+      "robustez"
+    ],
+    "713": [
+      "gelido",
+      "robustez"
+    ],
+    "714": [
+      "allanamiento"
+    ],
+    "715": [
+      "allanamiento"
+    ],
+    "716": [
+      "aura_feerica"
+    ],
+    "717": [
+      "aura_oscura"
+    ],
+    "718": [
+      "rompeaura"
+    ],
+    "721": [
+      "absorcion_agua"
+    ],
+    "722": [
+      "remoto"
+    ],
+    "723": [
+      "remoto"
+    ],
+    "724": [
+      "remoto"
+    ],
+    "742": [
+      "polvo_escudo"
+    ],
+    "743": [
+      "polvo_escudo"
+    ],
+    "744": [
+      "impasible"
+    ],
+    "745": [
+      "impasible"
+    ],
+    "747": [
+      "ensañamiento"
+    ],
+    "748": [
+      "ensañamiento"
+    ],
+    "751": [
+      "absorcion_agua"
+    ],
+    "752": [
+      "absorcion_agua"
+    ],
+    "753": [
+      "defensa_hoja"
+    ],
+    "754": [
+      "defensa_hoja"
+    ],
+    "757": [
+      "corrosion"
+    ],
+    "758": [
+      "corrosion"
+    ],
+    "761": [
+      "defensa_hoja"
+    ],
+    "762": [
+      "defensa_hoja"
+    ],
+    "763": [
+      "defensa_hoja"
+    ],
+    "771": [
+      "reves"
+    ],
+    "775": [
+      "letargo_perenne"
+    ],
+    "777": [
+      "punta_acero",
+      "robustez"
+    ],
+    "790": [
+      "robustez"
+    ],
+    "791": [
+      "guardia_metalica"
+    ],
+    "807": [
+      "absorcion_electricidad"
+    ],
+    "813": [
+      "libero"
+    ],
+    "814": [
+      "libero"
+    ],
+    "815": [
+      "libero"
+    ],
+    "823": [
+      "coraza_reflejo"
+    ],
+    "829": [
+      "pelusa"
+    ],
+    "830": [
+      "pelusa"
+    ],
+    "832": [
+      "impasible"
+    ],
+    "837": [
+      "absorcion_fuego"
+    ],
+    "838": [
+      "absorcion_fuego"
+    ],
+    "839": [
+      "absorcion_fuego"
+    ],
+    "850": [
+      "absorcion_fuego"
+    ],
+    "851": [
+      "absorcion_fuego"
+    ],
+    "854": [
+      "cuerpo_maldito"
+    ],
+    "855": [
+      "cuerpo_maldito"
+    ],
+    "862": [
+      "audaz"
+    ],
+    "864": [
+      "cuerpo_mortal"
+    ],
+    "865": [
+      "impasible"
+    ],
+    "866": [
+      "tumbos",
+      "antibarrera",
+      "gelido"
+    ],
+    "872": [
+      "polvo_escudo"
+    ],
+    "873": [
+      "polvo_escudo"
+    ],
+    "876": [
+      "sincronia"
+    ],
+    "878": [
+      "metal_pesado"
+    ],
+    "879": [
+      "metal_pesado"
+    ],
+    "880": [
+      "absorcion_electricidad"
+    ],
+    "881": [
+      "absorcion_electricidad"
+    ],
+    "882": [
+      "absorcion_agua"
+    ],
+    "883": [
+      "absorcion_agua",
+      "gelido"
+    ],
+    "884": [
+      "metal_liviano",
+      "metal_pesado"
+    ],
+    "885": [
+      "allanamiento",
+      "cuerpo_maldito"
+    ],
+    "886": [
+      "allanamiento",
+      "cuerpo_maldito"
+    ],
+    "887": [
+      "allanamiento",
+      "cuerpo_maldito"
+    ],
+    "888": [
+      "espada_indomita"
+    ],
+    "889": [
+      "escudo_recio"
+    ],
+    "893": [
+      "defensa_hoja"
+    ],
+    "896": [
+      "relincho_blanco"
+    ],
+    "897": [
+      "relincho_negro"
+    ],
+    "900": [
+      "cortante"
+    ],
+    "902": [
+      "rompemoldes"
+    ],
+    "903": [
+      "toque_toxico"
+    ],
+    "906": [
+      "mutatipo"
+    ],
+    "907": [
+      "mutatipo"
+    ],
+    "908": [
+      "mutatipo"
+    ],
+    "912": [
+      "autoestima"
+    ],
+    "913": [
+      "autoestima"
+    ],
+    "914": [
+      "autoestima"
+    ],
+    "919": [
+      "cromolente"
+    ],
+    "920": [
+      "cromolente"
+    ],
+    "922": [
+      "absorcion_electricidad"
+    ],
+    "923": [
+      "absorcion_electricidad"
+    ],
+    "928": [
+      "madrugar"
+    ],
+    "929": [
+      "madrugar"
+    ],
+    "932": [
+      "robustez"
+    ],
+    "933": [
+      "robustez"
+    ],
+    "934": [
+      "robustez"
+    ],
+    "935": [
+      "absorcion_fuego"
+    ],
+    "936": [
+      "absorcion_fuego"
+    ],
+    "937": [
+      "absorcion_fuego"
+    ],
+    "938": [
+      "humedad"
+    ],
+    "939": [
+      "dinamo",
+      "humedad"
+    ],
+    "940": [
+      "energia_eolica",
+      "absorcion_electricidad"
+    ],
+    "941": [
+      "energia_eolica",
+      "absorcion_electricidad"
+    ],
+    "945": [
+      "toque_toxico"
+    ],
+    "946": [
+      "allanamiento"
+    ],
+    "947": [
+      "allanamiento"
+    ],
+    "954": [
+      "sincronia"
+    ],
+    "956": [
+      "oportunista"
+    ],
+    "957": [
+      "rompemoldes"
+    ],
+    "958": [
+      "rompemoldes"
+    ],
+    "959": [
+      "rompemoldes"
+    ],
+    "965": [
+      "inicio_lento"
+    ],
+    "969": [
+      "capa_toxica",
+      "corrosion"
+    ],
+    "970": [
+      "capa_toxica",
+      "corrosion"
+    ],
+    "973": [
+      "tumbos",
+      "unisono"
+    ],
+    "976": [
+      "rompemoldes",
+      "cortante"
+    ],
+    "980": [
+      "absorcion_agua"
+    ],
+    "982": [
+      "dicha"
+    ],
+    "983": [
+      "general_supremo"
+    ],
+    "984": [
+      "paleosintesis"
+    ],
+    "985": [
+      "paleosintesis"
+    ],
+    "986": [
+      "paleosintesis"
+    ],
+    "987": [
+      "paleosintesis"
+    ],
+    "988": [
+      "paleosintesis"
+    ],
+    "989": [
+      "paleosintesis"
+    ],
+    "990": [
+      "carga_cuark"
+    ],
+    "991": [
+      "carga_cuark"
+    ],
+    "992": [
+      "carga_cuark"
+    ],
+    "993": [
+      "carga_cuark"
+    ],
+    "994": [
+      "carga_cuark"
+    ],
+    "995": [
+      "carga_cuark"
+    ],
+    "996": [
+      "gelido"
+    ],
+    "997": [
+      "gelido"
+    ],
+    "998": [
+      "gelido"
+    ],
+    "1001": [
+      "tablilla_debacle"
+    ],
+    "1002": [
+      "espada_debacle"
+    ],
+    "1003": [
+      "caldero_debacle"
+    ],
+    "1004": [
+      "abalorio_debacle"
+    ],
+    "1005": [
+      "paleosintesis"
+    ],
+    "1006": [
+      "carga_cuark"
+    ],
+    "1007": [
+      "latido_oricalco"
+    ],
+    "1008": [
+      "motor_hadronico"
+    ],
+    "1009": [
+      "paleosintesis"
+    ],
+    "1010": [
+      "carga_cuark"
+    ],
+    "1011": [
+      "nectar_dulce"
+    ],
+    "1012": [
+      "hospitalidad"
+    ],
+    "1013": [
+      "hospitalidad"
+    ],
+    "1014": [
+      "cadena_toxica"
+    ],
+    "1015": [
+      "cadena_toxica"
+    ],
+    "1016": [
+      "cadena_toxica"
+    ],
+    "1018": [
+      "robustez"
+    ],
+    "1019": [
+      "nectar_dulce"
+    ],
+    "1020": [
+      "paleosintesis"
+    ],
+    "1021": [
+      "paleosintesis"
+    ],
+    "1022": [
+      "carga_cuark"
+    ],
+    "1023": [
+      "carga_cuark"
+    ],
+    "1025": [
+      "titere_toxico"
+    ],
+    "10006": [
+      "dicha"
+    ],
+    "10016": [
+      "rompemoldes"
+    ],
+    "10018": [
+      "dicha"
+    ],
+    "10020": [
+      "absorcion_electricidad"
+    ],
+    "10022": [
+      "terravoltaje"
+    ],
+    "10023": [
+      "turbollama"
+    ],
+    "10025": [
+      "allanamiento"
+    ],
+    "10036": [
+      "megadisparador"
+    ],
+    "10039": [
+      "amor_filial"
+    ],
+    "10041": [
+      "rompemoldes"
+    ],
+    "10043": [
+      "impasible"
+    ],
+    "10045": [
+      "rompemoldes"
+    ],
+    "10049": [
+      "chorro_arena"
+    ],
+    "10052": [
+      "potencia"
+    ],
+    "10054": [
+      "energia_pura"
+    ],
+    "10073": [
+      "indefenso"
+    ],
+    "10100": [
+      "cola_surf"
+    ],
+    "10109": [
+      "robustez"
+    ],
+    "10110": [
+      "robustez"
+    ],
+    "10111": [
+      "robustez"
+    ],
+    "10112": [
+      "toque_toxico"
+    ],
+    "10113": [
+      "toque_toxico"
+    ],
+    "10115": [
+      "cuerpo_maldito"
+    ],
+    "10126": [
+      "indefenso"
+    ],
+    "10128": [
+      "defensa_hoja"
+    ],
+    "10129": [
+      "corrosion"
+    ],
+    "10149": [
+      "cuerpo_maldito"
+    ],
+    "10150": [
+      "polvo_escudo"
+    ],
+    "10153": [
+      "absorcion_agua"
+    ],
+    "10154": [
+      "punta_acero",
+      "robustez"
+    ],
+    "10157": [
+      "fuerza_cerebral"
+    ],
+    "10166": [
+      "impasible"
+    ],
+    "10167": [
+      "gas_reactivo"
+    ],
+    "10168": [
+      "antibarrera",
+      "gelido"
+    ],
+    "10172": [
+      "medicina_extrana"
+    ],
+    "10173": [
+      "cuerpo_maldito"
+    ],
+    "10180": [
+      "mimetismo"
+    ],
+    "10181": [
+      "rompeaura"
+    ],
+    "10186": [
+      "sincronia"
+    ],
+    "10188": [
+      "espada_indomita"
+    ],
+    "10189": [
+      "escudo_recio"
+    ],
+    "10192": [
+      "defensa_hoja"
+    ],
+    "10198": [
+      "cromolente"
+    ],
+    "10201": [
+      "indefenso",
+      "impasible"
+    ],
+    "10202": [
+      "cuerpo_maldito"
+    ],
+    "10204": [
+      "absorcion_agua"
+    ],
+    "10207": [
+      "contacto_condicion"
+    ],
+    "10210": [
+      "mutatipo"
+    ],
+    "10212": [
+      "coraza_reflejo"
+    ],
+    "10215": [
+      "absorcion_fuego"
+    ],
+    "10220": [
+      "absorcion_fuego"
+    ],
+    "10224": [
+      "metal_pesado"
+    ],
+    "10225": [
+      "metal_liviano",
+      "metal_pesado"
+    ],
+    "10229": [
+      "absorcion_fuego"
+    ],
+    "10230": [
+      "absorcion_fuego"
+    ],
+    "10236": [
+      "cortante"
+    ],
+    "10237": [
+      "defensa_hoja"
+    ],
+    "10240": [
+      "cromolente"
+    ],
+    "10243": [
+      "gelido",
+      "robustez"
+    ],
+    "10247": [
+      "rompemoldes"
+    ],
+    "10248": [
+      "rompemoldes"
+    ],
+    "10253": [
+      "absorcion_agua"
+    ],
+    "10255": [
+      "dicha"
+    ],
+    "10264": [
+      "latido_oricalco"
+    ],
+    "10265": [
+      "latido_oricalco"
+    ],
+    "10266": [
+      "latido_oricalco"
+    ],
+    "10267": [
+      "latido_oricalco"
+    ],
+    "10268": [
+      "motor_hadronico"
+    ],
+    "10269": [
+      "motor_hadronico"
+    ],
+    "10270": [
+      "motor_hadronico"
+    ],
+    "10271": [
+      "motor_hadronico"
+    ],
+    "10272": [
+      "ojo_mental"
+    ],
+    "10273": [
+      "absorcion_agua"
+    ],
+    "10274": [
+      "rompemoldes"
+    ],
+    "10275": [
+      "robustez"
+    ],
+    "10279": [
+      "reves"
+    ],
+    "10280": [
+      "potencia"
+    ],
+    "10283": [
+      "piel_dragontina"
+    ],
+    "10286": [
+      "rompemoldes"
+    ],
+    "10291": [
+      "allanamiento"
+    ],
+    "10294": [
+      "mutatipo"
+    ],
+    "10296": [
+      "aura_feerica"
+    ],
+    "10300": [
+      "indefenso"
+    ],
+    "10305": [
+      "indefenso"
+    ],
+    "10307": [
+      "cortante"
+    ],
+    "10320": [
+      "salpicante"
+    ],
+    "800": [
+      "fuerza_cerebral"
+    ],
+    "901": [
+      "ojo_mental"
+    ],
+    "181": [
+      "piel_dragontina"
+    ],
+    "952": [
+      "salpicante"
+    ]
+  }
+}

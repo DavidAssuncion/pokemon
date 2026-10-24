@@ -31,7 +31,6 @@ class GeneradorPokemonGimnasioTest extends TestCase
         parent::setUp();
         $this->generador = new GeneradorPokemonGimnasio(
             new MapeadorPokemonBatalla(new GeneradorMovimientosTipo()),
-            new GeneradorMovimientosTipo(),
         );
     }
 

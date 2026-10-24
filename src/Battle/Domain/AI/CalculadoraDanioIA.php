@@ -7,6 +7,7 @@ namespace Src\Battle\Domain\AI;
 use Src\Battle\Domain\AccionBatalla;
 use Src\Battle\Domain\AgregadoBatalla;
 use Src\Battle\Domain\AI\ValueObjects\EstimacionDanio;
+use Src\Battle\Domain\BarrerasVidaManager;
 use Src\Battle\Domain\Chain\CadenaDanio;
 use Src\Battle\Domain\Combatiente;
 use Src\Battle\Domain\MovimientoBatalla;
@@ -43,6 +44,8 @@ class CalculadoraDanioIA
             move: $movimiento,
             defenderTeamHasVanguard: $this->obtenerDefensorTieneVanguardia($atacante, $defensor, $batalla),
             weather: $batalla->weather(),
+            terreno: $batalla->terreno(),
+            equipoDefensor: $batalla->equipoDe($defensor),
         );
 
         // Semilla fija para modo determinista (sin variabilidad de críticos)
@@ -50,6 +53,10 @@ class CalculadoraDanioIA
         mt_srand(42);
         $dano = $this->cadenaDanio->calculate($accion);
         mt_srand($seed);
+
+        // Multi-golpe: cada impacto usa una fracción de potencia; el total
+        // esperado es potencia fraccionada × número esperado de golpes.
+        $dano *= $movimiento->perfil->golpesEsperados() * $movimiento->perfil->fraccionPotenciaPorGolpe;
 
         // Daño efectivo al HP real, descontando la barrera física/especial
         $hpDamage = $this->calcularHpDamage($atacante, $defensor, $movimiento, $dano);
@@ -124,17 +131,21 @@ class CalculadoraDanioIA
         MovimientoBatalla $movimiento,
         float $danoBruto,
     ): float {
-        $directPct = $atacante->obtenerPorcentajeDanioDirecto();
-
-        $dañoDirecto = $danoBruto * $directPct;
-        $dañoBarreras = $danoBruto - $dañoDirecto;
+        $directPct = min(1.0, $atacante->obtenerPorcentajeDanioDirecto() + $movimiento->perfil->danoDirectoFraccion);
 
         $barreraRelevante = $movimiento->esEspecial()
             ? $defensor->defensaEspHpActual()
             : $defensor->defensaHpActual();
 
-        // El excedente sobre la barrera se desborda al HP
-        return $dañoDirecto + max(0.0, $dañoBarreras - $barreraRelevante);
+        $desglose = (new BarrerasVidaManager())->desglosarDaño(
+            $danoBruto,
+            $barreraRelevante,
+            $directPct,
+            $movimiento->perfil->multiplicadorDanoEscudo,
+            $movimiento->perfil->multiplicadorDanoSalud,
+        );
+
+        return $desglose->danoHp;
     }
 
     private function obtenerDefensorTieneVanguardia(

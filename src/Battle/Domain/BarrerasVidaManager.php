@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Src\Battle\Domain;
 
+use Src\Battle\Domain\ValueObjects\ResultadoDanio;
+
 /**
  * Servicio de dominio puro que encapsula la lógica de vida y barreras.
  *
@@ -21,58 +23,29 @@ final class BarrerasVidaManager
      * Desglose puro del daño: parte absorbida por la barrera y parte que llega
      * a HP (daño directo + excedente de la barrera).
      *
-     * @return array{danoHp: float, absorbido: float, excedente: float}
+     * `$multiplicadorEscudo` solo escala la parte que intenta absorber la
+     * barrera; `$multiplicadorSalud` escala el daño directo y el excedente que
+     * llega a HP.
      */
-    public function desglosarDaño(float $daño, float $barreraActual, float $directPct): array
-    {
-        $dañoDirecto = $daño * $directPct;
-        $dañoBarreras = $daño - $dañoDirecto;
-        $absorbido = min($barreraActual, $dañoBarreras);
-        $excedente = $dañoBarreras - $absorbido;
-
-        return [
-            'danoHp' => $dañoDirecto + $excedente,
-            'absorbido' => $absorbido,
-            'excedente' => $excedente,
-        ];
-    }
-
-    /**
-     * Aplica daño desglosado: primero `directPct`% va directo a HP (ignora barreras),
-     * el resto se descuenta de la barrera correspondiente (defensa física o especial).
-     * El excedente de barrera se desborda al HP.
-     *
-     * @return array{hpNuevo: float, defensaHpNuevo: float, defensaEspHpNuevo: float}
-     */
-    public function recibirDaño(
-        float $hpActual,
-        float $defensaHpActual,
-        float $defensaEspHpActual,
+    public function desglosarDaño(
         float $daño,
-        bool $isSpecial,
+        float $barreraActual,
         float $directPct,
-    ): array {
-        $barrera = $isSpecial ? $defensaEspHpActual : $defensaHpActual;
-        $desglose = $this->desglosarDaño($daño, $barrera, $directPct);
+        float $multiplicadorEscudo = 1.0,
+        float $multiplicadorSalud = 1.0,
+    ): ResultadoDanio {
+        $dañoDirecto = $daño * $directPct;
+        $dañoBarrera = $daño * (1 - $directPct) * $multiplicadorEscudo;
+        $absorbido = min($barreraActual, $dañoBarrera);
+        $excedente = max(0.0, $dañoBarrera - $absorbido);
+        $dañoHp = ($dañoDirecto + $excedente) * $multiplicadorSalud;
 
-        $hpNuevo = $hpActual - $desglose['danoHp'];
-        if ($hpNuevo < 0) {
-            $hpNuevo = 0;
-        }
-
-        if ($isSpecial) {
-            $defensaEspHpNuevo = $defensaEspHpActual - $desglose['absorbido'];
-            $defensaHpNuevo = $defensaHpActual;
-        } else {
-            $defensaHpNuevo = $defensaHpActual - $desglose['absorbido'];
-            $defensaEspHpNuevo = $defensaEspHpActual;
-        }
-
-        return [
-            'hpNuevo' => $hpNuevo,
-            'defensaHpNuevo' => $defensaHpNuevo,
-            'defensaEspHpNuevo' => $defensaEspHpNuevo,
-        ];
+        return new ResultadoDanio(
+            danoHp: $dañoHp,
+            danoEscudo: $absorbido,
+            excedente: $excedente,
+            rompioEscudo: $barreraActual > 0.0 && $absorbido >= $barreraActual && $dañoBarrera > 0.0,
+        );
     }
 
     public function curarHp(float $hpActual, float $hpMax, float $porcentaje): float

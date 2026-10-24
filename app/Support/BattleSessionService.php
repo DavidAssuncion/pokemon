@@ -9,6 +9,32 @@ use Src\Battle\Domain\AgregadoBatalla;
 final class BattleSessionService
 {
     /**
+     * 20: Combatiente incorpora estado de objeto (cargas, embargo, reciclaje),
+     * supresión/copia de habilidades, sustituto y estado de jefe (fases y
+     * puntos débiles). Los payloads v9-v19 cargan con objeto pasivo, sin
+     * supresión, sin sustituto y sin jefe.
+     * 19: Combatiente incorpora racha de combo y duración de invocación;
+     * AgregadoBatalla añade el contador de
+     * invocaciones. Las condiciones MARCADO y VINCULO_DANO amplían
+     * CondicionVolatil con factor y fracción compartida. Los payloads
+     * v9-v18 cargan con medidor 0, combo 0 y sin invocación.
+     * 17: Combatiente guarda la prioridad declarada en preparación.
+     * 16: MultiplicadoresStats pasa a {base, temporales, turnos}; CambioStat
+     * guarda etapas y aplica +30 %/-30 % temporal. Combatiente añade cargas
+     * de veneno; AgregadoBatalla añade Trick Room. Los payloads v9-v15 cargan
+     * con temporales vacíos y cargas 0.
+     * 15: Combatiente incorpora postura, objetivo cubierto, acciones extra y
+     * su flag de ronda; AgregadoBatalla guarda la ronda preparada. Los
+     * payloads v9-v14 cargan con valores por defecto (atacar, 0 extras).
+     * 14: MovimientoBatalla incorpora objetivo, flags y efectos secundarios;
+     * Combatiente incorpora condiciones volátiles, último daño y coste de
+     * velocidad. Los payloads v9-v13 cargan con valores por defecto.
+     * 13: PerfilMovimiento pasa de 'golpes' fijo a 'golpesMin'/'golpesMax'.
+     * Los payloads v12 con 'golpes' se migran a min=max en __unserialize.
+     * 12: MovimientoBatalla añade PerfilMovimiento (golpes, probabilidad de
+     * estado, drenaje/recoil, multiplicadores de escudo/salud, efecto especial)
+     * y Combatiente cachea el clima. Los payloads v9-v11 siguen cargando con
+     * los valores por defecto.
      * 11: Combatiente dejó de serializar 'velocidadAcumulada' (el motor de
      * turnos pasa a contador de acciones por ronda); los payloads v9/v10 con
      * esa clave siguen cargando (la clave se ignora, best-effort).
@@ -18,13 +44,18 @@ final class BattleSessionService
      * 9: Combatiente cambió de etapas enteras ('etapas') a
      * MultiplicadoresStats ('multiplicadores' con factores float).
      */
-    private const SESSION_VERSION = 11;
+    private const SESSION_VERSION = 20;
 
     /**
-     * Versión mínima de payload aceptada por cargar(). SESSION_VERSION (11)
+     * Versión mínima de payload aceptada por cargar(). SESSION_VERSION (20)
      * y MINIMUM_COMPATIBLE_SESSION_VERSION (9) comparten estructura salvo
-     * claves opcionales: 'velocidadAcumulada' (ignorada) y BattleStats.$ivs
-     * (default null).
+     * claves opcionales: objeto/cargas/embargo, habilidad anulada/copiada,
+     * sustituto y jefe; 'velocidadAcumulada' (ignorada), BattleStats.$ivs
+     * (default null), PerfilMovimiento (default, con migración de 'golpes'),
+     * Combatiente.clima (NONE), postura (ATACAR), prioridad declarada (null),
+     * cargas/usos (vacíos), retraso (false), extras (0), veneno (0),
+     * MultiplicadoresStats temporales (vacíos), Trick Room (0), combo (0),
+     * invocación (ninguna) y contador de invocaciones (0).
      */
     private const MINIMUM_COMPATIBLE_SESSION_VERSION = 9;
 

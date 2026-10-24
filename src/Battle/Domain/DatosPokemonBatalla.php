@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Src\Battle\Domain;
 
+use Src\Battle\Domain\Enums\PosturaCombate;
 use Src\Pokemon\Domain\Stats\StatsValue;
 use Src\Shared\Tipos\TipoPokemon;
 
@@ -39,6 +40,13 @@ class DatosPokemonBatalla
         public readonly ?int $nivel = null,
         ?StatsValue $evs = null,
         public readonly ?StatsValue $ivs = null,
+        public readonly PosturaCombate $postura = PosturaCombate::ATACAR,
+        public readonly bool $esJefe = false,
+        /** @var list<array<string, mixed>> */
+        public readonly array $fasesJefe = [],
+        /** @var list<array<string, mixed>> */
+        public readonly array $puntosDebiles = [],
+        public readonly float $peso = 0.0,
     ) {
         $this->evs = $evs ?? new StatsValue(0, 0, 0, 0, 0, 0);
 

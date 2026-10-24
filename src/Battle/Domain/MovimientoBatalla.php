@@ -5,10 +5,14 @@ declare(strict_types=1);
 namespace Src\Battle\Domain;
 
 use Src\Battle\Domain\Collections\CambiosStatsCollection;
+use Src\Battle\Domain\Collections\EfectosSecundariosCollection;
+use Src\Battle\Domain\Collections\FlagsMovimientoCollection;
 use Src\Battle\Domain\Enums\CategoriaMovimiento;
 use Src\Battle\Domain\Enums\EstadoPokemon;
+use Src\Battle\Domain\Enums\ObjetivoMovimiento;
 use Src\Battle\Domain\Enums\StatClave;
 use Src\Battle\Domain\ValueObjects\CambioStat;
+use Src\Battle\Domain\ValueObjects\PerfilMovimiento;
 use Src\Shared\Tipos\TipoPokemon;
 
 class MovimientoBatalla
@@ -22,7 +26,70 @@ class MovimientoBatalla
         public readonly int $priority = 0,
         public readonly CambiosStatsCollection $selfStatChanges = new CambiosStatsCollection(),
         public readonly CambiosStatsCollection $targetStatChanges = new CambiosStatsCollection(),
+        public readonly PerfilMovimiento $perfil = new PerfilMovimiento(),
+        public readonly ObjetivoMovimiento $objetivo = ObjetivoMovimiento::NORMAL,
+        public readonly FlagsMovimientoCollection $flags = new FlagsMovimientoCollection(),
+        public readonly EfectosSecundariosCollection $secundarios = new EfectosSecundariosCollection(),
+        public readonly EfectosSecundariosCollection $autoEfectos = new EfectosSecundariosCollection(),
+        public readonly int $nivelRequerido = 1,
     ) {
+    }
+
+    /**
+     * Copia del movimiento con otra potencia bruta. Conserva tipo, categoría,
+     * estado, cambios y perfil; la usa el ejecutor de multi-golpe.
+     */
+    public function conPotencia(int $potencia): self
+    {
+        return new self(
+            nombre: $this->nombre,
+            potencia: $potencia,
+            tipo: $this->tipo,
+            categoria: $this->categoria,
+            statusEffect: $this->statusEffect,
+            priority: $this->priority,
+            selfStatChanges: $this->selfStatChanges,
+            targetStatChanges: $this->targetStatChanges,
+            perfil: $this->perfil,
+            objetivo: $this->objetivo,
+            flags: $this->flags,
+            secundarios: $this->secundarios,
+            autoEfectos: $this->autoEfectos,
+            nivelRequerido: $this->nivelRequerido,
+        );
+    }
+
+    /**
+     * Copia del movimiento con otro tipo efectivo (Meteorobola, Pulso de Campo,
+     * Furia Taurina). Conserva potencia, categoría, efectos y perfil.
+     */
+    public function conTipo(TipoPokemon $tipo): self
+    {
+        if ($tipo === $this->tipo) {
+            return $this;
+        }
+
+        return new self(
+            nombre: $this->nombre,
+            potencia: $this->potencia,
+            tipo: $tipo,
+            categoria: $this->categoria,
+            statusEffect: $this->statusEffect,
+            priority: $this->priority,
+            selfStatChanges: $this->selfStatChanges,
+            targetStatChanges: $this->targetStatChanges,
+            perfil: $this->perfil,
+            objetivo: $this->objetivo,
+            flags: $this->flags,
+            secundarios: $this->secundarios,
+            autoEfectos: $this->autoEfectos,
+            nivelRequerido: $this->nivelRequerido,
+        );
+    }
+
+    public function esContacto(): bool
+    {
+        return $this->perfil->esContacto;
     }
 
     /**
@@ -42,6 +109,18 @@ class MovimientoBatalla
             'priority' => $this->priority,
             'selfStatChanges' => $this->cambiosParaSerializar($this->selfStatChanges),
             'targetStatChanges' => $this->cambiosParaSerializar($this->targetStatChanges),
+            'perfil' => $this->perfil->toArray(),
+            'objetivo' => $this->objetivo->value,
+            'flags' => $this->flags->toArray(),
+            'secundarios' => array_map(
+                static fn ($efecto): array => $efecto->toArray(),
+                $this->secundarios->all(),
+            ),
+            'autoEfectos' => array_map(
+                static fn ($efecto): array => $efecto->toArray(),
+                $this->autoEfectos->all(),
+            ),
+            'nivelRequerido' => $this->nivelRequerido,
         ];
     }
 
@@ -61,6 +140,22 @@ class MovimientoBatalla
         $this->priority = (int) ($data['priority'] ?? 0);
         $this->selfStatChanges = self::cambiosDesdeSerializado($data['selfStatChanges'] ?? []);
         $this->targetStatChanges = self::cambiosDesdeSerializado($data['targetStatChanges'] ?? []);
+        $this->perfil = isset($data['perfil']) && is_array($data['perfil'])
+            ? PerfilMovimiento::desdeArray($data['perfil'])
+            : PerfilMovimiento::porDefecto();
+        $this->objetivo = ObjetivoMovimiento::tryFrom((string) ($data['objetivo'] ?? ObjetivoMovimiento::NORMAL->value))
+            ?? ObjetivoMovimiento::NORMAL;
+        $this->flags = FlagsMovimientoCollection::desdeArray(
+            isset($data['flags']) && is_array($data['flags']) ? $data['flags'] : [],
+        );
+        $this->secundarios = EfectosSecundariosCollection::desdeArray(
+            isset($data['secundarios']) && is_array($data['secundarios']) ? $data['secundarios'] : [],
+        );
+        $this->autoEfectos = EfectosSecundariosCollection::desdeArray(
+            isset($data['autoEfectos']) && is_array($data['autoEfectos']) ? $data['autoEfectos'] : [],
+            true,
+        );
+        $this->nivelRequerido = max(1, (int) ($data['nivelRequerido'] ?? 1));
     }
 
     public function esEspecial(): bool
@@ -103,7 +198,7 @@ class MovimientoBatalla
     {
         $resultado = [];
         foreach ($cambios as $cambio) {
-            $resultado[] = ['stat' => $cambio->statValue(), 'factor' => $cambio->factor];
+            $resultado[] = ['stat' => $cambio->statValue(), 'factor' => $cambio->factor, 'etapas' => $cambio->etapas];
         }
 
         return $resultado;
@@ -122,7 +217,7 @@ class MovimientoBatalla
             }
 
             if (array_key_exists('factor', $cambio)) {
-                $items[] = new CambioStat($stat, (float) $cambio['factor']);
+                $items[] = new CambioStat($stat, (float) $cambio['factor'], (int) ($cambio['etapas'] ?? 0));
             } elseif (array_key_exists('stages', $cambio)) {
                 $items[] = CambioStat::desdeEtapas($stat, (int) $cambio['stages']);
             }

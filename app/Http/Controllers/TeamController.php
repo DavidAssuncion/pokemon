@@ -10,13 +10,17 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
+use Src\Battle\Domain\Catalog\CatalogoObjetos;
+use Src\Equipos\App\ActualizarObjetosEquipo;
 use Src\Equipos\Domain\TeamRepositoryInterface;
 
 class TeamController extends Controller
 {
     public function __construct(
         private readonly TeamRepositoryInterface $teamRepository,
+        private readonly ActualizarObjetosEquipo $actualizarObjetosEquipo,
     ) {
     }
 
@@ -176,6 +180,71 @@ class TeamController extends Controller
                 'team' => [
                     'id' => $team->id,
                     'formacion' => $team->formacion ?? [],
+                ],
+            ]);
+        }
+
+        return redirect()->back();
+    }
+
+    /**
+     * Actualiza la postura por slot (PATCH /teams/{team}/posturas).
+     *
+     * Contrato: { posturas: { slot: 'atacar'|'guardia'|'cubrir', ... } }.
+     */
+    public function updatePosturas(Request $request, Team $team): RedirectResponse|JsonResponse
+    {
+        if ($team->isExploring()) {
+            return $this->responderError($request, 'No se puede modificar un equipo con exploraciones activas');
+        }
+
+        $data = Validator::make($request->all(), [
+            'posturas' => 'sometimes|array',
+            'posturas.*' => 'in:atacar,guardia,cubrir',
+        ])->validate();
+
+        $team->update(['posturas' => $data['posturas'] ?? null]);
+
+        if ($request->wantsJson()) {
+            return response()->json([
+                'team' => [
+                    'id' => $team->id,
+                    'posturas' => $team->posturas ?? [],
+                ],
+            ]);
+        }
+
+        return redirect()->back();
+    }
+
+    /**
+     * Actualiza el objeto equipado por slot (PATCH /teams/{team}/items).
+     *
+     * Contrato: { items: { slot: 'life_orb'|'leftovers'|...|'' } }. Se guarda
+     * en `reclutados.obj_equipados` como lista de una sola clave.
+     */
+    public function updateItems(Request $request, Team $team): RedirectResponse|JsonResponse
+    {
+        if ($team->isExploring()) {
+            return $this->responderError($request, 'No se puede modificar un equipo con exploraciones activas');
+        }
+
+        $data = Validator::make($request->all(), [
+            'items' => 'sometimes|array',
+            'items.*' => ['nullable', 'string', Rule::in([...CatalogoObjetos::claves(), ''])],
+        ])->validate();
+
+        $itemsActuales = $this->actualizarObjetosEquipo->actualizar(
+            $team,
+            $data['items'] ?? [],
+            (int) Auth::id(),
+        );
+
+        if ($request->wantsJson()) {
+            return response()->json([
+                'team' => [
+                    'id' => $team->id,
+                    'items' => $itemsActuales,
                 ],
             ]);
         }

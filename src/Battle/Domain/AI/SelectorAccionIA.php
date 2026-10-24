@@ -14,6 +14,8 @@ use Src\Battle\Domain\Collections\CombatientesCollection;
 use Src\Battle\Domain\Combatiente;
 use Src\Battle\Domain\Enums\Bando;
 use Src\Battle\Domain\Enums\CategoriaMovimiento;
+use Src\Battle\Domain\Enums\ClaveCondicion;
+use Src\Battle\Domain\Enums\ObjetivoMovimiento;
 use Src\Battle\Domain\MovimientoBatalla;
 use Src\Shared\Tipos\TipoPokemon;
 
@@ -115,8 +117,8 @@ class SelectorAccionIA
         $bestScore = -1;
 
         foreach ($attacker->pokemon()->moves() as $move) {
-            if ($move instanceof MovimientoBatalla) {
-                $efectividad = $move->tipo->effectiveness($defender->pokemon());
+            if ($move instanceof MovimientoBatalla && $attacker->movimientoDisponible($move)) {
+                $efectividad = $defender->efectividadContra($move->tipo);
                 $score = $efectividad * $move->potencia;
 
                 if ($score > $bestScore) {
@@ -198,13 +200,50 @@ class SelectorAccionIA
                 continue;
             }
 
-            foreach ($enemigosLegales as $enemigo) {
+            if (! $actor->movimientoDisponible($movimiento)) {
+                continue;
+            }
+
+            if (in_array($movimiento->objetivo, [
+                ObjetivoMovimiento::SELF,
+                ObjetivoMovimiento::ALLY_SIDE,
+                ObjetivoMovimiento::ALLIES,
+                ObjetivoMovimiento::ALLY_TEAM,
+            ], true)) {
+                $acciones->add(new AccionBatalla(
+                    attacker: $actor,
+                    defender: $actor,
+                    move: $movimiento,
+                    defenderTeamHasVanguard: false,
+                    weather: $battle->weather(),
+                    terreno: $battle->terreno(),
+                ));
+
+                continue;
+            }
+
+            $objetivos = $enemigosLegales->all();
+            if ($movimiento->objetivo->esFila() && $objetivos !== []) {
+                $objetivos = [$objetivos[0]];
+            }
+
+            $desafio = $actor->condicion(ClaveCondicion::DESAFIO);
+            if ($desafio !== null && $desafio->objetivoForzadoId !== '') {
+                $forzado = $battle->team1->findCombatantById($desafio->objetivoForzadoId)
+                    ?? $battle->team2->findCombatantById($desafio->objetivoForzadoId);
+                if ($forzado !== null && $forzado->estaVivo()) {
+                    $objetivos = [$forzado];
+                }
+            }
+
+            foreach ($objetivos as $enemigo) {
                 $acciones->add(new AccionBatalla(
                     attacker: $actor,
                     defender: $enemigo,
                     move: $movimiento,
                     defenderTeamHasVanguard: $defenderTeamHasVanguard,
                     weather: $battle->weather(),
+                    terreno: $battle->terreno(),
                 ));
             }
         }
@@ -279,7 +318,9 @@ class SelectorAccionIA
             throw new \LogicException('No hay enemigos vivos para la IA');
         }
 
-        $movimiento = self::movimientoBase();
+        $movimiento = $actor->pokemon()->moves()->isEmpty()
+            ? self::movimientoBase()
+            : new MovimientoBatalla('Espera', 0, TipoPokemon::NORMAL, CategoriaMovimiento::ESTADO);
 
         $accion = new AccionBatalla(
             attacker: $actor,
@@ -287,6 +328,7 @@ class SelectorAccionIA
             move: $movimiento,
             defenderTeamHasVanguard: false,
             weather: $contexto->battle->weather(),
+            terreno: $contexto->battle->terreno(),
         );
 
         return new EvaluacionAccion(

@@ -1,0 +1,60 @@
+habilidad,efecto
+(Vacio),El pokemon recibe STAB otra vez a los movimientos de sus tipos
+Absorción Agua,inmune a los movimientos de tipo Agua y le hace recuperar un 25% de sus PS máximos cada vez que sea alcanzado por un movimiento de este tipo que cause daño
+Absorción Electricidad,inmune a los movimientos de tipo Eléctrico y le hace recuperar un 25% de sus PS máximos cada vez que sea alcanzado por un movimiento de este tipo que cause daño
+Absorción Fuego,"inmune a los movimientos de tipo Fuego, al recibir un ataque aumenta un 50% su daño de fuego (solo 1 vez)"
+Alma Dragon,Los ataques normales pasan a Dragon. Recibe STAB
+Antidoto,El veneno me cura
+Armadura Batalla,Reduce 10% el daño fisico recibido
+Baba Toxica, Los ataques físicos que lo golpean reducen Velocidad del atacante y envenenan al 25% (el veneno se acumula y aumenta)
+Bromista,Al destruir un escudo enemigo recupera una pequeña cantidad de escudo propio.
+Cabeza Roca,No recibe daño recoil
+Cañones,"25% de daño a las barreras, +25% ataques de ""cañon"" o lanzar"
+Clorofila,Aumenta velocidad 25% cuando sol
+Colector,"los ataques agua que afectan a un solo objetivo usados por los oponentes, se dirijan al Pokémon poseedor de esta habilidad independientemente del objetivo seleccionado, no recibo el daño. Aumenta un nivel mi defensa special o ataque especial, según cual sea mas alto"
+Comealmas,"Cuando un enemigo es derrotado mis escudos aumentan su total un 15%, y reciben esa curacion. Si lo derroto yo, el % aumenta al 30%"
+Crueldad,"Si tiene problemas de estado, aumenta un 30% el daño al objetivo"
+Cuadruple Ataque,"25% de daño, ataca 4 veces"
+Danza Lunar,"Restaura 1/6 de la salud. El excedente, restaura el escudo especial.  - Si tiene toda la vida, restaurara un 1/6 del escudo especial, - Si tiene todo el escudo especial, restaurara un 1/6 del escudo fisico, "
+Demoledor / Mandíbula Hidráulica,"Daño contra escudos 25%. Si rompe el escudo, inflige daño adicional."
+Depredador de Arena,sube ataque y vel 1 lvl en tormenta de arena
+Depredador / Depredador Prehistorico / Malvado,Por cada % que le falte de la vida al objetivo le hace 0.25% mas de daño. 
+Detonacion,Provoca daño equivalente a un 25% de los PS máximos del rival si cae derrotado.
+Divide Dolor,"el daño se divide equitativamente entre especial y fisico. Al recibir escudos, se reparte tambien. "
+Doble Ataque,"50% de daño, ataca 2 veces"
+Dormilon,"La primera vez que su vida baja del 33%, se duerme hasta su siguiente turno y recupera un 50% de vida.  Cada vez que recibe daño estando dormido, efectua un ronquido, ataque a todos, 30 de potencia"
+Efecto Espora ,"tiene una probabilidad del 30% de dormir, paralizar o envenenar a Pokémon que realicen un movimiento de contacto contra el poseedor de la habilidad"
+Electricidad estática, 1/16 paralizar al contacto
+Enjambre/Mar Llamas/Espesura,"Cuanto este al 33% de salud, aumenta su daño un 50%"
+Enredaderas," Los ataques pueden reducir Velocidad 1/16, 20%"
+Espinas/piel seca,Los ataques fisicos devuelven 1/8 del daño
+Evasion,"12,5% de esquivar un ataque"
+Flexibilidad/ Depredador Marino,Convierte un 15% de la velocidad en ataque y ataque especial
+Flor Aromática,Libera aromas desde su flor. El aroma se intensifica cuanto más tiempo permanece en combate. Cada turno reduce progresivamente la capacidad ofensiva del enemigo. 1/16 cada turno
+Fotosíntesis,"Bajo Sequía, recupera HP al final del turno. Si está a máxima vida, la recuperación se convierte en escudo especial. "
+Garra Dura,Daño +15% fisico
+Guardian de los mares,stab agua
+Hypnotizador,"Al ser objetivo de un movimiento rival, tiene 1/8 de posibilidades de dormirlo 1 turno"
+Impetu arena,Aumenta velocidad 25% cuando tormenta arena
+Intimidacion,reduce 1 etapa de Ataque a los enemigos.
+Ira,"Cada golpe que recibe, aumenta un 1/16 su ataque y ataque especial. Si el ataque es multiple, se cabrea a 1/8"
+Mal Sueño,los oponentes dormidos reciben 1/8 de sus PS máximos al final de cada turno como daño especial
+Manto helado, se cura en hielo y recupera escudo con el excedente
+Muro Mágico,"evita que el equipo reciba daño indirecto (puas, drenadora, clima…) y solo pueda ser dañado por ataques"
+Pantallista,Duplica reflejos / pantalla luz
+Pararrayos,"los ataques eléctricos que afectan a un solo objetivo usados por los oponentes, se dirijan al Pokémon poseedor de esta habilidad independientemente del objetivo seleccionado, no recibo el daño. Aumenta un nivel mi defensa special o ataque especial, según cual sea mas alto"
+Prediccion,"No puedo recibir criticos, x2 a mi probabilidad de hacer criticos"
+Presion,destruye escudos de todos los escudos rivales 1/8 cada turno
+Protector / Campo Magnetico,"Recupera una 1/16 de HP al final del turno a todos los del equipo. A máxima vida, la recuperación se convierte en escudo fisico/magico."
+Punto Toxico, 1/16 envenanar al contacto
+Refuerzos,"La primera vez que reciba daño invoco un clon. Pierdo esta habilidad, y aumenta mi ataque, ataque especial y velocidad 1 nivel. Mi clon no tiene Refuerzo"
+Regeneracion/Sintesis/Bendicion,"Recupera una 1/8 de HP al final del turno. A máxima vida, la recuperación se convierte en escudo fisico/magico."
+Sombra Traviesa,"Sus ataques ignoran una pequeña parte de los escudos, 15%."
+Triple Ataque,"33% de daño, ataca 3 veces"
+Velo Agua,Aumenta la velocidad un 25% cuando llueve
+Velo Arena,"aumenta la potencia de los movimientos de tipo Tierra, Roca y Acero en un 30% cuando hay una tormenta de arena en combate. Además, proporciona inmunidad contra el daño producido por la tormentas de arena"
+Acero templado,"movimientos de tipo Acero del usuario, aumentando su daño en un 50%."
+Veleta / Actualizacion software,"Al inicio de turno, sube una estadistica aleatoria un 25%"
+Meditacion,Los ataques de estado duplican su efectividad
+Escamas,"Cuando tiene toda la vida reduce el daño recibido un 12,5%"
+Cuerpo llama,Al contacto puede quemar

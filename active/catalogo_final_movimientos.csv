@@ -1,0 +1,938 @@
+id,slug,nombre,tipo,clase,poder,decision,motivo,descripcion
+1,pound,Destructor,Normal,Físico,40,Dentro,Ya implementado,Golpea con las patas o la cola.
+2,karate-chop,Golpe Kárate,Lucha,Físico,50,Dentro,Ya implementado,Movimiento obsoleto o sin descripción oficial; se conserva por compatibilidad.
+3,double-slap,Doble Bofetón,Normal,Físico,15,Dentro,Ya implementado,Movimiento obsoleto o sin descripción oficial; se conserva por compatibilidad.
+4,comet-punch,Puño Cometa,Normal,Físico,18,Dentro,Ya implementado,Movimiento obsoleto o sin descripción oficial; se conserva por compatibilidad.
+5,mega-punch,Megapuño,Normal,Físico,80,Dentro,Ya implementado,Un puñetazo de gran potencia.
+6,pay-day,Día de Pago,Normal,Físico,40,Dentro,Ya implementado,Arroja monedas al objetivo y las recupera al final del combate.
+7,fire-punch,Puño Fuego,Fuego,Físico,75,Dentro,Ya implementado,Puñetazo ardiente que puede causar quemaduras.
+8,ice-punch,Puño Hielo,Hielo,Físico,75,Dentro,Ya implementado,Puñetazo helado que puede llegar a congelar.
+9,thunder-punch,Puño Trueno,Eléctrico,Físico,75,Dentro,Ya implementado,Puñetazo eléctrico que puede paralizar al adversario.
+10,scratch,Arañazo,Normal,Físico,40,Dentro,Ya implementado,Araña con afiladas garras.
+11,vice-grip,Agarre,Normal,Físico,55,Dentro,Ya implementado,Atrapa y atenaza al objetivo.
+12,guillotine,Guillotina,Normal,Físico,,Dentro,Ya implementado,Ataque cortante que debilita al oponente de un golpe si acierta.
+13,razor-wind,Viento Cortante,Normal,Especial,80,Dentro,Ya implementado,Movimiento obsoleto o sin descripción oficial; se conserva por compatibilidad.
+14,swords-dance,Danza Espada,Normal,Estado,,Dentro,Ya implementado,Baile frenético que aumenta mucho el Ataque.
+15,cut,Corte,Normal,Físico,50,Dentro,Ya implementado,"Corta al adversario con garras, guadañas, etc."
+16,gust,Tornado,Volador,Especial,40,Dentro,Ya implementado,Crea un tornado con las alas y lo lanza contra el objetivo.
+17,wing-attack,Ataque Ala,Volador,Físico,60,Dentro,Ya implementado,Golpea al objetivo con unas grandes alas.
+18,whirlwind,Remolino,Normal,Estado,,Fuera,Cambio forzado,"Se lleva al objetivo, que es cambiado por otro Pokémon. Si es un Pokémon salvaje, acaba el combate."
+19,fly,Vuelo,Volador,Físico,90,Fuera,Semiinvulnerabilidad,El usuario vuela en el primer turno y ataca en el segundo.
+20,bind,Atadura,Normal,Físico,15,Dentro,Ya implementado,Ata y oprime de cuatro a cinco turnos.
+21,slam,Atizar,Normal,Físico,80,Dentro,Ya implementado,"Golpea con la cola o con lianas, por ejemplo, para causar daño al objetivo."
+22,vine-whip,Látigo Cepa,Planta,Físico,45,Dentro,Ya implementado,Azota al objetivo con ramas finas.
+23,stomp,Pisotón,Normal,Físico,65,Dentro,Ya implementado,Tremendo pisotón que puede hacer que el objetivo se amedrente.
+24,double-kick,Doble Patada,Lucha,Físico,30,Dentro,Ya implementado,Una patada doble. Golpea dos veces.
+25,mega-kick,Megapatada,Normal,Físico,120,Dentro,Ya implementado,Patada de extrema fuerza.
+26,jump-kick,Patada Salto,Lucha,Físico,100,Fuera,Mecánica no soportada,Movimiento obsoleto o sin descripción oficial; se conserva por compatibilidad.
+27,rolling-kick,Patada Giro,Lucha,Físico,60,Dentro,Ya implementado,Movimiento obsoleto o sin descripción oficial; se conserva por compatibilidad.
+28,sand-attack,Ataque Arena,Tierra,Estado,,Dentro,Ya implementado,Arroja arena a la cara y baja la Precisión.
+29,headbutt,Golpe Cabeza,Normal,Físico,70,Dentro,Ya implementado,Potente cabezazo que puede amedrentar al objetivo.
+30,horn-attack,Cornada,Normal,Físico,65,Dentro,Ya implementado,Ataca al objetivo con una cornada.
+31,fury-attack,Ataque Furia,Normal,Físico,15,Dentro,Ya implementado,Cornea al objetivo de dos a cinco veces.
+32,horn-drill,Perforador,Normal,Físico,,Dentro,Ya implementado,Ataque con un cuerno giratorio que fulmina de un solo golpe al objetivo si lo alcanza.
+33,tackle,Placaje,Normal,Físico,40,Dentro,Ya implementado,Embestida con todo el cuerpo.
+34,body-slam,Golpe Cuerpo,Normal,Físico,85,Dentro,Ya implementado,Salta sobre el objetivo con todo su peso y puede llegar a paralizarlo.
+35,wrap,Constricción,Normal,Físico,15,Dentro,Ya implementado,Oprime al objetivo de cuatro a cinco turnos con ramas o con su cuerpo.
+36,take-down,Derribo,Normal,Físico,90,Dentro,Ya implementado,Carga desmedida que también hiere al agresor.
+37,thrash,Saña,Normal,Físico,120,Fuera,Bloqueo de turnos,Ataque de dos a tres turnos que acaba confundiendo al agresor.
+38,double-edge,Doble Filo,Normal,Físico,120,Dentro,Ya implementado,Ataque arriesgado que también hiere al agresor.
+39,tail-whip,Agitacola,Normal,Estado,,Dentro,Ya implementado,Agita la cola para bajar la Defensa del equipo rival.
+40,poison-sting,Picotazo Veneno,Veneno,Físico,15,Dentro,Ya implementado,Lanza un aguijón tóxico que puede envenenar al objetivo.
+41,twineedle,Doble Ataque,Bicho,Físico,25,Dentro,Ya implementado,Movimiento obsoleto o sin descripción oficial; se conserva por compatibilidad.
+42,pin-missile,Pin Misil,Bicho,Físico,25,Dentro,Ya implementado,Lanza finas púas que hieren de dos a cinco veces.
+43,leer,Malicioso,Normal,Estado,,Dentro,Ya implementado,Intimida a los rivales para bajar su Defensa.
+44,bite,Mordisco,Siniestro,Físico,60,Dentro,Ya implementado,Un voraz bocado que puede amedrentar al objetivo.
+45,growl,Gruñido,Normal,Estado,,Dentro,Ya implementado,Dulce gruñido que reduce el Ataque del equipo rival.
+46,roar,Rugido,Normal,Estado,,Fuera,Cambio forzado,"Se lleva al objetivo, que es cambiado por otro Pokémon. Si es un Pokémon salvaje, acaba el combate."
+47,sing,Canto,Normal,Estado,,Dentro,Ya implementado,Cancioncilla que hace dormir profundamente al objetivo.
+48,supersonic,Supersónico,Normal,Estado,,Dentro,Ya implementado,Raras ondas sónicas que confunden al objetivo.
+49,sonic-boom,Bomba Sónica,Normal,Especial,,Dentro,Ya implementado,Movimiento obsoleto o sin descripción oficial; se conserva por compatibilidad.
+50,disable,Anulación,Normal,Estado,,Fuera,Efecto único no soportado,Desactiva el último movimiento del objetivo durante cuatro turnos.
+51,acid,Ácido,Veneno,Especial,40,Dentro,Ya implementado,Rocía a los enemigos con un ácido corrosivo. Puede bajar la Defensa Especial.
+52,ember,Ascuas,Fuego,Especial,40,Dentro,Ya implementado,Ataca con llamas pequeñas que pueden causar quemaduras.
+53,flamethrower,Lanzallamas,Fuego,Especial,90,Dentro,Ya implementado,Ataca con una gran ráfaga de fuego que puede causar quemaduras.
+54,mist,Neblina,Hielo,Estado,,Dentro,Ya implementado,Rodea de fina niebla al usuario y protege las características de su equipo durante cinco turnos.
+55,water-gun,Pistola Agua,Agua,Especial,40,Dentro,Ya implementado,Ataca disparando agua con gran potencia.
+56,hydro-pump,Hidrobomba,Agua,Especial,110,Dentro,Ya implementado,Lanza una gran masa de agua a presión para atacar.
+57,surf,Surf,Agua,Especial,90,Dentro,Ya implementado,Inunda el terreno de combate con una ola gigante.
+58,ice-beam,Rayo Hielo,Hielo,Especial,90,Dentro,Ya implementado,Rayo de hielo que puede llegar a congelar.
+59,blizzard,Ventisca,Hielo,Especial,110,Dentro,Ya implementado,Tormenta de hielo que puede llegar a congelar.
+60,psybeam,Psicorrayo,Psíquico,Especial,65,Dentro,Ya implementado,Extraño rayo que puede causar confusión.
+61,bubble-beam,Rayo Burbuja,Agua,Especial,65,Dentro,Ya implementado,Diluvio de burbujas que puede bajar la Velocidad.
+62,aurora-beam,Rayo Aurora,Hielo,Especial,65,Dentro,Ya implementado,Rayo multicolor que puede reducir el Ataque.
+63,hyper-beam,Hiperrayo,Normal,Especial,150,Dentro,Ya implementado,"Es eficaz, pero el atacante deberá descansar en el siguiente turno."
+64,peck,Picotazo,Volador,Físico,35,Dentro,Ya implementado,Ensarta al objetivo con un cuerno o pico punzante.
+65,drill-peck,Pico Taladro,Volador,Físico,80,Dentro,Ya implementado,Picotazo giratorio y perforador muy potente.
+66,submission,Sumisión,Lucha,Físico,80,Dentro,Ya implementado,El usuario se lanza al suelo con el oponente en brazos y también se hace un poco de daño.
+67,low-kick,Patada Baja,Lucha,Físico,,Dentro,Ya implementado,"Patada baja que derriba al oponente. Cuanto más pesa el objetivo, más daño le causa."
+68,counter,Contraataque,Lucha,Físico,,Fuera,Contraataque,Devuelve un golpe físico por duplicado.
+69,seismic-toss,Sísmico,Lucha,Físico,,Dentro,Ya implementado,Aprovecha la gravedad para derribar al objetivo. Le resta tantos PS como nivel tenga el usuario.
+70,strength,Fuerza,Normal,Físico,80,Dentro,Ya implementado,Propina un potente puñetazo con todas sus fuerzas.
+71,absorb,Absorber,Planta,Especial,20,Dentro,Ya implementado,Un ataque que absorbe nutrientes. Quien lo usa recupera la mitad de los PS del daño que produce.
+72,mega-drain,Megaagotar,Planta,Especial,40,Dentro,Ya implementado,Un ataque que absorbe nutrientes. Quien lo usa recupera la mitad de los PS del daño que produce.
+73,leech-seed,Drenadoras,Planta,Estado,,Dentro,Ya implementado,Planta semillas que absorben PS del objetivo en cada turno y que le sirven para recuperarse.
+74,growth,Desarrollo,Normal,Estado,,Dentro,Ya implementado,Hace que su cuerpo crezca a marchas forzadas con lo que aumenta su Ataque y Ataque Especial.
+75,razor-leaf,Hoja Afilada,Planta,Físico,55,Dentro,Ya implementado,Corta con hojas afiladas. Un ataque que suele ser crítico.
+76,solar-beam,Rayo Solar,Planta,Especial,120,Dentro,Ya implementado,El usuario absorbe luz en el primer turno y en el segundo lanza un potente rayo de energía.
+77,poison-powder,Polvo Veneno,Veneno,Estado,,Dentro,Ya implementado,Polvo tóxico que envenena al objetivo.
+78,stun-spore,Paralizador,Planta,Estado,,Dentro,Ya implementado,Esparce polvo que paraliza al objetivo.
+79,sleep-powder,Somnífero,Planta,Estado,,Dentro,Ya implementado,Esparce polvo que duerme al objetivo.
+80,petal-dance,Danza Pétalo,Planta,Especial,120,Fuera,Bloqueo de turnos,Lanza pétalos de dos a tres turnos y acaba confundiendo al atacante.
+81,string-shot,Disparo Demora,Bicho,Estado,,Dentro,Ya implementado,Lanza seda a los rivales y reduce mucho su Velocidad.
+82,dragon-rage,Furia Dragón,Dragón,Especial,,Dentro,Ya implementado,Movimiento obsoleto o sin descripción oficial; se conserva por compatibilidad.
+83,fire-spin,Giro Fuego,Fuego,Especial,35,Dentro,Ya implementado,Un aro de fuego que atrapa al objetivo de cuatro a cinco turnos.
+84,thunder-shock,Impactrueno,Eléctrico,Especial,40,Dentro,Ya implementado,Ataque eléctrico que puede paralizar al objetivo.
+85,thunderbolt,Rayo,Eléctrico,Especial,90,Dentro,Ya implementado,Potente ataque eléctrico que puede paralizar al objetivo.
+86,thunder-wave,Onda Trueno,Eléctrico,Estado,,Dentro,Ya implementado,Una ligera descarga que paraliza al objetivo si lo alcanza.
+87,thunder,Trueno,Eléctrico,Especial,110,Dentro,Ya implementado,Un poderoso rayo que daña al objetivo y puede paralizarlo.
+88,rock-throw,Lanzarrocas,Roca,Físico,50,Dentro,Ya implementado,Tira una pequeña roca al objetivo.
+89,earthquake,Terremoto,Tierra,Físico,100,Dentro,Ya implementado,Un terremoto que afecta a todos los Pokémon que estén a su alrededor.
+90,fissure,Fisura,Tierra,Físico,,Dentro,Ya implementado,Abre una grieta en el suelo y mete al objetivo en ella. Fulmina en un golpe.
+91,dig,Excavar,Tierra,Físico,80,Fuera,Semiinvulnerabilidad,El usuario cava durante el primer turno y ataca en el segundo.
+92,toxic,Tóxico,Veneno,Estado,,Dentro,Ya implementado,Envenena gravemente al objetivo y causa un daño mayor en cada turno.
+93,confusion,Confusión,Psíquico,Especial,50,Dentro,Ya implementado,Débil ataque telequinético que puede causar confusión.
+94,psychic,Psíquico,Psíquico,Especial,90,Dentro,Ya implementado,Fuerte ataque telequinético que puede bajar la Defensa Especial del objetivo.
+95,hypnosis,Hipnosis,Psíquico,Estado,,Dentro,Ya implementado,Ataque hipnótico que hace dormir profundamente al objetivo.
+96,meditate,Meditación,Psíquico,Estado,,Dentro,Ya implementado,Movimiento obsoleto o sin descripción oficial; se conserva por compatibilidad.
+97,agility,Agilidad,Psíquico,Estado,,Dentro,Ya implementado,Relaja el cuerpo para ganar mucha Velocidad.
+98,quick-attack,Ataque Rápido,Normal,Físico,40,Dentro,Ya implementado,Ataca al objetivo a gran velocidad. Este movimiento tiene prioridad alta.
+99,rage,Furia,Normal,Físico,20,Fuera,Bloqueo de turnos,Movimiento obsoleto o sin descripción oficial; se conserva por compatibilidad.
+100,teleport,Teletransporte,Psíquico,Estado,,Fuera,Cambio de Pokémon (pivot),"Permite al usuario cambiarse por otro Pokémon del equipo, si es posible. Si un Pokémon salvaje usa este movimiento, huye del combate."
+101,night-shade,Tinieblas,Fantasma,Especial,,Dentro,Ya implementado,"Produce un espejismo ante el objetivo, que pierde tantos PS como nivel tenga el usuario."
+102,mimic,Mimético,Normal,Estado,,Fuera,Copia/transformación,"Copia el último movimiento usado por el objetivo, y puede utilizarlo mientras esté en el combate."
+103,screech,Chirrido,Normal,Estado,,Dentro,Ya implementado,Alarido agudo que reduce mucho la Defensa del objetivo.
+104,double-team,Doble Equipo,Normal,Estado,,Dentro,Ya implementado,Crea copias de sí mismo para mejorar la Evasión.
+105,recover,Recuperación,Normal,Estado,,Dentro,Ya implementado,Restaura hasta la mitad de los PS máximos.
+106,harden,Fortaleza,Normal,Estado,,Dentro,Ya implementado,Tensa la musculatura del usuario para aumentar la Defensa.
+107,minimize,Reducción,Normal,Estado,,Dentro,Ya implementado,El usuario mengua para aumentar mucho la Evasión.
+108,smokescreen,Pantalla de Humo,Normal,Estado,,Dentro,Ya implementado,Baja la Precisión del objetivo con una nube de humo o tinta.
+109,confuse-ray,Rayo Confuso,Fantasma,Estado,,Dentro,Ya implementado,Rayo siniestro que confunde al objetivo.
+110,withdraw,Refugio,Agua,Estado,,Dentro,Ya implementado,"El usuario se resguarda en su coraza, por lo que le sube la Defensa."
+111,defense-curl,Rizo Defensa,Normal,Estado,,Dentro,Ya implementado,Se enrosca para ocultar sus puntos débiles y aumentar la Defensa.
+112,barrier,Barrera,Psíquico,Estado,,Dentro,Ya implementado,Movimiento obsoleto o sin descripción oficial; se conserva por compatibilidad.
+113,light-screen,Pantalla de Luz,Psíquico,Estado,,Dentro,Ya implementado,Pared de luz que reduce durante cinco turnos el daño producido por los ataques especiales.
+114,haze,Niebla,Hielo,Estado,,Dentro,Ya implementado,Neblina que elimina los cambios de características de todos los Pokémon en combate.
+115,reflect,Reflejo,Psíquico,Estado,,Dentro,Ya implementado,Pared de luz que reduce durante cinco turnos el daño producido por los ataques físicos.
+116,focus-energy,Foco Energía,Normal,Estado,,Dentro,Ya implementado,Concentra energía para aumentar las posibilidades de asestar un golpe crítico.
+117,bide,Venganza,Normal,Físico,,Fuera,Contraataque,Movimiento obsoleto o sin descripción oficial; se conserva por compatibilidad.
+118,metronome,Metrónomo,Normal,Estado,,Fuera,Copia/transformación,Mueve un dedo y estimula su cerebro para usar al azar casi cualquier movimiento.
+119,mirror-move,Espejo,Volador,Estado,,Fuera,Copia/transformación,Movimiento obsoleto o sin descripción oficial; se conserva por compatibilidad.
+120,self-destruct,Autodestrucción,Normal,Físico,200,Dentro,Ya implementado,El atacante explota y hiere a todos a su alrededor. El usuario se debilita de inmediato.
+121,egg-bomb,Bomba Huevo,Normal,Físico,100,Dentro,Ya implementado,Movimiento obsoleto o sin descripción oficial; se conserva por compatibilidad.
+122,lick,Lengüetazo,Fantasma,Físico,30,Dentro,Ya implementado,Una lengua ataca al objetivo. Puede causar parálisis.
+123,smog,Polución,Veneno,Especial,30,Dentro,Ya implementado,Lanza un ataque con gases tóxicos que pueden llegar a envenenar.
+124,sludge,Residuos,Veneno,Especial,65,Dentro,Ya implementado,Arroja residuos al objetivo. Puede llegar a envenenar.
+125,bone-club,Hueso Palo,Tierra,Físico,65,Dentro,Ya implementado,Movimiento obsoleto o sin descripción oficial; se conserva por compatibilidad.
+126,fire-blast,Llamarada,Fuego,Especial,110,Dentro,Ya implementado,Llama intensa que chamusca y puede causar quemaduras.
+127,waterfall,Cascada,Agua,Físico,80,Dentro,Ya implementado,Embiste con un gran impulso que puede llegar a amedrentar.
+128,clamp,Tenaza,Agua,Físico,35,Dentro,Ya implementado,Movimiento obsoleto o sin descripción oficial; se conserva por compatibilidad.
+129,swift,Meteoros,Normal,Especial,60,Dentro,Ya implementado,Lanza rayos en forma de estrella que no fallan nunca.
+130,skull-bash,Cabezazo,Normal,Físico,130,Dentro,Ya implementado,El usuario se prepara y sube su Defensa en el primer turno y en el segundo arremete con un cabezazo.
+131,spike-cannon,Clavo Cañón,Normal,Físico,20,Dentro,Ya implementado,Movimiento obsoleto o sin descripción oficial; se conserva por compatibilidad.
+132,constrict,Restricción,Normal,Físico,10,Dentro,Ya implementado,Movimiento obsoleto o sin descripción oficial; se conserva por compatibilidad.
+133,amnesia,Amnesia,Psíquico,Estado,,Dentro,Ya implementado,El usuario olvida sus preocupaciones y aumenta mucho la Defensa Especial.
+134,kinesis,Kinético,Psíquico,Estado,,Dentro,Ya implementado,Dobla una cuchara para distraer al objetivo y bajar su nivel de Precisión.
+135,soft-boiled,Ovocuración,Normal,Estado,,Dentro,Ya implementado,Restaura la mitad de los PS máximos del usuario.
+136,high-jump-kick,Patada Salto Alta,Lucha,Físico,130,Dentro,Ya implementado,"El usuario salta muy alto y da un rodillazo. Si falla, se hará daño."
+137,glare,Deslumbrar,Normal,Estado,,Dentro,Ya implementado,Intimida y asusta al objetivo con la mirada para dejarlo paralizado.
+138,dream-eater,Comesueños,Psíquico,Especial,100,Dentro,Ya implementado,Restaura al usuario la mitad del daño causado a un objetivo dormido.
+139,poison-gas,Gas Venenoso,Veneno,Estado,,Dentro,Ya implementado,Lanza una nube de gas tóxico al objetivo. Produce envenenamiento.
+140,barrage,Bombardeo,Normal,Físico,15,Dentro,Ya implementado,Movimiento obsoleto o sin descripción oficial; se conserva por compatibilidad.
+141,leech-life,Chupavidas,Bicho,Físico,80,Dentro,Ya implementado,Restaura al usuario la mitad del daño causado al objetivo.
+142,lovely-kiss,Beso Amoroso,Normal,Estado,,Dentro,Ya implementado,Intimida al objetivo con una cara que asusta y le da un beso que lo deja dormido.
+143,sky-attack,Ataque Aéreo,Volador,Físico,140,Dentro,Ya implementado,Ataca durante dos turnos y suele asestar un golpe crítico. También puede amedrentar al objetivo.
+144,transform,Transformación,Normal,Estado,,Fuera,Copia/transformación,"El usuario se transforma en una copia del objetivo, con los mismos movimientos."
+145,bubble,Burbuja,Agua,Especial,40,Dentro,Ya implementado,Movimiento obsoleto o sin descripción oficial; se conserva por compatibilidad.
+146,dizzy-punch,Puño Mareo,Normal,Físico,70,Dentro,Ya implementado,Movimiento obsoleto o sin descripción oficial; se conserva por compatibilidad.
+147,spore,Espora,Planta,Estado,,Dentro,Ya implementado,Esparce esporas que inducen al sueño.
+148,flash,Destello,Normal,Estado,,Dentro,Ya implementado,Movimiento obsoleto o sin descripción oficial; se conserva por compatibilidad.
+149,psywave,Psicoonda,Psíquico,Especial,,Dentro,Ya implementado,Movimiento obsoleto o sin descripción oficial; se conserva por compatibilidad.
+150,splash,Salpicadura,Normal,Estado,,Dentro,Ya implementado,No tiene ningún efecto. Solo salpica.
+151,acid-armor,Armadura Ácida,Veneno,Estado,,Dentro,Ya implementado,Transforma la estructura celular para hacerse líquido y aumenta mucho la Defensa.
+152,crabhammer,Martillazo,Agua,Físico,100,Dentro,Ya implementado,Golpea con fuerza con una pinza enorme. Suele asestar un golpe crítico.
+153,explosion,Explosión,Normal,Físico,250,Dentro,Ya implementado,El atacante causa una grandísima explosión y hiere a todos a su alrededor. El usuario se debilita de inmediato.
+154,fury-swipes,Golpes Furia,Normal,Físico,18,Dentro,Ya implementado,Araña rápidamente de dos a cinco veces.
+155,bonemerang,Huesomerang,Tierra,Físico,50,Dentro,Ya implementado,Lanza un hueso a modo de bumerán que golpea dos veces.
+156,rest,Descanso,Psíquico,Estado,,Dentro,Ya implementado,"Restaura todos los PS y cura todos los problemas de estado del usuario, que se duerme los dos turnos siguientes."
+157,rock-slide,Avalancha,Roca,Físico,75,Dentro,Ya implementado,Lanza grandes pedruscos. Puede amedrentar al objetivo.
+158,hyper-fang,Hipercolmillo,Normal,Físico,80,Dentro,Ya implementado,Ataca con agudos colmillos. Puede amedrentar al objetivo.
+159,sharpen,Afilar,Normal,Estado,,Dentro,Ya implementado,Movimiento obsoleto o sin descripción oficial; se conserva por compatibilidad.
+160,conversion,Conversión,Normal,Estado,,Fuera,Efecto único no soportado,Cambia el tipo del usuario por el del primero de sus movimientos.
+161,tri-attack,Triataque,Normal,Especial,80,Dentro,Ya implementado,"Ataque triple que puede paralizar, quemar o congelar al objetivo."
+162,super-fang,Superdiente,Normal,Físico,,Dentro,Ya implementado,Finos colmillos que reducen a la mitad los PS del objetivo.
+163,slash,Cuchillada,Normal,Físico,70,Dentro,Ya implementado,Ataca con cuchillas o con pinzas. Suele asestar un golpe crítico.
+164,substitute,Sustituto,Normal,Estado,,Dentro,Ya implementado,Utiliza parte de los PS propios para crear un sustituto que actúa como señuelo.
+165,struggle,Forcejeo,Normal,Físico,50,Fuera,Mecánica no soportada,Solo se usa como último recurso al acabarse los PP. Hiere un poco al agresor.
+166,sketch,Esquema,Normal,Estado,,Fuera,Copia/transformación,Aprende de forma permanente el último movimiento utilizado por el objetivo. Es de un solo uso.
+167,triple-kick,Triple Patada,Lucha,Físico,10,Dentro,Ya implementado,Patea hasta tres veces seguidas y cada vez más fuerte.
+168,thief,Ladrón,Siniestro,Físico,60,Dentro,Ya implementado,El agresor ataca y le quita el objeto al objetivo siempre y cuando no lleve ninguno.
+169,spider-web,Telaraña,Bicho,Estado,,Fuera,Efecto único no soportado,Movimiento obsoleto o sin descripción oficial; se conserva por compatibilidad.
+170,mind-reader,Telépata,Normal,Estado,,Fuera,Efecto único no soportado,El usuario adivina los movimientos del objetivo para hacer que su siguiente ataque no falle.
+171,nightmare,Pesadilla,Fantasma,Estado,,Fuera,Estado no soportado,Movimiento obsoleto o sin descripción oficial; se conserva por compatibilidad.
+172,flame-wheel,Rueda Fuego,Fuego,Físico,60,Dentro,Ya implementado,Ataca envuelto en fuego. Puede causar quemaduras.
+173,snore,Ronquido,Normal,Especial,50,Fuera,Mecánica no soportada,Fuerte ronquido que solo puede usarse dormido. Puede amedrentar al objetivo.
+174,curse,Maldición,Fantasma,Estado,,Dentro,Ya implementado,Un movimiento que tiene efectos distintos si el usuario es de tipo Fantasma o no.
+175,flail,Azote,Normal,Físico,,Dentro,Ya implementado,"Ataque frenético. Cuantos menos PS tenga el usuario, más daño producirá."
+176,conversion-2,Conversión 2,Normal,Estado,,Fuera,Efecto único no soportado,El usuario cambia de tipo para hacerse resistente al último tipo de movimiento usado por el objetivo.
+177,aeroblast,Aerochorro,Volador,Especial,100,Dentro,Ya implementado,Lanza un chorro de aire que suele asestar un golpe crítico.
+178,cotton-spore,Esporagodón,Planta,Estado,,Dentro,Ya implementado,Adhiere esporas a los rivales para reducir mucho su Velocidad.
+179,reversal,Inversión,Lucha,Físico,,Dentro,Ya implementado,Ataque desesperado que causa más daño cuantos menos PS tenga el usuario.
+180,spite,Rencor,Fantasma,Estado,,Fuera,Efecto único no soportado,Da rienda suelta a su rencor para reducir cuatro PP del último movimiento usado por el objetivo.
+181,powder-snow,Nieve Polvo,Hielo,Especial,40,Dentro,Ya implementado,Lanza nieve que puede llegar a congelar.
+182,protect,Protección,Normal,Estado,,Dentro,Ya implementado,"Frena todos los ataques, pero puede fallar si se usa repetidamente."
+183,mach-punch,Ultrapuño,Lucha,Físico,40,Dentro,Ya implementado,Puñetazo de velocidad fulminante. Este movimiento tiene prioridad alta.
+184,scary-face,Cara Susto,Normal,Estado,,Dentro,Ya implementado,Asusta al objetivo para reducir mucho su Velocidad.
+185,feint-attack,Finta,Siniestro,Físico,60,Dentro,Ya implementado,Movimiento obsoleto o sin descripción oficial; se conserva por compatibilidad.
+186,sweet-kiss,Beso Dulce,Hada,Estado,,Dentro,Ya implementado,Da un beso con tal dulzura que causa confusión.
+187,belly-drum,Tambor,Normal,Estado,,Dentro,Ya implementado,Reduce la mitad de los PS máximos para mejorar al máximo el Ataque.
+188,sludge-bomb,Bomba Lodo,Veneno,Especial,90,Dentro,Ya implementado,Arroja residuos al objetivo. Puede llegar a envenenar.
+189,mud-slap,Bofetón Lodo,Tierra,Especial,20,Dentro,Ya implementado,Echa lodo en la cara para bajar la Precisión.
+190,octazooka,Pulpocañón,Agua,Especial,65,Dentro,Ya implementado,Dispara tinta a la cara. Puede bajar la Precisión.
+191,spikes,Púas,Tierra,Estado,,Dentro,Ya implementado,Esparce púas alrededor del equipo rival que hieren a los Pokémon rivales que entran en combate.
+192,zap-cannon,Electrocañón,Eléctrico,Especial,120,Dentro,Ya implementado,Dispara una descarga eléctrica que causa daño y parálisis.
+193,foresight,Profecía,Normal,Estado,,Fuera,Estado no soportado,Movimiento obsoleto o sin descripción oficial; se conserva por compatibilidad.
+194,destiny-bond,Mismo Destino,Fantasma,Estado,,Fuera,Contraataque,"Si el usuario se debilita por un ataque rival antes de usar otro movimiento, el Pokémon rival se debilitará también. Puede fallar si se usa repetidamente."
+195,perish-song,Canto Mortal,Normal,Estado,,Dentro,Ya implementado,"Si un Pokémon escucha este canto y no es cambiado por otro en tres turnos, acaba debilitándose."
+196,icy-wind,Viento Hielo,Hielo,Especial,55,Dentro,Ya implementado,Ataque con aire helado que baja la Velocidad de los rivales.
+197,detect,Detección,Lucha,Estado,,Dentro,Ya implementado,"Frena todos los ataques, pero puede fallar si se usa repetidamente."
+198,bone-rush,Ataque Óseo,Tierra,Físico,25,Dentro,Ya implementado,"Hueso en ristre, aporrea al objetivo de dos a cinco veces."
+199,lock-on,Fijar Blanco,Normal,Estado,,Fuera,Efecto único no soportado,Fija el blanco para que el siguiente ataque no falle.
+200,outrage,Enfado,Dragón,Físico,120,Fuera,Bloqueo de turnos,Ataca de dos a tres turnos y acaba confundiendo al agresor.
+201,sandstorm,Tormenta de Arena,Roca,Estado,,Dentro,Ya implementado,"Tormenta de arena que dura cinco turnos y hiere a todos, excepto a los de tipo Roca, Tierra y Acero, y aumenta la Defensa Especial de los de tipo Roca."
+202,giga-drain,Gigadrenado,Planta,Especial,75,Dentro,Ya implementado,Un ataque que absorbe nutrientes. Quien lo usa recupera la mitad de los PS del daño que produce.
+203,endure,Aguante,Normal,Estado,,Dentro,Ya implementado,Resiste cualquier ataque y deja al menos 1 PS. Puede fallar si se usa repetidamente.
+204,charm,Encanto,Hada,Estado,,Dentro,Ya implementado,Engatusa al objetivo y reduce mucho su Ataque.
+205,rollout,Rodar,Roca,Físico,30,Dentro,Ya implementado,"El atacante rueda contra el objetivo durante cinco turnos, cada vez con mayor fuerza."
+206,false-swipe,Falso Tortazo,Normal,Físico,40,Fuera,Mecánica no soportada,Ataque moderado que no debilita al objetivo y le deja al menos 1 PS.
+207,swagger,Fanfarronear,Normal,Estado,,Dentro,Ya implementado,"Provoca confusión en el objetivo, pero también sube mucho su Ataque."
+208,milk-drink,Batido,Normal,Estado,,Dentro,Ya implementado,Restaura la mitad de los PS máximos del usuario.
+209,spark,Chispa,Eléctrico,Físico,65,Dentro,Ya implementado,Ataque eléctrico que puede llegar a paralizar.
+210,fury-cutter,Corte Furia,Bicho,Físico,40,Dentro,Ya implementado,Ataque con garras o guadaña que crece en intensidad si se usa repetidas veces.
+211,steel-wing,Ala de Acero,Acero,Físico,70,Dentro,Ya implementado,Alas macizas que golpean al objetivo y pueden subir la Defensa del usuario.
+212,mean-look,Mal de Ojo,Normal,Estado,,Fuera,Efecto único no soportado,Mal de ojo que impide al objetivo huir del combate.
+213,attract,Atracción,Normal,Estado,,Fuera,Estado no soportado,"Si el objetivo es del sexo opuesto, se enamorará y bajará la posibilidad de que ataque."
+214,sleep-talk,Sonámbulo,Normal,Estado,,Fuera,Copia/transformación,"Mientras duerme, usa uno de sus movimientos elegido al azar."
+215,heal-bell,Cascabel Cura,Normal,Estado,,Dentro,Ya implementado,Tañido que cura los problemas de estado de todos los Pokémon del equipo.
+216,return,Retribución,Normal,Físico,,Fuera,Mecánica no soportada,Movimiento obsoleto o sin descripción oficial; se conserva por compatibilidad.
+217,present,Presente,Normal,Físico,,Dentro,Ya implementado,"Quien lo usa ataca al objetivo dándole un regalo con una bomba trampa. Sin embargo, a veces restaura sus PS."
+218,frustration,Frustración,Normal,Físico,,Fuera,Mecánica no soportada,Movimiento obsoleto o sin descripción oficial; se conserva por compatibilidad.
+219,safeguard,Velo Sagrado,Normal,Estado,,Dentro,Ya implementado,"Un escudo que protege de problemas de estado, como el sueño o la parálisis, durante cinco turnos."
+220,pain-split,Divide Dolor,Normal,Estado,,Dentro,Ya implementado,Suma los PS del usuario a los del objetivo y los reparte a partes iguales.
+221,sacred-fire,Fuego Sagrado,Fuego,Físico,100,Dentro,Ya implementado,Fuego místico de gran intensidad que puede causar quemaduras.
+222,magnitude,Magnitud,Tierra,Físico,,Dentro,Ya implementado,Movimiento obsoleto o sin descripción oficial; se conserva por compatibilidad.
+223,dynamic-punch,Puño Dinámico,Lucha,Físico,100,Dentro,Ya implementado,Puñetazo con toda la fuerza concentrada. Causa confusión si atina.
+224,megahorn,Megacuerno,Bicho,Físico,120,Dentro,Ya implementado,Violenta embestida con cuernos imponentes.
+225,dragon-breath,Dragoaliento,Dragón,Especial,60,Dentro,Ya implementado,Poderosa ráfaga de aliento que golpea al objetivo y puede paralizarlo.
+226,baton-pass,Relevo,Normal,Estado,,Fuera,Cambio de Pokémon (pivot),Cambia el puesto con otro miembro del equipo y le pasa los cambios de características.
+227,encore,Otra Vez,Normal,Estado,,Fuera,Efecto único no soportado,El objetivo repite su último movimiento durante tres turnos.
+228,pursuit,Persecución,Siniestro,Físico,40,Dentro,Ya implementado,Movimiento obsoleto o sin descripción oficial; se conserva por compatibilidad.
+229,rapid-spin,Giro Rápido,Normal,Físico,50,Fuera,Limpieza/creación de campo,"Ataque giratorio que puede eliminar movimientos como Atadura, Constricción y Drenadoras. También aumenta la Velocidad del usuario."
+230,sweet-scent,Dulce Aroma,Normal,Estado,,Dentro,Ya implementado,"Un dulce aroma engatusa al objetivo, por lo que se reduce mucho su Evasión."
+231,iron-tail,Cola Férrea,Acero,Físico,100,Dentro,Ya implementado,Ataca con una cola férrea y puede bajar la Defensa del objetivo.
+232,metal-claw,Garra Metal,Acero,Físico,50,Dentro,Ya implementado,Ataque con garras de acero que puede aumentar el Ataque del usuario.
+233,vital-throw,Llave Vital,Lucha,Físico,70,Dentro,Ya implementado,"El usuario ataca el último, pero no falla."
+234,morning-sun,Sol Matinal,Normal,Estado,,Dentro,Ya implementado,Restaura PS del usuario. La cantidad varía según el tiempo que haga.
+235,synthesis,Fotosíntesis,Planta,Estado,,Dentro,Ya implementado,Restaura PS del usuario. La cantidad varía según el tiempo que haga.
+236,moonlight,Luz Lunar,Hada,Estado,,Dentro,Ya implementado,Restaura PS del usuario. La cantidad varía según el tiempo que haga.
+237,hidden-power,Poder Oculto,Normal,Especial,60,Fuera,No estándar / variante,Movimiento obsoleto o sin descripción oficial; se conserva por compatibilidad.
+238,cross-chop,Tajo Cruzado,Lucha,Físico,100,Dentro,Ya implementado,Corte doble que suele propinar un golpe crítico.
+239,twister,Ciclón,Dragón,Especial,40,Dentro,Ya implementado,Crea un violento tornado para hacer trizas al objetivo. Puede amedrentarlo.
+240,rain-dance,Danza Lluvia,Agua,Estado,,Dentro,Ya implementado,Genera una fuerte lluvia que refuerza los movimientos de tipo Agua durante cinco turnos y debilita los de tipo Fuego.
+241,sunny-day,Día Soleado,Fuego,Estado,,Dentro,Ya implementado,"Hace que se intensifique el efecto del sol durante cinco turnos, lo que potencia los movimientos de tipo Fuego y debilita los de tipo Agua."
+242,crunch,Triturar,Siniestro,Físico,80,Dentro,Ya implementado,Tritura con afilados colmillos y puede bajar la Defensa del objetivo.
+243,mirror-coat,Manto Espejo,Psíquico,Especial,,Fuera,Contraataque,Responde a un ataque especial ocasionando el doble del daño recibido.
+244,psych-up,Autosugestión,Normal,Estado,,Dentro,Ya implementado,Quien lo usa se sume en un trance y copia cualquier cambio que haya en las características de su objetivo.
+245,extreme-speed,Velocidad Extrema,Normal,Físico,80,Dentro,Ya implementado,Ataque de una velocidad extrema. Este movimiento tiene prioridad alta.
+246,ancient-power,Poder Pasado,Roca,Especial,60,Dentro,Ya implementado,Ataque prehistórico que puede subir todas las características.
+247,shadow-ball,Bola Sombra,Fantasma,Especial,80,Dentro,Ya implementado,Lanza una bola oscura que puede bajar la Defensa Especial del objetivo.
+248,future-sight,Premonición,Psíquico,Especial,120,Dentro,Ya implementado,Concentra energía psíquica para golpear al objetivo dos turnos después.
+249,rock-smash,Golpe Roca,Lucha,Físico,40,Dentro,Ya implementado,Ataque con los puños. Puede bajar la Defensa del objetivo.
+250,whirlpool,Torbellino,Agua,Especial,35,Dentro,Ya implementado,Una tromba de agua atrapa al objetivo durante cuatro o cinco turnos.
+251,beat-up,Paliza,Siniestro,Físico,,Dentro,Ya implementado,"Ataque de todo el equipo Pokémon. Cuantos más haya, más veces se atacará."
+252,fake-out,Sorpresa,Normal,Físico,40,Fuera,Prioridad condicional,Amedrenta al objetivo con este movimiento de prioridad alta. Solo sirve en el primer turno.
+253,uproar,Alboroto,Normal,Especial,90,Fuera,Bloqueo de turnos,Ataca de forma alborotada durante tres turnos. Mantiene despiertos a todos.
+254,stockpile,Reserva,Normal,Estado,,Fuera,Mecánica no soportada,Acumula energía y sube la Defensa y la Defensa Especial. Puede utilizarse hasta tres veces.
+255,spit-up,Escupir,Normal,Especial,,Fuera,Mecánica no soportada,Libera de una vez la energía acumulada con Reserva. La potencia del ataque será proporcional a la cantidad de energía acumulada.
+256,swallow,Tragar,Normal,Estado,,Fuera,Mecánica no soportada,"Absorbe la energía acumulada con Reserva para recobrar salud. Cuanta más se haya acumulado, mayor será el número de PS que se recuperen."
+257,heat-wave,Onda Ígnea,Fuego,Especial,95,Dentro,Ya implementado,Provoca un viento abrasador que puede quemar al objetivo.
+258,hail,Granizo,Hielo,Estado,,Dentro,Ya implementado,Tormenta de granizo que dura cinco turnos. Hiere a todos los Pokémon excepto a los de tipo Hielo.
+259,torment,Tormento,Siniestro,Estado,,Fuera,Estado no soportado,"Atormenta y enfurece al objetivo, que no puede usar dos veces seguidas el mismo movimiento."
+260,flatter,Camelo,Siniestro,Estado,,Dentro,Ya implementado,"Halaga al objetivo y lo confunde, pero también sube su Ataque Especial."
+261,will-o-wisp,Fuego Fatuo,Fuego,Estado,,Dentro,Ya implementado,Siniestra llama morada que produce quemaduras.
+262,memento,Legado,Siniestro,Estado,,Dentro,Ya implementado,"El usuario se debilita, pero baja mucho tanto el Ataque como el Ataque Especial del objetivo."
+263,facade,Fachada,Normal,Físico,70,Dentro,Ya implementado,"Si el usuario está quemado, paralizado o envenenado, ataca con el doble de potencia."
+264,focus-punch,Puño Certero,Lucha,Físico,150,Fuera,Mecánica no soportada,Se concentra para dar un puñetazo. Falla si se sufre un golpe antes de su uso.
+265,smelling-salts,Estímulo,Normal,Físico,70,Dentro,Ya implementado,Movimiento obsoleto o sin descripción oficial; se conserva por compatibilidad.
+266,follow-me,Señuelo,Normal,Estado,,Fuera,Efecto único no soportado,Llama la atención para concentrar todos los ataques de todos los del equipo rival hacia sí mismo.
+267,nature-power,Adaptación,Normal,Estado,,Fuera,Copia/transformación,Usa el poder de la naturaleza para atacar. Su efecto varía según el entorno de combate.
+268,charge,Carga,Eléctrico,Estado,,Dentro,Ya implementado,Recarga energía para potenciar el siguiente movimiento de tipo Eléctrico. También sube la Defensa Especial.
+269,taunt,Mofa,Siniestro,Estado,,Dentro,Ya implementado,Enfurece al objetivo para que solo use movimientos de ataque durante tres turnos.
+270,helping-hand,Refuerzo,Normal,Estado,,Fuera,Efecto único no soportado,El usuario ayuda a un aliado reforzando la potencia de su ataque.
+271,trick,Truco,Psíquico,Estado,,Dentro,Ya implementado,Engaña al objetivo desprevenido e intercambia objetos.
+272,role-play,Imitación,Psíquico,Estado,,Dentro,Ya implementado,Imita al objetivo por completo y copia su habilidad.
+273,wish,Deseo,Normal,Estado,,Fuera,Efecto único no soportado,Restaura en el siguiente turno la mitad de los PS máximos del usuario o se los pasa al Pokémon que lo sustituye.
+274,assist,Ayuda,Normal,Estado,,Fuera,Copia/transformación,Movimiento obsoleto o sin descripción oficial; se conserva por compatibilidad.
+275,ingrain,Arraigo,Planta,Estado,,Fuera,Estado no soportado,"Echa raíces para recuperar PS en cada turno, pero impide el relevo."
+276,superpower,Fuerza Bruta,Lucha,Físico,120,Dentro,Ya implementado,"Ataque de gran potencia, pero que reduce el Ataque y la Defensa del agresor."
+277,magic-coat,Capa Mágica,Psíquico,Estado,,Fuera,Efecto único no soportado,Barrera capaz de devolver al agresor movimientos como Drenadoras y otros que alteran el estado o las características.
+278,recycle,Reciclaje,Normal,Estado,,Dentro,Ya implementado,Recicla y así recupera un objeto equipado de un solo uso que ya haya sido empleado durante el combate.
+279,revenge,Desquite,Lucha,Físico,60,Dentro,Ya implementado,Ataque que produce el doble de daño si el usuario resulta herido en el mismo turno.
+280,brick-break,Demolición,Lucha,Físico,75,Dentro,Ya implementado,Potente ataque que también es capaz de destruir barreras como Pantalla de Luz y Reflejo.
+281,yawn,Bostezo,Normal,Estado,,Fuera,Estado no soportado,Gran bostezo que induce al sueño al objetivo en el siguiente turno.
+282,knock-off,Desarme,Siniestro,Físico,65,Dentro,Ya implementado,Impide al objetivo usar el objeto que lleva durante el combate. La potencia del movimiento se multiplica si el objetivo lleva un objeto.
+283,endeavor,Esfuerzo,Normal,Físico,,Dentro,Ya implementado,Reduce los PS del objetivo para que igualen a los del atacante.
+284,eruption,Estallido,Fuego,Especial,150,Dentro,Ya implementado,"Furia explosiva. Cuanto menor sea el número de PS del usuario, menos daño hará el ataque."
+285,skill-swap,Intercambio,Psíquico,Estado,,Dentro,Ya implementado,Usa el poder psíquico para intercambiar habilidades con el objetivo.
+286,imprison,Sellar,Psíquico,Estado,,Fuera,Efecto único no soportado,Impide a los contrincantes usar ataques conocidos por el usuario durante el combate.
+287,refresh,Alivio,Normal,Estado,,Dentro,Ya implementado,Movimiento obsoleto o sin descripción oficial; se conserva por compatibilidad.
+288,grudge,Rabia,Fantasma,Estado,,Fuera,Efecto único no soportado,"Si el usuario se debilita al recibir un ataque, todos los PP de este último ataque serán eliminados."
+289,snatch,Robo,Siniestro,Estado,,Fuera,Efecto único no soportado,Movimiento obsoleto o sin descripción oficial; se conserva por compatibilidad.
+290,secret-power,Daño Secreto,Normal,Físico,70,Dentro,Ya implementado,Movimiento obsoleto o sin descripción oficial; se conserva por compatibilidad.
+291,dive,Buceo,Agua,Físico,80,Fuera,Semiinvulnerabilidad,El usuario se sumerge en el primer turno y ataca en el segundo.
+292,arm-thrust,Empujón,Lucha,Físico,15,Dentro,Ya implementado,Fuertes empujones que golpean de dos a cinco veces seguidas.
+293,camouflage,Camuflaje,Normal,Estado,,Dentro,Ya implementado,Movimiento obsoleto o sin descripción oficial; se conserva por compatibilidad.
+294,tail-glow,Luminicola,Bicho,Estado,,Dentro,Ya implementado,Movimiento obsoleto o sin descripción oficial; se conserva por compatibilidad.
+295,luster-purge,Resplandor,Psíquico,Especial,95,Dentro,Ya implementado,Fogonazo de luz que puede bajar la Defensa Especial del objetivo.
+296,mist-ball,Bola Neblina,Psíquico,Especial,95,Dentro,Ya implementado,Banco de niebla que puede bajar el Ataque Especial del objetivo.
+297,feather-dance,Danza Pluma,Volador,Estado,,Dentro,Ya implementado,Envuelve al objetivo con un manto de plumas para reducir mucho su Ataque.
+298,teeter-dance,Danza Caos,Normal,Estado,,Dentro,Ya implementado,Danza histérica que confunde a los Pokémon que están alrededor del usuario.
+299,blaze-kick,Patada Ígnea,Fuego,Físico,85,Dentro,Ya implementado,Patada que suele ser un golpe crítico y puede causar quemaduras.
+300,mud-sport,Chapoteo Lodo,Tierra,Estado,,Dentro,Ya implementado,Movimiento obsoleto o sin descripción oficial; se conserva por compatibilidad.
+301,ice-ball,Bola Hielo,Hielo,Físico,30,Dentro,Ya implementado,Movimiento obsoleto o sin descripción oficial; se conserva por compatibilidad.
+302,needle-arm,Brazo Pincho,Planta,Físico,60,Dentro,Ya implementado,Movimiento obsoleto o sin descripción oficial; se conserva por compatibilidad.
+303,slack-off,Relajo,Normal,Estado,,Dentro,Ya implementado,El usuario se relaja y restaura la mitad de sus PS máximos.
+304,hyper-voice,Vozarrón,Normal,Especial,90,Dentro,Ya implementado,Grito desgarrador que inflige daño al objetivo.
+305,poison-fang,Colmillo Veneno,Veneno,Físico,50,Dentro,Ya implementado,Colmillos tóxicos que pueden envenenar gravemente al objetivo.
+306,crush-claw,Garra Brutal,Normal,Físico,75,Dentro,Ya implementado,Hace trizas al objetivo con garras afiladas y puede bajar su Defensa.
+307,blast-burn,Anillo Ígneo,Fuego,Especial,150,Dentro,Ya implementado,Explosión de fuego. El atacante debe descansar el siguiente turno.
+308,hydro-cannon,Hidrocañón,Agua,Especial,150,Dentro,Ya implementado,Disparo de agua. El atacante debe descansar el siguiente turno.
+309,meteor-mash,Puño Meteoro,Acero,Físico,90,Dentro,Ya implementado,Puñetazo que impacta como un meteorito y puede subir el Ataque del agresor.
+310,astonish,Impresionar,Fantasma,Físico,30,Dentro,Ya implementado,Lanza un grito tan tremendo que impresiona y puede amedrentar al objetivo.
+311,weather-ball,Meteorobola,Normal,Especial,50,Dentro,Ya implementado,El tipo y fuerza del ataque varían según el tiempo que haga.
+312,aromatherapy,Aromaterapia,Planta,Estado,,Dentro,Ya implementado,Cura todos los problemas de estado del equipo con un suave aroma.
+313,fake-tears,Llanto Falso,Siniestro,Estado,,Dentro,Ya implementado,Lágrimas de cocodrilo que bajan mucho la Defensa Especial del objetivo.
+314,air-cutter,Aire Afilado,Volador,Especial,60,Dentro,Ya implementado,Viento cortante que azota. Suele ser un golpe crítico.
+315,overheat,Sofoco,Fuego,Especial,130,Dentro,Ya implementado,Ataque en toda regla que baja mucho el Ataque Especial de quien lo usa.
+316,odor-sleuth,Rastreo,Normal,Estado,,Fuera,Estado no soportado,Movimiento obsoleto o sin descripción oficial; se conserva por compatibilidad.
+317,rock-tomb,Tumba Rocas,Roca,Físico,60,Dentro,Ya implementado,Tira rocas que detienen al objetivo y bajan su Velocidad.
+318,silver-wind,Viento Plata,Bicho,Especial,60,Dentro,Ya implementado,Movimiento obsoleto o sin descripción oficial; se conserva por compatibilidad.
+319,metal-sound,Eco Metálico,Acero,Estado,,Dentro,Ya implementado,Horrible chirrido metálico que baja mucho la Defensa Especial del objetivo.
+320,grass-whistle,Silbato,Planta,Estado,,Dentro,Ya implementado,Movimiento obsoleto o sin descripción oficial; se conserva por compatibilidad.
+321,tickle,Cosquillas,Normal,Estado,,Dentro,Ya implementado,Hace reír al objetivo para bajar su Ataque y Defensa.
+322,cosmic-power,Masa Cósmica,Psíquico,Estado,,Dentro,Ya implementado,Sube la Defensa y la Defensa Especial propias con energía mística.
+323,water-spout,Salpicar,Agua,Especial,150,Dentro,Ya implementado,"Chorro de agua. Cuantos menos PS tenga el usuario, menos dañino será."
+324,signal-beam,Rayo Señal,Bicho,Especial,75,Dentro,Ya implementado,Movimiento obsoleto o sin descripción oficial; se conserva por compatibilidad.
+325,shadow-punch,Puño Sombra,Fantasma,Físico,60,Dentro,Ya implementado,Puñetazo ineludible procedente de las sombras.
+326,extrasensory,Paranormal,Psíquico,Especial,80,Dentro,Ya implementado,Emite una energía muy extraña que puede amedrentar al objetivo.
+327,sky-uppercut,Gancho Alto,Lucha,Físico,85,Dentro,Ya implementado,Movimiento obsoleto o sin descripción oficial; se conserva por compatibilidad.
+328,sand-tomb,Bucle Arena,Tierra,Físico,35,Dentro,Ya implementado,Enreda al objetivo en un remolino de arena de cuatro a cinco turnos.
+329,sheer-cold,Frío Polar,Hielo,Especial,,Dentro,Ya implementado,"Debilita al objetivo de un solo golpe. Si lo usa un Pokémon que no sea de tipo Hielo, es difícil que acierte."
+330,muddy-water,Agua Lodosa,Agua,Especial,90,Dentro,Ya implementado,Ataque con agua lodosa que puede bajar la Precisión del equipo rival.
+331,bullet-seed,Semilladora,Planta,Físico,25,Dentro,Ya implementado,Dispara rápido de dos a cinco ráfagas de semillas de manera consecutiva.
+332,aerial-ace,Golpe Aéreo,Volador,Físico,60,Dentro,Ya implementado,El usuario lanza un ataque muy rápido e ineludible.
+333,icicle-spear,Carámbano,Hielo,Físico,25,Dentro,Ya implementado,Ataca lanzando de dos a cinco ráfagas consecutivas de carámbanos.
+334,iron-defense,Defensa Férrea,Acero,Estado,,Dentro,Ya implementado,Fortalece el cuerpo como si fuera de hierro y sube mucho la Defensa.
+335,block,Bloqueo,Normal,Estado,,Fuera,Efecto único no soportado,Le corta el paso al objetivo para que no pueda escapar.
+336,howl,Aullido,Normal,Estado,,Dentro,Ya implementado,Aullido que sube el ánimo y aumenta el Ataque del equipo.
+337,dragon-claw,Garra Dragón,Dragón,Físico,80,Dentro,Ya implementado,Araña al objetivo con garras afiladas.
+338,frenzy-plant,Planta Feroz,Planta,Especial,150,Dentro,Ya implementado,Golpea con una enorme planta. Quien lo usa no puede moverse en el siguiente turno.
+339,bulk-up,Corpulencia,Lucha,Estado,,Dentro,Ya implementado,Robustece el cuerpo para subir el Ataque y la Defensa.
+340,bounce,Bote,Volador,Físico,85,Fuera,Semiinvulnerabilidad,El usuario bota en el primer turno y golpea al objetivo en el segundo y puede llegar a paralizarlo.
+341,mud-shot,Disparo Lodo,Tierra,Especial,55,Dentro,Ya implementado,El usuario lanza lodo al objetivo y reduce su Velocidad.
+342,poison-tail,Cola Veneno,Veneno,Físico,50,Dentro,Ya implementado,Puede envenenar y dar un golpe crítico.
+343,covet,Antojo,Normal,Físico,60,Fuera,Objetos,"Se acerca con ternura al objetivo, pero le ataca y le roba el objeto que lleve."
+344,volt-tackle,Placaje Eléctrico,Eléctrico,Físico,120,Dentro,Ya implementado,"Quien lo usa electrifica su cuerpo para luego atacar. Se hiere mucho a sí mismo, pero puede paralizar al objetivo."
+345,magical-leaf,Hoja Mágica,Planta,Especial,60,Dentro,Ya implementado,Esparce extrañas hojas que persiguen al objetivo. No se puede esquivar.
+346,water-sport,Hidrochorro,Agua,Estado,,Dentro,Ya implementado,Movimiento obsoleto o sin descripción oficial; se conserva por compatibilidad.
+347,calm-mind,Paz Mental,Psíquico,Estado,,Dentro,Ya implementado,Aumenta la concentración y calma el espíritu para subir el Ataque Especial y la Defensa Especial.
+348,leaf-blade,Hoja Aguda,Planta,Físico,90,Dentro,Ya implementado,Acuchilla con una hoja fina. Suele dar un golpe crítico.
+349,dragon-dance,Danza Dragón,Dragón,Estado,,Dentro,Ya implementado,Danza mística que sube el Ataque y la Velocidad.
+350,rock-blast,Pedrada,Roca,Físico,25,Dentro,Ya implementado,Lanza pedruscos al objetivo de dos a cinco veces consecutivas.
+351,shock-wave,Onda Voltio,Eléctrico,Especial,60,Dentro,Ya implementado,Ataque eléctrico muy rápido e ineludible.
+352,water-pulse,Hidropulso,Agua,Especial,60,Dentro,Ya implementado,Ataca con un potente chorro de agua. Puede confundir al objetivo.
+353,doom-desire,Deseo Oculto,Acero,Especial,140,Dentro,Ya implementado,Concentra un haz de luz y ataca dos turnos después.
+354,psycho-boost,Psicoataque,Psíquico,Especial,140,Dentro,Ya implementado,Movimiento obsoleto o sin descripción oficial; se conserva por compatibilidad.
+355,roost,Respiro,Volador,Estado,,Dentro,Ya implementado,Aterriza sobre la superficie para descansar. Recupera hasta la mitad del total de sus PS.
+356,gravity,Gravedad,Psíquico,Estado,,Fuera,Campo especial no soportado,"Durante cinco turnos, se anulan los movimientos que alzan el vuelo y los Pokémon de tipo Volador o que levitan son vulnerables a movimientos de tipo Tierra."
+357,miracle-eye,Gran Ojo,Psíquico,Estado,,Fuera,Estado no soportado,Movimiento obsoleto o sin descripción oficial; se conserva por compatibilidad.
+358,wake-up-slap,Espabila,Lucha,Físico,70,Dentro,Ya implementado,Movimiento obsoleto o sin descripción oficial; se conserva por compatibilidad.
+359,hammer-arm,Machada,Lucha,Físico,100,Dentro,Ya implementado,"Gira con fuerza el puño y da un gran golpe. No obstante, baja la Velocidad."
+360,gyro-ball,Giro Bola,Acero,Físico,,Dentro,Ya implementado,"Embiste al objetivo con un potente ataque giratorio. Cuanto más lento es el usuario, más daño causa."
+361,healing-wish,Deseo Cura,Psíquico,Estado,,Dentro,Ya implementado,"El Pokémon cae debilitado, pero su sustituto recupera su estado y los PS."
+362,brine,Salmuera,Agua,Especial,65,Dentro,Ya implementado,"Si al objetivo le queda la mitad o menos de sus PS, el ataque será el doble de fuerte."
+363,natural-gift,Don Natural,Normal,Físico,,Fuera,Objetos,Movimiento obsoleto o sin descripción oficial; se conserva por compatibilidad.
+364,feint,Amago,Normal,Físico,30,Fuera,Mecánica no soportada,Permite golpear a objetivos que han utilizado movimientos como Protección o Detección y anula sus efectos.
+365,pluck,Picoteo,Volador,Físico,60,Fuera,Objetos,"Picotea al objetivo. Si este sostiene una baya, la picotea también y obtiene sus efectos."
+366,tailwind,Viento Afín,Volador,Estado,,Dentro,Ya implementado,Crea un fuerte remolino que aumenta la Velocidad de los Pokémon de tu equipo durante cuatro turnos.
+367,acupressure,Acupresión,Normal,Estado,,Dentro,Ya implementado,Aplica presión en puntos clave del cuerpo para potenciar mucho una de sus características.
+368,metal-burst,Represión Metal,Acero,Físico,,Dentro,Ya implementado,"Devuelve al rival el último ataque recibido, pero con mucha más fuerza."
+369,u-turn,Ida y Vuelta,Bicho,Físico,70,Fuera,Cambio de Pokémon (pivot),"Tras atacar, el usuario vuelve a toda prisa para dar paso a otro Pokémon del equipo."
+370,close-combat,A Bocajarro,Lucha,Físico,120,Dentro,Ya implementado,Lucha abiertamente contra el objetivo sin protegerse. También reduce la Defensa y la Defensa Especial del usuario.
+371,payback,Vendetta,Siniestro,Físico,50,Dentro,Ya implementado,El usuario contraataca con el doble de fuerza si el objetivo usa un movimiento antes.
+372,assurance,Buena Baza,Siniestro,Físico,60,Dentro,Ya implementado,"Si el objetivo ya ha sufrido daño en ese turno, la fuerza del ataque se duplica."
+373,embargo,Embargo,Siniestro,Estado,,Dentro,Ya implementado,Movimiento obsoleto o sin descripción oficial; se conserva por compatibilidad.
+374,fling,Lanzamiento,Siniestro,Físico,,Fuera,Objetos,El usuario lanza contra el objetivo el objeto que lleva. La fuerza del ataque y su efecto varían según el objeto.
+375,psycho-shift,Psicocambio,Psíquico,Estado,,Fuera,Copia/transformación,Usa su poder mental para transferir al objetivo sus problemas de estado.
+376,trump-card,As Oculto,Normal,Especial,,Fuera,Mecánica no soportada,Movimiento obsoleto o sin descripción oficial; se conserva por compatibilidad.
+377,heal-block,Anticura,Psíquico,Estado,,Fuera,Estado no soportado,Movimiento obsoleto o sin descripción oficial; se conserva por compatibilidad.
+378,wring-out,Estrujón,Normal,Especial,,Dentro,Ya implementado,Movimiento obsoleto o sin descripción oficial; se conserva por compatibilidad.
+379,power-trick,Truco Fuerza,Psíquico,Estado,,Fuera,Copia/transformación,Usa sus poderes mentales para intercambiar sus características de Ataque y Defensa.
+380,gastro-acid,Bilis,Veneno,Estado,,Dentro,Ya implementado,"El usuario arroja sus jugos biliares al objetivo, lo que anula el efecto de la habilidad en uso."
+381,lucky-chant,Conjuro,Normal,Estado,,Dentro,Ya implementado,Movimiento obsoleto o sin descripción oficial; se conserva por compatibilidad.
+382,me-first,Yo Primero,Normal,Estado,,Fuera,Copia/transformación,Movimiento obsoleto o sin descripción oficial; se conserva por compatibilidad.
+383,copycat,Copión,Normal,Estado,,Fuera,Copia/transformación,Imita el movimiento usado justo antes. El movimiento falla si no se ha usado aún ninguno.
+384,power-swap,Cambiafuerza,Psíquico,Estado,,Dentro,Ya implementado,El usuario emplea su poder mental para intercambiar los cambios en el Ataque y Ataque Especial con el objetivo.
+385,guard-swap,Cambiadefensa,Psíquico,Estado,,Dentro,Ya implementado,El usuario emplea su poder mental para intercambiar los cambios en la Defensa y Defensa Especial con el objetivo.
+386,punishment,Castigo,Siniestro,Físico,,Dentro,Ya implementado,Movimiento obsoleto o sin descripción oficial; se conserva por compatibilidad.
+387,last-resort,Última Baza,Normal,Físico,140,Fuera,Mecánica no soportada,Este movimiento solo puede utilizarse tras haber usado al menos una vez todos los demás conocidos por el Pokémon.
+388,worry-seed,Abatidoras,Planta,Estado,,Fuera,Copia/transformación,Planta una semilla en el objetivo que le causa pesar. Sustituye la habilidad del objetivo por Insomnio y le impide dormirse.
+389,sucker-punch,Golpe Bajo,Siniestro,Físico,70,Fuera,Prioridad condicional,Permite atacar con prioridad. Falla si el objetivo no está preparando ningún ataque.
+390,toxic-spikes,Púas Tóxicas,Veneno,Estado,,Dentro,Ya implementado,Lanza una trampa de púas tóxicas a los pies del objetivo. El veneno afecta a los Pokémon oponentes que entran en combate.
+391,heart-swap,Cambiaalmas,Psíquico,Estado,,Fuera,Copia/transformación,Movimiento obsoleto o sin descripción oficial; se conserva por compatibilidad.
+392,aqua-ring,Acua Aro,Agua,Estado,,Dentro,Ya implementado,Un manto de agua cubre al Pokémon que lo usa. Recupera algunos PS en cada turno.
+393,magnet-rise,Levitón,Eléctrico,Estado,,Dentro,Ya implementado,Levita gracias a un campo magnético generado por electricidad durante cinco turnos.
+394,flare-blitz,Envite Ígneo,Fuego,Físico,120,Dentro,Ya implementado,"El Pokémon se cubre de llamas y carga contra el objetivo, aunque él también recibe daño. Puede quemar."
+395,force-palm,Palmeo,Lucha,Físico,60,Dentro,Ya implementado,Ataca al objetivo con una onda de choque y puede llegar a paralizarlo.
+396,aura-sphere,Esfera Aural,Lucha,Especial,80,Dentro,Ya implementado,"Libera, desde su interior, una inmensa descarga de aura. Es infalible."
+397,rock-polish,Pulimento,Roca,Estado,,Dentro,Ya implementado,Reduce la resistencia puliendo su cuerpo. Aumenta mucho la Velocidad.
+398,poison-jab,Puya Nociva,Veneno,Físico,80,Dentro,Ya implementado,Pincha al objetivo con un tentáculo o brazo envenenado. Puede llegar a envenenar al objetivo.
+399,dark-pulse,Pulso Umbrío,Siniestro,Especial,80,Dentro,Ya implementado,Libera una horrible aura llena de malos pensamientos que puede amedrentar al objetivo.
+400,night-slash,Tajo Umbrío,Siniestro,Físico,70,Dentro,Ya implementado,Ataca al objetivo a la primera oportunidad. Suele ser crítico.
+401,aqua-tail,Acua Cola,Agua,Físico,90,Dentro,Ya implementado,Ataca agitando la cola como si fuera una ola rabiosa en una tormenta devastadora.
+402,seed-bomb,Bomba Germen,Planta,Físico,80,Dentro,Ya implementado,Lanza al objetivo una descarga de semillas explosivas desde arriba.
+403,air-slash,Tajo Aéreo,Volador,Especial,75,Dentro,Ya implementado,Ataca con un viento afilado que incluso corta el aire. También puede amedrentar al objetivo.
+404,x-scissor,Tijera X,Bicho,Físico,80,Dentro,Ya implementado,Cruza las guadañas o las garras para atacar al objetivo como si fueran unas tijeras.
+405,bug-buzz,Zumbido,Bicho,Especial,90,Dentro,Ya implementado,El usuario crea una onda sónica dañina moviendo su cuerpo que también puede disminuir la Defensa Especial del objetivo.
+406,dragon-pulse,Pulso Dragón,Dragón,Especial,85,Dentro,Ya implementado,Abre mucho la boca y libera una onda de choque que ataca al objetivo.
+407,dragon-rush,Carga Dragón,Dragón,Físico,100,Dentro,Ya implementado,Ataca de forma brutal mientras intimida al objetivo. También puede amedrentarlo.
+408,power-gem,Joya de Luz,Roca,Especial,80,Dentro,Ya implementado,Ataca con un rayo de luz que centellea como si lo formaran miles de joyas.
+409,drain-punch,Puño Drenaje,Lucha,Físico,75,Dentro,Ya implementado,Un golpe que drena energía. El Pokémon recupera la mitad de los PS arrebatados al objetivo.
+410,vacuum-wave,Onda Vacío,Lucha,Especial,40,Dentro,Ya implementado,Gira los puños y libera una onda de vacío contra el objetivo. Este movimiento tiene prioridad alta.
+411,focus-blast,Onda Certera,Lucha,Especial,120,Dentro,Ya implementado,Agudiza la concentración mental y libera su poder. Puede disminuir la Defensa Especial del objetivo.
+412,energy-ball,Energibola,Planta,Especial,90,Dentro,Ya implementado,Aúna fuerzas de la naturaleza y libera su ataque. Puede disminuir la Defensa Especial del objetivo.
+413,brave-bird,Pájaro Osado,Volador,Físico,120,Dentro,Ya implementado,Pliega sus alas y ataca con un vuelo rasante. El Pokémon que lo usa también resulta seriamente dañado.
+414,earth-power,Tierra Viva,Tierra,Especial,90,Dentro,Ya implementado,La tierra a los pies del objetivo erupciona violentamente. Puede disminuir la Defensa Especial del objetivo.
+415,switcheroo,Trapicheo,Siniestro,Estado,,Fuera,Objetos,Intercambia con el objetivo los objetos que llevan tan rápido que es imposible verlo a simple vista.
+416,giga-impact,Gigaimpacto,Normal,Físico,150,Dentro,Ya implementado,El usuario carga contra el objetivo con toda la fuerza que tiene y descansa durante el siguiente turno.
+417,nasty-plot,Maquinación,Siniestro,Estado,,Dentro,Ya implementado,Estimula su cerebro pensando en cosas malas. Aumenta mucho el Ataque Especial.
+418,bullet-punch,Puño Bala,Acero,Físico,40,Dentro,Ya implementado,Ataca con fuertes puñetazos tan rápidos como proyectiles. Este movimiento tiene prioridad alta.
+419,avalanche,Alud,Hielo,Físico,60,Dentro,Ya implementado,Este ataque inflige el doble de daño a un objetivo que haya golpeado al usuario en ese mismo turno.
+420,ice-shard,Esquirla Helada,Hielo,Físico,40,Dentro,Ya implementado,Crea bolas de hielo y las lanza a gran velocidad. Este movimiento tiene prioridad alta.
+421,shadow-claw,Garra Umbría,Fantasma,Físico,70,Dentro,Ya implementado,Ataca con una garra afilada hecha de sombras. Suele ser crítico.
+422,thunder-fang,Colmillo Rayo,Eléctrico,Físico,65,Dentro,Ya implementado,El usuario muerde al objetivo con colmillos electrificados y puede hacer que se amedrente o se paralice.
+423,ice-fang,Colmillo Hielo,Hielo,Físico,65,Dentro,Ya implementado,El usuario muerde al objetivo con colmillos helados y puede hacer que se amedrente o se congele.
+424,fire-fang,Colmillo Ígneo,Fuego,Físico,65,Dentro,Ya implementado,El usuario muerde al objetivo con colmillos en llamas y puede hacer que se amedrente o sufra quemaduras.
+425,shadow-sneak,Sombra Vil,Fantasma,Físico,40,Dentro,Ya implementado,Extiende su sombra y ataca al objetivo por la espalda. Este movimiento tiene prioridad alta.
+426,mud-bomb,Bomba Fango,Tierra,Especial,65,Dentro,Ya implementado,Movimiento obsoleto o sin descripción oficial; se conserva por compatibilidad.
+427,psycho-cut,Psicocorte,Psíquico,Físico,70,Dentro,Ya implementado,Ataca al objetivo con cuchillas formadas por energía psíquica. Suele ser crítico.
+428,zen-headbutt,Cabezazo Zen,Psíquico,Físico,80,Dentro,Ya implementado,Concentra su energía psíquica en la cabeza para golpear. Puede hacer que el objetivo se amedrente.
+429,mirror-shot,Disparo Espejo,Acero,Especial,65,Dentro,Ya implementado,Movimiento obsoleto o sin descripción oficial; se conserva por compatibilidad.
+430,flash-cannon,Cañón Resplandor,Acero,Especial,80,Dentro,Ya implementado,El usuario concentra toda la luz del cuerpo y la libera. Puede bajar la Defensa Especial del objetivo.
+431,rock-climb,Treparrocas,Normal,Físico,90,Dentro,Ya implementado,Movimiento obsoleto o sin descripción oficial; se conserva por compatibilidad.
+432,defog,Despejar,Volador,Estado,,Fuera,Limpieza/creación de campo,Potente viento que barre el reflejo o la pantalla de luz creada por el objetivo. También puede reducir su Evasión.
+433,trick-room,Espacio Raro,Psíquico,Estado,,Fuera,No clasificado,Crea un espacio extraño en el que los Pokémon lentos se mueven primero durante cinco turnos.
+434,draco-meteor,Cometa Draco,Dragón,Especial,130,Dentro,Ya implementado,Hace que grandes cometas caigan del cielo sobre el objetivo. Baja mucho el Ataque Especial del que lo usa.
+435,discharge,Chispazo,Eléctrico,Especial,80,Dentro,Ya implementado,Una deslumbradora onda eléctrica afecta a los Pokémon que hay combatiendo alrededor. Puede paralizar.
+436,lava-plume,Humareda,Fuego,Especial,80,Dentro,Ya implementado,Un infierno de llamas daña a los Pokémon adyacentes en combate. Puede quemar.
+437,leaf-storm,Lluevehojas,Planta,Especial,130,Dentro,Ya implementado,"Envuelve al objetivo con una lluvia de hojas afiladas, pero reduce mucho su Ataque Especial."
+438,power-whip,Latigazo,Planta,Físico,120,Dentro,Ya implementado,El usuario agita violentamente sus lianas o tentáculos para golpear al objetivo.
+439,rock-wrecker,Romperrocas,Roca,Físico,150,Dentro,Ya implementado,"Lanza una piedra enorme contra el objetivo, pero tiene que descansar el siguiente turno."
+440,cross-poison,Veneno X,Veneno,Físico,70,Dentro,Ya implementado,Tajo que puede envenenar al objetivo. Suele ser crítico.
+441,gunk-shot,Lanzamugre,Veneno,Físico,120,Dentro,Ya implementado,Lanza contra el objetivo basura asquerosa y puede envenenarlo.
+442,iron-head,Cabeza de Hierro,Acero,Físico,80,Dentro,Ya implementado,Ataca con su dura cabeza de hierro. Puede hacer que el objetivo se amedrente.
+443,magnet-bomb,Bomba Imán,Acero,Físico,60,Dentro,Ya implementado,Movimiento obsoleto o sin descripción oficial; se conserva por compatibilidad.
+444,stone-edge,Roca Afilada,Roca,Físico,100,Dentro,Ya implementado,Clava piedras muy afiladas al objetivo. Suele ser crítico.
+445,captivate,Seducción,Normal,Estado,,Fuera,Cambio de estadísticas no soportado,Movimiento obsoleto o sin descripción oficial; se conserva por compatibilidad.
+446,stealth-rock,Trampa Rocas,Roca,Estado,,Dentro,Ya implementado,Una trampa de rocas que flota en el aire y daña a los objetivos que entran en combate.
+447,grass-knot,Hierba Lazo,Planta,Especial,,Dentro,Ya implementado,"Enreda al objetivo con hierba y lo derriba. Cuanto más pesado es el objetivo, más daño inflige."
+448,chatter,Cháchara,Volador,Especial,65,Dentro,Ya implementado,Ataca con una onda de sonido muy ruidosa compuesta por palabras y confunde al objetivo.
+449,judgment,Sentencia,Normal,Especial,100,Dentro,Ya implementado,Emite incontables haces de luz. El tipo del movimiento varía según la tabla que lleve el usuario.
+450,bug-bite,Picadura,Bicho,Físico,60,Fuera,Objetos,"Pica al objetivo. Si el objetivo lleva una baya, el usuario se la come y se beneficia de su efecto."
+451,charge-beam,Rayo Carga,Eléctrico,Especial,50,Dentro,Ya implementado,Lanza un rayo eléctrico contra el objetivo. Puede subir el Ataque Especial de quien lo usa.
+452,wood-hammer,Mazazo,Planta,Físico,120,Dentro,Ya implementado,Arremete contra el objetivo con su robusto cuerpo. El agresor también sufre bastante daño.
+453,aqua-jet,Acua Jet,Agua,Físico,40,Dentro,Ya implementado,Ataque de una rapidez espeluznante. Este movimiento tiene prioridad alta.
+454,attack-order,Al Ataque,Bicho,Físico,90,Dentro,Ya implementado,El usuario llama a sus súbditos para que ataquen al objetivo. Suele ser crítico.
+455,defend-order,A Defender,Bicho,Estado,,Dentro,Ya implementado,El usuario llama a sus súbditos para que formen un escudo viviente. Sube la Defensa y la Defensa Especial.
+456,heal-order,Auxilio,Bicho,Estado,,Dentro,Ya implementado,Movimiento obsoleto o sin descripción oficial; se conserva por compatibilidad.
+457,head-smash,Testarazo,Roca,Físico,150,Dentro,Ya implementado,El usuario arriesga su vida y lanza un cabezazo con toda su fuerza. El agresor resulta seriamente dañado.
+458,double-hit,Doble Golpe,Normal,Físico,35,Dentro,Ya implementado,Golpea al objetivo dos veces seguidas con la cola u otras partes de su cuerpo.
+459,roar-of-time,Distorsión,Dragón,Especial,150,Dentro,Ya implementado,Ataca al objetivo usando tal energía que el tiempo se distorsiona. El usuario descansa el siguiente turno.
+460,spacial-rend,Corte Vacío,Dragón,Especial,100,Dentro,Ya implementado,Desgarra al objetivo y el espacio a su alrededor. Suele ser crítico.
+461,lunar-dance,Danza Lunar,Psíquico,Estado,,Dentro,Ya implementado,"El usuario se debilita, pero el Pokémon que lo sustituye recupera su estado, los PS y los PP."
+462,crush-grip,Agarrón,Normal,Físico,,Dentro,Ya implementado,"Estruja al objetivo con gran fuerza. Cuantos más PS le queden al objetivo, más fuerte será el ataque."
+463,magma-storm,Lluvia Ígnea,Fuego,Especial,100,Dentro,Ya implementado,El objetivo queda atrapado en una tormenta de fuego que dura de cuatro a cinco turnos.
+464,dark-void,Brecha Negra,Siniestro,Estado,,Dentro,Ya implementado,El objetivo es enviado a un mundo de tinieblas que lo hace dormir.
+465,seed-flare,Fulgor Semilla,Planta,Especial,120,Dentro,Ya implementado,Una onda de choque se libera del cuerpo. Puede bajar mucho la Defensa Especial del objetivo.
+466,ominous-wind,Viento Aciago,Fantasma,Especial,60,Dentro,Ya implementado,Movimiento obsoleto o sin descripción oficial; se conserva por compatibilidad.
+467,shadow-force,Golpe Umbrío,Fantasma,Físico,120,Dentro,Ya implementado,"En el primer turno, desaparece. En el segundo, golpea al objetivo aunque se esté protegiendo."
+468,hone-claws,Afilagarras,Siniestro,Estado,,Dentro,Ya implementado,El usuario se afila las garras para aumentar su Ataque y Precisión.
+469,wide-guard,Vasta Guardia,Roca,Estado,,Fuera,Protección de equipo no soportada,Bloquea los ataques de objetivo múltiple lanzados contra tu equipo durante un turno.
+470,guard-split,Isoguardia,Psíquico,Estado,,Fuera,Copia/transformación,El usuario emplea sus poderes para hacer la media de su Defensa y Defensa Especial con las de su objetivo y compartirlas.
+471,power-split,Isofuerza,Psíquico,Estado,,Fuera,Copia/transformación,El usuario emplea sus poderes para hacer la media de su Ataque y Ataque Especial con los de su objetivo y compartirlos.
+472,wonder-room,Zona Extraña,Psíquico,Estado,,Fuera,Campo especial no soportado,Crea una zona misteriosa donde se intercambian la Defensa y la Defensa Especial de todos los Pokémon durante cinco turnos.
+473,psyshock,Psicocarga,Psíquico,Especial,80,Dentro,Ya implementado,Crea una onda psíquica que causa daño físico al objetivo.
+474,venoshock,Carga Tóxica,Veneno,Especial,65,Dentro,Ya implementado,Cubre al objetivo con un líquido venenoso. El daño será doble si este ya está envenenado.
+475,autotomize,Aligerar,Acero,Estado,,Dentro,Ya implementado,El usuario se desprende de partes prescindibles de su cuerpo para hacerse más ligero y aumentar mucho su Velocidad.
+476,rage-powder,Polvo Ira,Bicho,Estado,,Fuera,Efecto único no soportado,Usa un polvo que irrita y centra en el usuario la atención y los ataques de los rivales.
+477,telekinesis,Telequinesis,Psíquico,Estado,,Fuera,Estado no soportado,Movimiento obsoleto o sin descripción oficial; se conserva por compatibilidad.
+478,magic-room,Zona Mágica,Psíquico,Estado,,Dentro,Ya implementado,Crea un espacio misterioso que inutiliza todos los objetos de los Pokémon durante cinco turnos.
+479,smack-down,Antiaéreo,Roca,Físico,50,Dentro,Ya implementado,"Ataca lanzando una piedra o un proyectil. Si el objetivo está en el aire, lo estrella contra el suelo."
+480,storm-throw,Llave Corsé,Lucha,Físico,60,Dentro,Ya implementado,Lanza un golpe devastador. Siempre asesta un golpe crítico.
+481,flame-burst,Pirotecnia,Fuego,Especial,70,Dentro,Ya implementado,Movimiento obsoleto o sin descripción oficial; se conserva por compatibilidad.
+482,sludge-wave,Onda Tóxica,Veneno,Especial,95,Dentro,Ya implementado,Una onda tóxica que daña a los Pokémon de alrededor. Puede envenenar.
+483,quiver-dance,Danza Aleteo,Bicho,Estado,,Dentro,Ya implementado,"Danza mística que sube el Ataque Especial, la Defensa Especial y la Velocidad."
+484,heavy-slam,Cuerpo Pesado,Acero,Físico,,Dentro,Ya implementado,"El usuario golpea con todo su cuerpo. Cuanto mayor sea su peso comparado con el del objetivo, más daño causará."
+485,synchronoise,Sincrorruido,Psíquico,Especial,120,Dentro,Ya implementado,Movimiento obsoleto o sin descripción oficial; se conserva por compatibilidad.
+486,electro-ball,Bola Voltio,Eléctrico,Especial,,Dentro,Ya implementado,"Lanza una bola eléctrica. Cuanto mayor sea la Velocidad del usuario en comparación con la del objetivo, mayor será el daño causado."
+487,soak,Empapar,Agua,Estado,,Fuera,Efecto único no soportado,Potente lluvia que transforma al objetivo en un Pokémon de tipo Agua.
+488,flame-charge,Nitrocarga,Fuego,Físico,50,Dentro,Ya implementado,Llamas que golpean al objetivo y aumentan la Velocidad del atacante.
+489,coil,Enrosque,Veneno,Estado,,Dentro,Ya implementado,"El usuario se concentra, lo que le permite aumentar su Ataque, Defensa y Precisión."
+490,low-sweep,Puntapié,Lucha,Físico,65,Dentro,Ya implementado,Ataque rápido dirigido a los pies del objetivo que le hace perder Velocidad.
+491,acid-spray,Bomba Ácida,Veneno,Especial,40,Dentro,Ya implementado,Ataca con un líquido corrosivo que reduce mucho la Defensa Especial del objetivo.
+492,foul-play,Juego Sucio,Siniestro,Físico,95,Dentro,Ya implementado,"El usuario emplea la fuerza del objetivo para atacarlo. Cuanto mayor es el Ataque del objetivo, más daño provoca."
+493,simple-beam,Onda Simple,Normal,Estado,,Fuera,Copia/transformación,Lanza una onda psíquica que hace que la habilidad del objetivo pase a ser Simple.
+494,entrainment,Danza Amiga,Normal,Estado,,Fuera,Copia/transformación,Una extraña danza que hace que el usuario y el objetivo tengan la misma habilidad.
+495,after-you,Cede Paso,Normal,Estado,,Fuera,Efecto único no soportado,"Si el usuario es el más rápido, permite al objetivo usar un movimiento justo tras él, adelantándose a Pokémon más rápidos."
+496,round,Canon,Normal,Especial,60,Dentro,Ya implementado,"Un canto que ataca al objetivo. Cuantos más Pokémon lo usan, más aumenta de potencia."
+497,echoed-voice,Eco Voz,Normal,Especial,40,Dentro,Ya implementado,Un susurro que aumenta de potencia conforme el usuario y otros Pokémon lo van utilizando.
+498,chip-away,Guardia Baja,Normal,Físico,70,Dentro,Ya implementado,Movimiento obsoleto o sin descripción oficial; se conserva por compatibilidad.
+499,clear-smog,Niebla Clara,Veneno,Especial,50,Dentro,Ya implementado,Ataca al objetivo con una singular bola de lodo que elimina cualquier cambio en sus características.
+500,stored-power,Poder Reserva,Psíquico,Especial,20,Dentro,Ya implementado,"Acumula poder para golpear. Cuanto más suban las características del usuario, mayor será el daño."
+501,quick-guard,Anticipo,Lucha,Estado,,Fuera,Protección de equipo no soportada,Se protege a sí mismo y a sus aliados de movimientos con prioridad.
+502,ally-switch,Cambio de Banda,Psíquico,Estado,,Fuera,Efecto único no soportado,Extraño poder que intercambia la posición del usuario con la de un aliado sobre el terreno de combate.
+503,scald,Escaldar,Agua,Especial,80,Dentro,Ya implementado,Ataca arrojando agua hirviendo al objetivo. Puede causar quemaduras.
+504,shell-smash,Rompecoraza,Normal,Estado,,Dentro,Ya implementado,"El usuario rompe su coraza y baja su Defensa y Defensa Especial, pero aumenta mucho su Ataque, Ataque Especial y Velocidad."
+505,heal-pulse,Pulso Cura,Psíquico,Estado,,Dentro,Ya implementado,Una onda curativa restaura la mitad de los PS máximos del objetivo.
+506,hex,Infortunio,Fantasma,Especial,65,Dentro,Ya implementado,Ataque que causa un gran daño a los objetivos que sufren problemas de estado.
+507,sky-drop,Caída Libre,Volador,Físico,60,Fuera,Semiinvulnerabilidad,Movimiento obsoleto o sin descripción oficial; se conserva por compatibilidad.
+508,shift-gear,Cambio de Marcha,Acero,Estado,,Dentro,Ya implementado,"Al hacer girar los engranajes, el usuario mejora su Ataque y aumenta mucho su Velocidad."
+509,circle-throw,Llave Giro,Lucha,Físico,60,Fuera,Cambio forzado,"Lanza por los aires al objetivo y hace que salga otro Pokémon. Si es uno salvaje, acaba el combate."
+510,incinerate,Calcinación,Fuego,Especial,60,Fuera,Objetos,"Llamas que golpean a los objetivos adyacentes. Si estos llevan bayas o ciertos objetos, se quemarán y ya no se podrán usar."
+511,quash,Último Lugar,Siniestro,Estado,,Fuera,Efecto único no soportado,Consigue que el objetivo sea el último en moverse.
+512,acrobatics,Acróbata,Volador,Físico,55,Dentro,Ya implementado,"Golpea ágilmente. Si el usuario no porta ningún objeto, el objetivo resulta seriamente dañado."
+513,reflect-type,Clonatipo,Normal,Estado,,Fuera,Copia/transformación,Cambia el tipo del Pokémon al mismo tipo que el del objetivo.
+514,retaliate,Represalia,Normal,Físico,70,Dentro,Ya implementado,"Venga a los amigos caídos. Si en el turno anterior han derrotado a alguno, la potencia del ataque aumentará."
+515,final-gambit,Sacrificio,Lucha,Especial,,Dentro,Ya implementado,El usuario se sacrifica causándole un daño al objetivo equivalente a sus propios PS perdidos.
+516,bestow,Ofrenda,Normal,Estado,,Fuera,Objetos,Movimiento obsoleto o sin descripción oficial; se conserva por compatibilidad.
+517,inferno,Infierno,Fuego,Especial,100,Dentro,Ya implementado,Ataca con una gran ráfaga de fuego que causa quemaduras.
+518,water-pledge,Voto Agua,Agua,Especial,80,Dentro,Ya implementado,"Ataca con columnas de agua. Combinado con Voto Fuego, crea un arcoíris y aumenta su potencia."
+519,fire-pledge,Voto Fuego,Fuego,Especial,80,Dentro,Ya implementado,"Ataca con columnas de fuego. Combinado con Voto Planta, crea un mar de llamas y aumenta su potencia."
+520,grass-pledge,Voto Planta,Planta,Especial,80,Dentro,Ya implementado,"Ataca con columnas de hojas. Combinado con Voto Agua, crea un pantano y aumenta su potencia."
+521,volt-switch,Voltiocambio,Eléctrico,Especial,70,Fuera,Cambio de Pokémon (pivot),"Tras atacar, el usuario vuelve a toda prisa para dar paso a otro Pokémon del equipo."
+522,struggle-bug,Estoicismo,Bicho,Especial,50,Dentro,Ya implementado,El usuario opone resistencia y ataca a los oponentes. También reduce su Ataque Especial.
+523,bulldoze,Terratemblor,Tierra,Físico,60,Dentro,Ya implementado,Sacudida sísmica que afecta a los demás Pokémon adyacentes y también reduce su Velocidad.
+524,frost-breath,Vaho Gélido,Hielo,Especial,60,Dentro,Ya implementado,Quien lo usa ataca lanzando un aliento gélido. Siempre asesta un golpe crítico.
+525,dragon-tail,Cola Dragón,Dragón,Físico,60,Fuera,Cambio forzado,"Ataca al objetivo y lo obliga a cambiarse por otro Pokémon. Si es uno salvaje, acaba el combate."
+526,work-up,Avivar,Normal,Estado,,Dentro,Ya implementado,Quien lo usa se concentra y potencia su Ataque y su Ataque Especial.
+527,electroweb,Electrotela,Eléctrico,Especial,55,Dentro,Ya implementado,Atrapa y ataca a los objetivos con una telaraña eléctrica. También reduce su Velocidad.
+528,wild-charge,Voltio Cruel,Eléctrico,Físico,90,Dentro,Ya implementado,Carga eléctrica muy potente que también hiere ligeramente a quien la usa.
+529,drill-run,Taladradora,Tierra,Físico,80,Dentro,Ya implementado,El usuario golpea usando su cuerpo como un taladro. Suele ser crítico.
+530,dual-chop,Golpe Bis,Dragón,Físico,40,Dentro,Ya implementado,Golpea dos veces seguidas con las partes más recias de su cuerpo.
+531,heart-stamp,Arrumaco,Psíquico,Físico,60,Dentro,Ya implementado,Movimiento obsoleto o sin descripción oficial; se conserva por compatibilidad.
+532,horn-leech,Asta Drenaje,Planta,Físico,75,Dentro,Ya implementado,Un golpe que drena energía. El Pokémon recupera la mitad de los PS arrebatados al objetivo.
+533,sacred-sword,Espada Santa,Lucha,Físico,90,Dentro,Ya implementado,"El usuario ataca con una espada, ignorando cualquier cambio en las características del objetivo."
+534,razor-shell,Concha Filo,Agua,Físico,75,Dentro,Ya implementado,Una afilada vieira ataca al objetivo. También puede hacer disminuir su Defensa.
+535,heat-crash,Golpe Calor,Fuego,Físico,,Dentro,Ya implementado,"El usuario ataca con su cuerpo ardiente. Cuanto mayor sea su peso comparado con el del objetivo, más daño causará."
+536,leaf-tornado,Ciclón de Hojas,Planta,Especial,65,Dentro,Ya implementado,Tritura con afiladas hojas y puede bajar la Precisión del objetivo.
+537,steamroller,Rodillo de Púas,Bicho,Físico,65,Dentro,Ya implementado,Movimiento obsoleto o sin descripción oficial; se conserva por compatibilidad.
+538,cotton-guard,Rizo Algodón,Planta,Estado,,Dentro,Ya implementado,Cubre al Pokémon con una madeja protectora. Aumenta muchísimo la Defensa.
+539,night-daze,Pulso Noche,Siniestro,Especial,85,Dentro,Ya implementado,Ataca al objetivo con una onda siniestra. Puede bajar su Precisión.
+540,psystrike,Onda Mental,Psíquico,Especial,100,Dentro,Ya implementado,Crea una onda psíquica que causa daño físico al objetivo.
+541,tail-slap,Plumerazo,Normal,Físico,25,Dentro,Ya implementado,Golpea con la cola de dos a cinco veces seguidas.
+542,hurricane,Vendaval,Volador,Especial,110,Dentro,Ya implementado,Golpea al objetivo con un fuerte torbellino que envuelve al rival y puede confundirlo.
+543,head-charge,Ariete,Normal,Físico,120,Dentro,Ya implementado,Propina un tremendo cabezazo. También daña al usuario un poco.
+544,gear-grind,Rueda Doble,Acero,Físico,50,Dentro,Ya implementado,Rota dos engranajes de hierro sobre el objetivo. Golpea dos veces.
+545,searing-shot,Bomba Ígnea,Fuego,Especial,100,Dentro,Ya implementado,Un infierno de llamas daña a los Pokémon adyacentes en combate. Puede quemar.
+546,techno-blast,Tecno Shock,Normal,Especial,120,Fuera,Objetos,Ataca al objetivo con un gran láser. El tipo del ataque lo determina el cartucho que porta el usuario.
+547,relic-song,Canto Arcaico,Normal,Especial,75,Dentro,Ya implementado,Ataca conmoviendo a los rivales de alrededor con un antiguo canto. Puede dormirlos.
+548,secret-sword,Sable Místico,Lucha,Especial,85,Dentro,Ya implementado,Ensarta al objetivo con un largo cuerno dotado de un poder místico que provoca daño físico.
+549,glaciate,Mundo Gélido,Hielo,Especial,65,Dentro,Ya implementado,Ataque con aire helado que baja la Velocidad del objetivo.
+550,bolt-strike,Ataque Fulgor,Eléctrico,Físico,130,Dentro,Ya implementado,Ataca envolviéndose de una gran carga eléctrica y embistiendo al objetivo con ella. Puede paralizar.
+551,blue-flare,Llama Azul,Fuego,Especial,130,Dentro,Ya implementado,Ataca con una bella pero potente llama azul que rodea al objetivo. Puede quemarlo.
+552,fiery-dance,Danza Llama,Fuego,Especial,80,Dentro,Ya implementado,Envuelve en llamas y daña al objetivo. Puede aumentar el Ataque Especial de quien lo usa.
+553,freeze-shock,Rayo Gélido,Hielo,Físico,140,Dentro,Ya implementado,El usuario carga un bloque de hielo con electricidad en el primer turno y ataca con él en el segundo. Puede paralizar.
+554,ice-burn,Llama Gélida,Hielo,Especial,140,Dentro,Ya implementado,Ataca al objetivo en el segundo turno rodeándolo de un aire gélido. Puede causar quemaduras.
+555,snarl,Alarido,Siniestro,Especial,55,Dentro,Ya implementado,Chillido desagradable que baja el Ataque Especial del rival.
+556,icicle-crash,Chuzos,Hielo,Físico,85,Dentro,Ya implementado,Lanza grandes carámbanos. Puede amedrentar al objetivo.
+557,v-create,V de Fuego,Fuego,Físico,180,Dentro,Ya implementado,"Golpea con una V de llamas al objetivo. Baja la Defensa, la Defensa Especial y la Velocidad de quien lo usa."
+558,fusion-flare,Llama Fusión,Fuego,Especial,100,Dentro,Ya implementado,Ataca con una llamarada gigantesca. Aumenta su potencia si es influenciada por una gran energía eléctrica.
+559,fusion-bolt,Rayo Fusión,Eléctrico,Físico,100,Dentro,Ya implementado,Ataca con una enorme descarga eléctrica. Aumenta su potencia si es influenciada por una gigantesca llamarada.
+560,flying-press,Plancha Voladora,Lucha,Físico,100,Fuera,Mecánica no soportada,El Pokémon que lo usa se lanza sobre su oponente. Este movimiento es de tipo Lucha y tipo Volador al mismo tiempo.
+561,mat-block,Escudo Tatami,Lucha,Estado,,Fuera,Protección de equipo no soportada,El usuario usa un tatami para escudarse de los ataques enemigos. Protege también a los aliados. No funciona contra movimientos de estado.
+562,belch,Eructo,Veneno,Especial,120,Fuera,Objetos,El Pokémon causa daño a su oponente lanzándole un eructo. Para poder utilizar este movimiento tiene que llevar una baya y comérsela.
+563,rototiller,Fertilizante,Tierra,Estado,,Dentro,Ya implementado,Movimiento obsoleto o sin descripción oficial; se conserva por compatibilidad.
+564,sticky-web,Red Viscosa,Bicho,Estado,,Fuera,Limpieza/creación de campo,Coloca una red pegajosa alrededor del equipo rival que baja la Velocidad de cualquier adversario que entre a combatir.
+565,fell-stinger,Aguijón Letal,Bicho,Físico,50,Dentro,Ya implementado,"Si se derrota al objetivo utilizando este movimiento, aumenta muchísimo el Ataque del usuario."
+566,phantom-force,Golpe Fantasma,Fantasma,Físico,90,Fuera,Semiinvulnerabilidad,El usuario desaparece en el primer turno y ataca a su objetivo en el segundo. Permite acertar aunque el objetivo esté protegiéndose.
+567,trick-or-treat,Halloween,Fantasma,Estado,,Fuera,Efecto único no soportado,"Invita al objetivo a celebrar Halloween, lo que añade el tipo Fantasma a los tipos de este."
+568,noble-roar,Rugido de Guerra,Normal,Estado,,Dentro,Ya implementado,"Intimida a su oponente con un rugido de guerra, lo que hace que disminuyan tanto su Ataque como su Ataque Especial."
+569,ion-deluge,Cortina Plasma,Eléctrico,Estado,,Fuera,Campo especial no soportado,Movimiento obsoleto o sin descripción oficial; se conserva por compatibilidad.
+570,parabolic-charge,Carga Parábola,Eléctrico,Especial,65,Dentro,Ya implementado,Inflige daño a todos los Pokémon a su alrededor. El usuario absorbe la mitad del daño producido para restaurar sus propios PS.
+571,forests-curse,Condena Silvana,Planta,Estado,,Fuera,Efecto único no soportado,"El objetivo es presa de la maldición del bosque, por lo que pasa a ser un Pokémon de tipo Planta, además de conservar sus tipos habituales."
+572,petal-blizzard,Tormenta Floral,Planta,Físico,90,Dentro,Ya implementado,El usuario desata un intenso vendaval de pétalos que daña a los Pokémon a su alrededor.
+573,freeze-dry,Liofilización,Hielo,Especial,70,Dentro,Ya implementado,Enfría súbitamente al objetivo e incluso puede congelarlo. Es supereficaz contra Pokémon de tipo Agua.
+574,disarming-voice,Voz Cautivadora,Hada,Especial,40,Dentro,Ya implementado,Obnubila a los oponentes con su fascinante voz y les provoca daños emocionales. Siempre acierta al objetivo.
+575,parting-shot,Última Palabra,Siniestro,Estado,,Fuera,Cambio de Pokémon (pivot),"El usuario se cambia por otro Pokémon de su equipo, pero antes amedrenta a su oponente y hace que disminuyan su Ataque y Ataque Especial."
+576,topsy-turvy,Reversión,Siniestro,Estado,,Dentro,Ya implementado,Invierte por completo los cambios en las características del objetivo.
+577,draining-kiss,Beso Drenaje,Hada,Especial,50,Dentro,Ya implementado,El usuario absorbe PS del objetivo con un beso y restaura su propia energía en una cantidad igual o superior a la mitad del daño infligido.
+578,crafty-shield,Truco Defensa,Hada,Estado,,Fuera,Protección de equipo no soportada,"Usa unos misteriosos poderes para protegerse a sí mismo y a sus aliados de movimientos de estado, pero no de otro tipo de ataques."
+579,flower-shield,Defensa Floral,Hada,Estado,,Fuera,Efecto único no soportado,Aumenta la Defensa de todos los Pokémon de tipo Planta que hay en el combate usando unos misteriosos poderes.
+580,grassy-terrain,Campo de Hierba,Planta,Estado,,Dentro,Ya implementado,"Durante cinco turnos, se potencian los movimientos de tipo Planta y los Pokémon que están en contacto con el suelo recuperan PS en cada turno."
+581,misty-terrain,Campo de Niebla,Hada,Estado,,Dentro,Ya implementado,"Durante cinco turnos, los Pokémon que están en el suelo no sufren problemas de estado y se reduce a la mitad el daño de los movimientos de tipo Dragón."
+582,electrify,Electrificación,Eléctrico,Estado,,Fuera,Efecto único no soportado,"Si el objetivo queda electrificado antes de usar un movimiento, este será de tipo Eléctrico."
+583,play-rough,Carantoña,Hada,Físico,90,Dentro,Ya implementado,El Pokémon que lo usa le hace cucamonas al objetivo y lo ataca. Puede disminuir el Ataque del objetivo.
+584,fairy-wind,Viento Feérico,Hada,Especial,40,Dentro,Ya implementado,El Pokémon que lo usa desata un vendaval feérico que arremete contra el objetivo.
+585,moonblast,Fuerza Lunar,Hada,Especial,95,Dentro,Ya implementado,Invoca el poder de la luna para atacar al objetivo. Puede disminuir el Ataque Especial del objetivo.
+586,boomburst,Estruendo,Normal,Especial,140,Dentro,Ya implementado,Ataca a todos los Pokémon a su alrededor con una potentísima onda sonora.
+587,fairy-lock,Cerrojo Feérico,Hada,Estado,,Fuera,Campo especial no soportado,Consigue que ningún Pokémon pueda huir en el siguiente turno echando un cerrojo.
+588,kings-shield,Escudo Real,Acero,Estado,,Fuera,Efecto único no soportado,El usuario adopta una postura defensiva y se protege de cualquier daño. Reduce el Ataque de cualquier Pokémon con el que entre en contacto.
+589,play-nice,Camaradería,Normal,Estado,,Dentro,Ya implementado,"Se hace amigo de su oponente y consigue que a este se le quiten las ganas de combatir. Además, reduce su Ataque."
+590,confide,Confidencia,Normal,Estado,,Dentro,Ya implementado,Hace que el objetivo pierda la concentración contándole un secreto. Disminuye el Ataque Especial del oponente.
+591,diamond-storm,Tormenta de Diamantes,Roca,Físico,100,Dentro,Ya implementado,Desata un devastador vendaval de diamantes para dañar a los oponentes. Puede aumentar mucho la Defensa del usuario.
+592,steam-eruption,Chorro de Vapor,Agua,Especial,110,Dentro,Ya implementado,Envuelve al Pokémon oponente con vapor extremadamente caliente que puede llegar a quemarlo.
+593,hyperspace-hole,Paso Dimensional,Psíquico,Especial,80,Fuera,Mecánica no soportada,El usuario aparece junto al rival usando un agujero dimensional y le asesta un golpe que movimientos como Protección o Detección no pueden evitar.
+594,water-shuriken,Shuriken de Agua,Agua,Especial,15,Dentro,Ya implementado,Golpea al oponente de dos a cinco veces con estrellas arrojadizas hechas de mucosidad. Este movimiento tiene prioridad alta.
+595,mystical-fire,Llama Embrujada,Fuego,Especial,75,Dentro,Ya implementado,El usuario lanza por la boca una singular llama a gran temperatura con la que ataca a su oponente y baja su Ataque Especial.
+596,spiky-shield,Barrera Espinosa,Planta,Estado,,Fuera,Efecto único no soportado,"Protege al usuario de ataques, e inflige daño a quien se los lance si entra en contacto con él."
+597,aromatic-mist,Niebla Aromática,Hada,Estado,,Dentro,Ya implementado,Consigue aumentar la Defensa Especial de un Pokémon de su equipo con una fragancia misteriosa.
+598,eerie-impulse,Onda Anómala,Eléctrico,Estado,,Dentro,Ya implementado,"El usuario irradia unas raras ondas que, al alcanzar a un oponente, hacen que disminuya mucho su Ataque Especial."
+599,venom-drench,Trampa Venenosa,Veneno,Estado,,Dentro,Ya implementado,"Impregna a su objetivo con un líquido venenoso que disminuye el Ataque, el Ataque Especial y la Velocidad. Solo afecta a Pokémon ya envenenados."
+600,powder,Polvo Explosivo,Bicho,Estado,,Fuera,Efecto único no soportado,"Esparce un polvo sobre el objetivo. Si este usa un movimiento de tipo Fuego en el mismo turno, el polvo explota y le inflige daño."
+601,geomancy,Geocontrol,Hada,Estado,,Dentro,Ya implementado,"Concentra energía durante el primer turno, de forma que su Velocidad, Ataque Especial y Defensa Especial aumenten mucho en el segundo."
+602,magnetic-flux,Aura Magnética,Eléctrico,Estado,,Dentro,Ya implementado,Manipula el campo magnético y logra aumentar la Defensa y la Defensa Especial de los Pokémon aliados que cuenten con las habilidades Más y Menos.
+603,happy-hour,Paga Extra,Normal,Estado,,Fuera,Efecto único no soportado,Al usar este movimiento se consigue duplicar la recompensa recibida tras el combate.
+604,electric-terrain,Campo Eléctrico,Eléctrico,Estado,,Dentro,Ya implementado,"Durante cinco turnos, se potencian los movimientos de tipo Eléctrico y los Pokémon que están en contacto con el suelo no pueden quedarse dormidos."
+605,dazzling-gleam,Brillo Mágico,Hada,Especial,80,Dentro,Ya implementado,Inflige daño a los oponentes con una potente luz.
+606,celebrate,Celebración,Normal,Estado,,Fuera,Efecto único no soportado,El Pokémon te felicita en un día muy especial para ti.
+607,hold-hands,Manos Juntas,Normal,Estado,,Fuera,Efecto único no soportado,El Pokémon le da la mano a un aliado y ambos se sienten muy felices.
+608,baby-doll-eyes,Ojitos Tiernos,Hada,Estado,,Dentro,Ya implementado,"Lanza una mirada al objetivo con ojos acaramelados, con lo que logra que su Ataque se reduzca. Este movimiento tiene prioridad alta."
+609,nuzzle,Moflete Estático,Eléctrico,Físico,20,Dentro,Ya implementado,Quien lo usa frota sus mofletes cargados de electricidad contra el objetivo y consigue paralizarlo.
+610,hold-back,Clemencia,Normal,Físico,40,Fuera,Mecánica no soportada,El usuario se contiene a la hora de atacar y deja al objetivo con al menos 1 PS.
+611,infestation,Acoso,Bicho,Especial,20,Dentro,Ya implementado,Hostiga al objetivo durante cuatro o cinco turnos e impide que pueda huir mientras tanto.
+612,power-up-punch,Puño Incremento,Lucha,Físico,40,Dentro,Ya implementado,"Cada vez que golpea a un oponente se endurecen sus puños. Si acierta al objetivo, el Ataque del usuario aumenta."
+613,oblivion-wing,Ala Mortífera,Volador,Especial,80,Dentro,Ya implementado,El usuario absorbe energía del objetivo y aumenta sus PS en una cantidad igual o superior a la mitad del daño infligido.
+614,thousand-arrows,Mil Flechas,Tierra,Físico,90,Fuera,Mecánica no soportada,Acierta incluso a Pokémon que estén en el aire y los hace caer al suelo.
+615,thousand-waves,Mil Temblores,Tierra,Físico,90,Dentro,Ya implementado,El usuario genera ondas sísmicas que se propagan por el suelo y sacuden a los oponentes. Los Pokémon alcanzados no podrán huir del combate.
+616,lands-wrath,Fuerza Telúrica,Tierra,Físico,90,Dentro,Ya implementado,"Acumula energía de la corteza terrestre y la concentra contra los oponentes, dañándolos."
+617,light-of-ruin,Luz Aniquiladora,Hada,Especial,140,Dentro,Ya implementado,"El usuario emplea el poder de la Flor Eterna para lanzar un potente rayo de luz, pero sufre bastante daño al hacerlo."
+618,origin-pulse,Pulso Primigenio,Agua,Especial,110,Dentro,Ya implementado,Ataca al objetivo con una infinidad de rayos de luz azulada.
+619,precipice-blades,Filo del Abismo,Tierra,Físico,120,Dentro,Ya implementado,Hace que el poder latente de la tierra se manifieste en forma de hojas afiladas y ataca al objetivo con ellas.
+620,dragon-ascent,Ascenso Draco,Volador,Físico,120,Dentro,Ya implementado,"El usuario se precipita desde el cielo a una velocidad de vértigo para atacar al objetivo, pero hace que bajen la Defensa y la Defensa Especial del usuario."
+621,hyperspace-fury,Cerco Dimensión,Siniestro,Físico,100,Fuera,Mecánica no soportada,Ataca al objetivo con una ráfaga de golpes que pasan por alto los efectos de movimientos como Protección o Detección. Baja la Defensa del usuario.
+622,breakneck-blitz--physical,Carrera Arrolladora,Normal,Físico,,Fuera,No estándar / variante,Movimiento obsoleto o sin descripción oficial; se conserva por compatibilidad.
+623,breakneck-blitz--special,Carrera Arrolladora,Normal,Especial,,Fuera,No estándar / variante,Movimiento obsoleto o sin descripción oficial; se conserva por compatibilidad.
+624,all-out-pummeling--physical,Ráfaga Demoledora,Lucha,Físico,,Fuera,No estándar / variante,Movimiento obsoleto o sin descripción oficial; se conserva por compatibilidad.
+625,all-out-pummeling--special,Ráfaga Demoledora,Lucha,Especial,,Fuera,No estándar / variante,Movimiento obsoleto o sin descripción oficial; se conserva por compatibilidad.
+626,supersonic-skystrike--physical,Picado Supersónico,Volador,Físico,,Fuera,No estándar / variante,Movimiento obsoleto o sin descripción oficial; se conserva por compatibilidad.
+627,supersonic-skystrike--special,Picado Supersónico,Volador,Especial,,Fuera,No estándar / variante,Movimiento obsoleto o sin descripción oficial; se conserva por compatibilidad.
+628,acid-downpour--physical,Diluvio Corrosivo,Veneno,Físico,,Fuera,No estándar / variante,Movimiento obsoleto o sin descripción oficial; se conserva por compatibilidad.
+629,acid-downpour--special,Diluvio Corrosivo,Veneno,Especial,,Fuera,No estándar / variante,Movimiento obsoleto o sin descripción oficial; se conserva por compatibilidad.
+630,tectonic-rage--physical,Barrena Telúrica,Tierra,Físico,,Fuera,No estándar / variante,Movimiento obsoleto o sin descripción oficial; se conserva por compatibilidad.
+631,tectonic-rage--special,Barrena Telúrica,Tierra,Especial,,Fuera,No estándar / variante,Movimiento obsoleto o sin descripción oficial; se conserva por compatibilidad.
+632,continental-crush--physical,Aplastamiento Gigalítico,Roca,Físico,,Fuera,No estándar / variante,Movimiento obsoleto o sin descripción oficial; se conserva por compatibilidad.
+633,continental-crush--special,Aplastamiento Gigalítico,Roca,Especial,,Fuera,No estándar / variante,Movimiento obsoleto o sin descripción oficial; se conserva por compatibilidad.
+634,savage-spin-out--physical,Guadaña Sedosa,Bicho,Físico,,Fuera,No estándar / variante,Movimiento obsoleto o sin descripción oficial; se conserva por compatibilidad.
+635,savage-spin-out--special,Guadaña Sedosa,Bicho,Especial,,Fuera,No estándar / variante,Movimiento obsoleto o sin descripción oficial; se conserva por compatibilidad.
+636,never-ending-nightmare--physical,Presa Espectral,Fantasma,Físico,,Fuera,No estándar / variante,Movimiento obsoleto o sin descripción oficial; se conserva por compatibilidad.
+637,never-ending-nightmare--special,Presa Espectral,Fantasma,Especial,,Fuera,No estándar / variante,Movimiento obsoleto o sin descripción oficial; se conserva por compatibilidad.
+638,corkscrew-crash--physical,Hélice Trepanadora,Acero,Físico,,Fuera,No estándar / variante,Movimiento obsoleto o sin descripción oficial; se conserva por compatibilidad.
+639,corkscrew-crash--special,Hélice Trepanadora,Acero,Especial,,Fuera,No estándar / variante,Movimiento obsoleto o sin descripción oficial; se conserva por compatibilidad.
+640,inferno-overdrive--physical,Hecatombe Pírica,Fuego,Físico,,Fuera,No estándar / variante,Movimiento obsoleto o sin descripción oficial; se conserva por compatibilidad.
+641,inferno-overdrive--special,Hecatombe Pírica,Fuego,Especial,,Fuera,No estándar / variante,Movimiento obsoleto o sin descripción oficial; se conserva por compatibilidad.
+642,hydro-vortex--physical,Hidrovórtice Abisal,Agua,Físico,,Fuera,No estándar / variante,Movimiento obsoleto o sin descripción oficial; se conserva por compatibilidad.
+643,hydro-vortex--special,Hidrovórtice Abisal,Agua,Especial,,Fuera,No estándar / variante,Movimiento obsoleto o sin descripción oficial; se conserva por compatibilidad.
+644,bloom-doom--physical,Megatón Floral,Planta,Físico,,Fuera,No estándar / variante,Movimiento obsoleto o sin descripción oficial; se conserva por compatibilidad.
+645,bloom-doom--special,Megatón Floral,Planta,Especial,,Fuera,No estándar / variante,Movimiento obsoleto o sin descripción oficial; se conserva por compatibilidad.
+646,gigavolt-havoc--physical,Gigavoltio Destructor,Eléctrico,Físico,,Fuera,No estándar / variante,Movimiento obsoleto o sin descripción oficial; se conserva por compatibilidad.
+647,gigavolt-havoc--special,Gigavoltio Destructor,Eléctrico,Especial,,Fuera,No estándar / variante,Movimiento obsoleto o sin descripción oficial; se conserva por compatibilidad.
+648,shattered-psyche--physical,Disruptor Psíquico,Psíquico,Físico,,Fuera,No estándar / variante,Movimiento obsoleto o sin descripción oficial; se conserva por compatibilidad.
+649,shattered-psyche--special,Disruptor Psíquico,Psíquico,Especial,,Fuera,No estándar / variante,Movimiento obsoleto o sin descripción oficial; se conserva por compatibilidad.
+650,subzero-slammer--physical,Crioaliento Despiadado,Hielo,Físico,,Fuera,No estándar / variante,Movimiento obsoleto o sin descripción oficial; se conserva por compatibilidad.
+651,subzero-slammer--special,Crioaliento Despiadado,Hielo,Especial,,Fuera,No estándar / variante,Movimiento obsoleto o sin descripción oficial; se conserva por compatibilidad.
+652,devastating-drake--physical,Dracoaliento Devastador,Dragón,Físico,,Fuera,No estándar / variante,Movimiento obsoleto o sin descripción oficial; se conserva por compatibilidad.
+653,devastating-drake--special,Dracoaliento Devastador,Dragón,Especial,,Fuera,No estándar / variante,Movimiento obsoleto o sin descripción oficial; se conserva por compatibilidad.
+654,black-hole-eclipse--physical,Agujero Negro Aniquilador,Siniestro,Físico,,Fuera,No estándar / variante,Movimiento obsoleto o sin descripción oficial; se conserva por compatibilidad.
+655,black-hole-eclipse--special,Agujero Negro Aniquilador,Siniestro,Especial,,Fuera,No estándar / variante,Movimiento obsoleto o sin descripción oficial; se conserva por compatibilidad.
+656,twinkle-tackle--physical,Arrumaco Sideral,Hada,Físico,,Fuera,No estándar / variante,Movimiento obsoleto o sin descripción oficial; se conserva por compatibilidad.
+657,twinkle-tackle--special,Arrumaco Sideral,Hada,Especial,,Fuera,No estándar / variante,Movimiento obsoleto o sin descripción oficial; se conserva por compatibilidad.
+658,catastropika,Pikavoltio Letal,Eléctrico,Físico,210,Fuera,No estándar / variante,Movimiento obsoleto o sin descripción oficial; se conserva por compatibilidad.
+659,shore-up,Recogearena,Tierra,Estado,,Dentro,Ya implementado,"Restaura la mitad de los PS máximos del usuario. Durante las tormentas de arena, restaura aún más PS."
+660,first-impression,Escaramuza,Bicho,Físico,90,Fuera,Prioridad condicional,Movimiento de gran potencia que solo puede usarse en el turno en que el usuario sale al combate.
+661,baneful-bunker,Búnker,Veneno,Estado,,Fuera,Efecto único no soportado,"Protege de los ataques y, al mismo tiempo, envenena al Pokémon que use un movimiento de contacto contra el usuario."
+662,spirit-shackle,Puntada Sombría,Fantasma,Físico,80,Dentro,Ya implementado,"Ataca al oponente y, al mismo tiempo, fija su sombra al terreno para impedir su huida."
+663,darkest-lariat,Lariat Oscuro,Siniestro,Físico,85,Dentro,Ya implementado,Gira sobre sí mismo y golpea al oponente con ambos brazos. Ignora los cambios en las características del objetivo.
+664,sparkling-aria,Aria Burbuja,Agua,Especial,90,Dentro,Ya implementado,Libera burbujas al cantar. Este movimiento cura las quemaduras de los Pokémon que reciban daño.
+665,ice-hammer,Martillo Hielo,Hielo,Físico,100,Dentro,Ya implementado,"Un terrible puño golpea al contrincante, pero la Velocidad del usuario se ve reducida."
+666,floral-healing,Cura Floral,Hada,Estado,,Dentro,Ya implementado,Restaura la mitad de los PS máximos del objetivo. Es más efectivo cuando se usa en conjunción con Campo de Hierba.
+667,high-horsepower,Fuerza Equina,Tierra,Físico,95,Dentro,Ya implementado,Asesta un golpe devastador usando todo su cuerpo.
+668,strength-sap,Absorbefuerza,Planta,Estado,,Dentro,Ya implementado,"Restaura una cantidad de PS equivalente al valor de Ataque del rival, que además verá reducida esta característica."
+669,solar-blade,Cuchilla Solar,Planta,Físico,125,Dentro,Ya implementado,El usuario dedica un turno a absorber energía lumínica y concentrarla en forma de cuchilla con la que ataca al rival en el siguiente turno.
+670,leafage,Follaje,Planta,Físico,40,Dentro,Ya implementado,Ataca al oponente lanzando hojas.
+671,spotlight,Foco,Normal,Estado,,Fuera,Efecto único no soportado,Movimiento obsoleto o sin descripción oficial; se conserva por compatibilidad.
+672,toxic-thread,Hilo Venenoso,Veneno,Estado,,Dentro,Ya implementado,Ataca al oponente con hilillos venenosos que reducen su Velocidad y lo envenenan.
+673,laser-focus,Aguzar,Normal,Estado,,Dentro,Ya implementado,El usuario se concentra para que el siguiente ataque propine un golpe crítico.
+674,gear-up,Piñón Auxiliar,Acero,Estado,,Dentro,Ya implementado,Cambia de marcha y logra aumentar el Ataque y el Ataque Especial de los Pokémon aliados que cuenten con las habilidades Más y Menos.
+675,throat-chop,Golpe Mordaza,Siniestro,Físico,80,Fuera,Mecánica no soportada,Inflige al rival un dolor tan abrumador que le impide utilizar durante dos turnos ataques que se sirven del sonido.
+676,pollen-puff,Bola de Polen,Bicho,Especial,90,Dentro,Ya implementado,"Ataca al oponente con una bola explosiva. Si esta alcanza a un aliado, le hará recuperar PS."
+677,anchor-shot,Anclaje,Acero,Físico,80,Dentro,Ya implementado,"Ataca lanzando un ancla al oponente, que queda atrapado y no puede huir."
+678,psychic-terrain,Campo Psíquico,Psíquico,Estado,,Dentro,Ya implementado,"Durante cinco turnos, se potencian los movimientos de tipo Psíquico y los Pokémon que están en el suelo quedan protegidos contra movimientos con prioridad."
+679,lunge,Plancha,Bicho,Físico,80,Dentro,Ya implementado,Ataca al oponente abalanzándose sobre él con todas sus fuerzas y reduce su Ataque.
+680,fire-lash,Látigo Ígneo,Fuego,Físico,80,Dentro,Ya implementado,Golpea al oponente con un látigo incandescente y reduce su Defensa.
+681,power-trip,Chulería,Siniestro,Físico,20,Dentro,Ya implementado,"Ataca al oponente presumiendo de su fuerza. Cuanto más hayan subido las características del usuario, mayor será el daño."
+682,burn-up,Llama Final,Fuego,Especial,130,Fuera,Mecánica no soportada,"Utiliza hasta el último resquicio de llamas de su cuerpo para infligir un grave daño al oponente. Tras el ataque, el usuario deja de ser de tipo Fuego."
+683,speed-swap,Cambiavelocidad,Psíquico,Estado,,Dentro,Ya implementado,Intercambia su Velocidad por la del oponente.
+684,smart-strike,Cuerno Certero,Acero,Físico,70,Dentro,Ya implementado,El usuario ensarta al adversario con su afilada cornamenta. Este movimiento acierta siempre.
+685,purify,Purificación,Veneno,Estado,,Dentro,Ya implementado,Cura los problemas de estado del Pokémon rival y a cambio recupera PS propios.
+686,revelation-dance,Danza Despertar,Normal,Especial,90,Dentro,Ya implementado,Ataque que consiste en un baile muy enérgico. El tipo de este ataque se corresponde con el del Pokémon que lo ejecuta.
+687,core-enforcer,Núcleo Castigo,Dragón,Especial,100,Dentro,Ya implementado,"Inflige daño al rival, y si este ya ha hecho uso de algún movimiento, pierde su habilidad."
+688,trop-kick,Patada Tropical,Planta,Físico,70,Dentro,Ya implementado,Lanza una patada con la fuerza del trópico que golpea al rival y reduce su Ataque.
+689,instruct,Mandato,Psíquico,Estado,,Fuera,Copia/transformación,Fuerza al objetivo a repetir inmediatamente su último movimiento.
+690,beak-blast,Pico Cañón,Volador,Físico,100,Dentro,Ya implementado,Primero aumenta la temperatura de su pico y luego ejecuta un ataque. Quema al rival si este le propina un ataque físico mientras está calentando el pico.
+691,clanging-scales,Fragor Escamas,Dragón,Especial,110,Dentro,Ya implementado,"Frota todas las escamas de su cuerpo para crear un fuerte sonido con el que ataca. Cuando el ataque termina, su Defensa se ve reducida."
+692,dragon-hammer,Martillo Dragón,Dragón,Físico,90,Dentro,Ya implementado,Usa el cuerpo como un martillo para abalanzarse sobre su rival y causarle daño.
+693,brutal-swing,Giro Vil,Siniestro,Físico,60,Dentro,Ya implementado,Hace pivotar su cuerpo para causar daño a su alrededor.
+694,aurora-veil,Velo Aurora,Hielo,Estado,,Dentro,Ya implementado,Reduce el daño de los ataques físicos y especiales que ejecuta el rival durante cinco turnos. Solo puede usarse cuando está granizando.
+695,sinister-arrow-raid,Aluvión de Flechas Sombrías,Fantasma,Físico,180,Fuera,No estándar / variante,Movimiento obsoleto o sin descripción oficial; se conserva por compatibilidad.
+696,malicious-moonsault,Hiperplancha Oscura,Siniestro,Físico,180,Fuera,No estándar / variante,Movimiento obsoleto o sin descripción oficial; se conserva por compatibilidad.
+697,oceanic-operetta,Sinfonía de la Diva Marina,Agua,Especial,195,Fuera,No estándar / variante,Movimiento obsoleto o sin descripción oficial; se conserva por compatibilidad.
+698,guardian-of-alola,Cólera del Guardián,Hada,Especial,,Fuera,No estándar / variante,Movimiento obsoleto o sin descripción oficial; se conserva por compatibilidad.
+699,soul-stealing-7-star-strike,Constelación Robaalmas,Fantasma,Físico,195,Fuera,No estándar / variante,Movimiento obsoleto o sin descripción oficial; se conserva por compatibilidad.
+700,stoked-sparksurfer,Surfeo Galvánico,Eléctrico,Especial,175,Fuera,No estándar / variante,Movimiento obsoleto o sin descripción oficial; se conserva por compatibilidad.
+701,pulverizing-pancake,Arrojo Intempestivo,Normal,Físico,210,Fuera,No estándar / variante,Movimiento obsoleto o sin descripción oficial; se conserva por compatibilidad.
+702,extreme-evoboost,Novena Potencia,Normal,Estado,,Fuera,No estándar / variante,Movimiento obsoleto o sin descripción oficial; se conserva por compatibilidad.
+703,genesis-supernova,Supernova Original,Psíquico,Especial,185,Fuera,No estándar / variante,Movimiento obsoleto o sin descripción oficial; se conserva por compatibilidad.
+704,shell-trap,Coraza Trampa,Fuego,Especial,150,Fuera,Mecánica no soportada,"El caparazón del Pokémon se convierte en una trampa. Si le alcanza un ataque físico, la trampa estalla y los oponentes sufren daño."
+705,fleur-cannon,Cañón Floral,Hada,Especial,130,Dentro,Ya implementado,"El usuario emite un potente rayo, pero su Ataque Especial se reduce mucho."
+706,psychic-fangs,Psicocolmillo,Psíquico,Físico,85,Dentro,Ya implementado,Ataca a sus rivales con poderes psíquicos que además destruyen barreras como Pantalla de Luz y Reflejo.
+707,stomping-tantrum,Pataleta,Tierra,Físico,75,Dentro,Ya implementado,Usa la frustración como revulsivo para atacar. La potencia de Pataleta se duplica si el usuario ha fallado el último movimiento usado.
+708,shadow-bone,Hueso Sombrío,Fantasma,Físico,85,Dentro,Ya implementado,Ataca al oponente golpeándole con un hueso poseído por un espíritu. Puede reducir la Defensa del objetivo.
+709,accelerock,Roca Veloz,Roca,Físico,40,Dentro,Ya implementado,El usuario se lanza contra el objetivo a gran velocidad. Este movimiento tiene prioridad alta.
+710,liquidation,Hidroariete,Agua,Físico,85,Dentro,Ya implementado,Ataca golpeando gracias a la fuerza del agua. También puede reducir la Defensa del objetivo.
+711,prismatic-laser,Láser Prisma,Psíquico,Especial,160,Dentro,Ya implementado,"El usuario utiliza un prisma para emitir un rayo de gran potencia, pero no puede moverse en el turno siguiente."
+712,spectral-thief,Robasombra,Fantasma,Físico,90,Fuera,Mecánica no soportada,El usuario se esconde en la sombra del objetivo y lo ataca tras robarle las mejoras en sus características.
+713,sunsteel-strike,Meteoimpacto,Acero,Físico,100,Dentro,Ya implementado,"Ataca al objetivo con la potencia de un meteoro, ignorando su habilidad."
+714,moongeist-beam,Rayo Umbrío,Fantasma,Especial,100,Dentro,Ya implementado,Ataca con un rayo misterioso que ignora la habilidad del objetivo.
+715,tearful-look,Ojos Llorosos,Normal,Estado,,Dentro,Ya implementado,Mira al objetivo con ojos llorosos para hacerle perder su espíritu combativo y reduce su Ataque y Ataque Especial.
+716,zing-zap,Electropunzada,Eléctrico,Físico,80,Dentro,Ya implementado,Se lanza contra el objetivo y le suelta una potente descarga eléctrica que puede hacer que se amedrente.
+717,natures-madness,Furia Natural,Hada,Especial,,Dentro,Ya implementado,Golpea al objetivo con la furia de la naturaleza y reduce sus PS a la mitad.
+718,multi-attack,Multiataque,Normal,Físico,120,Fuera,Objetos,El Pokémon se rodea de una potente energía con la que golpea al rival. El tipo del movimiento depende del disco que lleva el usuario.
+719,10-000-000-volt-thunderbolt,Gigarrayo Fulminante,Eléctrico,Especial,195,Fuera,No estándar / variante,Movimiento obsoleto o sin descripción oficial; se conserva por compatibilidad.
+720,mind-blown,Cabeza Sorpresa,Fuego,Especial,150,Dentro,Ya implementado,"El usuario hace explotar su cabeza para atacar a todos los Pokémon que se hallan a su alrededor, aunque también se hiere a sí mismo."
+721,plasma-fists,Puños Plasma,Eléctrico,Físico,100,Fuera,Mecánica no soportada,El usuario ataca con puños cargados de electricidad. Convierte los movimientos de tipo Normal en movimientos de tipo Eléctrico.
+722,photon-geyser,Géiser Fotónico,Psíquico,Especial,100,Dentro,Ya implementado,El usuario ataca con una gran columna de luz. Compara sus valores de Ataque y Ataque Especial para infligir daño con el más alto de los dos.
+723,light-that-burns-the-sky,Fotodestrucción Apocalíptica,Psíquico,Especial,200,Fuera,No estándar / variante,Movimiento obsoleto o sin descripción oficial; se conserva por compatibilidad.
+724,searing-sunraze-smash,Embestida Solar,Acero,Físico,200,Fuera,No estándar / variante,Movimiento obsoleto o sin descripción oficial; se conserva por compatibilidad.
+725,menacing-moonraze-maelstrom,Deflagración Lunar,Fantasma,Especial,200,Fuera,No estándar / variante,Movimiento obsoleto o sin descripción oficial; se conserva por compatibilidad.
+726,lets-snuggle-forever,Somanta Amistosa,Hada,Físico,190,Fuera,No estándar / variante,Movimiento obsoleto o sin descripción oficial; se conserva por compatibilidad.
+727,splintered-stormshards,Tempestad Rocosa,Roca,Físico,190,Fuera,No estándar / variante,Movimiento obsoleto o sin descripción oficial; se conserva por compatibilidad.
+728,clangorous-soulblaze,Estruendo Implacable,Dragón,Especial,185,Fuera,No estándar / variante,Movimiento obsoleto o sin descripción oficial; se conserva por compatibilidad.
+729,zippy-zap,Pikaturbo,Eléctrico,Físico,80,Fuera,No estándar / variante,Movimiento obsoleto o sin descripción oficial; se conserva por compatibilidad.
+730,splishy-splash,Salpikasurf,Agua,Especial,90,Dentro,Ya implementado,Movimiento obsoleto o sin descripción oficial; se conserva por compatibilidad.
+731,floaty-fall,Pikapicado,Volador,Físico,90,Fuera,No estándar / variante,Movimiento obsoleto o sin descripción oficial; se conserva por compatibilidad.
+732,pika-papow,Pikatormenta,Eléctrico,Especial,,Fuera,No estándar / variante,Movimiento obsoleto o sin descripción oficial; se conserva por compatibilidad.
+733,bouncy-bubble,Vapodrenaje,Agua,Especial,60,Fuera,No estándar / variante,Movimiento obsoleto o sin descripción oficial; se conserva por compatibilidad.
+734,buzzy-buzz,Joltioparálisis,Eléctrico,Especial,60,Dentro,Ya implementado,Movimiento obsoleto o sin descripción oficial; se conserva por compatibilidad.
+735,sizzly-slide,Flarembestida,Fuego,Físico,60,Fuera,No estándar / variante,Movimiento obsoleto o sin descripción oficial; se conserva por compatibilidad.
+736,glitzy-glow,Espeaura,Psíquico,Especial,80,Dentro,Ya implementado,Movimiento obsoleto o sin descripción oficial; se conserva por compatibilidad.
+737,baddy-bad,Umbreozona,Siniestro,Especial,80,Fuera,No estándar / variante,Movimiento obsoleto o sin descripción oficial; se conserva por compatibilidad.
+738,sappy-seed,Leafitobombas,Planta,Físico,100,Dentro,Ya implementado,Movimiento obsoleto o sin descripción oficial; se conserva por compatibilidad.
+739,freezy-frost,Glaceoprisma,Hielo,Especial,100,Fuera,No estándar / variante,Movimiento obsoleto o sin descripción oficial; se conserva por compatibilidad.
+740,sparkly-swirl,Sylveotornado,Hada,Especial,120,Fuera,No estándar / variante,Movimiento obsoleto o sin descripción oficial; se conserva por compatibilidad.
+741,veevee-volley,Eevimpacto,Normal,Físico,,Fuera,No estándar / variante,Movimiento obsoleto o sin descripción oficial; se conserva por compatibilidad.
+742,double-iron-bash,Ferropuño Doble,Acero,Físico,60,Dentro,Ya implementado,"Usando la tuerca del pecho como eje, gira sobre sí mismo y golpea con los brazos dos veces seguidas. Puede amedrentar al rival."
+743,max-guard,Maxibarrera,Normal,Estado,,Fuera,No estándar / variante,"Frena todos los ataques, pero puede fallar si se usa repetidamente."
+744,dynamax-cannon,Cañón Dinamax,Dragón,Especial,100,Dentro,Ya implementado,El usuario ataca emitiendo un rayo desde su núcleo. El daño infligido se duplica si el objetivo ha alcanzado el estado Dinamax.
+745,snipe-shot,Disparo Certero,Agua,Especial,80,Dentro,Ya implementado,Permite atacar al objetivo seleccionado ignorando las habilidades o movimientos que permiten a un rival centrar la atención sobre sí.
+746,jaw-lock,Presa Maxilar,Siniestro,Físico,80,Dentro,Ya implementado,Impide que tanto el atacante como el defensor puedan ser intercambiados hasta que uno de ellos se debilite o abandone el terreno de combate.
+747,stuff-cheeks,Atiborramiento,Normal,Estado,,Dentro,Ya implementado,El usuario ingiere la baya que lleva equipada para aumentar mucho su Defensa.
+748,no-retreat,Bastión Final,Lucha,Estado,,Dentro,Ya implementado,"El usuario aumenta todas sus características, pero ya no puede huir ni ser cambiado por otro."
+749,tar-shot,Alquitranazo,Roca,Estado,,Dentro,Ya implementado,Cubre al objetivo de un alquitrán pegajoso que reduce su Velocidad y lo vuelve débil contra el fuego.
+750,magic-powder,Polvo Mágico,Psíquico,Estado,,Fuera,Efecto único no soportado,Cubre al objetivo con unos polvos mágicos que le hacen adquirir el tipo Psíquico.
+751,dragon-darts,Dracoflechas,Dragón,Físico,50,Dentro,Ya implementado,"El usuario ataca propulsando a ambos Dreepy. En caso de haber dos adversarios, cada Dreepy golpea a su propio objetivo por separado."
+752,teatime,Hora del Té,Normal,Estado,,Fuera,Objetos,"El usuario invita a tomar el té a todos los presentes en el terreno de combate, lo que hace que ingieran las bayas que lleven equipadas."
+753,octolock,Octopresa,Lucha,Estado,,Fuera,Efecto único no soportado,"Retiene al objetivo para impedir su huida, a la vez que reduce su Defensa y Defensa Especial cada turno."
+754,bolt-beak,Electropico,Eléctrico,Físico,85,Dentro,Ya implementado,"El usuario ensarta al objetivo con su pico cargado de electricidad. Si ataca en primer lugar, la potencia del movimiento se duplica."
+755,fishious-rend,Branquibocado,Agua,Físico,85,Dentro,Ya implementado,"El usuario agarra al objetivo con sus duras branquias. En caso de atacar antes que este último, la potencia del movimiento se duplica."
+756,court-change,Cambio de Cancha,Normal,Estado,,Fuera,Limpieza/creación de campo,Extraño poder que intercambia los efectos en el terreno de combate de ambos bandos.
+757,max-flare,Maxignición,Fuego,Físico,100,Fuera,No estándar / variante,Ataque de tipo Fuego ejecutado por un Pokémon Dinamax. Hace que se intensifique el efecto del sol durante cinco turnos.
+758,max-flutterby,Maxinsecto,Bicho,Físico,10,Fuera,No estándar / variante,Ataque de tipo Bicho ejecutado por un Pokémon Dinamax. Reduce el Ataque Especial del objetivo.
+759,max-lightning,Maxitormenta,Eléctrico,Físico,10,Fuera,No estándar / variante,Ataque de tipo Eléctrico ejecutado por un Pokémon Dinamax. Crea un campo eléctrico durante cinco turnos.
+760,max-strike,Maxiataque,Normal,Físico,10,Fuera,No estándar / variante,Ataque de tipo Normal ejecutado por un Pokémon Dinamax. Reduce la Velocidad del objetivo.
+761,max-knuckle,Maxipuño,Lucha,Físico,10,Fuera,No estándar / variante,Ataque de tipo Lucha ejecutado por un Pokémon Dinamax. Aumenta el Ataque de tu bando.
+762,max-phantasm,Maxiespectro,Fantasma,Físico,10,Fuera,No estándar / variante,Ataque de tipo Fantasma ejecutado por un Pokémon Dinamax. Reduce la Defensa de los rivales.
+763,max-hailstorm,Maxihelada,Hielo,Físico,10,Fuera,No estándar / variante,Ataque de tipo Hielo ejecutado por un Pokémon Dinamax. Crea una tormenta de granizo que dura cinco turnos.
+764,max-ooze,Maxiácido,Veneno,Físico,10,Fuera,No estándar / variante,Ataque de tipo Veneno ejecutado por un Pokémon Dinamax. Aumenta el Ataque Especial de tu bando.
+765,max-geyser,Maxichorro,Agua,Físico,10,Fuera,No estándar / variante,Ataque de tipo Agua ejecutado por un Pokémon Dinamax. Desata un aguacero que dura cinco turnos.
+766,max-airstream,Maxiciclón,Volador,Físico,10,Fuera,No estándar / variante,Ataque de tipo Volador ejecutado por un Pokémon Dinamax. Aumenta la Velocidad de tu bando.
+767,max-starfall,Maxiestela,Hada,Físico,10,Fuera,No estándar / variante,Ataque de tipo Hada ejecutado por un Pokémon Dinamax. Crea un campo de niebla durante cinco turnos.
+768,max-wyrmwind,Maxidraco,Dragón,Físico,10,Fuera,No estándar / variante,Ataque de tipo Dragón ejecutado por un Pokémon Dinamax. Reduce el Ataque del objetivo.
+769,max-mindstorm,Maxionda,Psíquico,Físico,10,Fuera,No estándar / variante,Ataque de tipo Psíquico ejecutado por un Pokémon Dinamax. Crea un campo psíquico durante cinco turnos.
+770,max-rockfall,Maxilito,Roca,Físico,10,Fuera,No estándar / variante,Ataque de tipo Roca ejecutado por un Pokémon Dinamax. Levanta una tormenta de arena que dura cinco turnos.
+771,max-quake,Maxitemblor,Tierra,Físico,10,Fuera,No estándar / variante,Ataque de tipo Tierra ejecutado por un Pokémon Dinamax. Aumenta la Defensa Especial de tu bando.
+772,max-darkness,Maxisombra,Siniestro,Físico,10,Fuera,No estándar / variante,Ataque de tipo Siniestro ejecutado por un Pokémon Dinamax. Reduce la Defensa Especial del objetivo.
+773,max-overgrowth,Maxiflora,Planta,Físico,10,Fuera,No estándar / variante,Ataque de tipo Planta ejecutado por un Pokémon Dinamax. Crea un campo de hierba durante cinco turnos.
+774,max-steelspike,Maximetal,Acero,Físico,10,Fuera,No estándar / variante,Ataque de tipo Acero ejecutado por un Pokémon Dinamax. Aumenta la Defensa de tu bando.
+775,clangorous-soul,Estruendo Escama,Dragón,Estado,,Dentro,Ya implementado,Utiliza parte de los PS propios para subir sus características.
+776,body-press,Plancha Corporal,Lucha,Físico,80,Dentro,Ya implementado,El usuario usa el cuerpo para lanzar su ataque e infligir un daño directamente proporcional a su Defensa.
+777,decorate,Decoración,Hada,Estado,,Dentro,Ya implementado,Aumenta mucho el Ataque y el Ataque Especial del objetivo al decorarlo.
+778,drum-beating,Batería Asalto,Planta,Físico,80,Dentro,Ya implementado,El usuario controla un tocón mediante la percusión y al atacar reduce la Velocidad del objetivo.
+779,snap-trap,Cepo,Planta,Físico,35,Dentro,Ya implementado,Cepo que atrapa al objetivo durante cuatro o cinco turnos y le causa daño mientras se encuentra preso.
+780,pyro-ball,Balón Ígneo,Fuego,Físico,120,Dentro,Ya implementado,El usuario prende una pequeña piedra para crear una bola de fuego con la que ataca al rival. Puede causar quemaduras.
+781,behemoth-blade,Tajo Supremo,Acero,Físico,100,Dentro,Ya implementado,"El usuario se convierte en una espada gigante para rebanar al objetivo. Si este ha alcanzado el estado Dinamax, se duplica el daño infligido."
+782,behemoth-bash,Embate Supremo,Acero,Físico,100,Dentro,Ya implementado,"El usuario se convierte en un escudo gigante para golpear al objetivo. Si este ha alcanzado el estado Dinamax, se duplica el daño infligido."
+783,aura-wheel,Rueda Aural,Eléctrico,Físico,110,Dentro,Ya implementado,La energía que acumula en las mejillas le sirve para atacar y aumentar su Velocidad. Este movimiento cambia de tipo según la forma que adopte Morpeko.
+784,breaking-swipe,Vasto Impacto,Dragón,Físico,60,Dentro,Ya implementado,El usuario sacude violentamente su enorme cola para golpear a todos los rivales y reducir su Ataque a la par.
+785,branch-poke,Punzada Rama,Planta,Físico,40,Dentro,Ya implementado,Ataca pinchando al objetivo con una rama afilada.
+786,overdrive,Amplificador,Eléctrico,Especial,80,Dentro,Ya implementado,El usuario rasguea la guitarra o el bajo para generar enormes vibraciones de intensa reverberación con las que ataca al objetivo.
+787,apple-acid,Ácido Málico,Planta,Especial,80,Dentro,Ya implementado,"Ataca al objetivo con el fluido corrosivo que desprende una manzana ácida, lo que también disminuye la Defensa Especial de este."
+788,grav-apple,Fuerza G,Planta,Físico,80,Dentro,Ya implementado,El usuario ataca haciendo caer una manzana desde gran altura. Disminuye la Defensa del objetivo.
+789,spirit-break,Choque Anímico,Hada,Físico,75,Dentro,Ya implementado,"El usuario ataca al objetivo con tal ímpetu que acaba minando su moral y, en consecuencia, reduce su Ataque Especial."
+790,strange-steam,Cautivapor,Hada,Especial,90,Dentro,Ya implementado,"Desprende un humo con el que ataca al objetivo, que puede acabar confundido."
+791,life-dew,Gota Vital,Agua,Estado,,Dentro,Ya implementado,Vierte un agua misteriosa y balsámica que restaura tanto sus propios PS como los de aquellos aliados presentes en el terreno de combate.
+792,obstruct,Obstrucción,Siniestro,Estado,,Fuera,Efecto único no soportado,"Frena todos los ataques, pero puede fallar si se usa repetidamente. Reduce mucho la Defensa de quien ejecute un movimiento de contacto contra el usuario."
+793,false-surrender,Irreverencia,Siniestro,Físico,80,Dentro,Ya implementado,El usuario finge hacer una reverencia y aprovecha la ocasión para ensartar al objetivo con su cabello alborotado. Siempre acierta.
+794,meteor-assault,Asalto Estelar,Lucha,Físico,150,Dentro,Ya implementado,"El usuario agita violentamente su grueso puerro para atacar, pero el mareo que le provocan las sacudidas le impide moverse en el turno siguiente."
+795,eternabeam,Rayo Infinito,Dragón,Especial,160,Dentro,Ya implementado,Este es el mayor ataque de Eternatus una vez adquirida su forma original. No puede moverse en el turno siguiente.
+796,steel-beam,Metaláser,Acero,Especial,140,Dentro,Ya implementado,Utiliza el acero de su cuerpo para disparar un potente rayo. También hiere al agresor.
+797,expanding-force,Vasta Fuerza,Psíquico,Especial,80,Dentro,Ya implementado,"El usuario ataca al objetivo con sus poderes psíquicos. Cuando se usa en conjunción con un campo psíquico, aumenta su potencia e inflige daño a todos los rivales."
+798,steel-roller,Allanador Férreo,Acero,Físico,130,Dentro,Ya implementado,"El usuario lanza su ataque y destruye el campo activo en el terreno de combate, y falla si no hay ninguno en ese momento."
+799,scale-shot,Ráfaga Escamas,Dragón,Físico,25,Dentro,Ya implementado,"Lanza escamas al objetivo de dos a cinco veces seguidas. Aumenta la Velocidad del usuario, pero reduce su Defensa."
+800,meteor-beam,Rayo Meteórico,Roca,Especial,120,Dentro,Ya implementado,El usuario dedica el primer turno a aumentar su Ataque Especial acumulando energía cósmica y lanza su ofensiva contra el objetivo en el segundo.
+801,shell-side-arm,Moluscañón,Veneno,Especial,90,Dentro,Ya implementado,El usuario lanza un ataque físico o especial en función de cuál inflija más daño. Puede envenenar al objetivo.
+802,misty-explosion,Bruma Explosiva,Hada,Especial,100,Dentro,Ya implementado,"El usuario ataca a todos a su alrededor, pero se debilita de inmediato. La potencia del movimiento aumenta si el terreno está cubierto por un campo de niebla."
+803,grassy-glide,Fitoimpulso,Planta,Físico,55,Fuera,Prioridad condicional,Ataca al objetivo deslizándose sobre el terreno de combate. Este movimiento tiene prioridad alta cuando el terreno está cubierto por un campo de hierba.
+804,rising-voltage,Alto Voltaje,Eléctrico,Especial,70,Dentro,Ya implementado,Ataca con una descarga eléctrica que surge del terreno de combate. La potencia del movimiento se duplica si el rival se ve afectado por un campo eléctrico.
+805,terrain-pulse,Pulso de Campo,Normal,Especial,50,Dentro,Ya implementado,"El usuario ataca aprovechando la energía del campo activo, que determina tanto el tipo como la potencia del movimiento."
+806,skitter-smack,Golpe Rastrero,Bicho,Físico,70,Dentro,Ya implementado,Ataca al objetivo por la espalda de forma subrepticia y además reduce su Ataque Especial.
+807,burning-jealousy,Envidia Ardiente,Fuego,Especial,70,Dentro,Ya implementado,Ataca al objetivo con la energía generada por la envidia y causa quemaduras a los Pokémon cuyas características hayan aumentado en ese turno.
+808,lash-out,Desahogo,Siniestro,Físico,75,Dentro,Ya implementado,"Ataca al rival presa de la rabia. Si el usuario ha sufrido una reducción de características en ese turno, la potencia del movimiento se duplica."
+809,poltergeist,Poltergeist,Fantasma,Físico,110,Fuera,Objetos,"El usuario ataca utilizando el objeto que lleva el rival. Si no tiene ninguno equipado, el movimiento falla."
+810,corrosive-gas,Gas Corrosivo,Veneno,Estado,,Fuera,Objetos,El usuario libera un gas cáustico que envuelve a todos los que se encuentren alrededor y derrite por completo los objetos que lleven equipados.
+811,coaching,Motivación,Lucha,Estado,,Dentro,Ya implementado,"El usuario imparte indicaciones precisas a sus aliados, que ven aumentados su Ataque y su Defensa."
+812,flip-turn,Viraje,Agua,Físico,60,Fuera,Cambio de Pokémon (pivot),"Tras atacar, el usuario da paso a toda prisa a otro Pokémon del equipo."
+813,triple-axel,Triple Axel,Hielo,Físico,20,Dentro,Ya implementado,Patea hasta tres veces seguidas y cada vez más fuerte.
+814,dual-wingbeat,Ala Bis,Volador,Físico,40,Dentro,Ya implementado,Ataca al adversario golpeándolo dos veces con las alas.
+815,scorching-sands,Arenas Ardientes,Tierra,Especial,70,Dentro,Ya implementado,Ataca al objetivo arrojándole arena a temperaturas muy elevadas. Puede causar quemaduras.
+816,jungle-healing,Cura Selvática,Planta,Estado,,Dentro,Ya implementado,"Al entrar en plena armonía con la selva, el usuario cura problemas de estado y restaura PS no solo de sí mismo, sino también de los aliados presentes en el terreno."
+817,wicked-blow,Golpe Oscuro,Siniestro,Físico,75,Dentro,Ya implementado,Golpe devastador que requiere un absoluto dominio de las artes siniestras. Siempre asesta un golpe crítico.
+818,surging-strikes,Azote Torrencial,Agua,Físico,25,Dentro,Ya implementado,"El usuario, dominador absoluto del líquido elemento, golpea hasta tres veces con movimientos fluidos. Siempre asesta un golpe crítico."
+819,thunder-cage,Electrojaula,Eléctrico,Especial,80,Dentro,Ya implementado,El objetivo queda atrapado en una jaula electrificada que permanece en el terreno de cuatro a cinco turnos.
+820,dragon-energy,Dracoenergía,Dragón,Especial,150,Dentro,Ya implementado,"El usuario convierte su fuerza vital en una energía con la que ataca al objetivo. Cuantos menos PS tenga el usuario, menor será la potencia del movimiento."
+821,freezing-glare,Mirada Heladora,Psíquico,Especial,90,Dentro,Ya implementado,"A través de sus ojos emite poderes psíquicos con los que ataca al objetivo, al que puede llegar a congelar."
+822,fiery-wrath,Furia Candente,Siniestro,Especial,90,Dentro,Ya implementado,El usuario convierte su ira en un aura flamígera para lanzar su ataque. Puede amedrentar al objetivo.
+823,thunderous-kick,Patada Relámpago,Lucha,Físico,90,Dentro,Ya implementado,El usuario desconcierta al rival con movimientos centelleantes y le propina una patada. Baja la Defensa del objetivo.
+824,glacial-lance,Lanza Glacial,Hielo,Físico,120,Dentro,Ya implementado,El usuario ataca al objetivo lanzándole un carámbano de hielo envuelto en una ventisca.
+825,astral-barrage,Orbes Espectro,Fantasma,Especial,120,Dentro,Ya implementado,El usuario ataca al objetivo lanzándole una ingente cantidad de pequeños fantasmas.
+826,eerie-spell,Conjuro Funesto,Psíquico,Especial,80,Fuera,Mecánica no soportada,El usuario ataca con un poder psíquico de inmensa potencia y elimina 3 PP del último movimiento que haya usado el objetivo.
+827,dire-claw,Garra Nociva,Veneno,Físico,80,Dentro,Ya implementado,Sin descripción oficial en PokeAPI.
+828,psyshield-bash,Asalto Barrera,Psíquico,Físico,70,Dentro,Ya implementado,Sin descripción oficial en PokeAPI.
+829,power-shift,Cambiapoder,Normal,Estado,0,Fuera,Mecánica no soportada,Sin descripción oficial en PokeAPI.
+830,stone-axe,Hachazo Pétreo,Roca,Físico,65,Fuera,Limpieza/creación de campo,Sin descripción oficial en PokeAPI.
+831,springtide-storm,Ciclón Primavera,Hada,Especial,100,Dentro,Ya implementado,Sin descripción oficial en PokeAPI.
+832,mystical-power,Poder Místico,Psíquico,Especial,70,Dentro,Ya implementado,Sin descripción oficial en PokeAPI.
+833,raging-fury,Erupción de Ira,Fuego,Físico,120,Fuera,Bloqueo de turnos,Sin descripción oficial en PokeAPI.
+834,wave-crash,Envite Acuático,Agua,Físico,120,Dentro,Ya implementado,Sin descripción oficial en PokeAPI.
+835,chloroblast,Clorofiláser,Planta,Especial,150,Dentro,Ya implementado,Sin descripción oficial en PokeAPI.
+836,mountain-gale,Viento Carámbano,Hielo,Físico,100,Dentro,Ya implementado,Sin descripción oficial en PokeAPI.
+837,victory-dance,Danza Triunfal,Lucha,Estado,0,Dentro,Ya implementado,Sin descripción oficial en PokeAPI.
+838,headlong-rush,Arremetida,Tierra,Físico,120,Dentro,Ya implementado,Sin descripción oficial en PokeAPI.
+839,barb-barrage,Mil Púas Tóxicas,Veneno,Físico,60,Dentro,Ya implementado,Sin descripción oficial en PokeAPI.
+840,esper-wing,Ala Aural,Psíquico,Especial,80,Dentro,Ya implementado,Sin descripción oficial en PokeAPI.
+841,bitter-malice,Rencor Reprimido,Fantasma,Especial,75,Dentro,Ya implementado,Sin descripción oficial en PokeAPI.
+842,shelter,Retracción,Acero,Estado,0,Dentro,Ya implementado,Sin descripción oficial en PokeAPI.
+843,triple-arrows,Triple Flecha,Lucha,Físico,90,Dentro,Ya implementado,Sin descripción oficial en PokeAPI.
+844,infernal-parade,Marcha Espectral,Fantasma,Especial,60,Dentro,Ya implementado,Sin descripción oficial en PokeAPI.
+845,ceaseless-edge,Tajo Metralla,Siniestro,Físico,65,Fuera,Limpieza/creación de campo,Sin descripción oficial en PokeAPI.
+846,bleakwind-storm,Vendaval Gélido,Volador,Especial,100,Dentro,Ya implementado,Sin descripción oficial en PokeAPI.
+847,wildbolt-storm,Electormenta,Eléctrico,Especial,100,Dentro,Ya implementado,Sin descripción oficial en PokeAPI.
+848,sandsear-storm,Simún de Arena,Tierra,Especial,100,Dentro,Ya implementado,Sin descripción oficial en PokeAPI.
+849,lunar-blessing,Plegaria Lunar,Psíquico,Estado,0,Dentro,Ya implementado,Sin descripción oficial en PokeAPI.
+850,take-heart,Bálsamo Osado,Psíquico,Estado,0,Dentro,Ya implementado,Sin descripción oficial en PokeAPI.
+851,tera-blast,Teraexplosión,Normal,Especial,80,Fuera,Mecánica no soportada,Sin descripción oficial en PokeAPI.
+852,silk-trap,Telatrampa,Bicho,Estado,0,Fuera,Mecánica no soportada,Sin descripción oficial en PokeAPI.
+853,axe-kick,Patada Hacha,Lucha,Físico,120,Fuera,Mecánica no soportada,Sin descripción oficial en PokeAPI.
+854,last-respects,Homenaje Póstumo,Fantasma,Físico,50,Dentro,Ya implementado,Sin descripción oficial en PokeAPI.
+855,lumina-crash,Fotocolisión,Psíquico,Especial,80,Dentro,Ya implementado,Sin descripción oficial en PokeAPI.
+856,order-up,Oído Cocina,Dragón,Físico,80,Dentro,Ya implementado,Sin descripción oficial en PokeAPI.
+857,jet-punch,Puño Jet,Agua,Físico,60,Dentro,Ya implementado,Sin descripción oficial en PokeAPI.
+858,spicy-extract,Extracto Picante,Planta,Estado,0,Dentro,Ya implementado,Sin descripción oficial en PokeAPI.
+859,spin-out,Quemarrueda,Acero,Físico,100,Dentro,Ya implementado,Sin descripción oficial en PokeAPI.
+860,population-bomb,Proliferación,Normal,Físico,20,Dentro,Ya implementado,Sin descripción oficial en PokeAPI.
+861,ice-spinner,Pirueta Helada,Hielo,Físico,80,Dentro,Ya implementado,Sin descripción oficial en PokeAPI.
+862,glaive-rush,Asalto Espadón,Dragón,Físico,120,Fuera,Mecánica no soportada,Sin descripción oficial en PokeAPI.
+863,revival-blessing,Plegaria Vital,Normal,Estado,0,Dentro,Ya implementado,Sin descripción oficial en PokeAPI.
+864,salt-cure,Salazón,Roca,Físico,40,Fuera,Mecánica no soportada,Sin descripción oficial en PokeAPI.
+865,triple-dive,Triple Inmersión,Agua,Físico,30,Dentro,Ya implementado,Sin descripción oficial en PokeAPI.
+866,mortal-spin,Giro Mortífero,Veneno,Físico,30,Fuera,Limpieza/creación de campo,Sin descripción oficial en PokeAPI.
+867,doodle,Decalcomanía,Normal,Estado,0,Fuera,Copia/transformación,Sin descripción oficial en PokeAPI.
+868,fillet-away,Deslome,Normal,Estado,0,Dentro,Ya implementado,Sin descripción oficial en PokeAPI.
+869,kowtow-cleave,Genufendiente,Siniestro,Físico,85,Dentro,Ya implementado,Sin descripción oficial en PokeAPI.
+870,flower-trick,Truco Floral,Planta,Físico,70,Dentro,Ya implementado,Sin descripción oficial en PokeAPI.
+871,torch-song,Canto Ardiente,Fuego,Especial,80,Dentro,Ya implementado,Sin descripción oficial en PokeAPI.
+872,aqua-step,Danza Acuática,Agua,Físico,80,Dentro,Ya implementado,Sin descripción oficial en PokeAPI.
+873,raging-bull,Furia Taurina,Normal,Físico,90,Dentro,Ya implementado,Sin descripción oficial en PokeAPI.
+874,make-it-rain,Fiebre Dorada,Acero,Especial,120,Dentro,Ya implementado,Sin descripción oficial en PokeAPI.
+875,psyblade,Psicohojas,Psíquico,Físico,80,Dentro,Ya implementado,Sin descripción oficial en PokeAPI.
+876,hydro-steam,Hidrovapor,Agua,Especial,80,Dentro,Ya implementado,Sin descripción oficial en PokeAPI.
+877,ruination,Calamidad,Siniestro,Especial,1,Dentro,Ya implementado,Sin descripción oficial en PokeAPI.
+878,collision-course,Nitrochoque,Lucha,Físico,100,Dentro,Ya implementado,Sin descripción oficial en PokeAPI.
+879,electro-drift,Electroderrape,Eléctrico,Especial,100,Dentro,Ya implementado,Sin descripción oficial en PokeAPI.
+880,shed-tail,Autotomía,Normal,Estado,0,Fuera,Cambio de Pokémon (pivot),Sin descripción oficial en PokeAPI.
+881,chilly-reception,Fría Acogida,Hielo,Estado,0,Fuera,Cambio de Pokémon (pivot),Sin descripción oficial en PokeAPI.
+882,tidy-up,Limpieza General,Normal,Estado,0,Fuera,Limpieza/creación de campo,Sin descripción oficial en PokeAPI.
+883,snowscape,Paisaje Nevado,Hielo,Estado,0,Dentro,Ya implementado,Sin descripción oficial en PokeAPI.
+884,pounce,Brinco,Bicho,Físico,50,Dentro,Ya implementado,Sin descripción oficial en PokeAPI.
+885,trailblaze,Abrecaminos,Planta,Físico,50,Dentro,Ya implementado,Sin descripción oficial en PokeAPI.
+886,chilling-water,Agua Fría,Agua,Especial,50,Dentro,Ya implementado,Sin descripción oficial en PokeAPI.
+887,hyper-drill,Hipertaladro,Normal,Físico,100,Dentro,Ya implementado,Sin descripción oficial en PokeAPI.
+888,twin-beam,Láser Doble,Psíquico,Especial,40,Dentro,Ya implementado,Sin descripción oficial en PokeAPI.
+889,rage-fist,Puño Furia,Fantasma,Físico,50,Dentro,Ya implementado,Sin descripción oficial en PokeAPI.
+890,armor-cannon,Cañón Armadura,Fuego,Especial,120,Dentro,Ya implementado,Sin descripción oficial en PokeAPI.
+891,bitter-blade,Espada Lamento,Fuego,Físico,90,Dentro,Ya implementado,Sin descripción oficial en PokeAPI.
+892,double-shock,Electropalmas,Eléctrico,Físico,120,Fuera,Mecánica no soportada,Sin descripción oficial en PokeAPI.
+893,gigaton-hammer,Martillo Colosal,Acero,Físico,160,Fuera,Bloqueo de turnos,Sin descripción oficial en PokeAPI.
+894,comeuppance,Resarcimiento,Siniestro,Físico,1,Fuera,Contraataque,Sin descripción oficial en PokeAPI.
+895,aqua-cutter,Tajo Acuático,Agua,Físico,70,Dentro,Ya implementado,Sin descripción oficial en PokeAPI.
+896,blazing-torque,Pirochoque,Fuego,Físico,80,Dentro,Ya implementado,Sin descripción oficial en PokeAPI.
+897,wicked-torque,Ominochoque,Siniestro,Físico,80,Dentro,Ya implementado,Sin descripción oficial en PokeAPI.
+898,noxious-torque,Ponzochoque,Veneno,Físico,100,Dentro,Ya implementado,Sin descripción oficial en PokeAPI.
+899,combat-torque,Pugnachoque,Lucha,Físico,100,Dentro,Ya implementado,Sin descripción oficial en PokeAPI.
+900,magical-torque,Feerichoque,Hada,Físico,100,Dentro,Ya implementado,Sin descripción oficial en PokeAPI.
+901,blood-moon,Luna Roja,Normal,Especial,140,Dentro,Ya implementado,Sin descripción oficial en PokeAPI.
+902,matcha-gotcha,Cañón Batidor,Planta,Especial,80,Dentro,Ya implementado,Sin descripción oficial en PokeAPI.
+903,syrup-bomb,Bomba Caramelo,Planta,Especial,60,Dentro,Ya implementado,Sin descripción oficial en PokeAPI.
+904,ivy-cudgel,Garrote Liana,Planta,Físico,100,Fuera,Mecánica no soportada,Sin descripción oficial en PokeAPI.
+905,electro-shot,Electrorrayo,Eléctrico,Especial,130,Dentro,Ya implementado,Sin descripción oficial en PokeAPI.
+906,tera-starstorm,Teraclúster,Normal,Especial,120,Fuera,Mecánica no soportada,Sin descripción oficial en PokeAPI.
+907,fickle-beam,Láser Veleidoso,Dragón,Especial,80,Fuera,Mecánica no soportada,Sin descripción oficial en PokeAPI.
+908,burning-bulwark,Llama Protectora,Fuego,Estado,0,Fuera,Mecánica no soportada,Sin descripción oficial en PokeAPI.
+909,thunderclap,Relámpago Súbito,Eléctrico,Especial,70,Fuera,Prioridad condicional,Sin descripción oficial en PokeAPI.
+910,mighty-cleave,Filo Potente,Roca,Físico,95,Dentro,Ya implementado,Sin descripción oficial en PokeAPI.
+911,tachyon-cutter,Tajo Taquión,Acero,Especial,50,Dentro,Ya implementado,Sin descripción oficial en PokeAPI.
+912,hard-press,Prensa Metálica,Acero,Físico,0,Dentro,Ya implementado,Sin descripción oficial en PokeAPI.
+913,dragon-cheer,Bramido Dragón,Dragón,Estado,0,Dentro,Ya implementado,Sin descripción oficial en PokeAPI.
+914,alluring-voice,Canto Encantador,Hada,Especial,80,Dentro,Ya implementado,Sin descripción oficial en PokeAPI.
+915,temper-flare,Cólera Ardiente,Fuego,Físico,75,Dentro,Ya implementado,Sin descripción oficial en PokeAPI.
+916,supercell-slam,Plancha Voltaica,Eléctrico,Físico,100,Dentro,Ya implementado,Sin descripción oficial en PokeAPI.
+917,psychic-noise,Psicorruido,Psíquico,Especial,75,Fuera,Mecánica no soportada,Sin descripción oficial en PokeAPI.
+918,upper-hand,Palma Rauda,Lucha,Físico,65,Fuera,Prioridad condicional,Sin descripción oficial en PokeAPI.
+919,malignant-chain,Cadena Virulenta,Veneno,Especial,100,Dentro,Ya implementado,Sin descripción oficial en PokeAPI.
+10001,shadow-rush,Carga Oscura,Sombra,Físico,55,Fuera,No estándar / variante,Sin descripción oficial en PokeAPI.
+10002,shadow-blast,Soplo Oscuro,Sombra,Físico,80,Fuera,No estándar / variante,Sin descripción oficial en PokeAPI.
+10003,shadow-blitz,Vigor Oscuro,Sombra,Físico,40,Fuera,No estándar / variante,Sin descripción oficial en PokeAPI.
+10004,shadow-bolt,Rayo Oscuro,Sombra,Especial,75,Fuera,No estándar / variante,Sin descripción oficial en PokeAPI.
+10005,shadow-break,Brío Oscuro,Sombra,Físico,75,Fuera,No estándar / variante,Sin descripción oficial en PokeAPI.
+10006,shadow-chill,Hielo Oscuro,Sombra,Especial,75,Fuera,No estándar / variante,Sin descripción oficial en PokeAPI.
+10007,shadow-end,Fin Oscuro,Sombra,Físico,120,Fuera,No estándar / variante,Sin descripción oficial en PokeAPI.
+10008,shadow-fire,Fuego Oscuro,Sombra,Especial,75,Fuera,No estándar / variante,Sin descripción oficial en PokeAPI.
+10009,shadow-rave,Rabia Oscura,Sombra,Especial,70,Fuera,No estándar / variante,Sin descripción oficial en PokeAPI.
+10010,shadow-storm,Tifón Oscuro,Sombra,Especial,95,Fuera,No estándar / variante,Sin descripción oficial en PokeAPI.
+10011,shadow-wave,Onda Oscura,Sombra,Especial,50,Fuera,No estándar / variante,Sin descripción oficial en PokeAPI.
+10012,shadow-down,Ocaso Oscuro,Sombra,Estado,,Fuera,No estándar / variante,Sin descripción oficial en PokeAPI.
+10013,shadow-half,Mitad Oscura,Sombra,Especial,,Fuera,No estándar / variante,Sin descripción oficial en PokeAPI.
+10014,shadow-hold,Traba Oscura,Sombra,Estado,,Fuera,No estándar / variante,Sin descripción oficial en PokeAPI.
+10015,shadow-mist,Bruma Oscura,Sombra,Estado,,Fuera,No estándar / variante,Sin descripción oficial en PokeAPI.
+10016,shadow-panic,Miedo Oscuro,Sombra,Estado,,Fuera,No estándar / variante,Sin descripción oficial en PokeAPI.
+10017,shadow-shed,Muda Oscura,Sombra,Estado,,Fuera,No estándar / variante,Sin descripción oficial en PokeAPI.
+10018,shadow-sky,Cielo Oscuro,Sombra,Estado,,Fuera,No estándar / variante,Sin descripción oficial en PokeAPI.

@@ -8,14 +8,18 @@ use Src\Battle\Domain\AccionBatalla;
 use Src\Battle\Domain\Combatiente;
 use Src\Battle\Domain\MovimientoBatalla;
 use Src\Battle\Domain\ReglasBatalla;
+use Src\Shared\Tipos\TipoPokemon;
 
 class ManejadorSTAB extends ManejadorDanioAbstracto
 {
     protected function process(AccionBatalla $action, float $daño): float
     {
-        return self::tieneStab($action->attacker, $action->move)
-            ? $daño * ReglasBatalla::BONUS_STAB
-            : $daño;
+        $tipo = $action->attacker->tipoEfectivoMovimiento($action);
+        $multiplicador = self::tieneStabDeTipo($action->attacker, $tipo)
+            ? ReglasBatalla::BONUS_STAB
+            : 1.0;
+
+        return $daño * $multiplicador * $action->attacker->multiplicadorStab($action);
     }
 
     /**
@@ -24,8 +28,13 @@ class ManejadorSTAB extends ManejadorDanioAbstracto
      */
     public static function tieneStab(Combatiente $atacante, MovimientoBatalla $movimiento): bool
     {
-        foreach ($atacante->pokemon()->tiposCollection() as $tipo) {
-            if ($tipo === $movimiento->tipo) {
+        return self::tieneStabDeTipo($atacante, $movimiento->tipo);
+    }
+
+    public static function tieneStabDeTipo(Combatiente $atacante, TipoPokemon $tipo): bool
+    {
+        foreach ($atacante->tiposDefensivos() as $tipoAtacante) {
+            if ($tipoAtacante === $tipo) {
                 return true;
             }
         }

@@ -26,7 +26,16 @@ class ManejadorClima extends ManejadorDanioAbstracto
             return $daño;
         }
 
-        $tipoMovimiento = $action->move->tipo;
+        $perfil = $action->move->perfil;
+        if ($perfil->climaPotenciador !== null && $perfil->climaPotenciador === $weather) {
+            return $daño * $perfil->factorClima;
+        }
+
+        if ($perfil->ignoraDebuffClima) {
+            return $daño;
+        }
+
+        $tipoMovimiento = $action->attacker->tipoEfectivoMovimiento($action);
 
         $multiplicador = match ($weather) {
             TipoClima::SEQUIA => $this->multiplicadorSequia($tipoMovimiento),
@@ -81,7 +90,7 @@ class ManejadorClima extends ManejadorDanioAbstracto
     {
         if ($action->move->esFisico()) {
             $defensor = $action->defender;
-            foreach ($defensor->pokemon()->tiposCollection() as $tipoDef) {
+            foreach ($defensor->tiposDefensivos() as $tipoDef) {
                 if (in_array($tipoDef, [TipoPokemon::ROCA, TipoPokemon::TIERRA, TipoPokemon::ACERO], true)) {
                     // +25% Def → ataque físico hace -20% (1/1.25 = 0.8)
                     return 0.80;

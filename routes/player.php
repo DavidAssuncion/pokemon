@@ -42,11 +42,16 @@ Route::patch('/teams/member/{member}/role', [TeamController::class, 'updateMembe
 // Formación persistida del equipo (combate: vanguardia/retaguardia por slot)
 Route::patch('/teams/{team}/formacion', [TeamController::class, 'updateFormacion']);
 
+// Update team postures per slot — { posturas: { slot: 'atacar'|'guardia'|'cubrir' } }
+Route::patch('/teams/{team}/posturas', [TeamController::class, 'updatePosturas']);
+Route::patch('/teams/{team}/items', [TeamController::class, 'updateItems']);
+
 // Reclutado detail: type candy feeding + evolution + release
 Route::get('/reclutado/{reclutado}', [ReclutadoController::class, 'show']);
 Route::post('/reclutado/{reclutado}/dar-caramelo', [ReclutadoController::class, 'darCaramelo']);
 Route::post('/reclutado/{reclutado}/dar-evs', [ReclutadoController::class, 'darEvs']);
 Route::post('/reclutado/{reclutado}/evolucionar', [ReclutadoController::class, 'evolucionar']);
+Route::patch('/reclutado/{reclutado}/loadout', [ReclutadoController::class, 'actualizarLoadout']);
 Route::delete('/reclutado/{reclutado}', [ReclutadoController::class, 'destroy']);
 
 // Opciones de evolución bajo demanda (usado por el modal de /equipos)

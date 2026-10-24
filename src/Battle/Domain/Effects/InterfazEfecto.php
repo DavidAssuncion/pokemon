@@ -27,6 +27,12 @@ interface InterfazEfecto
 
     public function onRoundEnd(Combatiente $portador, AgregadoBatalla $battle): void;
 
+    /**
+     * Cierre de ronda después de daños por estado/clima y notificaciones de
+     * muerte. Lo usa Comealmas para ver todos los KOs de la ronda.
+     */
+    public function onRoundEndFinal(Combatiente $portador, AgregadoBatalla $battle): void;
+
     // ─── Event hooks (per-combatant dispatch) ─────────────────
 
     public function onDamageDealt(Combatiente $portador, Combatiente $target, float $daño, AgregadoBatalla $battle): void;

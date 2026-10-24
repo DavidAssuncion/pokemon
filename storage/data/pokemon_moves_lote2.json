@@ -1,0 +1,4258 @@
+{
+  "1": [
+    "double-edge",
+    "power-whip"
+  ],
+  "2": [
+    "double-edge",
+    "power-whip"
+  ],
+  "3": [
+    "double-edge",
+    "power-whip"
+  ],
+  "6": [
+    "dragon-claw",
+    "air-slash"
+  ],
+  "7": [
+    "aqua-tail"
+  ],
+  "8": [
+    "aqua-tail"
+  ],
+  "9": [
+    "aqua-tail",
+    "aqua-jet"
+  ],
+  "12": [
+    "air-slash"
+  ],
+  "15": [
+    "endeavor",
+    "assurance",
+    "venoshock",
+    "fury-cutter"
+  ],
+  "16": [
+    "air-slash",
+    "hurricane"
+  ],
+  "17": [
+    "air-slash",
+    "hurricane"
+  ],
+  "18": [
+    "air-slash",
+    "hurricane"
+  ],
+  "19": [
+    "superdiente",
+    "endeavor",
+    "assurance",
+    "double-edge"
+  ],
+  "20": [
+    "superdiente",
+    "endeavor",
+    "assurance",
+    "double-edge"
+  ],
+  "21": [
+    "assurance"
+  ],
+  "22": [
+    "assurance"
+  ],
+  "25": [
+    "thunder",
+    "electro-ball"
+  ],
+  "26": [
+    "thunder",
+    "electro-ball"
+  ],
+  "27": [
+    "desenrrollar",
+    "fury-cutter",
+    "gyro-ball"
+  ],
+  "28": [
+    "desenrrollar",
+    "fury-cutter",
+    "gyro-ball"
+  ],
+  "29": [
+    "superdiente"
+  ],
+  "30": [
+    "superdiente"
+  ],
+  "31": [
+    "body-slam",
+    "superpower"
+  ],
+  "34": [
+    "megahorn"
+  ],
+  "35": [
+    "stored-power",
+    "body-slam",
+    "double-edge"
+  ],
+  "36": [
+    "stored-power",
+    "double-edge"
+  ],
+  "37": [
+    "payback",
+    "hex"
+  ],
+  "38": [
+    "hex"
+  ],
+  "39": [
+    "body-slam",
+    "double-edge",
+    "desenrrollar",
+    "gyro-ball"
+  ],
+  "40": [
+    "double-edge",
+    "body-slam",
+    "gyro-ball"
+  ],
+  "41": [
+    "air-slash",
+    "acrobatics",
+    "venoshock"
+  ],
+  "42": [
+    "air-slash",
+    "acrobatics",
+    "venoshock"
+  ],
+  "46": [
+    "fury-cutter",
+    "venoshock"
+  ],
+  "47": [
+    "fury-cutter",
+    "venoshock"
+  ],
+  "48": [
+    "zen-headbutt"
+  ],
+  "49": [
+    "zen-headbutt",
+    "air-slash"
+  ],
+  "52": [
+    "assurance"
+  ],
+  "53": [
+    "assurance"
+  ],
+  "54": [
+    "zen-headbutt",
+    "aqua-tail"
+  ],
+  "55": [
+    "zen-headbutt",
+    "aqua-jet",
+    "aqua-tail"
+  ],
+  "56": [
+    "low-kick",
+    "assurance",
+    "punishment",
+    "final-gambit"
+  ],
+  "57": [
+    "low-kick",
+    "assurance",
+    "punishment",
+    "final-gambit",
+    "rage-fist"
+  ],
+  "59": [
+    "double-edge"
+  ],
+  "60": [
+    "body-slam",
+    "low-kick",
+    "double-edge"
+  ],
+  "61": [
+    "body-slam",
+    "low-kick",
+    "double-edge"
+  ],
+  "62": [
+    "body-slam",
+    "superpower",
+    "double-edge"
+  ],
+  "64": [
+    "future-sight",
+    "psyshock",
+    "zen-headbutt"
+  ],
+  "65": [
+    "future-sight",
+    "psyshock",
+    "zen-headbutt"
+  ],
+  "66": [
+    "low-kick",
+    "superpower",
+    "double-edge",
+    "mach-punch"
+  ],
+  "67": [
+    "low-kick",
+    "superpower",
+    "double-edge",
+    "mach-punch"
+  ],
+  "68": [
+    "low-kick",
+    "superpower",
+    "double-edge",
+    "mach-punch"
+  ],
+  "69": [
+    "power-whip"
+  ],
+  "70": [
+    "power-whip"
+  ],
+  "71": [
+    "leaf-storm",
+    "power-whip"
+  ],
+  "72": [
+    "hex",
+    "brine"
+  ],
+  "73": [
+    "hex",
+    "brine"
+  ],
+  "74": [
+    "desenrrollar",
+    "double-edge"
+  ],
+  "75": [
+    "desenrrollar",
+    "double-edge"
+  ],
+  "76": [
+    "desenrrollar",
+    "double-edge",
+    "heavy-slam"
+  ],
+  "77": [
+    "double-edge"
+  ],
+  "78": [
+    "megahorn",
+    "double-edge"
+  ],
+  "79": [
+    "zen-headbutt"
+  ],
+  "80": [
+    "zen-headbutt"
+  ],
+  "81": [
+    "gyro-ball",
+    "electro-ball",
+    "thunder"
+  ],
+  "82": [
+    "gyro-ball",
+    "electro-ball",
+    "thunder"
+  ],
+  "83": [
+    "fury-cutter",
+    "air-slash",
+    "acrobatics"
+  ],
+  "84": [
+    "endeavor"
+  ],
+  "85": [
+    "endeavor"
+  ],
+  "86": [
+    "ice-shard",
+    "aqua-jet",
+    "brine",
+    "aqua-tail",
+    "waterfall",
+    "double-edge"
+  ],
+  "87": [
+    "ice-shard",
+    "aqua-jet",
+    "brine",
+    "aqua-tail",
+    "waterfall",
+    "double-edge"
+  ],
+  "90": [
+    "ice-shard",
+    "brine"
+  ],
+  "91": [
+    "icicle-crash",
+    "ice-shard"
+  ],
+  "92": [
+    "payback",
+    "hex",
+    "venoshock"
+  ],
+  "93": [
+    "payback",
+    "hex",
+    "venoshock"
+  ],
+  "94": [
+    "payback",
+    "hex",
+    "venoshock"
+  ],
+  "95": [
+    "double-edge",
+    "gyro-ball",
+    "desenrrollar"
+  ],
+  "96": [
+    "future-sight",
+    "zen-headbutt",
+    "psyshock"
+  ],
+  "97": [
+    "future-sight",
+    "zen-headbutt",
+    "psyshock"
+  ],
+  "98": [
+    "brine"
+  ],
+  "99": [
+    "brine"
+  ],
+  "100": [
+    "desenrrollar",
+    "gyro-ball",
+    "electro-ball"
+  ],
+  "101": [
+    "desenrrollar",
+    "gyro-ball",
+    "electro-ball"
+  ],
+  "103": [
+    "leaf-storm",
+    "psyshock",
+    "power-whip"
+  ],
+  "104": [
+    "double-edge",
+    "endeavor"
+  ],
+  "105": [
+    "double-edge",
+    "endeavor"
+  ],
+  "106": [
+    "facade",
+    "low-kick"
+  ],
+  "107": [
+    "mach-punch"
+  ],
+  "108": [
+    "desenrrollar",
+    "power-whip",
+    "zen-headbutt",
+    "double-edge"
+  ],
+  "109": [
+    "assurance",
+    "gyro-ball"
+  ],
+  "110": [
+    "assurance",
+    "gyro-ball"
+  ],
+  "111": [
+    "megahorn",
+    "double-edge"
+  ],
+  "112": [
+    "megahorn",
+    "double-edge"
+  ],
+  "113": [
+    "double-edge"
+  ],
+  "114": [
+    "power-whip"
+  ],
+  "116": [
+    "brine",
+    "waterfall"
+  ],
+  "117": [
+    "brine",
+    "waterfall"
+  ],
+  "118": [
+    "waterfall",
+    "megahorn"
+  ],
+  "119": [
+    "waterfall",
+    "megahorn"
+  ],
+  "120": [
+    "gyro-ball",
+    "brine"
+  ],
+  "121": [
+    "brine"
+  ],
+  "122": [
+    "zen-headbutt"
+  ],
+  "123": [
+    "fury-cutter",
+    "air-slash"
+  ],
+  "124": [
+    "body-slam",
+    "blizzard",
+    "avalanche"
+  ],
+  "125": [
+    "thunder",
+    "low-kick",
+    "electro-ball"
+  ],
+  "126": [
+    "low-kick"
+  ],
+  "127": [
+    "superpower"
+  ],
+  "128": [
+    "payback",
+    "zen-headbutt",
+    "double-edge",
+    "assurance",
+    "raging-bull"
+  ],
+  "130": [
+    "aqua-tail",
+    "hurricane",
+    "waterfall",
+    "brine"
+  ],
+  "131": [
+    "body-slam",
+    "ice-shard",
+    "brine",
+    "blizzard"
+  ],
+  "133": [
+    "double-edge"
+  ],
+  "134": [
+    "agua_lodosa",
+    "double-edge",
+    "aqua-tail"
+  ],
+  "135": [
+    "thunder",
+    "double-edge"
+  ],
+  "136": [
+    "double-edge"
+  ],
+  "137": [
+    "double-edge"
+  ],
+  "138": [
+    "desenrrollar",
+    "brine"
+  ],
+  "139": [
+    "desenrrollar",
+    "brine"
+  ],
+  "140": [
+    "aqua-jet",
+    "brine"
+  ],
+  "141": [
+    "fury-cutter",
+    "aqua-jet",
+    "brine"
+  ],
+  "143": [
+    "body-slam",
+    "double-edge",
+    "desenrrollar",
+    "heavy-slam",
+    "superpower",
+    "zen-headbutt"
+  ],
+  "144": [
+    "blizzard",
+    "ice-shard",
+    "hurricane",
+    "freeze-dry"
+  ],
+  "145": [
+    "thunder"
+  ],
+  "146": [
+    "air-slash",
+    "hurricane",
+    "overheat"
+  ],
+  "147": [
+    "aqua-tail"
+  ],
+  "148": [
+    "aqua-tail"
+  ],
+  "149": [
+    "aqua-tail",
+    "hurricane",
+    "aqua-jet"
+  ],
+  "150": [
+    "future-sight"
+  ],
+  "152": [
+    "body-slam"
+  ],
+  "153": [
+    "body-slam"
+  ],
+  "154": [
+    "body-slam"
+  ],
+  "155": [
+    "desenrrollar",
+    "double-edge",
+    "overheat"
+  ],
+  "156": [
+    "desenrrollar",
+    "double-edge",
+    "overheat"
+  ],
+  "157": [
+    "gyro-ball",
+    "desenrrollar",
+    "double-edge",
+    "overheat"
+  ],
+  "158": [
+    "aqua-tail",
+    "superpower",
+    "low-kick"
+  ],
+  "159": [
+    "aqua-tail",
+    "superpower",
+    "low-kick"
+  ],
+  "160": [
+    "aqua-tail",
+    "superpower",
+    "low-kick"
+  ],
+  "161": [
+    "double-edge"
+  ],
+  "162": [
+    "double-edge"
+  ],
+  "163": [
+    "air-slash",
+    "zen-headbutt"
+  ],
+  "164": [
+    "air-slash",
+    "zen-headbutt"
+  ],
+  "165": [
+    "double-edge",
+    "mach-punch",
+    "air-slash"
+  ],
+  "166": [
+    "double-edge",
+    "mach-punch",
+    "air-slash"
+  ],
+  "167": [
+    "shadow-sneak"
+  ],
+  "168": [
+    "shadow-sneak"
+  ],
+  "169": [
+    "air-slash",
+    "acrobatics",
+    "venoshock"
+  ],
+  "170": [
+    "electro-ball"
+  ],
+  "171": [
+    "electro-ball"
+  ],
+  "172": [
+    "thunder"
+  ],
+  "173": [
+    "double-edge"
+  ],
+  "175": [
+    "double-edge"
+  ],
+  "176": [
+    "double-edge",
+    "air-slash"
+  ],
+  "177": [
+    "future-sight",
+    "stored-power"
+  ],
+  "178": [
+    "future-sight",
+    "stored-power",
+    "air-slash"
+  ],
+  "179": [
+    "thunder",
+    "electro-ball"
+  ],
+  "180": [
+    "thunder",
+    "electro-ball"
+  ],
+  "181": [
+    "thunder",
+    "electro-ball"
+  ],
+  "182": [
+    "leaf-storm"
+  ],
+  "183": [
+    "desenrrollar",
+    "double-edge",
+    "aqua-tail",
+    "superpower"
+  ],
+  "184": [
+    "desenrrollar",
+    "double-edge",
+    "aqua-tail",
+    "superpower"
+  ],
+  "185": [
+    "low-kick",
+    "double-edge",
+    "desenrrollar"
+  ],
+  "186": [
+    "body-slam",
+    "double-edge"
+  ],
+  "187": [
+    "acrobatics"
+  ],
+  "188": [
+    "acrobatics"
+  ],
+  "189": [
+    "acrobatics"
+  ],
+  "190": [
+    "double-edge"
+  ],
+  "191": [
+    "endeavor",
+    "double-edge"
+  ],
+  "192": [
+    "leaf-storm",
+    "double-edge",
+    "endeavor"
+  ],
+  "193": [
+    "air-slash"
+  ],
+  "194": [
+    "agua_lodosa",
+    "aqua-tail"
+  ],
+  "195": [
+    "agua_lodosa",
+    "aqua-tail"
+  ],
+  "196": [
+    "future-sight",
+    "double-edge"
+  ],
+  "197": [
+    "assurance",
+    "double-edge",
+    "foul-play"
+  ],
+  "198": [
+    "assurance",
+    "foul-play",
+    "air-slash"
+  ],
+  "199": [
+    "zen-headbutt"
+  ],
+  "200": [
+    "payback",
+    "hex",
+    "shadow-sneak"
+  ],
+  "203": [
+    "assurance",
+    "zen-headbutt"
+  ],
+  "204": [
+    "double-edge",
+    "payback",
+    "gyro-ball",
+    "desenrrollar"
+  ],
+  "205": [
+    "double-edge",
+    "payback",
+    "gyro-ball",
+    "heavy-slam",
+    "desenrrollar"
+  ],
+  "206": [
+    "endeavor",
+    "desenrrollar",
+    "double-edge",
+    "body-slam",
+    "air-slash"
+  ],
+  "207": [
+    "fury-cutter",
+    "acrobatics"
+  ],
+  "208": [
+    "double-edge",
+    "gyro-ball",
+    "desenrrollar"
+  ],
+  "209": [
+    "payback"
+  ],
+  "210": [
+    "payback"
+  ],
+  "211": [
+    "desenrrollar",
+    "brine",
+    "aqua-tail"
+  ],
+  "212": [
+    "fury-cutter",
+    "air-slash"
+  ],
+  "213": [
+    "desenrrollar"
+  ],
+  "214": [
+    "megahorn",
+    "double-edge"
+  ],
+  "215": [
+    "beat-up",
+    "ice-shard",
+    "punishment",
+    "blizzard"
+  ],
+  "216": [
+    "payback",
+    "double-edge"
+  ],
+  "217": [
+    "payback",
+    "double-edge"
+  ],
+  "218": [
+    "body-slam"
+  ],
+  "219": [
+    "body-slam"
+  ],
+  "220": [
+    "blizzard",
+    "ice-shard",
+    "icicle-crash",
+    "double-edge"
+  ],
+  "221": [
+    "blizzard",
+    "ice-shard",
+    "icicle-crash",
+    "double-edge"
+  ],
+  "222": [
+    "brine"
+  ],
+  "226": [
+    "air-slash",
+    "double-edge"
+  ],
+  "227": [
+    "air-slash",
+    "payback"
+  ],
+  "228": [
+    "beat-up",
+    "foul-play",
+    "payback"
+  ],
+  "229": [
+    "beat-up",
+    "foul-play",
+    "payback"
+  ],
+  "230": [
+    "brine"
+  ],
+  "231": [
+    "desenrrollar",
+    "double-edge"
+  ],
+  "232": [
+    "desenrrollar",
+    "assurance",
+    "double-edge"
+  ],
+  "234": [
+    "zen-headbutt",
+    "double-edge"
+  ],
+  "237": [
+    "triple-kick",
+    "endeavor",
+    "gyro-ball"
+  ],
+  "238": [
+    "blizzard",
+    "avalanche"
+  ],
+  "239": [
+    "thunder",
+    "low-kick",
+    "electro-ball"
+  ],
+  "240": [
+    "low-kick"
+  ],
+  "241": [
+    "desenrrollar",
+    "body-slam",
+    "zen-headbutt",
+    "gyro-ball"
+  ],
+  "242": [
+    "double-edge"
+  ],
+  "243": [
+    "thunder"
+  ],
+  "245": [
+    "blizzard"
+  ],
+  "246": [
+    "payback"
+  ],
+  "247": [
+    "payback"
+  ],
+  "248": [
+    "payback"
+  ],
+  "249": [
+    "future-sight",
+    "punishment",
+    "weather-ball"
+  ],
+  "250": [
+    "future-sight",
+    "punishment",
+    "weather-ball",
+    "overheat"
+  ],
+  "251": [
+    "future-sight",
+    "leaf-storm"
+  ],
+  "252": [
+    "endeavor",
+    "assurance",
+    "leaf-storm"
+  ],
+  "253": [
+    "fury-cutter",
+    "leaf-storm",
+    "assurance",
+    "endeavor"
+  ],
+  "254": [
+    "fury-cutter",
+    "leaf-storm",
+    "assurance",
+    "endeavor"
+  ],
+  "258": [
+    "endeavor"
+  ],
+  "259": [
+    "agua_lodosa",
+    "endeavor"
+  ],
+  "260": [
+    "agua_lodosa",
+    "endeavor"
+  ],
+  "261": [
+    "assurance"
+  ],
+  "262": [
+    "assurance"
+  ],
+  "263": [
+    "double-edge"
+  ],
+  "264": [
+    "double-edge"
+  ],
+  "267": [
+    "venoshock",
+    "air-slash"
+  ],
+  "269": [
+    "venoshock"
+  ],
+  "270": [
+    "zen-headbutt"
+  ],
+  "271": [
+    "zen-headbutt"
+  ],
+  "272": [
+    "zen-headbutt"
+  ],
+  "273": [
+    "desenrrollar",
+    "payback"
+  ],
+  "274": [
+    "desenrrollar",
+    "payback"
+  ],
+  "275": [
+    "leaf-storm",
+    "hurricane",
+    "desenrrollar",
+    "payback"
+  ],
+  "276": [
+    "endeavor",
+    "air-slash"
+  ],
+  "277": [
+    "endeavor",
+    "air-slash"
+  ],
+  "278": [
+    "air-slash",
+    "hurricane"
+  ],
+  "279": [
+    "payback",
+    "hurricane",
+    "brine",
+    "air-slash"
+  ],
+  "280": [
+    "future-sight",
+    "stored-power"
+  ],
+  "281": [
+    "future-sight",
+    "stored-power"
+  ],
+  "282": [
+    "future-sight",
+    "stored-power"
+  ],
+  "283": [
+    "aqua-jet"
+  ],
+  "284": [
+    "air-slash",
+    "aqua-jet"
+  ],
+  "286": [
+    "mach-punch"
+  ],
+  "289": [
+    "punishment"
+  ],
+  "291": [
+    "fury-cutter"
+  ],
+  "292": [
+    "shadow-sneak"
+  ],
+  "295": [
+    "boomburst"
+  ],
+  "296": [
+    "heavy-slam"
+  ],
+  "297": [
+    "brine",
+    "heavy-slam"
+  ],
+  "300": [
+    "double-edge",
+    "payback",
+    "facade"
+  ],
+  "301": [
+    "double-edge",
+    "facade",
+    "payback"
+  ],
+  "302": [
+    "shadow-sneak",
+    "punishment",
+    "zen-headbutt",
+    "foul-play"
+  ],
+  "304": [
+    "double-edge",
+    "heavy-slam"
+  ],
+  "305": [
+    "double-edge",
+    "heavy-slam"
+  ],
+  "306": [
+    "double-edge",
+    "heavy-slam"
+  ],
+  "307": [
+    "low-kick",
+    "zen-headbutt"
+  ],
+  "308": [
+    "zen-headbutt",
+    "low-kick"
+  ],
+  "309": [
+    "thunder"
+  ],
+  "310": [
+    "thunder"
+  ],
+  "311": [
+    "thunder",
+    "electro-ball"
+  ],
+  "312": [
+    "thunder",
+    "electro-ball"
+  ],
+  "313": [
+    "double-edge",
+    "zen-headbutt"
+  ],
+  "314": [
+    "zen-headbutt"
+  ],
+  "315": [
+    "venoshock"
+  ],
+  "317": [
+    "body-slam"
+  ],
+  "318": [
+    "assurance",
+    "aqua-jet"
+  ],
+  "319": [
+    "assurance",
+    "aqua-jet"
+  ],
+  "320": [
+    "desenrrollar",
+    "brine",
+    "heavy-slam",
+    "body-slam"
+  ],
+  "321": [
+    "desenrrollar",
+    "brine",
+    "heavy-slam",
+    "body-slam"
+  ],
+  "322": [
+    "double-edge"
+  ],
+  "323": [
+    "double-edge"
+  ],
+  "324": [
+    "body-slam"
+  ],
+  "325": [
+    "zen-headbutt",
+    "payback",
+    "psyshock"
+  ],
+  "326": [
+    "zen-headbutt",
+    "payback",
+    "psyshock"
+  ],
+  "327": [
+    "double-edge",
+    "body-slam"
+  ],
+  "328": [
+    "superpower"
+  ],
+  "329": [
+    "boomburst",
+    "superpower"
+  ],
+  "330": [
+    "dragon-claw",
+    "superpower",
+    "boomburst"
+  ],
+  "331": [
+    "payback",
+    "assurance"
+  ],
+  "332": [
+    "payback",
+    "assurance"
+  ],
+  "334": [
+    "hurricane"
+  ],
+  "335": [
+    "fury-cutter",
+    "facade"
+  ],
+  "336": [
+    "venoshock"
+  ],
+  "337": [
+    "future-sight",
+    "psyshock"
+  ],
+  "338": [
+    "zen-headbutt"
+  ],
+  "339": [
+    "future-sight",
+    "aqua-tail",
+    "agua_lodosa",
+    "zen-headbutt"
+  ],
+  "340": [
+    "future-sight",
+    "zen-headbutt",
+    "aqua-tail",
+    "agua_lodosa"
+  ],
+  "341": [
+    "endeavor"
+  ],
+  "342": [
+    "endeavor"
+  ],
+  "345": [
+    "brine"
+  ],
+  "346": [
+    "brine"
+  ],
+  "347": [
+    "fury-cutter",
+    "brine"
+  ],
+  "348": [
+    "fury-cutter",
+    "brine"
+  ],
+  "350": [
+    "aqua-tail"
+  ],
+  "351": [
+    "weather-ball",
+    "blizzard",
+    "hurricane"
+  ],
+  "352": [
+    "shadow-sneak",
+    "foul-play"
+  ],
+  "353": [
+    "shadow-sneak",
+    "hex"
+  ],
+  "354": [
+    "shadow-sneak",
+    "hex"
+  ],
+  "355": [
+    "future-sight",
+    "shadow-sneak",
+    "payback",
+    "hex"
+  ],
+  "356": [
+    "future-sight",
+    "shadow-sneak",
+    "payback",
+    "hex"
+  ],
+  "357": [
+    "body-slam",
+    "air-slash",
+    "leaf-storm"
+  ],
+  "358": [
+    "double-edge",
+    "stored-power"
+  ],
+  "359": [
+    "future-sight"
+  ],
+  "361": [
+    "blizzard",
+    "ice-shard",
+    "icicle-crash",
+    "weather-ball"
+  ],
+  "362": [
+    "blizzard",
+    "ice-shard",
+    "freeze-dry",
+    "bola_hielo",
+    "icicle-crash",
+    "weather-ball"
+  ],
+  "363": [
+    "bola_hielo",
+    "body-slam",
+    "blizzard",
+    "desenrrollar",
+    "brine"
+  ],
+  "364": [
+    "bola_hielo",
+    "body-slam",
+    "blizzard",
+    "desenrrollar",
+    "brine"
+  ],
+  "365": [
+    "bola_hielo",
+    "body-slam",
+    "blizzard",
+    "desenrrollar",
+    "brine"
+  ],
+  "367": [
+    "brine",
+    "aqua-tail"
+  ],
+  "368": [
+    "aqua-tail"
+  ],
+  "369": [
+    "double-edge",
+    "aqua-tail"
+  ],
+  "370": [
+    "brine"
+  ],
+  "371": [
+    "dragon-claw",
+    "double-edge",
+    "zen-headbutt"
+  ],
+  "372": [
+    "dragon-claw",
+    "double-edge",
+    "zen-headbutt"
+  ],
+  "373": [
+    "dragon-claw",
+    "double-edge",
+    "zen-headbutt"
+  ],
+  "375": [
+    "zen-headbutt"
+  ],
+  "376": [
+    "zen-headbutt"
+  ],
+  "377": [
+    "superpower"
+  ],
+  "378": [
+    "superpower",
+    "blizzard"
+  ],
+  "379": [
+    "superpower",
+    "heavy-slam"
+  ],
+  "380": [
+    "zen-headbutt",
+    "stored-power"
+  ],
+  "381": [
+    "zen-headbutt",
+    "stored-power"
+  ],
+  "382": [
+    "body-slam",
+    "double-edge",
+    "aqua-tail",
+    "agua_lodosa"
+  ],
+  "384": [
+    "dragon-claw",
+    "air-slash",
+    "hurricane"
+  ],
+  "385": [
+    "double-edge",
+    "future-sight",
+    "doom-desire",
+    "zen-headbutt"
+  ],
+  "386": [
+    "zen-headbutt",
+    "psyshock"
+  ],
+  "387": [
+    "leaf-storm",
+    "double-edge"
+  ],
+  "388": [
+    "leaf-storm",
+    "double-edge"
+  ],
+  "389": [
+    "leaf-storm",
+    "double-edge"
+  ],
+  "390": [
+    "facade",
+    "acrobatics",
+    "double-edge"
+  ],
+  "391": [
+    "mach-punch",
+    "acrobatics",
+    "facade",
+    "double-edge"
+  ],
+  "392": [
+    "mach-punch",
+    "punishment",
+    "acrobatics",
+    "facade",
+    "double-edge"
+  ],
+  "393": [
+    "brine",
+    "double-edge"
+  ],
+  "394": [
+    "brine",
+    "double-edge"
+  ],
+  "395": [
+    "brine",
+    "aqua-jet",
+    "double-edge"
+  ],
+  "396": [
+    "endeavor",
+    "final-gambit",
+    "air-slash",
+    "double-edge"
+  ],
+  "397": [
+    "endeavor",
+    "final-gambit",
+    "air-slash",
+    "double-edge"
+  ],
+  "398": [
+    "endeavor",
+    "final-gambit",
+    "air-slash",
+    "double-edge"
+  ],
+  "399": [
+    "desenrrollar",
+    "superdiente",
+    "superpower",
+    "double-edge"
+  ],
+  "400": [
+    "desenrrollar",
+    "superdiente",
+    "superpower",
+    "aqua-jet",
+    "aqua-tail",
+    "double-edge"
+  ],
+  "402": [
+    "fury-cutter"
+  ],
+  "403": [
+    "thunder"
+  ],
+  "404": [
+    "thunder"
+  ],
+  "405": [
+    "thunder"
+  ],
+  "406": [
+    "venoshock"
+  ],
+  "407": [
+    "weather-ball",
+    "venoshock"
+  ],
+  "408": [
+    "assurance",
+    "zen-headbutt",
+    "double-edge"
+  ],
+  "409": [
+    "assurance",
+    "endeavor",
+    "zen-headbutt",
+    "double-edge"
+  ],
+  "410": [
+    "heavy-slam",
+    "double-edge"
+  ],
+  "411": [
+    "heavy-slam",
+    "double-edge"
+  ],
+  "413": [
+    "leaf-storm"
+  ],
+  "414": [
+    "air-slash"
+  ],
+  "416": [
+    "fury-cutter",
+    "air-slash"
+  ],
+  "417": [
+    "superdiente",
+    "electro-ball",
+    "thunder"
+  ],
+  "418": [
+    "aqua-jet",
+    "aqua-tail",
+    "waterfall"
+  ],
+  "419": [
+    "aqua-jet",
+    "aqua-tail",
+    "waterfall"
+  ],
+  "420": [
+    "double-edge"
+  ],
+  "421": [
+    "double-edge"
+  ],
+  "422": [
+    "body-slam",
+    "agua_lodosa"
+  ],
+  "423": [
+    "body-slam",
+    "agua_lodosa"
+  ],
+  "424": [
+    "double-edge"
+  ],
+  "425": [
+    "payback",
+    "hex"
+  ],
+  "426": [
+    "payback",
+    "hex"
+  ],
+  "427": [
+    "double-edge"
+  ],
+  "428": [
+    "mach-punch",
+    "double-edge"
+  ],
+  "429": [
+    "hex",
+    "payback",
+    "shadow-sneak"
+  ],
+  "430": [
+    "foul-play",
+    "assurance",
+    "air-slash"
+  ],
+  "431": [
+    "double-edge"
+  ],
+  "432": [
+    "body-slam",
+    "double-edge"
+  ],
+  "433": [
+    "double-edge"
+  ],
+  "434": [
+    "venoshock",
+    "double-edge"
+  ],
+  "435": [
+    "venoshock",
+    "double-edge"
+  ],
+  "436": [
+    "gyro-ball",
+    "future-sight",
+    "payback",
+    "heavy-slam",
+    "hex"
+  ],
+  "437": [
+    "gyro-ball",
+    "future-sight",
+    "payback",
+    "heavy-slam",
+    "weather-ball",
+    "hex"
+  ],
+  "438": [
+    "low-kick",
+    "double-edge",
+    "desenrrollar"
+  ],
+  "439": [
+    "zen-headbutt"
+  ],
+  "440": [
+    "double-edge"
+  ],
+  "441": [
+    "air-slash",
+    "hurricane"
+  ],
+  "442": [
+    "shadow-sneak",
+    "payback",
+    "hex"
+  ],
+  "443": [
+    "dragon-claw",
+    "double-edge"
+  ],
+  "444": [
+    "dragon-claw",
+    "double-edge"
+  ],
+  "445": [
+    "dragon-claw",
+    "double-edge"
+  ],
+  "446": [
+    "body-slam",
+    "desenrrollar",
+    "zen-headbutt",
+    "double-edge"
+  ],
+  "447": [
+    "final-gambit"
+  ],
+  "448": [
+    "final-gambit",
+    "mach-punch"
+  ],
+  "449": [
+    "double-edge"
+  ],
+  "450": [
+    "double-edge"
+  ],
+  "451": [
+    "venoshock"
+  ],
+  "452": [
+    "venoshock"
+  ],
+  "453": [
+    "venoshock",
+    "low-kick"
+  ],
+  "454": [
+    "venoshock",
+    "low-kick"
+  ],
+  "455": [
+    "power-whip",
+    "grass-knot"
+  ],
+  "456": [
+    "air-slash"
+  ],
+  "457": [
+    "air-slash"
+  ],
+  "458": [
+    "air-slash",
+    "double-edge"
+  ],
+  "459": [
+    "ice-shard",
+    "blizzard",
+    "icicle-crash"
+  ],
+  "460": [
+    "ice-shard",
+    "blizzard",
+    "icicle-crash"
+  ],
+  "461": [
+    "assurance",
+    "punishment",
+    "beat-up",
+    "ice-shard",
+    "blizzard"
+  ],
+  "462": [
+    "gyro-ball",
+    "electro-ball",
+    "thunder"
+  ],
+  "463": [
+    "desenrrollar",
+    "power-whip",
+    "gyro-ball",
+    "zen-headbutt",
+    "double-edge"
+  ],
+  "464": [
+    "megahorn",
+    "double-edge"
+  ],
+  "465": [
+    "power-whip"
+  ],
+  "466": [
+    "low-kick",
+    "thunder",
+    "electro-ball"
+  ],
+  "467": [
+    "low-kick"
+  ],
+  "468": [
+    "air-slash",
+    "double-edge"
+  ],
+  "469": [
+    "air-slash"
+  ],
+  "470": [
+    "double-edge"
+  ],
+  "471": [
+    "ice-shard",
+    "blizzard",
+    "double-edge",
+    "freeze-dry"
+  ],
+  "472": [
+    "fury-cutter",
+    "acrobatics"
+  ],
+  "473": [
+    "blizzard",
+    "ice-shard",
+    "icicle-crash",
+    "double-edge"
+  ],
+  "474": [
+    "double-edge"
+  ],
+  "475": [
+    "fury-cutter",
+    "stored-power",
+    "future-sight"
+  ],
+  "476": [
+    "body-press"
+  ],
+  "477": [
+    "shadow-sneak",
+    "payback",
+    "future-sight",
+    "hex"
+  ],
+  "478": [
+    "ice-shard",
+    "blizzard",
+    "hex",
+    "icicle-crash"
+  ],
+  "479": [
+    "electro-ball",
+    "hex",
+    "thunder"
+  ],
+  "480": [
+    "future-sight"
+  ],
+  "481": [
+    "future-sight"
+  ],
+  "482": [
+    "future-sight"
+  ],
+  "483": [
+    "dragon-claw"
+  ],
+  "484": [
+    "dragon-claw",
+    "aqua-tail"
+  ],
+  "486": [
+    "superpower",
+    "zen-headbutt",
+    "payback",
+    "heavy-slam",
+    "body-press",
+    "facade"
+  ],
+  "487": [
+    "dragon-claw",
+    "shadow-sneak",
+    "hex"
+  ],
+  "488": [
+    "future-sight"
+  ],
+  "489": [
+    "zen-headbutt"
+  ],
+  "490": [
+    "zen-headbutt"
+  ],
+  "491": [
+    "shadow-sneak",
+    "hex"
+  ],
+  "492": [
+    "air-slash"
+  ],
+  "493": [
+    "punishment",
+    "future-sight"
+  ],
+  "494": [
+    "zen-headbutt",
+    "double-edge",
+    "final-gambit",
+    "stored-power",
+    "overheat"
+  ],
+  "495": [
+    "leaf-storm"
+  ],
+  "496": [
+    "leaf-storm"
+  ],
+  "497": [
+    "leaf-storm"
+  ],
+  "498": [
+    "desenrrollar",
+    "heat-crash",
+    "assurance"
+  ],
+  "499": [
+    "desenrrollar",
+    "heat-crash",
+    "assurance"
+  ],
+  "500": [
+    "desenrrollar",
+    "heat-crash",
+    "assurance"
+  ],
+  "501": [
+    "fury-cutter",
+    "aqua-jet",
+    "aqua-tail"
+  ],
+  "502": [
+    "fury-cutter",
+    "aqua-jet",
+    "aqua-tail"
+  ],
+  "503": [
+    "megahorn",
+    "fury-cutter",
+    "aqua-jet",
+    "aqua-tail"
+  ],
+  "504": [
+    "superdiente"
+  ],
+  "505": [
+    "low-kick",
+    "superdiente"
+  ],
+  "509": [
+    "assurance"
+  ],
+  "510": [
+    "assurance"
+  ],
+  "511": [
+    "acrobatics",
+    "grass-knot"
+  ],
+  "513": [
+    "acrobatics"
+  ],
+  "515": [
+    "acrobatics",
+    "brine"
+  ],
+  "517": [
+    "zen-headbutt",
+    "future-sight",
+    "stored-power"
+  ],
+  "518": [
+    "future-sight",
+    "zen-headbutt",
+    "stored-power"
+  ],
+  "519": [
+    "air-slash",
+    "facade"
+  ],
+  "520": [
+    "air-slash",
+    "facade"
+  ],
+  "521": [
+    "air-slash",
+    "facade"
+  ],
+  "527": [
+    "assurance",
+    "air-slash",
+    "future-sight",
+    "endeavor"
+  ],
+  "528": [
+    "assurance",
+    "air-slash",
+    "future-sight",
+    "endeavor"
+  ],
+  "531": [
+    "double-edge",
+    "zen-headbutt"
+  ],
+  "532": [
+    "low-kick",
+    "superpower"
+  ],
+  "533": [
+    "low-kick",
+    "superpower"
+  ],
+  "534": [
+    "low-kick",
+    "superpower"
+  ],
+  "535": [
+    "agua_lodosa"
+  ],
+  "536": [
+    "agua_lodosa"
+  ],
+  "537": [
+    "agua_lodosa"
+  ],
+  "538": [
+    "body-slam",
+    "superpower"
+  ],
+  "542": [
+    "leaf-storm"
+  ],
+  "543": [
+    "desenrrollar",
+    "venoshock",
+    "double-edge"
+  ],
+  "544": [
+    "desenrrollar",
+    "venoshock",
+    "double-edge"
+  ],
+  "545": [
+    "desenrrollar",
+    "megahorn",
+    "venoshock",
+    "double-edge"
+  ],
+  "546": [
+    "endeavor"
+  ],
+  "547": [
+    "hurricane",
+    "endeavor"
+  ],
+  "548": [
+    "leaf-storm"
+  ],
+  "549": [
+    "leaf-storm"
+  ],
+  "550": [
+    "aqua-jet",
+    "aqua-tail",
+    "double-edge",
+    "final-gambit"
+  ],
+  "551": [
+    "assurance",
+    "foul-play"
+  ],
+  "552": [
+    "assurance",
+    "foul-play"
+  ],
+  "553": [
+    "assurance",
+    "foul-play"
+  ],
+  "554": [
+    "desenrrollar",
+    "facade",
+    "superpower",
+    "overheat"
+  ],
+  "555": [
+    "desenrrollar",
+    "facade",
+    "superpower",
+    "overheat"
+  ],
+  "557": [
+    "fury-cutter"
+  ],
+  "558": [
+    "fury-cutter"
+  ],
+  "559": [
+    "low-kick",
+    "payback",
+    "facade",
+    "beat-up"
+  ],
+  "560": [
+    "low-kick",
+    "payback",
+    "facade",
+    "beat-up"
+  ],
+  "561": [
+    "air-slash"
+  ],
+  "562": [
+    "hex"
+  ],
+  "563": [
+    "hex"
+  ],
+  "564": [
+    "desenrrollar",
+    "aqua-jet",
+    "brine",
+    "aqua-tail"
+  ],
+  "565": [
+    "desenrrollar",
+    "aqua-jet",
+    "brine",
+    "aqua-tail"
+  ],
+  "566": [
+    "acrobatics",
+    "endeavor",
+    "dragon-claw"
+  ],
+  "567": [
+    "acrobatics",
+    "endeavor",
+    "dragon-claw"
+  ],
+  "569": [
+    "body-slam"
+  ],
+  "570": [
+    "foul-play",
+    "punishment"
+  ],
+  "571": [
+    "foul-play",
+    "punishment"
+  ],
+  "574": [
+    "psyshock",
+    "future-sight"
+  ],
+  "575": [
+    "psyshock",
+    "future-sight"
+  ],
+  "576": [
+    "psyshock",
+    "future-sight"
+  ],
+  "577": [
+    "desenrrollar",
+    "psyshock",
+    "endeavor",
+    "future-sight"
+  ],
+  "578": [
+    "desenrrollar",
+    "psyshock",
+    "endeavor",
+    "future-sight"
+  ],
+  "579": [
+    "desenrrollar",
+    "psyshock",
+    "endeavor",
+    "future-sight"
+  ],
+  "580": [
+    "air-slash",
+    "hurricane"
+  ],
+  "581": [
+    "air-slash",
+    "hurricane"
+  ],
+  "582": [
+    "avalanche",
+    "blizzard"
+  ],
+  "583": [
+    "avalanche",
+    "blizzard"
+  ],
+  "584": [
+    "weather-ball",
+    "avalanche",
+    "blizzard",
+    "freeze-dry",
+    "icicle-crash"
+  ],
+  "585": [
+    "double-edge",
+    "zen-headbutt"
+  ],
+  "586": [
+    "megahorn",
+    "double-edge",
+    "zen-headbutt"
+  ],
+  "587": [
+    "electro-ball",
+    "acrobatics"
+  ],
+  "588": [
+    "fury-cutter",
+    "double-edge"
+  ],
+  "589": [
+    "double-edge",
+    "fury-cutter"
+  ],
+  "592": [
+    "brine",
+    "hex"
+  ],
+  "593": [
+    "brine",
+    "hex"
+  ],
+  "594": [
+    "aqua-jet",
+    "brine"
+  ],
+  "595": [
+    "fury-cutter",
+    "electro-ball"
+  ],
+  "596": [
+    "fury-cutter",
+    "electro-ball"
+  ],
+  "597": [
+    "desenrrollar",
+    "gyro-ball",
+    "payback"
+  ],
+  "598": [
+    "desenrrollar",
+    "gyro-ball",
+    "power-whip",
+    "payback"
+  ],
+  "605": [
+    "zen-headbutt"
+  ],
+  "606": [
+    "zen-headbutt"
+  ],
+  "607": [
+    "hex",
+    "overheat"
+  ],
+  "608": [
+    "hex",
+    "overheat"
+  ],
+  "609": [
+    "hex",
+    "overheat"
+  ],
+  "610": [
+    "assurance",
+    "dragon-claw"
+  ],
+  "611": [
+    "assurance",
+    "dragon-claw"
+  ],
+  "612": [
+    "assurance",
+    "dragon-claw"
+  ],
+  "613": [
+    "brine",
+    "blizzard"
+  ],
+  "614": [
+    "superpower",
+    "brine",
+    "icicle-crash",
+    "blizzard",
+    "aqua-jet"
+  ],
+  "615": [
+    "ice-shard",
+    "freeze-dry"
+  ],
+  "616": [
+    "body-slam",
+    "final-gambit"
+  ],
+  "617": [
+    "final-gambit",
+    "body-slam"
+  ],
+  "618": [
+    "agua_lodosa"
+  ],
+  "621": [
+    "dragon-claw",
+    "superpower"
+  ],
+  "622": [
+    "desenrrollar",
+    "heavy-slam"
+  ],
+  "623": [
+    "desenrrollar",
+    "heavy-slam"
+  ],
+  "624": [
+    "fury-cutter",
+    "assurance"
+  ],
+  "625": [
+    "fury-cutter",
+    "assurance"
+  ],
+  "626": [
+    "megahorn"
+  ],
+  "627": [
+    "air-slash",
+    "double-edge"
+  ],
+  "628": [
+    "air-slash",
+    "superpower"
+  ],
+  "629": [
+    "punishment",
+    "air-slash"
+  ],
+  "630": [
+    "punishment",
+    "air-slash"
+  ],
+  "632": [
+    "fury-cutter",
+    "beat-up"
+  ],
+  "633": [
+    "body-slam",
+    "assurance"
+  ],
+  "634": [
+    "body-slam",
+    "assurance"
+  ],
+  "635": [
+    "body-slam",
+    "assurance"
+  ],
+  "636": [
+    "double-edge"
+  ],
+  "637": [
+    "hurricane",
+    "double-edge"
+  ],
+  "641": [
+    "air-slash",
+    "hurricane"
+  ],
+  "642": [
+    "thunder"
+  ],
+  "644": [
+    "zen-headbutt",
+    "dragon-claw",
+    "thunder"
+  ],
+  "645": [
+    "punishment"
+  ],
+  "646": [
+    "endeavor",
+    "blizzard",
+    "freeze-dry"
+  ],
+  "647": [
+    "aqua-jet",
+    "aqua-tail",
+    "secret-sword"
+  ],
+  "648": [
+    "acrobatics"
+  ],
+  "649": [
+    "fury-cutter"
+  ],
+  "650": [
+    "desenrrollar",
+    "body-slam"
+  ],
+  "651": [
+    "desenrrollar",
+    "body-slam"
+  ],
+  "652": [
+    "desenrrollar",
+    "body-slam"
+  ],
+  "653": [
+    "psyshock"
+  ],
+  "654": [
+    "psyshock"
+  ],
+  "655": [
+    "future-sight",
+    "psyshock"
+  ],
+  "658": [
+    "shadow-sneak"
+  ],
+  "659": [
+    "superdiente",
+    "facade"
+  ],
+  "660": [
+    "superdiente",
+    "facade"
+  ],
+  "661": [
+    "acrobatics"
+  ],
+  "662": [
+    "acrobatics"
+  ],
+  "663": [
+    "acrobatics"
+  ],
+  "666": [
+    "hurricane"
+  ],
+  "667": [
+    "endeavor",
+    "overheat"
+  ],
+  "668": [
+    "endeavor",
+    "overheat"
+  ],
+  "671": [
+    "grass-knot"
+  ],
+  "672": [
+    "double-edge"
+  ],
+  "673": [
+    "double-edge"
+  ],
+  "674": [
+    "body-slam"
+  ],
+  "675": [
+    "body-slam"
+  ],
+  "677": [
+    "psyshock"
+  ],
+  "678": [
+    "psyshock"
+  ],
+  "679": [
+    "fury-cutter",
+    "shadow-sneak"
+  ],
+  "680": [
+    "fury-cutter",
+    "shadow-sneak"
+  ],
+  "681": [
+    "fury-cutter",
+    "shadow-sneak"
+  ],
+  "684": [
+    "endeavor"
+  ],
+  "685": [
+    "endeavor"
+  ],
+  "686": [
+    "foul-play",
+    "payback",
+    "superpower"
+  ],
+  "687": [
+    "superpower",
+    "foul-play",
+    "payback"
+  ],
+  "688": [
+    "fury-cutter"
+  ],
+  "689": [
+    "fury-cutter"
+  ],
+  "690": [
+    "aqua-tail"
+  ],
+  "691": [
+    "aqua-tail"
+  ],
+  "692": [
+    "aqua-jet",
+    "agua_lodosa"
+  ],
+  "693": [
+    "aqua-jet",
+    "agua_lodosa"
+  ],
+  "694": [
+    "thunder"
+  ],
+  "695": [
+    "thunder"
+  ],
+  "696": [
+    "dragon-claw"
+  ],
+  "697": [
+    "dragon-claw"
+  ],
+  "698": [
+    "avalanche",
+    "blizzard",
+    "freeze-dry"
+  ],
+  "699": [
+    "freeze-dry",
+    "avalanche",
+    "blizzard"
+  ],
+  "700": [
+    "double-edge"
+  ],
+  "701": [
+    "endeavor"
+  ],
+  "702": [
+    "thunder",
+    "superdiente"
+  ],
+  "704": [
+    "body-slam",
+    "agua_lodosa"
+  ],
+  "705": [
+    "body-slam",
+    "agua_lodosa"
+  ],
+  "706": [
+    "body-slam",
+    "agua_lodosa",
+    "aqua-tail",
+    "power-whip"
+  ],
+  "707": [
+    "foul-play"
+  ],
+  "708": [
+    "hex"
+  ],
+  "709": [
+    "hex"
+  ],
+  "710": [
+    "shadow-sneak"
+  ],
+  "711": [
+    "shadow-sneak"
+  ],
+  "712": [
+    "bola_hielo",
+    "avalanche",
+    "blizzard",
+    "double-edge",
+    "ice-shard"
+  ],
+  "713": [
+    "bola_hielo",
+    "avalanche",
+    "blizzard",
+    "double-edge",
+    "body-slam",
+    "icicle-crash"
+  ],
+  "714": [
+    "superdiente",
+    "air-slash",
+    "hurricane"
+  ],
+  "715": [
+    "hurricane",
+    "boomburst",
+    "superdiente",
+    "air-slash"
+  ],
+  "716": [
+    "megahorn"
+  ],
+  "717": [
+    "hurricane",
+    "air-slash",
+    "foul-play"
+  ],
+  "720": [
+    "zen-headbutt"
+  ],
+  "721": [
+    "weather-ball",
+    "body-slam",
+    "overheat"
+  ],
+  "722": [
+    "shadow-sneak",
+    "air-slash",
+    "leaf-storm"
+  ],
+  "723": [
+    "shadow-sneak",
+    "air-slash",
+    "leaf-storm"
+  ],
+  "724": [
+    "shadow-sneak",
+    "leaf-storm"
+  ],
+  "728": [
+    "aqua-jet"
+  ],
+  "729": [
+    "aqua-jet"
+  ],
+  "730": [
+    "aqua-jet"
+  ],
+  "734": [
+    "superdiente",
+    "payback"
+  ],
+  "735": [
+    "superdiente",
+    "payback"
+  ],
+  "736": [
+    "acrobatics"
+  ],
+  "737": [
+    "acrobatics"
+  ],
+  "738": [
+    "air-slash",
+    "acrobatics"
+  ],
+  "739": [
+    "payback"
+  ],
+  "740": [
+    "avalanche"
+  ],
+  "741": [
+    "air-slash",
+    "hurricane",
+    "acrobatics"
+  ],
+  "745": [
+    "accelerock"
+  ],
+  "746": [
+    "brine",
+    "beat-up",
+    "aqua-tail",
+    "double-edge",
+    "endeavor"
+  ],
+  "747": [
+    "venoshock"
+  ],
+  "748": [
+    "venoshock"
+  ],
+  "749": [
+    "heavy-slam",
+    "superpower"
+  ],
+  "750": [
+    "heavy-slam",
+    "superpower"
+  ],
+  "753": [
+    "fury-cutter"
+  ],
+  "754": [
+    "fury-cutter"
+  ],
+  "757": [
+    "venoshock",
+    "endeavor"
+  ],
+  "758": [
+    "venoshock",
+    "endeavor"
+  ],
+  "759": [
+    "payback",
+    "double-edge",
+    "superpower"
+  ],
+  "760": [
+    "payback",
+    "double-edge",
+    "superpower"
+  ],
+  "762": [
+    "leaf-storm"
+  ],
+  "763": [
+    "leaf-storm",
+    "punishment",
+    "power-whip"
+  ],
+  "764": [
+    "grass-knot"
+  ],
+  "765": [
+    "stored-power",
+    "zen-headbutt",
+    "foul-play",
+    "future-sight"
+  ],
+  "766": [
+    "beat-up",
+    "double-edge"
+  ],
+  "768": [
+    "fury-cutter"
+  ],
+  "772": [
+    "air-slash",
+    "punishment",
+    "double-edge"
+  ],
+  "773": [
+    "air-slash",
+    "punishment",
+    "double-edge"
+  ],
+  "774": [
+    "desenrrollar",
+    "double-edge"
+  ],
+  "775": [
+    "desenrrollar"
+  ],
+  "776": [
+    "body-slam",
+    "overheat"
+  ],
+  "777": [
+    "desenrrollar"
+  ],
+  "778": [
+    "shadow-sneak"
+  ],
+  "779": [
+    "aqua-jet",
+    "aqua-tail",
+    "psyshock"
+  ],
+  "781": [
+    "gyro-ball",
+    "heavy-slam",
+    "power-whip"
+  ],
+  "782": [
+    "dragon-claw"
+  ],
+  "783": [
+    "dragon-claw"
+  ],
+  "784": [
+    "dragon-claw",
+    "boomburst"
+  ],
+  "785": [
+    "natures-madness",
+    "electro-ball"
+  ],
+  "786": [
+    "psyshock",
+    "natures-madness"
+  ],
+  "787": [
+    "superpower",
+    "natures-madness",
+    "zen-headbutt",
+    "megahorn"
+  ],
+  "788": [
+    "brine",
+    "natures-madness",
+    "agua_lodosa"
+  ],
+  "791": [
+    "zen-headbutt"
+  ],
+  "792": [
+    "air-slash"
+  ],
+  "793": [
+    "venoshock"
+  ],
+  "794": [
+    "superpower"
+  ],
+  "795": [
+    "low-kick",
+    "triple-kick"
+  ],
+  "796": [
+    "power-whip"
+  ],
+  "797": [
+    "air-slash",
+    "heavy-slam",
+    "double-edge"
+  ],
+  "798": [
+    "fury-cutter",
+    "air-slash"
+  ],
+  "799": [
+    "heavy-slam",
+    "body-slam"
+  ],
+  "800": [
+    "stored-power"
+  ],
+  "801": [
+    "gyro-ball",
+    "desenrrollar"
+  ],
+  "802": [
+    "assurance",
+    "shadow-sneak",
+    "endeavor"
+  ],
+  "803": [
+    "venoshock"
+  ],
+  "804": [
+    "venoshock",
+    "air-slash"
+  ],
+  "805": [
+    "double-edge"
+  ],
+  "806": [
+    "stored-power"
+  ],
+  "809": [
+    "superpower"
+  ],
+  "810": [
+    "endeavor"
+  ],
+  "811": [
+    "endeavor"
+  ],
+  "812": [
+    "endeavor",
+    "boomburst"
+  ],
+  "813": [
+    "double-edge"
+  ],
+  "814": [
+    "double-edge"
+  ],
+  "815": [
+    "double-edge"
+  ],
+  "818": [
+    "acrobatics"
+  ],
+  "819": [
+    "body-slam",
+    "superdiente"
+  ],
+  "820": [
+    "body-slam",
+    "superdiente"
+  ],
+  "827": [
+    "beat-up",
+    "assurance",
+    "foul-play"
+  ],
+  "828": [
+    "beat-up",
+    "assurance",
+    "foul-play"
+  ],
+  "829": [
+    "leaf-storm"
+  ],
+  "830": [
+    "leaf-storm"
+  ],
+  "831": [
+    "double-edge"
+  ],
+  "832": [
+    "double-edge"
+  ],
+  "833": [
+    "body-slam"
+  ],
+  "834": [
+    "body-slam"
+  ],
+  "837": [
+    "heat-crash"
+  ],
+  "838": [
+    "heat-crash"
+  ],
+  "839": [
+    "heat-crash"
+  ],
+  "841": [
+    "acrobatics"
+  ],
+  "842": [
+    "body-slam"
+  ],
+  "846": [
+    "aqua-jet",
+    "double-edge"
+  ],
+  "847": [
+    "aqua-jet",
+    "double-edge"
+  ],
+  "849": [
+    "venoshock",
+    "boomburst"
+  ],
+  "852": [
+    "superpower"
+  ],
+  "853": [
+    "superpower"
+  ],
+  "859": [
+    "assurance",
+    "foul-play"
+  ],
+  "860": [
+    "assurance",
+    "foul-play"
+  ],
+  "861": [
+    "assurance",
+    "foul-play"
+  ],
+  "862": [
+    "double-edge"
+  ],
+  "864": [
+    "hex"
+  ],
+  "865": [
+    "fury-cutter",
+    "final-gambit"
+  ],
+  "866": [
+    "ice-shard",
+    "freeze-dry"
+  ],
+  "867": [
+    "hex"
+  ],
+  "870": [
+    "megahorn"
+  ],
+  "873": [
+    "blizzard"
+  ],
+  "874": [
+    "body-slam",
+    "heavy-slam"
+  ],
+  "875": [
+    "weather-ball",
+    "freeze-dry",
+    "blizzard"
+  ],
+  "876": [
+    "stored-power"
+  ],
+  "878": [
+    "desenrrollar",
+    "superpower"
+  ],
+  "879": [
+    "heavy-slam",
+    "desenrrollar",
+    "superpower"
+  ],
+  "881": [
+    "avalanche",
+    "freeze-dry",
+    "icicle-crash",
+    "blizzard"
+  ],
+  "882": [
+    "superdiente"
+  ],
+  "883": [
+    "freeze-dry",
+    "superdiente",
+    "icicle-crash",
+    "blizzard"
+  ],
+  "884": [
+    "dragon-claw"
+  ],
+  "886": [
+    "assurance",
+    "hex",
+    "double-edge"
+  ],
+  "887": [
+    "dragon-darts",
+    "assurance",
+    "hex",
+    "double-edge"
+  ],
+  "890": [
+    "venoshock"
+  ],
+  "893": [
+    "grass-knot",
+    "power-whip"
+  ],
+  "895": [
+    "dragon-claw"
+  ],
+  "896": [
+    "avalanche",
+    "icicle-crash",
+    "double-edge"
+  ],
+  "897": [
+    "hex",
+    "double-edge"
+  ],
+  "898": [
+    "psyshock",
+    "future-sight"
+  ],
+  "899": [
+    "zen-headbutt",
+    "double-edge",
+    "megahorn"
+  ],
+  "900": [
+    "air-slash",
+    "fury-cutter"
+  ],
+  "901": [
+    "double-edge",
+    "payback"
+  ],
+  "902": [
+    "aqua-jet",
+    "hex",
+    "zen-headbutt",
+    "double-edge"
+  ],
+  "904": [
+    "barb-barrage",
+    "aqua-tail",
+    "double-edge",
+    "brine"
+  ],
+  "905": [
+    "superpower"
+  ],
+  "907": [
+    "leaf-storm"
+  ],
+  "908": [
+    "leaf-storm"
+  ],
+  "911": [
+    "hex",
+    "overheat"
+  ],
+  "912": [
+    "aqua-jet",
+    "air-slash",
+    "acrobatics"
+  ],
+  "913": [
+    "aqua-jet",
+    "air-slash",
+    "acrobatics"
+  ],
+  "914": [
+    "aqua-jet",
+    "air-slash",
+    "acrobatics"
+  ],
+  "915": [
+    "double-edge"
+  ],
+  "916": [
+    "double-edge"
+  ],
+  "917": [
+    "assurance"
+  ],
+  "918": [
+    "assurance"
+  ],
+  "919": [
+    "assurance"
+  ],
+  "920": [
+    "low-kick",
+    "assurance"
+  ],
+  "924": [
+    "superdiente",
+    "beat-up",
+    "population-bomb"
+  ],
+  "925": [
+    "superdiente",
+    "beat-up",
+    "population-bomb"
+  ],
+  "926": [
+    "double-edge"
+  ],
+  "927": [
+    "double-edge"
+  ],
+  "928": [
+    "terrain-pulse"
+  ],
+  "929": [
+    "terrain-pulse"
+  ],
+  "930": [
+    "terrain-pulse"
+  ],
+  "931": [
+    "facade"
+  ],
+  "932": [
+    "heavy-slam"
+  ],
+  "933": [
+    "heavy-slam"
+  ],
+  "934": [
+    "heavy-slam"
+  ],
+  "936": [
+    "psyshock",
+    "expanding-force"
+  ],
+  "938": [
+    "weather-ball"
+  ],
+  "939": [
+    "weather-ball"
+  ],
+  "941": [
+    "electro-ball",
+    "hurricane"
+  ],
+  "942": [
+    "payback",
+    "double-edge"
+  ],
+  "943": [
+    "payback",
+    "double-edge"
+  ],
+  "946": [
+    "desenrrollar",
+    "hex",
+    "power-whip"
+  ],
+  "947": [
+    "desenrrollar",
+    "hex",
+    "power-whip"
+  ],
+  "948": [
+    "hex",
+    "power-whip"
+  ],
+  "949": [
+    "hex",
+    "power-whip"
+  ],
+  "951": [
+    "zen-headbutt"
+  ],
+  "952": [
+    "zen-headbutt",
+    "overheat"
+  ],
+  "953": [
+    "desenrrollar"
+  ],
+  "954": [
+    "desenrrollar"
+  ],
+  "960": [
+    "aqua-jet"
+  ],
+  "961": [
+    "aqua-jet"
+  ],
+  "962": [
+    "payback"
+  ],
+  "963": [
+    "aqua-jet",
+    "acrobatics",
+    "aqua-tail"
+  ],
+  "964": [
+    "aqua-jet",
+    "acrobatics",
+    "aqua-tail"
+  ],
+  "965": [
+    "assurance",
+    "gyro-ball"
+  ],
+  "966": [
+    "assurance",
+    "gyro-ball"
+  ],
+  "967": [
+    "dragon-claw",
+    "double-edge"
+  ],
+  "969": [
+    "venoshock"
+  ],
+  "970": [
+    "venoshock"
+  ],
+  "971": [
+    "double-edge"
+  ],
+  "972": [
+    "last-respects",
+    "double-edge"
+  ],
+  "973": [
+    "low-kick",
+    "payback",
+    "air-slash"
+  ],
+  "974": [
+    "ice-shard",
+    "avalanche",
+    "body-slam",
+    "double-edge",
+    "blizzard"
+  ],
+  "975": [
+    "ice-shard",
+    "avalanche",
+    "body-slam",
+    "double-edge",
+    "blizzard"
+  ],
+  "976": [
+    "aqua-jet",
+    "final-gambit"
+  ],
+  "977": [
+    "body-slam",
+    "aqua-tail",
+    "heavy-slam",
+    "double-edge"
+  ],
+  "978": [
+    "agua_lodosa"
+  ],
+  "979": [
+    "low-kick",
+    "assurance",
+    "rage-fist",
+    "final-gambit"
+  ],
+  "980": [
+    "megahorn"
+  ],
+  "981": [
+    "assurance"
+  ],
+  "982": [
+    "desenrrollar",
+    "double-edge",
+    "endeavor",
+    "hurricane",
+    "boomburst"
+  ],
+  "983": [
+    "fury-cutter",
+    "assurance"
+  ],
+  "984": [
+    "desenrrollar",
+    "endeavor",
+    "megahorn"
+  ],
+  "985": [
+    "body-slam",
+    "gyro-ball",
+    "boomburst"
+  ],
+  "986": [
+    "payback"
+  ],
+  "987": [
+    "psyshock"
+  ],
+  "988": [
+    "superpower"
+  ],
+  "989": [
+    "heavy-slam"
+  ],
+  "990": [
+    "desenrrollar",
+    "heavy-slam",
+    "endeavor",
+    "megahorn",
+    "steel-roller"
+  ],
+  "991": [
+    "freeze-dry",
+    "blizzard"
+  ],
+  "992": [
+    "heavy-slam"
+  ],
+  "993": [
+    "assurance",
+    "air-slash"
+  ],
+  "994": [
+    "hurricane",
+    "overheat"
+  ],
+  "996": [
+    "dragon-claw",
+    "icicle-crash"
+  ],
+  "997": [
+    "icicle-crash"
+  ],
+  "998": [
+    "ice-shard",
+    "dragon-claw",
+    "icicle-crash"
+  ],
+  "1001": [
+    "payback",
+    "ruination",
+    "foul-play",
+    "power-whip",
+    "leaf-storm"
+  ],
+  "1002": [
+    "payback",
+    "ice-shard",
+    "icicle-crash",
+    "ruination"
+  ],
+  "1003": [
+    "payback",
+    "ruination"
+  ],
+  "1004": [
+    "payback",
+    "ruination",
+    "overheat"
+  ],
+  "1005": [
+    "dragon-claw",
+    "zen-headbutt",
+    "double-edge"
+  ],
+  "1006": [
+    "shadow-sneak",
+    "fury-cutter",
+    "future-sight"
+  ],
+  "1007": [
+    "dragon-claw",
+    "collision-course"
+  ],
+  "1008": [
+    "electro-drift",
+    "thunder",
+    "overheat"
+  ],
+  "1009": [
+    "aqua-jet",
+    "hydro-steam"
+  ],
+  "1010": [
+    "psyblade",
+    "megahorn"
+  ],
+  "1012": [
+    "foul-play",
+    "hex",
+    "leaf-storm"
+  ],
+  "1013": [
+    "foul-play",
+    "hex",
+    "leaf-storm"
+  ],
+  "1014": [
+    "low-kick",
+    "superpower"
+  ],
+  "1015": [
+    "future-sight"
+  ],
+  "1016": [
+    "beat-up"
+  ],
+  "1017": [
+    "power-whip",
+    "superpower"
+  ],
+  "1018": [
+    "dragon-claw"
+  ],
+  "1019": [
+    "power-whip"
+  ],
+  "1020": [
+    "dragon-claw"
+  ],
+  "1021": [
+    "rising-voltage",
+    "body-press",
+    "thunder"
+  ],
+  "1022": [
+    "megahorn"
+  ],
+  "1023": [
+    "psyshock",
+    "future-sight"
+  ],
+  "1024": [
+    "heavy-slam",
+    "double-edge",
+    "gyro-ball"
+  ],
+  "10001": [
+    "superpower",
+    "zen-headbutt",
+    "psyshock"
+  ],
+  "10002": [
+    "zen-headbutt"
+  ],
+  "10003": [
+    "zen-headbutt",
+    "psyshock"
+  ],
+  "10006": [
+    "air-slash",
+    "leaf-storm"
+  ],
+  "10007": [
+    "dragon-claw",
+    "shadow-sneak",
+    "hex"
+  ],
+  "10008": [
+    "electro-ball",
+    "hex"
+  ],
+  "10009": [
+    "electro-ball",
+    "hex"
+  ],
+  "10010": [
+    "electro-ball",
+    "hex"
+  ],
+  "10011": [
+    "electro-ball",
+    "hex"
+  ],
+  "10012": [
+    "electro-ball",
+    "hex"
+  ],
+  "10013": [
+    "weather-ball",
+    "blizzard",
+    "hurricane"
+  ],
+  "10014": [
+    "weather-ball",
+    "blizzard",
+    "hurricane"
+  ],
+  "10015": [
+    "weather-ball",
+    "blizzard",
+    "hurricane"
+  ],
+  "10016": [
+    "aqua-jet",
+    "aqua-tail",
+    "double-edge",
+    "final-gambit"
+  ],
+  "10017": [
+    "desenrrollar",
+    "facade",
+    "superpower",
+    "overheat"
+  ],
+  "10018": [
+    "acrobatics"
+  ],
+  "10019": [
+    "air-slash",
+    "hurricane"
+  ],
+  "10020": [
+    "thunder"
+  ],
+  "10021": [
+    "punishment"
+  ],
+  "10022": [
+    "endeavor",
+    "blizzard",
+    "freeze-dry"
+  ],
+  "10023": [
+    "endeavor",
+    "blizzard",
+    "freeze-dry"
+  ],
+  "10024": [
+    "aqua-jet",
+    "aqua-tail",
+    "secret-sword"
+  ],
+  "10025": [
+    "stored-power",
+    "psyshock",
+    "future-sight"
+  ],
+  "10026": [
+    "fury-cutter",
+    "shadow-sneak"
+  ],
+  "10027": [
+    "shadow-sneak"
+  ],
+  "10028": [
+    "shadow-sneak"
+  ],
+  "10029": [
+    "shadow-sneak"
+  ],
+  "10030": [
+    "shadow-sneak"
+  ],
+  "10031": [
+    "shadow-sneak"
+  ],
+  "10032": [
+    "shadow-sneak"
+  ],
+  "10033": [
+    "double-edge",
+    "power-whip"
+  ],
+  "10034": [
+    "dragon-claw",
+    "air-slash"
+  ],
+  "10035": [
+    "dragon-claw",
+    "air-slash"
+  ],
+  "10036": [
+    "aqua-tail",
+    "aqua-jet"
+  ],
+  "10037": [
+    "future-sight"
+  ],
+  "10038": [
+    "payback",
+    "hex"
+  ],
+  "10040": [
+    "superpower"
+  ],
+  "10041": [
+    "aqua-tail",
+    "hurricane",
+    "waterfall"
+  ],
+  "10043": [
+    "future-sight"
+  ],
+  "10044": [
+    "future-sight"
+  ],
+  "10045": [
+    "electro-ball",
+    "thunder"
+  ],
+  "10046": [
+    "fury-cutter"
+  ],
+  "10047": [
+    "megahorn"
+  ],
+  "10048": [
+    "beat-up",
+    "foul-play"
+  ],
+  "10049": [
+    "payback"
+  ],
+  "10051": [
+    "stored-power",
+    "future-sight"
+  ],
+  "10053": [
+    "heavy-slam",
+    "double-edge"
+  ],
+  "10054": [
+    "zen-headbutt"
+  ],
+  "10055": [
+    "thunder"
+  ],
+  "10056": [
+    "shadow-sneak",
+    "hex"
+  ],
+  "10057": [
+    "future-sight"
+  ],
+  "10058": [
+    "dragon-claw"
+  ],
+  "10060": [
+    "ice-shard",
+    "blizzard"
+  ],
+  "10062": [
+    "zen-headbutt",
+    "stored-power"
+  ],
+  "10063": [
+    "zen-headbutt",
+    "stored-power"
+  ],
+  "10064": [
+    "agua_lodosa",
+    "endeavor"
+  ],
+  "10065": [
+    "leaf-storm",
+    "fury-cutter"
+  ],
+  "10066": [
+    "shadow-sneak",
+    "punishment",
+    "zen-headbutt",
+    "foul-play"
+  ],
+  "10068": [
+    "stored-power",
+    "fury-cutter"
+  ],
+  "10069": [
+    "double-edge"
+  ],
+  "10070": [
+    "aqua-jet",
+    "assurance"
+  ],
+  "10071": [
+    "zen-headbutt"
+  ],
+  "10072": [
+    "gyro-ball",
+    "double-edge"
+  ],
+  "10073": [
+    "hurricane",
+    "air-slash"
+  ],
+  "10074": [
+    "ice-shard",
+    "freeze-dry",
+    "blizzard"
+  ],
+  "10076": [
+    "zen-headbutt"
+  ],
+  "10077": [
+    "aqua-tail",
+    "body-slam",
+    "agua_lodosa",
+    "double-edge"
+  ],
+  "10079": [
+    "air-slash"
+  ],
+  "10080": [
+    "electro-ball",
+    "thunder"
+  ],
+  "10081": [
+    "electro-ball",
+    "thunder"
+  ],
+  "10082": [
+    "electro-ball",
+    "thunder"
+  ],
+  "10083": [
+    "electro-ball",
+    "thunder"
+  ],
+  "10084": [
+    "electro-ball",
+    "thunder"
+  ],
+  "10085": [
+    "electro-ball",
+    "thunder"
+  ],
+  "10089": [
+    "dragon-claw",
+    "zen-headbutt",
+    "double-edge"
+  ],
+  "10090": [
+    "assurance",
+    "endeavor",
+    "venoshock"
+  ],
+  "10091": [
+    "assurance",
+    "superdiente",
+    "double-edge",
+    "endeavor"
+  ],
+  "10092": [
+    "assurance",
+    "superdiente",
+    "double-edge",
+    "endeavor"
+  ],
+  "10093": [
+    "assurance",
+    "superdiente",
+    "double-edge",
+    "endeavor"
+  ],
+  "10094": [
+    "electro-ball",
+    "thunder"
+  ],
+  "10095": [
+    "electro-ball",
+    "thunder"
+  ],
+  "10096": [
+    "electro-ball",
+    "thunder"
+  ],
+  "10097": [
+    "electro-ball",
+    "thunder"
+  ],
+  "10098": [
+    "electro-ball",
+    "thunder"
+  ],
+  "10099": [
+    "electro-ball",
+    "thunder"
+  ],
+  "10100": [
+    "thunder",
+    "electro-ball"
+  ],
+  "10101": [
+    "bola_hielo",
+    "fury-cutter",
+    "gyro-ball",
+    "blizzard",
+    "ice-shard",
+    "desenrrollar"
+  ],
+  "10102": [
+    "bola_hielo",
+    "icicle-crash",
+    "ice-shard",
+    "blizzard",
+    "desenrrollar",
+    "fury-cutter",
+    "gyro-ball"
+  ],
+  "10103": [
+    "ice-shard",
+    "payback",
+    "hex",
+    "blizzard",
+    "freeze-dry"
+  ],
+  "10104": [
+    "ice-shard",
+    "blizzard"
+  ],
+  "10107": [
+    "assurance"
+  ],
+  "10108": [
+    "assurance"
+  ],
+  "10109": [
+    "desenrrollar",
+    "double-edge"
+  ],
+  "10110": [
+    "desenrrollar",
+    "double-edge"
+  ],
+  "10111": [
+    "heavy-slam",
+    "double-edge"
+  ],
+  "10114": [
+    "psyshock",
+    "leaf-storm",
+    "power-whip"
+  ],
+  "10115": [
+    "hex",
+    "endeavor",
+    "double-edge"
+  ],
+  "10116": [
+    "shadow-sneak"
+  ],
+  "10117": [
+    "shadow-sneak"
+  ],
+  "10121": [
+    "superdiente"
+  ],
+  "10122": [
+    "air-slash",
+    "acrobatics"
+  ],
+  "10123": [
+    "air-slash",
+    "hurricane",
+    "acrobatics"
+  ],
+  "10124": [
+    "air-slash",
+    "hurricane",
+    "acrobatics"
+  ],
+  "10125": [
+    "air-slash",
+    "hurricane",
+    "acrobatics"
+  ],
+  "10127": [
+    "brine",
+    "beat-up",
+    "aqua-tail",
+    "double-edge",
+    "endeavor"
+  ],
+  "10128": [
+    "fury-cutter"
+  ],
+  "10129": [
+    "venoshock"
+  ],
+  "10130": [
+    "desenrrollar",
+    "double-edge"
+  ],
+  "10131": [
+    "desenrrollar",
+    "double-edge"
+  ],
+  "10132": [
+    "desenrrollar",
+    "double-edge"
+  ],
+  "10133": [
+    "desenrrollar",
+    "double-edge"
+  ],
+  "10134": [
+    "desenrrollar",
+    "double-edge"
+  ],
+  "10135": [
+    "desenrrollar",
+    "double-edge"
+  ],
+  "10136": [
+    "desenrrollar",
+    "double-edge"
+  ],
+  "10137": [
+    "desenrrollar",
+    "double-edge"
+  ],
+  "10138": [
+    "desenrrollar",
+    "double-edge"
+  ],
+  "10139": [
+    "desenrrollar",
+    "double-edge"
+  ],
+  "10140": [
+    "desenrrollar",
+    "double-edge"
+  ],
+  "10141": [
+    "desenrrollar",
+    "double-edge"
+  ],
+  "10142": [
+    "desenrrollar",
+    "double-edge"
+  ],
+  "10143": [
+    "shadow-sneak"
+  ],
+  "10144": [
+    "shadow-sneak"
+  ],
+  "10145": [
+    "shadow-sneak"
+  ],
+  "10146": [
+    "dragon-claw"
+  ],
+  "10147": [
+    "gyro-ball",
+    "desenrrollar"
+  ],
+  "10148": [
+    "electro-ball",
+    "thunder"
+  ],
+  "10149": [
+    "hex",
+    "endeavor"
+  ],
+  "10152": [
+    "accelerock"
+  ],
+  "10154": [
+    "desenrrollar"
+  ],
+  "10155": [
+    "stored-power"
+  ],
+  "10156": [
+    "stored-power"
+  ],
+  "10157": [
+    "stored-power"
+  ],
+  "10158": [
+    "thunder"
+  ],
+  "10159": [
+    "double-edge"
+  ],
+  "10160": [
+    "electro-ball",
+    "thunder"
+  ],
+  "10163": [
+    "megahorn"
+  ],
+  "10164": [
+    "zen-headbutt"
+  ],
+  "10165": [
+    "zen-headbutt"
+  ],
+  "10166": [
+    "fury-cutter",
+    "final-gambit"
+  ],
+  "10167": [
+    "assurance"
+  ],
+  "10168": [
+    "ice-shard",
+    "freeze-dry"
+  ],
+  "10169": [
+    "hurricane",
+    "future-sight"
+  ],
+  "10171": [
+    "payback",
+    "air-slash",
+    "hurricane"
+  ],
+  "10172": [
+    "zen-headbutt"
+  ],
+  "10173": [
+    "hex"
+  ],
+  "10174": [
+    "double-edge"
+  ],
+  "10175": [
+    "double-edge"
+  ],
+  "10176": [
+    "avalanche",
+    "blizzard",
+    "superpower"
+  ],
+  "10177": [
+    "icicle-crash",
+    "avalanche",
+    "blizzard",
+    "superpower"
+  ],
+  "10178": [
+    "icicle-crash",
+    "avalanche",
+    "blizzard",
+    "superpower"
+  ],
+  "10179": [
+    "hex"
+  ],
+  "10180": [
+    "agua_lodosa"
+  ],
+  "10184": [
+    "boomburst"
+  ],
+  "10185": [
+    "weather-ball",
+    "freeze-dry",
+    "blizzard"
+  ],
+  "10186": [
+    "stored-power"
+  ],
+  "10190": [
+    "venoshock"
+  ],
+  "10191": [
+    "aqua-jet"
+  ],
+  "10192": [
+    "grass-knot",
+    "power-whip"
+  ],
+  "10193": [
+    "double-edge",
+    "avalanche",
+    "icicle-crash",
+    "psyshock",
+    "future-sight"
+  ],
+  "10194": [
+    "double-edge",
+    "hex",
+    "psyshock",
+    "future-sight"
+  ],
+  "10229": [
+    "double-edge"
+  ],
+  "10230": [
+    "double-edge"
+  ],
+  "10231": [
+    "thunder",
+    "desenrrollar",
+    "electro-ball",
+    "gyro-ball"
+  ],
+  "10232": [
+    "thunder",
+    "desenrrollar",
+    "electro-ball",
+    "gyro-ball"
+  ],
+  "10233": [
+    "hex",
+    "desenrrollar",
+    "infernal-parade",
+    "overheat",
+    "gyro-ball",
+    "double-edge"
+  ],
+  "10234": [
+    "barb-barrage",
+    "aqua-tail",
+    "double-edge",
+    "brine"
+  ],
+  "10236": [
+    "aqua-jet",
+    "aqua-tail",
+    "megahorn",
+    "fury-cutter"
+  ],
+  "10237": [
+    "leaf-storm"
+  ],
+  "10238": [
+    "shadow-sneak",
+    "foul-play"
+  ],
+  "10239": [
+    "shadow-sneak",
+    "foul-play"
+  ],
+  "10240": [
+    "air-slash",
+    "double-edge",
+    "hurricane",
+    "superpower"
+  ],
+  "10241": [
+    "agua_lodosa"
+  ],
+  "10242": [
+    "body-slam",
+    "agua_lodosa",
+    "heavy-slam"
+  ],
+  "10243": [
+    "ice-shard",
+    "blizzard",
+    "double-edge",
+    "avalanche"
+  ],
+  "10244": [
+    "air-slash",
+    "leaf-storm",
+    "shadow-sneak"
+  ],
+  "10245": [
+    "dragon-claw"
+  ],
+  "10246": [
+    "aqua-tail"
+  ],
+  "10247": [
+    "aqua-jet",
+    "zen-headbutt",
+    "double-edge"
+  ],
+  "10248": [
+    "aqua-jet",
+    "double-edge"
+  ],
+  "10249": [
+    "superpower"
+  ],
+  "10250": [
+    "assurance",
+    "zen-headbutt",
+    "raging-bull",
+    "double-edge"
+  ],
+  "10251": [
+    "zen-headbutt",
+    "raging-bull"
+  ],
+  "10252": [
+    "aqua-jet",
+    "zen-headbutt",
+    "raging-bull"
+  ],
+  "10254": [
+    "double-edge"
+  ],
+  "10255": [
+    "desenrrollar",
+    "double-edge",
+    "endeavor",
+    "hurricane",
+    "boomburst"
+  ],
+  "10256": [
+    "aqua-jet",
+    "acrobatics",
+    "aqua-tail"
+  ],
+  "10257": [
+    "superdiente",
+    "beat-up",
+    "population-bomb"
+  ],
+  "10258": [
+    "agua_lodosa"
+  ],
+  "10259": [
+    "agua_lodosa"
+  ],
+  "10260": [
+    "facade"
+  ],
+  "10261": [
+    "facade"
+  ],
+  "10262": [
+    "facade"
+  ],
+  "10264": [
+    "dragon-claw",
+    "collision-course"
+  ],
+  "10265": [
+    "dragon-claw",
+    "collision-course"
+  ],
+  "10266": [
+    "dragon-claw",
+    "collision-course"
+  ],
+  "10267": [
+    "dragon-claw",
+    "collision-course"
+  ],
+  "10268": [
+    "electro-drift",
+    "thunder",
+    "overheat"
+  ],
+  "10269": [
+    "electro-drift",
+    "thunder",
+    "overheat"
+  ],
+  "10270": [
+    "electro-drift",
+    "thunder",
+    "overheat"
+  ],
+  "10271": [
+    "electro-drift",
+    "thunder",
+    "overheat"
+  ],
+  "10272": [
+    "payback"
+  ],
+  "10273": [
+    "power-whip",
+    "superpower"
+  ],
+  "10274": [
+    "power-whip",
+    "superpower"
+  ],
+  "10275": [
+    "power-whip",
+    "superpower"
+  ],
+  "10276": [
+    "heavy-slam",
+    "double-edge",
+    "gyro-ball"
+  ],
+  "10277": [
+    "heavy-slam",
+    "double-edge",
+    "gyro-ball"
+  ]
+}

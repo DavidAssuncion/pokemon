@@ -22,6 +22,8 @@ namespace Src\Battle\Domain\Enums;
  *
  * Valores:
  *  - INICIO ('init')            → batalla recién creada, sin selección.
+ *  - PREPARACION ('preparacion') → prioridades antes de la ronda; las
+ *    posturas ya vienen configuradas desde Equipo y no se reconfirman.
  *  - SELECCION_OBJETIVO         → el jugador elige objetivo del ataque.
  *  - SELECCION_MOVIMIENTO       → el jugador elige movimiento a usar.
  *  - BATALLA_TERMINADA          → resultado final, no hay más acciones.
@@ -29,6 +31,7 @@ namespace Src\Battle\Domain\Enums;
 enum FaseCombate: string
 {
     case INICIO = 'init';
+    case PREPARACION = 'preparacion';
     case SELECCION_OBJETIVO = 'player_target';
     case SELECCION_MOVIMIENTO = 'player_move';
     case BATALLA_TERMINADA = 'battle_over';

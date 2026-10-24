@@ -4,8 +4,12 @@ declare(strict_types=1);
 
 namespace Src\Battle\Domain;
 
+use Src\Battle\Domain\Catalog\CatalogoHabilidades;
 use Src\Battle\Domain\Collections\CombatientesCollection;
+use Src\Battle\Domain\Effects\Equipo\ColeccionEfectosEquipo;
+use Src\Battle\Domain\Effects\Equipo\InterfazEfectoEquipo;
 use Src\Battle\Domain\Effects\FabricaEfectos;
+use Src\Battle\Domain\Enums\PosturaCombate;
 use Src\Pokemon\Domain\PokemonEntity;
 use Src\Pokemon\Domain\Stats\BattleStats;
 use Src\Pokemon\Domain\Stats\StatsValue;
@@ -15,10 +19,13 @@ class EquipoBatalla
 {
     private CombatientesCollection $combatientes;
 
+    private ColeccionEfectosEquipo $efectos;
+
     public function __construct(
         public readonly string $name,
     ) {
         $this->combatientes = new CombatientesCollection();
+        $this->efectos = new ColeccionEfectosEquipo();
     }
 
     public function __clone(): void
@@ -28,6 +35,63 @@ class EquipoBatalla
             $nuevaColeccion->add(clone $combatant);
         }
         $this->combatientes = $nuevaColeccion;
+        $this->efectos = clone $this->efectos;
+    }
+
+    public function efectos(): ColeccionEfectosEquipo
+    {
+        return $this->efectos;
+    }
+
+    public function agregarEfecto(InterfazEfectoEquipo $efecto): void
+    {
+        $this->efectos->add($efecto);
+    }
+
+    public function multiplicadorDanoRecibido(AccionBatalla $accion): float
+    {
+        return $this->efectos->multiplicadorDanoRecibido($accion);
+    }
+
+    public function multiplicadorVelocidad(): float
+    {
+        $factor = 1.0;
+        foreach ($this->efectos->all() as $efecto) {
+            $factor *= $efecto->multiplicadorVelocidad();
+        }
+
+        return $factor;
+    }
+
+    public function consumirPantallas(float $dano, MovimientoBatalla $movimiento): void
+    {
+        $this->efectos->consumir($dano, $movimiento);
+    }
+
+    public function limpiarPantallas(): void
+    {
+        $this->efectos->limpiarPantallas();
+    }
+
+    public function onRoundStart(AgregadoBatalla $battle): void
+    {
+        $this->efectos->onRoundStart($this, $battle);
+    }
+
+    public function onRoundEnd(AgregadoBatalla $battle): void
+    {
+        $this->efectos->onRoundEnd($this, $battle);
+    }
+
+    public function bloqueaDanioIndirecto(): bool
+    {
+        foreach ($this->combatientes->vivos() as $combatiente) {
+            if ($combatiente->bloqueaDanioIndirecto()) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
@@ -52,6 +116,15 @@ class EquipoBatalla
     {
         $combatant->setPosicion($posicion);
         $this->combatientes->add($combatant);
+    }
+
+    /**
+     * Retira un combatiente temporal (invocación) de la colección. No se usa
+     * para Pokémon derrotados: esos permanecen en el equipo como K.O.
+     */
+    public function quitarCombatiente(Combatiente $combatiente): void
+    {
+        $this->combatientes->quitar($combatiente);
     }
 
     /**
@@ -130,6 +203,7 @@ class EquipoBatalla
                 moves: $member->moves,
                 tiposCollection: $tipos,
                 precomputedBattleStats: $precomputedBattleStats,
+                peso: $member->peso,
             );
 
             $combatant = new Combatiente($pokemon, $member->posicion);
@@ -139,12 +213,19 @@ class EquipoBatalla
             $combatant->setSpeciesId($member->speciesId);
             $combatant->setFormSuffix($member->formSuffix);
             $combatant->setShiny($member->shiny);
+            $combatant->setPostura($member->postura);
 
-            // Procesar efectos/habilidades via Factory
+            // Procesar efectos/habilidades via Factory (una clave puede componer varios efectos)
             foreach ($member->effectKeys as $key) {
-                $effect = $fabricaEfectos->crearEfecto($key);
-                if ($effect !== null) {
-                    $combatant->effects()->add($effect);
+                $claves = CatalogoHabilidades::clavesDe($key);
+                if ($claves === []) {
+                    $claves = [$key];
+                }
+
+                foreach ($claves as $clave) {
+                    foreach ($fabricaEfectos->crearEfectos($clave) as $effect) {
+                        $combatant->effects()->add($effect);
+                    }
                 }
             }
 
@@ -157,10 +238,50 @@ class EquipoBatalla
                 }
             }
 
+            if ($member->esJefe) {
+                $combatant->configurarJefe($member->fasesJefe, $member->puntosDebiles);
+            }
+
             $team->agregarCombatiente($combatant, $member->posicion);
         }
 
+        $team->normalizarCubridores();
+
         return $team;
+    }
+
+    /**
+     * Mantiene coherentes los objetivos de Cubrir: cada cubridor vivo apunta
+     * a otro aliado vivo. Si el objetivo murió, se reasigna automáticamente
+     * sin pedir confirmación al jugador. Las posturas se configuran en Equipo.
+     */
+    public function normalizarCubridores(): void
+    {
+        $vivos = $this->combatientes->vivos()->all();
+
+        foreach ($vivos as $combatiente) {
+            if ($combatiente->postura() !== PosturaCombate::CUBRIR) {
+                $combatiente->setObjetivoCubiertoId('');
+
+                continue;
+            }
+
+            $objetivo = $this->findCombatantById($combatiente->objetivoCubiertoId());
+            if ($objetivo !== null && $objetivo !== $combatiente && $objetivo->estaVivo()) {
+                continue;
+            }
+
+            $nuevoObjetivo = null;
+            foreach ($vivos as $aliado) {
+                if ($aliado !== $combatiente) {
+                    $nuevoObjetivo = $aliado;
+
+                    break;
+                }
+            }
+
+            $combatiente->setObjetivoCubiertoId($nuevoObjetivo?->id() ?? '');
+        }
     }
 
     public function findCombatant(Combatiente $target): ?Combatiente

@@ -1,0 +1,3273 @@
+{
+  "definitions": [
+    {
+      "name": "Electrogénesis",
+      "effect": "",
+      "effect_keys": [
+        "electrogenesis"
+      ],
+      "identifier": "electric-surge"
+    },
+    {
+      "name": "Herbogénesis",
+      "effect": "",
+      "effect_keys": [
+        "herbogenesis"
+      ],
+      "identifier": "grassy-surge"
+    },
+    {
+      "name": "Psicogénesis",
+      "effect": "",
+      "effect_keys": [
+        "psicogenesis"
+      ],
+      "identifier": "psychic-surge"
+    },
+    {
+      "name": "Nebulogénesis",
+      "effect": "",
+      "effect_keys": [
+        "nebulogenesis"
+      ],
+      "identifier": "misty-surge"
+    },
+    {
+      "name": "Aclimatación",
+      "effect": "",
+      "effect_keys": [
+        "aclimatacion"
+      ],
+      "identifier": "cloud-nine"
+    },
+    {
+      "name": "Ritmo Propio",
+      "effect": "",
+      "effect_keys": [
+        "ritmo_propio"
+      ],
+      "identifier": "own-tempo"
+    },
+    {
+      "name": "Intrépido",
+      "effect": "",
+      "effect_keys": [
+        "intrepido"
+      ],
+      "identifier": "inner-focus"
+    },
+    {
+      "name": "Insonoridad",
+      "effect": "",
+      "effect_keys": [
+        "insonoridad"
+      ],
+      "identifier": "soundproof"
+    },
+    {
+      "name": "Insomnio",
+      "effect": "",
+      "effect_keys": [
+        "insomnio"
+      ],
+      "identifier": "insomnia"
+    },
+    {
+      "name": "Inmunidad",
+      "effect": "",
+      "effect_keys": [
+        "inmunidad"
+      ],
+      "identifier": "immunity"
+    },
+    {
+      "name": "Hidratación",
+      "effect": "",
+      "effect_keys": [
+        "hidratacion"
+      ],
+      "identifier": "hydration"
+    },
+    {
+      "name": "Mudar",
+      "effect": "",
+      "effect_keys": [
+        "mudar"
+      ],
+      "identifier": "shed-skin"
+    },
+    {
+      "name": "Viscosidad",
+      "effect": "",
+      "effect_keys": [
+        "viscosidad"
+      ],
+      "identifier": "gooey"
+    },
+    {
+      "name": "Antibalas",
+      "effect": "",
+      "effect_keys": [
+        "antibalas"
+      ],
+      "identifier": "bulletproof"
+    },
+    {
+      "name": "Ojo Compuesto",
+      "effect": "",
+      "effect_keys": [
+        "ojo_compuesto"
+      ],
+      "identifier": "compound-eyes"
+    },
+    {
+      "name": "Potencia Bruta",
+      "effect": "",
+      "effect_keys": [
+        "potencia_bruta"
+      ],
+      "identifier": "sheer-force"
+    },
+    {
+      "name": "Armadura Prisma",
+      "effect": "",
+      "effect_keys": [
+        "armadura_prisma"
+      ],
+      "identifier": "prism-armor"
+    },
+    {
+      "name": "Piel Milagrosa",
+      "effect": "",
+      "effect_keys": [
+        "piel_milagrosa"
+      ],
+      "identifier": "wonder-skin"
+    },
+    {
+      "name": "Compiescolta",
+      "effect": "",
+      "effect_keys": [
+        "guardia_amiga"
+      ],
+      "identifier": "friend-guard"
+    },
+    {
+      "name": "Velo Aroma",
+      "effect": "",
+      "effect_keys": [
+        "aroma_velo"
+      ],
+      "identifier": "aroma-veil"
+    },
+    {
+      "name": "Velo Flor",
+      "effect": "",
+      "effect_keys": [
+        "velo_flor"
+      ],
+      "identifier": "flower-veil"
+    },
+    {
+      "name": "Espejo Mágico",
+      "effect": "",
+      "effect_keys": [
+        "espejo_magico"
+      ],
+      "identifier": "magic-bounce"
+    },
+    {
+      "name": "Nevada",
+      "effect": "",
+      "effect_keys": [
+        "nevada"
+      ],
+      "identifier": "snow-warning"
+    },
+    {
+      "name": "Fuerza Arena",
+      "effect": "",
+      "effect_keys": [
+        "poder_arena"
+      ],
+      "identifier": "sand-force"
+    },
+    {
+      "name": "Manto Nivoso",
+      "effect": "",
+      "effect_keys": [
+        "manto_nivoso"
+      ],
+      "identifier": "snow-cloak"
+    },
+    {
+      "name": "Barrera Aérea",
+      "effect": "",
+      "effect_keys": [
+        "barrera_aerea"
+      ],
+      "identifier": "air-lock"
+    },
+    {
+      "name": "Velo Dulce",
+      "effect": "",
+      "effect_keys": [
+        "velo_dulce"
+      ],
+      "identifier": "sweet-veil"
+    },
+    {
+      "name": "Rizos Enredados",
+      "effect": "",
+      "effect_keys": [
+        "rizos_enredados"
+      ],
+      "identifier": "tangling-hair"
+    },
+    {
+      "name": "Electromotor",
+      "effect": "",
+      "effect_keys": [
+        "electromotor"
+      ],
+      "identifier": "motor-drive"
+    },
+    {
+      "name": "Justiciero",
+      "effect": "",
+      "effect_keys": [
+        "justiciero"
+      ],
+      "identifier": "justified"
+    },
+    {
+      "name": "Cobardía",
+      "effect": "",
+      "effect_keys": [
+        "cobardia"
+      ],
+      "identifier": "rattled"
+    },
+    {
+      "name": "Firmeza",
+      "effect": "",
+      "effect_keys": [
+        "firmeza"
+      ],
+      "identifier": "stamina"
+    },
+    {
+      "name": "Quitanieves",
+      "effect": "",
+      "effect_keys": [
+        "quitanieves"
+      ],
+      "identifier": "slush-rush"
+    },
+    {
+      "name": "Armadura Frágil",
+      "effect": "",
+      "effect_keys": [
+        "armadura_fragil"
+      ],
+      "identifier": "weak-armor"
+    },
+    {
+      "name": "Cólera",
+      "effect": "",
+      "effect_keys": [
+        "colera"
+      ],
+      "identifier": "berserk"
+    },
+    {
+      "name": "Tenacidad",
+      "effect": "",
+      "effect_keys": [
+        "tenacidad"
+      ],
+      "identifier": "competitive"
+    },
+    {
+      "name": "Competitivo",
+      "effect": "",
+      "effect_keys": [
+        "competitivo"
+      ],
+      "identifier": "defiant"
+    },
+    {
+      "name": "Combustible",
+      "effect": "",
+      "effect_keys": [
+        "combustible"
+      ],
+      "identifier": "steam-engine"
+    },
+    {
+      "name": "Cuerpo Horneado",
+      "effect": "",
+      "effect_keys": [
+        "cuerpo_horneado"
+      ],
+      "identifier": "well-baked-body"
+    },
+    {
+      "name": "Geofagia",
+      "effect": "",
+      "effect_keys": [
+        "geofagia"
+      ],
+      "identifier": "earth-eater"
+    },
+    {
+      "name": "Sal Purificadora",
+      "effect": "",
+      "effect_keys": [
+        "sal_purificadora"
+      ],
+      "identifier": "purifying-salt"
+    },
+    {
+      "name": "Cuerpo Áureo",
+      "effect": "",
+      "effect_keys": [
+        "cuerpo_aureo"
+      ],
+      "identifier": "good-as-gold"
+    },
+    {
+      "name": "Expulsarena",
+      "effect": "",
+      "effect_keys": [
+        "expulsarena"
+      ],
+      "identifier": "sand-spit"
+    },
+    {
+      "name": "Disemillar",
+      "effect": "",
+      "effect_keys": [
+        "disemillar"
+      ],
+      "identifier": "seed-sower"
+    },
+    {
+      "name": "Cuerpo Puro",
+      "effect": "",
+      "effect_keys": [
+        "cuerpo_puro"
+      ],
+      "identifier": "clear-body"
+    },
+    {
+      "name": "Humo Blanco",
+      "effect": "",
+      "effect_keys": [
+        "humo_blanco"
+      ],
+      "identifier": "white-smoke"
+    },
+    {
+      "name": "Corte Fuerte",
+      "effect": "",
+      "effect_keys": [
+        "corte_fuerte"
+      ],
+      "identifier": "hyper-cutter"
+    },
+    {
+      "name": "Sacapecho",
+      "effect": "",
+      "effect_keys": [
+        "sacapecho"
+      ],
+      "identifier": "big-pecks"
+    },
+    {
+      "name": "Vista Lince",
+      "effect": "",
+      "effect_keys": [
+        "vista_lince"
+      ],
+      "identifier": "keen-eye"
+    },
+    {
+      "name": "Pelaje Recio",
+      "effect": "",
+      "effect_keys": [
+        "pelaje_recio"
+      ],
+      "identifier": "fur-coat"
+    },
+    {
+      "name": "Escama de Hielo",
+      "effect": "",
+      "effect_keys": [
+        "escama_hielo"
+      ],
+      "identifier": "ice-scales"
+    },
+    {
+      "name": "Guardia Espectro",
+      "effect": "",
+      "effect_keys": [
+        "guardia_espectro"
+      ],
+      "identifier": "shadow-shield"
+    },
+    {
+      "name": "Ignífugo",
+      "effect": "",
+      "effect_keys": [
+        "ignifugo"
+      ],
+      "identifier": "heatproof"
+    },
+    {
+      "name": "Peluche",
+      "effect": "",
+      "effect_keys": [
+        "peluche"
+      ],
+      "identifier": "fluffy"
+    },
+    {
+      "name": "Funda",
+      "effect": "",
+      "effect_keys": [
+        "funda"
+      ],
+      "identifier": "overcoat"
+    },
+    {
+      "name": "Pompa",
+      "effect": "",
+      "effect_keys": [
+        "pompa"
+      ],
+      "identifier": "water-bubble"
+    },
+    {
+      "name": "Termoconversión",
+      "effect": "",
+      "effect_keys": [
+        "termoconversion"
+      ],
+      "identifier": "thermal-exchange"
+    },
+    {
+      "name": "Hidrorrefuerzo",
+      "effect": "",
+      "effect_keys": [
+        "hidrorrefuerzo"
+      ],
+      "identifier": "water-compaction"
+    },
+    {
+      "name": "Coraza Ira",
+      "effect": "",
+      "effect_keys": [
+        "coraza_ira"
+      ],
+      "identifier": "anger-shell"
+    },
+    {
+      "name": "Velo Pastel",
+      "effect": "",
+      "effect_keys": [
+        "velo_pastel"
+      ],
+      "identifier": "pastel-veil"
+    },
+    {
+      "name": "Mandíbula Dragón",
+      "effect": "",
+      "effect_keys": [
+        "mandibula_dragon"
+      ],
+      "identifier": "dragons-maw"
+    },
+    {
+      "name": "Transistor",
+      "effect": "",
+      "effect_keys": [
+        "transistor"
+      ],
+      "identifier": "transistor"
+    },
+    {
+      "name": "Transportarrocas",
+      "effect": "",
+      "effect_keys": [
+        "transportarrocas"
+      ],
+      "identifier": "rocky-payload"
+    },
+    {
+      "name": "Superguarda",
+      "effect": "",
+      "effect_keys": [
+        "superguarda"
+      ],
+      "identifier": "wonder-guard"
+    },
+    {
+      "name": "Levitación",
+      "effect": "",
+      "effect_keys": [
+        "levitacion"
+      ],
+      "identifier": "levitate"
+    },
+    {
+      "name": "Telepatía",
+      "effect": "",
+      "effect_keys": [
+        "telepatia"
+      ],
+      "identifier": "telepathy"
+    },
+    {
+      "name": "Ventosas",
+      "effect": "",
+      "effect_keys": [
+        "ventosas"
+      ],
+      "identifier": "suction-cups"
+    },
+    {
+      "name": "Espíritu Vital",
+      "effect": "",
+      "effect_keys": [
+        "espiritu_vital"
+      ],
+      "identifier": "vital-spirit"
+    },
+    {
+      "name": "Escudo Magma",
+      "effect": "",
+      "effect_keys": [
+        "escudo_magma"
+      ],
+      "identifier": "magma-armor"
+    },
+    {
+      "name": "Despiste",
+      "effect": "",
+      "effect_keys": [
+        "despiste"
+      ],
+      "identifier": "oblivious"
+    },
+    {
+      "name": "Perro Guardián",
+      "effect": "",
+      "effect_keys": [
+        "perro_guardian"
+      ],
+      "identifier": "guard-dog"
+    },
+    {
+      "name": "Agallas",
+      "effect": "",
+      "effect_keys": [
+        "agallas"
+      ],
+      "identifier": "guts"
+    },
+    {
+      "name": "Pies Rápidos",
+      "effect": "",
+      "effect_keys": [
+        "pies_rapidos"
+      ],
+      "identifier": "quick-feet"
+    },
+    {
+      "name": "Ímpetu Tóxico",
+      "effect": "",
+      "effect_keys": [
+        "impetu_toxico"
+      ],
+      "identifier": "toxic-boost"
+    },
+    {
+      "name": "Ímpetu Ardiente",
+      "effect": "",
+      "effect_keys": [
+        "impetu_ardiente"
+      ],
+      "identifier": "flare-boost"
+    },
+    {
+      "name": "Escama Especial",
+      "effect": "",
+      "effect_keys": [
+        "escama_especial"
+      ],
+      "identifier": "marvel-scale"
+    },
+    {
+      "name": "Afortunado",
+      "effect": "",
+      "effect_keys": [
+        "afortunado"
+      ],
+      "identifier": "super-luck"
+    },
+    {
+      "name": "Ultraimpulso",
+      "effect": "",
+      "effect_keys": [
+        "ultraimpulso"
+      ],
+      "identifier": "beast-boost"
+    },
+    {
+      "name": "Coránima",
+      "effect": "",
+      "effect_keys": [
+        "coranimas"
+      ],
+      "identifier": "soul-heart"
+    },
+    {
+      "name": "Impulso",
+      "effect": "",
+      "effect_keys": [
+        "impulso"
+      ],
+      "identifier": "speed-boost"
+    },
+    {
+      "name": "Don Floral",
+      "effect": "",
+      "effect_keys": [
+        "don_floral"
+      ],
+      "identifier": "flower-gift"
+    },
+    {
+      "name": "Simple",
+      "effect": "",
+      "effect_keys": [
+        "simple"
+      ],
+      "identifier": "simple"
+    },
+    {
+      "name": "Respondón",
+      "effect": "",
+      "effect_keys": [
+        "inversion"
+      ],
+      "identifier": "contrary"
+    },
+    {
+      "name": "Ignorante",
+      "effect": "",
+      "effect_keys": [
+        "ignorante"
+      ],
+      "identifier": "unaware"
+    },
+    {
+      "name": "Irascible",
+      "effect": "",
+      "effect_keys": [
+        "punto_ira"
+      ],
+      "identifier": "anger-point"
+    },
+    {
+      "name": "Francotirador",
+      "effect": "",
+      "effect_keys": [
+        "francotirador"
+      ],
+      "identifier": "sniper"
+    },
+    {
+      "name": "Encadenado",
+      "effect": "",
+      "effect_keys": [
+        "encadenamiento"
+      ],
+      "identifier": "skill-link"
+    },
+    {
+      "name": "Experto",
+      "effect": "",
+      "effect_keys": [
+        "experto"
+      ],
+      "identifier": "technician"
+    },
+    {
+      "name": "Piel Celeste",
+      "effect": "",
+      "effect_keys": [
+        "aerilacion"
+      ],
+      "identifier": "aerilate"
+    },
+    {
+      "name": "Piel Feérica",
+      "effect": "",
+      "effect_keys": [
+        "pixilacion"
+      ],
+      "identifier": "pixilate"
+    },
+    {
+      "name": "Piel Helada",
+      "effect": "",
+      "effect_keys": [
+        "refrigeracion"
+      ],
+      "identifier": "refrigerate"
+    },
+    {
+      "name": "Piel Eléctrica",
+      "effect": "",
+      "effect_keys": [
+        "galvanizacion"
+      ],
+      "identifier": "galvanize"
+    },
+    {
+      "name": "Normalidad",
+      "effect": "",
+      "effect_keys": [
+        "normalizacion"
+      ],
+      "identifier": "normalize"
+    },
+    {
+      "name": "Voz Fluida",
+      "effect": "",
+      "effect_keys": [
+        "voz_liquida"
+      ],
+      "identifier": "liquid-voice"
+    },
+    {
+      "name": "Valentía",
+      "effect": "",
+      "effect_keys": [
+        "valentia"
+      ],
+      "identifier": "scrappy"
+    },
+    {
+      "name": "Batería",
+      "effect": "",
+      "effect_keys": [
+        "bateria"
+      ],
+      "identifier": "battery"
+    },
+    {
+      "name": "Fuente Energía",
+      "effect": "",
+      "effect_keys": [
+        "punto_energia"
+      ],
+      "identifier": "power-spot"
+    },
+    {
+      "name": "Alma Acerada",
+      "effect": "",
+      "effect_keys": [
+        "espiritu_acerado"
+      ],
+      "identifier": "steely-spirit"
+    },
+    {
+      "name": "Alma Cura",
+      "effect": "",
+      "effect_keys": [
+        "curacion"
+      ],
+      "identifier": "healer"
+    }
+  ],
+  "assignments": {
+    "11": [
+      "mudar"
+    ],
+    "12": [
+      "ojo_compuesto"
+    ],
+    "14": [
+      "mudar"
+    ],
+    "23": [
+      "mudar"
+    ],
+    "24": [
+      "mudar"
+    ],
+    "31": [
+      "potencia_bruta"
+    ],
+    "34": [
+      "potencia_bruta"
+    ],
+    "41": [
+      "intrepido"
+    ],
+    "42": [
+      "intrepido"
+    ],
+    "48": [
+      "ojo_compuesto"
+    ],
+    "49": [
+      "piel_milagrosa"
+    ],
+    "54": [
+      "aclimatacion"
+    ],
+    "55": [
+      "aclimatacion"
+    ],
+    "63": [
+      "intrepido"
+    ],
+    "64": [
+      "intrepido"
+    ],
+    "65": [
+      "intrepido"
+    ],
+    "79": [
+      "ritmo_propio",
+      "despiste"
+    ],
+    "80": [
+      "ritmo_propio",
+      "despiste"
+    ],
+    "83": [
+      "intrepido",
+      "competitivo",
+      "vista_lince"
+    ],
+    "86": [
+      "hidratacion"
+    ],
+    "87": [
+      "hidratacion"
+    ],
+    "96": [
+      "insomnio",
+      "intrepido"
+    ],
+    "97": [
+      "insomnio",
+      "intrepido"
+    ],
+    "98": [
+      "potencia_bruta",
+      "corte_fuerte"
+    ],
+    "99": [
+      "potencia_bruta",
+      "corte_fuerte"
+    ],
+    "100": [
+      "insonoridad"
+    ],
+    "101": [
+      "insonoridad"
+    ],
+    "107": [
+      "intrepido",
+      "vista_lince"
+    ],
+    "108": [
+      "ritmo_propio",
+      "aclimatacion",
+      "despiste"
+    ],
+    "115": [
+      "intrepido",
+      "valentia"
+    ],
+    "122": [
+      "insonoridad",
+      "experto"
+    ],
+    "128": [
+      "potencia_bruta",
+      "punto_ira"
+    ],
+    "131": [
+      "hidratacion"
+    ],
+    "134": [
+      "hidratacion"
+    ],
+    "143": [
+      "inmunidad"
+    ],
+    "147": [
+      "mudar",
+      "escama_especial"
+    ],
+    "148": [
+      "mudar",
+      "escama_especial"
+    ],
+    "149": [
+      "intrepido"
+    ],
+    "158": [
+      "potencia_bruta"
+    ],
+    "159": [
+      "potencia_bruta"
+    ],
+    "160": [
+      "potencia_bruta"
+    ],
+    "163": [
+      "insomnio",
+      "vista_lince"
+    ],
+    "164": [
+      "insomnio",
+      "vista_lince"
+    ],
+    "167": [
+      "insomnio",
+      "francotirador"
+    ],
+    "168": [
+      "insomnio",
+      "francotirador"
+    ],
+    "169": [
+      "intrepido"
+    ],
+    "193": [
+      "ojo_compuesto",
+      "impulso"
+    ],
+    "197": [
+      "intrepido"
+    ],
+    "198": [
+      "insomnio",
+      "afortunado"
+    ],
+    "199": [
+      "ritmo_propio",
+      "despiste"
+    ],
+    "203": [
+      "intrepido"
+    ],
+    "207": [
+      "inmunidad",
+      "corte_fuerte"
+    ],
+    "208": [
+      "potencia_bruta"
+    ],
+    "215": [
+      "intrepido",
+      "vista_lince"
+    ],
+    "225": [
+      "insomnio",
+      "espiritu_vital"
+    ],
+    "235": [
+      "ritmo_propio",
+      "experto"
+    ],
+    "238": [
+      "hidratacion",
+      "despiste"
+    ],
+    "243": [
+      "intrepido"
+    ],
+    "244": [
+      "intrepido"
+    ],
+    "245": [
+      "intrepido"
+    ],
+    "247": [
+      "mudar"
+    ],
+    "266": [
+      "mudar"
+    ],
+    "268": [
+      "mudar"
+    ],
+    "269": [
+      "ojo_compuesto"
+    ],
+    "270": [
+      "ritmo_propio"
+    ],
+    "271": [
+      "ritmo_propio"
+    ],
+    "272": [
+      "ritmo_propio"
+    ],
+    "278": [
+      "hidratacion",
+      "vista_lince"
+    ],
+    "290": [
+      "ojo_compuesto"
+    ],
+    "293": [
+      "insonoridad",
+      "cobardia"
+    ],
+    "294": [
+      "insonoridad",
+      "valentia"
+    ],
+    "295": [
+      "insonoridad",
+      "valentia"
+    ],
+    "296": [
+      "potencia_bruta",
+      "agallas"
+    ],
+    "297": [
+      "potencia_bruta",
+      "agallas"
+    ],
+    "300": [
+      "piel_milagrosa",
+      "normalizacion"
+    ],
+    "301": [
+      "piel_milagrosa",
+      "normalizacion"
+    ],
+    "303": [
+      "potencia_bruta",
+      "corte_fuerte"
+    ],
+    "322": [
+      "ritmo_propio",
+      "despiste",
+      "simple"
+    ],
+    "325": [
+      "ritmo_propio"
+    ],
+    "326": [
+      "ritmo_propio"
+    ],
+    "327": [
+      "ritmo_propio",
+      "inversion"
+    ],
+    "328": [
+      "potencia_bruta",
+      "corte_fuerte"
+    ],
+    "333": [
+      "aclimatacion"
+    ],
+    "334": [
+      "aclimatacion"
+    ],
+    "335": [
+      "inmunidad",
+      "impetu_toxico"
+    ],
+    "336": [
+      "mudar"
+    ],
+    "339": [
+      "hidratacion",
+      "despiste"
+    ],
+    "340": [
+      "hidratacion",
+      "despiste"
+    ],
+    "353": [
+      "insomnio"
+    ],
+    "354": [
+      "insomnio"
+    ],
+    "361": [
+      "intrepido"
+    ],
+    "362": [
+      "intrepido"
+    ],
+    "368": [
+      "hidratacion"
+    ],
+    "370": [
+      "hidratacion"
+    ],
+    "371": [
+      "potencia_bruta"
+    ],
+    "401": [
+      "mudar"
+    ],
+    "408": [
+      "potencia_bruta"
+    ],
+    "409": [
+      "potencia_bruta"
+    ],
+    "410": [
+      "insonoridad"
+    ],
+    "411": [
+      "insonoridad"
+    ],
+    "412": [
+      "mudar",
+      "funda"
+    ],
+    "430": [
+      "insomnio",
+      "afortunado"
+    ],
+    "431": [
+      "ritmo_propio",
+      "vista_lince"
+    ],
+    "432": [
+      "ritmo_propio",
+      "competitivo"
+    ],
+    "439": [
+      "insonoridad",
+      "experto"
+    ],
+    "447": [
+      "intrepido"
+    ],
+    "448": [
+      "intrepido",
+      "justiciero"
+    ],
+    "459": [
+      "insonoridad",
+      "nevada"
+    ],
+    "460": [
+      "insonoridad",
+      "nevada"
+    ],
+    "463": [
+      "ritmo_propio",
+      "aclimatacion",
+      "despiste"
+    ],
+    "489": [
+      "hidratacion"
+    ],
+    "490": [
+      "hidratacion"
+    ],
+    "532": [
+      "potencia_bruta",
+      "agallas"
+    ],
+    "533": [
+      "potencia_bruta",
+      "agallas"
+    ],
+    "534": [
+      "potencia_bruta",
+      "agallas"
+    ],
+    "535": [
+      "hidratacion"
+    ],
+    "536": [
+      "hidratacion"
+    ],
+    "538": [
+      "intrepido",
+      "agallas"
+    ],
+    "539": [
+      "intrepido"
+    ],
+    "548": [
+      "ritmo_propio"
+    ],
+    "549": [
+      "ritmo_propio"
+    ],
+    "554": [
+      "intrepido"
+    ],
+    "555": [
+      "potencia_bruta"
+    ],
+    "559": [
+      "mudar"
+    ],
+    "560": [
+      "mudar"
+    ],
+    "561": [
+      "piel_milagrosa"
+    ],
+    "580": [
+      "hidratacion",
+      "vista_lince",
+      "sacapecho"
+    ],
+    "581": [
+      "hidratacion",
+      "vista_lince",
+      "sacapecho"
+    ],
+    "588": [
+      "mudar"
+    ],
+    "594": [
+      "hidratacion",
+      "curacion"
+    ],
+    "595": [
+      "ojo_compuesto"
+    ],
+    "596": [
+      "ojo_compuesto"
+    ],
+    "616": [
+      "hidratacion",
+      "funda"
+    ],
+    "617": [
+      "hidratacion"
+    ],
+    "619": [
+      "intrepido"
+    ],
+    "620": [
+      "intrepido"
+    ],
+    "621": [
+      "potencia_bruta"
+    ],
+    "624": [
+      "intrepido",
+      "competitivo"
+    ],
+    "625": [
+      "intrepido",
+      "competitivo"
+    ],
+    "626": [
+      "insonoridad"
+    ],
+    "627": [
+      "potencia_bruta",
+      "vista_lince"
+    ],
+    "628": [
+      "potencia_bruta",
+      "competitivo",
+      "vista_lince"
+    ],
+    "645": [
+      "potencia_bruta",
+      "poder_arena"
+    ],
+    "650": [
+      "antibalas"
+    ],
+    "651": [
+      "antibalas"
+    ],
+    "652": [
+      "antibalas"
+    ],
+    "664": [
+      "ojo_compuesto",
+      "guardia_amiga"
+    ],
+    "665": [
+      "mudar",
+      "guardia_amiga"
+    ],
+    "666": [
+      "ojo_compuesto",
+      "guardia_amiga"
+    ],
+    "677": [
+      "ritmo_propio",
+      "vista_lince"
+    ],
+    "704": [
+      "hidratacion",
+      "viscosidad"
+    ],
+    "705": [
+      "hidratacion",
+      "viscosidad"
+    ],
+    "706": [
+      "hidratacion",
+      "viscosidad"
+    ],
+    "710": [
+      "insomnio"
+    ],
+    "711": [
+      "insomnio"
+    ],
+    "712": [
+      "ritmo_propio"
+    ],
+    "713": [
+      "ritmo_propio"
+    ],
+    "733": [
+      "potencia_bruta",
+      "vista_lince",
+      "encadenamiento"
+    ],
+    "749": [
+      "ritmo_propio",
+      "intrepido",
+      "firmeza"
+    ],
+    "750": [
+      "ritmo_propio",
+      "intrepido",
+      "firmeza"
+    ],
+    "765": [
+      "intrepido",
+      "telepatia"
+    ],
+    "779": [
+      "piel_milagrosa"
+    ],
+    "780": [
+      "aclimatacion",
+      "colera"
+    ],
+    "782": [
+      "antibalas",
+      "insonoridad",
+      "funda"
+    ],
+    "783": [
+      "antibalas",
+      "insonoridad",
+      "funda"
+    ],
+    "784": [
+      "antibalas",
+      "insonoridad",
+      "funda"
+    ],
+    "785": [
+      "electrogenesis",
+      "telepatia"
+    ],
+    "786": [
+      "psicogenesis",
+      "telepatia"
+    ],
+    "787": [
+      "herbogenesis",
+      "telepatia"
+    ],
+    "788": [
+      "nebulogenesis",
+      "telepatia"
+    ],
+    "800": [
+      "armadura_prisma"
+    ],
+    "810": [
+      "herbogenesis"
+    ],
+    "811": [
+      "herbogenesis"
+    ],
+    "812": [
+      "herbogenesis"
+    ],
+    "824": [
+      "ojo_compuesto",
+      "telepatia"
+    ],
+    "825": [
+      "ojo_compuesto",
+      "telepatia"
+    ],
+    "831": [
+      "antibalas",
+      "peluche"
+    ],
+    "832": [
+      "antibalas",
+      "peluche"
+    ],
+    "840": [
+      "antibalas"
+    ],
+    "843": [
+      "mudar",
+      "expulsarena"
+    ],
+    "844": [
+      "mudar",
+      "expulsarena"
+    ],
+    "871": [
+      "electrogenesis"
+    ],
+    "876": [
+      "intrepido",
+      "psicogenesis"
+    ],
+    "878": [
+      "potencia_bruta"
+    ],
+    "879": [
+      "potencia_bruta"
+    ],
+    "891": [
+      "intrepido"
+    ],
+    "900": [
+      "potencia_bruta"
+    ],
+    "901": [
+      "antibalas",
+      "agallas"
+    ],
+    "917": [
+      "insomnio"
+    ],
+    "918": [
+      "insomnio"
+    ],
+    "924": [
+      "ritmo_propio"
+    ],
+    "926": [
+      "ritmo_propio"
+    ],
+    "938": [
+      "ritmo_propio"
+    ],
+    "951": [
+      "insomnio"
+    ],
+    "952": [
+      "insomnio"
+    ],
+    "953": [
+      "ojo_compuesto",
+      "mudar"
+    ],
+    "957": [
+      "ritmo_propio"
+    ],
+    "958": [
+      "ritmo_propio"
+    ],
+    "959": [
+      "ritmo_propio"
+    ],
+    "960": [
+      "viscosidad",
+      "cobardia"
+    ],
+    "961": [
+      "viscosidad",
+      "cobardia"
+    ],
+    "967": [
+      "mudar"
+    ],
+    "974": [
+      "potencia_bruta",
+      "manto_nivoso"
+    ],
+    "975": [
+      "potencia_bruta",
+      "quitanieves"
+    ],
+    "979": [
+      "intrepido",
+      "competitivo",
+      "espiritu_vital"
+    ],
+    "10017": [
+      "potencia_bruta"
+    ],
+    "10027": [
+      "insomnio"
+    ],
+    "10028": [
+      "insomnio"
+    ],
+    "10029": [
+      "insomnio"
+    ],
+    "10030": [
+      "insomnio"
+    ],
+    "10031": [
+      "insomnio"
+    ],
+    "10032": [
+      "insomnio"
+    ],
+    "10044": [
+      "insomnio"
+    ],
+    "10068": [
+      "intrepido"
+    ],
+    "10087": [
+      "potencia_bruta"
+    ],
+    "10146": [
+      "antibalas",
+      "insonoridad",
+      "funda"
+    ],
+    "10151": [
+      "ritmo_propio"
+    ],
+    "10155": [
+      "armadura_prisma"
+    ],
+    "10156": [
+      "armadura_prisma"
+    ],
+    "10164": [
+      "ritmo_propio"
+    ],
+    "10165": [
+      "ritmo_propio"
+    ],
+    "10167": [
+      "nebulogenesis",
+      "levitacion"
+    ],
+    "10172": [
+      "ritmo_propio"
+    ],
+    "10176": [
+      "intrepido"
+    ],
+    "10186": [
+      "ritmo_propio",
+      "psicogenesis"
+    ],
+    "10198": [
+      "ojo_compuesto"
+    ],
+    "10203": [
+      "potencia_bruta",
+      "corte_fuerte"
+    ],
+    "10204": [
+      "hidratacion"
+    ],
+    "10206": [
+      "inmunidad"
+    ],
+    "10209": [
+      "herbogenesis"
+    ],
+    "10218": [
+      "mudar",
+      "expulsarena"
+    ],
+    "10224": [
+      "potencia_bruta"
+    ],
+    "10231": [
+      "insonoridad"
+    ],
+    "10232": [
+      "insonoridad"
+    ],
+    "10235": [
+      "intrepido",
+      "vista_lince"
+    ],
+    "10240": [
+      "potencia_bruta",
+      "vista_lince"
+    ],
+    "10241": [
+      "viscosidad"
+    ],
+    "10242": [
+      "viscosidad"
+    ],
+    "10261": [
+      "potencia_bruta"
+    ],
+    "10262": [
+      "potencia_bruta"
+    ],
+    "10292": [
+      "antibalas"
+    ],
+    "10304": [
+      "electrogenesis"
+    ],
+    "35": [
+      "guardia_amiga"
+    ],
+    "39": [
+      "guardia_amiga",
+      "tenacidad"
+    ],
+    "173": [
+      "guardia_amiga"
+    ],
+    "174": [
+      "guardia_amiga",
+      "tenacidad"
+    ],
+    "177": [
+      "espejo_magico"
+    ],
+    "178": [
+      "espejo_magico"
+    ],
+    "196": [
+      "espejo_magico"
+    ],
+    "440": [
+      "guardia_amiga"
+    ],
+    "669": [
+      "velo_flor"
+    ],
+    "670": [
+      "velo_flor"
+    ],
+    "671": [
+      "velo_flor"
+    ],
+    "682": [
+      "aroma_velo",
+      "curacion"
+    ],
+    "683": [
+      "aroma_velo",
+      "curacion"
+    ],
+    "764": [
+      "velo_flor"
+    ],
+    "856": [
+      "espejo_magico",
+      "curacion"
+    ],
+    "857": [
+      "espejo_magico",
+      "curacion"
+    ],
+    "858": [
+      "espejo_magico",
+      "curacion"
+    ],
+    "868": [
+      "aroma_velo",
+      "velo_dulce"
+    ],
+    "869": [
+      "aroma_velo",
+      "velo_dulce"
+    ],
+    "915": [
+      "aroma_velo"
+    ],
+    "925": [
+      "guardia_amiga",
+      "experto"
+    ],
+    "927": [
+      "aroma_velo",
+      "cuerpo_horneado"
+    ],
+    "10057": [
+      "espejo_magico"
+    ],
+    "10061": [
+      "velo_flor"
+    ],
+    "10066": [
+      "espejo_magico"
+    ],
+    "10075": [
+      "espejo_magico"
+    ],
+    "10221": [
+      "espejo_magico",
+      "curacion"
+    ],
+    "10223": [
+      "aroma_velo",
+      "velo_dulce"
+    ],
+    "10254": [
+      "aroma_velo"
+    ],
+    "10257": [
+      "guardia_amiga",
+      "experto"
+    ],
+    "10278": [
+      "espejo_magico"
+    ],
+    "50": [
+      "poder_arena"
+    ],
+    "51": [
+      "poder_arena"
+    ],
+    "144": [
+      "manto_nivoso"
+    ],
+    "220": [
+      "manto_nivoso",
+      "despiste"
+    ],
+    "221": [
+      "manto_nivoso",
+      "despiste"
+    ],
+    "299": [
+      "poder_arena"
+    ],
+    "384": [
+      "barrera_aerea"
+    ],
+    "422": [
+      "poder_arena"
+    ],
+    "423": [
+      "poder_arena"
+    ],
+    "449": [
+      "poder_arena"
+    ],
+    "450": [
+      "poder_arena"
+    ],
+    "471": [
+      "manto_nivoso"
+    ],
+    "473": [
+      "manto_nivoso",
+      "despiste"
+    ],
+    "476": [
+      "poder_arena"
+    ],
+    "478": [
+      "manto_nivoso"
+    ],
+    "524": [
+      "poder_arena",
+      "armadura_fragil"
+    ],
+    "525": [
+      "poder_arena",
+      "armadura_fragil"
+    ],
+    "526": [
+      "poder_arena"
+    ],
+    "529": [
+      "poder_arena"
+    ],
+    "530": [
+      "poder_arena"
+    ],
+    "582": [
+      "manto_nivoso",
+      "armadura_fragil"
+    ],
+    "583": [
+      "manto_nivoso",
+      "armadura_fragil"
+    ],
+    "584": [
+      "nevada",
+      "armadura_fragil"
+    ],
+    "613": [
+      "manto_nivoso",
+      "quitanieves",
+      "cobardia"
+    ],
+    "614": [
+      "manto_nivoso",
+      "quitanieves"
+    ],
+    "684": [
+      "velo_dulce"
+    ],
+    "685": [
+      "velo_dulce"
+    ],
+    "698": [
+      "nevada",
+      "refrigeracion"
+    ],
+    "699": [
+      "nevada",
+      "refrigeracion"
+    ],
+    "742": [
+      "velo_dulce"
+    ],
+    "743": [
+      "velo_dulce"
+    ],
+    "761": [
+      "velo_dulce",
+      "despiste"
+    ],
+    "762": [
+      "velo_dulce",
+      "despiste"
+    ],
+    "763": [
+      "velo_dulce"
+    ],
+    "10058": [
+      "poder_arena"
+    ],
+    "10060": [
+      "nevada"
+    ],
+    "10072": [
+      "poder_arena"
+    ],
+    "10101": [
+      "manto_nivoso",
+      "quitanieves"
+    ],
+    "10102": [
+      "manto_nivoso",
+      "quitanieves"
+    ],
+    "10103": [
+      "manto_nivoso",
+      "nevada"
+    ],
+    "10104": [
+      "manto_nivoso",
+      "nevada"
+    ],
+    "10105": [
+      "rizos_enredados",
+      "poder_arena"
+    ],
+    "10106": [
+      "rizos_enredados",
+      "poder_arena"
+    ],
+    "10150": [
+      "velo_dulce"
+    ],
+    "10285": [
+      "nevada"
+    ],
+    "40": [
+      "tenacidad"
+    ],
+    "56": [
+      "competitivo",
+      "espiritu_vital",
+      "punto_ira"
+    ],
+    "57": [
+      "competitivo",
+      "espiritu_vital",
+      "punto_ira"
+    ],
+    "58": [
+      "justiciero"
+    ],
+    "59": [
+      "justiciero"
+    ],
+    "95": [
+      "armadura_fragil"
+    ],
+    "129": [
+      "cobardia"
+    ],
+    "138": [
+      "armadura_fragil"
+    ],
+    "139": [
+      "armadura_fragil"
+    ],
+    "140": [
+      "armadura_fragil"
+    ],
+    "141": [
+      "armadura_fragil"
+    ],
+    "165": [
+      "cobardia"
+    ],
+    "185": [
+      "cobardia"
+    ],
+    "206": [
+      "cobardia"
+    ],
+    "209": [
+      "cobardia"
+    ],
+    "210": [
+      "cobardia",
+      "pies_rapidos"
+    ],
+    "218": [
+      "armadura_fragil",
+      "escudo_magma"
+    ],
+    "219": [
+      "armadura_fragil",
+      "escudo_magma"
+    ],
+    "227": [
+      "armadura_fragil",
+      "vista_lince"
+    ],
+    "261": [
+      "cobardia",
+      "pies_rapidos"
+    ],
+    "350": [
+      "tenacidad",
+      "escama_especial"
+    ],
+    "359": [
+      "justiciero",
+      "afortunado"
+    ],
+    "366": [
+      "cobardia"
+    ],
+    "393": [
+      "tenacidad"
+    ],
+    "394": [
+      "tenacidad"
+    ],
+    "395": [
+      "tenacidad"
+    ],
+    "438": [
+      "cobardia"
+    ],
+    "466": [
+      "electromotor",
+      "espiritu_vital"
+    ],
+    "475": [
+      "justiciero"
+    ],
+    "522": [
+      "electromotor"
+    ],
+    "523": [
+      "electromotor"
+    ],
+    "557": [
+      "armadura_fragil"
+    ],
+    "558": [
+      "armadura_fragil"
+    ],
+    "569": [
+      "armadura_fragil"
+    ],
+    "574": [
+      "tenacidad"
+    ],
+    "575": [
+      "tenacidad"
+    ],
+    "576": [
+      "tenacidad"
+    ],
+    "587": [
+      "electromotor"
+    ],
+    "629": [
+      "armadura_fragil",
+      "sacapecho",
+      "funda"
+    ],
+    "630": [
+      "armadura_fragil",
+      "sacapecho",
+      "funda"
+    ],
+    "638": [
+      "justiciero"
+    ],
+    "639": [
+      "justiciero"
+    ],
+    "640": [
+      "justiciero"
+    ],
+    "641": [
+      "competitivo"
+    ],
+    "642": [
+      "competitivo"
+    ],
+    "647": [
+      "justiciero"
+    ],
+    "766": [
+      "competitivo"
+    ],
+    "835": [
+      "cobardia"
+    ],
+    "836": [
+      "tenacidad"
+    ],
+    "837": [
+      "combustible",
+      "ignifugo"
+    ],
+    "838": [
+      "combustible"
+    ],
+    "839": [
+      "combustible"
+    ],
+    "848": [
+      "cobardia"
+    ],
+    "854": [
+      "armadura_fragil"
+    ],
+    "855": [
+      "armadura_fragil"
+    ],
+    "862": [
+      "competitivo",
+      "agallas"
+    ],
+    "864": [
+      "armadura_fragil"
+    ],
+    "870": [
+      "competitivo"
+    ],
+    "881": [
+      "quitanieves"
+    ],
+    "883": [
+      "quitanieves"
+    ],
+    "930": [
+      "disemillar"
+    ],
+    "932": [
+      "sal_purificadora",
+      "cuerpo_puro"
+    ],
+    "933": [
+      "sal_purificadora",
+      "cuerpo_puro"
+    ],
+    "934": [
+      "sal_purificadora",
+      "cuerpo_puro"
+    ],
+    "936": [
+      "armadura_fragil"
+    ],
+    "937": [
+      "armadura_fragil"
+    ],
+    "940": [
+      "tenacidad"
+    ],
+    "941": [
+      "tenacidad"
+    ],
+    "968": [
+      "geofagia"
+    ],
+    "982": [
+      "cobardia"
+    ],
+    "983": [
+      "competitivo"
+    ],
+    "999": [
+      "cobardia"
+    ],
+    "1000": [
+      "cuerpo_aureo"
+    ],
+    "1017": [
+      "competitivo"
+    ],
+    "1018": [
+      "firmeza"
+    ],
+    "10024": [
+      "justiciero"
+    ],
+    "10025": [
+      "tenacidad",
+      "vista_lince"
+    ],
+    "10107": [
+      "cobardia",
+      "experto"
+    ],
+    "10108": [
+      "cobardia",
+      "pelaje_recio",
+      "experto"
+    ],
+    "10169": [
+      "tenacidad"
+    ],
+    "10170": [
+      "competitivo"
+    ],
+    "10171": [
+      "colera"
+    ],
+    "10173": [
+      "armadura_fragil"
+    ],
+    "10207": [
+      "armadura_fragil"
+    ],
+    "10215": [
+      "combustible"
+    ],
+    "10247": [
+      "cobardia"
+    ],
+    "10255": [
+      "cobardia"
+    ],
+    "10302": [
+      "colera"
+    ],
+    "10303": [
+      "competitivo"
+    ],
+    "16": [
+      "vista_lince",
+      "sacapecho"
+    ],
+    "17": [
+      "vista_lince",
+      "sacapecho"
+    ],
+    "18": [
+      "vista_lince",
+      "sacapecho"
+    ],
+    "21": [
+      "vista_lince",
+      "francotirador"
+    ],
+    "22": [
+      "vista_lince",
+      "francotirador"
+    ],
+    "72": [
+      "cuerpo_puro"
+    ],
+    "73": [
+      "cuerpo_puro"
+    ],
+    "90": [
+      "funda",
+      "encadenamiento"
+    ],
+    "91": [
+      "funda",
+      "encadenamiento"
+    ],
+    "127": [
+      "corte_fuerte"
+    ],
+    "161": [
+      "vista_lince"
+    ],
+    "162": [
+      "vista_lince"
+    ],
+    "204": [
+      "funda"
+    ],
+    "205": [
+      "funda"
+    ],
+    "279": [
+      "vista_lince"
+    ],
+    "302": [
+      "vista_lince"
+    ],
+    "324": [
+      "humo_blanco"
+    ],
+    "341": [
+      "corte_fuerte"
+    ],
+    "342": [
+      "corte_fuerte"
+    ],
+    "372": [
+      "funda"
+    ],
+    "374": [
+      "cuerpo_puro"
+    ],
+    "375": [
+      "cuerpo_puro"
+    ],
+    "376": [
+      "cuerpo_puro"
+    ],
+    "377": [
+      "cuerpo_puro"
+    ],
+    "378": [
+      "cuerpo_puro"
+    ],
+    "379": [
+      "cuerpo_puro"
+    ],
+    "396": [
+      "vista_lince"
+    ],
+    "413": [
+      "funda"
+    ],
+    "434": [
+      "vista_lince"
+    ],
+    "435": [
+      "vista_lince"
+    ],
+    "436": [
+      "ignifugo",
+      "levitacion"
+    ],
+    "437": [
+      "ignifugo",
+      "levitacion"
+    ],
+    "441": [
+      "vista_lince",
+      "sacapecho"
+    ],
+    "451": [
+      "vista_lince",
+      "francotirador"
+    ],
+    "452": [
+      "vista_lince",
+      "francotirador"
+    ],
+    "472": [
+      "corte_fuerte"
+    ],
+    "504": [
+      "vista_lince"
+    ],
+    "505": [
+      "vista_lince"
+    ],
+    "519": [
+      "sacapecho",
+      "afortunado"
+    ],
+    "520": [
+      "sacapecho",
+      "afortunado"
+    ],
+    "521": [
+      "sacapecho",
+      "afortunado"
+    ],
+    "540": [
+      "funda"
+    ],
+    "541": [
+      "funda"
+    ],
+    "542": [
+      "funda"
+    ],
+    "577": [
+      "funda"
+    ],
+    "578": [
+      "funda"
+    ],
+    "579": [
+      "funda"
+    ],
+    "589": [
+      "funda"
+    ],
+    "599": [
+      "cuerpo_puro"
+    ],
+    "600": [
+      "cuerpo_puro"
+    ],
+    "601": [
+      "cuerpo_puro"
+    ],
+    "631": [
+      "humo_blanco"
+    ],
+    "661": [
+      "sacapecho"
+    ],
+    "676": [
+      "pelaje_recio"
+    ],
+    "678": [
+      "vista_lince"
+    ],
+    "703": [
+      "cuerpo_puro"
+    ],
+    "719": [
+      "cuerpo_puro"
+    ],
+    "731": [
+      "vista_lince",
+      "encadenamiento"
+    ],
+    "732": [
+      "vista_lince",
+      "encadenamiento"
+    ],
+    "739": [
+      "corte_fuerte",
+      "punto_ira"
+    ],
+    "740": [
+      "corte_fuerte",
+      "punto_ira"
+    ],
+    "744": [
+      "vista_lince",
+      "espiritu_vital"
+    ],
+    "745": [
+      "vista_lince"
+    ],
+    "751": [
+      "pompa"
+    ],
+    "752": [
+      "pompa"
+    ],
+    "759": [
+      "peluche"
+    ],
+    "760": [
+      "peluche"
+    ],
+    "769": [
+      "hidrorrefuerzo"
+    ],
+    "770": [
+      "hidrorrefuerzo"
+    ],
+    "792": [
+      "guardia_espectro"
+    ],
+    "821": [
+      "vista_lince",
+      "sacapecho"
+    ],
+    "822": [
+      "vista_lince",
+      "sacapecho"
+    ],
+    "850": [
+      "humo_blanco"
+    ],
+    "851": [
+      "humo_blanco"
+    ],
+    "872": [
+      "escama_hielo"
+    ],
+    "873": [
+      "escama_hielo"
+    ],
+    "885": [
+      "cuerpo_puro"
+    ],
+    "886": [
+      "cuerpo_puro"
+    ],
+    "887": [
+      "cuerpo_puro"
+    ],
+    "894": [
+      "transistor"
+    ],
+    "895": [
+      "mandibula_dragon"
+    ],
+    "950": [
+      "coraza_ira"
+    ],
+    "962": [
+      "sacapecho",
+      "vista_lince",
+      "transportarrocas"
+    ],
+    "965": [
+      "funda"
+    ],
+    "966": [
+      "funda"
+    ],
+    "971": [
+      "peluche"
+    ],
+    "972": [
+      "peluche"
+    ],
+    "996": [
+      "termoconversion"
+    ],
+    "997": [
+      "termoconversion"
+    ],
+    "998": [
+      "termoconversion"
+    ],
+    "1012": [
+      "ignifugo"
+    ],
+    "1013": [
+      "ignifugo"
+    ],
+    "10004": [
+      "funda"
+    ],
+    "10005": [
+      "funda"
+    ],
+    "10126": [
+      "vista_lince",
+      "espiritu_vital"
+    ],
+    "10153": [
+      "pompa"
+    ],
+    "10162": [
+      "velo_pastel"
+    ],
+    "10163": [
+      "velo_pastel"
+    ],
+    "10220": [
+      "humo_blanco"
+    ],
+    "10249": [
+      "funda"
+    ],
+    "10325": [
+      "termoconversion"
+    ],
+    "19": [
+      "agallas"
+    ],
+    "20": [
+      "agallas"
+    ],
+    "66": [
+      "agallas"
+    ],
+    "67": [
+      "agallas"
+    ],
+    "68": [
+      "agallas"
+    ],
+    "92": [
+      "levitacion"
+    ],
+    "93": [
+      "levitacion"
+    ],
+    "109": [
+      "levitacion"
+    ],
+    "110": [
+      "levitacion"
+    ],
+    "124": [
+      "despiste"
+    ],
+    "125": [
+      "espiritu_vital"
+    ],
+    "126": [
+      "espiritu_vital"
+    ],
+    "135": [
+      "pies_rapidos"
+    ],
+    "136": [
+      "agallas"
+    ],
+    "175": [
+      "afortunado"
+    ],
+    "176": [
+      "afortunado"
+    ],
+    "200": [
+      "levitacion"
+    ],
+    "201": [
+      "levitacion"
+    ],
+    "202": [
+      "telepatia"
+    ],
+    "214": [
+      "agallas"
+    ],
+    "216": [
+      "pies_rapidos"
+    ],
+    "217": [
+      "agallas",
+      "pies_rapidos"
+    ],
+    "224": [
+      "ventosas",
+      "francotirador"
+    ],
+    "236": [
+      "agallas",
+      "espiritu_vital"
+    ],
+    "239": [
+      "espiritu_vital"
+    ],
+    "240": [
+      "espiritu_vital"
+    ],
+    "246": [
+      "agallas"
+    ],
+    "255": [
+      "impulso"
+    ],
+    "256": [
+      "impulso"
+    ],
+    "257": [
+      "impulso"
+    ],
+    "262": [
+      "pies_rapidos"
+    ],
+    "263": [
+      "pies_rapidos"
+    ],
+    "264": [
+      "pies_rapidos"
+    ],
+    "276": [
+      "agallas",
+      "valentia"
+    ],
+    "277": [
+      "agallas",
+      "valentia"
+    ],
+    "280": [
+      "telepatia"
+    ],
+    "281": [
+      "telepatia"
+    ],
+    "282": [
+      "telepatia"
+    ],
+    "285": [
+      "pies_rapidos"
+    ],
+    "288": [
+      "espiritu_vital"
+    ],
+    "291": [
+      "impulso"
+    ],
+    "292": [
+      "superguarda"
+    ],
+    "307": [
+      "telepatia"
+    ],
+    "308": [
+      "telepatia"
+    ],
+    "314": [
+      "despiste"
+    ],
+    "318": [
+      "impulso"
+    ],
+    "319": [
+      "impulso"
+    ],
+    "320": [
+      "despiste"
+    ],
+    "321": [
+      "despiste"
+    ],
+    "323": [
+      "escudo_magma",
+      "punto_ira"
+    ],
+    "329": [
+      "levitacion"
+    ],
+    "330": [
+      "levitacion"
+    ],
+    "337": [
+      "levitacion"
+    ],
+    "338": [
+      "levitacion"
+    ],
+    "343": [
+      "levitacion"
+    ],
+    "344": [
+      "levitacion"
+    ],
+    "345": [
+      "ventosas"
+    ],
+    "346": [
+      "ventosas"
+    ],
+    "349": [
+      "despiste"
+    ],
+    "355": [
+      "levitacion"
+    ],
+    "358": [
+      "levitacion"
+    ],
+    "360": [
+      "telepatia"
+    ],
+    "363": [
+      "despiste"
+    ],
+    "364": [
+      "despiste"
+    ],
+    "365": [
+      "despiste"
+    ],
+    "380": [
+      "levitacion"
+    ],
+    "381": [
+      "levitacion"
+    ],
+    "403": [
+      "agallas"
+    ],
+    "404": [
+      "agallas"
+    ],
+    "405": [
+      "agallas"
+    ],
+    "421": [
+      "don_floral"
+    ],
+    "425": [
+      "impetu_ardiente"
+    ],
+    "426": [
+      "impetu_ardiente"
+    ],
+    "429": [
+      "levitacion"
+    ],
+    "433": [
+      "levitacion"
+    ],
+    "455": [
+      "levitacion"
+    ],
+    "467": [
+      "espiritu_vital"
+    ],
+    "468": [
+      "afortunado"
+    ],
+    "469": [
+      "impulso"
+    ],
+    "479": [
+      "levitacion"
+    ],
+    "480": [
+      "levitacion"
+    ],
+    "481": [
+      "levitacion"
+    ],
+    "482": [
+      "levitacion"
+    ],
+    "483": [
+      "telepatia"
+    ],
+    "484": [
+      "telepatia"
+    ],
+    "487": [
+      "telepatia"
+    ],
+    "488": [
+      "levitacion"
+    ],
+    "506": [
+      "espiritu_vital"
+    ],
+    "517": [
+      "telepatia"
+    ],
+    "518": [
+      "telepatia"
+    ],
+    "543": [
+      "impulso"
+    ],
+    "544": [
+      "impulso"
+    ],
+    "545": [
+      "impulso"
+    ],
+    "602": [
+      "levitacion"
+    ],
+    "603": [
+      "levitacion"
+    ],
+    "604": [
+      "levitacion"
+    ],
+    "605": [
+      "telepatia"
+    ],
+    "606": [
+      "telepatia"
+    ],
+    "615": [
+      "levitacion"
+    ],
+    "635": [
+      "levitacion"
+    ],
+    "686": [
+      "ventosas",
+      "inversion"
+    ],
+    "687": [
+      "ventosas",
+      "inversion"
+    ],
+    "714": [
+      "telepatia"
+    ],
+    "715": [
+      "telepatia"
+    ],
+    "738": [
+      "levitacion"
+    ],
+    "757": [
+      "despiste"
+    ],
+    "758": [
+      "despiste"
+    ],
+    "793": [
+      "ultraimpulso"
+    ],
+    "794": [
+      "ultraimpulso"
+    ],
+    "795": [
+      "ultraimpulso"
+    ],
+    "796": [
+      "ultraimpulso"
+    ],
+    "797": [
+      "ultraimpulso"
+    ],
+    "798": [
+      "ultraimpulso"
+    ],
+    "799": [
+      "ultraimpulso"
+    ],
+    "801": [
+      "coranimas"
+    ],
+    "803": [
+      "ultraimpulso"
+    ],
+    "804": [
+      "ultraimpulso"
+    ],
+    "805": [
+      "ultraimpulso"
+    ],
+    "806": [
+      "ultraimpulso"
+    ],
+    "826": [
+      "telepatia"
+    ],
+    "931": [
+      "agallas"
+    ],
+    "943": [
+      "perro_guardian"
+    ],
+    "954": [
+      "telepatia"
+    ],
+    "955": [
+      "impulso"
+    ],
+    "956": [
+      "impulso"
+    ],
+    "977": [
+      "despiste",
+      "ignorante"
+    ],
+    "1014": [
+      "perro_guardian"
+    ],
+    "10007": [
+      "levitacion"
+    ],
+    "10008": [
+      "levitacion"
+    ],
+    "10009": [
+      "levitacion"
+    ],
+    "10010": [
+      "levitacion"
+    ],
+    "10011": [
+      "levitacion"
+    ],
+    "10012": [
+      "levitacion"
+    ],
+    "10050": [
+      "impulso"
+    ],
+    "10062": [
+      "levitacion"
+    ],
+    "10063": [
+      "levitacion"
+    ],
+    "10122": [
+      "levitacion"
+    ],
+    "10129": [
+      "despiste"
+    ],
+    "10147": [
+      "coranimas"
+    ],
+    "10168": [
+      "espiritu_vital"
+    ],
+    "10174": [
+      "pies_rapidos"
+    ],
+    "10175": [
+      "pies_rapidos"
+    ],
+    "10201": [
+      "agallas"
+    ],
+    "10213": [
+      "telepatia"
+    ],
+    "10245": [
+      "telepatia"
+    ],
+    "10246": [
+      "telepatia"
+    ],
+    "10260": [
+      "agallas"
+    ],
+    "10293": [
+      "levitacion"
+    ],
+    "10306": [
+      "levitacion"
+    ],
+    "10309": [
+      "levitacion"
+    ],
+    "15": [
+      "francotirador"
+    ],
+    "36": [
+      "ignorante"
+    ],
+    "52": [
+      "experto"
+    ],
+    "53": [
+      "experto"
+    ],
+    "113": [
+      "curacion"
+    ],
+    "116": [
+      "francotirador"
+    ],
+    "117": [
+      "francotirador"
+    ],
+    "123": [
+      "experto"
+    ],
+    "182": [
+      "curacion"
+    ],
+    "190": [
+      "encadenamiento"
+    ],
+    "194": [
+      "ignorante"
+    ],
+    "195": [
+      "ignorante"
+    ],
+    "212": [
+      "experto"
+    ],
+    "213": [
+      "inversion"
+    ],
+    "223": [
+      "francotirador"
+    ],
+    "230": [
+      "francotirador"
+    ],
+    "237": [
+      "experto"
+    ],
+    "241": [
+      "valentia"
+    ],
+    "242": [
+      "curacion"
+    ],
+    "286": [
+      "experto"
+    ],
+    "399": [
+      "simple",
+      "ignorante"
+    ],
+    "400": [
+      "simple",
+      "ignorante"
+    ],
+    "402": [
+      "experto"
+    ],
+    "407": [
+      "experto"
+    ],
+    "424": [
+      "experto",
+      "encadenamiento"
+    ],
+    "495": [
+      "inversion"
+    ],
+    "496": [
+      "inversion"
+    ],
+    "497": [
+      "inversion"
+    ],
+    "507": [
+      "valentia"
+    ],
+    "508": [
+      "valentia"
+    ],
+    "527": [
+      "ignorante",
+      "simple"
+    ],
+    "528": [
+      "ignorante",
+      "simple"
+    ],
+    "531": [
+      "curacion"
+    ],
+    "551": [
+      "punto_ira"
+    ],
+    "552": [
+      "punto_ira"
+    ],
+    "553": [
+      "punto_ira"
+    ],
+    "572": [
+      "experto",
+      "encadenamiento"
+    ],
+    "573": [
+      "experto",
+      "encadenamiento"
+    ],
+    "674": [
+      "valentia"
+    ],
+    "675": [
+      "valentia"
+    ],
+    "688": [
+      "francotirador"
+    ],
+    "689": [
+      "francotirador"
+    ],
+    "700": [
+      "pixilacion"
+    ],
+    "728": [
+      "voz_liquida"
+    ],
+    "729": [
+      "voz_liquida"
+    ],
+    "730": [
+      "voz_liquida"
+    ],
+    "737": [
+      "bateria"
+    ],
+    "753": [
+      "inversion"
+    ],
+    "754": [
+      "inversion"
+    ],
+    "771": [
+      "ignorante"
+    ],
+    "789": [
+      "ignorante"
+    ],
+    "802": [
+      "experto"
+    ],
+    "816": [
+      "francotirador"
+    ],
+    "817": [
+      "francotirador"
+    ],
+    "818": [
+      "francotirador"
+    ],
+    "849": [
+      "experto"
+    ],
+    "852": [
+      "experto"
+    ],
+    "853": [
+      "experto"
+    ],
+    "863": [
+      "espiritu_acerado"
+    ],
+    "865": [
+      "valentia"
+    ],
+    "874": [
+      "punto_energia"
+    ],
+    "905": [
+      "inversion"
+    ],
+    "909": [
+      "ignorante"
+    ],
+    "910": [
+      "ignorante"
+    ],
+    "911": [
+      "ignorante"
+    ],
+    "973": [
+      "valentia"
+    ],
+    "980": [
+      "ignorante"
+    ],
+    "1016": [
+      "experto"
+    ],
+    "10040": [
+      "aerilacion"
+    ],
+    "10046": [
+      "experto"
+    ],
+    "10047": [
+      "encadenamiento"
+    ],
+    "10051": [
+      "pixilacion"
+    ],
+    "10067": [
+      "pixilacion"
+    ],
+    "10069": [
+      "curacion"
+    ],
+    "10074": [
+      "refrigeracion"
+    ],
+    "10088": [
+      "valentia"
+    ],
+    "10089": [
+      "aerilacion"
+    ],
+    "10109": [
+      "galvanizacion"
+    ],
+    "10110": [
+      "galvanizacion"
+    ],
+    "10111": [
+      "galvanizacion"
+    ],
+    "10128": [
+      "inversion"
+    ],
+    "10166": [
+      "valentia"
+    ],
+    "10184": [
+      "experto"
+    ],
+    "10200": [
+      "experto"
+    ],
+    "10211": [
+      "francotirador"
+    ],
+    "10219": [
+      "experto"
+    ],
+    "10228": [
+      "experto"
+    ],
+    "10244": [
+      "valentia"
+    ],
+    "10250": [
+      "punto_ira"
+    ],
+    "10251": [
+      "punto_ira"
+    ],
+    "10252": [
+      "punto_ira"
+    ],
+    "10253": [
+      "ignorante"
+    ],
+    "10297": [
+      "inversion"
+    ],
+    "10308": [
+      "inversion"
+    ]
+  }
+}

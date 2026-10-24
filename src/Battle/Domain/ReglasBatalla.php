@@ -78,4 +78,17 @@ final class ReglasBatalla
      * Probabilidad (%) de golpearse a sí mismo por confusión (33%).
      */
     public const PORCIENTO_CONFUSION_GOLPE = 33;
+
+    /**
+     * Racha de combo: incremento por golpe y máximo de golpes acumulables.
+     * El multiplicador es 1 + min(combo, máximo) × incremento.
+     */
+    public const COMBO_INCREMENTO = 0.10;
+
+    public const COMBO_MAXIMO = 5;
+
+    /**
+     * Fracción máxima de daño que puede repartirse mediante Vínculo de Daño.
+     */
+    public const VINCULO_DANO_MAXIMO = 0.5;
 }

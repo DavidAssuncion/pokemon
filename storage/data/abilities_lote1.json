@@ -1,0 +1,764 @@
+{
+  "definitions": [
+    {
+      "name": "Nado Rápido",
+      "effect": "",
+      "effect_keys": [
+        "nado_rapido"
+      ],
+      "identifier": "swift-swim"
+    },
+    {
+      "name": "Poder Solar",
+      "effect": "",
+      "effect_keys": [
+        "poder_solar"
+      ],
+      "identifier": "solar-power"
+    },
+    {
+      "name": "Cura Lluvia",
+      "effect": "",
+      "effect_keys": [
+        "cura_lluvia"
+      ],
+      "identifier": "rain-dish"
+    },
+    {
+      "name": "Multiescamas",
+      "effect": "",
+      "effect_keys": [
+        "multiescamas"
+      ],
+      "identifier": "multiscale"
+    },
+    {
+      "name": "Adaptable",
+      "effect": "",
+      "effect_keys": [
+        "adaptable"
+      ],
+      "identifier": "adaptability"
+    },
+    {
+      "name": "Puño Férreo",
+      "effect": "",
+      "effect_keys": [
+        "puno_fierro"
+      ],
+      "identifier": "iron-fist"
+    },
+    {
+      "name": "Punk Rock",
+      "effect": "",
+      "effect_keys": [
+        "punk_rock"
+      ],
+      "identifier": "punk-rock"
+    },
+    {
+      "name": "Mandíbula Fuerte",
+      "effect": "",
+      "effect_keys": [
+        "mandibula_fuerte"
+      ],
+      "identifier": "strong-jaw"
+    },
+    {
+      "name": "Piel Tosca",
+      "effect": "",
+      "effect_keys": [
+        "piel_tosca"
+      ],
+      "identifier": "rough-skin"
+    },
+    {
+      "name": "Sebo",
+      "effect": "",
+      "effect_keys": [
+        "sebo"
+      ],
+      "identifier": "thick-fat"
+    },
+    {
+      "name": "Herbívoro",
+      "effect": "",
+      "effect_keys": [
+        "herbivoro"
+      ],
+      "identifier": "sap-sipper"
+    },
+    {
+      "name": "Filtro",
+      "effect": "",
+      "effect_keys": [
+        "filtro"
+      ],
+      "identifier": "filter"
+    },
+    {
+      "name": "Roca Sólida",
+      "effect": "",
+      "effect_keys": [
+        "roca_solida"
+      ],
+      "identifier": "solid-rock"
+    },
+    {
+      "name": "Entusiasmo",
+      "effect": "",
+      "effect_keys": [
+        "entusiasmo"
+      ],
+      "identifier": "hustle"
+    }
+  ],
+  "assignments": {
+    "4": [
+      "poder_solar"
+    ],
+    "5": [
+      "poder_solar"
+    ],
+    "6": [
+      "poder_solar"
+    ],
+    "7": [
+      "cura_lluvia"
+    ],
+    "8": [
+      "cura_lluvia"
+    ],
+    "9": [
+      "cura_lluvia"
+    ],
+    "19": [
+      "entusiasmo"
+    ],
+    "20": [
+      "entusiasmo"
+    ],
+    "29": [
+      "entusiasmo"
+    ],
+    "30": [
+      "entusiasmo"
+    ],
+    "32": [
+      "entusiasmo"
+    ],
+    "33": [
+      "entusiasmo"
+    ],
+    "54": [
+      "nado_rapido"
+    ],
+    "55": [
+      "nado_rapido"
+    ],
+    "60": [
+      "nado_rapido"
+    ],
+    "61": [
+      "nado_rapido"
+    ],
+    "62": [
+      "nado_rapido"
+    ],
+    "72": [
+      "cura_lluvia"
+    ],
+    "73": [
+      "cura_lluvia"
+    ],
+    "86": [
+      "sebo"
+    ],
+    "87": [
+      "sebo"
+    ],
+    "107": [
+      "puno_fierro"
+    ],
+    "116": [
+      "nado_rapido"
+    ],
+    "118": [
+      "nado_rapido"
+    ],
+    "119": [
+      "nado_rapido"
+    ],
+    "122": [
+      "filtro"
+    ],
+    "129": [
+      "nado_rapido"
+    ],
+    "133": [
+      "adaptable"
+    ],
+    "138": [
+      "nado_rapido"
+    ],
+    "139": [
+      "nado_rapido"
+    ],
+    "140": [
+      "nado_rapido"
+    ],
+    "141": [
+      "nado_rapido"
+    ],
+    "143": [
+      "sebo"
+    ],
+    "149": [
+      "multiescamas"
+    ],
+    "166": [
+      "puno_fierro"
+    ],
+    "175": [
+      "entusiasmo"
+    ],
+    "176": [
+      "entusiasmo"
+    ],
+    "183": [
+      "sebo",
+      "herbivoro"
+    ],
+    "184": [
+      "sebo",
+      "herbivoro"
+    ],
+    "191": [
+      "poder_solar"
+    ],
+    "192": [
+      "poder_solar"
+    ],
+    "203": [
+      "herbivoro"
+    ],
+    "211": [
+      "nado_rapido"
+    ],
+    "220": [
+      "sebo"
+    ],
+    "221": [
+      "sebo"
+    ],
+    "222": [
+      "entusiasmo"
+    ],
+    "223": [
+      "entusiasmo"
+    ],
+    "225": [
+      "entusiasmo"
+    ],
+    "226": [
+      "nado_rapido"
+    ],
+    "230": [
+      "nado_rapido"
+    ],
+    "234": [
+      "herbivoro"
+    ],
+    "241": [
+      "sebo",
+      "herbivoro"
+    ],
+    "249": [
+      "multiescamas"
+    ],
+    "270": [
+      "nado_rapido",
+      "cura_lluvia"
+    ],
+    "271": [
+      "nado_rapido",
+      "cura_lluvia"
+    ],
+    "272": [
+      "nado_rapido",
+      "cura_lluvia"
+    ],
+    "278": [
+      "cura_lluvia"
+    ],
+    "279": [
+      "cura_lluvia"
+    ],
+    "283": [
+      "nado_rapido",
+      "cura_lluvia"
+    ],
+    "296": [
+      "sebo"
+    ],
+    "297": [
+      "sebo"
+    ],
+    "298": [
+      "sebo",
+      "herbivoro"
+    ],
+    "318": [
+      "piel_tosca"
+    ],
+    "319": [
+      "piel_tosca"
+    ],
+    "323": [
+      "roca_solida"
+    ],
+    "325": [
+      "sebo"
+    ],
+    "326": [
+      "sebo"
+    ],
+    "341": [
+      "adaptable"
+    ],
+    "342": [
+      "adaptable"
+    ],
+    "347": [
+      "nado_rapido"
+    ],
+    "348": [
+      "nado_rapido"
+    ],
+    "349": [
+      "nado_rapido",
+      "adaptable"
+    ],
+    "357": [
+      "poder_solar"
+    ],
+    "363": [
+      "sebo"
+    ],
+    "364": [
+      "sebo"
+    ],
+    "365": [
+      "sebo"
+    ],
+    "367": [
+      "nado_rapido"
+    ],
+    "368": [
+      "nado_rapido"
+    ],
+    "369": [
+      "nado_rapido"
+    ],
+    "370": [
+      "nado_rapido"
+    ],
+    "390": [
+      "puno_fierro"
+    ],
+    "391": [
+      "puno_fierro"
+    ],
+    "392": [
+      "puno_fierro"
+    ],
+    "415": [
+      "entusiasmo"
+    ],
+    "418": [
+      "nado_rapido"
+    ],
+    "419": [
+      "nado_rapido"
+    ],
+    "432": [
+      "sebo"
+    ],
+    "439": [
+      "filtro"
+    ],
+    "443": [
+      "piel_tosca"
+    ],
+    "444": [
+      "piel_tosca"
+    ],
+    "445": [
+      "piel_tosca"
+    ],
+    "446": [
+      "sebo"
+    ],
+    "456": [
+      "nado_rapido"
+    ],
+    "457": [
+      "nado_rapido"
+    ],
+    "458": [
+      "nado_rapido"
+    ],
+    "464": [
+      "roca_solida"
+    ],
+    "468": [
+      "entusiasmo"
+    ],
+    "473": [
+      "sebo"
+    ],
+    "474": [
+      "adaptable"
+    ],
+    "498": [
+      "sebo"
+    ],
+    "499": [
+      "sebo"
+    ],
+    "522": [
+      "herbivoro"
+    ],
+    "523": [
+      "herbivoro"
+    ],
+    "532": [
+      "puno_fierro"
+    ],
+    "533": [
+      "puno_fierro"
+    ],
+    "534": [
+      "puno_fierro"
+    ],
+    "535": [
+      "nado_rapido"
+    ],
+    "536": [
+      "nado_rapido"
+    ],
+    "537": [
+      "nado_rapido"
+    ],
+    "550": [
+      "adaptable"
+    ],
+    "554": [
+      "entusiasmo"
+    ],
+    "564": [
+      "roca_solida",
+      "nado_rapido"
+    ],
+    "565": [
+      "roca_solida",
+      "nado_rapido"
+    ],
+    "585": [
+      "herbivoro"
+    ],
+    "586": [
+      "herbivoro"
+    ],
+    "614": [
+      "nado_rapido"
+    ],
+    "621": [
+      "piel_tosca"
+    ],
+    "622": [
+      "puno_fierro"
+    ],
+    "623": [
+      "puno_fierro"
+    ],
+    "626": [
+      "herbivoro"
+    ],
+    "627": [
+      "entusiasmo"
+    ],
+    "632": [
+      "entusiasmo"
+    ],
+    "633": [
+      "entusiasmo"
+    ],
+    "634": [
+      "entusiasmo"
+    ],
+    "672": [
+      "herbivoro"
+    ],
+    "673": [
+      "herbivoro"
+    ],
+    "674": [
+      "puno_fierro"
+    ],
+    "675": [
+      "puno_fierro"
+    ],
+    "690": [
+      "adaptable"
+    ],
+    "691": [
+      "adaptable"
+    ],
+    "694": [
+      "poder_solar"
+    ],
+    "695": [
+      "poder_solar"
+    ],
+    "696": [
+      "mandibula_fuerte"
+    ],
+    "697": [
+      "mandibula_fuerte"
+    ],
+    "704": [
+      "herbivoro"
+    ],
+    "705": [
+      "herbivoro"
+    ],
+    "706": [
+      "herbivoro"
+    ],
+    "734": [
+      "mandibula_fuerte",
+      "adaptable"
+    ],
+    "735": [
+      "mandibula_fuerte",
+      "adaptable"
+    ],
+    "739": [
+      "puno_fierro"
+    ],
+    "740": [
+      "puno_fierro"
+    ],
+    "755": [
+      "cura_lluvia"
+    ],
+    "756": [
+      "cura_lluvia"
+    ],
+    "779": [
+      "mandibula_fuerte"
+    ],
+    "780": [
+      "herbivoro"
+    ],
+    "809": [
+      "puno_fierro"
+    ],
+    "833": [
+      "mandibula_fuerte",
+      "nado_rapido"
+    ],
+    "834": [
+      "mandibula_fuerte",
+      "nado_rapido"
+    ],
+    "836": [
+      "mandibula_fuerte"
+    ],
+    "841": [
+      "entusiasmo"
+    ],
+    "842": [
+      "sebo"
+    ],
+    "846": [
+      "nado_rapido"
+    ],
+    "847": [
+      "nado_rapido"
+    ],
+    "849": [
+      "punk_rock"
+    ],
+    "880": [
+      "entusiasmo"
+    ],
+    "882": [
+      "mandibula_fuerte"
+    ],
+    "899": [
+      "herbivoro"
+    ],
+    "902": [
+      "nado_rapido",
+      "adaptable"
+    ],
+    "904": [
+      "nado_rapido"
+    ],
+    "915": [
+      "sebo"
+    ],
+    "916": [
+      "sebo"
+    ],
+    "921": [
+      "puno_fierro"
+    ],
+    "922": [
+      "puno_fierro"
+    ],
+    "923": [
+      "puno_fierro"
+    ],
+    "931": [
+      "entusiasmo"
+    ],
+    "966": [
+      "filtro"
+    ],
+    "974": [
+      "sebo"
+    ],
+    "975": [
+      "sebo"
+    ],
+    "981": [
+      "herbivoro"
+    ],
+    "10016": [
+      "adaptable"
+    ],
+    "10033": [
+      "sebo"
+    ],
+    "10048": [
+      "poder_solar"
+    ],
+    "10053": [
+      "filtro"
+    ],
+    "10059": [
+      "adaptable"
+    ],
+    "10064": [
+      "nado_rapido"
+    ],
+    "10070": [
+      "mandibula_fuerte"
+    ],
+    "10090": [
+      "adaptable"
+    ],
+    "10091": [
+      "entusiasmo",
+      "sebo"
+    ],
+    "10092": [
+      "entusiasmo",
+      "sebo"
+    ],
+    "10093": [
+      "entusiasmo",
+      "sebo"
+    ],
+    "10121": [
+      "mandibula_fuerte",
+      "adaptable"
+    ],
+    "10159": [
+      "adaptable"
+    ],
+    "10176": [
+      "entusiasmo"
+    ],
+    "10184": [
+      "punk_rock"
+    ],
+    "10196": [
+      "poder_solar"
+    ],
+    "10197": [
+      "cura_lluvia"
+    ],
+    "10205": [
+      "adaptable"
+    ],
+    "10206": [
+      "sebo"
+    ],
+    "10208": [
+      "puno_fierro"
+    ],
+    "10214": [
+      "mandibula_fuerte",
+      "nado_rapido"
+    ],
+    "10216": [
+      "entusiasmo"
+    ],
+    "10217": [
+      "sebo"
+    ],
+    "10219": [
+      "punk_rock"
+    ],
+    "10228": [
+      "punk_rock"
+    ],
+    "10234": [
+      "nado_rapido"
+    ],
+    "10237": [
+      "entusiasmo"
+    ],
+    "10241": [
+      "herbivoro"
+    ],
+    "10242": [
+      "herbivoro"
+    ],
+    "10243": [
+      "mandibula_fuerte"
+    ],
+    "10247": [
+      "adaptable"
+    ],
+    "10248": [
+      "nado_rapido",
+      "adaptable"
+    ],
+    "10254": [
+      "sebo"
+    ],
+    "10260": [
+      "entusiasmo"
+    ],
+    "10261": [
+      "entusiasmo"
+    ],
+    "10262": [
+      "entusiasmo"
+    ],
+    "10281": [
+      "multiescamas"
+    ],
+    "10315": [
+      "puno_fierro"
+    ],
+    "10321": [
+      "adaptable"
+    ]
+  }
+}
