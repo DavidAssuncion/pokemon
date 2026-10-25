@@ -14,7 +14,7 @@ use Src\Battle\Domain\Catalog\NormalizadorNombre;
 /**
  * Asigna los movimientos del catálogo a cada especie desde
  * storage/data/poke habilidades.csv y los lotes de learnsets derivados de
- * PokeAPI (lotes 1-8).
+ * PokeAPI (lotes 1-11).
  *
  * La columna `movimientos` contiene 0-2 nombres separados por comas. El
  * seeder valida TODAS las filas antes de escribir y falla con el listado de
@@ -179,7 +179,9 @@ class PokemonMoveSeeder extends Seeder
     private function asignacionesExtra(): array
     {
         $extra = self::ASIGNACIONES_EXTRA;
-        foreach (['pokemon_moves_lote1.json', 'pokemon_moves_lote2.json', 'pokemon_moves_lote3.json', 'pokemon_moves_lote4.json', 'pokemon_moves_lote5.json', 'pokemon_moves_lote6.json', 'pokemon_moves_lote7.json', 'pokemon_moves_lote8.json', 'pokemon_moves_lote9.json', 'pokemon_moves_lote10.json'] as $archivo) {
+        // El lote 11 contiene los learnsets completos por especie (Showdown
+        // cruzado con el catálogo); el resto son lotes temáticos previos.
+        foreach (['pokemon_moves_lote1.json', 'pokemon_moves_lote2.json', 'pokemon_moves_lote3.json', 'pokemon_moves_lote4.json', 'pokemon_moves_lote5.json', 'pokemon_moves_lote6.json', 'pokemon_moves_lote7.json', 'pokemon_moves_lote8.json', 'pokemon_moves_lote9.json', 'pokemon_moves_lote10.json', 'pokemon_moves_lote11.json'] as $archivo) {
             $ruta = storage_path('data/'.$archivo);
             if (! is_file($ruta)) {
                 continue;

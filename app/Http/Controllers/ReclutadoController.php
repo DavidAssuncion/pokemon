@@ -13,6 +13,7 @@ use App\Models\Pokemon;
 use App\Models\Reclutado;
 use App\Support\ItemCatalogo;
 use App\Support\ReclutadoSerializer;
+use App\Support\ReclutadoVistaPresenter;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -20,37 +21,15 @@ use Illuminate\View\View;
 use Src\Exploraciones\App\FabricaCapacidadesStats;
 use Src\Reclutamiento\App\Collections\PokemonCollection;
 use Src\Reclutamiento\App\ServicioEvolucion;
-use Src\Shared\Domain\NivelHelper;
 
 class ReclutadoController extends Controller
 {
     public function show(Reclutado $reclutado): View
     {
-        $reclutado->load('pokemon.types');
-
-        $siguiente = ServicioEvolucion::siguienteEvolucion($reclutado->pokemon);
-        $expTotal = $reclutado->exp->total();
-
-        return view('reclutado.show', [
-            'reclutado' => [
-                'id' => $reclutado->id,
-                'nombre' => $reclutado->nombre,
-                'pokemon_id' => $reclutado->pokemon_id,
-                'pokemon_nombre' => $reclutado->pokemon?->name,
-                'nivel' => NivelHelper::nivelDesdeExperiencia($expTotal),
-                'exp_total' => $expTotal,
-                'imagen' => "/images/iconos/{$reclutado->pokemon_id}.png",
-            ],
-            'siguiente' => $siguiente !== null
-                ? [
-                    'pokemon_id' => $siguiente->id,
-                    'nombre' => $siguiente->name,
-                    'imagen' => "/images/iconos/{$siguiente->id}.png",
-                ]
-                : null,
-            'requisitos' => ServicioEvolucion::requisitos($reclutado, auth()->id())->toArray(),
-            'puedeEvolucionar' => ServicioEvolucion::puedeEvolucionar($reclutado, auth()->id()),
-        ]);
+        return view('reclutado.show', ReclutadoVistaPresenter::toView(
+            $reclutado,
+            auth()->id() !== null ? (int) auth()->id() : null,
+        ));
     }
 
     public function darCaramelo(Request $request, Reclutado $reclutado): JsonResponse
@@ -58,6 +37,7 @@ class ReclutadoController extends Controller
         $data = $request->validate([
             'tipo' => 'required|string',
             'evolved_species_id' => 'sometimes|integer|nullable',
+            'cantidad' => 'sometimes|integer|min:1|max:100',
         ]);
 
         // Coherencia con liberar/evolucionar: un pokémon en equipo en
@@ -81,9 +61,22 @@ class ReclutadoController extends Controller
             return response()->json(['error' => 'Ese tipo no es necesario para la evolución'], 422);
         }
 
-        $userId = auth()->id();
+        $userId = (int) auth()->id();
 
-        $caramelo = DB::transaction(function () use ($tipo, $userId): ?PlayerInventory {
+        $cantidadSolicitada = (int) ($data['cantidad'] ?? 1);
+        $umbral = ServicioEvolucion::umbralParaNivel(ServicioEvolucion::nivelDe($reclutado));
+        $faltante = max(0, $umbral - $reclutado->exp->expTipo($tipo));
+
+        if ($faltante <= 0) {
+            return response()->json([
+                'error' => "Ya no necesita más caramelos de tipo {$tipo}",
+            ], 422);
+        }
+
+        // Cada caramelo aporta 100 exp: no gastar más de lo que falta para el umbral.
+        $cantidad = min($cantidadSolicitada, (int) ceil($faltante / 100));
+
+        $resultado = DB::transaction(function () use ($tipo, $userId, $cantidad): ?array {
             // Lock de la fila del inventario del jugador: evita doble consumo
             // concurrente (decrement atómico tras el chequeo de stock).
             $caramelo = PlayerInventory::where('user_id', $userId)
@@ -95,33 +88,40 @@ class ReclutadoController extends Controller
                 return null;
             }
 
-            $caramelo->decrement('cantidad');
+            $consumidos = min($cantidad, $caramelo->cantidad);
+            $caramelo->decrement('cantidad', $consumidos);
 
-            return $caramelo;
+            return [
+                'caramelo' => $caramelo,
+                'consumidos' => $consumidos,
+            ];
         });
 
-        if ($caramelo === null) {
+        if ($resultado === null) {
             return response()->json(['error' => "No hay caramelos de tipo {$tipo}"], 422);
         }
 
         // Exp de tipo al JSON del reclutado (cast inmutable: se reasigna).
-        $reclutado->exp = $reclutado->exp->sumarExpTipo($tipo, 100);
+        $reclutado->exp = $reclutado->exp->sumarExpTipo($tipo, 100 * $resultado['consumidos']);
         $reclutado->save();
 
         return response()->json([
             'success' => true,
             'actual' => $reclutado->exp->expTipo($tipo),
-            'caramelos_disponibles' => $caramelo->cantidad,
+            'caramelos_disponibles' => $resultado['caramelo']->cantidad,
+            'cantidad_consumida' => $resultado['consumidos'],
+            'exp_ganada' => 100 * $resultado['consumidos'],
             'puede_evolucionar' => ServicioEvolucion::puedeEvolucionarPara($reclutado, $userId, $destino),
         ]);
     }
 
     /**
-     * Da un caramelo EV (+10 al stat) a un reclutado.
+     * Da caramelos EV (+10 al stat por caramelo) a un reclutado.
      *
-     * - Consume 1 `candy_ev/{slug}` del inventario (lockForUpdate antifraude).
+     * - Consume hasta `cantidad` caramelos `candy_ev/{slug}` del inventario
+     *   (lockForUpdate antifraude).
      * - Cap por stat: 255 (sin cap total combinado, contrato del frontend); el
-     *   chequeo es ANTES de consumir el caramelo.
+     *   chequeo es ANTES de consumir los caramelos.
      * - Rechazado con 422 si el stat ya está al máximo.
      * - Mismo patrón anti-exploración que darCaramelo.
      */
@@ -129,6 +129,7 @@ class ReclutadoController extends Controller
     {
         $data = $request->validate([
             'stat' => 'required|string|in:hp,atk,def,spAtk,spDef,speed',
+            'cantidad' => 'sometimes|integer|min:1|max:100',
         ]);
 
         if ($reclutado->teamMember?->team?->isExploring()) {
@@ -151,7 +152,11 @@ class ReclutadoController extends Controller
 
         $userId = (int) auth()->id();
 
-        $caramelo = DB::transaction(function () use ($statEnum, $userId): ?PlayerInventory {
+        $cantidadSolicitada = (int) ($data['cantidad'] ?? 1);
+        $maxPorEv = (int) ceil((255 - $valorActual) / 10);
+        $cantidad = min($cantidadSolicitada, max(1, $maxPorEv));
+
+        $resultado = DB::transaction(function () use ($statEnum, $userId, $cantidad): ?array {
             $caramelo = PlayerInventory::where('user_id', $userId)
                 ->where('item_key', ItemCatalogo::keyEv($statEnum->value))
                 ->lockForUpdate()
@@ -161,18 +166,22 @@ class ReclutadoController extends Controller
                 return null;
             }
 
-            $caramelo->decrement('cantidad');
+            $consumidos = min($cantidad, $caramelo->cantidad);
+            $caramelo->decrement('cantidad', $consumidos);
 
-            return $caramelo;
+            return [
+                'caramelo' => $caramelo,
+                'consumidos' => $consumidos,
+            ];
         });
 
-        if ($caramelo === null) {
+        if ($resultado === null) {
             return response()->json([
                 'error' => 'No hay caramelos de EV para ese stat',
             ], 422);
         }
 
-        $nuevo = min(255.0, $valorActual + 10);
+        $nuevo = min(255.0, $valorActual + 10 * $resultado['consumidos']);
         $evsNuevos = $evsActuales->conStat($stat, $nuevo);
         $reclutado->evs = $evsNuevos;
         $reclutado->save();
@@ -180,7 +189,8 @@ class ReclutadoController extends Controller
         return response()->json([
             'success' => true,
             'actual' => (int) $nuevo,
-            'caramelos_disponibles' => $caramelo->cantidad,
+            'caramelos_disponibles' => $resultado['caramelo']->cantidad,
+            'cantidad_consumida' => $resultado['consumidos'],
             'evs' => $evsNuevos->toArray(),
         ]);
     }
@@ -222,7 +232,13 @@ class ReclutadoController extends Controller
 
         ActualizarPokedexJob::dispatch($userId, $destino->id, 'RECLUTADO');
 
-        return response()->json(['success' => true, 'pokemon_id' => $destino->id]);
+        $reclutado->refresh()->load('pokemon.types', 'pokemon.stats', 'pokemon.abilities', 'pokemon.moves');
+
+        return response()->json([
+            'success' => true,
+            'pokemon_id' => $destino->id,
+            'reclutado' => ReclutadoSerializer::serializar($reclutado, auth()->user()?->nivel()),
+        ]);
     }
 
     /**

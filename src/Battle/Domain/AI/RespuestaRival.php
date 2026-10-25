@@ -47,7 +47,8 @@ class RespuestaRival
             return new AccionesPosiblesCollection();
         }
 
-        $accionesPeligrosas = new AccionesPosiblesCollection();
+        /** @var list<array{accion: AccionBatalla, dano: float}> $accionesPeligrosas */
+        $accionesPeligrosas = [];
 
         foreach ($enemigosVivos as $enemigo) {
             foreach ($aliadosVivos as $aliado) {
@@ -60,22 +61,37 @@ class RespuestaRival
                         continue;
                     }
 
-                    $accionesPeligrosas->add(new AccionBatalla(
+                    $accion = new AccionBatalla(
                         attacker: $enemigo,
                         defender: $aliado,
                         move: $movimiento,
                         defenderTeamHasVanguard: $equipoAliado->tieneVanguardiaViva(),
                         weather: $estadoSimulado->weather(),
                         terreno: $estadoSimulado->terreno(),
-                    ));
+                    );
+
+                    // El daño se estima UNA sola vez por acción: estimarDano
+                    // recorre toda la cadena de daño y hacerlo dentro del
+                    // comparador multiplicaba el coste por cada comparación
+                    // del sort (decenas de miles de cálculos por decisión).
+                    $accionesPeligrosas[] = [
+                        'accion' => $accion,
+                        'dano' => $this->estimarDano($accion, $estadoSimulado),
+                    ];
                 }
             }
         }
 
-        // Ordenar por daño estimado descendente, tomar top 3.
-        return $accionesPeligrosas
-            ->sort(fn (AccionBatalla $a, AccionBatalla $b) => $this->estimarDano($b, $estadoSimulado) <=> $this->estimarDano($a, $estadoSimulado))
-            ->primeras(3);
+        // Ordenar por el daño precalculado (descendente) y tomar el top 3.
+        usort(
+            $accionesPeligrosas,
+            static fn (array $a, array $b): int => $b['dano'] <=> $a['dano'],
+        );
+
+        return new AccionesPosiblesCollection(array_map(
+            static fn (array $entrada): AccionBatalla => $entrada['accion'],
+            array_slice($accionesPeligrosas, 0, 3),
+        ));
     }
 
     private function estimarDano(AccionBatalla $accion, AgregadoBatalla $estadoSimulado): float

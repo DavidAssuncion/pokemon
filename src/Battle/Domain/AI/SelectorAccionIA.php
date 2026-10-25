@@ -15,7 +15,6 @@ use Src\Battle\Domain\Combatiente;
 use Src\Battle\Domain\Enums\Bando;
 use Src\Battle\Domain\Enums\CategoriaMovimiento;
 use Src\Battle\Domain\Enums\ClaveCondicion;
-use Src\Battle\Domain\Enums\ObjetivoMovimiento;
 use Src\Battle\Domain\MovimientoBatalla;
 use Src\Shared\Tipos\TipoPokemon;
 
@@ -204,12 +203,7 @@ class SelectorAccionIA
                 continue;
             }
 
-            if (in_array($movimiento->objetivo, [
-                ObjetivoMovimiento::SELF,
-                ObjetivoMovimiento::ALLY_SIDE,
-                ObjetivoMovimiento::ALLIES,
-                ObjetivoMovimiento::ALLY_TEAM,
-            ], true)) {
+            if ($movimiento->esAutodirigido()) {
                 $acciones->add(new AccionBatalla(
                     attacker: $actor,
                     defender: $actor,
@@ -253,18 +247,21 @@ class SelectorAccionIA
 
     /**
      * Filtra enemigos según la restricción de posición:
-     * - Actor en vanguardia → solo vanguardia enemiga.
+     * - Actor en vanguardia → vanguardia enemiga mientras quede alguna viva.
+     * - Si la vanguardia enemiga está caída, puede atacar a la retaguardia.
      * - Actor en retaguardia → cualquier enemigo vivo.
      */
     private function filtrarEnemigosPorPosicion(CombatientesCollection $enemigos, Combatiente $actor): CombatientesCollection
     {
-        if ($actor->estaEnVanguardia()) {
-            return $enemigos->filter(
-                fn (Combatiente $e) => $e->estaEnVanguardia()
-            );
+        if (! $actor->estaEnVanguardia()) {
+            return $enemigos;
         }
 
-        return $enemigos;
+        $vanguardiaEnemiga = $enemigos->filter(
+            fn (Combatiente $e) => $e->estaEnVanguardia()
+        );
+
+        return $vanguardiaEnemiga->isEmpty() ? $enemigos : $vanguardiaEnemiga;
     }
 
     // ─── Selección por dificultad ──────────────────────────
@@ -285,7 +282,24 @@ class SelectorAccionIA
 
         usort(
             $evaluaciones,
-            fn (EvaluacionAccion $a, EvaluacionAccion $b) => $b->score <=> $a->score
+            function (EvaluacionAccion $a, EvaluacionAccion $b): int {
+                $score = $b->score <=> $a->score;
+
+                if ($score !== 0) {
+                    return $score;
+                }
+
+                // Empate: prioriza el daño efectivo y, después, la potencia.
+                // Evita que un movimiento de estado (p. ej. Aguante) gane
+                // sistemáticamente a un ataque cuando las puntuaciones igualan.
+                $damage = $b->damageValue <=> $a->damageValue;
+
+                if ($damage !== 0) {
+                    return $damage;
+                }
+
+                return $b->accion->move->potencia <=> $a->accion->move->potencia;
+            },
         );
 
         $candidatas = match ($dificultad) {

@@ -81,6 +81,9 @@ class Combatiente
 
     private int $golpesRecibidos = 0;
 
+    /** Última ronda en la que el combatiente usó Protección/Aguante. */
+    private int $ultimaRondaProteccion = 0;
+
     private TipoClima $clima = TipoClima::NONE;
 
     private EstadoTurno $turno;
@@ -171,6 +174,7 @@ class Combatiente
             'ultimoAtacanteId' => $this->ultimoAtacanteId,
             'danoRecibidoEstaRonda' => $this->danoRecibidoEstaRonda,
             'golpesRecibidos' => $this->golpesRecibidos,
+            'ultimaRondaProteccion' => $this->ultimaRondaProteccion,
             'costeVelocidad' => $this->turno->costeVelocidad(),
             'rondaActual' => $this->turno->rondaActual(),
             'costeVelocidadHastaRonda' => $this->turno->costeVelocidadHastaRonda(),
@@ -255,6 +259,7 @@ class Combatiente
         $this->ultimoAtacanteId = (string) ($data['ultimoAtacanteId'] ?? '');
         $this->danoRecibidoEstaRonda = (float) ($data['danoRecibidoEstaRonda'] ?? 0.0);
         $this->golpesRecibidos = max(0, (int) ($data['golpesRecibidos'] ?? 0));
+        $this->ultimaRondaProteccion = max(0, (int) ($data['ultimaRondaProteccion'] ?? 0));
         $this->clima = TipoClima::tryFrom((string) ($data['clima'] ?? TipoClima::NONE->value)) ?? TipoClima::NONE;
         $prioridad = $data['prioridadDeclarada'] ?? null;
         $this->turno = new EstadoTurno();
@@ -1123,6 +1128,16 @@ class Combatiente
         return $this->ultimoDanoRecibido;
     }
 
+    public function ultimaRondaProteccion(): int
+    {
+        return $this->ultimaRondaProteccion;
+    }
+
+    public function setUltimaRondaProteccion(int $ronda): void
+    {
+        $this->ultimaRondaProteccion = max(0, $ronda);
+    }
+
     public function ultimoAtacanteId(): string
     {
         return $this->ultimoAtacanteId;
@@ -1374,6 +1389,16 @@ class Combatiente
      * @return array<string, mixed>
      */
     public function aArrayVista(int $teamIdx): array
+    {
+        return $this->toView($teamIdx);
+    }
+
+    /**
+     * Contrato de vista del combatiente (alias canónico de aArrayVista).
+     *
+     * @return array<string, mixed>
+     */
+    public function toView(int $teamIdx): array
     {
         return CombatienteVista::para($this, $teamIdx);
     }

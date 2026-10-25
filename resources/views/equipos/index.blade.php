@@ -3,13 +3,7 @@
 @section('title', 'Equipos')
 
 @section('content')
-@php
-    $tipos = \App\Enums\TipoEnum::options();
-    $objetos = collect(\Src\Battle\Domain\Catalog\CatalogoObjetos::claves())
-        ->mapWithKeys(fn (string $clave): array => [$clave => \Src\Battle\Domain\Catalog\CatalogoObjetos::nombreDe($clave)])
-        ->all();
-@endphp
-<div x-data="favoritosApp()" x-init="init()">
+<div x-data="favoritosApp()">
     <!-- Header -->
     <div class="mb-6">
         <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Equipos</h1>
@@ -289,151 +283,202 @@
                 <template x-if="activeSeccion === 'pokemon'">
                 <div class="space-y-6">
                     <!-- Search and Filter -->
-                <div class="flex flex-col sm:flex-row gap-3">
-                    <div class="relative flex-1">
-                        <input
-                            type="text"
-                            x-model="searchQuery"
-                            placeholder="Buscar por nombre o ID..."
-                            class="w-full px-4 py-2 pl-10 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
-                        >
-                        <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-                        </svg>
-                    </div>
-                    <div class="relative">
-                        <button
-                            @click="showTypeFilter = !showTypeFilter"
-                            class="px-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors flex items-center gap-2"
-                        >
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/>
+                <div class="space-y-3">
+                    <div class="flex flex-col sm:flex-row gap-3">
+                        <div class="relative flex-1">
+                            <input
+                                type="text"
+                                x-model="searchQuery"
+                                placeholder="Buscar por nombre o ID..."
+                                class="w-full px-4 py-2 pl-10 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
+                            >
+                            <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
                             </svg>
-                            Tipo
+                        </div>
+                        <div class="flex items-center gap-2 px-3 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg">
+                            <span class="text-[11px] font-bold uppercase tracking-wide text-gray-500 dark:text-gray-400">CP</span>
+                            <input
+                                type="number"
+                                min="0"
+                                inputmode="numeric"
+                                x-model="cpMin"
+                                placeholder="Mín"
+                                aria-label="CP mínimo"
+                                class="w-16 px-1 py-0.5 bg-transparent text-sm text-center text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none"
+                            >
+                            <span class="text-gray-300 dark:text-gray-600" aria-hidden="true">–</span>
+                            <input
+                                type="number"
+                                min="0"
+                                inputmode="numeric"
+                                x-model="cpMax"
+                                placeholder="Máx"
+                                aria-label="CP máximo"
+                                class="w-16 px-1 py-0.5 bg-transparent text-sm text-center text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none"
+                            >
+                            <button
+                                type="button"
+                                x-show="cpFiltroActivo()"
+                                @click="cpMin = ''; cpMax = ''"
+                                class="w-5 h-5 flex items-center justify-center rounded text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                                title="Quitar filtro de CP"
+                                aria-label="Quitar filtro de CP"
+                            >×</button>
+                        </div>
+                    </div>
+
+                    <!-- Filtro de tipo: botones con icono, selección múltiple -->
+                    <div class="flex flex-wrap items-center gap-1.5" role="group" aria-label="Filtrar por tipo">
+                        <span class="mr-1 text-[11px] font-bold uppercase tracking-wide text-gray-500 dark:text-gray-400">Tipo</span>
+                        @foreach($tiposVista as $tipo)
+                        <button
+                            type="button"
+                            @click="toggleTypeFilter({{ $tipo['id'] }})"
+                            :aria-pressed="filtroTipoActivo({{ $tipo['id'] }}) ? 'true' : 'false'"
+                            :title="'Filtrar por tipo {{ $tipo['nombre'] }}'"
+                            class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full border text-[11px] font-semibold transition-opacity"
+                            :class="filtroTipoActivo({{ $tipo['id'] }})
+                                ? tipoClase('{{ $tipo['nombre'] }}') + ' border-gray-900 dark:border-white'
+                                : 'bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400 border-gray-200 dark:border-gray-700 opacity-60 hover:opacity-100'"
+                        >
+                            <img src="/images/type/{{ $tipo['slug'] }}.webp" alt="" loading="lazy" decoding="async" class="w-5 h-5 object-contain">
+                            <span>{{ $tipo['nombre'] }}</span>
                         </button>
-                        <template x-if="showTypeFilter">
-                            <div class="absolute right-0 top-full mt-1 z-40 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-lg p-3 w-48 max-h-64 overflow-y-auto">
-                                <button
-                                    @click="typeFilter = null; showTypeFilter = false"
-                                    class="w-full text-left px-3 py-1.5 text-sm rounded hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-                                    :class="typeFilter === null ? 'text-blue-600 dark:text-blue-400 font-medium' : 'text-gray-700 dark:text-gray-300'"
-                                >
-                                    Todos
-                                </button>
-                                @foreach($tipos as $id => $nombre)
-                                <button
-                                    @click="typeFilter = '{{ $nombre }}'; showTypeFilter = false"
-                                    class="w-full text-left px-3 py-1.5 text-sm rounded hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-                                    :class="typeFilter === '{{ $nombre }}' ? 'text-blue-600 dark:text-blue-400 font-medium' : 'text-gray-700 dark:text-gray-300'"
-                                >
-                                    {{ $nombre }}
-                                </button>
-                                @endforeach
-                            </div>
-                        </template>
+                        @endforeach
+                        <button
+                            type="button"
+                            x-show="typeFilters.length > 0"
+                            x-cloak
+                            @click="typeFilters = []"
+                            class="ml-auto text-[11px] font-medium text-blue-600 dark:text-blue-400 hover:underline"
+                            title="Quitar todos los filtros de tipo"
+                        >
+                            Limpiar tipos
+                        </button>
                     </div>
                 </div>
 
-                <!-- Available Pokemon Section (not assigned to any team) -->
+                <!-- Reclutados: disponibles y asignados comparten cuadrícula -->
                 <div>
                     <div class="flex items-center justify-between bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-2 mb-4">
-                        <h2 class="text-sm font-bold uppercase tracking-wide text-gray-700 dark:text-gray-300">Reclutados Disponibles</h2>
+                        <h2 class="text-sm font-bold uppercase tracking-wide text-gray-700 dark:text-gray-300">Reclutados</h2>
+                        <span class="text-[11px] font-medium text-gray-500 dark:text-gray-400" x-text="pokemonsEquipoFiltrados.length + ' Pokémon'"></span>
                     </div>
                     <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-2">
-                        <template x-for="pokemon in availablePokemonsTeams" :key="'eq-avail-'+pokemon.id">
+                        <template x-for="pokemon in pokemonsEquipoFiltrados" :key="'eq-pokemon-'+pokemon.id">
                             <div
-                                class="relative bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 text-center group"
+                                class="relative bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 text-center group pokemon-card-quality hover:z-30"
+                                :class="[calidadClase(pokemon), pokemonTeamId(pokemon) !== null ? 'pokemon-card-assigned' : '']"
                                 x-data="{ showTeamDropdown: false }"
                             >
+                                <!-- Nombre del equipo encima / libre -->
+                                <div class="px-1 pt-1 pb-1.5 border-b border-gray-100 dark:border-gray-700/70">
+                                    <p
+                                        class="text-[9px] font-bold uppercase tracking-wide truncate"
+                                        :class="pokemonTeamId(pokemon) !== null ? 'text-gray-500 dark:text-gray-400' : 'text-blue-500/70 dark:text-blue-400/70'"
+                                        x-text="pokemonTeamId(pokemon) !== null ? getTeamName(pokemonTeamId(pokemon)) : 'Libre'"
+                                    ></p>
+                                </div>
                                 <div class="w-24 h-24 mx-auto">
                                     <img
                                         :src="iconoDe(pokemon)"
                                         loading="lazy"
                                         decoding="async"
                                         :alt="pokemon.nombre || pokemon.pokemon_id || 'Pokémon'"
-                                        :title="pokemon.nombre || pokemon.pokemon_id || 'Pokémon'"
+                                        :title="(pokemon.nombre || pokemon.pokemon_id || 'Pokémon') + (pokemonTeamId(pokemon) !== null ? ' — ' + getTeamName(pokemonTeamId(pokemon)) : '')"
                                         class="w-full h-full object-contain"
+                                        :class="pokemonTeamId(pokemon) !== null ? 'grayscale opacity-60' : ''"
                                         onerror="this.style.display='none'"
                                     >
                                 </div>
-                                <p class="text-[10px] text-gray-600 dark:text-gray-400 truncate px-1 pb-1" x-text="nombreDe(pokemon)"></p>
+                                <p
+                                    class="text-[10px] truncate px-1 pb-1"
+                                    :class="pokemonTeamId(pokemon) !== null ? 'text-gray-500 dark:text-gray-500' : 'text-gray-600 dark:text-gray-400'"
+                                    x-text="nombreDe(pokemon)"
+                                ></p>
                                 <template x-if="cpDe(pokemon) != null">
-                                    <p class="text-[10px] font-bold text-purple-600 dark:text-purple-400 leading-none" x-text="'CP ' + cpDe(pokemon)"></p>
+                                    <p
+                                        class="text-[10px] font-bold leading-none"
+                                        :class="pokemonTeamId(pokemon) !== null ? 'text-purple-500/70' : 'text-purple-600 dark:text-purple-400'"
+                                        x-text="'CP ' + cpDe(pokemon)"
+                                    ></p>
                                 </template>
-                                <!-- Action buttons -->
-                                <div class="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2 rounded-lg">
-                                    <div class="relative">
-                                        <button
-                                            @click="showTeamDropdown = !showTeamDropdown"
-                                            class="w-8 h-8 bg-green-500 text-white rounded-full flex items-center justify-center hover:bg-green-600 transition-colors text-lg font-bold"
-                                            :aria-label="'Agregar ' + nombreDe(pokemon) + ' a equipo'"
-                                            :title="'Agregar ' + nombreDe(pokemon) + ' a equipo'"
-                                        >
-                                            +
-                                        </button>
-                                        <!-- Team dropdown -->
-                                        <template x-if="showTeamDropdown && teams.length > 0">
-                                            <div class="absolute left-1/2 -translate-x-1/2 top-full mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg p-1 w-36 z-50">
-                                                <template x-for="team in teams" :key="'dd-'+team.id">
-                                                    <button
-                                                        @click="addToTeam(pokemon, team); showTeamDropdown = false"
-                                                        class="w-full text-left px-3 py-1.5 text-xs text-gray-700 dark:text-gray-300 rounded hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-                                                        x-text="team.name"
-                                                    ></button>
+
+                                <!-- Resumen en hover: habilidad activa y movimientos asignados -->
+                                <div class="pointer-events-none absolute left-1/2 top-full z-50 mt-2 hidden w-56 -translate-x-1/2 group-hover:block">
+                                    <div class="rounded-xl border border-gray-200 bg-white p-2.5 text-left shadow-xl dark:border-gray-600 dark:bg-gray-800">
+                                        <div class="flex items-center justify-between gap-2">
+                                            <span class="text-[9px] font-bold uppercase tracking-wide text-emerald-600 dark:text-emerald-400">Habilidad</span>
+                                            <span class="text-[9px] text-gray-400 dark:text-gray-500" x-text="habilidadActivaDe(pokemon) ? 'Asignada' : 'Automática'"></span>
+                                        </div>
+                                        <template x-if="(pokemon.habilidades_disponibles || []).length > 0">
+                                            <div class="mt-1 space-y-0.5">
+                                                <template x-for="hab in pokemon.habilidades_disponibles" :key="'card-hab-' + pokemon.id + '-' + hab.id">
+                                                    <div class="flex items-center gap-1.5" :title="hab.description || hab.name">
+                                                        <span class="h-1 w-1 shrink-0 rounded-full" :class="String(pokemon.habilidad_activa_id) === String(hab.id) ? 'bg-emerald-500' : 'bg-gray-300 dark:bg-gray-600'"></span>
+                                                        <span class="truncate text-[10px] leading-snug" :class="String(pokemon.habilidad_activa_id) === String(hab.id) ? 'font-semibold text-emerald-600 dark:text-emerald-400' : 'text-gray-600 dark:text-gray-300'" x-text="hab.name"></span>
+                                                    </div>
                                                 </template>
                                             </div>
                                         </template>
+                                        <p x-show="(pokemon.habilidades_disponibles || []).length === 0" class="mt-1 text-[10px] text-gray-400 dark:text-gray-500">Sin habilidades registradas</p>
+
+                                        <p class="mt-2 text-[9px] font-bold uppercase tracking-wide text-blue-600 dark:text-blue-400">Movimientos</p>
+                                        <template x-if="movimientosAsignadosDe(pokemon).length > 0">
+                                            <div class="mt-1 space-y-0.5">
+                                                <template x-for="mov in movimientosAsignadosDe(pokemon)" :key="'card-mov-' + pokemon.id + '-' + mov.slug">
+                                                    <div class="flex items-center gap-1.5">
+                                                        <img :src="tipoIconoUrl(mov)" :alt="tipoDeMovimiento(mov) || 'Tipo'" loading="lazy" decoding="async" class="w-3.5 h-3.5 shrink-0 object-contain">
+                                                        <span class="truncate text-[10px] text-gray-600 dark:text-gray-300" x-text="mov.name"></span>
+                                                    </div>
+                                                </template>
+                                            </div>
+                                        </template>
+                                        <p x-show="movimientosAsignadosDe(pokemon).length === 0" class="mt-1 text-[10px] text-gray-400 dark:text-gray-500">Sin asignar · catálogo completo</p>
                                     </div>
-                                    <!-- Inspect (always available, read-only) -->
-                                    <button
-                                        @click="openDetail(pokemon)"
-                                        class="w-8 h-8 bg-blue-500 text-white rounded-full flex items-center justify-center hover:bg-blue-600 transition-colors"
-                                        :aria-label="'Ver detalle de ' + nombreDe(pokemon)"
-                                        :title="'Ver detalle de ' + nombreDe(pokemon)"
-                                    >
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
-                                        </svg>
-                                    </button>
                                 </div>
-                            </div>
-                        </template>
 
-                        <!-- Empty available -->
-                        <template x-if="availablePokemonsTeams.length === 0">
-                            <div class="col-span-full text-center py-8">
-                                <p class="text-sm text-gray-400 dark:text-gray-500" x-text="searchQuery || typeFilter ? 'No se encontraron Pokémon' : 'No hay Pokémon disponibles para asignar'"></p>
-                            </div>
-                        </template>
-                    </div>
-                </div>
-
-                <!-- Assigned Pokemon Section -->
-                <div>
-                    <div class="flex items-center justify-between bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-2 mb-4">
-                        <h2 class="text-sm font-bold uppercase tracking-wide text-gray-700 dark:text-gray-300">Asignados</h2>
-                    </div>
-                    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-2">
-                        <template x-for="pokemon in assignedPokemons" :key="'eq-assigned-'+pokemon.id">
-                            <div class="relative bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden text-center group opacity-60">
-                                <div class="w-24 h-24 mx-auto">
-                                    <img
-                                        :src="iconoDe(pokemon)"
-                                        loading="lazy"
-                                        decoding="async"
-                                        :alt="pokemon.nombre || pokemon.pokemon_id || 'Pokémon'"
-                                        :title="(pokemon.nombre || pokemon.pokemon_id || 'Pokémon') + ' — ' + getTeamName(pokemon.team_id)"
-                                        class="w-full h-full object-contain grayscale"
-                                        onerror="this.style.display='none'"
-                                    >
-                                </div>
-                                <p class="text-[10px] text-gray-500 dark:text-gray-500 truncate px-1 pb-1" x-text="nombreDe(pokemon)"></p>
-                                <template x-if="cpDe(pokemon) != null">
-                                    <p class="text-[10px] font-bold text-purple-500/70 leading-none" x-text="'CP ' + cpDe(pokemon)"></p>
-                                </template>
                                 <!-- Action buttons -->
-                                <div class="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                                <div class="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2 rounded-lg">
+                                    <template x-if="pokemonTeamId(pokemon) === null">
+                                        <div class="relative">
+                                            <button
+                                                @click="showTeamDropdown = !showTeamDropdown"
+                                                class="w-8 h-8 bg-green-500 text-white rounded-full flex items-center justify-center hover:bg-green-600 transition-colors text-lg font-bold"
+                                                :aria-label="'Agregar ' + nombreDe(pokemon) + ' a equipo'"
+                                                :title="'Agregar ' + nombreDe(pokemon) + ' a equipo'"
+                                            >
+                                                +
+                                            </button>
+                                            <!-- Team dropdown -->
+                                            <template x-if="showTeamDropdown && teams.length > 0">
+                                                <div class="absolute left-1/2 -translate-x-1/2 top-full mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg p-1 w-44 max-h-56 overflow-y-auto z-50">
+                                                    <template x-for="team in teams" :key="'dd-'+team.id">
+                                                        <button
+                                                            @click="selectTeamForPokemon(pokemon, team); showTeamDropdown = false"
+                                                            :disabled="isInExploration(team.id)"
+                                                            class="w-full text-left px-3 py-1.5 rounded hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                                                            :title="isInExploration(team.id)
+                                                                ? 'Equipo en exploración'
+                                                                : (team.members.length >= 3 ? 'Equipo completo: elige a quién reemplazar' : 'Añadir al equipo')"
+                                                        >
+                                                            <span class="block text-xs font-medium text-gray-700 dark:text-gray-300 truncate" x-text="team.name"></span>
+                                                            <span
+                                                                class="block text-[9px] font-semibold"
+                                                                :class="isInExploration(team.id)
+                                                                    ? 'text-orange-600 dark:text-orange-400'
+                                                                    : (team.members.length >= 3 ? 'text-amber-600 dark:text-amber-400' : 'text-green-600 dark:text-green-400')"
+                                                                x-text="isInExploration(team.id)
+                                                                    ? 'En exploración'
+                                                                    : (team.members.length >= 3 ? 'Completo · reemplazar' : 'Libre · añadir')"
+                                                            ></span>
+                                                        </button>
+                                                    </template>
+                                                </div>
+                                            </template>
+                                        </div>
+                                    </template>
                                     <!-- Inspect (always available, read-only) -->
                                     <button
                                         @click="openDetail(pokemon)"
@@ -447,23 +492,25 @@
                                         </svg>
                                     </button>
                                     <!-- Remove from team (blocked while the team is exploring) -->
-                                    <button
-                                        @click="!pokemonEnExploracion(pokemon) && removeFromTeam(pokemon)"
-                                        :disabled="pokemonEnExploracion(pokemon)"
-                                        :title="pokemonEnExploracion(pokemon) ? 'El equipo está en exploración' : 'Quitar ' + nombreDe(pokemon) + ' de equipo'"
-                                        class="w-8 h-8 bg-orange-500 text-white rounded-full flex items-center justify-center hover:bg-orange-600 transition-colors text-sm disabled:opacity-30 disabled:cursor-not-allowed"
-                                        :aria-label="'Quitar ' + nombreDe(pokemon) + ' de equipo'"
-                                    >
-                                        →
-                                    </button>
+                                    <template x-if="pokemonTeamId(pokemon) !== null">
+                                        <button
+                                            @click="!pokemonEnExploracion(pokemon) && removeFromTeam(pokemon)"
+                                            :disabled="pokemonEnExploracion(pokemon)"
+                                            :title="pokemonEnExploracion(pokemon) ? 'El equipo está en exploración' : 'Quitar ' + nombreDe(pokemon) + ' de equipo'"
+                                            class="w-8 h-8 bg-orange-500 text-white rounded-full flex items-center justify-center hover:bg-orange-600 transition-colors text-sm disabled:opacity-30 disabled:cursor-not-allowed"
+                                            :aria-label="'Quitar ' + nombreDe(pokemon) + ' de equipo'"
+                                        >
+                                            →
+                                        </button>
+                                    </template>
                                 </div>
                             </div>
                         </template>
 
-                        <!-- Empty assigned -->
-                        <template x-if="assignedPokemons.length === 0">
+                        <!-- Empty -->
+                        <template x-if="pokemonsEquipoFiltrados.length === 0">
                             <div class="col-span-full text-center py-8">
-                                <p class="text-sm text-gray-400 dark:text-gray-500">No hay Pokémon asignados a equipos</p>
+                                <p class="text-sm text-gray-400 dark:text-gray-500" x-text="hayFiltrosEquipo() ? 'No se encontraron Pokémon' : 'No hay Pokémon reclutados'"></p>
                             </div>
                         </template>
                     </div>
@@ -794,14 +841,72 @@
         </div>
     </template>
 
+    <!-- Replace Team Member Modal (equipo completo) -->
+    <template x-if="showReplaceModal">
+        <div class="fixed inset-0 z-50 flex items-center justify-center p-4" @keydown.escape.window="cerrarReemplazo()" role="dialog" aria-modal="true" aria-labelledby="replace-modal-title">
+            <div class="absolute inset-0 bg-black/60" @click="cerrarReemplazo()"></div>
+            <div class="relative bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-md p-6">
+                <h3 id="replace-modal-title" class="text-lg font-bold text-gray-900 dark:text-white">Equipo completo</h3>
+                <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                    Elige qué Pokémon de <strong class="text-gray-900 dark:text-white" x-text="replaceTeam?.name"></strong> ocupará el lugar de
+                    <strong class="text-gray-900 dark:text-white" x-text="replacePokemon ? nombreFormateado(replacePokemon) : ''"></strong>.
+                </p>
+
+                <template x-if="replaceError">
+                    <p class="mt-3 px-3 py-2 rounded-lg bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 text-xs" role="alert" x-text="replaceError"></p>
+                </template>
+
+                <div class="mt-4 space-y-2">
+                    <template x-for="slot in [1,2,3]" :key="'replace-slot-'+slot">
+                        <template x-if="replaceTeam && getMember(replaceTeam, slot)">
+                            <button
+                                type="button"
+                                @click="reemplazarMiembroEquipo(slot)"
+                                :disabled="replaceSaving"
+                                class="w-full flex items-center gap-3 p-3 rounded-xl border border-gray-200 dark:border-gray-700 hover:border-amber-400 dark:hover:border-amber-500 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors text-left disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                <img
+                                    :src="iconoDe(reclutadoDeSlot(replaceTeam, slot))"
+                                    :alt="nombreFormateado(reclutadoDeSlot(replaceTeam, slot))"
+                                    class="w-12 h-12 object-contain shrink-0"
+                                    loading="lazy"
+                                    decoding="async"
+                                    onerror="this.style.display='none'"
+                                >
+                                <div class="flex-1 min-w-0">
+                                    <p class="text-sm font-semibold text-gray-900 dark:text-white truncate" x-text="nombreFormateado(reclutadoDeSlot(replaceTeam, slot))"></p>
+                                    <p class="text-[10px] text-gray-400 dark:text-gray-500">
+                                        Slot <span x-text="slot"></span> ·
+                                        <span x-text="'CP ' + (cpDe(reclutadoDeSlot(replaceTeam, slot)) ?? '—')"></span>
+                                    </p>
+                                </div>
+                                <span class="text-[10px] font-bold uppercase text-amber-600 dark:text-amber-400">Reemplazar</span>
+                            </button>
+                        </template>
+                    </template>
+                </div>
+
+                <div class="mt-5 flex gap-3">
+                    <button
+                        type="button"
+                        @click="cerrarReemplazo()"
+                        class="flex-1 px-4 py-2.5 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg text-sm font-medium hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                    >
+                        Cancelar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </template>
+
     <!-- Pokemon Detail Modal (shared) -->
     <template x-if="showDetailModal">
         <div class="fixed inset-0 z-50 flex items-center justify-center p-4" @keydown.escape.window="closeDetail()" role="dialog" aria-modal="true" aria-labelledby="detail-modal-title">
             <div class="absolute inset-0 bg-black/60" @click="closeDetail()"></div>
-            <div class="relative bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-6xl max-h-[94vh] overflow-y-auto">
-                <!-- Header -->
+                <div class="relative bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-[90vw] max-w-[90vw] max-h-[94vh] overflow-y-auto pokemon-modal-quality" :class="calidadClase(detailPokemon)">
+
                 <div class="flex items-start gap-4 p-6 border-b border-gray-100 dark:border-gray-700">
-                    <div class="w-24 h-24 shrink-0 rounded-lg bg-gray-50 dark:bg-gray-900/50 flex items-center justify-center overflow-hidden">
+                    <div class="w-24 h-24 shrink-0 rounded-xl pokemon-quality flex items-center justify-center overflow-hidden" :class="calidadClase(detailPokemon)">
                         <img
                             :src="iconoPrincipalDe(detailPokemon)"
                             loading="lazy"
@@ -815,342 +920,285 @@
                     </div>
                     <div class="flex-1 min-w-0">
                         <div class="flex items-center gap-2 flex-wrap">
-                            <h3 id="detail-modal-title" class="text-lg font-bold text-gray-900 dark:text-white capitalize truncate" x-text="nombreDe(detailPokemon)"></h3>
+                            <h3 id="detail-modal-title" class="text-2xl font-bold text-gray-900 dark:text-white capitalize truncate" x-text="nombreDe(detailPokemon)"></h3>
                             <template x-if="detailPokemon.es_shiny">
                                 <span class="px-1.5 py-0.5 bg-yellow-100 dark:bg-yellow-900/40 text-yellow-700 dark:text-yellow-400 text-[10px] font-bold rounded uppercase" title="Shiny">★ Shiny</span>
                             </template>
                         </div>
-                        <p class="text-xs text-gray-400 dark:text-gray-500" x-text="detailPokemon.pokemon_id ? '#' + detailPokemon.pokemon_id : ''"></p>
-                        <div class="flex items-center gap-1.5 mt-1.5 flex-wrap">
-                            <template x-if="detailPokemon.pokemon?.types?.length">
+                        <div class="flex items-center gap-1.5 mt-2 flex-wrap">
+                            <template x-if="(detailPokemon.pokemon?.types || []).length">
                                 <template x-for="t in detailPokemon.pokemon.types" :key="'header-type-'+(t.id ?? t.slot ?? t.type)">
-                                    <span class="px-2 py-0.5 text-[11px] font-semibold rounded-full inline-flex items-center" :class="tipoClase(tipoLabelDel(t))" x-text="tipoLabelDel(t)"></span>
+                                    <span class="px-2 py-0.5 text-xs font-semibold rounded-full inline-flex items-center gap-1" :class="tipoClase(tipoLabelDel(t))">
+                                        <img :src="tipoIconoDeTipo(t)" :alt="tipoLabelDel(t)" loading="lazy" decoding="async" class="w-5 h-5 object-contain">
+                                        <span x-text="tipoLabelDel(t)"></span>
+                                    </span>
                                 </template>
                             </template>
                         </div>
-                        <div class="flex items-center gap-2 mt-1 flex-wrap">
+                        <div class="flex items-center gap-2 mt-2 flex-wrap">
                             <span class="px-2 py-0.5 bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-400 text-xs font-bold rounded-full">Nv <span x-text="nivelDe(detailPokemon)"></span></span>
                             <template x-if="cpDe(detailPokemon) != null">
                                 <span class="px-2 py-0.5 bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300 text-xs font-bold rounded-full" title="Poder de combate">CP <span x-text="cpDe(detailPokemon)"></span></span>
                             </template>
-                            <span class="text-xs text-gray-500 dark:text-gray-400" x-text="formatExp(expTotalDe(detailPokemon)) + ' exp'"></span>
+                            <span class="text-[11px] font-medium text-gray-400 dark:text-gray-500" x-text="getTeamName(pokemonTeamId(detailPokemon)) || 'Sin equipo'"></span>
                         </div>
                     </div>
-                    <button
-                        @click="closeDetail()"
-                        class="shrink-0 w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-                        aria-label="Cerrar"
-                    >
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                        </svg>
-                    </button>
+                    <div class="shrink-0 flex items-center gap-2">
+                        <button
+                            @click="releasePokemon()"
+                            :disabled="detailLoading || (detailPokemon && (enExploracion(detailPokemon.id) || pokemonEnExploracion(detailPokemon)))"
+                            :title="detailPokemon && (enExploracion(detailPokemon.id) || pokemonEnExploracion(detailPokemon)) ? 'El Pokémon está en exploración' : 'Liberar Pokémon'"
+                            aria-label="Liberar Pokémon"
+                            class="inline-flex items-center justify-center gap-1 px-2.5 py-2 bg-red-600 text-white rounded-lg text-xs font-bold hover:bg-red-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                        >
+                            <svg class="w-4 h-4 sm:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                            <span class="hidden sm:inline">Liberar</span>
+                        </button>
+                        <button @click="closeDetail()" class="w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" aria-label="Cerrar">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                        </button>
+                    </div>
                 </div>
 
                 <div class="p-6">
-                    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
-                        <div class="lg:col-span-7 space-y-5">
-                            <!-- Movimientos -->
-                            <div>
-                                <div class="flex items-center justify-between mb-2">
-                                    <h4 class="text-xs font-bold uppercase tracking-wide text-gray-500 dark:text-gray-400">Movimientos</h4>
-                                    <span class="text-[10px] text-gray-400 dark:text-gray-500" x-text="loadoutMovimientos.length + ' seleccionados'"></span>
-                                </div>
-                                <template x-if="(detailPokemon.movimientos_disponibles || []).length > 0">
-                                    <div class="space-y-2">
-                                        <template x-for="mov in detailPokemon.movimientos_disponibles" :key="'detail-mov-'+mov.slug">
-                                            <div class="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900/30 p-3"
-                                                 :class="mov.desbloqueado === false ? 'opacity-60' : ''">
-                                                <div class="flex items-start justify-between gap-3">
-                                                    <div class="min-w-0">
-                                                        <p class="text-sm font-semibold text-gray-900 dark:text-white" x-text="mov.name"></p>
-                                                        <p class="text-[10px] text-gray-400 dark:text-gray-500">
-                                                            <span x-text="mov.category"></span>
-                                                            <span x-show="mov.base_power > 0" x-text="' · ' + mov.base_power + ' potencia'"></span>
-                                                            <span class="ml-1" x-show="mov.desbloqueado === false"
-                                                                  x-text="' · Nivel ' + mov.nivel_requerido"></span>
-                                                        </p>
-                                                    </div>
-                                                    <button
-                                                        type="button"
-                                                        @click="toggleLoadoutMovimiento(mov.slug)"
-                                                        :disabled="mov.desbloqueado === false"
-                                                        class="shrink-0 px-2 py-1 rounded-md text-[10px] font-bold border transition-colors disabled:cursor-not-allowed"
-                                                        :class="mov.desbloqueado === false
-                                                            ? 'border-gray-200 dark:border-gray-700 text-gray-400 dark:text-gray-500'
-                                                            : (loadoutMovimientos.includes(mov.slug)
-                                                                ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
-                                                                : 'border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400 hover:border-blue-300')"
-                                                        x-text="mov.desbloqueado === false ? ('Nivel ' + mov.nivel_requerido) : (loadoutMovimientos.includes(mov.slug) ? 'Quitar' : 'Añadir')"
-                                                    ></button>
+                    <div class="grid grid-cols-1 xl:grid-cols-3 gap-4">
+                        <!-- Columna 2/3: evolución, habilidades y movimientos -->
+                        <div class="xl:col-span-2 space-y-4">
+                            <!-- Evolución (solo si el Pokémon puede evolucionar) -->
+                            <template x-if="detailEvoluciones.length > 0">
+                                <div class="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900/30 p-4">
+                                    <h4 class="text-sm font-bold uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-2">Evolución</h4>
+                                    <template x-if="detailPokemon && (enExploracion(detailPokemon.id) || pokemonEnExploracion(detailPokemon))">
+                                        <div class="mb-3 px-3 py-2 rounded-lg bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400 text-xs" role="status">Este Pokémon está en exploración activa: no puedes evolucionarlo hasta que vuelva.</div>
+                                    </template>
+                                    <div class="space-y-3">
+                                        <template x-if="detailEvoluciones.length > 1">
+                                            <div>
+                                                <p class="text-[11px] text-gray-500 dark:text-gray-400 mb-2">Selecciona a qué Pokémon evolucionar</p>
+                                                <div class="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                                                    <template x-for="opcion in detailEvoluciones" :key="opcion.pokemon_id">
+                                                        <button @click="selectedEvolucionId = opcion.pokemon_id" class="flex flex-col items-center gap-1 p-2 rounded-lg border-2 transition-colors" :class="selectedEvolucionId === opcion.pokemon_id ? 'border-blue-500 dark:border-blue-400 ring-2 ring-blue-500/30' : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'" :aria-pressed="selectedEvolucionId === opcion.pokemon_id" :aria-label="'Evolucionar a ' + opcion.nombre">
+                                                            <img :src="opcion.imagen || '/images/iconos_webp/' + opcion.pokemon_id + '.webp'" loading="lazy" decoding="async" :alt="opcion.nombre" class="w-12 h-12 object-contain" onerror="this.style.display='none'">
+                                                            <span class="text-[10px] text-gray-700 dark:text-gray-300 capitalize truncate" x-text="opcion.nombre"></span>
+                                                        </button>
+                                                    </template>
                                                 </div>
-                                                <p class="mt-1.5 text-[11px] leading-snug text-gray-500 dark:text-gray-400" x-text="mov.description || 'Sin descripción.'"></p>
+                                            </div>
+                                        </template>
+                                        <template x-if="opcionSeleccionada()">
+                                            <div class="space-y-2.5">
+                                                <template x-for="req in opcionSeleccionada().requisitos" :key="req.slug">
+                                                    <div>
+                                                        <div class="flex items-center justify-between mb-1"><span class="text-[10px] text-gray-500 dark:text-gray-400" x-text="req.tipo"></span><span class="text-[10px] text-gray-400 dark:text-gray-500" x-text="formatExp(req.actual) + ' / ' + formatExp(req.necesario)"></span></div>
+                                                        <div class="flex flex-wrap items-center gap-2">
+                                                            <div class="flex-1 min-w-[7rem] h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden" role="progressbar" :aria-valuenow="porcentajeExpRequisito(req)" aria-valuemin="0" aria-valuemax="100"><div class="h-full bg-blue-500 rounded-full transition-all duration-500" :style="'width: ' + porcentajeExpRequisito(req) + '%'"></div></div>
+                                                            <div class="flex shrink-0 items-center gap-1">
+                                                                <span class="inline-flex items-center gap-1 rounded-full bg-gray-100 px-1.5 py-0.5 text-[10px] font-semibold text-gray-600 dark:bg-gray-700 dark:text-gray-300" :title="'Caramelos de ' + req.tipo + ' disponibles: ' + req.caramelosDisponibles">
+                                                                    <img :src="'/images/candy_type/' + req.slug + '.webp'" loading="lazy" decoding="async" :alt="'Caramelo de ' + req.tipo" class="w-3.5 h-3.5 object-contain" onerror="this.onerror=null; this.src='/images/candy_pokemon/0.webp';">
+                                                                    <span x-text="'×' + req.caramelosDisponibles"></span>
+                                                                </span>
+                                                                <template x-for="cantidad in [1, 10, 100]" :key="'feed-'+req.slug+'-'+cantidad">
+                                                                    <button type="button" @click="alimentarCaramelo(req, cantidad)" :disabled="!puedeAlimentar(req) || detailCandyFeeding" :title="'Consumir hasta ' + cantidad + ' caramelo(s) de ' + req.tipo + ' (+' + (cantidad * 100) + ' exp máx.)'" class="px-1.5 py-0.5 rounded-md bg-amber-500 text-white text-[10px] font-bold hover:bg-amber-600 transition-colors disabled:opacity-40 disabled:cursor-not-allowed" x-text="'x' + cantidad"></button>
+                                                                </template>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </template>
                                             </div>
                                         </template>
                                     </div>
-                                </template>
-                                <template x-if="(detailPokemon.movimientos_disponibles || []).length === 0">
-                                    <p class="text-[11px] text-gray-400 dark:text-gray-500">Esta especie no tiene movimientos de catálogo.</p>
-                                </template>
-                            </div>
+                                    <div class="mt-3 border-t border-gray-100 dark:border-gray-700 pt-3">
+                                        <button @click="evolvePokemon()" :disabled="detailLoading || (detailPokemon && (enExploracion(detailPokemon.id) || pokemonEnExploracion(detailPokemon))) || !opcionSeleccionada()?.puede_evolucionar" :title="(detailPokemon && (enExploracion(detailPokemon.id) || pokemonEnExploracion(detailPokemon))) ? 'El Pokémon está en exploración' : (opcionSeleccionada()?.puede_evolucionar ? 'Evolucionar Pokémon' : 'Completa la exp de tipo para evolucionar')" class="w-full px-4 py-2.5 bg-green-600 text-white rounded-lg text-sm font-bold hover:bg-green-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed">
+                                            <span x-text="detailLoading ? 'Evolucionando…' : 'Evolucionar'"></span>
+                                        </button>
+                                    </div>
+                                </div>
+                            </template>
 
                             <!-- Habilidades -->
-                            <div>
-                                <h4 class="text-xs font-bold uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-2">Habilidades</h4>
+                            <div class="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900/30 p-4">
+                                <h4 class="text-sm font-bold uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-2">Habilidades</h4>
                                 <template x-if="(detailPokemon.habilidades_disponibles || []).length > 0">
                                     <div class="space-y-2">
                                         <template x-for="hab in detailPokemon.habilidades_disponibles" :key="'detail-hab-'+hab.id">
-                                            <button
-                                                type="button"
-                                                @click="loadoutHabilidadId = (loadoutHabilidadId == hab.id ? '' : hab.id)"
-                                                class="w-full text-left rounded-xl border p-3 transition-colors"
-                                                :class="loadoutHabilidadId == hab.id
-                                                    ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20'
-                                                    : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900/30 hover:border-emerald-300'"
-                                            >
-                                                <div class="flex items-center justify-between gap-2">
-                                                    <span class="text-sm font-semibold text-gray-900 dark:text-white" x-text="hab.name"></span>
-                                                    <span x-show="loadoutHabilidadId == hab.id" class="text-[10px] font-bold text-emerald-600 dark:text-emerald-400">ACTIVA</span>
-                                                </div>
-                                                <p class="mt-1 text-[11px] leading-snug text-gray-500 dark:text-gray-400" x-text="hab.description || 'Sin descripción.'"></p>
+                                            <button type="button" @click="loadoutHabilidadId = (loadoutHabilidadId == hab.id ? '' : hab.id)" class="w-full text-left rounded-xl border p-3 transition-colors" :class="loadoutHabilidadId == hab.id ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20' : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900/30 hover:border-emerald-300'">
+                                                <div class="flex items-center justify-between gap-2"><span class="text-sm font-semibold text-gray-900 dark:text-white" x-text="hab.name"></span><span x-show="loadoutHabilidadId == hab.id" class="text-[11px] font-bold text-emerald-600 dark:text-emerald-400">ACTIVA</span></div>
+                                                <p class="mt-1 text-xs leading-snug text-gray-500 dark:text-gray-400" x-text="hab.description || 'Sin descripción.'"></p>
                                             </button>
                                         </template>
                                     </div>
                                 </template>
                                 <template x-if="(detailPokemon.habilidades_disponibles || []).length === 0">
-                                    <p class="text-[11px] text-gray-400 dark:text-gray-500">Esta especie no tiene habilidades registradas.</p>
+                                    <p class="text-xs text-gray-400 dark:text-gray-500">Esta especie no tiene habilidades registradas.</p>
                                 </template>
                             </div>
 
-                            <!-- Loadout de combate -->
+                            <!-- Movimientos asignados -->
                             <div class="rounded-2xl border border-blue-200 dark:border-blue-900/60 bg-blue-50/50 dark:bg-blue-900/10 p-4">
-                                <div class="flex items-center justify-between mb-2">
-                                    <h4 class="text-xs font-bold uppercase tracking-wide text-blue-700 dark:text-blue-300">Loadout de combate</h4>
-                                    <span class="text-[10px] text-blue-600/70 dark:text-blue-300/70" x-text="loadoutMovimientos.length + '/6 movimientos'"></span>
+                                <div class="flex items-center justify-between gap-2 mb-2">
+                                    <h4 class="text-sm font-bold uppercase tracking-wide text-blue-700 dark:text-blue-300">Movimientos asignados</h4>
+                                    <span class="text-[11px] text-blue-600/70 dark:text-blue-300/70" x-text="loadoutMovimientos.length + '/6'"></span>
                                 </div>
-                                <p class="text-[11px] text-gray-600 dark:text-gray-300 mb-2">
-                                    Habilidad activa:
-                                    <strong x-text="nombreHabilidadLoadout()"></strong>
-                                </p>
+                                <p class="text-xs text-gray-600 dark:text-gray-300 mb-2">Habilidad activa: <strong x-text="nombreHabilidadLoadout()"></strong></p>
                                 <div class="flex flex-wrap gap-1.5 mb-3">
                                     <template x-for="slug in loadoutMovimientos" :key="'loadout-chip-'+slug">
-                                        <span class="px-2 py-0.5 rounded-full bg-white dark:bg-gray-800 border border-blue-200 dark:border-blue-800 text-[10px] text-blue-700 dark:text-blue-300" x-text="nombreMovimientoLoadout(slug) || slug"></span>
+                                        <span class="inline-flex items-center gap-1 pl-1 pr-1.5 py-0.5 rounded-full bg-white dark:bg-gray-800 border border-blue-200 dark:border-blue-800 text-[11px] text-blue-700 dark:text-blue-300">
+                                            <img :src="tipoIconoUrl(movimientoLoadout(slug))" :alt="tipoDeMovimiento(movimientoLoadout(slug)) || 'Tipo'" loading="lazy" decoding="async" class="w-4 h-4 object-contain">
+                                            <span x-text="nombreMovimientoLoadout(slug) || slug"></span>
+                                            <button type="button" @click="toggleLoadoutMovimiento(slug)" class="w-4 h-4 flex items-center justify-center rounded-full text-blue-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30 transition-colors" :aria-label="'Quitar ' + nombreMovimientoLoadout(slug) + ' del loadout'" title="Quitar del loadout">×</button>
+                                        </span>
                                     </template>
-                                    <span x-show="loadoutMovimientos.length === 0" class="text-[10px] text-gray-400 dark:text-gray-500">Sin selección: se usa el catálogo desbloqueado completo.</span>
+                                    <span x-show="loadoutMovimientos.length === 0" class="text-[11px] text-gray-400 dark:text-gray-500">Sin selección: se usa el catálogo desbloqueado completo.</span>
                                 </div>
-                                <button
-                                    type="button"
-                                    @click="guardarLoadout()"
-                                    :disabled="loadoutSaving"
-                                    class="w-full px-3 py-2 bg-blue-600 text-white rounded-lg text-xs font-bold hover:bg-blue-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-                                    x-text="loadoutSaving ? 'Guardando…' : 'Guardar loadout'"
-                                ></button>
-                                <div
-                                    x-show="loadoutFeedback.mensaje"
-                                    x-cloak
-                                    role="status"
-                                    class="mt-2 px-2 py-1.5 rounded text-[10px]"
-                                    :class="loadoutFeedback.tipo === 'error'
-                                        ? 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400'
-                                        : 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400'"
-                                    x-text="loadoutFeedback.mensaje"
-                                ></div>
+                                <button type="button" @click="guardarLoadout()" :disabled="loadoutSaving" class="w-full px-3 py-2 bg-blue-600 text-white rounded-lg text-xs font-bold hover:bg-blue-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed" x-text="loadoutSaving ? 'Guardando…' : 'Guardar loadout'"></button>
+                                <div x-show="loadoutFeedback.mensaje" x-cloak role="status" class="mt-2 px-2 py-1.5 rounded text-[10px]" :class="loadoutFeedback.tipo === 'error' ? 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400' : 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400'" x-text="loadoutFeedback.mensaje"></div>
                             </div>
-                        </div>
 
-                        <div class="lg:col-span-5 space-y-5">
-                            <!-- Stats base + chart hexagonal -->
+                            <!-- Movimientos disponibles -->
                             <div class="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900/30 p-4">
-                                <h4 class="text-xs font-bold uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-2">Stats base</h4>
-                                <div class="relative w-full max-w-[270px] mx-auto" style="height: 220px;">
-                                    <canvas id="detail-stats-chart" role="img" aria-label="Gráfico hexagonal de stats base"></canvas>
+                                <div class="flex items-center justify-between mb-2 gap-2">
+                                    <h4 class="text-sm font-bold uppercase tracking-wide text-gray-500 dark:text-gray-400">Movimientos disponibles</h4>
+                                    <span class="text-[11px] text-gray-400 dark:text-gray-500"><span x-text="movimientosFiltrados.length + ' / ' + (detailPokemon.movimientos_disponibles || []).length"></span> · <span x-text="loadoutMovimientos.length + ' asignados'"></span></span>
                                 </div>
-                                <div class="mt-3 space-y-1.5">
-                                    <template x-for="(stat, index) in hexStats(detailPokemon)" :key="'base-stat-'+stat.label">
-                                        <div class="grid grid-cols-[3.5rem_1fr_2.5rem] items-center gap-2">
-                                            <span class="text-[10px] text-gray-500 dark:text-gray-400 truncate" x-text="stat.label"></span>
-                                            <div class="h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
-                                                <div class="h-full bg-blue-500 rounded-full" :style="'width: ' + Math.min((stat.value / 255) * 100, 100) + '%'"></div>
-                                            </div>
-                                            <span class="text-[10px] font-semibold text-right text-gray-700 dark:text-gray-300" x-text="stat.value"></span>
+                                <template x-if="(detailPokemon.movimientos_disponibles || []).length > 0">
+                                    <div class="space-y-2 mb-2">
+                                        <div class="relative max-w-sm">
+                                            <input type="text" x-model="filtroNombreMovimiento" placeholder="Filtrar movimientos por nombre..." class="w-full px-3 py-1.5 pl-9 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-xs text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors">
+                                            <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
                                         </div>
-                                    </template>
-                                </div>
-                            </div>
-
-                            <!-- EVs -->
-                            <template x-if="detailPokemon && (detailPokemon.evs || detailPokemon.ev)">
-                                <div>
-                                    <h4 class="text-xs font-bold uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-2">Entrenamiento (EV)</h4>
-                                    <template x-if="detailEvFeedback.mensaje">
-                                        <div class="px-3 py-2 rounded-lg text-xs mb-2" role="status"
-                                            :class="detailEvFeedback.tipo === 'error'
-                                                ? 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400'
-                                                : 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400'"
-                                            x-text="detailEvFeedback.mensaje">
-                                        </div>
-                                    </template>
-                                    <div class="space-y-2">
-                                        <template x-for="stat in evStats" :key="'ev-'+stat.key">
-                                            <div class="flex items-center gap-2">
-                                                <span class="text-[10px] text-gray-500 dark:text-gray-400 w-20 text-right truncate" x-text="stat.label"></span>
-                                                <div class="flex-1 h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
-                                                    <div class="h-full bg-amber-500 rounded-full" :style="'width: ' + evPct(evValue(detailPokemon, stat.key)) + '%'"></div>
-                                                </div>
-                                                <span class="text-[10px] font-medium text-gray-700 dark:text-gray-300 w-8 flex-shrink-0" x-text="evValue(detailPokemon, stat.key) + '/255'"></span>
-                                                <button
-                                                    @click="darEv(stat.key)"
-                                                    :disabled="!puedeDarEv(detailPokemon, stat.key)"
-                                                    :title="!puedeDarEv(detailPokemon, stat.key) ? 'No puedes dar caramelos EV ahora mismo' : 'Dar caramelo EV (+10 a ' + stat.label + ')'"
-                                                    class="shrink-0 px-2 py-1 bg-amber-500 text-white rounded-md text-[10px] font-bold hover:bg-amber-600 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-                                                >
-                                                    🍬 <span x-text="evCandyLabel(detailPokemon, stat.key)"></span>
-                                                </button>
-                                            </div>
-                                        </template>
-                                    </div>
-                                </div>
-                            </template>
-                            <!-- IVs -->
-                            <template x-if="detailPokemon && (detailPokemon.ivs || detailPokemon.iv)">
-                                <div>
-                                    <h4 class="text-xs font-bold uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-2">Valores Individuales (IV)</h4>
-                                    <div class="grid grid-cols-2 gap-x-4 gap-y-1.5">
-                                        <template x-for="stat in evStats" :key="'iv-'+stat.key">
-                                            <div class="flex items-center justify-between">
-                                                <span class="text-[10px] text-gray-500 dark:text-gray-400" x-text="stat.label"></span>
-                                                <span class="text-xs font-bold" :class="ivValue(detailPokemon, stat.key) >= 15 ? 'text-green-600 dark:text-green-400' : 'text-gray-700 dark:text-gray-300'" x-text="ivValue(detailPokemon, stat.key) + '/15'"></span>
-                                            </div>
-                                        </template>
-                                    </div>
-                                </div>
-                            </template>
-
-                        </div>
-                    </div>
-
-                    <div class="mt-6 space-y-5">
-                    <!-- Locked while exploring (individual or team) -->
-                    <template x-if="detailPokemon && (enExploracion(detailPokemon.id) || pokemonEnExploracion(detailPokemon))">
-                        <div class="px-3 py-2 rounded-lg bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400 text-xs" role="status">
-                            Este Pokémon está en exploración activa: no puedes evolucionarlo ni liberarlo hasta que vuelva.
-                        </div>
-                    </template>
-
-                    <!-- Evolution / release actions -->
-                    <div class="border-t border-gray-100 dark:border-gray-700 pt-4">
-                        <h4 class="text-xs font-bold uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-2">Evolución</h4>
-
-                        <!-- Loading -->
-                        <template x-if="detailEvolucionesLoading">
-                            <div class="text-sm text-gray-400 dark:text-gray-500 py-2" role="status">Cargando opciones de evolución…</div>
-                        </template>
-
-                        <!-- Error sin información -->
-                        <template x-if="!detailEvolucionesLoading && detailEvolucionesError">
-                            <div class="text-sm text-gray-400 dark:text-gray-500 py-2">No hay información de evolución disponible.</div>
-                        </template>
-
-                        <!-- Sin evolución -->
-                        <template x-if="!detailEvolucionesLoading && !detailEvolucionesError && detailEvoluciones.length === 0">
-                            <div class="text-sm text-gray-400 dark:text-gray-500 py-2">Este Pokémon no tiene evolución.</div>
-                        </template>
-
-                        <template x-if="!detailEvolucionesLoading && !detailEvolucionesError && detailEvoluciones.length > 0">
-                            <div class="space-y-4">
-                                <!-- Target selector (solo si hay varias opciones) -->
-                                <template x-if="detailEvoluciones.length > 1">
-                                    <div>
-                                        <p class="text-[10px] text-gray-500 dark:text-gray-400 mb-2">Selecciona a qué Pokémon evolucionar</p>
-                                        <div class="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                                            <template x-for="opcion in detailEvoluciones" :key="opcion.pokemon_id">
-                                                <button
-                                                    @click="selectedEvolucionId = opcion.pokemon_id"
-                                                    class="flex flex-col items-center gap-1 p-2 rounded-lg border-2 transition-colors"
-                                                    :class="selectedEvolucionId === opcion.pokemon_id
-                                                        ? 'border-blue-500 dark:border-blue-400 ring-2 ring-blue-500/30'
-                                                        : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'"
-                                                    :aria-pressed="selectedEvolucionId === opcion.pokemon_id"
-                                                    :aria-label="'Evolucionar a ' + opcion.nombre"
-                                                >
-                                                    <img
-                                                        :src="opcion.imagen || '/images/iconos_webp/' + opcion.pokemon_id + '.webp'"
-                                                        loading="lazy"
-                                                        decoding="async"
-                                                        :alt="opcion.nombre"
-                                                        class="w-12 h-12 object-contain"
-                                                        onerror="this.style.display='none'"
-                                                    >
-                                                    <span class="text-[10px] text-gray-700 dark:text-gray-300 capitalize truncate" x-text="opcion.nombre"></span>
+                                        <div class="flex flex-wrap items-center gap-1.5">
+                                            <template x-for="tipo in tiposMovimientoDisponibles" :key="'filtro-tipo-'+tipo.slug">
+                                                <button type="button" @click="toggleFiltroTipoMovimiento(tipo.slug)" :aria-pressed="filtroTipoMovimientoActivo(tipo.slug) ? 'true' : 'false'" :title="'Filtrar por tipo ' + tipo.nombre" class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full border text-[11px] font-semibold transition-opacity" :class="filtroTipoMovimientoActivo(tipo.slug) ? tipoClase(tipo.nombre) + ' border-gray-900 dark:border-white' : 'bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400 border-gray-200 dark:border-gray-700 opacity-60 hover:opacity-100'">
+                                                    <img :src="'/images/type/' + tipo.slug + '.webp'" :alt="tipo.nombre" loading="lazy" decoding="async" class="w-5 h-5 object-contain"><span x-text="tipo.nombre"></span>
                                                 </button>
                                             </template>
+                                            <span class="mx-1 h-4 w-px bg-gray-300 dark:bg-gray-600" aria-hidden="true"></span>
+                                            <template x-for="categoria in categoriasMovimientoDisponibles" :key="'filtro-categoria-'+categoria">
+                                                <button type="button" @click="toggleFiltroCategoriaMovimiento(categoria)" :aria-pressed="filtroCategoriaMovimientoActiva(categoria) ? 'true' : 'false'" :title="'Filtrar por categoría ' + etiquetaCategoriaSlug(categoria)" class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full border text-[11px] font-semibold transition-opacity" :class="filtroCategoriaMovimientoActiva(categoria) ? claseCategoria(categoria) + ' border-gray-900 dark:border-white' : 'bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400 border-gray-200 dark:border-gray-700 opacity-60 hover:opacity-100'">
+                                                    <img :src="categoriaIconoDe(categoria)" :alt="etiquetaCategoriaSlug(categoria)" loading="lazy" decoding="async" class="w-5 h-5 object-contain"><span x-text="etiquetaCategoriaSlug(categoria)"></span>
+                                                </button>
+                                            </template>
+                                            <button type="button" x-show="hayFiltrosMovimiento()" @click="limpiarFiltrosMovimiento()" class="ml-auto text-[11px] font-medium text-blue-600 dark:text-blue-400 hover:underline" title="Quitar todos los filtros">Limpiar filtros</button>
                                         </div>
                                     </div>
                                 </template>
-
-                                <!-- Exp bars toward evolution for selected option -->
-                                <template x-if="opcionSeleccionada()">
-                                    <div class="space-y-2.5">
-                                        <template x-for="req in opcionSeleccionada().requisitos" :key="req.slug">
-                                            <div>
-                                                <div class="flex items-center justify-between mb-1">
-                                                    <span class="text-[10px] text-gray-500 dark:text-gray-400" x-text="req.tipo"></span>
-                                                    <span class="text-[10px] text-gray-400 dark:text-gray-500" x-text="formatExp(req.actual) + ' / ' + formatExp(req.necesario)"></span>
+                                <template x-if="(detailPokemon.movimientos_disponibles || []).length > 0">
+                                    <div class="grid grid-cols-1 sm:grid-cols-2 2xl:grid-cols-3 gap-2">
+                                        <template x-for="mov in movimientosFiltrados" :key="'detail-mov-'+mov.slug">
+                                            <div class="flex flex-col rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900/30 p-2.5" :class="mov.desbloqueado === false ? 'opacity-60' : ''">
+                                                <div class="flex items-start justify-between gap-1.5">
+                                                    <p class="min-w-0 text-sm font-semibold leading-tight text-gray-900 dark:text-white" x-text="mov.name"></p>
+                                                    <span class="shrink-0 inline-flex items-center gap-1 pl-0 pr-2 py-0.5 text-[11px] font-semibold rounded-full" :class="tipoClase(tipoDeMovimiento(mov))">
+                                                        <img :src="tipoIconoUrl(mov)" :alt="tipoDeMovimiento(mov) || 'Tipo'" loading="lazy" decoding="async" class="w-[30px] h-[30px] object-contain"><span x-text="tipoDeMovimiento(mov) || '—'"></span>
+                                                    </span>
                                                 </div>
-                                                <div class="flex items-center gap-2">
-                                                    <div class="flex-1 h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden" role="progressbar" :aria-valuenow="porcentajeExpRequisito(req)" aria-valuemin="0" aria-valuemax="100">
-                                                        <div class="h-full bg-blue-500 rounded-full transition-all duration-500" :style="'width: ' + porcentajeExpRequisito(req) + '%'"></div>
-                                                    </div>
-                                                    <button
-                                                        @click="alimentarCaramelo(req)"
-                                                        :disabled="!puedeAlimentar(req)"
-                                                        :title="'Usar caramelo de ' + req.tipo + ' (+100 exp)'"
-                                                        :aria-label="'Usar caramelo de ' + req.tipo + ' (+100 exp)'"
-                                                        class="shrink-0 flex items-center gap-1 px-1.5 py-0.5 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-                                                    >
-                                                        <img
-                                                            :src="'/images/candy_type/' + req.slug + '.webp'"
-                                                            loading="lazy"
-                                                            decoding="async"
-                                                            :alt="'Caramelo de ' + req.tipo"
-                                                            class="w-4 h-4 object-contain"
-                                                            onerror="this.onerror=null; this.src='/images/candy_pokemon/0.webp';"
-                                                        >
-                                                        <span class="text-[10px] font-medium text-gray-600 dark:text-gray-300" x-text="'× ' + req.caramelosDisponibles"></span>
-                                                    </button>
+                                                <div class="mt-1 flex flex-wrap items-center gap-x-1.5 text-xs text-gray-400 dark:text-gray-500">
+                                                    <img :src="categoriaIconoUrl(mov)" :alt="etiquetaCategoria(mov)" loading="lazy" decoding="async" class="w-[30px] h-[30px] object-contain"><span x-text="etiquetaCategoria(mov)"></span>
+                                                    <span x-show="mov.base_power > 0" x-text="'· ' + mov.base_power + ' pot.'"></span>
+                                                    <span x-show="mov.desbloqueado === false" x-text="'· Nv ' + mov.nivel_requerido"></span>
                                                 </div>
+                                                <p class="mt-1.5 flex-1 text-xs leading-snug text-gray-500 dark:text-gray-400" x-text="mov.description || 'Sin descripción.'"></p>
+                                                <button type="button" @click="toggleLoadoutMovimiento(mov.slug)" :disabled="mov.desbloqueado === false" class="mt-2 w-full px-2 py-1 rounded-md text-[11px] font-bold border transition-colors disabled:cursor-not-allowed" :class="mov.desbloqueado === false ? 'border-gray-200 dark:border-gray-700 text-gray-400 dark:text-gray-500' : (loadoutMovimientos.includes(mov.slug) ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300' : 'border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400 hover:border-blue-300')" x-text="mov.desbloqueado === false ? ('Nivel ' + mov.nivel_requerido) : (loadoutMovimientos.includes(mov.slug) ? 'Quitar' : 'Añadir')"></button>
                                             </div>
                                         </template>
                                     </div>
                                 </template>
-
-                                <!-- Actions -->
-                                <div class="flex flex-col sm:flex-row gap-2 border-t border-gray-100 dark:border-gray-700 pt-3">
-                                    <button
-                                        @click="evolvePokemon()"
-                                        :disabled="detailLoading || detailPokemon && (enExploracion(detailPokemon.id) || pokemonEnExploracion(detailPokemon)) || !opcionSeleccionada()?.puede_evolucionar"
-                                        :title="(detailPokemon && (enExploracion(detailPokemon.id) || pokemonEnExploracion(detailPokemon)))
-                                            ? 'El Pokémon está en exploración'
-                                            : (opcionSeleccionada()?.puede_evolucionar ? 'Evolucionar Pokémon' : 'Completa la exp de tipo para evolucionar')"
-                                        class="flex-1 px-4 py-2.5 bg-green-600 text-white rounded-lg text-sm font-bold hover:bg-green-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-                                    >
-                                        <span x-text="detailLoading ? 'Evolucionando…' : 'Evolucionar'"></span>
-                                    </button>
-                                    <button
-                                        @click="releasePokemon()"
-                                        :disabled="detailLoading || detailPokemon && (enExploracion(detailPokemon.id) || pokemonEnExploracion(detailPokemon))"
-                                        :title="detailPokemon && (enExploracion(detailPokemon.id) || pokemonEnExploracion(detailPokemon)) ? 'El Pokémon está en exploración' : 'Liberar Pokémon'"
-                                        class="flex-1 px-4 py-2.5 bg-red-600 text-white rounded-lg text-sm font-bold hover:bg-red-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-                                    >
-                                        Liberar
-                                    </button>
-                                </div>
-                                <p class="text-[10px] text-gray-400 dark:text-gray-500 mt-1">
-                                    Usa caramelos de tipo para llenar la barra y poder evolucionar.
-                                </p>
+                                <template x-if="(detailPokemon.movimientos_disponibles || []).length > 0 && movimientosFiltrados.length === 0">
+                                    <p class="text-xs text-gray-400 dark:text-gray-500">Ningún movimiento coincide con los filtros seleccionados.</p>
+                                </template>
+                                <template x-if="(detailPokemon.movimientos_disponibles || []).length === 0">
+                                    <p class="text-xs text-gray-400 dark:text-gray-500">Esta especie no tiene movimientos de catálogo.</p>
+                                </template>
                             </div>
-                        </template>
-                    </div>
+                        </div>
+
+                        <!-- Columna 1/3: stats -->
+                        <div class="space-y-4">
+                            <!-- Stats calculados con el nivel de la cuenta -->
+                            <div class="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900/30 p-4">
+                                <div class="flex items-center justify-between gap-2 mb-2">
+                                    <h4 class="text-sm font-bold uppercase tracking-wide text-gray-500 dark:text-gray-400">Stats</h4>
+                                    <span class="text-[10px] text-gray-400 dark:text-gray-500" title="Nivel de la cuenta">Nv <span x-text="nivelJugador"></span></span>
+                                </div>
+                                <div class="relative w-full" style="height: 180px;"><canvas id="detail-calculated-chart" role="img" aria-label="Gráfico hexagonal de stats"></canvas></div>
+                                <div class="mt-3 space-y-1.5">
+                                    <template x-for="stat in hexStatsCalculados(detailPokemon)" :key="'calc-stat-'+stat.label">
+                                        <div class="grid grid-cols-[2.5rem_1fr_2.5rem] items-center gap-2">
+                                            <span class="text-[10px] font-semibold text-gray-500 dark:text-gray-400 truncate" x-text="stat.label"></span>
+                                            <div class="h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                                                <div class="h-full bg-emerald-500 rounded-full" :style="'width: ' + Math.min(100, (stat.value / escalaCalculada(detailPokemon)) * 100) + '%'"></div>
+                                            </div>
+                                            <span class="text-[11px] font-bold text-right text-gray-700 dark:text-gray-300" x-text="stat.value"></span>
+                                        </div>
+                                    </template>
+                                </div>
+                            </div>
+
+                            <!-- Entrenamiento EV -->
+                            <template x-if="detailPokemon && (detailPokemon.evs || detailPokemon.ev)">
+                                <div>
+                                    <div class="flex items-center justify-between gap-2 mb-2">
+                                        <h4 class="text-sm font-bold uppercase tracking-wide text-gray-500 dark:text-gray-400">Entrenamiento (EV)</h4>
+                                        <span class="text-[10px] text-gray-400 dark:text-gray-500">Máx. 255</span>
+                                    </div>
+                                    <template x-if="detailEvFeedback.mensaje">
+                                        <div class="px-3 py-2 rounded-lg text-xs mb-2" role="status" :class="detailEvFeedback.tipo === 'error' ? 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400' : 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400'" x-text="detailEvFeedback.mensaje"></div>
+                                    </template>
+                                    <div class="grid grid-cols-3 gap-2">
+                                        <template x-for="stat in evStats" :key="'ev-'+stat.key">
+                                            <div class="flex flex-col items-center text-center gap-1 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900/30 p-1.5">
+                                                <div class="relative">
+                                                    <img :src="'/images/candy_ev/' + slugCorto(stat.key) + '.webp'" loading="lazy" decoding="async" :alt="'Caramelo EV de ' + stat.label" class="w-8 h-8 object-contain" onerror="this.style.display='none'">
+                                                    <span class="absolute -right-1 -top-1 min-w-[1.25rem] rounded-full px-1 py-0.5 text-center text-[8px] font-bold leading-none shadow" :class="evCaramelosDe(detailPokemon, stat.key) > 0 ? 'bg-amber-500 text-white' : 'bg-gray-300 text-gray-600 dark:bg-gray-600 dark:text-gray-300'" :title="'Caramelos EV disponibles: ' + evCaramelosDe(detailPokemon, stat.key)" x-text="'×' + evCaramelosDe(detailPokemon, stat.key)"></span>
+                                                </div>
+                                                <span class="text-[9px] font-semibold text-gray-600 dark:text-gray-300 truncate w-full" x-text="stat.label"></span>
+                                                <div class="flex items-baseline gap-0.5"><span class="text-xs font-bold text-gray-900 dark:text-white" x-text="evValue(detailPokemon, stat.key)"></span><span class="text-[8px] text-gray-400 dark:text-gray-500">/255</span></div>
+                                                <div class="w-full h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden"><div class="h-full bg-amber-500 rounded-full" :style="'width: ' + evPct(evValue(detailPokemon, stat.key)) + '%'"></div></div>
+                                                <div class="mt-1 grid w-full grid-cols-2 gap-1">
+                                                    <button @click="darEv(stat.key, 1)" :disabled="!puedeDarEv(detailPokemon, stat.key)" :title="!puedeDarEv(detailPokemon, stat.key) ? 'No puedes dar caramelos EV ahora mismo' : 'Usar hasta 1 caramelo EV (+10 a ' + stat.label + ')'" class="w-full rounded-md bg-amber-500 px-1 py-1 text-[9px] font-bold text-white transition-colors hover:bg-amber-600 disabled:cursor-not-allowed disabled:opacity-40">+10</button>
+                                                    <button @click="darEv(stat.key, 10)" :disabled="!puedeDarEv(detailPokemon, stat.key)" :title="!puedeDarEv(detailPokemon, stat.key) ? 'No puedes dar caramelos EV ahora mismo' : 'Usar hasta 10 caramelos EV (+100 a ' + stat.label + ')'" class="w-full rounded-md bg-amber-500 px-1 py-1 text-[9px] font-bold text-white transition-colors hover:bg-amber-600 disabled:cursor-not-allowed disabled:opacity-40">+100</button>
+                                                </div>
+                                            </div>
+                                        </template>
+                                    </div>
+                                </div>
+                            </template>
+
+                            <!-- Stats base -->
+                            <div class="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900/30 p-4">
+                                <div class="flex items-center justify-between gap-2 mb-2">
+                                    <h4 class="text-sm font-bold uppercase tracking-wide text-gray-500 dark:text-gray-400">Stats base</h4>
+                                    <span class="text-[10px] text-gray-400 dark:text-gray-500">0–<span x-text="escalaStats(detailPokemon)"></span></span>
+                                </div>
+                                <div class="relative w-full" style="height: 180px;"><canvas id="detail-stats-chart" role="img" aria-label="Gráfico hexagonal de stats base"></canvas></div>
+                                <div class="mt-3 space-y-1.5">
+                                    <template x-for="stat in hexStats(detailPokemon)" :key="'base-stat-'+stat.label">
+                                        <div class="grid grid-cols-[2.5rem_1fr_2.5rem] items-center gap-2">
+                                            <span class="text-[10px] font-semibold text-gray-500 dark:text-gray-400 truncate" x-text="stat.label"></span>
+                                            <div class="h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                                                <div class="h-full bg-blue-500 rounded-full" :style="'width: ' + Math.min(100, (stat.value / escalaStats(detailPokemon)) * 100) + '%'"></div>
+                                            </div>
+                                            <span class="text-[11px] font-bold text-right text-gray-700 dark:text-gray-300" x-text="stat.value"></span>
+                                        </div>
+                                    </template>
+                                </div>
+                            </div>
+
+                            <!-- Valores IV -->
+                            <div class="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900/30 p-4" :class="calidadClase(detailPokemon)">
+                                <h4 class="text-sm font-bold uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-2">Valores IV</h4>
+                                <div class="relative w-full" style="height: 180px;"><canvas id="detail-iv-chart" role="img" aria-label="Gráfico hexagonal de valores individuales"></canvas></div>
+                                <div class="mt-3 grid grid-cols-2 gap-x-3 gap-y-1.5">
+                                    <template x-for="stat in evStats" :key="'iv-stat-'+stat.key">
+                                        <div class="flex items-center gap-1.5" :class="ivCalidadClase(ivValue(detailPokemon, stat.key))" :title="stat.label + ': ' + ivValue(detailPokemon, stat.key) + '/15'">
+                                            <span class="w-10 shrink-0 text-[10px] text-gray-500 dark:text-gray-400 truncate" x-text="stat.corto || stat.label"></span>
+                                            <div class="flex-1 h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden"><div class="h-full rounded-full iv-bar-fill" :style="'width: ' + (ivValue(detailPokemon, stat.key) / 15 * 100) + '%'"></div></div>
+                                            <span class="text-[11px] font-bold iv-value" x-text="ivValue(detailPokemon, stat.key)"></span>
+                                        </div>
+                                    </template>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -1163,11 +1211,13 @@
 function favoritosApp() {
     return {
         // ─── Datos del servidor ─────────────────────────────────────────────
+        nivelJugador: @json($nivelJugador ?? 1),
         reclutados: @json($reclutados ?? []),
         reclutadosEnExploracion: @json($reclutadosEnExploracion ?? []),
         teams: @json($teams ?? []),
         teamPokemonIds: @json($teamIds ?? []),
         equiposEnExploracion: @json($equiposEnExploracion ?? []),
+        inventarioCaramelos: @json($inventarioCaramelos ?? ['ev' => []]),
 
         // ─── Formación persistente (combate 3v3) ───────────────────────────
         // Draft local por equipo: {teamId: {slot: 'vanguardia'|'retaguardia'}}.
@@ -1194,14 +1244,22 @@ function favoritosApp() {
         // ─── UI: Equipos ───────────────────────────────────────────────────
         // ─── UI: Buscar/filtro ─────────────────────────────────────────────
         searchQuery: '',
-        typeFilter: null,
-        showTypeFilter: false,
+        typeFilters: [],
+        cpMin: '',
+        cpMax: '',
 
         selectedTeamId: null,
         showNewTeamForm: false,
         newTeamName: '',
         showDeleteModal: false,
         teamToDelete: null,
+
+        // ─── Reemplazo de miembro en equipo completo ───────────────────────
+        showReplaceModal: false,
+        replaceTeam: null,
+        replacePokemon: null,
+        replaceSaving: false,
+        replaceError: '',
 
         // ─── Detail Modal (shared) ─────────────────────────────────────────
         showDetailModal: false,
@@ -1211,24 +1269,28 @@ function favoritosApp() {
         detailEvolucionesLoading: false,
         detailEvolucionesError: false,
         selectedEvolucionId: null,
-        detailChartInstance: null,
+        detailChartInstances: [],
 
         // ─── Detail: loadout de combate ─────────────────────────────────────
         loadoutHabilidadId: '',
         loadoutMovimientos: [],
+        filtrosMovimientoTipo: [],
+        filtrosMovimientoCategoria: [],
+        filtroNombreMovimiento: '',
         loadoutSaving: false,
         loadoutFeedback: { tipo: '', mensaje: '' },
 
         // ─── Detail: EV feeding (caramelos EV / IVs) ─────────────────────────
         evStats: [
-            { key: 'hp', label: 'PS' },
-            { key: 'atk', label: 'Ataque' },
-            { key: 'def', label: 'Defensa' },
-            { key: 'spAtk', label: 'Ataque Esp.' },
-            { key: 'spDef', label: 'Defensa Esp.' },
-            { key: 'speed', label: 'Velocidad' },
+            { key: 'hp', label: 'PS', corto: 'PS' },
+            { key: 'atk', label: 'Ataque', corto: 'ATK' },
+            { key: 'def', label: 'Defensa', corto: 'DEF' },
+            { key: 'spAtk', label: 'Ataque Esp.', corto: 'A.Esp' },
+            { key: 'spDef', label: 'Defensa Esp.', corto: 'D.Esp' },
+            { key: 'speed', label: 'Velocidad', corto: 'VEL' },
         ],
         detailEvsFeeding: false,
+        detailCandyFeeding: false,
         detailEvFeedback: { tipo: '', mensaje: '' },
 
         // ─── Huevos tab ──────────────────────────────────────────────────────
@@ -1264,54 +1326,78 @@ function favoritosApp() {
         // COMPUTED GETTERS
         // ═══════════════════════════════════════════════════════════════════════
 
-        /** Equipos tab: reclutados not assigned to any team */
-        get availablePokemonsTeams() {
-            let result = this.reclutados.filter(r => !this.teamPokemonIds.includes(r.id));
-            if (this.searchQuery.trim()) {
-                const q = this.searchQuery.toLowerCase().trim();
-                result = result.filter(r =>
-                    String(r.nombre || '').toLowerCase().includes(q) ||
-                    String(r.pokemon_id || '').includes(q)
-                );
+        /** Equipos tab: todos los reclutados (libres y asignados) en una sola cuadrícula. */
+        get pokemonsEquipoFiltrados() {
+            let result = this.reclutados.slice();
+            const q = this.normalizarTexto(this.searchQuery).trim();
+            if (q) {
+                result = result.filter(r => {
+                    const texto = [
+                        r.nombre,
+                        r.pokemon?.name,
+                        r.pokemon_id,
+                    ].map(valor => this.normalizarTexto(valor)).join(' ');
+                    return texto.includes(q);
+                });
             }
-            if (this.typeFilter) {
-                result = result.filter(r =>
-                    r.pokemon && r.pokemon.types &&
-                    Array.isArray(r.pokemon.types) &&
-                    r.pokemon.types.some(t => t.tipo_nombre === this.typeFilter)
-                );
+            if (this.typeFilters.length > 0) {
+                result = result.filter(r => {
+                    const tipos = Array.isArray(r.pokemon?.types) ? r.pokemon.types : [];
+                    return tipos.some(t => this.typeFilters.includes(this.tipoIdDe(t)));
+                });
+            }
+            if (this.cpFiltroActivo()) {
+                const min = this.cpMin === '' || this.cpMin === null ? null : Number(this.cpMin);
+                const max = this.cpMax === '' || this.cpMax === null ? null : Number(this.cpMax);
+                result = result.filter(r => {
+                    const cp = this.cpDe(r);
+                    if (cp === null) return false;
+                    if (min !== null && Number.isFinite(min) && cp < min) return false;
+                    if (max !== null && Number.isFinite(max) && cp > max) return false;
+                    return true;
+                });
             }
             return result;
-        },
-
-        /** Equipos tab: reclutados already assigned to a team */
-        get assignedPokemons() {
-            let result = this.reclutados.filter(r => this.teamPokemonIds.includes(r.id));
-            if (this.searchQuery.trim()) {
-                const q = this.searchQuery.toLowerCase().trim();
-                result = result.filter(r =>
-                    String(r.nombre || '').toLowerCase().includes(q) ||
-                    String(r.pokemon_id || '').includes(q)
-                );
-            }
-            return result;
-        },
-
-        // ═══════════════════════════════════════════════════════════════════════
-        // INIT
-        // ═══════════════════════════════════════════════════════════════════════
-
-        init() {
-            document.addEventListener('click', (e) => {
-                if (!e.target.closest('[x-data]')?.contains(e.target)) {
-                    this.showTypeFilter = false;
-                }
-            });
         },
 
         // ═══════════════════════════════════════════════════════════════════════
         // SHARED HELPERS
         // ═══════════════════════════════════════════════════════════════════════
+
+        normalizarTexto(valor) {
+            return String(valor ?? '')
+                .toLowerCase()
+                .normalize('NFD')
+                .replace(/[\u0300-\u036f]/g, '');
+        },
+
+        hayFiltrosEquipo() {
+            return this.searchQuery.trim() !== ''
+                || this.typeFilters.length > 0
+                || this.cpFiltroActivo();
+        },
+
+        cpFiltroActivo() {
+            return String(this.cpMin ?? '').trim() !== ''
+                || String(this.cpMax ?? '').trim() !== '';
+        },
+
+        toggleTypeFilter(tipoId) {
+            const id = Number(tipoId);
+            this.typeFilters = this.typeFilters.includes(id)
+                ? this.typeFilters.filter(actual => actual !== id)
+                : [...this.typeFilters, id];
+        },
+
+        filtroTipoActivo(tipoId) {
+            return this.typeFilters.includes(Number(tipoId));
+        },
+
+        tipoIdDe(tipo) {
+            if (!tipo) return null;
+            const raw = tipo.type ?? tipo.tipo_id ?? null;
+            return raw === null ? null : Number(raw);
+        },
 
         enExploracion(reclutadoId) {
             return this.reclutadosEnExploracion.includes(reclutadoId);
@@ -1423,30 +1509,142 @@ function favoritosApp() {
             ];
         },
 
-        renderDetailChart() {
-            const canvas = document.getElementById('detail-stats-chart');
-            if (!canvas || typeof window.Chart === 'undefined' || !this.detailPokemon) return;
+        /** Stats base por clave canónica, a partir del array ordenado del serializador. */
+        baseStatsMap(pokemon) {
+            const stats = this.statsDe(pokemon);
+            return {
+                hp: Number(stats[0]?.value ?? 0),
+                atk: Number(stats[1]?.value ?? 0),
+                def: Number(stats[2]?.value ?? 0),
+                spAtk: Number(stats[3]?.value ?? 0),
+                spDef: Number(stats[4]?.value ?? 0),
+                speed: Number(stats[5]?.value ?? 0),
+            };
+        },
 
-            if (this.detailChartInstance) {
-                this.detailChartInstance.destroy();
-                this.detailChartInstance = null;
+        /** Reproduce la fórmula de BattleStats usando el nivel de la cuenta, igual que el combate. */
+        statsCalculados(pokemon) {
+            const base = this.baseStatsMap(pokemon);
+            const nivel = Math.max(1, Number(this.nivelJugador) || 1);
+            const calcular = (baseStat, iv, ev, esHp) => {
+                const bruto = ((2 * baseStat + (iv * 4) + Math.floor(ev / 4)) * nivel) / 100;
+                return Math.floor(bruto + (esHp ? nivel + 10 : 5));
+            };
+            return {
+                hp: calcular(base.hp, this.ivValue(pokemon, 'hp'), this.evValue(pokemon, 'hp'), true),
+                atk: calcular(base.atk, this.ivValue(pokemon, 'atk'), this.evValue(pokemon, 'atk'), false),
+                def: calcular(base.def, this.ivValue(pokemon, 'def'), this.evValue(pokemon, 'def'), false),
+                spAtk: calcular(base.spAtk, this.ivValue(pokemon, 'spAtk'), this.evValue(pokemon, 'spAtk'), false),
+                spDef: calcular(base.spDef, this.ivValue(pokemon, 'spDef'), this.evValue(pokemon, 'spDef'), false),
+                speed: calcular(base.speed, this.ivValue(pokemon, 'speed'), this.evValue(pokemon, 'speed'), false),
+            };
+        },
+
+        hexStatsCalculados(pokemon) {
+            const stats = this.statsCalculados(pokemon);
+            return [
+                { label: 'PS', value: stats.hp },
+                { label: 'ATK', value: stats.atk },
+                { label: 'DEF', value: stats.def },
+                { label: 'VEL', value: stats.speed },
+                { label: 'SpD', value: stats.spDef },
+                { label: 'SpA', value: stats.spAtk },
+            ];
+        },
+
+        hexIvs(pokemon) {
+            return [
+                { label: 'PS', value: this.ivValue(pokemon, 'hp') },
+                { label: 'ATK', value: this.ivValue(pokemon, 'atk') },
+                { label: 'DEF', value: this.ivValue(pokemon, 'def') },
+                { label: 'VEL', value: this.ivValue(pokemon, 'speed') },
+                { label: 'SpD', value: this.ivValue(pokemon, 'spDef') },
+                { label: 'SpA', value: this.ivValue(pokemon, 'spAtk') },
+            ];
+        },
+
+        /**
+         * Calidad global por media de los seis IV. El estado perfecto exige 15 en todos.
+         * Devuelve la paleta para gráficos y la clase CSS para las superficies.
+         */
+        calidadIvs(pokemon) {
+            const valores = this.evStats.map(stat => Number(this.ivValue(pokemon, stat.key)) || 0);
+            const suma = valores.reduce((total, valor) => total + valor, 0);
+            const media = valores.length > 0 ? suma / valores.length : 0;
+            const perfecto = valores.length === 6 && valores.every(valor => valor === 15);
+            const dark = typeof document !== 'undefined' && document.documentElement.classList.contains('dark');
+
+            let clave = 'normal';
+            let color = dark ? '#f1f5f9' : '#94a3b8';
+            let rgb = dark ? '241, 245, 249' : '148, 163, 184';
+
+            if (perfecto) {
+                clave = 'perfect';
+                color = '#facc15';
+                rgb = '250, 204, 21';
+            } else if (media >= 13) {
+                clave = 'excellent';
+                color = '#c084fc';
+                rgb = '192, 132, 252';
+            } else if (media >= 9) {
+                clave = 'great';
+                color = '#38bdf8';
+                rgb = '56, 189, 248';
+            } else if (media >= 5) {
+                clave = 'good';
+                color = '#4ade80';
+                rgb = '74, 222, 128';
             }
 
-            const stats = this.hexStats(this.detailPokemon);
+            return { clave, color, rgb, media, valores, perfecto };
+        },
+
+        calidadClase(pokemon) {
+            return 'pokemon-quality--' + this.calidadIvs(pokemon).clave;
+        },
+
+        ivCalidadClave(valor) {
+            const iv = Number(valor) || 0;
+            if (iv >= 15) return 'perfect';
+            if (iv >= 13) return 'excellent';
+            if (iv >= 9) return 'great';
+            if (iv >= 5) return 'good';
+            return 'normal';
+        },
+
+        ivCalidadClase(valor) {
+            return 'pokemon-quality--' + this.ivCalidadClave(valor);
+        },
+
+        destroyDetailCharts() {
+            (this.detailChartInstances || []).forEach(chart => {
+                try {
+                    chart.destroy();
+                } catch (error) {
+                    console.warn('No se pudo destruir un gráfico del detalle:', error);
+                }
+            });
+            this.detailChartInstances = [];
+        },
+
+        crearRadarChart(canvasId, etiquetas, valores, maximo, color, rgb) {
+            const canvas = document.getElementById(canvasId);
+            if (!canvas || typeof window.Chart === 'undefined') return null;
+
             const dark = document.documentElement.classList.contains('dark');
             const labelColor = dark ? '#9ca3af' : '#6b7280';
             const gridColor = dark ? 'rgba(107,114,128,0.35)' : 'rgba(209,213,219,0.9)';
 
-            this.detailChartInstance = new window.Chart(canvas.getContext('2d'), {
+            return new window.Chart(canvas.getContext('2d'), {
                 type: 'radar',
                 data: {
-                    labels: stats.map(stat => stat.label),
+                    labels: etiquetas,
                     datasets: [{
-                        data: stats.map(stat => stat.value),
-                        borderColor: '#3b82f6',
-                        backgroundColor: 'rgba(59,130,246,0.18)',
-                        pointBackgroundColor: '#3b82f6',
-                        pointBorderColor: '#3b82f6',
+                        data: valores,
+                        borderColor: color,
+                        backgroundColor: 'rgba(' + rgb + ', 0.18)',
+                        pointBackgroundColor: color,
+                        pointBorderColor: color,
                         pointRadius: 3,
                         borderWidth: 2,
                     }],
@@ -1458,13 +1656,13 @@ function favoritosApp() {
                     scales: {
                         r: {
                             min: 0,
-                            max: 255,
+                            max: Math.max(1, maximo),
                             ticks: { display: false },
                             grid: { color: gridColor },
                             angleLines: { color: gridColor },
                             pointLabels: {
                                 color: labelColor,
-                                font: { size: 10, weight: '600' },
+                                font: { size: 11, weight: '600' },
                             },
                         },
                     },
@@ -1473,6 +1671,148 @@ function favoritosApp() {
                     },
                 },
             });
+        },
+
+        renderDetailCharts() {
+            if (!this.detailPokemon || typeof window.Chart === 'undefined') return;
+
+            this.destroyDetailCharts();
+
+            const base = this.hexStats(this.detailPokemon);
+            const calculados = this.hexStatsCalculados(this.detailPokemon);
+            const ivs = this.hexIvs(this.detailPokemon);
+            const calidad = this.calidadIvs(this.detailPokemon);
+
+            const charts = [
+                this.crearRadarChart(
+                    'detail-stats-chart',
+                    base.map(stat => stat.label),
+                    base.map(stat => stat.value),
+                    this.escalaStats(this.detailPokemon),
+                    '#3b82f6',
+                    '59, 130, 246'
+                ),
+                this.crearRadarChart(
+                    'detail-calculated-chart',
+                    calculados.map(stat => stat.label),
+                    calculados.map(stat => stat.value),
+                    this.escalaCalculada(this.detailPokemon),
+                    '#10b981',
+                    '16, 185, 129'
+                ),
+                this.crearRadarChart(
+                    'detail-iv-chart',
+                    ivs.map(stat => stat.label),
+                    ivs.map(stat => stat.value),
+                    15,
+                    calidad.color,
+                    calidad.rgb
+                ),
+            ].filter(chart => chart !== null);
+
+            this.detailChartInstances = charts;
+        },
+
+        escalaStats(pokemon) {
+            const valores = this.hexStats(pokemon).map(stat => Number(stat.value) || 0);
+            const maxStat = Math.max(1, ...valores);
+            return Math.min(255, Math.max(50, Math.ceil((maxStat * 1.15) / 10) * 10));
+        },
+
+        escalaCalculada(pokemon) {
+            const valores = this.hexStatsCalculados(pokemon).map(stat => Number(stat.value) || 0);
+            const maxStat = Math.max(1, ...valores);
+            return Math.max(10, Math.ceil((maxStat * 1.15) / 10) * 10);
+        },
+
+        get movimientosFiltrados() {
+            const movimientos = this.detailPokemon?.movimientos_disponibles || [];
+            const tipos = this.filtrosMovimientoTipo;
+            const categorias = this.filtrosMovimientoCategoria;
+            const nombre = this.normalizarTexto(this.filtroNombreMovimiento).trim();
+            if (tipos.length === 0 && categorias.length === 0 && !nombre) {
+                return movimientos;
+            }
+            return movimientos.filter(mov => {
+                const tipoOk = tipos.length === 0 || tipos.includes(this.tipoSlugDeMovimiento(mov));
+                const categoriaOk = categorias.length === 0 || categorias.includes(this.categoriaSlug(mov));
+                const nombreOk = !nombre || this.normalizarTexto(mov.name).includes(nombre);
+                return tipoOk && categoriaOk && nombreOk;
+            });
+        },
+
+        get tiposMovimientoDisponibles() {
+            const vistos = new Set();
+            const tipos = [];
+            for (const mov of this.detailPokemon?.movimientos_disponibles || []) {
+                const slug = this.tipoSlugDeMovimiento(mov);
+                if (!vistos.has(slug)) {
+                    vistos.add(slug);
+                    tipos.push({ slug, nombre: this.tipoDeMovimiento(mov) || slug });
+                }
+            }
+            return tipos;
+        },
+
+        get categoriasMovimientoDisponibles() {
+            const presentes = new Set(
+                (this.detailPokemon?.movimientos_disponibles || []).map(mov => this.categoriaSlug(mov))
+            );
+            return ['fisico', 'especial', 'estado'].filter(categoria => presentes.has(categoria));
+        },
+
+        toggleFiltroTipoMovimiento(slug) {
+            this.filtrosMovimientoTipo = this.filtrosMovimientoTipo.includes(slug)
+                ? this.filtrosMovimientoTipo.filter(tipo => tipo !== slug)
+                : [...this.filtrosMovimientoTipo, slug];
+        },
+
+        toggleFiltroCategoriaMovimiento(categoria) {
+            this.filtrosMovimientoCategoria = this.filtrosMovimientoCategoria.includes(categoria)
+                ? this.filtrosMovimientoCategoria.filter(cat => cat !== categoria)
+                : [...this.filtrosMovimientoCategoria, categoria];
+        },
+
+        filtroTipoMovimientoActivo(slug) {
+            return this.filtrosMovimientoTipo.includes(slug);
+        },
+
+        filtroCategoriaMovimientoActiva(categoria) {
+            return this.filtrosMovimientoCategoria.includes(categoria);
+        },
+
+        hayFiltrosMovimiento() {
+            return this.filtrosMovimientoTipo.length > 0
+                || this.filtrosMovimientoCategoria.length > 0
+                || String(this.filtroNombreMovimiento || '').trim() !== '';
+        },
+
+        limpiarFiltrosMovimiento() {
+            this.filtrosMovimientoTipo = [];
+            this.filtrosMovimientoCategoria = [];
+            this.filtroNombreMovimiento = '';
+        },
+
+        /** Habilidad activa del reclutado para el resumen en hover de la tarjeta. */
+        habilidadActivaDe(pokemon) {
+            const id = pokemon?.habilidad_activa_id;
+            if (id === null || id === undefined || id === '') return null;
+            return (pokemon?.habilidades_disponibles || []).find(hab => String(hab.id) === String(id)) || null;
+        },
+
+        movimientoDeReclutado(pokemon, slug) {
+            return (pokemon?.movimientos_disponibles || []).find(mov => mov.slug === slug) || null;
+        },
+
+        /** Movimientos del loadout con los datos del catálogo cargado en /equipos. */
+        movimientosAsignadosDe(pokemon) {
+            const slugs = Array.isArray(pokemon?.movimientos_seleccionados) ? pokemon.movimientos_seleccionados : [];
+            return slugs.map(slug => this.movimientoDeReclutado(pokemon, slug)).filter(Boolean);
+        },
+
+        /** Devuelve el movimiento del catálogo a partir de su slug (para chips equipados). */
+        movimientoLoadout(slug) {
+            return (this.detailPokemon?.movimientos_disponibles || []).find(mov => mov.slug === slug) || null;
         },
 
         nombreMovimientoLoadout(slug) {
@@ -1505,6 +1845,71 @@ function favoritosApp() {
                 return nombres[t.type] || ('#' + t.type);
             }
             return t.type || 'Tipo';
+        },
+
+        /** Slug del asset (/images/type/{slug}.webp) a partir del tipo serializado. */
+        tipoSlugDel(t) {
+            if (t?.tipo_slug) return t.tipo_slug;
+            return this.normalizarTexto(this.tipoLabelDel(t)).replace(/\s+/g, '');
+        },
+
+        tipoIconoDeTipo(t) {
+            return '/images/type/' + this.tipoSlugDel(t) + '.webp';
+        },
+
+        tipoDeMovimiento(mov) {
+            if (!mov) return null;
+            if (mov.tipo_nombre) return mov.tipo_nombre;
+            const nombres = {
+                1: 'Normal', 2: 'Lucha', 3: 'Volador', 4: 'Veneno', 5: 'Tierra', 6: 'Roca',
+                7: 'Bicho', 8: 'Fantasma', 9: 'Acero', 10: 'Fuego', 11: 'Agua', 12: 'Planta',
+                13: 'Eléctrico', 14: 'Psíquico', 15: 'Hielo', 16: 'Dragón', 17: 'Siniestro', 18: 'Hada',
+            };
+            return nombres[Number(mov.type_id)] || null;
+        },
+
+        tipoSlugDeMovimiento(mov) {
+            if (mov?.tipo_slug) return mov.tipo_slug;
+            return String(this.tipoDeMovimiento(mov) || 'Normal')
+                .toLowerCase()
+                .normalize('NFD')
+                .replace(/[\u0300-\u036f]/g, '');
+        },
+
+        tipoIconoUrl(mov) {
+            return '/images/type/' + this.tipoSlugDeMovimiento(mov) + '.webp';
+        },
+
+        categoriaSlug(mov) {
+            const categoria = String(mov?.category || '')
+                .toLowerCase()
+                .normalize('NFD')
+                .replace(/[\u0300-\u036f]/g, '');
+            return ['fisico', 'especial', 'estado'].includes(categoria) ? categoria : 'estado';
+        },
+
+        categoriaIconoUrl(mov) {
+            return this.categoriaIconoDe(this.categoriaSlug(mov));
+        },
+
+        categoriaIconoDe(categoria) {
+            return '/images/moves/' + categoria + '.png';
+        },
+
+        etiquetaCategoria(mov) {
+            return this.etiquetaCategoriaSlug(this.categoriaSlug(mov));
+        },
+
+        etiquetaCategoriaSlug(categoria) {
+            return { fisico: 'Físico', especial: 'Especial', estado: 'Estado' }[categoria] ?? categoria;
+        },
+
+        claseCategoria(categoria) {
+            return {
+                fisico: 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300',
+                especial: 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300',
+                estado: 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300',
+            }[categoria] ?? 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300';
         },
 
         tipoClase(nombre) {
@@ -1545,13 +1950,28 @@ function favoritosApp() {
         // DETAIL MODAL (shared)
         // ═══════════════════════════════════════════════════════════════════════
 
-        openMemberDetail(team, slot) {
-            const member = this.getMember(team, slot);
-            const reclutado = member?.reclutado;
-            if (!reclutado) return;
-            this.openDetail(
-                this.reclutados.find(r => String(r.id) === String(reclutado.id)) || reclutado
+        /** Sustituye el reclutado actualizado en la cuadrícula y en los equipos. */
+        _actualizarReclutadoEnMemoria(actualizado) {
+            const id = actualizado?.id;
+            if (id === undefined || id === null) return;
+
+            this.reclutados = this.reclutados.map(reclutado =>
+                String(reclutado.id) === String(id) ? { ...reclutado, ...actualizado } : reclutado
             );
+
+            this.teams.forEach(team => {
+                (team.members || []).forEach(member => {
+                    if (member.reclutado && String(member.reclutado.id) === String(id)) {
+                        member.reclutado = { ...member.reclutado, ...actualizado };
+                    }
+                });
+            });
+        },
+
+        openMemberDetail(team, slot) {
+            const reclutado = this.reclutadoDeSlot(team, slot);
+            if (!reclutado) return;
+            this.openDetail(reclutado);
         },
 
         openDetail(pokemon) {
@@ -1562,9 +1982,12 @@ function favoritosApp() {
             this.loadoutMovimientos = Array.isArray(pokemon?.movimientos_seleccionados)
                 ? [...pokemon.movimientos_seleccionados]
                 : [];
+            this.filtrosMovimientoTipo = [];
+            this.filtrosMovimientoCategoria = [];
+            this.filtroNombreMovimiento = '';
             this.loadoutFeedback = { tipo: '', mensaje: '' };
             this.cargarEvoluciones(pokemon);
-            setTimeout(() => this.renderDetailChart(), 0);
+            setTimeout(() => this.renderDetailCharts(), 50);
         },
 
         closeDetail() {
@@ -1577,13 +2000,14 @@ function favoritosApp() {
             this.selectedEvolucionId = null;
             this.detailEvFeedback = { tipo: '', mensaje: '' };
             this.detailEvsFeeding = false;
+            this.detailCandyFeeding = false;
             this.loadoutHabilidadId = '';
             this.loadoutMovimientos = [];
+            this.filtrosMovimientoTipo = [];
+            this.filtrosMovimientoCategoria = [];
+            this.filtroNombreMovimiento = '';
             this.loadoutFeedback = { tipo: '', mensaje: '' };
-            if (this.detailChartInstance) {
-                this.detailChartInstance.destroy();
-                this.detailChartInstance = null;
-            }
+            this.destroyDetailCharts();
         },
 
         toggleLoadoutMovimiento(slug) {
@@ -1745,28 +2169,35 @@ function favoritosApp() {
         },
 
         evCaramelosDe(pokemon, key) {
+            const inventario = (this.inventarioCaramelos?.ev || []).find(item => item.key === key);
+            if (inventario) return inventario.cantidad;
+
             const mapa = pokemon?.caramelos_ev;
-            if (!mapa) return null;
-            return mapa[key] ?? mapa[this.slugCorto(key)] ?? 0;
+            if (mapa && typeof mapa === 'object') {
+                return Number(mapa[key] ?? mapa[this.slugCorto(key)] ?? 0);
+            }
+
+            return 0;
         },
 
-        evCandyLabel(pokemon, key) {
-            const n = this.evCaramelosDe(pokemon, key);
-            return n === null ? '—' : 'x' + n;
+        actualizarInventarioEv(key, cantidad) {
+            const item = (this.inventarioCaramelos?.ev || []).find(caramelo => caramelo.key === key);
+            if (item) item.cantidad = Math.max(0, Number(cantidad) || 0);
         },
 
         puedeDarEv(pokemon, key) {
             if (!pokemon || this._pokemonBloqueado(pokemon)) return false;
             if (this.detailEvsFeeding) return false;
             if (this.evValue(pokemon, key) >= 255) return false;
-            const caramelos = this.evCaramelosDe(pokemon, key);
-            if (caramelos !== null && caramelos <= 0) return false;
+            if (this.evCaramelosDe(pokemon, key) <= 0) return false;
             return true;
         },
 
-        async darEv(key) {
+        async darEv(key, cantidad = 1) {
             const pokemon = this.detailPokemon;
             if (!pokemon || !this.puedeDarEv(pokemon, key)) return;
+            const cantidadEnvio = Math.max(1, Number(cantidad) || 1);
+            const valorAnterior = this.evValue(pokemon, key);
             this.detailEvsFeeding = true;
             this.detailEvFeedback = { tipo: '', mensaje: '' };
             try {
@@ -1777,7 +2208,7 @@ function favoritosApp() {
                         'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '',
                         'Accept': 'application/json',
                     },
-                    body: JSON.stringify({ stat: key }),
+                    body: JSON.stringify({ stat: key, cantidad: cantidadEnvio }),
                 });
                 if (response.ok) {
                     const data = await response.json();
@@ -1789,8 +2220,15 @@ function favoritosApp() {
                     if (data.caramelos_ev && typeof data.caramelos_ev === 'object') {
                         pokemon.caramelos_ev = data.caramelos_ev;
                     }
+                    const restantes = Number(data.caramelos_disponibles);
+                    if (Number.isFinite(restantes)) {
+                        pokemon.caramelos_ev = { ...(pokemon.caramelos_ev || {}), [key]: restantes };
+                        this.actualizarInventarioEv(key, restantes);
+                    }
                     const label = (this.evStats.find(s => s.key === key) || {}).label || key;
-                    this.detailEvFeedback = { tipo: 'success', mensaje: '✓ ¡+10 EV para ' + label + '!' };
+                    const ganados = Math.max(0, Number(data.actual ?? this.evValue(pokemon, key)) - valorAnterior);
+                    this.detailEvFeedback = { tipo: 'success', mensaje: '✓ ¡+' + ganados + ' EV para ' + label + '!' };
+                    setTimeout(() => this.renderDetailCharts(), 0);
                 } else {
                     let message = 'No se pudo dar el caramelo EV.';
                     try {
@@ -1996,6 +2434,13 @@ function favoritosApp() {
             return member ? member.reclutado : null;
         },
 
+        /** Reclutado enriquecido del serializador principal para un slot concreto. */
+        reclutadoDeSlot(team, slot) {
+            const member = team?.members?.find(m => String(m.slot) === String(slot));
+            if (!member) return null;
+            return this.reclutados.find(r => String(r.id) === String(member.pokemon_id)) || member.reclutado;
+        },
+
         getTeamName(teamId) {
             const team = this.teams.find(t => t.id === teamId);
             return team ? team.name : '';
@@ -2016,15 +2461,104 @@ function favoritosApp() {
             };
         },
 
-        pokemonTeamId(pokemon) {
+        pokemonTeam(pokemon) {
             if (!pokemon) return null;
-            const team = this.teams.find(t => t.members.some(m => m.pokemon_id === pokemon.id));
-            return team ? team.id : null;
+            return this.teams.find(t => t.members.some(m => String(m.pokemon_id) === String(pokemon.id))) || null;
+        },
+
+        pokemonTeamId(pokemon) {
+            return this.pokemonTeam(pokemon)?.id ?? null;
+        },
+
+        pokemonTeamNombre(pokemon) {
+            return this.pokemonTeam(pokemon)?.name ?? '';
         },
 
         pokemonEnExploracion(pokemon) {
             const teamId = this.pokemonTeamId(pokemon);
             return teamId !== null && this.isInExploration(teamId);
+        },
+
+        // ─── Asignación / reemplazo en equipos completos ────────────────────
+
+        selectTeamForPokemon(pokemon, team) {
+            if (!pokemon || !team || this.isInExploration(team.id)) return;
+            if (team.members.length >= 3) {
+                this.abrirReemplazo(pokemon, team);
+                return;
+            }
+            this.addToTeam(pokemon, team);
+        },
+
+        abrirReemplazo(pokemon, team) {
+            this.replacePokemon = pokemon;
+            this.replaceTeam = team;
+            this.replaceError = '';
+            this.replaceSaving = false;
+            this.showReplaceModal = true;
+        },
+
+        cerrarReemplazo() {
+            this.showReplaceModal = false;
+            this.replacePokemon = null;
+            this.replaceTeam = null;
+            this.replaceSaving = false;
+            this.replaceError = '';
+        },
+
+        async reemplazarMiembroEquipo(slot) {
+            const team = this.replaceTeam;
+            const pokemon = this.replacePokemon;
+            const member = team ? team.members.find(m => String(m.slot) === String(slot)) : null;
+            if (!team || !pokemon || !member || this.replaceSaving) return;
+
+            this.replaceSaving = true;
+            this.replaceError = '';
+
+            try {
+                const response = await fetch('/teams/add-member', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '',
+                        'Accept': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        team_id: team.id,
+                        reclutado_id: pokemon.id,
+                        slot: member.slot,
+                        behavior: member.behavior || 'VANGUARDIA',
+                        replace: true,
+                    }),
+                });
+
+                const data = await response.json().catch(() => ({}));
+                if (!response.ok) {
+                    this.replaceError = data.error || data.message || 'No se pudo reemplazar el miembro del equipo.';
+                    return;
+                }
+
+                if (data.member) {
+                    team.members = team.members.filter(m => String(m.id) !== String(member.id));
+                    team.members.push({
+                        id: data.member.id,
+                        team_id: data.member.team_id,
+                        pokemon_id: data.member.pokemon_id,
+                        slot: data.member.slot,
+                        behavior: member.behavior || 'VANGUARDIA',
+                        reclutado: pokemon,
+                    });
+                    this.teamPokemonIds = this.teamPokemonIds.filter(id => String(id) !== String(member.pokemon_id));
+                    this.teamPokemonIds.push(pokemon.id);
+                }
+
+                this.cerrarReemplazo();
+            } catch (err) {
+                console.error('Error replacing team member:', err);
+                this.replaceError = 'Error de conexión al reemplazar el miembro del equipo.';
+            } finally {
+                this.replaceSaving = false;
+            }
         },
 
         async createTeam() {
@@ -2108,9 +2642,12 @@ function favoritosApp() {
         },
 
         async addToTeam(pokemon, team) {
-            const emptySlot = [1,2,3].find(s => !team.members.some(m => m.slot === s));
+            if (!pokemon || !team) return;
+            if (this.isInExploration(team.id)) return;
+
+            const emptySlot = [1, 2, 3].find(s => !team.members.some(m => Number(m.slot) === s));
             if (!emptySlot) {
-                alert('Este equipo está lleno');
+                this.abrirReemplazo(pokemon, team);
                 return;
             }
             try {
@@ -2131,7 +2668,7 @@ function favoritosApp() {
                 if (response.ok) {
                     const data = await response.json();
                     if (data.member) {
-                        const t = this.teams.find(t => t.id === data.member.team_id);
+                        const t = this.teams.find(t => String(t.id) === String(data.member.team_id));
                         if (t) {
                             t.members.push({
                                 id: data.member.id,
@@ -2142,7 +2679,9 @@ function favoritosApp() {
                                 reclutado: pokemon,
                             });
                         }
-                        this.teamPokemonIds.push(pokemon.id);
+                        if (!this.teamPokemonIds.some(id => String(id) === String(pokemon.id))) {
+                            this.teamPokemonIds.push(pokemon.id);
+                        }
                     }
                 } else {
                     await this.handleError(response);
@@ -2153,7 +2692,7 @@ function favoritosApp() {
         },
 
         async removeMember(team, pokemon) {
-            const member = team.members.find(m => m.pokemon_id === pokemon.id);
+            const member = team.members.find(m => String(m.pokemon_id) === String(pokemon.id));
             if (!member) return;
             try {
                 const response = await fetch('/teams/remove-member', {
@@ -2166,8 +2705,8 @@ function favoritosApp() {
                     body: JSON.stringify({ member_id: member.id }),
                 });
                 if (response.ok) {
-                    team.members = team.members.filter(m => m.id !== member.id);
-                    this.teamPokemonIds = this.teamPokemonIds.filter(id => id !== pokemon.id);
+                    team.members = team.members.filter(m => String(m.id) !== String(member.id));
+                    this.teamPokemonIds = this.teamPokemonIds.filter(id => String(id) !== String(pokemon.id));
                 } else {
                     await this.handleError(response);
                 }
@@ -2177,7 +2716,7 @@ function favoritosApp() {
         },
 
         removeFromTeam(pokemon) {
-            const team = this.teams.find(t => t.members.some(m => m.pokemon_id === pokemon.id));
+            const team = this.pokemonTeam(pokemon);
             if (team) {
                 this.removeMember(team, pokemon);
             }
@@ -2296,7 +2835,7 @@ function favoritosApp() {
             if (draft !== undefined) return draft;
 
             const member = this.getMember(team, slot);
-            const items = member?.reclutado?.obj_equipados;
+            const items = member?.obj_equipados;
             const item = Array.isArray(items) ? items[0] : '';
 
             return typeof item === 'string' ? item : '';
@@ -2328,8 +2867,8 @@ function favoritosApp() {
                 }
 
                 const member = this.getMember(team, slot);
-                if (member?.reclutado) {
-                    member.reclutado.obj_equipados = itemKey !== '' ? [itemKey] : [];
+                if (member) {
+                    member.obj_equipados = itemKey !== '' ? [itemKey] : [];
                 }
                 this.itemsDraft[team.id] = {};
                 this.itemSaveSuccess = '✓ Objeto guardado';
@@ -2433,9 +2972,12 @@ function favoritosApp() {
             return true;
         },
 
-        async alimentarCaramelo(requisito) {
+        async alimentarCaramelo(requisito, cantidad = 1) {
             const pokemon = this.detailPokemon;
-            if (!pokemon || !requisito || !this.puedeAlimentar(requisito)) return;
+            if (!pokemon || !requisito || !this.puedeAlimentar(requisito) || this.detailCandyFeeding) return;
+
+            const cantidadEnvio = Math.max(1, Number(cantidad) || 1);
+            this.detailCandyFeeding = true;
             try {
                 const response = await fetch('/reclutado/' + pokemon.id + '/dar-caramelo', {
                     method: 'POST',
@@ -2447,6 +2989,7 @@ function favoritosApp() {
                     body: JSON.stringify({
                         tipo: requisito.tipo,
                         evolved_species_id: this.selectedEvolucionId,
+                        cantidad: cantidadEnvio,
                     }),
                 });
                 if (response.ok) {
@@ -2462,6 +3005,8 @@ function favoritosApp() {
                 }
             } catch (err) {
                 console.error('Error dando caramelo:', err);
+            } finally {
+                this.detailCandyFeeding = false;
             }
         },
 
@@ -2489,6 +3034,24 @@ function favoritosApp() {
                     if (data.pokemon_id) {
                         pokemon.pokemon_id = data.pokemon_id;
                     }
+
+                    if (data.reclutado) {
+                        this._actualizarReclutadoEnMemoria(data.reclutado);
+                        this.detailPokemon = this.reclutados.find(r => String(r.id) === String(data.reclutado.id)) || data.reclutado;
+                        this.loadoutHabilidadId = this.detailPokemon.habilidad_activa_id ?? '';
+                        this.loadoutMovimientos = Array.isArray(this.detailPokemon.movimientos_seleccionados)
+                            ? [...this.detailPokemon.movimientos_seleccionados]
+                            : [];
+                        this.filtrosMovimientoTipo = [];
+                        this.filtrosMovimientoCategoria = [];
+                        this.filtroNombreMovimiento = '';
+                        this.loadoutFeedback = { tipo: '', mensaje: '' };
+                        this.detailEvFeedback = { tipo: '', mensaje: '' };
+                        this.cargarEvoluciones(this.detailPokemon);
+                        setTimeout(() => this.renderDetailCharts(), 50);
+                        return;
+                    }
+
                     location.reload();
                     return;
                 }

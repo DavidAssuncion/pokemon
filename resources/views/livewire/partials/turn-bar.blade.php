@@ -1,36 +1,19 @@
-@php
-    $puedeCambiarTurno = count($turnQueue) >= 2
-        && ($turnQueue[0]['team'] ?? null) === 0
-        && ($turnQueue[1]['team'] ?? null) === 0
-        && in_array($phase, ['player_target', 'player_move'], true)
-        && ($animAttackerId ?? '') === '';
-    $siguienteTurno = $puedeCambiarTurno ? ($team1[$turnQueue[1]['index']] ?? null) : null;
-    $actorActual = ($turnQueue[0]['team'] ?? null) === 0
-        ? ($team1[$turnQueue[0]['index']] ?? null)
-        : null;
-    $puedeRetrasar = in_array($phase, ['player_target', 'player_move'], true)
-        && ($animAttackerId ?? '') === ''
-        && ($actorActual['puedeRetrasar'] ?? false);
-@endphp
 <div class="card mb-3 turn-bar">
     <div class="card-body py-2">
         <div class="d-flex align-items-center gap-2 flex-wrap">
             <span class="text-uppercase small fw-bold text-muted me-1">Próximos turnos</span>
-            @forelse($turnQueue as $idx => $turn)
-                @php $p = $turn['team'] === 0 ? ($team1[$turn['index']] ?? null) : ($team2[$turn['index']] ?? null); @endphp
-                @if($p && $p['alive'])
-                    <span class="badge rounded-pill {{ $idx === 0 ? 'bg-primary' : 'bg-secondary' }} d-inline-flex align-items-center gap-1 {{ $idx === 0 || $p['refId'] === $actingRefId ? 'active-turn' : '' }}" title="{{ $p['nombre'] }}">
-                        <img src="{{ $p['icon'] }}" alt="{{ $p['nombre'] }}" style="width:20px; height:20px; object-fit:contain">
-                        {{ $p['nombre'] }}
-                        <small class="opacity-75">{{ round($p['effectiveSpeed']) }}</small>
-                    </span>
-                @endif
+            @forelse($turnBar['items'] as $item)
+                <span class="badge rounded-pill {{ $item['badgeClass'] }} d-inline-flex align-items-center gap-1 {{ $item['activeClass'] }}" title="{{ $item['nombre'] }}">
+                    <img src="{{ $item['icon'] }}" alt="{{ $item['nombre'] }}" style="width:20px; height:20px; object-fit:contain">
+                    {{ $item['nombre'] }}
+                    <small class="opacity-75">{{ $item['velocidad'] }}</small>
+                </span>
             @empty
                 <span class="text-muted small">Esperando...</span>
             @endforelse
 
             <div class="ms-auto d-flex align-items-center gap-2">
-                @if(in_array($phase, ['player_target', 'player_move'], true) && ($animAttackerId ?? '') === '')
+                @if($turnBar['mostrarEsperar'])
                     <button type="button"
                             class="btn btn-sm btn-outline-secondary"
                             wire:click="pasarTurno"
@@ -39,7 +22,7 @@
                         ⏭ Esperar
                     </button>
                 @endif
-                @if($puedeRetrasar)
+                @if($turnBar['puedeRetrasar'])
                     <button type="button"
                             class="btn btn-sm btn-outline-warning"
                             wire:click="retrasarTurno"
@@ -48,13 +31,13 @@
                         ⏳ Retrasar turno
                     </button>
                 @endif
-                @if($siguienteTurno && $siguienteTurno['alive'] && $siguienteTurno['refId'] !== $actingRefId)
+                @if($turnBar['puedeCambiarTurno'])
                     <button type="button"
                             class="btn btn-sm btn-outline-primary turn-swap"
                             wire:click="swapTurno"
                             wire:loading.attr="disabled"
-                            title="Adelanta el turno de {{ $siguienteTurno['nombre'] }}; el pokémon actual actuará después">
-                        ⇄ Atacar con {{ $siguienteTurno['nombre'] }}
+                            title="Adelanta el turno de {{ $turnBar['siguienteTurno']['nombre'] }}; el pokémon actual actuará después">
+                        ⇄ Atacar con {{ $turnBar['siguienteTurno']['nombre'] }}
                     </button>
                 @endif
                 <button type="button"

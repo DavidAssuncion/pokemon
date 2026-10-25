@@ -10,7 +10,7 @@ use Src\Battle\Domain\Enums\ClaveCondicion;
 use Src\Battle\Domain\Enums\ClaveEfectoMovimiento;
 use Src\Battle\Domain\ValueObjects\CondicionVolatil;
 
-/** Protección / Detección: anula los ataques recibidos durante la ronda. */
+/** Protección / Detección: reduce el daño recibido durante la ronda a cambio de no atacar. */
 class EjecutorProteccion extends EjecutorMovimientoAbstracto
 {
     public function clave(): ClaveEfectoMovimiento
@@ -20,7 +20,19 @@ class EjecutorProteccion extends EjecutorMovimientoAbstracto
 
     public function ejecutar(AccionBatalla $accion, float $danoAplicado, AgregadoBatalla $battle): void
     {
-        $accion->attacker->reemplazarCondicion(new CondicionVolatil(ClaveCondicion::PROTEGIDO, 1));
-        $battle->agregarLog("{$accion->attacker->nombre()} se protege");
+        $atacante = $accion->attacker;
+        $ronda = $battle->turnManager()->round();
+        $ultimaRonda = $atacante->ultimaRondaProteccion();
+
+        if ($ultimaRonda > 0 && $ultimaRonda === $ronda - 1) {
+            $atacante->setUltimaRondaProteccion($ronda);
+            $battle->agregarLog("{$atacante->nombre()} no puede volver a protegerse en rondas consecutivas");
+
+            return;
+        }
+
+        $atacante->setUltimaRondaProteccion($ronda);
+        $atacante->reemplazarCondicion(new CondicionVolatil(ClaveCondicion::PROTEGIDO, 1));
+        $battle->agregarLog("{$atacante->nombre()} se protege (-60% daño)");
     }
 }

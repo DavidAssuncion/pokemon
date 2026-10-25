@@ -109,6 +109,44 @@ final class PresentadorExploraciones
     }
 
     /**
+     * Contrato completo de la página de exploraciones.
+     *
+     * @param  Collection<int, ExploracionActiva>  $activas
+     * @param  Collection<int, ExploracionActiva>  $terminadas
+     * @return array{activas: list<array<string, mixed>>, terminadas: list<array<string, mixed>>, nivelJugador: int|null}
+     */
+    public function toView(Collection $activas, Collection $terminadas, ?int $nivelJugador = null): array
+    {
+        $nombres = $this->nombresPokemon($activas, $terminadas);
+
+        $activasVista = $activas
+            ->map(fn (ExploracionActiva $exp): array => $this->toActiva($exp, $nombres))
+            ->values()
+            ->all();
+
+        $terminadasVista = $terminadas
+            ->map(fn (ExploracionActiva $exp): array => $this->toTerminada($exp, $nombres))
+            ->values()
+            ->all();
+
+        $nivel = $nivelJugador ?? 1;
+        foreach ($activasVista as &$activa) {
+            $activa['requiere_nivel'] = $activa['min_lvl'] !== null && $nivel < $activa['min_lvl'];
+        }
+        unset($activa);
+        foreach ($terminadasVista as &$terminada) {
+            $terminada['requiere_nivel'] = $terminada['min_lvl'] !== null && $nivel < $terminada['min_lvl'];
+        }
+        unset($terminada);
+
+        return [
+            'activas' => $activasVista,
+            'terminadas' => $terminadasVista,
+            'nivelJugador' => $nivelJugador,
+        ];
+    }
+
+    /**
      * @param  array<array-key, string>  $nombres
      * @return array<string, mixed>
      */
@@ -139,6 +177,7 @@ final class PresentadorExploraciones
         $habitat = $exp->habitat;
 
         return [
+            '_vista' => true,
             'id' => $exp->id,
             'equipo' => $reclutado !== null ? $reclutado->nombre : 'Sin reclutado',
             'reclutado' => $reclutado !== null ? $reclutado->nombre : null,
@@ -152,6 +191,11 @@ final class PresentadorExploraciones
             'inicio_vuelta' => $inicioVuelta?->toIso8601String(),
             'fin' => $fin?->toIso8601String(),
             'estado' => $estado,
+            'volviendo' => $estado === 'volviendo',
+            'estado_label' => $estado === 'volviendo' ? 'Volviendo' : 'Explorando',
+            'estado_clase' => $estado === 'volviendo'
+                ? 'bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400'
+                : 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400',
             'progreso' => $progreso,
             'tiempo_perdido' => (int) $this->eventosDe($exp)->get('tiempo_perdido', 0),
             'bitacora' => $bitacora,
@@ -211,7 +255,7 @@ final class PresentadorExploraciones
         $reclutado = $exp->reclutado;
         $habitat = $exp->habitat;
 
-        return [
+        return ResultadoExploracionVista::toView([
             'id' => $exp->id,
             'equipo' => $reclutado !== null ? $reclutado->nombre : 'Sin reclutado',
             'reclutado' => $reclutado !== null ? $reclutado->nombre : null,
@@ -236,7 +280,58 @@ final class PresentadorExploraciones
                 ],
             ],
             'derrotados' => $this->eventosDe($exp)->get('derrotados', []),
-        ];
+        ]);
+    }
+
+    /**
+     * Normaliza una tarjeta activa ya construida (payload legacy o tests de
+     * vista) sin depender del modelo Eloquent.
+     *
+     * @param  array<string, mixed>  $exp
+     * @return array<string, mixed>
+     */
+    public function activaToView(array $exp, ?int $nivelJugador = null): array
+    {
+        if (($exp['_vista'] ?? false) === true) {
+            return $exp;
+        }
+
+        $estado = (string) ($exp['estado'] ?? 'explorando');
+        $progreso = max(0, min(100, (int) ($exp['progreso'] ?? 0)));
+        $bitacora = array_map(
+            static fn (array $evento): array => EventoExploracionVista::toView($evento),
+            is_array($exp['bitacora'] ?? null) ? $exp['bitacora'] : [],
+        );
+        $minLvl = $exp['min_lvl'] ?? null;
+
+        return array_merge($exp, [
+            '_vista' => true,
+            'estado' => $estado,
+            'volviendo' => $estado === 'volviendo',
+            'estado_label' => $estado === 'volviendo' ? 'Volviendo' : 'Explorando',
+            'estado_clase' => $estado === 'volviendo'
+                ? 'bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400'
+                : 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400',
+            'progreso' => $progreso,
+            'bitacora' => $bitacora,
+            'requiere_nivel' => $minLvl !== null && ($nivelJugador ?? 1) < $minLvl,
+        ]);
+    }
+
+    /**
+     * Transforma una tarjeta ya construida (útil para pruebas de vista o
+     * payloads legacy) sin depender del modelo Eloquent.
+     *
+     * @param  array<string, mixed>  $terminada
+     * @return array<string, mixed>
+     */
+    public function terminadaToView(array $terminada): array
+    {
+        if (($terminada['_vista'] ?? false) === true) {
+            return $terminada;
+        }
+
+        return ResultadoExploracionVista::toView($terminada);
     }
 
     /**
@@ -246,23 +341,7 @@ final class PresentadorExploraciones
      */
     public function transformarEvento(array $evento, array $nombres): array
     {
-        $tipo = $evento['tipo'] ?? 'desconocido';
-
-        if ($tipo === 'caramelo_ev') {
-            $statInfo = self::stats()[(int) ($evento['stat'] ?? 0)] ?? null;
-            $evento['stat_nombre'] = $statInfo['nombre'] ?? null;
-            $evento['stat_slug'] = $statInfo['slug'] ?? null;
-        } elseif (isset($evento['pokemon_id'])) {
-            $evento['nombre'] = $nombres[(int) $evento['pokemon_id']] ?? null;
-        } elseif (isset($evento['pokemon_ids'])) {
-            $ids = array_values(array_filter(
-                array_map('intval', (array) $evento['pokemon_ids']),
-                static fn (int $id): bool => $id > 0
-            ));
-            $evento['nombre'] = $ids === [] ? null : ($nombres[$ids[0]] ?? null);
-        }
-
-        return $evento;
+        return EventoExploracionVista::toView($evento, $nombres, completarStats: true);
     }
 
     /**

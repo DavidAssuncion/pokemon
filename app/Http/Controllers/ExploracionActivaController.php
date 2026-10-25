@@ -53,16 +53,7 @@ class ExploracionActivaController extends Controller
             ->reject(fn (ExploracionActiva $exp): bool => $this->estaCancelada($exp))
             ->values();
 
-        $nombres = $this->presentador->nombresPokemon($activas, $terminadas);
-
-        return view('exploraciones.index', [
-            'activas' => $activas
-                ->map(fn (ExploracionActiva $exp) => $this->presentador->toActiva($exp, $nombres))
-                ->all(),
-            'terminadas' => $terminadas
-                ->map(fn (ExploracionActiva $exp) => $this->presentador->toTerminada($exp, $nombres))
-                ->all(),
-        ]);
+        return view('exploraciones.index', $this->presentador->toView($activas, $terminadas, Auth::user()?->nivel()));
     }
 
     /**

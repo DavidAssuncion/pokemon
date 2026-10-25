@@ -3,9 +3,6 @@
 @section('title', 'Exploraciones')
 
 @section('content')
-@php
-    $candyFallback = "this.src='/images/candy_pokemon/0.webp'; this.onerror=null;";
-@endphp
 <div x-data="exploracionesPage()">
     <!-- Header -->
     <div class="mb-6">
@@ -25,6 +22,10 @@
         </div>
 
         @forelse(($activas ?? []) as $exp)
+            @php
+                $exp = app(\Src\Exploraciones\Presentation\PresentadorExploraciones::class)
+                    ->activaToView($exp, $nivelJugador ?? null);
+            @endphp
             <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden mb-4">
                 <!-- Card header: team / habitat / level + status -->
                 <div class="px-4 py-3 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 flex items-center justify-between flex-wrap gap-2">
@@ -37,7 +38,7 @@
                         <span class="px-2 py-0.5 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 text-[10px] font-bold rounded-full uppercase">
                             Nivel {{ $exp['nivel'] }}
                         </span>
-                        @if(($exp['min_lvl'] ?? null) !== null && ($nivelJugador ?? 1) < $exp['min_lvl'])
+                        @if($exp['requiere_nivel'] ?? false)
                             <span class="px-2 py-0.5 bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400 text-[10px] font-bold rounded-full uppercase inline-flex items-center gap-1"
                                   title="Requiere nivel {{ $exp['min_lvl'] }} de jugador">
                                 <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
@@ -47,13 +48,8 @@
                             </span>
                         @endif
                     </div>
-                    @php
-                        $volviendo = ($exp['estado'] ?? 'explorando') === 'volviendo';
-                    @endphp
-                    <span class="px-2 py-0.5 text-[10px] font-bold rounded-full uppercase {{ $volviendo
-                        ? 'bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400'
-                        : 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400' }}">
-                        {{ $volviendo ? 'Volviendo' : 'Explorando' }}
+                    <span class="px-2 py-0.5 text-[10px] font-bold rounded-full uppercase {{ $exp['estado_clase'] }}">
+                        {{ $exp['estado_label'] }}
                     </span>
                 </div>
 
@@ -66,7 +62,7 @@
                         </div>
                         <div class="h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
                             <div class="h-2 bg-blue-500 rounded-full transition-all"
-                                 style="width: {{ max(0, min(100, (int) ($exp['progreso'] ?? 0))) }}%"></div>
+                                 style="width: {{ (int) ($exp['progreso'] ?? 0) }}%"></div>
                         </div>
                     </div>
 
@@ -150,7 +146,11 @@
         </div>
 
         @forelse(($terminadas ?? []) as $terminada)
-            @php $resultado = $terminada['resultado'] ?? []; @endphp
+            @php
+                $terminada = app(\Src\Exploraciones\Presentation\PresentadorExploraciones::class)
+                    ->terminadaToView($terminada);
+                $resultado = $terminada['vista'];
+            @endphp
             <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden mb-4">
                 <div class="px-4 py-3 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 flex items-center justify-between flex-wrap gap-2">
                     <div class="flex items-center gap-2 flex-wrap">
@@ -162,7 +162,7 @@
                         <span class="px-2 py-0.5 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 text-[10px] font-bold rounded-full uppercase">
                             Nivel {{ $terminada['nivel'] }}
                         </span>
-                        @if(($terminada['min_lvl'] ?? null) !== null && ($nivelJugador ?? 1) < $terminada['min_lvl'])
+                        @if($terminada['requiere_nivel'] ?? false)
                             <span class="px-2 py-0.5 bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400 text-[10px] font-bold rounded-full uppercase inline-flex items-center gap-1"
                                   title="Requiere nivel {{ $terminada['min_lvl'] }} de jugador">
                                 <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
@@ -171,10 +171,9 @@
                                 Requiere Nv {{ $terminada['min_lvl'] }}
                             </span>
                         @endif
-                        @php $exp = $resultado['exp'] ?? 0; @endphp
                         <span class="px-2 py-0.5 bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 text-[10px] font-bold rounded-full"
-                              aria-label="Experiencia ganada: {{ $exp }} puntos">
-                            +{{ $exp }} EXP
+                              aria-label="Experiencia ganada: {{ $resultado['exp'] }} puntos">
+                            +{{ $resultado['exp'] }} EXP
                         </span>
                     </div>
                     <button
@@ -186,59 +185,31 @@
                 </div>
 
                 <div class="p-4">
-                    @php
-                        $resultadoCat = $resultado['resultado'] ?? null;
-                        $incidentes = $resultado['incidentes'] ?? [];
-                        $durationReal = (int) ($resultado['duration_real'] ?? 0);
-                        $tiempoPerdido = (int) ($resultado['tiempo_perdido'] ?? 0);
-                        $efectivos = max(0, $durationReal - $tiempoPerdido);
-                        // Pérdidas por derrota (contrato: lista de {tipo, id/label, cantidad_perdida})
-                        $objetosPerdidos = $resultado['objetos_perdidos'] ?? [];
-                        $tienePerdidas = !empty($objetosPerdidos);
-                        $resultadoLabel = match ($resultadoCat) {
-                            'exito_excepcional' => 'Éxito excepcional',
-                            'exito' => 'Éxito',
-                            'exito_parcial' => 'Éxito parcial',
-                            'fracaso' => 'Fracaso',
-                            'retirada' => 'Retirada',
-                            default => null,
-                        };
-                        $resultadoClass = match ($resultadoCat) {
-                            'exito_excepcional' => 'bg-emerald-400 text-emerald-950 dark:bg-emerald-500 dark:text-emerald-950',
-                            'exito' => 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400',
-                            'exito_parcial' => 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400',
-                            'fracaso' => 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400',
-                            'retirada' => 'bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300',
-                            default => null,
-                        };
-                        $tieneResumen = $resultadoLabel !== null || !empty($incidentes) || $durationReal > 0 || $tiempoPerdido > 0;
-                    @endphp
-
-                    @if($tieneResumen)
+                    @if($resultado['tiene_resumen'])
                         <div class="flex flex-wrap items-center gap-x-4 gap-y-2 mb-4">
-                            @if($resultadoLabel !== null)
-                                <span class="px-2.5 py-1 text-[10px] font-bold rounded-full uppercase tracking-wide {{ $resultadoClass }}">
-                                    {{ $resultadoLabel }}
+                            @if($resultado['label'] !== null)
+                                <span class="px-2.5 py-1 text-[10px] font-bold rounded-full uppercase tracking-wide {{ $resultado['clase'] }}">
+                                    {{ $resultado['label'] }}
                                 </span>
                             @endif
-                            @if(!empty($incidentes))
+                            @if($resultado['incidentes'] !== [])
                                 <span class="text-xs text-gray-500 dark:text-gray-400">
-                                    Encuentros {{ (int) ($incidentes['encuentros'] ?? 0) }}
-                                    · Victorias {{ (int) ($incidentes['victorias'] ?? 0) }}
-                                    · Huidas {{ (int) ($incidentes['huidas'] ?? 0) }}
-                                    · Emboscadas {{ (int) ($incidentes['emboscadas'] ?? 0) }}
-                                    · Contratiempos {{ (int) ($incidentes['contratiempos'] ?? 0) }}
+                                    Encuentros {{ (int) ($resultado['incidentes']['encuentros'] ?? 0) }}
+                                    · Victorias {{ (int) ($resultado['incidentes']['victorias'] ?? 0) }}
+                                    · Huidas {{ (int) ($resultado['incidentes']['huidas'] ?? 0) }}
+                                    · Emboscadas {{ (int) ($resultado['incidentes']['emboscadas'] ?? 0) }}
+                                    · Contratiempos {{ (int) ($resultado['incidentes']['contratiempos'] ?? 0) }}
                                 </span>
                             @endif
-                            @if($durationReal > 0 || $tiempoPerdido > 0)
+                            @if($resultado['duration_real'] > 0 || $resultado['tiempo_perdido'] > 0)
                                 <span class="text-xs text-gray-500 dark:text-gray-400">
-                                    {{ $efectivos }} min efectivos · {{ $tiempoPerdido }} min perdidos
+                                    {{ $resultado['efectivos'] }} min efectivos · {{ $resultado['tiempo_perdido'] }} min perdidos
                                 </span>
                             @endif
                         </div>
                     @endif
 
-                    @if($tienePerdidas)
+                    @if($resultado['objetos_perdidos'] !== [])
                         <div class="mb-4 px-4 py-3 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-sm" role="alert">
                             <div class="flex items-center gap-2 mb-1">
                                 <svg class="w-5 h-5 text-red-600 dark:text-red-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -247,11 +218,11 @@
                                 <span class="font-semibold text-red-700 dark:text-red-300">⚠️ Perdiste objetos</span>
                             </div>
                             <ul class="space-y-1 text-red-600 dark:text-red-400">
-                                @foreach($objetosPerdidos as $perdida)
+                                @foreach($resultado['objetos_perdidos'] as $perdida)
                                     <li class="flex items-center gap-2 text-xs">
-                                        <span class="font-medium" x-text="'{{ $perdida['tipo'] ?? 'Objeto' }}'"></span>
-                                        @if(!empty($perdida['id']) || !empty($perdida['label']))
-                                            <span x-text="'{{ $perdida['label'] ?? $perdida['id'] ?? '' }}'"></span>
+                                        <span class="font-medium">{{ $perdida['tipo'] }}</span>
+                                        @if($perdida['label'] !== '')
+                                            <span>{{ $perdida['label'] }}</span>
                                         @endif
                                         <span class="font-bold">x{{ $perdida['cantidad_perdida'] ?? 0 }}</span>
                                     </li>
@@ -260,48 +231,10 @@
                         </div>
                     @endif
 
-                    @if(!empty($resultado))
-                        @php
-                            $capturados = $resultado['capturados'] ?? [];
-                            $caramelosFamilia = $resultado['caramelos_familia'] ?? [];
-                            $caramelosEv = $resultado['caramelos_ev'] ?? [];
-                            $caramelosTipo = $resultado['caramelos_tipo'] ?? [];
-
-                            $derrotadosIds = $terminada['derrotados'] ?? [];
-                            $derrotadosAgrupados = collect($derrotadosIds)->countBy()->all();
-                            $tieneDerrotados = !empty($derrotadosAgrupados);
-                            $tieneCapturados = !empty($capturados);
-                            $tieneRecompensas = !empty($caramelosFamilia) || !empty($caramelosEv) || !empty($caramelosTipo);
-
-                            // Reparto de columnas del grid lg:grid-cols-4
-                            if ($tieneRecompensas) {
-                                $spanDerrotados = $tieneDerrotados ? 'lg:col-span-1' : '';
-                                $spanCapturados = $tieneCapturados ? 'lg:col-span-1' : '';
-                                if ($tieneDerrotados && $tieneCapturados) {
-                                    $spanRecompensas = 'lg:col-span-2';
-                                } elseif ($tieneDerrotados || $tieneCapturados) {
-                                    $spanRecompensas = 'lg:col-span-3';
-                                } else {
-                                    $spanRecompensas = 'lg:col-span-4';
-                                }
-                            } elseif ($tieneDerrotados && $tieneCapturados) {
-                                $spanDerrotados = 'lg:col-span-2';
-                                $spanCapturados = 'lg:col-span-2';
-                                $spanRecompensas = '';
-                            } elseif ($tieneDerrotados) {
-                                $spanDerrotados = 'lg:col-span-4';
-                                $spanCapturados = '';
-                                $spanRecompensas = '';
-                            } else {
-                                $spanDerrotados = '';
-                                $spanCapturados = 'lg:col-span-4';
-                                $spanRecompensas = '';
-                            }
-                        @endphp
-
+                    @if($resultado['tiene_resultado'])
                         <div class="grid grid-cols-1 lg:grid-cols-4 gap-4">
-                            @if($tieneDerrotados)
-                                <div class="bg-gray-50 dark:bg-gray-900/50 rounded-lg p-3 {{ $spanDerrotados }}">
+                            @if($terminada['tieneDerrotados'])
+                                <div class="bg-gray-50 dark:bg-gray-900/50 rounded-lg p-3 {{ $terminada['spanDerrotados'] }}">
                                     <p class="text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wide mb-2 flex items-center gap-1.5">
                                         <svg class="w-4 h-4 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
@@ -309,11 +242,11 @@
                                         Derrotados
                                     </p>
                                     <div class="flex flex-wrap gap-3">
-                                        @foreach($derrotadosAgrupados as $pokeId => $cantidad)
-                                            <div class="text-center" title="Derrotado ×{{ $cantidad }}">
+                                        @foreach($terminada['derrotadosAgrupados'] as $derrotado)
+                                            <div class="text-center" title="Derrotado ×{{ $derrotado['cantidad'] }}">
                                                 <div class="relative inline-block">
                                                     <img
-                                                        src="/images/iconos_webp/{{ $pokeId }}.webp"
+                                                        src="{{ $derrotado['icono'] }}"
                                                         loading="lazy"
                                                         decoding="async"
                                                         alt="Derrotado"
@@ -321,7 +254,7 @@
                                                         onerror="this.style.display='none'"
                                                     >
                                                     <span class="absolute -top-1.5 -right-1.5 px-1.5 py-0.5 bg-gray-600 text-white text-[10px] font-bold rounded-full">
-                                                        ×{{ $cantidad }}
+                                                        ×{{ $derrotado['cantidad'] }}
                                                     </span>
                                                 </div>
                                             </div>
@@ -330,15 +263,15 @@
                                 </div>
                             @endif
 
-                            @if($tieneCapturados)
-                                <div class="bg-gray-50 dark:bg-gray-900/50 rounded-lg p-3 {{ $spanCapturados }}">
+                            @if($terminada['tieneCapturados'])
+                                <div class="bg-gray-50 dark:bg-gray-900/50 rounded-lg p-3 {{ $terminada['spanCapturados'] }}">
                                     <p class="text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wide mb-2">Capturados</p>
                                     <div class="flex flex-wrap gap-3">
-                                        @foreach($capturados as $capturado)
+                                        @foreach($resultado['capturados'] as $capturado)
                                             <div class="text-center" title="{{ $capturado['nombre'] }}">
                                                 <div class="relative inline-block">
                                                     <img
-                                                        src="/images/iconos_webp/{{ $capturado['pokemon_id'] }}.webp"
+                                                        src="{{ $capturado['icono'] }}"
                                                         loading="lazy"
                                                         decoding="async"
                                                         alt="{{ $capturado['nombre'] }}"
@@ -356,56 +289,33 @@
                                 </div>
                             @endif
 
-                            @if($tieneRecompensas)
-                                <div class="bg-gray-50 dark:bg-gray-900/50 rounded-lg p-3 {{ $spanRecompensas }}">
-                                    @if(!empty($caramelosFamilia))
+                            @if($terminada['tieneRecompensas'])
+                                <div class="bg-gray-50 dark:bg-gray-900/50 rounded-lg p-3 {{ $terminada['spanRecompensas'] }}">
+                                    @if(!empty($resultado['caramelos_familia']))
                                         <div class="flex flex-wrap gap-3">
-                                            @foreach($caramelosFamilia as $candy)
-                                                @php
-                                                    $hasPoke = !empty($candy['pokemon_id']);
-                                                    $candy['src'] = $hasPoke
-                                                        ? "/images/candy_pokemon/{$candy['pokemon_id']}.webp"
-                                                        : '/images/candy_pokemon/0.webp';
-                                                    $candy['alt'] = 'Caramelo de ' . ($candy['nombre'] ?? 'Pokémon');
-                                                @endphp
+                                            @foreach($resultado['caramelos_familia'] as $candy)
                                                 @include('exploraciones._caramelo', ['caramelo' => $candy])
                                             @endforeach
                                         </div>
-                                        @if(!empty($caramelosEv) || !empty($caramelosTipo))
+                                        @if(!empty($resultado['caramelos_ev']) || !empty($resultado['caramelos_tipo']))
                                             <hr class="my-3 border-gray-200 dark:border-gray-700">
                                         @endif
                                     @endif
 
-                                    @if(!empty($caramelosEv))
+                                    @if(!empty($resultado['caramelos_ev']))
                                         <div class="flex flex-wrap gap-3">
-                                            @foreach($caramelosEv as $candy)
-                                                @php
-                                                    $slug = $candy['stat_slug'] ?? null;
-                                                    $candy['src'] = !empty($slug)
-                                                        ? "/images/candy_ev/{$slug}.webp"
-                                                        : '/images/candy_ev/.webp';
-                                                    $candy['alt'] = 'Caramelo EV ' . ($candy['stat_nombre'] ?? '');
-                                                    $candy['nombre'] = $candy['stat_nombre'] ?? null;
-                                                    $candy['nombre_js'] = !empty($candy['stat_nombre'])
-                                                        ? null
-                                                        : 'statName(' . ($candy['stat'] ?? 0) . ')';
-                                                @endphp
+                                            @foreach($resultado['caramelos_ev'] as $candy)
                                                 @include('exploraciones._caramelo', ['caramelo' => $candy])
                                             @endforeach
                                         </div>
-                                        @if(!empty($caramelosTipo))
+                                        @if(!empty($resultado['caramelos_tipo']))
                                             <hr class="my-3 border-gray-200 dark:border-gray-700">
                                         @endif
                                     @endif
 
-                                    @if(!empty($caramelosTipo))
+                                    @if(!empty($resultado['caramelos_tipo']))
                                         <div class="flex flex-wrap gap-3">
-                                            @foreach($caramelosTipo as $candy)
-                                                @php
-                                                    $candy['src'] = '/images/candy_type/' . ($candy['slug'] ?? '') . '.webp';
-                                                    $candy['alt'] = $candy['tipo'] ?? 'Caramelo de tipo';
-                                                    $candy['nombre'] = $candy['tipo'] ?? null;
-                                                @endphp
+                                            @foreach($resultado['caramelos_tipo'] as $candy)
                                                 @include('exploraciones._caramelo', ['caramelo' => $candy])
                                             @endforeach
                                         </div>

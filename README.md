@@ -62,7 +62,8 @@ Este comando ejecuta: `composer install`, genera `.env`, `php artisan key:genera
 ## Comandos disponibles
 
 ```bash
-composer dev    # Servidor + queue + logs + vite (concurrente)
+composer dev    # Servidor (Xdebug off) + queue + logs + vite (concurrente)
+composer serve  # Solo el servidor HTTP, con Xdebug desactivado
 composer test   # Ejecuta tests (PHPUnit)
 ```
 

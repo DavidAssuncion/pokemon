@@ -8,10 +8,13 @@ use App\Datagrid\DatagridService;
 use App\Enums\StatEnum;
 use App\Enums\TipoEnum;
 use App\Models\ExploracionActiva;
+use App\Models\PlayerInventory;
 use App\Models\Reclutable;
 use App\Models\Reclutado;
 use App\Models\Team;
 use App\Models\TeamMember;
+use App\Support\EquiposVistaPresenter;
+use App\Support\ItemCatalogo;
 use App\Support\ReclutadoSerializer;
 use Illuminate\View\View;
 use Src\Equipos\App\ObtenerEquipos;
@@ -134,12 +137,61 @@ class PlayerController extends Controller
             ->toArray()
             : [];
 
-        return view('equipos.index', [
+        return view('equipos.index', array_merge([
             'teams' => $teams,
             'reclutados' => $reclutados,
             'teamIds' => $teamIds,
             'equiposEnExploracion' => $equiposEnExploracion,
             'reclutadosEnExploracion' => $reclutadosEnExploracion,
-        ]);
+            'inventarioCaramelos' => $this->inventarioCaramelos((int) auth()->id()),
+            'tipos' => TipoEnum::options(),
+        ], EquiposVistaPresenter::toView()));
+    }
+
+    /**
+     * Caramelos EV del jugador para mostrar el stock de cada atributo en el
+     * detalle del reclutado. Los caramelos de tipo se consultan dentro de las
+     * opciones de evolución de cada Pokémon.
+     *
+     * @return array{
+     *     ev: list<array{key: string, nombre: string, corto: string, slug: string, cantidad: int}>
+     * }
+     */
+    private function inventarioCaramelos(int $userId): array
+    {
+        $items = PlayerInventory::query()
+            ->where('user_id', $userId)
+            ->where('item_key', 'like', 'ev:%')
+            ->pluck('cantidad', 'item_key');
+
+        $ev = collect(StatEnum::cases())
+            ->map(fn (StatEnum $stat): array => [
+                'key' => match ($stat) {
+                    StatEnum::HP => 'hp',
+                    StatEnum::ATTACK => 'atk',
+                    StatEnum::DEFENSE => 'def',
+                    StatEnum::SPECIAL_ATTACK => 'spAtk',
+                    StatEnum::SPECIAL_DEFENSE => 'spDef',
+                    StatEnum::SPEED => 'speed',
+                },
+                'nombre' => $stat->label(),
+                'corto' => match ($stat) {
+                    StatEnum::HP => 'PS',
+                    StatEnum::ATTACK => 'ATK',
+                    StatEnum::DEFENSE => 'DEF',
+                    StatEnum::SPECIAL_ATTACK => 'A.Esp',
+                    StatEnum::SPECIAL_DEFENSE => 'D.Esp',
+                    StatEnum::SPEED => 'VEL',
+                },
+                'slug' => $stat->slug(),
+                'cantidad' => (int) ($items[ItemCatalogo::keyEv($stat->value)] ?? 0),
+            ])
+            ->filter(fn (array $item): bool => $item['cantidad'] > 0)
+            ->values()
+            ->all();
+
+        return [
+            'ev' => $ev,
+        ];
     }
 }

@@ -24,6 +24,10 @@ final readonly class MapaConteo
     /**
      * Frontera — reconstrucción desde datos serializados.
      *
+     * Los valores pueden ser negativos: además de contadores, este mapa
+     * representa etapas de stats (−6..+6) en MultiplicadoresStats. Los
+     * contadores de cargas/usos se normalizan en sus propios VOs.
+     *
      * @param  array<mixed, mixed>  $valores
      */
     public static function desdeArray(array $valores): self
@@ -31,7 +35,7 @@ final readonly class MapaConteo
         $normalizados = [];
         foreach ($valores as $clave => $valor) {
             if (is_string($clave)) {
-                $normalizados[$clave] = max(0, (int) $valor);
+                $normalizados[$clave] = (int) $valor;
             }
         }
 

@@ -1,7 +1,7 @@
 @php
-    $hasNombre = !empty($caramelo['nombre']);
+    $candyFallback ??= "this.src='/images/candy_pokemon/0.webp'; this.onerror=null;";
 @endphp
-<div class="text-center" @if($hasNombre) title="{{ $caramelo['nombre'] }}" @endif>
+<div class="text-center" @if(!empty($caramelo['nombre'])) title="{{ $caramelo['nombre'] }}" @endif>
     <div class="relative inline-block">
         <img
             src="{{ $caramelo['src'] }}"
@@ -18,7 +18,7 @@
     </div>
     @if(!empty($caramelo['nombre_js']))
         <p class="text-[10px] text-gray-500 dark:text-gray-400 truncate w-12" x-text="{{ $caramelo['nombre_js'] }}"></p>
-    @elseif($hasNombre)
+    @elseif(!empty($caramelo['nombre']))
         <p class="text-[10px] text-gray-500 dark:text-gray-400 truncate w-12">{{ $caramelo['nombre'] }}</p>
     @else
         <p class="text-[10px] text-gray-400 dark:text-gray-500 truncate w-12">—</p>

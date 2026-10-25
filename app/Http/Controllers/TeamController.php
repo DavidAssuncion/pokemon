@@ -10,6 +10,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 use Src\Battle\Domain\Catalog\CatalogoObjetos;
@@ -88,6 +89,8 @@ class TeamController extends Controller
             // Equipos estándar de 3 (combates 3v3 y mazmorra 3v1).
             'slot' => 'required|integer|min:1|max:3',
             'behavior' => 'required|in:VANGUARDIA,COMBATIENTE,RECOLECTOR,RASTREADOR',
+            // Permite sustituir al miembro que ocupa el slot cuando el equipo está completo.
+            'replace' => 'sometimes|boolean',
         ]);
 
         // El global scope de Team hace que un equipo ajeno resuelva a null:
@@ -98,9 +101,11 @@ class TeamController extends Controller
             return $this->responderError($request, 'No se puede modificar un equipo con exploraciones activas');
         }
 
-        // ensure slot not taken
-        $exists = TeamMember::where('team_id', $data['team_id'])->where('slot', $data['slot'])->exists();
-        if ($exists) {
+        $replace = (bool) ($data['replace'] ?? false);
+
+        // ensure slot not taken (salvo que se pida reemplazar explícitamente)
+        $ocupante = TeamMember::where('team_id', $data['team_id'])->where('slot', $data['slot'])->first();
+        if ($ocupante !== null && ! $replace) {
             return $this->responderError($request, 'Slot ya ocupado');
         }
 
@@ -110,12 +115,18 @@ class TeamController extends Controller
             return $this->responderError($request, 'Pokémon ya está en un equipo');
         }
 
-        $member = TeamMember::create([
-            'team_id' => $data['team_id'],
-            'pokemon_id' => $data['reclutado_id'],
-            'slot' => $data['slot'],
-            'behavior' => $data['behavior'],
-        ]);
+        $member = DB::transaction(function () use ($data, $ocupante, $replace): TeamMember {
+            if ($ocupante !== null && $replace) {
+                $ocupante->delete();
+            }
+
+            return TeamMember::create([
+                'team_id' => $data['team_id'],
+                'pokemon_id' => $data['reclutado_id'],
+                'slot' => $data['slot'],
+                'behavior' => $data['behavior'],
+            ]);
+        });
 
         if ($request->wantsJson()) {
             return response()->json([
@@ -124,7 +135,9 @@ class TeamController extends Controller
                     'team_id' => $member->team_id,
                     'pokemon_id' => $member->pokemon_id,
                     'slot' => $member->slot,
+                    'behavior' => $member->behavior,
                 ],
+                'replaced_member_id' => $ocupante?->id,
             ]);
         }
 

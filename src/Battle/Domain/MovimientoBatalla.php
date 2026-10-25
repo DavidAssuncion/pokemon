@@ -192,6 +192,29 @@ class MovimientoBatalla
     }
 
     /**
+     * Un movimiento es autodirigido cuando apunta al propio usuario/aliados o
+     * cuando es un movimiento de estado que solo modifica las stats del usuario
+     * (Danza Espada, Paz Mental...). Los ataques que bajan stats del usuario
+     * como efecto secundario (A Bocajarro, Superpotencia, Sofoco...) NO son
+     * autodirigidos: siguen golpeando al rival.
+     */
+    public function esAutodirigido(): bool
+    {
+        if (in_array($this->objetivo, [
+            ObjetivoMovimiento::SELF,
+            ObjetivoMovimiento::ALLY_SIDE,
+            ObjetivoMovimiento::ALLIES,
+            ObjetivoMovimiento::ALLY_TEAM,
+        ], true)) {
+            return true;
+        }
+
+        return $this->esEstado()
+            && $this->tieneSelfStatChanges()
+            && ! $this->tieneTargetStatChanges();
+    }
+
+    /**
      * @return array<int, array{stat: string, factor: float}>
      */
     private function cambiosParaSerializar(CambiosStatsCollection $cambios): array

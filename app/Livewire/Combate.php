@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Livewire;
 
+use App\Livewire\Presenters\BatallaVistaPresenter;
 use App\Livewire\Presenters\MovesPreviewPresenter;
 use App\Livewire\Presenters\PresentadorResultadoBatalla;
 use App\Support\BattleSessionService;
@@ -81,6 +82,9 @@ class Combate extends Component
     /** @var array<string, string> refId => postura elegida para la ronda ('atacar'|'guardia'|'cubrir') */
     public array $posturas = [];
 
+    /** Panel de preparación de ronda visible (no bloquea el turno: jugar lo omite). */
+    public bool $preparacionPendiente = false;
+
     /** @var array<string, list<array{index: int, nombre: string, prioridad: int}>> */
     public array $prioridadesDisponibles = [];
 
@@ -138,7 +142,27 @@ class Combate extends Component
 
     public function render(): \Illuminate\View\View
     {
-        return view('livewire.combate')
+        $vista = BatallaVistaPresenter::toView(
+            team1: $this->team1,
+            team2: $this->team2,
+            turnQueue: $this->turnQueue,
+            phase: $this->phase,
+            actingRefId: $this->actingRefId,
+            selectedTargetRefId: $this->selectedTargetRefId,
+            animAttackerId: $this->animAttackerId,
+            animDefenderId: $this->animDefenderId,
+            animAttackerNombre: $this->animAttackerNombre,
+            animDefenderNombre: $this->animDefenderNombre,
+            animMoveNombre: $this->animMoveNombre,
+            weather: $this->weather,
+            log: $this->log,
+            eventos: $this->eventos,
+            rewards: $this->rewards,
+        );
+
+        $vista['movesResumen'] = MovesPreviewPresenter::resumen($this->currentMoves);
+
+        return view('livewire.combate', $vista)
             ->extends('layouts.app')
             ->section('content');
     }
@@ -185,10 +209,8 @@ class Combate extends Component
             }
         }
 
-        if ($battle->rondaPreparada() !== $turnos->round()) {
+        if ($battle->rondaPreparada() !== $turnos->round() && ! $this->preparacionPendiente) {
             $this->abrirPreparacion($battle);
-
-            return;
         }
 
         $actor = $turnos->getNextActor();
@@ -302,6 +324,7 @@ class Combate extends Component
     {
         $rondaNueva = $battle->turnManager()->round() + 1;
         $previoFin = $this->grabandoEventos ? $this->capturarEstado($battle) : [];
+        $this->preparacionPendiente = false;
 
         if ($battle->turnManager()->round() > 0) {
             $battle->triggerRoundEndEffects();
@@ -344,7 +367,7 @@ class Combate extends Component
 
     private function abrirPreparacion(AgregadoBatalla $battle): void
     {
-        $this->phase = FaseCombate::PREPARACION->value;
+        $this->preparacionPendiente = true;
         $this->prioridades = [];
         $this->prioridadesDisponibles = [];
         $this->posturas = [];
@@ -381,10 +404,52 @@ class Combate extends Component
     public function confirmarPreparacion(): void
     {
         $battle = $this->session->cargar($this->battleId);
-        if ($battle === null || $this->phase !== FaseCombate::PREPARACION->value) {
+        if ($battle === null || ! $this->preparacionPendiente
+            || $this->processing || $this->animAttackerId !== '') {
             return;
         }
 
+        $this->aplicarPreparacion($battle, true);
+
+        $this->preparacionPendiente = false;
+        $this->log[] = "--- Ronda {$battle->turnManager()->round()}: preparación confirmada ---";
+
+        $this->phase = FaseCombate::INICIO->value;
+        $this->syncViewData($battle);
+        $this->resolverPrioridades($battle);
+        $this->limpiarEstadoPreparacion();
+        $this->session->guardar($this->battleId, $battle);
+        $this->nextActor();
+    }
+
+    public function saltarPreparacion(): void
+    {
+        $battle = $this->session->cargar($this->battleId);
+        if ($battle === null || ! $this->preparacionPendiente
+            || $this->processing || $this->animAttackerId !== '') {
+            return;
+        }
+
+        $this->aplicarPreparacion($battle, false);
+
+        $this->preparacionPendiente = false;
+        $this->log[] = "--- Ronda {$battle->turnManager()->round()}: preparación omitida ---";
+
+        $this->phase = FaseCombate::INICIO->value;
+        $this->syncViewData($battle);
+        $this->resolverPrioridades($battle);
+        $this->limpiarEstadoPreparacion();
+        $this->session->guardar($this->battleId, $battle);
+        $this->nextActor();
+    }
+
+    /**
+     * Aplica las posturas elegidas (y, opcionalmente, las prioridades del
+     * jugador), declara las prioridades de la IA y marca la ronda preparada.
+     * No resuelve prioridades ni avanza el turno.
+     */
+    private function aplicarPreparacion(AgregadoBatalla $battle, bool $conPrioridades): void
+    {
         $equipoJugador = $battle->team1;
         $vivosJugador = $equipoJugador->combatientesCollection()->vivos()->all();
 
@@ -392,6 +457,12 @@ class Combate extends Component
             $postura = PosturaCombate::tryFrom($this->posturas[$combatiente->id()] ?? '')
                 ?? PosturaCombate::ATACAR;
             $combatiente->setPostura($postura);
+
+            if (! $conPrioridades) {
+                $combatiente->limpiarPrioridad();
+
+                continue;
+            }
 
             $prioridad = null;
             $indicePrioridad = $this->prioridades[$combatiente->id()] ?? '';
@@ -426,22 +497,33 @@ class Combate extends Component
         $this->declararPrioridadesIA($battle);
 
         $battle->setRondaPreparada($battle->turnManager()->round());
-        $this->log[] = "--- Ronda {$battle->turnManager()->round()}: preparación confirmada ---";
+    }
 
-        $this->phase = FaseCombate::INICIO->value;
+    /**
+     * Cierra la preparación como si el jugador hubiera pulsado Saltar, pero
+     * sin reiniciar el turno: se usa cuando juega directamente.
+     */
+    private function autoSaltarPreparacion(AgregadoBatalla $battle): void
+    {
+        if (! $this->preparacionPendiente) {
+            return;
+        }
+
+        $this->aplicarPreparacion($battle, false);
+        $this->preparacionPendiente = false;
+        $this->log[] = "--- Ronda {$battle->turnManager()->round()}: preparación omitida al jugar ---";
+
         $this->syncViewData($battle);
         $this->resolverPrioridades($battle);
+        $this->limpiarEstadoPreparacion();
+        $this->session->guardar($this->battleId, $battle);
+    }
+
+    private function limpiarEstadoPreparacion(): void
+    {
         $this->prioridades = [];
         $this->prioridadesDisponibles = [];
         $this->posturas = [];
-        $this->session->guardar($this->battleId, $battle);
-        $this->nextActor();
-    }
-
-    public function saltarPreparacion(): void
-    {
-        $this->prioridades = [];
-        $this->confirmarPreparacion();
     }
 
     /**
@@ -451,7 +533,8 @@ class Combate extends Component
     public function cambiarPostura(string $refId, string $postura): void
     {
         $battle = $this->session->cargar($this->battleId);
-        if ($battle === null || $this->phase !== FaseCombate::PREPARACION->value) {
+        if ($battle === null || ! $this->preparacionPendiente
+            || $this->processing || $this->animAttackerId !== '') {
             return;
         }
 
@@ -914,7 +997,7 @@ class Combate extends Component
         $this->selectedTargetIdx = $pokemonIdx;
         $this->selectedTargetRefId = $target->id();
 
-        $this->currentMoves = MovesPreviewPresenter::para($actor, $battle, $target);
+        $this->currentMoves = MovesPreviewPresenter::toView($actor, $battle, $target);
         $this->phase = FaseCombate::SELECCION_MOVIMIENTO->value;
         $this->session->guardar($this->battleId, $battle);
     }
@@ -926,8 +1009,25 @@ class Combate extends Component
             return;
         }
 
+        if ($this->preparacionPendiente) {
+            $this->autoSaltarPreparacion($battle);
+        }
+
         $actor = $this->resolveActor($battle);
-        if ($actor === null) {
+        if ($actor === null || ! $actor->estaVivo() || ! $actor->tieneAccionPendienteEstaRonda()) {
+            $this->nextActor();
+
+            return;
+        }
+
+        if ($actor->postura() !== PosturaCombate::ATACAR) {
+            $this->log[] = "{$actor->nombre()} mantiene la postura de {$actor->postura()->label()}.";
+            $battle->turnManager()->consumeAction($actor);
+            $this->resetAnimState();
+            $this->syncViewData($battle);
+            $this->session->guardar($this->battleId, $battle);
+            $this->nextActor();
+
             return;
         }
 
@@ -962,6 +1062,10 @@ class Combate extends Component
         }
 
         if ($defender === null || ! $defender->estaVivo()) {
+            $this->cancelTarget();
+            $this->syncViewData($battle, $actor);
+            $this->session->guardar($this->battleId, $battle);
+
             return;
         }
 
@@ -1043,8 +1147,18 @@ class Combate extends Component
             return;
         }
 
+        if ($this->preparacionPendiente) {
+            $this->autoSaltarPreparacion($battle);
+        }
+
         $actor = $this->resolveActor($battle);
-        if ($actor === null || ! $actor->retrasarTurno()) {
+        if ($actor === null || ! $actor->estaVivo()) {
+            $this->nextActor();
+
+            return;
+        }
+
+        if (! $actor->retrasarTurno()) {
             return;
         }
 
@@ -1077,8 +1191,14 @@ class Combate extends Component
             return;
         }
 
+        if ($this->preparacionPendiente) {
+            $this->autoSaltarPreparacion($battle);
+        }
+
         $actor = $this->resolveActor($battle);
-        if ($actor === null) {
+        if ($actor === null || ! $actor->estaVivo()) {
+            $this->nextActor();
+
             return;
         }
 

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Support;
 
 use App\Enums\StatEnum;
+use App\Enums\TipoEnum;
 use App\Models\Ability;
 use App\Models\Move;
 use App\Models\PokemonStat;
@@ -14,6 +15,7 @@ use Src\Pokemon\Domain\Stats\BattleStats;
 use Src\Pokemon\Domain\Stats\CalculadorCP;
 use Src\Pokemon\Domain\Stats\StatsValue;
 use Src\Shared\Domain\NivelHelper;
+use Src\Shared\Tipos\TipoPokemon;
 
 /**
  * Serializador compartido de Reclutado para los endpoints de listado
@@ -62,11 +64,18 @@ final class ReclutadoSerializer
             ->all() ?? [];
         $nivelDesbloqueo = $nivelUsuario ?? NivelHelper::nivelDesdeExperiencia($reclutado->exp->total());
         $datos['movimientos_disponibles'] = $reclutado->pokemon?->moves
+            ->sortBy([
+                static fn (Move $a, Move $b): int => $a->type_id <=> $b->type_id,
+                static fn (Move $a, Move $b): int => $b->base_power <=> $a->base_power,
+                static fn (Move $a, Move $b): int => self::ordenCategoria($a->category) <=> self::ordenCategoria($b->category),
+            ])
             ->map(static fn (Move $move): array => [
                 'slug' => $move->slug,
                 'name' => $move->name,
                 'description' => $move->description ?? '',
                 'type_id' => $move->type_id,
+                'tipo_nombre' => TipoEnum::fromId($move->type_id)?->label(),
+                'tipo_slug' => TipoPokemon::tryFrom($move->type_id)?->slug(),
                 'base_power' => $move->base_power,
                 'nivel_requerido' => $move->nivel_requerido,
                 'desbloqueado' => $move->nivel_requerido <= $nivelDesbloqueo,
@@ -86,6 +95,19 @@ final class ReclutadoSerializer
         }
 
         return $datos;
+    }
+
+    /**
+     * Orden de presentación de categorías de movimiento: físico, especial y estado.
+     */
+    private static function ordenCategoria(?string $categoria): int
+    {
+        return match (strtolower((string) $categoria)) {
+            'fisico', 'físico' => 0,
+            'especial' => 1,
+            'estado' => 2,
+            default => 3,
+        };
     }
 
     /**

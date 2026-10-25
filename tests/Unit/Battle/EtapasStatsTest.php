@@ -98,4 +98,19 @@ class EtapasStatsTest extends TestCase
 
         $this->assertSame(0.25, $multiplicadores->obtenerMultiplicador(StatClave::ATAQUE));
     }
+
+    public function test_obtener_etapas_conserva_valores_negativos(): void
+    {
+        $multiplicadores = MultiplicadoresStats::desdeEtapas([
+            'attack' => -2,
+            'defense' => 1,
+            'spDef' => -1,
+        ]);
+
+        $etapas = $multiplicadores->obtenerEtapas();
+
+        $this->assertSame(-2, $etapas->obtener('attack'));
+        $this->assertSame(1, $etapas->obtener('defense'));
+        $this->assertSame(-1, $etapas->obtener('spDef'));
+    }
 }

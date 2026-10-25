@@ -6,6 +6,7 @@ namespace Tests\Unit\Battle;
 
 use PHPUnit\Framework\TestCase;
 use Src\Battle\Domain\AgregadoBatalla;
+use Src\Battle\Domain\AI\NivelDificultad;
 use Src\Battle\Domain\AI\SelectorAccionIA;
 use Src\Battle\Domain\Combatiente;
 use Src\Battle\Domain\Enums\CategoriaMovimiento;
@@ -223,6 +224,47 @@ class SelectorAccionIATest extends TestCase
         $mejor = $this->selector->elegirMejorMovimiento($atacante, $defensor);
 
         $this->assertSame('Hoja Afilada', $mejor->nombre);
+    }
+
+    public function test_empate_prefiere_ataque_sobre_aguante(): void
+    {
+        $atacante = $this->combatiente(
+            stats: ['atk' => 100],
+            moves: [
+                new MovimientoBatalla(
+                    'Aguante',
+                    0,
+                    TipoPokemon::NORMAL,
+                    CategoriaMovimiento::ESTADO,
+                    objetivo: \Src\Battle\Domain\Enums\ObjetivoMovimiento::SELF,
+                ),
+                new MovimientoBatalla('Golpe', 40, TipoPokemon::NORMAL, CategoriaMovimiento::FISICO),
+            ],
+            tipos: [TipoPokemon::NORMAL],
+            id: 'a1',
+            nombre: 'Atacante',
+        );
+        $defensor = $this->combatiente(
+            stats: ['hp' => 100, 'def' => 100, 'spDef' => 100],
+            tipos: [TipoPokemon::NORMAL],
+            id: 'e1',
+            nombre: 'Defensor',
+        );
+        // El ataque queda absorbido por la barrera: damageValue = 0 y empata
+        // con Aguante. El desempate debe preferir el ataque.
+        $defensor->setDefensaHpActual(100000.0);
+        $segundo = $this->combatiente(
+            stats: ['hp' => 100, 'def' => 100],
+            tipos: [TipoPokemon::NORMAL],
+            id: 'e2',
+            nombre: 'Segundo',
+        );
+
+        $battle = $this->batallaCon($atacante, $defensor, $segundo);
+
+        $resultado = $this->selector->elegirAccion($battle, $atacante, NivelDificultad::PERFECTA);
+
+        $this->assertSame('Golpe', $resultado->accion->move->nombre);
     }
 
     private function batallaCon(Combatiente $actor, Combatiente $enemigo1, Combatiente $enemigo2): AgregadoBatalla

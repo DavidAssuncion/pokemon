@@ -1,46 +1,46 @@
-@if($phase === 'preparacion')
+@if($preparacionPendiente)
     <div class="card mb-3 border border-blue-200 dark:border-blue-900/60">
         <div class="card-body py-3">
             <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
                 <div>
-                    <div class="fw-semibold text-gray-900 dark:text-gray-100">Prioridades de la ronda {{ $round }}</div>
+                    <div class="fw-semibold text-gray-900 dark:text-gray-100">Preparación de la ronda {{ $round }}</div>
                     <div class="text-xs text-gray-500 dark:text-gray-400">
-                        Las posturas se configuran en Equipo y se mantienen automáticamente.
-                        Aquí solo puedes adelantar un movimiento con prioridad.
+                        Ajusta las posturas y, si quieres, adelanta un movimiento con prioridad.
+                        Si juegas directamente, la preparación se omite.
                     </div>
                 </div>
                 <div class="d-flex gap-2">
-                    <button type="button" class="btn btn-sm btn-outline-secondary" wire:click="saltarPreparacion">
+                    <button type="button" class="btn btn-sm btn-outline-secondary" wire:click="saltarPreparacion" {{ ($processing || $animAttackerId !== '') ? 'disabled' : '' }}>
                         Saltar
                     </button>
-                    <button type="button" class="btn btn-sm btn-primary" wire:click="confirmarPreparacion">
+                    <button type="button" class="btn btn-sm btn-primary" wire:click="confirmarPreparacion" {{ ($processing || $animAttackerId !== '') ? 'disabled' : '' }}>
                         Listo
                     </button>
                 </div>
             </div>
 
-            <div class="d-flex align-items-center gap-2 flex-wrap mb-3">
-                <span class="text-[10px] uppercase fw-bold text-gray-500 dark:text-gray-400">Posturas actuales · solo lectura</span>
-                @foreach($team1 as $pokemon)
+            <div class="d-flex align-items-center gap-2 flex-wrap mb-2">
+                <span class="text-[10px] uppercase fw-bold text-gray-500 dark:text-gray-400">Posturas de la ronda</span>
+                @foreach($team1Vista as $pokemon)
                     @if($pokemon['alive'])
-                        @php
-                            $postura = \Src\Battle\Domain\Enums\PosturaCombate::tryFrom((string) ($pokemon['postura'] ?? ''))
-                                ?? \Src\Battle\Domain\Enums\PosturaCombate::ATACAR;
-                        @endphp
-                        <span class="d-inline-flex align-items-center gap-1 bg-light border rounded px-1 py-0.5" title="Postura configurada en Equipo">
+                        <div class="d-inline-flex align-items-center gap-1 bg-light border rounded px-1 py-0.5" title="Postura de {{ $pokemon['nombre'] }}">
                             <img src="{{ $pokemon['icon'] }}" alt="" width="18" height="18" style="object-fit:contain">
-                            <select class="form-select form-select-sm border-0 bg-transparent text-[10px] p-0" style="width: 4.8rem;" disabled aria-label="Postura de {{ $pokemon['nombre'] }}">
-                                <option value="atacar" @selected($postura === \Src\Battle\Domain\Enums\PosturaCombate::ATACAR)>Atacar</option>
-                                <option value="guardia" @selected($postura === \Src\Battle\Domain\Enums\PosturaCombate::GUARDIA)>Guardia</option>
-                                <option value="cubrir" @selected($postura === \Src\Battle\Domain\Enums\PosturaCombate::CUBRIR)>Cubrir</option>
+                            <select class="form-select form-select-sm border-0 bg-transparent text-[10px] p-0" style="width: 5.4rem;" wire:change="cambiarPostura('{{ $pokemon['refId'] }}', $event.target.value)" aria-label="Postura de {{ $pokemon['nombre'] }}" {{ ($processing || $animAttackerId !== '') ? 'disabled' : '' }}>
+                                <option value="atacar" @selected(($posturas[$pokemon['refId']] ?? 'atacar') === 'atacar')>Atacar</option>
+                                <option value="guardia" @selected(($posturas[$pokemon['refId']] ?? 'atacar') === 'guardia')>Guardia</option>
+                                <option value="cubrir" @selected(($posturas[$pokemon['refId']] ?? 'atacar') === 'cubrir')>Cubrir</option>
                             </select>
-                        </span>
+                        </div>
                     @endif
                 @endforeach
             </div>
+            <div class="text-[10px] text-gray-500 dark:text-gray-400 mb-3">
+                Atacar: acción normal · Guardia: −50 % de daño recibido · Cubrir: redirige el 40 % del daño de un aliado.
+                Si eliges un movimiento de prioridad, la postura vuelve a Atacar.
+            </div>
 
             <div class="row g-2">
-                @foreach($team1 as $pokemon)
+                @foreach($team1Vista as $pokemon)
                     @if($pokemon['alive'])
                         @php($prioridadesPokemon = $prioridadesDisponibles[$pokemon['refId']] ?? [])
                         @if($prioridadesPokemon !== [])
@@ -72,7 +72,7 @@
 
             @if(empty($prioridadesDisponibles))
                 <div class="text-xs text-gray-500 dark:text-gray-400">
-                    Ningún Pokémon tiene movimientos de prioridad disponibles. Puedes continuar con la ronda.
+                    Ningún Pokémon tiene movimientos de prioridad disponibles. Ajusta las posturas o juega directamente.
                 </div>
             @endif
         </div>

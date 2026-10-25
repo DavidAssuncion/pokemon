@@ -34,6 +34,7 @@ final class GeneradorEquipoRuta
     public function __construct(
         private readonly MapeadorPokemonBatalla $mapeador,
         private readonly ClasificadorOfensivaDefensiva $clasificador,
+        private readonly SelectorMovimientosMeta $selectorMovimientos,
     ) {
     }
 
@@ -81,6 +82,14 @@ final class GeneradorEquipoRuta
         foreach ($seleccionados as $i => $pokemon) {
             $shiny = ProbabilidadesShiny::esShiny(ProbabilidadesShiny::SALVAJE, $aleatorioShiny);
 
+            // Loadout "meta" acotado (6-8): evita que el salvaje cargue todo
+            // su learnset y hace viable la evaluación de la IA.
+            $movimientos = $this->selectorMovimientos->seleccionar(
+                $pokemon,
+                $nivel,
+                $nivelRival,
+            );
+
             $equipo[] = $this->mapeador->desdePokemon(
                 pokemon: $pokemon,
                 id: "ruta_{$habitatId}_{$nivel}_{$i}",
@@ -89,6 +98,7 @@ final class GeneradorEquipoRuta
                 nivel: $nivelRival,
                 shiny: $shiny,
                 ivs: $shiny ? GeneradorIvs::maximos() : GeneradorIvs::aleatorios(),
+                movimientosSeleccionados: $movimientos !== [] ? $movimientos : null,
             );
         }
 

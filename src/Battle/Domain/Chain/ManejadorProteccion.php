@@ -8,24 +8,18 @@ use Src\Battle\Domain\AccionBatalla;
 use Src\Battle\Domain\Enums\ClaveCondicion;
 
 /**
- * Protección y Aguante: Protección anula el daño del turno; Aguante deja al
- * portador a 1 HP si el golpe fuera letal.
+ * Protección: reduce el daño del turno (no lo anula). Aguante se aplica al
+ * final de la cadena en ManejadorAguante.
  */
 class ManejadorProteccion extends ManejadorDanioAbstracto
 {
+    /** Fracción del daño que sigue recibiendo el portador de Protección. */
+    private const FACTOR_DANIO_RECIBIDO = 0.4;
+
     protected function process(AccionBatalla $action, float $daño): float
     {
         if ($action->defender->tieneCondicion(ClaveCondicion::PROTEGIDO)) {
-            return 0.0;
-        }
-
-        if ($action->defender->tieneCondicion(ClaveCondicion::AGUANTE)) {
-            $hp = $action->defender->hpActual();
-            if ($daño >= $hp) {
-                $action->defender->quitarCondicion(ClaveCondicion::AGUANTE);
-
-                return max(0.0, $hp - 1.0);
-            }
+            return $daño * self::FACTOR_DANIO_RECIBIDO;
         }
 
         return $daño;

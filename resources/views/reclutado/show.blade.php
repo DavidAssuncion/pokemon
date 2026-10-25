@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', $reclutado['nombre'] ?? $reclutado['pokemon_nombre'])
+@section('title', $reclutado['nombre_formateado'])
 
 @section('content')
 <div class="max-w-2xl mx-auto p-4">
@@ -15,10 +15,10 @@
         >
         <div>
             <h1 class="text-2xl font-bold text-gray-900 dark:text-white capitalize">
-                {{ \Illuminate\Support\Str::ucfirst($reclutado['nombre'] ?? $reclutado['pokemon_nombre']) }}
+                {{ $reclutado['nombre_formateado'] }}
             </h1>
             <p class="text-sm text-gray-500 dark:text-gray-400">
-                Nivel {{ $reclutado['nivel'] }} &middot; {{ number_format($reclutado['exp_total'] ?? 0) }} exp
+                Nivel {{ $reclutado['nivel'] }} &middot; {{ $reclutado['exp_total_formateado'] }} exp
                 @if(!empty($reclutado['cp']))
                     &middot; <span class="font-bold text-purple-600 dark:text-purple-400">CP {{ number_format($reclutado['cp']) }}</span>
                 @endif
@@ -31,7 +31,7 @@
             <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Próxima evolución</h2>
             <div class="mt-3 flex items-center gap-4">
                 <img src="{{ $siguiente['imagen'] }}" alt="{{ $siguiente['nombre'] }}" class="w-16 h-16 object-contain">
-                <p class="text-gray-700 dark:text-gray-300 capitalize">{{ $siguiente['nombre'] }}</p>
+                <p class="text-gray-700 dark:text-gray-300">{{ $siguiente['nombre_formateado'] }}</p>
             </div>
 
             <div class="mt-4 space-y-3">
@@ -40,21 +40,26 @@
                         <div>
                             <p class="font-medium text-gray-800 dark:text-gray-200">{{ $requisito['tipo'] }}</p>
                             <p class="text-sm text-gray-500 dark:text-gray-400">
-                                {{ number_format($requisito['actual'] ?? 0) }} / {{ number_format($requisito['necesario'] ?? 0) }} exp
+                                {{ $requisito['actual_formateado'] }} / {{ $requisito['necesario_formateado'] }} exp
                             </p>
                             <p class="text-xs text-gray-400 dark:text-gray-500">
                                 Caramelos de tipo: {{ $requisito['caramelosDisponibles'] ?? 0 }}
                             </p>
                         </div>
-                        <button
-                            type="button"
-                            class="px-3 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors dar-caramelo-btn"
-                            data-url="{{ url('/reclutado/'.$reclutado['id'].'/dar-caramelo') }}"
-                            data-tipo="{{ $requisito['tipo'] }}"
-                            {{ ($requisito['caramelosDisponibles'] ?? 0) <= 0 ? 'disabled' : '' }}
-                        >
-                            Dar caramelo (+100)
-                        </button>
+                        <div class="flex shrink-0 items-center gap-1">
+                            @foreach ([1, 10, 100] as $cantidad)
+                                <button
+                                    type="button"
+                                    class="px-2.5 py-2 bg-blue-600 text-white rounded-lg text-xs font-bold hover:bg-blue-700 transition-colors dar-caramelo-btn disabled:opacity-40 disabled:cursor-not-allowed"
+                                    data-url="{{ url('/reclutado/'.$reclutado['id'].'/dar-caramelo') }}"
+                                    data-tipo="{{ $requisito['tipo'] }}"
+                                    data-cantidad="{{ $cantidad }}"
+                                    {{ ($requisito['caramelosDisponibles'] ?? 0) <= 0 ? 'disabled' : '' }}
+                                >
+                                    x{{ $cantidad }}
+                                </button>
+                            @endforeach
+                        </div>
                     </div>
                 @endforeach
             </div>
@@ -63,7 +68,7 @@
                 <form method="POST" action="{{ url('/reclutado/'.$reclutado['id'].'/evolucionar') }}" class="mt-5">
                     @csrf
                     <button type="submit" class="w-full px-4 py-3 bg-green-600 text-white rounded-xl text-sm font-bold hover:bg-green-700 transition-colors">
-                        ¡Evolucionar a {{ $siguiente['nombre'] }}!
+                        ¡Evolucionar a {{ $siguiente['nombre_formateado'] }}!
                     </button>
                 </form>
             @endif
@@ -86,7 +91,10 @@
                         'Content-Type': 'application/json',
                         'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content ?? '{{ csrf_token() }}',
                     },
-                    body: JSON.stringify({ tipo: button.dataset.tipo }),
+                    body: JSON.stringify({
+                        tipo: button.dataset.tipo,
+                        cantidad: Number(button.dataset.cantidad || 1),
+                    }),
                 });
                 if (response.ok) {
                     window.location.reload();

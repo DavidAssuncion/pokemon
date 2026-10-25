@@ -16,6 +16,7 @@ use Src\Battle\Domain\Posicion;
 use Src\CombateEntrenadores\App\MapeadorPokemonBatalla;
 use Src\CombateEntrenadores\Domain\GeneradorMovimientosTipo;
 use Src\CombateRuta\App\GeneradorEquipoRuta;
+use Src\CombateRuta\App\SelectorMovimientosMeta;
 use Src\Shared\Domain\ClasificadorOfensivaDefensiva;
 use Tests\TestCase;
 
@@ -28,6 +29,7 @@ class GeneradorEquipoRutaTest extends TestCase
         return new GeneradorEquipoRuta(
             new MapeadorPokemonBatalla(new GeneradorMovimientosTipo()),
             new ClasificadorOfensivaDefensiva(),
+            new SelectorMovimientosMeta(),
         );
     }
 

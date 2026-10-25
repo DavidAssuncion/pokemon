@@ -30,6 +30,7 @@ class CadenaDanio
             new ManejadorObjetosEquipados(),
             new ManejadorBonusDaño(),
             new ManejadorBonificadorDanio(),
+            new ManejadorAguante(),
         ];
 
         for ($indice = 0; $indice < count($manejadores) - 1; $indice++) {
