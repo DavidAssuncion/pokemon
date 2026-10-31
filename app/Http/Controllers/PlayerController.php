@@ -13,9 +13,11 @@ use App\Models\Reclutable;
 use App\Models\Reclutado;
 use App\Models\Team;
 use App\Models\TeamMember;
+use App\Support\DesbloqueoPokedex;
 use App\Support\EquiposVistaPresenter;
 use App\Support\ItemCatalogo;
 use App\Support\ReclutadoSerializer;
+use Illuminate\Http\Request;
 use Illuminate\View\View;
 use Src\Equipos\App\ObtenerEquipos;
 use Src\Exploraciones\Domain\Collections\RolesExploracionCollection;
@@ -30,20 +32,31 @@ class PlayerController extends Controller
     ) {
     }
 
-    public function pokedex(): View
+    public function pokedex(Request $request): View
     {
-        $page = $this->datagrid->list('pokemon', [
+        // TEMPORAL: flag de QA para ver todos los Pokémon y sus hábitats sin
+        // haberlos avistado. Se puede activar por entorno o con ?unlock=1 en
+        // local/debug, sin tocar los datos de la pokédex del usuario.
+        $unlockAll = DesbloqueoPokedex::activo($request);
+
+        $params = [
             'per_page' => 120,
             'sort' => 'id',
             'order' => 'asc',
-            'filter' => ['visto' => '1'],
-        ]);
+        ];
+
+        if (! $unlockAll) {
+            $params['filter'] = ['visto' => '1'];
+        }
+
+        $page = $this->datagrid->list('pokemon', $params);
 
         return view('pokedex.index', [
             'pokemons' => $page,
             'counts' => $page['meta']['counts'] ?? ['total' => 0, 'vistos' => 0, 'atrapados' => 0, 'no_vistos' => 0],
             'tipos' => TipoEnum::options(),
             'stats' => StatEnum::options(),
+            'unlockAll' => $unlockAll,
         ]);
     }
 
@@ -67,9 +80,8 @@ class PlayerController extends Controller
     public function equipos(): View
     {
         $teams = Team::with('members.reclutado.pokemon.abilities')
-            ->get()
-            ->sortBy('id')
-            ->values();
+            ->orderBy('id')
+            ->get();
 
         $teams = $teams->map(function (Team $team): array {
             $members = $team->members->sortBy('slot')->values();
@@ -121,9 +133,11 @@ class PlayerController extends Controller
             fn (Reclutado $r): bool => $r->teamMember !== null
         )->pluck('id')->toArray();
 
-        $reclutados = $reclutadosQuery
-            ->map(fn (Reclutado $reclutado): array => ReclutadoSerializer::serializar($reclutado, auth()->user()?->nivel()))
-            ->values();
+        $reclutados = ReclutadoSerializer::serializarColeccion(
+            $reclutadosQuery,
+            auth()->user()?->nivel(),
+            incluirMovimientosDisponibles: false,
+        );
 
         $reclutadosEnExploracion = ExploracionActiva::whereNull('regreso')
             ->pluck('reclutado_id')

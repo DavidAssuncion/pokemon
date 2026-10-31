@@ -60,7 +60,7 @@ class Pokemon extends Model
     public function moves(): BelongsToMany
     {
         return $this->belongsToMany(Move::class, 'pokemon_moves')
-            ->withPivot(['slot', 'source'])
+            ->withPivot(['slot', 'source', 'level'])
             ->withTimestamps()
             ->orderByPivot('slot');
     }

@@ -87,6 +87,7 @@ final class EloquentGymCatalogoRepository implements GymCatalogoRepositoryInterf
             $data = [
                 'vanguardia' => $equipo->vanguardia->all(),
                 'retaguardia' => $equipo->retaguardia->all(),
+                'movimientos' => $equipo->movimientos,
             ];
 
             if (isset($existentes[$etapa])) {
@@ -119,6 +120,7 @@ final class EloquentGymCatalogoRepository implements GymCatalogoRepositoryInterf
             $equipos[(int) $stage->etapa] = new EquipoEtapaGimnasio(
                 vanguardia: new IntCollection($stage->vanguardia ?? []),
                 retaguardia: new IntCollection($stage->retaguardia ?? []),
+                movimientos: is_array($stage->movimientos) ? $stage->movimientos : [],
             );
         }
 

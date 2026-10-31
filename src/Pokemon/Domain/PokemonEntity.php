@@ -18,6 +18,8 @@ class PokemonEntity
 
     private StatsValue $evs;
 
+    private StatsValue $ivs;
+
     private ColeccionMovimientos $moves;
 
     private TiposCollection $tiposCollection;
@@ -38,14 +40,16 @@ class PokemonEntity
         ?string $habilidad = null,
         ?BattleStats $precomputedBattleStats = null,
         private readonly float $peso = 0.0,
+        ?StatsValue $ivs = null,
     ) {
         $this->stats = $stats;
         $this->evs = $evs;
+        $this->ivs = $ivs ?? $precomputedBattleStats?->ivs() ?? StatsValue::ceros();
         $this->moves = new ColeccionMovimientos($moves);
         $this->tiposCollection = $tiposCollection;
         $this->objetos = $objetos;
         $this->habilidad = $habilidad;
-        $this->battleStats = $precomputedBattleStats ?? new BattleStats($stats, $evs);
+        $this->battleStats = $precomputedBattleStats ?? new BattleStats($stats, $evs, ivs: $this->ivs);
     }
 
     public function peso(): float
@@ -66,6 +70,11 @@ class PokemonEntity
     public function evs(): StatsValue
     {
         return $this->evs;
+    }
+
+    public function ivs(): StatsValue
+    {
+        return $this->ivs;
     }
 
     public function moves(): ColeccionMovimientos

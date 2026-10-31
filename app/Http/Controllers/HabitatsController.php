@@ -7,6 +7,7 @@ namespace App\Http\Controllers;
 use App\Models\ExploracionActiva;
 use App\Models\Habitat;
 use App\Models\Pokedex;
+use App\Support\DesbloqueoPokedex;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
@@ -43,8 +44,10 @@ class HabitatsController extends Controller
         return view('habitats.index', ['provincias' => $provincias]);
     }
 
-    public function show(int $id): View
+    public function show(Request $request, int $id): View
     {
+        $unlockAll = DesbloqueoPokedex::activo($request);
+
         $exploracionesActivas = ExploracionActiva::where('habitat_id', $id)
             ->whereNull('regreso')
             ->with('reclutado')
@@ -75,10 +78,12 @@ class HabitatsController extends Controller
                 }
             }
         }
-        $sightedPokemonIds = Pokedex::whereIn('pokemon_id', $pokemonIds)
-            ->where('visto', true)
-            ->pluck('pokemon_id')
-            ->toArray();
+        $sightedPokemonIds = $unlockAll
+            ? array_values(array_unique($pokemonIds))
+            : Pokedex::whereIn('pokemon_id', $pokemonIds)
+                ->where('visto', true)
+                ->pluck('pokemon_id')
+                ->toArray();
 
         return view('habitats.show', [
             'habitat' => $habitatData,
@@ -86,6 +91,7 @@ class HabitatsController extends Controller
             'exploracionesActivas' => $exploracionesActivas,
             'equiposEnExploracion' => $equiposEnExploracion,
             'sightedPokemonIds' => $sightedPokemonIds,
+            'unlockAll' => $unlockAll,
         ]);
     }
 

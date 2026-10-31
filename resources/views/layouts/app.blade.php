@@ -79,6 +79,7 @@
                             ['route' => '/pokedex', 'label' => 'Pokédex'],
                             ['route' => '/habitats', 'label' => 'Hábitats'],
                             ['route' => '/equipos', 'label' => 'Equipos'],
+                            ['route' => '/sendas', 'label' => 'Sendas'],
                             ['route' => '/gimnasios', 'label' => 'Gimnasios'],
                             ['route' => '/reclutamiento', 'label' => 'Reclutamiento'],
                             ['route' => '/exploraciones', 'label' => 'Exploraciones'],

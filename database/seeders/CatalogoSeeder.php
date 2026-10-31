@@ -23,6 +23,7 @@ class CatalogoSeeder extends Seeder
             PokemonHabitatSeeder::class,
             MoveSeeder::class,
             PokemonMoveSeeder::class,
+            TypePathNodeSeeder::class,
             AbilitySeeder::class,
             PokemonAbilitySeeder::class,
         ]);

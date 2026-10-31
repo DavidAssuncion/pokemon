@@ -5,11 +5,19 @@
 @section('content')
 <div x-data="pokedexApp()" x-init="init()">
         <!-- Header -->
-        <div class="mb-6">
-            <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Pokédex</h1>
-            <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                <span x-text="counts.vistos"></span> vistos · <span x-text="counts.atrapados"></span> atrapados · <span x-text="counts.total"></span> totales
-            </p>
+        <div class="mb-6 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+            <div>
+                <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Pokédex</h1>
+                <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                    <span x-text="counts.vistos"></span> vistos · <span x-text="counts.atrapados"></span> atrapados · <span x-text="counts.total"></span> totales
+                </p>
+            </div>
+            <template x-if="unlockAll">
+                <span class="inline-flex items-center gap-2 self-start px-3 py-1.5 rounded-lg bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300 text-xs font-medium border border-amber-200 dark:border-amber-800">
+                    <span class="w-2 h-2 rounded-full bg-amber-500"></span>
+                    Modo test: todos desbloqueados
+                </span>
+            </template>
         </div>
 
         <!-- Filter bar -->
@@ -41,6 +49,16 @@
                     class="px-4 py-2 rounded-lg text-sm font-medium transition-colors"
                 >
                     Atrapados
+                </button>
+                <button
+                    x-show="unlockAll"
+                    @click="setFilter('todos')"
+                    role="tab"
+                    :aria-selected="activeFilter === 'todos'"
+                    :class="tabClass('todos')"
+                    class="px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+                >
+                    Todos
                 </button>
                 <div class="relative">
                     <button
@@ -168,11 +186,11 @@
                     tabindex="0"
                     @keydown.space.prevent="openDetail(pokemon)"
                     @keydown.enter.prevent="openDetail(pokemon)"
-                    :aria-label="'Pokemon #' + pokemon.id + ' ' + (pokemon.visto ? pokemon.name : 'No visto')"
+                    :aria-label="'Pokemon #' + pokemon.id + ' ' + ((pokemon.visto || unlockAll) ? pokemon.name : 'No visto')"
                 >
                     <!-- Image / placeholder -->
                     <div class="aspect-square relative bg-gray-50 dark:bg-gray-900 p-2">
-                        <template x-if="!pokemon.visto">
+                        <template x-if="!pokemon.visto && !unlockAll">
                             <div
                                 class="w-full h-full rounded-lg bg-gray-200 dark:bg-gray-700 bg-linear-to-br from-gray-200 to-gray-300 dark:from-gray-700 dark:to-gray-800 flex items-center justify-center"
                                 aria-hidden="true"
@@ -180,7 +198,7 @@
                                 <span class="text-2xl font-bold text-gray-400 dark:text-gray-600 select-none">?</span>
                             </div>
                         </template>
-                        <template x-if="pokemon.visto">
+                        <template x-if="pokemon.visto || unlockAll">
                             <img
                                 :src="iconUrl(pokemon)"
                                 x-on:error="onIconError($event, pokemon)"
@@ -202,9 +220,12 @@
                         <p class="text-[10px] text-gray-400 dark:text-gray-500" x-text="'#' + pokemon.id"></p>
                         <p
                             class="text-xs font-medium text-gray-900 dark:text-white truncate"
-                            :class="{ 'text-gray-400 dark:text-gray-500': !pokemon.visto }"
-                            x-text="pokemon.visto ? pokemon.name : '???'"
+                            :class="{ 'text-gray-400 dark:text-gray-500': !pokemon.visto && !unlockAll }"
+                            x-text="(pokemon.visto || unlockAll) ? pokemon.name : '???'"
                         ></p>
+                        <template x-if="pokemon.habitat && (pokemon.visto || unlockAll)">
+                            <p class="text-[10px] text-blue-600 dark:text-blue-400 truncate" x-text="pokemon.habitat"></p>
+                        </template>
                     </div>
                 </div>
             </template>
@@ -262,7 +283,7 @@
 
                 <!-- Header -->
                 <div class="p-6 pb-4 text-center border-b border-gray-200 dark:border-gray-700">
-                    <template x-if="!selectedPokemon.visto">
+                    <template x-if="!selectedPokemon.visto && !unlockAll">
                         <div
                             class="w-24 h-24 rounded-xl bg-gray-200 dark:bg-gray-700 bg-linear-to-br from-gray-200 to-gray-300 dark:from-gray-700 dark:to-gray-800 flex items-center justify-center mx-auto mb-3"
                             aria-hidden="true"
@@ -270,7 +291,7 @@
                             <span class="text-3xl font-bold text-gray-400 dark:text-gray-600 select-none">?</span>
                         </div>
                     </template>
-                    <template x-if="selectedPokemon.visto">
+                    <template x-if="selectedPokemon.visto || unlockAll">
                         <img
                             :src="iconUrl(selectedPokemon)"
                             x-on:error="onIconError($event, selectedPokemon)"
@@ -281,7 +302,7 @@
                         >
                     </template>
                     <p class="text-xs text-gray-400 dark:text-gray-500" x-text="'#' + selectedPokemon.id"></p>
-                    <h2 id="pokedex-modal-title" class="text-xl font-bold text-gray-900 dark:text-white" x-text="selectedPokemon.visto ? selectedPokemon.name : '???'"></h2>
+                    <h2 id="pokedex-modal-title" class="text-xl font-bold text-gray-900 dark:text-white" x-text="(selectedPokemon.visto || unlockAll) ? selectedPokemon.name : '???'"></h2>
                     <template x-if="selectedPokemon.atrapado">
                         <span class="inline-block mt-2 px-3 py-1 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 text-xs font-medium rounded-full">
                             Atrapado
@@ -317,14 +338,14 @@
                     </template>
 
                     <!-- Not viewed message (no fetch for unseen pokemon) -->
-                    <template x-if="!detailLoading && !detailError && !selectedPokemon.visto">
+                    <template x-if="!detailLoading && !detailError && !selectedPokemon.visto && !unlockAll">
                         <div class="text-center py-6">
                             <p class="text-gray-400 dark:text-gray-500 italic">Este Pokémon aún no ha sido avistado.</p>
                         </div>
                     </template>
 
                     <!-- Detail content -->
-                    <template x-if="!detailLoading && !detailError && selectedPokemon.visto && detail">
+                    <template x-if="!detailLoading && !detailError && (selectedPokemon.visto || unlockAll) && detail">
                         <!-- Types -->
                         <template x-if="detail.types && detail.types.length > 0">
                             <div>
@@ -367,7 +388,21 @@
                         <template x-if="detail.habitat_name">
                             <div>
                                 <h3 class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">Hábitat</h3>
-                                <p class="text-sm text-gray-900 dark:text-white" x-text="detail.habitat_name"></p>
+                                <template x-if="detail.habitat_id">
+                                    <a :href="'/habitats/' + detail.habitat_id" class="block group/habitat">
+                                        <img
+                                            :src="'/habitats-img/' + detail.habitat_id + '.webp?v=1'"
+                                            :alt="detail.habitat_name"
+                                            loading="lazy"
+                                            decoding="async"
+                                            class="w-full h-24 object-cover rounded-lg border border-gray-200 dark:border-gray-700 transition-transform group-hover/habitat:scale-[1.02]"
+                                        >
+                                        <p class="mt-1 text-sm text-blue-600 dark:text-blue-400 group-hover/habitat:underline" x-text="(detail.habitats && detail.habitats.length) ? detail.habitats.join(', ') : detail.habitat_name"></p>
+                                    </a>
+                                </template>
+                                <template x-if="!detail.habitat_id">
+                                    <p class="text-sm text-gray-900 dark:text-white" x-text="(detail.habitats && detail.habitats.length) ? detail.habitats.join(', ') : detail.habitat_name"></p>
+                                </template>
                             </div>
                         </template>
                     </template>
@@ -383,6 +418,8 @@ function pokedexApp() {
     return {
         items: [],
         activeFilter: 'vistos',
+        // TEMPORAL: modo QA para ver todos los Pokémon/hábitats sin avistar.
+        unlockAll: @json($unlockAll ?? false),
         typeFilter: null,
         showTypeFilter: false,
         effortFilter: null,
@@ -413,6 +450,9 @@ function pokedexApp() {
             if (this.activeFilter === 'no_vistos') {
                 return 'No hay Pokémon sin avistar';
             }
+            if (this.activeFilter === 'todos') {
+                return 'No hay Pokémon';
+            }
             return 'No se encontraron Pokémon';
         },
 
@@ -435,7 +475,11 @@ function pokedexApp() {
                 : (initial && Array.isArray(initial.data) ? initial.data : []);
             // Guard defensivo: el backend entrega la página 1 SIN filtrar por la pestaña inicial;
             // filtramos aquí (por flags del item) para que la primera pintura coincida con "Vistos".
-            this.items = seed.filter(p => p && p.visto);
+            this.items = this.unlockAll ? seed : seed.filter(p => p && p.visto);
+            if (this.unlockAll) {
+                // En modo test el seed llega sin filtro y arrancamos en "Todos".
+                this.activeFilter = 'todos';
+            }
             this.page = Number(initial?.meta?.page) || 1;
             this.lastPage = initial?.meta?.last_page != null ? Number(initial.meta.last_page) : null;
             const fallbackCounts = {
@@ -639,11 +683,11 @@ function pokedexApp() {
             this.detailLoading = false;
             this.detailError = false;
             this.showModal = true;
-            if (pokemon.visto) {
+            if (pokemon.visto || this.unlockAll) {
                 this.detailLoading = true;
                 this.loadDetail(pokemon.id);
             }
-            // Pokémon no visto: sin fetch bajo demanda (decisión documentada).
+            // Pokémon no visto y modo test desactivado: sin fetch bajo demanda.
         },
 
         closeDetail() {

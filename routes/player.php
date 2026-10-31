@@ -6,6 +6,7 @@ use App\Http\Controllers\OnboardingController;
 use App\Http\Controllers\PlayerController;
 use App\Http\Controllers\ReclutadoController;
 use App\Http\Controllers\ReclutamientoController;
+use App\Http\Controllers\SendasController;
 use App\Http\Controllers\TeamController;
 use Illuminate\Support\Facades\Route;
 
@@ -56,6 +57,14 @@ Route::delete('/reclutado/{reclutado}', [ReclutadoController::class, 'destroy'])
 
 // Opciones de evolución bajo demanda (usado por el modal de /equipos)
 Route::get('/reclutado/{reclutado}/evoluciones', [ReclutadoController::class, 'evoluciones']);
+
+// Catálogo de movimientos bajo demanda (usado por el modal de /equipos)
+Route::get('/reclutado/{reclutado}/movimientos', [ReclutadoController::class, 'movimientos']);
+
+// Sendas de tipo: progreso de cuenta y desbloqueo global de movimientos
+Route::get('/sendas', [SendasController::class, 'index'])->name('sendas.index');
+Route::get('/sendas/{tipo}', [SendasController::class, 'show'])->name('sendas.show');
+Route::post('/sendas/desbloquear', [SendasController::class, 'desbloquear'])->name('sendas.desbloquear');
 
 // Favoritos y capacidades de reclutados (API JSON)
 Route::get('/api/reclutados', [ReclutadoController::class, 'listarTodos']);

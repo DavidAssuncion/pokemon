@@ -61,6 +61,8 @@ class CombateExploracion
             shiny: $reclutado->es_shiny,
             item: $item,
             nivel: $nivelPokemon,
+            evs: $reclutado->evs,
+            ivs: $reclutado->ivs,
             movimientosSeleccionados: is_array($reclutado->movimientos) ? $reclutado->movimientos : null,
             habilidadActivaId: $reclutado->habilidad_activa_id,
             nivelDesbloqueo: $nivelDesbloqueo,

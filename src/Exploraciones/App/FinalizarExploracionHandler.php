@@ -26,6 +26,8 @@ use Src\Exploraciones\Domain\ValueObjects\EventoExploracion;
 use Src\Exploraciones\Presentation\DTOIncidentesExploracion;
 use Src\Exploraciones\Presentation\DTOObjetoPerdido;
 use Src\Exploraciones\Presentation\TransformadorResultadoExploracion;
+use Src\Granjas\App\ResolverBonosFamilia;
+use Src\Granjas\Domain\Collections\RefugiosHabitatCollection;
 use Src\Shared\Bus\Command;
 use Src\Shared\Bus\CommandHandler;
 use Src\Shared\Bus\UnitOfWork;
@@ -57,6 +59,7 @@ final class FinalizarExploracionHandler implements CommandHandler
         private readonly PersistirRecompensas $persistir,
         private readonly TransformadorResultadoExploracion $transformador,
         ?callable $aleatorio = null,
+        private readonly ?ResolverBonosFamilia $bonosFamilia = null,
     ) {
         $this->aleatorio = $aleatorio !== null ? Closure::fromCallable($aleatorio) : null;
     }
@@ -136,9 +139,15 @@ final class FinalizarExploracionHandler implements CommandHandler
         ?callable $aleatorio = null,
     ): void {
         $usuario = $exploracion->user;
+        $bonos = $this->bonosFamilia ?? app(ResolverBonosFamilia::class);
+        $refugios = $bonos->refugiosDeHabitat(
+            $exploracion->user_id,
+            $exploracion->habitat_id,
+        );
+
         $recompensas = $this->calculador->calcular(
             $derrotados,
-            $this->rollAleatorio($aleatorio),
+            $this->rollAleatorio($aleatorio, $bonos, $refugios),
             $usuario !== null ? $usuario->nivel() : 1,
             $multiplicador,
         );
@@ -450,14 +459,26 @@ final class FinalizarExploracionHandler implements CommandHandler
     /**
      * Tirada de captura (regla cap-25, dominio ProbabilidadCaptura): seam de
      * test con aleatorio [0,1) determinista; por defecto mt_rand(1, 100) / 100.
+     * El factor de refugio se aplica a la probabilidad final (no al capture_rate)
+     * para que no quede topado por el cap-25.
      *
      * @param  callable():float|null  $aleatorio
      */
-    private function rollAleatorio(?callable $aleatorio = null): callable
-    {
-        $aleatorio = $aleatorio ?? fn (): float => mt_rand(1, 100) / 100;
+    private function rollAleatorio(
+        ?callable $aleatorio = null,
+        ?ResolverBonosFamilia $bonos = null,
+        ?RefugiosHabitatCollection $refugios = null,
+    ): callable {
+        $aleatorio ??= fn (): float => mt_rand(1, 100) / 100;
 
-        return fn (PokemonDerrotado $pokemon): bool => ProbabilidadCaptura::intentar($pokemon->captureRate, $aleatorio);
+        return function (PokemonDerrotado $pokemon) use ($aleatorio, $bonos, $refugios): bool {
+            $factor = 1.0;
+            if ($bonos !== null && $refugios !== null && $pokemon->evolutionChainId !== null) {
+                $factor = $bonos->factorCaptura($refugios, $pokemon->evolutionChainId);
+            }
+
+            return ProbabilidadCaptura::intentarConFactor($pokemon->captureRate, $factor, $aleatorio);
+        };
     }
 
     /**

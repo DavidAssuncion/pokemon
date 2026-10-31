@@ -5,15 +5,16 @@
 Sistema de huevos del jugador (2026-09-16): se pone a gestar un huevo de una familia evolutiva de
 la que el jugador ya tiene **≥2 reclutados distintos** (misma `evolution_chain_id`; especies
 distintas de la misma cadena valen), se espera gestación + incubación y se eclosiona para obtener
-un reclutado con IVs mejores que los salvajes (10-15, o 15 si es shiny). Los tiempos y estados se
-**derivan de timestamps** (on-read); no hay ningún cron/worker que avance huevos.
+un reclutado con IVs dependientes del nivel del nido de su familia (0–4 sin nido; 15 a nivel 5; 15
+si es shiny). Los tiempos y estados se **derivan de timestamps** (on-read); no hay ningún
+cron/worker que avance huevos.
 
 ## Estructura (convención DDD por módulos, `docs/ddd.md`)
 
 | Carpeta / clase | Responsabilidad |
 |---|---|
 | `Domain/CalculadorTiemposHuevo` | Fórmulas puras (contrato B1 del cliente): `puestaHoras = 255 / max(capture_rate, 1)`; `eclosionHoras = ceil(max(hatch, 1) / 15)` (`DIVISOR_HATCH = 15`); `sumaHoras`. Guard suelo 1 en ambos divisores (hardening P1). |
-| `Domain/CalculadorEstadoHuevo` | Estado derivado: `estadoDe(creadoEn, captureRate, hatch, ahora)` → GESTANDO si `now < finGestacion`, INCUBANDO si `finGestacion <= now < finIncubacion`, LISTO si `now >= finIncubacion`; `restanteHoras` redondeado a 2 decimales (evita "84h 60m" por 84.9999∞). |
+| `Domain/CalculadorEstadoHuevo` | Estado derivado: `estadoDe(creadoEn, DatosTiempoHuevo, ahora)` → GESTANDO si `now < finGestacion`, INCUBANDO si `finGestacion <= now < finIncubacion`, LISTO si `now >= finIncubacion`; `restanteHoras` redondeado a 2 decimales (evita "84h 60m" por 84.9999∞). |
 | `Domain/EstadoHuevo` | Enum `GESTANDO` / `INCUBANDO` / `LISTO`. |
 | `Domain/EstadoCalculadoHuevo` | VO readonly `{estado, restanteHoras}`. |
 | `App/ListarHuevos` | Serializa huevos (horas float + `progreso` 0-100 + `puede_eclosionar`); `disponibles` por familia (≥2 individuos, dedupe 1/cadena, sin huevo activo de esa familia, hatch no-nulo; representante = menor `species_id`); `limites` (`max_gestacion=1`, `max_incubando=1`, flags activos). `serializarUno()` es público y lo reutiliza el controller en POST (201). |
@@ -24,7 +25,7 @@ un reclutado con IVs mejores que los salvajes (10-15, o 15 si es shiny). Los tie
 ## Dependencias
 
 - `src/Shared/Domain/ProbabilidadesShiny` — rolls shiny compartidos (`HUEVO = 512`; `SALVAJE = 2048` usado por ruta).
-- `src/Pokemon/Domain/Stats/GeneradorIvs` — `maximos()` (15) y `huevo()` (10-15 por stat); `StatsValue`/`DatosStats`.
+- `src/Pokemon/Domain/Stats/GeneradorIvs` — `maximos()` (15) y `huevo()` (rango de IVs por nivel de nido: 0–4 sin nido, 5–8, 9–10, 11–12, 13–14, 15 a nivel 5); `StatsValue`/`DatosStats`.
 - `app/Support/CrearReclutado` — creación del reclutado en eclosión (misma vía que ruta shiny).
 - `app/Support/ReclutadoSerializer` — serialización del reclutado eclosionado (CP al nivel del usuario).
 - Modelos Eloquent: `App\Models\Huevo` (BelongsToUser → anti-IDOR por scope), `App\Models\Reclutado`, `App\Models\Pokemon`.
@@ -41,7 +42,8 @@ un reclutado con IVs mejores que los salvajes (10-15, o 15 si es shiny). Los tie
 4. **Pareja por familia** (semántica O2): ≥2 reclutados DISTINTOS con `pokemon.evolution_chain_id`
    = X; especies distintas de la misma cadena valen; especie del huevo = miembro de menor
    `species_id` (regla "primer integrante").
-5. **Shiny**: 1/512 en creación; shiny → IVs 15/15/15/15/15/15; no-shiny → 10-15 por stat.
+5. **Shiny**: 1/512 en creación; shiny → IVs 15/15/15/15/15/15; no-shiny → rango por nivel del
+   nido de la familia (0–4 sin nido, 5–8, 9–10, 11–12, 13–14 y 15 a nivel 5).
 6. **Eclosión idempotente**: un huevo con `eclosionado_en` no nulo → 422 "Este huevo ya eclosionó."
    (sin duplicar reclutados); estado != LISTO → 422.
 7. **Defensa en profundidad**: `EclosionarHuevo` revalida `user_id` (404 si ajeno) aunque el
@@ -53,9 +55,11 @@ un reclutado con IVs mejores que los salvajes (10-15, o 15 si es shiny). Los tie
 GET  /api/huevos                       → { huevos[], disponibles[], limites }
      huevos[]: { id, estado: gestando|incubando|listo, tiempo_total_horas: float,
                  tiempo_restante: float, progreso: int 0-100, puede_eclosionar: bool,
-                 pokemon: { id, name, icon } }
+                 pokemon: { id, name, icon }, nido_nivel, rango_iv: {min,max},
+                 factor_tiempo }
      disponibles[] (1/familia): { evolution_chain_id, pokemon: {id, name, icon},
-                                  capture_rate, hatch }
+                                  capture_rate, hatch, nido_nivel,
+                                  rango_iv: {min,max}, factor_tiempo }
      limites: { max_gestacion: 1, max_incubando: 1, gestacion_activa, incubacion_activa }
 
 POST /api/huevos                      body: { evolution_chain_id }

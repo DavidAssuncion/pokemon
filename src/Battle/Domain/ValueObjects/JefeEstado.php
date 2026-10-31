@@ -39,6 +39,18 @@ class JefeEstado
     }
 
     /**
+     * Clon profundo de las partes del jefe (HP mutable).
+     */
+    public function __clone(): void
+    {
+        $partes = [];
+        foreach ($this->partes as $parte) {
+            $partes[] = clone $parte;
+        }
+        $this->partes = $partes;
+    }
+
+    /**
      * @param  list<array<string, mixed>>  $fases
      * @return list<array{umbral: float, nombre: string, bonificador_dano: float, bonificador_velocidad: float, enrage: bool}>
      */

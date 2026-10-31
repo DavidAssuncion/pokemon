@@ -37,8 +37,12 @@
                         >
                             <!-- Image container: fixed 300x300 -->
                             <div class="w-full aspect-square bg-gray-100 dark:bg-gray-900 flex items-center justify-center overflow-hidden">
+                                @php
+                                    $habitatImagePath = resource_path('habitats_img/'.$habitat['id'].'.webp');
+                                    $habitatImageVersion = is_file($habitatImagePath) ? filemtime($habitatImagePath) : 0;
+                                @endphp
                                 <img
-                                    src="/habitats-img/{{ $habitat['id'] }}.webp"
+                                    src="/habitats-img/{{ $habitat['id'] }}.webp?v={{ $habitatImageVersion }}"
                                     alt="{{ $habitat['name'] }}"
                                     class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                                     onerror="this.style.display='none'"

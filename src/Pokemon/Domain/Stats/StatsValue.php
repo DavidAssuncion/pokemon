@@ -16,6 +16,11 @@ class StatsValue
     ) {
     }
 
+    public static function ceros(): self
+    {
+        return new self(0, 0, 0, 0, 0, 0);
+    }
+
     /**
      * Normaliza un array (JSON de BD o payload) a un StatsValue.
      * Claves canónicas cortas {hp, atk, def, spAtk, spDef, speed} con fallback

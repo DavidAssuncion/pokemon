@@ -64,7 +64,7 @@
                         <span class="flex-1 text-sm text-left font-medium text-gray-700 dark:text-gray-300">Combate de ruta</span>
                     </button>
                     <button
-                        @click="{{ $bloqueadoConstruccion ? '' : "alert('Función próximamente')" }}"
+                        @click="{{ $bloqueadoConstruccion ? '' : 'openGranjaModal()' }}"
                         {{ $bloqueadoConstruccion ? 'disabled' : '' }}
                         @if($bloqueadoConstruccion) title="No disponible durante exploraciones activas" @endif
                         class="{{ $constructionButtonClass }} {{ $bloqueadoConstruccion ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-50 dark:hover:bg-gray-700' }}"
@@ -1078,6 +1078,168 @@
             </div>
         </div>
     </template>
+
+    <!-- Granjas Modal -->
+    <template x-if="showGranjaModal">
+        <div class="fixed inset-0 z-50 flex items-center justify-center p-4" @keydown.escape.window="closeGranjaModal()">
+            <div class="absolute inset-0 bg-black/60" @click="closeGranjaModal()"></div>
+            <div class="relative bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-5xl max-h-[90vh] overflow-hidden flex flex-col">
+                <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+                    <div>
+                        <h3 class="text-lg font-bold text-gray-900 dark:text-white">
+                            Granjas — <span x-text="granja?.habitat?.name || '{{ $habitat['name'] }}'"></span>
+                        </h3>
+                        <p class="text-xs text-gray-500 dark:text-gray-400">Nidos, refugios y complementos de las familias del hábitat.</p>
+                    </div>
+                    <button @click="closeGranjaModal()" class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400" aria-label="Cerrar modal de granjas">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                    </button>
+                </div>
+
+                <div class="flex-1 overflow-y-auto p-6 space-y-4">
+                    <div x-show="granjaLoading" x-cloak role="status" class="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
+                        <svg class="w-4 h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                        Cargando granja...
+                    </div>
+
+                    <div x-show="granjaError" x-cloak role="alert" class="text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg px-3 py-2">
+                        <span x-text="granjaError"></span>
+                        <button @click="loadGranja()" class="ml-2 underline font-medium">Reintentar</button>
+                    </div>
+
+                    <template x-if="!granjaLoading && !granjaError && granja">
+                        <div class="space-y-4">
+                            <div class="rounded-xl bg-gray-50 dark:bg-gray-900/40 border border-gray-200 dark:border-gray-700 p-3 text-xs text-gray-600 dark:text-gray-300 space-y-1">
+                                <p><strong>Nido:</strong> cada nivel sube el rango de IV de los huevos y reduce su tiempo de gestación/eclosión.</p>
+                                <p><strong>Refugio:</strong> modifica la aparición y la captura de la familia. Las condiciones insalubres invierten el efecto.</p>
+                                <p><strong>Complementos:</strong> dan EV a toda la familia; al subir un complemento se aplica también a los reclutados existentes.</p>
+                            </div>
+
+                            <div x-show="granja.familias.length === 0" class="text-center py-10 text-gray-500 dark:text-gray-400">
+                                Este hábitat no tiene familias asignadas todavía.
+                            </div>
+
+                            <template x-for="familia in (granja.familias || [])" :key="'granja-' + familia.evolution_chain_id">
+                                <div class="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-4 space-y-4">
+                                    <div class="flex items-center gap-3">
+                                        <div class="w-14 h-14 shrink-0 rounded-xl bg-gray-100 dark:bg-gray-900 flex items-center justify-center overflow-hidden">
+                                            <img :src="familia.base.icon" loading="lazy" decoding="async" :alt="familia.base.name" class="w-full h-full object-contain" onerror="this.style.display='none'">
+                                        </div>
+                                        <div class="min-w-0 flex-1">
+                                            <p class="text-sm font-bold text-gray-900 dark:text-white truncate" x-text="familia.base.name"></p>
+                                            <div class="flex flex-wrap gap-1 mt-1">
+                                                <template x-for="tipo in (familia.types || [])" :key="familia.evolution_chain_id + '-tipo-' + tipo.id">
+                                                    <span class="px-1.5 py-0.5 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 text-[10px] font-medium rounded" x-text="tipo.name"></span>
+                                                </template>
+                                            </div>
+                                        </div>
+                                        <div class="text-right shrink-0">
+                                            <p class="text-[10px] uppercase tracking-wide text-gray-400 dark:text-gray-500">Caramelos familia</p>
+                                            <p class="text-sm font-bold text-gray-900 dark:text-white">🍬 <span x-text="saldoFamilia(familia.evolution_chain_id)"></span></p>
+                                        </div>
+                                    </div>
+
+                                    <div class="grid md:grid-cols-2 gap-3">
+                                        <!-- Nido -->
+                                        <div class="rounded-xl border border-amber-200 dark:border-amber-800 bg-amber-50/50 dark:bg-amber-900/10 p-3">
+                                            <div class="flex items-center justify-between gap-2">
+                                                <p class="text-sm font-bold text-gray-900 dark:text-white">🪺 Nido</p>
+                                                <span class="text-xs font-semibold text-amber-700 dark:text-amber-300" x-text="'Nv ' + familia.nido.nivel + '/' + familia.nido.max"></span>
+                                            </div>
+                                            <p class="text-xs text-gray-600 dark:text-gray-300 mt-2">
+                                                IV por stat: <strong x-text="familia.nido.rango_iv.min + '–' + familia.nido.rango_iv.max"></strong>
+                                            </p>
+                                            <p class="text-xs text-gray-600 dark:text-gray-300">
+                                                Tiempo de huevo: <strong x-text="familia.nido.reduccion_tiempo_pct + '% más rápido'"></strong>
+                                            </p>
+                                            <button
+                                                type="button"
+                                                @click="mejorarNido(familia.evolution_chain_id)"
+                                                :disabled="granjaAccionando || !familia.nido.puede_mejorar"
+                                                class="mt-3 w-full px-3 py-2 rounded-lg text-xs font-bold transition-colors disabled:bg-gray-200 dark:disabled:bg-gray-700 disabled:text-gray-500 dark:disabled:text-gray-400 disabled:cursor-not-allowed bg-amber-600 text-white hover:bg-amber-700"
+                                            >
+                                                <span x-text="familia.nido.coste_siguiente !== null ? (familia.nido.nivel === 0 ? 'Construir nido' : 'Mejorar nido') + ' · ' + familia.nido.coste_siguiente + ' 🍬' : 'Nido al máximo'"></span>
+                                            </button>
+                                        </div>
+
+                                        <!-- Refugio -->
+                                        <div class="rounded-xl border border-emerald-200 dark:border-emerald-800 bg-emerald-50/50 dark:bg-emerald-900/10 p-3">
+                                            <div class="flex items-center justify-between gap-2">
+                                                <p class="text-sm font-bold text-gray-900 dark:text-white">🏕️ Refugio</p>
+                                                <span class="text-xs font-semibold text-emerald-700 dark:text-emerald-300" x-text="'Nv ' + familia.refugio.nivel + '/' + familia.refugio.max"></span>
+                                            </div>
+                                            <p class="text-xs text-gray-600 dark:text-gray-300 mt-2">
+                                                Aparición ×<strong x-text="familia.refugio.multiplicador_aparicion"></strong>
+                                                · Captura ×<strong x-text="familia.refugio.multiplicador_captura"></strong>
+                                            </p>
+                                            <p x-show="familia.refugio.exclusivo" class="text-xs font-semibold text-emerald-700 dark:text-emerald-300 mt-1">
+                                                Nivel 5: solo aparece esta familia.
+                                            </p>
+                                            <p x-show="familia.refugio.excluido" class="text-xs font-semibold text-orange-600 dark:text-orange-400 mt-1">
+                                                Otra familia tiene un refugio nivel 5: esta familia no aparece.
+                                            </p>
+                                            <p x-show="familia.refugio.insalubres" class="text-xs font-semibold text-red-600 dark:text-red-400 mt-1">
+                                                Condiciones insalubres activas: efecto invertido y complementos bloqueados.
+                                            </p>
+                                            <button
+                                                type="button"
+                                                @click="mejorarRefugio(familia.evolution_chain_id)"
+                                                :disabled="granjaAccionando || !familia.refugio.puede_mejorar"
+                                                class="mt-3 w-full px-3 py-2 rounded-lg text-xs font-bold transition-colors disabled:bg-gray-200 dark:disabled:bg-gray-700 disabled:text-gray-500 dark:disabled:text-gray-400 disabled:cursor-not-allowed bg-emerald-600 text-white hover:bg-emerald-700"
+                                            >
+                                                <span x-text="familia.refugio.coste_siguiente !== null ? (familia.refugio.nivel === 0 ? 'Construir refugio' : 'Mejorar refugio') + ' · ' + familia.refugio.coste_siguiente + ' 🍬' : 'Refugio al máximo'"></span>
+                                            </button>
+                                            <button
+                                                type="button"
+                                                x-show="familia.refugio.nivel > 0"
+                                                @click="alternarInsalubres(familia.evolution_chain_id)"
+                                                :disabled="granjaAccionando"
+                                                class="mt-2 w-full px-3 py-1.5 rounded-lg text-[11px] font-semibold border transition-colors disabled:opacity-50 disabled:cursor-not-allowed border-red-300 dark:border-red-700 text-red-700 dark:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20"
+                                                x-text="familia.refugio.insalubres ? 'Activar condiciones salubres' : 'Activar condiciones insalubres'"
+                                            ></button>
+                                        </div>
+                                    </div>
+
+                                    <!-- Complementos -->
+                                    <div>
+                                        <div class="flex items-center justify-between gap-2">
+                                            <p class="text-sm font-bold text-gray-900 dark:text-white">🧪 Complementos EV</p>
+                                            <span class="text-xs font-semibold text-blue-700 dark:text-blue-300" x-text="'Total familia: +' + familia.ev_total + ' EV'"></span>
+                                        </div>
+                                        <p x-show="familia.refugio.insalubres" class="text-xs text-red-600 dark:text-red-400 mt-1">
+                                            Desactivados mientras las condiciones insalubres estén activas.
+                                        </p>
+                                        <div class="grid grid-cols-2 md:grid-cols-3 gap-2 mt-2">
+                                            <template x-for="comp in (familia.complementos || [])" :key="familia.evolution_chain_id + '-comp-' + comp.stat">
+                                                <div class="rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/30 p-2">
+                                                    <div class="flex items-center justify-between gap-1">
+                                                        <span class="text-xs font-semibold text-gray-800 dark:text-gray-200" x-text="comp.nombre"></span>
+                                                        <span class="text-[10px] font-bold text-gray-500 dark:text-gray-400" x-text="'Nv ' + comp.nivel + '/' + comp.max"></span>
+                                                    </div>
+                                                    <p class="text-[11px] text-blue-700 dark:text-blue-300 mt-1">+<span x-text="comp.ev"></span> EV</p>
+                                                    <p class="text-[10px] text-gray-500 dark:text-gray-400">
+                                                        <span x-show="comp.coste_ev !== null" x-text="comp.coste_ev + ' EV 🍬 + ' + comp.coste_familia + ' fam. 🍬'"></span>
+                                                        <span x-show="comp.coste_ev === null">Máximo</span>
+                                                    </p>
+                                                    <button
+                                                        type="button"
+                                                        @click="mejorarComplemento(familia.evolution_chain_id, comp.stat)"
+                                                        :disabled="granjaAccionando || !comp.puede_mejorar"
+                                                        class="mt-2 w-full px-2 py-1.5 rounded-md text-[11px] font-bold transition-colors disabled:bg-gray-200 dark:disabled:bg-gray-700 disabled:text-gray-500 dark:disabled:text-gray-400 disabled:cursor-not-allowed bg-blue-600 text-white hover:bg-blue-700"
+                                                        x-text="textoBotonComplemento(comp)"
+                                                    ></button>
+                                                </div>
+                                            </template>
+                                        </div>
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
+                    </template>
+                </div>
+            </div>
+        </div>
+    </template>
 </div>
 
 @push('scripts')
@@ -1097,6 +1259,8 @@ function habitatShow() {
         previewLoaded: false,
         previewError: '',
         sightedPokemonIds: @json($sightedPokemonIds ?? []),
+        // TEMPORAL: modo QA, muestra todos los Pokémon del hábitat aunque no estén avistados.
+        unlockAll: @json($unlockAll ?? false),
         equiposEnExploracion: @json($equiposEnExploracion->pluck('equipo_id')->toArray()),
         teams: @json($teams),
         // Favoritos (exploración individual): se cargan desde /api/reclutados/favoritos?habitat_id={id}.
@@ -1446,6 +1610,104 @@ function habitatShow() {
             }
         },
 
+        // Granja
+        showGranjaModal: false,
+        granjaLoading: false,
+        granjaError: '',
+        granja: null,
+        granjaAccionando: false,
+
+        openGranjaModal() {
+            this.showGranjaModal = true;
+            this.granjaError = '';
+            this.loadGranja();
+        },
+
+        closeGranjaModal() {
+            this.showGranjaModal = false;
+        },
+
+        async loadGranja() {
+            this.granjaLoading = true;
+            this.granjaError = '';
+            try {
+                const response = await fetch('/api/habitats/{{ $habitat['id'] }}/farm', {
+                    headers: { 'Accept': 'application/json' },
+                });
+                if (!response.ok) {
+                    const data = await response.json().catch(() => ({}));
+                    throw new Error(data.message || 'No se pudo cargar la granja');
+                }
+                this.granja = await response.json();
+            } catch (e) {
+                console.error('Error loading granja:', e);
+                this.granjaError = e.message || 'No se pudo cargar la granja.';
+                this.granja = null;
+            } finally {
+                this.granjaLoading = false;
+            }
+        },
+
+        async accionGranja(url) {
+            if (this.granjaAccionando) return;
+            this.granjaAccionando = true;
+            this.granjaError = '';
+            try {
+                const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || '';
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': csrfToken,
+                    },
+                });
+                if (!response.ok) {
+                    const data = await response.json().catch(() => ({}));
+                    throw new Error(data.message || 'No se pudo completar la acción.');
+                }
+                this.granja = await response.json();
+            } catch (e) {
+                console.error('Error updating granja:', e);
+                this.granjaError = e.message || 'Error de conexión al actualizar la granja.';
+            } finally {
+                this.granjaAccionando = false;
+            }
+        },
+
+        saldoFamilia(chainId) {
+            const item = (this.granja?.inventario?.familia || []).find(
+                (caramelo) => Number(caramelo.evolution_chain_id) === Number(chainId)
+            );
+
+            return item?.cantidad ?? 0;
+        },
+
+        textoBotonComplemento(comp) {
+            if (comp?.coste_ev === null) return 'Máximo';
+            if (comp?.motivo === 'refugio') return 'Refugio primero';
+            if (comp?.motivo === 'insalubres') return 'Insalubres';
+            if (comp?.motivo === 'saldo') return 'Faltan caramelos';
+
+            return comp?.nivel === 0 ? 'Crear' : 'Subir';
+        },
+
+        mejorarNido(chainId) {
+            return this.accionGranja('/api/habitats/{{ $habitat['id'] }}/farm/nests/' + chainId + '/upgrade');
+        },
+
+        mejorarRefugio(chainId) {
+            return this.accionGranja('/api/habitats/{{ $habitat['id'] }}/farm/shelters/' + chainId + '/upgrade');
+        },
+
+        alternarInsalubres(chainId) {
+            return this.accionGranja('/api/habitats/{{ $habitat['id'] }}/farm/shelters/' + chainId + '/toggle-unhealthy');
+        },
+
+        mejorarComplemento(chainId, stat) {
+            return this.accionGranja('/api/habitats/{{ $habitat['id'] }}/farm/shelters/' + chainId + '/complements/' + encodeURIComponent(stat) + '/upgrade');
+        },
+
         // Admin Gestion state
         showGestionModal: false,
         gestionTab: 'assign',
@@ -1652,7 +1914,7 @@ function habitatShow() {
         },
 
         isSighted(pokemonId) {
-            return this.sightedPokemonIds.includes(pokemonId);
+            return this.unlockAll || this.sightedPokemonIds.includes(pokemonId);
         },
 
         openExplorationModal() {

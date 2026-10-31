@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Src\Battle\Domain;
 
 use Src\Battle\Domain\Enums\PosturaCombate;
+use Src\Pokemon\Domain\Stats\GeneradorIvs;
 use Src\Pokemon\Domain\Stats\StatsValue;
 use Src\Shared\Tipos\TipoPokemon;
 
@@ -12,10 +13,14 @@ class DatosPokemonBatalla
 {
     public readonly StatsValue $evs;
 
+    public readonly StatsValue $ivs;
+
     /**
      * @param  MovimientoBatalla[]  $moves
      * @param  TipoPokemon[]  $tipos
      * @param  string[]  $effectKeys  Claves de efectos/habilidades (ej: 'armor_pierce')
+     * @param  StatsValue|null  $evs  Si no se especifican, se inicializan a 0.
+     * @param  StatsValue|null  $ivs  Si no se especifican, se generan aleatorios (0-15).
      */
     public function __construct(
         public readonly string $id,
@@ -39,7 +44,7 @@ class DatosPokemonBatalla
         public readonly string $formSuffix = '',
         public readonly ?int $nivel = null,
         ?StatsValue $evs = null,
-        public readonly ?StatsValue $ivs = null,
+        ?StatsValue $ivs = null,
         public readonly PosturaCombate $postura = PosturaCombate::ATACAR,
         public readonly bool $esJefe = false,
         /** @var list<array<string, mixed>> */
@@ -48,7 +53,8 @@ class DatosPokemonBatalla
         public readonly array $puntosDebiles = [],
         public readonly float $peso = 0.0,
     ) {
-        $this->evs = $evs ?? new StatsValue(0, 0, 0, 0, 0, 0);
+        $this->evs = $evs ?? StatsValue::ceros();
+        $this->ivs = $ivs ?? GeneradorIvs::aleatorios();
 
         foreach ($moves as $m) {
             if (! $m instanceof MovimientoBatalla) {

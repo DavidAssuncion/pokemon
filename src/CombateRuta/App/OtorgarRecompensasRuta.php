@@ -24,7 +24,9 @@ use Src\Exploraciones\Domain\Recompensas\RecompensaEv;
 use Src\Exploraciones\Domain\Recompensas\RecompensaFamilia;
 use Src\Exploraciones\Domain\Recompensas\RecompensaTipo;
 use Src\Exploraciones\Domain\Recompensas\ResultadoRecompensas;
+use Src\Granjas\App\ResolverBonosFamilia;
 use Src\Pokemon\Domain\Stats\GeneradorIvs;
+use Src\Reclutamiento\Domain\DataTransferObjects\DatosNuevoReclutado;
 use Src\Shared\Domain\Collections\ItemModalCollection;
 use Src\Shared\Domain\DataTransferObjects\ItemModal;
 use Src\Shared\Domain\DataTransferObjects\ItemResuelto;
@@ -49,6 +51,7 @@ final class OtorgarRecompensasRuta
         private readonly CalculadorRecompensas $calculador,
         private readonly PersistirRecompensas $persistir,
         private readonly CrearReclutado $crearReclutado,
+        private readonly ?ResolverBonosFamilia $bonosFamilia = null,
     ) {
     }
 
@@ -129,12 +132,20 @@ final class OtorgarRecompensasRuta
         $this->despacharAvistados($ids, $userId);
 
         $capturasShiny = [];
+        $bonosFamilia = $this->bonosFamilia ?? app(ResolverBonosFamilia::class);
         foreach ($shinyDerrotados as $derrotado) {
+            $evs = $derrotado->evolutionChainId !== null
+                ? $bonosFamilia->evsIniciales($userId, $derrotado->evolutionChainId)
+                : null;
+
             $this->crearReclutado->crear(
-                userId: $userId,
-                pokemonId: $derrotado->id,
-                ivs: GeneradorIvs::maximos(),
-                esShiny: true,
+                new DatosNuevoReclutado(
+                    userId: $userId,
+                    pokemonId: $derrotado->id,
+                    ivs: GeneradorIvs::maximos(),
+                    esShiny: true,
+                ),
+                $evs,
             );
             $capturasShiny[] = new RecompensaCaptura(pokemonId: $derrotado->id, cantidad: 1, esShiny: true);
         }

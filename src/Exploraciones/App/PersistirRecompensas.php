@@ -4,12 +4,15 @@ declare(strict_types=1);
 
 namespace Src\Exploraciones\App;
 
+use App\Enums\TipoEnum;
 use App\Models\PlayerInventory;
+use App\Models\PlayerTypePath;
 use App\Models\Reclutable;
 use App\Models\Reclutado;
 use App\Models\Team;
 use App\Models\User;
 use App\Support\ItemCatalogo;
+use App\Support\SendaProgreso;
 use Illuminate\Support\Collection;
 use Src\Exploraciones\Domain\Recompensas\RecompensaCaptura;
 use Src\Exploraciones\Domain\Recompensas\RecompensaEv;
@@ -117,6 +120,10 @@ class PersistirRecompensas
             $usuario->increment('experiencia', $expTotal);
         }
 
+        // La misma EXP de tipo que recibe cada combatiente/explorador se
+        // acumula UNA sola vez en la cuenta. No genera caramelos.
+        $this->otorgarExpSendas($usuario, $expTipoPorMiembro);
+
         if ($destinoExp === null || $expPorMiembro <= 0) {
             return;
         }
@@ -132,6 +139,47 @@ class PersistirRecompensas
         }
 
         $this->sumarExp($destinoExp, $expPorMiembro, $expTipoPorMiembro);
+    }
+
+    /**
+     * Acumula la EXP de tipo en la cuenta del jugador para las Sendas.
+     *
+     * @param  array<string, int>  $expTipoPorMiembro
+     */
+    private function otorgarExpSendas(?User $usuario, array $expTipoPorMiembro): void
+    {
+        if ($usuario === null || $expTipoPorMiembro === []) {
+            return;
+        }
+
+        $tipoPorLabel = [];
+        foreach (TipoEnum::cases() as $tipo) {
+            $tipoPorLabel[$tipo->label()] = $tipo->value;
+        }
+
+        foreach ($expTipoPorMiembro as $label => $exp) {
+            $tipoId = $tipoPorLabel[$label] ?? null;
+            if ($tipoId === null || $exp <= 0) {
+                continue;
+            }
+
+            $path = PlayerTypePath::query()
+                ->withoutGlobalScope(PlayerTypePath::USER_SCOPE_NAME)
+                ->firstOrCreate(
+                    [
+                        'user_id' => $usuario->id,
+                        'type_id' => $tipoId,
+                    ],
+                    [
+                        'exp' => 0,
+                        'level' => 1,
+                    ],
+                );
+
+            $path->increment('exp', $exp);
+            $path->refresh();
+            $path->update(['level' => SendaProgreso::nivel((int) $path->exp)]);
+        }
     }
 
     /**

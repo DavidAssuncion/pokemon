@@ -435,6 +435,13 @@ class ServicioEjecucionBatalla
             fn (Combatiente $objetivo): bool => ! ($accion->move->esEstado() && $objetivo->tieneEfecto('cuerpo_aureo')),
         );
 
+        // Sin objetivos alcanzados el movimiento falló (precisión, inmunidad,
+        // protección…): no debe aplicar estados ni cambios de stats, sobre todo
+        // los auto-cambios de movimientos como Lluevehojas o Fuerza Bruta.
+        if ($objetivos->isEmpty()) {
+            return;
+        }
+
         foreach ($objetivos as $objetivo) {
             $this->aplicarEstado($objetivo, $accion->move, $battle, $accion->attacker);
         }

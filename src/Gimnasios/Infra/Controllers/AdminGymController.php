@@ -51,6 +51,9 @@ class AdminGymController extends Controller
             'etapas.*.vanguardia.*' => ['integer', 'min:1'],
             'etapas.*.retaguardia' => ['sometimes', 'array'],
             'etapas.*.retaguardia.*' => ['integer', 'min:1'],
+            'etapas.*.movimientos' => ['sometimes', 'array'],
+            'etapas.*.movimientos.*' => ['array'],
+            'etapas.*.movimientos.*.*' => ['string', 'max:100'],
         ]);
 
         $gimnasio = $this->catalogo->insertar(
@@ -89,6 +92,9 @@ class AdminGymController extends Controller
             'vanguardia.*' => ['integer', 'min:1'],
             'retaguardia' => ['sometimes', 'array'],
             'retaguardia.*' => ['integer', 'min:1'],
+            'movimientos' => ['sometimes', 'array'],
+            'movimientos.*' => ['array'],
+            'movimientos.*.*' => ['string', 'max:100'],
         ]);
 
         $etapa = max(1, min(4, $etapa));
@@ -96,6 +102,7 @@ class AdminGymController extends Controller
         $equipo = new EquipoEtapaGimnasio(
             vanguardia: new IntCollection(array_map('intval', (array) ($data['vanguardia'] ?? []))),
             retaguardia: new IntCollection(array_map('intval', (array) ($data['retaguardia'] ?? []))),
+            movimientos: $this->normalizarMovimientos((array) ($data['movimientos'] ?? [])),
         );
         $equipos = $gimnasio->equipos->con($etapa, $equipo);
 
@@ -105,7 +112,7 @@ class AdminGymController extends Controller
     }
 
     /**
-     * @param  array<int, array{vanguardia?: list<int>, retaguardia?: list<int>}>  $etapas
+     * @param  array<int, array{vanguardia?: list<int>, retaguardia?: list<int>, movimientos?: array<int, list<string>>}>  $etapas
      */
     private function equiposDesdeValidated(array $etapas): EquipoEtapaGimnasioCollection
     {
@@ -120,10 +127,33 @@ class AdminGymController extends Controller
             $equipos[$etapaInt] = new EquipoEtapaGimnasio(
                 vanguardia: new IntCollection(array_map('intval', $datos['vanguardia'] ?? [])),
                 retaguardia: new IntCollection(array_map('intval', $datos['retaguardia'] ?? [])),
+                movimientos: $this->normalizarMovimientos((array) ($datos['movimientos'] ?? [])),
             );
         }
 
         return new EquipoEtapaGimnasioCollection($equipos);
+    }
+
+    /**
+     * @param  array<int|string, mixed>  $movimientos
+     * @return array<int, list<string>>
+     */
+    private function normalizarMovimientos(array $movimientos): array
+    {
+        $normalizados = [];
+
+        foreach ($movimientos as $speciesId => $slugs) {
+            if (! is_array($slugs)) {
+                continue;
+            }
+
+            $slugs = array_values(array_filter($slugs, 'is_string'));
+            if ($slugs !== []) {
+                $normalizados[(int) $speciesId] = $slugs;
+            }
+        }
+
+        return $normalizados;
     }
 
     private function serializar(\Src\Gimnasios\Domain\Gimnasio $gimnasio): array
@@ -133,6 +163,7 @@ class AdminGymController extends Controller
             $etapas[$etapa] = [
                 'vanguardia' => $equipo->vanguardia->all(),
                 'retaguardia' => $equipo->retaguardia->all(),
+                'movimientos' => $equipo->movimientos,
             ];
         }
 
@@ -155,6 +186,7 @@ class AdminGymController extends Controller
             'etapa' => $etapa,
             'vanguardia' => $equipo->vanguardia->all(),
             'retaguardia' => $equipo->retaguardia->all(),
+            'movimientos' => $equipo->movimientos,
         ];
     }
 }

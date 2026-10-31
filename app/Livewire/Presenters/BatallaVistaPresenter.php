@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Livewire\Presenters;
 
 use Src\Battle\Domain\Enums\TipoClima;
+use Src\Shared\Domain\Collections\ItemModalCollection;
+use Src\Shared\Domain\DataTransferObjects\ItemModal;
 
 /**
  * Presentador de la pantalla de combate.
@@ -337,11 +339,11 @@ final class BatallaVistaPresenter
             return null;
         }
 
-        $caramelosFamilia = self::caramelosFamilia($rewards['caramelos_familia'] ?? []);
-        $caramelosEv = self::caramelosEv($rewards['caramelos_ev'] ?? []);
-        $caramelosTipo = self::caramelosTipo($rewards['caramelos_tipo'] ?? []);
+        $caramelosFamilia = self::caramelos($rewards['caramelos_familia'] ?? [], 'candy_pokemon');
+        $caramelosEv = self::caramelos($rewards['caramelos_ev'] ?? [], 'candy_ev');
+        $caramelosTipo = self::caramelos($rewards['caramelos_tipo'] ?? [], 'candy_type');
         $capturas = self::capturas($rewards['capturas'] ?? []);
-        $tieneCaramelos = $caramelosFamilia !== [] || $caramelosEv !== [] || $caramelosTipo !== [];
+        $tieneCaramelos = ! $caramelosFamilia->isEmpty() || ! $caramelosEv->isEmpty() || ! $caramelosTipo->isEmpty();
         $layout = ($tieneCaramelos || $capturas !== []) ? 'ruta' : 'entrenador';
 
         return [
@@ -359,66 +361,40 @@ final class BatallaVistaPresenter
     }
 
     /**
+     * Normaliza una colección de `ItemModal` de ruta al contrato tipado que
+     * consume `exploraciones._caramelo` (`src`, `alt`, `nombre`, `cantidad`).
+     *
+     * El dominio ya entrega la imagen y el nombre resueltos (ItemCatalogo);
+     * aquí sólo se rellenan los huecos para payloads legacy. No se emite
+     * `nombre_js`: el modal de combate no define `statName()` en su scope de
+     * Alpine y provocaba `ReferenceError`.
+     *
      * @param  list<array<string, mixed>>  $caramelos
-     * @return list<array<string, mixed>>
      */
-    private static function caramelosFamilia(array $caramelos): array
+    private static function caramelos(array $caramelos, string $carpeta): ItemModalCollection
     {
-        return array_map(static function (array $caramelo): array {
-            $pokemonId = $caramelo['pokemon_id'] ?? null;
-            $nombre = $caramelo['nombre'] ?? null;
+        $items = new ItemModalCollection();
 
-            return array_merge($caramelo, [
-                'src' => $pokemonId !== null && $pokemonId !== ''
-                    ? "/images/candy_pokemon/{$pokemonId}.webp"
-                    : '/images/candy_pokemon/0.webp',
-                'alt' => 'Caramelo de '.($nombre ?? 'Pokémon'),
-                'nombre' => $nombre,
-                'cantidad' => (int) ($caramelo['cantidad'] ?? 0),
-            ]);
-        }, $caramelos);
-    }
+        foreach ($caramelos as $caramelo) {
+            $nombre = $caramelo['nombre'] ?? $caramelo['stat_nombre'] ?? null;
+            $src = (string) ($caramelo['src'] ?? '');
 
-    /**
-     * @param  list<array<string, mixed>>  $caramelos
-     * @return list<array<string, mixed>>
-     */
-    private static function caramelosEv(array $caramelos): array
-    {
-        return array_map(static function (array $caramelo): array {
-            $slug = $caramelo['stat_slug'] ?? null;
-            $nombre = $caramelo['stat_nombre'] ?? null;
-            $stat = (int) ($caramelo['stat'] ?? 0);
+            if ($src === '') {
+                $id = $caramelo['pokemon_id'] ?? $caramelo['stat_slug'] ?? $caramelo['slug'] ?? '';
+                $src = $id !== ''
+                    ? "/images/{$carpeta}/{$id}.webp"
+                    : '/images/candy_pokemon/0.webp';
+            }
 
-            return array_merge($caramelo, [
-                'src' => $slug !== null && $slug !== ''
-                    ? "/images/candy_ev/{$slug}.webp"
-                    : '/images/candy_ev/.webp',
-                'alt' => 'Caramelo EV '.($nombre ?? ''),
-                'nombre' => $nombre,
-                'nombre_js' => $nombre === null || $nombre === '' ? 'statName('.$stat.')' : null,
-                'cantidad' => (int) ($caramelo['cantidad'] ?? 0),
-            ]);
-        }, $caramelos);
-    }
+            $items->add(new ItemModal(
+                src: $src,
+                alt: (string) ($caramelo['alt'] ?? 'Caramelo'.($nombre !== null && $nombre !== '' ? ' de '.$nombre : '')),
+                cantidad: (int) ($caramelo['cantidad'] ?? 0),
+                nombre: $nombre,
+            ));
+        }
 
-    /**
-     * @param  list<array<string, mixed>>  $caramelos
-     * @return list<array<string, mixed>>
-     */
-    private static function caramelosTipo(array $caramelos): array
-    {
-        return array_map(static function (array $caramelo): array {
-            $tipo = $caramelo['tipo'] ?? null;
-            $slug = $caramelo['slug'] ?? '';
-
-            return array_merge($caramelo, [
-                'src' => '/images/candy_type/'.$slug.'.webp',
-                'alt' => $tipo ?? 'Caramelo de tipo',
-                'nombre' => $tipo,
-                'cantidad' => (int) ($caramelo['cantidad'] ?? 0),
-            ]);
-        }, $caramelos);
+        return $items;
     }
 
     /**

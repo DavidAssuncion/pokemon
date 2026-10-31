@@ -7,8 +7,11 @@ namespace Src\Huevos\App;
 use App\Models\Huevo;
 use App\Models\Reclutado;
 use App\Support\CrearReclutado;
+use Src\Granjas\App\ResolverBonosFamilia;
 use Src\Huevos\Domain\CalculadorEstadoHuevo;
+use Src\Huevos\Domain\DataTransferObjects\DatosTiempoHuevo;
 use Src\Huevos\Domain\EstadoHuevo;
+use Src\Reclutamiento\Domain\DataTransferObjects\DatosNuevoReclutado;
 use Src\Shared\Domain\Exceptions\RecursoNoExiste;
 use Src\Shared\Domain\Exceptions\ViolacionReglaNegocio;
 
@@ -21,6 +24,7 @@ final class EclosionarHuevo
 {
     public function __construct(
         private readonly CrearReclutado $crearReclutado,
+        private readonly ResolverBonosFamilia $bonosFamilia,
     ) {
     }
 
@@ -42,8 +46,11 @@ final class EclosionarHuevo
 
         $estado = CalculadorEstadoHuevo::estadoDe(
             $huevo->created_at,
-            $huevo->capture_rate ?? 0,
-            $huevo->hatch ?? 1,
+            new DatosTiempoHuevo(
+                captureRate: $huevo->capture_rate ?? 0,
+                hatch: $huevo->hatch ?? 1,
+                nidoNivel: $huevo->nido_nivel ?? 0,
+            ),
             now(),
         );
 
@@ -51,13 +58,22 @@ final class EclosionarHuevo
             throw new ViolacionReglaNegocio('El huevo aún no está listo para eclosionar');
         }
 
-        $huevo->update(['eclosionado_en' => now()]);
+        $huevo->eclosionado_en = now();
+        $huevo->save();
+
+        $evolutionChainId = $huevo->pokemon->evolution_chain_id ?? 0;
+        $evs = $evolutionChainId > 0
+            ? $this->bonosFamilia->evsIniciales($userId, $evolutionChainId)
+            : null;
 
         return $this->crearReclutado->crear(
-            userId: $userId,
-            pokemonId: $huevo->pokemon_id,
-            ivs: $huevo->ivs,
-            esShiny: $huevo->es_shiny,
+            new DatosNuevoReclutado(
+                userId: $userId,
+                pokemonId: $huevo->pokemon_id,
+                ivs: $huevo->ivs,
+                esShiny: $huevo->es_shiny,
+            ),
+            $evs,
         );
     }
 }

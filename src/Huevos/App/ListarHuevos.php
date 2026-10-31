@@ -9,16 +9,24 @@ use App\Models\Pokemon;
 use App\Models\Reclutado;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
+use Src\Granjas\App\ResolverBonosFamilia;
+use Src\Granjas\Domain\CalculadoraBonosGranja;
 use Src\Huevos\Domain\CalculadorEstadoHuevo;
 use Src\Huevos\Domain\CalculadorTiemposHuevo;
 use Src\Huevos\Domain\Collections\HuevoDisponibleCollection;
 use Src\Huevos\Domain\Collections\HuevoResumenCollection;
+use Src\Huevos\Domain\DataTransferObjects\ContenidoHuevo;
+use Src\Huevos\Domain\DataTransferObjects\DatosTiempoHuevo;
+use Src\Huevos\Domain\DataTransferObjects\EspecieHuevo;
 use Src\Huevos\Domain\DataTransferObjects\HuevoDisponible;
 use Src\Huevos\Domain\DataTransferObjects\HuevoResumen;
 use Src\Huevos\Domain\DataTransferObjects\LimitesHuevos;
+use Src\Huevos\Domain\DataTransferObjects\NidoHuevo;
 use Src\Huevos\Domain\DataTransferObjects\ResumenHuevos;
+use Src\Huevos\Domain\DataTransferObjects\TiemposHuevo;
 use Src\Huevos\Domain\EstadoCalculadoHuevo;
 use Src\Huevos\Domain\EstadoHuevo;
+use Src\Pokemon\Domain\Stats\GeneradorIvs;
 use Src\Shared\Domain\DataTransferObjects\PokemonResumen;
 
 /**
@@ -26,6 +34,11 @@ use Src\Shared\Domain\DataTransferObjects\PokemonResumen;
  */
 final class ListarHuevos
 {
+    public function __construct(
+        private readonly ResolverBonosFamilia $bonosFamilia,
+    ) {
+    }
+
     /**
      * Resumen de huevos activos, familias disponibles y límites.
      *
@@ -42,12 +55,10 @@ final class ListarHuevos
 
         $ahora = now();
 
-        $huevosResumen = new HuevoResumenCollection(
-            $huevos
-                ->map(fn (Huevo $huevo): HuevoResumen => $this->serializarUno($huevo, $ahora))
-                ->values()
-                ->all()
-        );
+        $huevosResumen = new HuevoResumenCollection();
+        foreach ($huevos as $huevo) {
+            $huevosResumen->add($this->serializarUno($huevo, $ahora));
+        }
 
         return new ResumenHuevos(
             huevos: $huevosResumen,
@@ -64,17 +75,29 @@ final class ListarHuevos
         $ahora ??= now();
         $captureRate = $huevo->capture_rate ?? 0;
         $hatch = $huevo->hatch ?? 1;
+        $nidoNivel = $huevo->nido_nivel ?? 0;
         $estado = self::estadoDe($huevo, $ahora);
-        $totalHoras = round(CalculadorTiemposHuevo::sumaHoras($captureRate, $hatch), 2);
+        $totalHoras = round(CalculadorTiemposHuevo::sumaHoras($captureRate, $hatch, $nidoNivel), 2);
+        $rangoIvs = GeneradorIvs::rangoHuevo($nidoNivel);
+        $factorTiempo = CalculadoraBonosGranja::factorTiempo($nidoNivel);
 
         return new HuevoResumen(
             id: $huevo->id,
             estado: $estado->estado->value,
-            tiempoTotalHoras: $totalHoras,
-            tiempoRestante: $estado->restanteHoras,
-            progreso: self::progresoDe($totalHoras, $estado->restanteHoras),
-            puedeEclosionar: $estado->estado === EstadoHuevo::LISTO,
-            pokemon: self::resumenPokemon($huevo->pokemon),
+            tiempos: new TiemposHuevo(
+                totalHoras: $totalHoras,
+                restanteHoras: $estado->restanteHoras,
+                progreso: self::progresoDe($totalHoras, $estado->restanteHoras),
+                puedeEclosionar: $estado->estado === EstadoHuevo::LISTO,
+            ),
+            contenido: new ContenidoHuevo(
+                pokemon: self::resumenPokemon($huevo->pokemon),
+                nido: new NidoHuevo(
+                    nivel: $nidoNivel,
+                    rangoIvs: $rangoIvs,
+                    factorTiempo: $factorTiempo,
+                ),
+            ),
         );
     }
 
@@ -98,16 +121,18 @@ final class ListarHuevos
             ->whereNull('eclosionado_en')
             ->whereNotNull('evolution_chain_id')
             ->pluck('evolution_chain_id')
-            ->map(fn ($cadena): int => (int) $cadena)
-            ->all();
+            ->map(fn ($cadena): int => (int) $cadena);
 
-        /** @var array<int, Pokemon> $porCadena keyed por evolution_chain_id */
-        $porCadena = [];
-        foreach ($reclutados->groupBy(fn (Reclutado $reclutado): ?int => $reclutado->pokemon->evolution_chain_id) as $cadena => $grupo) {
-            if (!is_int($cadena) || $grupo->count() < 2 || in_array($cadena, $familiasActivas, true)) {
-                continue;
-            }
+        $grupos = $reclutados
+            ->groupBy(fn (Reclutado $reclutado): ?int => $reclutado->pokemon->evolution_chain_id)
+            ->filter(function (Collection $grupo, $cadena) use ($familiasActivas): bool {
+                return is_int($cadena)
+                    && $grupo->count() >= 2
+                    && ! $familiasActivas->contains($cadena);
+            });
 
+        $disponibles = new HuevoDisponibleCollection();
+        foreach ($grupos->sortKeys() as $cadena => $grupo) {
             /** @var Reclutado $representante */
             $representante = $grupo
                 ->sortBy(fn (Reclutado $reclutado): int => $reclutado->pokemon->species_id)
@@ -118,18 +143,21 @@ final class ListarHuevos
                 continue;
             }
 
-            $porCadena[$cadena] = $pokemon;
-        }
+            $chainId = (int) $cadena;
+            $bonos = $this->bonosFamilia->paraFamilia($userId, $chainId);
 
-        ksort($porCadena);
-
-        $disponibles = new HuevoDisponibleCollection();
-        foreach ($porCadena as $cadena => $pokemon) {
             $disponibles->add(new HuevoDisponible(
-                evolutionChainId: $cadena,
+                evolutionChainId: $chainId,
                 pokemon: self::resumenPokemon($pokemon),
-                captureRate: $pokemon->capture_rate,
-                hatch: (int) $pokemon->hatch,
+                especie: new EspecieHuevo(
+                    captureRate: $pokemon->capture_rate,
+                    hatch: $pokemon->hatch,
+                ),
+                nido: new NidoHuevo(
+                    nivel: $bonos->nido->nivel,
+                    rangoIvs: $bonos->nido->rangoIvs,
+                    factorTiempo: $bonos->nido->factorTiempo,
+                ),
             ));
         }
 
@@ -150,7 +178,7 @@ final class ListarHuevos
             if ($estado === EstadoHuevo::GESTANDO) {
                 $gestacionActiva = true;
             }
-            if (in_array($estado, [EstadoHuevo::INCUBANDO, EstadoHuevo::LISTO], true)) {
+            if ($estado === EstadoHuevo::INCUBANDO || $estado === EstadoHuevo::LISTO) {
                 $incubacionActiva = true;
             }
         }
@@ -179,8 +207,11 @@ final class ListarHuevos
     {
         return CalculadorEstadoHuevo::estadoDe(
             $huevo->created_at,
-            $huevo->capture_rate ?? 0,
-            $huevo->hatch ?? 1,
+            new DatosTiempoHuevo(
+                captureRate: $huevo->capture_rate ?? 0,
+                hatch: $huevo->hatch ?? 1,
+                nidoNivel: $huevo->nido_nivel ?? 0,
+            ),
             $ahora,
         );
     }

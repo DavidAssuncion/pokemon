@@ -154,6 +154,7 @@ final class MovesPreviewPresenter
         $efectividad = $esEstado ? 1.0 : $target->efectividadContra($tipoEfectivo);
         $estadoEfecto = $move->statusEffect;
         $motivo = $actor->motivoMovimientoNoDisponible($move);
+        $precision = max(0, min(100, (int) round($move->perfil->precision * 100)));
 
         return [
             'nombre' => $move->nombre,
@@ -162,6 +163,8 @@ final class MovesPreviewPresenter
             'tipoSlug' => $tipoEfectivo->slug(),
             'tipoColor' => $tipoEfectivo->color(),
             'potencia' => $move->potencia,
+            'precision' => $precision,
+            'precisionTexto' => $precision.'%',
             'categoria' => $categoria->value,
             'categoriaLabel' => self::categoriaLabel($categoria),
             'categoriaColor' => self::categoriaColor($categoria),

@@ -7,8 +7,8 @@ namespace App\Http\Controllers;
 use App\Enums\StatEnum;
 use App\Jobs\ActualizarPokedexJob;
 use App\Models\Favorito;
-use App\Models\Move;
 use App\Models\PlayerInventory;
+use App\Models\PlayerMoveUnlock;
 use App\Models\Pokemon;
 use App\Models\Reclutado;
 use App\Support\ItemCatalogo;
@@ -192,6 +192,7 @@ class ReclutadoController extends Controller
             'caramelos_disponibles' => $resultado['caramelo']->cantidad,
             'cantidad_consumida' => $resultado['consumidos'],
             'evs' => $evsNuevos->toArray(),
+            'stats_calculados' => ReclutadoSerializer::statsCalculados($reclutado, auth()->user()?->nivel()),
         ]);
     }
 
@@ -248,6 +249,24 @@ class ReclutadoController extends Controller
     {
         return response()->json([
             'opciones' => ServicioEvolucion::requisitosDeOpciones($reclutado, auth()->id())->toArray(),
+        ]);
+    }
+
+    /**
+     * Catálogo de movimientos bajo demanda (usado por el modal de /equipos).
+     *
+     * El listado de /equipos ya no envía los movimientos de cada especie para
+     * mantener el payload pequeño; el modal pide sólo los del reclutado abierto.
+     */
+    public function movimientos(Reclutado $reclutado): JsonResponse
+    {
+        $reclutado->loadMissing('pokemon.moves');
+
+        return response()->json([
+            'movimientos_disponibles' => ReclutadoSerializer::movimientosDisponibles(
+                $reclutado,
+                auth()->user()?->nivel(),
+            ),
         ]);
     }
 
@@ -343,15 +362,49 @@ class ReclutadoController extends Controller
         }
 
         $nivelUsuario = $request->user()?->nivel() ?? 1;
-        $bloqueados = $pokemon->moves
-            ->whereIn('slug', $slugs)
-            ->filter(static fn (Move $move): bool => $move->nivel_requerido > $nivelUsuario)
-            ->map(static fn (Move $move): string => "{$move->name} (nivel {$move->nivel_requerido})")
-            ->values()
-            ->all();
-        if ($bloqueados !== []) {
+        $seleccionados = $pokemon->moves->whereIn('slug', $slugs);
+        $userId = (int) auth()->id();
+
+        $desbloqueadas = array_fill_keys(
+            PlayerMoveUnlock::query()
+                ->withoutGlobalScope(PlayerMoveUnlock::USER_SCOPE_NAME)
+                ->where('user_id', $userId)
+                ->whereIn('move_id', $seleccionados->pluck('id'))
+                ->pluck('move_id')
+                ->map(static fn (mixed $id): int => (int) $id)
+                ->all(),
+            true,
+        );
+
+        $bloqueadosPorNivel = [];
+        $sendasBloqueadas = [];
+
+        foreach ($seleccionados as $move) {
+            $esNivel = ($move->pivot->source ?? null) === 'level-up';
+            $desbloqueado = isset($desbloqueadas[(int) $move->id]);
+
+            if ($esNivel) {
+                if (! $desbloqueado && $move->nivelRequeridoEfectivo() > $nivelUsuario) {
+                    $bloqueadosPorNivel[] = "{$move->name} (nivel {$move->nivelRequeridoEfectivo()})";
+                }
+
+                continue;
+            }
+
+            if (! $desbloqueado) {
+                $sendasBloqueadas[] = $move->name;
+            }
+        }
+
+        if ($bloqueadosPorNivel !== []) {
             return response()->json([
-                'error' => 'Movimientos bloqueados por nivel: '.implode(', ', $bloqueados),
+                'error' => 'Movimientos bloqueados por nivel: '.implode(', ', $bloqueadosPorNivel),
+            ], 422);
+        }
+
+        if ($sendasBloqueadas !== []) {
+            return response()->json([
+                'error' => 'Movimientos de Senda sin desbloquear en la cuenta: '.implode(', ', $sendasBloqueadas),
             ], 422);
         }
 
@@ -459,12 +512,15 @@ class ReclutadoController extends Controller
             $query->globales();
         }
 
-        $reclutados = $query
-            ->withoutGlobalScope('belongsToUser')
-            ->where('user_id', $userId)
-            ->get()
-            ->map(fn (Favorito $favorito): array => ReclutadoSerializer::serializar($favorito->reclutado, auth()->user()?->nivel()))
-            ->values();
+        $reclutados = ReclutadoSerializer::serializarColeccion(
+            $query
+                ->withoutGlobalScope('belongsToUser')
+                ->where('user_id', $userId)
+                ->get()
+                ->map(fn (Favorito $favorito): Reclutado => $favorito->reclutado),
+            auth()->user()?->nivel(),
+            incluirMovimientosDisponibles: false,
+        );
 
         return response()->json($reclutados);
     }
@@ -478,15 +534,16 @@ class ReclutadoController extends Controller
      */
     public function listarTodos(): JsonResponse
     {
-        $reclutados = Reclutado::with([
-            'pokemon.types',
-            'pokemon.stats',
-            'pokemon.abilities',
-            'pokemon.moves',
-        ])
-            ->get()
-            ->map(fn (Reclutado $reclutado): array => ReclutadoSerializer::serializar($reclutado, auth()->user()?->nivel()))
-            ->values();
+        $reclutados = ReclutadoSerializer::serializarColeccion(
+            Reclutado::with([
+                'pokemon.types',
+                'pokemon.stats',
+                'pokemon.abilities',
+                'pokemon.moves',
+            ])->get(),
+            auth()->user()?->nivel(),
+            incluirMovimientosDisponibles: false,
+        );
 
         return response()->json($reclutados);
     }

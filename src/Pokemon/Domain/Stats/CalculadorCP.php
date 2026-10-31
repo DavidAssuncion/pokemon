@@ -20,9 +20,9 @@ final class CalculadorCP
     public static function calcular(BattleStats $stats, int $ev): int
     {
         $sumaStats = $stats->hp + $stats->attack + $stats->defense + $stats->spAtk + $stats->spDef + $stats->speed;
-        $base = $sumaStats * $stats->nivel() * 6 / 100;
-        $extra = $ev * (($stats->nivel() / 4) / 100 + 2);
+        $base = $sumaStats * $stats->nivel() * 5 / 100;
+        //$extra = $ev * (($stats->nivel() / 4) / 100 + 2);
 
-        return (int) floor($base + $extra);
+        return (int) floor($base);
     }
 }

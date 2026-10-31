@@ -10,8 +10,10 @@ namespace Src\Pokemon\Domain\Stats;
  */
 final class GeneradorIvs
 {
+    public const NIVEL_NIDO_MAX = 5;
+
     /**
-     * IVs aleatorios 0-15 por stat (reclutamiento normal, encuentro salvaje no-shiny).
+     * IVs aleatorios 0-15 por stat (encuentro salvaje no-shiny / fallback).
      * aleatorio: callable(): float returning [0, 1).
      */
     public static function aleatorios(?callable $aleatorio = null): StatsValue
@@ -28,12 +30,42 @@ final class GeneradorIvs
     }
 
     /**
-     * IVs de huevo: 10-15 por stat (mínimo 10 por spec).
+     * IVs de huevo: rango 0-4 sin nido y sube con el nivel de nido hasta 15.
      * aleatorio: callable(): float returning [0, 1).
      */
-    public static function huevo(?callable $aleatorio = null): StatsValue
+    public static function huevo(int $nivelNido = 0, ?callable $aleatorio = null): StatsValue
     {
-        return self::generar(10, 15, $aleatorio);
+        $rango = self::rangoHuevo($nivelNido);
+
+        return self::generar($rango->min, $rango->max, $aleatorio);
+    }
+
+    /**
+     * IVs de reclutamiento: sin nido 0-15; con nido se garantiza el mínimo
+     * del rango del nido, pero el máximo sigue siendo 15.
+     * Ej.: nivel 1 → 4-15; nivel 5 → 15.
+     * aleatorio: callable(): float returning [0, 1).
+     */
+    public static function reclutamiento(int $nivelNido = 0, ?callable $aleatorio = null): StatsValue
+    {
+        $minimo = self::rangoHuevo($nivelNido)->min;
+
+        return self::generar($minimo, 15, $aleatorio);
+    }
+
+    /**
+     * Rango de IVs por stat para un nivel de nido (0..5).
+     */
+    public static function rangoHuevo(int $nivelNido): RangoIvs
+    {
+        return match (max(0, min(self::NIVEL_NIDO_MAX, $nivelNido))) {
+            0 => new RangoIvs(0, 3),
+            1 => new RangoIvs(4, 7),
+            2 => new RangoIvs(8, 9),
+            3 => new RangoIvs(10, 11),
+            4 => new RangoIvs(12, 14),
+            default => new RangoIvs(15, 15),
+        };
     }
 
     /**

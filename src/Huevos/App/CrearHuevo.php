@@ -6,7 +6,9 @@ namespace Src\Huevos\App;
 
 use App\Models\Huevo;
 use App\Models\Reclutado;
+use Src\Granjas\App\ResolverBonosFamilia;
 use Src\Huevos\Domain\CalculadorEstadoHuevo;
+use Src\Huevos\Domain\DataTransferObjects\DatosTiempoHuevo;
 use Src\Huevos\Domain\EstadoHuevo;
 use Src\Pokemon\Domain\Stats\GeneradorIvs;
 use Src\Shared\Domain\Exceptions\ViolacionReglaNegocio;
@@ -22,6 +24,10 @@ use Src\Shared\Domain\ProbabilidadesShiny;
  */
 final class CrearHuevo
 {
+    public function __construct(
+        private readonly ResolverBonosFamilia $bonosFamilia,
+    ) {
+    }
     public function crear(
         int $userId,
         int $evolutionChainId,
@@ -45,8 +51,11 @@ final class CrearHuevo
         $hayGestacionActiva = $huevosActivos->contains(
             fn (Huevo $huevo): bool => CalculadorEstadoHuevo::estadoDe(
                 $huevo->created_at,
-                $huevo->capture_rate,
-                $huevo->hatch ?? 1,
+                new DatosTiempoHuevo(
+                    captureRate: $huevo->capture_rate ?? 0,
+                    hatch: $huevo->hatch ?? 1,
+                    nidoNivel: $huevo->nido_nivel ?? 0,
+                ),
                 now(),
             )->estado === EstadoHuevo::GESTANDO,
         );
@@ -75,16 +84,20 @@ final class CrearHuevo
         }
 
         $shiny = ProbabilidadesShiny::esShiny(ProbabilidadesShiny::HUEVO, $aleatorioShiny);
-        $ivs = $shiny ? GeneradorIvs::maximos() : GeneradorIvs::huevo($aleatorioIvs);
+        $nidoNivel = $this->bonosFamilia->nidoNivel($userId, $evolutionChainId);
+        $ivs = $shiny ? GeneradorIvs::maximos() : GeneradorIvs::huevo($nidoNivel, $aleatorioIvs);
 
-        return Huevo::create([
-            'user_id' => $userId,
-            'pokemon_id' => $pokemon->id,
-            'evolution_chain_id' => (int) $pokemon->evolution_chain_id,
-            'capture_rate' => $pokemon->capture_rate,
-            'hatch' => $pokemon->hatch,
-            'es_shiny' => $shiny,
-            'ivs' => $ivs,
-        ]);
+        $huevo = new Huevo();
+        $huevo->user_id = $userId;
+        $huevo->pokemon_id = $pokemon->id;
+        $huevo->evolution_chain_id = (int) $pokemon->evolution_chain_id;
+        $huevo->capture_rate = $pokemon->capture_rate;
+        $huevo->hatch = $pokemon->hatch;
+        $huevo->nido_nivel = $nidoNivel;
+        $huevo->es_shiny = $shiny;
+        $huevo->ivs = $ivs;
+        $huevo->save();
+
+        return $huevo;
     }
 }

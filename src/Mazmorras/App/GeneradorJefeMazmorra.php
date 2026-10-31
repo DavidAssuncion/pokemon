@@ -63,6 +63,7 @@ final class GeneradorJefeMazmorra
             formSuffix: '',
             nivel: $datos->nivel,
             evs: $datos->evs,
+            ivs: $datos->ivs,
             peso: $datos->peso,
             esJefe: true,
             fasesJefe: [

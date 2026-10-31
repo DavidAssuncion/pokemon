@@ -6,6 +6,9 @@ namespace Src\Pokemon\Domain\Stats;
 
 class BattleStats
 {
+    CONST IV = 5;
+    CONST EV = 4;
+
     public readonly int $nivel;
 
     private ?StatsValue $ivs = null;
@@ -33,6 +36,7 @@ class BattleStats
         ?StatsValue $ivs = null,
     ) {
         $this->nivel = $nivel;
+        $ivs ??= StatsValue::ceros();
         $this->ivs = $ivs;
         $this->calcularStats($stats, $evs, $nivel, $ivs);
     }
@@ -42,12 +46,12 @@ class BattleStats
         return $this->nivel;
     }
 
-    public function ivs(): ?StatsValue
+    public function ivs(): StatsValue
     {
-        return $this->ivs;
+        return $this->ivs ?? StatsValue::ceros();
     }
 
-    private function calcularStats(StatsValue $stats, StatsValue $evs, int $nivel, ?StatsValue $ivs = null): void
+    private function calcularStats(StatsValue $stats, StatsValue $evs, int $nivel, StatsValue $ivs): void
     {
         $hpIv = $ivs->hp ?? 0.0;
         $atkIv = $ivs->attack ?? 0.0;
@@ -68,11 +72,11 @@ class BattleStats
 
     private function calcularHp(float $base, float $evs, int $nivel, float $iv = 0.0): float
     {
-        return floor(((2 * $base + ($iv * 4) + floor($evs / 4)) * $nivel / 100) + $nivel + 10);
+        return floor(((2 * $base + ($iv * self::IV) + floor($evs / self::EV)) * $nivel / 100) + $nivel + 10);
     }
 
     private function calcularStat(float $base, float $evs, int $nivel, float $iv = 0.0): float
     {
-        return floor(((2 * $base + ($iv * 4) + floor($evs / 4)) * $nivel / 100) + 5);
+        return floor(((2 * $base + ($iv * self::IV) + floor($evs / self::EV)) * $nivel / 100) + 5);
     }
 }

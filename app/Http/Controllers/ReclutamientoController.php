@@ -12,11 +12,15 @@ use App\Support\ItemCatalogo;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Src\Granjas\App\ResolverBonosFamilia;
+use Src\Pokemon\Domain\Stats\GeneradorIvs;
+use Src\Reclutamiento\Domain\DataTransferObjects\DatosNuevoReclutado;
 
 class ReclutamientoController extends Controller
 {
     public function __construct(
         private readonly CrearReclutado $crearReclutado,
+        private readonly ResolverBonosFamilia $bonosFamilia,
     ) {
     }
 
@@ -29,13 +33,27 @@ class ReclutamientoController extends Controller
         return DB::transaction(function () use ($data): JsonResponse {
             // Propiedad: el global scope BelongsToUser + findOrFail → 404 si el
             // reclutable es de otro jugador (la regla exists no filtra por usuario).
-            $reclutable = Reclutable::findOrFail($data['reclutable_id']);
+            $reclutable = Reclutable::with('pokemon')->findOrFail($data['reclutable_id']);
 
             $userId = (int) auth()->id();
+            $evolutionChainId = $reclutable->pokemon->evolution_chain_id ?? 0;
+
+            $bonos = $evolutionChainId > 0
+                ? $this->bonosFamilia->paraFamilia($userId, $evolutionChainId)
+                : null;
+
+            // Sin nido los IVs son 0-15; con nido se garantiza el mínimo de
+            // su rango. Los EVs de complemento también se aplican.
+            $ivs = GeneradorIvs::reclutamiento($bonos?->nido->nivel ?? 0);
+            $evs = $bonos?->evsFamilia;
 
             $this->crearReclutado->crear(
-                userId: $userId,
-                pokemonId: $reclutable->pokemon_id,
+                new DatosNuevoReclutado(
+                    userId: $userId,
+                    pokemonId: $reclutable->pokemon_id,
+                    ivs: $ivs,
+                ),
+                $evs,
             );
 
             if ($reclutable->cantidad > 1) {

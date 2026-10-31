@@ -21,6 +21,7 @@ use Src\Exploraciones\Domain\SimuladorEncuentros;
 use Src\Exploraciones\Domain\ValueObjects\EstadoExplorador;
 use Src\Exploraciones\Domain\ValueObjects\PoolHabitat;
 use Src\Exploraciones\Domain\ValueObjects\ResultadoBatallaExploracion;
+use Src\Granjas\App\ResolverBonosFamilia;
 use Src\Shared\Bus\Command;
 use Src\Shared\Bus\CommandBus;
 use Src\Shared\Bus\CommandHandler;
@@ -59,6 +60,7 @@ final class ProcesarExploracionHandler implements CommandHandler
         private readonly CombateExploracion $combate,
         private readonly EscaladorNivelRival $escalador,
         ?callable $aleatorio = null,
+        private readonly ?ResolverBonosFamilia $bonosFamilia = null,
     ) {
         $this->aleatorio = $aleatorio !== null ? Closure::fromCallable($aleatorio) : null;
     }
@@ -661,6 +663,12 @@ final class ProcesarExploracionHandler implements CommandHandler
             return new PoolHabitat();
         }
 
+        $bonos = $this->bonosFamilia ?? app(ResolverBonosFamilia::class);
+        $refugios = $bonos->refugiosDeHabitat(
+            $exploracion->user_id,
+            $exploracion->habitat_id,
+        );
+
         return PoolHabitat::desdeArray(
             $habitat->pokemon()
                 ->wherePivot('level', $exploracion->nivel)
@@ -679,6 +687,8 @@ final class ProcesarExploracionHandler implements CommandHandler
                         ])
                         ->values()
                         ->all(),
+                    'evolution_chain_id' => $pokemon->evolution_chain_id,
+                    'peso' => $bonos->factorAparicion($refugios, (int) $pokemon->evolution_chain_id),
                 ])
                 ->values()
                 ->all(),

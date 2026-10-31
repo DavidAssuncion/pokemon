@@ -61,7 +61,12 @@ final class GeneradorPokemonGimnasio
                 speed: $statsBase->speed,
                 tipos: $this->mapeador->tiposDe($pokemon)->toList(),
                 posicion: $posicion,
-                moves: $this->movimientosDe($pokemon, $this->mapeador->tiposDe($pokemon), $nivelRival)->all(),
+                moves: $this->movimientosDe(
+                    $pokemon,
+                    $this->mapeador->tiposDe($pokemon),
+                    $nivelRival,
+                    $equipo->movimientosDe((int) $pokemon->species_id),
+                )->all(),
                 shiny: false,
                 iconName: '',
                 effectKeys: $this->mapeador->efectosDe($pokemon)->toList(),
@@ -172,8 +177,24 @@ final class GeneradorPokemonGimnasio
         return $resultado;
     }
 
-    private function movimientosDe(Pokemon $pokemon, TiposCollection $tipos, int $nivel): MovimientoBatallaCollection
-    {
+    /**
+     * @param  list<string>  $movimientosManuales
+     */
+    private function movimientosDe(
+        Pokemon $pokemon,
+        TiposCollection $tipos,
+        int $nivel,
+        array $movimientosManuales = [],
+    ): MovimientoBatallaCollection {
+        if ($movimientosManuales !== []) {
+            $movimientos = $this->mapeador->depurarMovimientos(
+                $this->mapeador->movimientosDeSeleccion($movimientosManuales),
+            );
+            if (! $movimientos->isEmpty()) {
+                return $movimientos;
+            }
+        }
+
         return $this->mapeador->movimientosDeConFallback($pokemon, $tipos, null, $nivel);
     }
 }

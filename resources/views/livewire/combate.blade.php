@@ -143,32 +143,32 @@
 
                             <div class="bg-gray-50 dark:bg-gray-900/50 rounded-lg p-3">
                                 @if($rewardsVista['tieneCaramelos'])
-                                    @if($rewardsVista['caramelos_familia'] !== [])
+                                    @if(! $rewardsVista['caramelos_familia']->isEmpty())
                                         <div class="flex flex-wrap gap-3">
                                             @foreach($rewardsVista['caramelos_familia'] as $candy)
-                                                @include('exploraciones._caramelo', ['caramelo' => $candy])
+                                                @include('exploraciones._caramelo', ['caramelo' => $candy->toArray()])
                                             @endforeach
                                         </div>
-                                        @if($rewardsVista['caramelos_ev'] !== [] || $rewardsVista['caramelos_tipo'] !== [])
+                                        @if(! $rewardsVista['caramelos_ev']->isEmpty() || ! $rewardsVista['caramelos_tipo']->isEmpty())
                                             <hr class="my-3 border-gray-200 dark:border-gray-700">
                                         @endif
                                     @endif
 
-                                    @if($rewardsVista['caramelos_ev'] !== [])
+                                    @if(! $rewardsVista['caramelos_ev']->isEmpty())
                                         <div class="flex flex-wrap gap-3">
                                             @foreach($rewardsVista['caramelos_ev'] as $candy)
-                                                @include('exploraciones._caramelo', ['caramelo' => $candy])
+                                                @include('exploraciones._caramelo', ['caramelo' => $candy->toArray()])
                                             @endforeach
                                         </div>
-                                        @if($rewardsVista['caramelos_tipo'] !== [])
+                                        @if(! $rewardsVista['caramelos_tipo']->isEmpty())
                                             <hr class="my-3 border-gray-200 dark:border-gray-700">
                                         @endif
                                     @endif
 
-                                    @if($rewardsVista['caramelos_tipo'] !== [])
+                                    @if(! $rewardsVista['caramelos_tipo']->isEmpty())
                                         <div class="flex flex-wrap gap-3">
                                             @foreach($rewardsVista['caramelos_tipo'] as $candy)
-                                                @include('exploraciones._caramelo', ['caramelo' => $candy])
+                                                @include('exploraciones._caramelo', ['caramelo' => $candy->toArray()])
                                             @endforeach
                                         </div>
                                     @endif

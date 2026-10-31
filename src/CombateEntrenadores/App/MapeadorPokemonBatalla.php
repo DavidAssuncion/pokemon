@@ -8,6 +8,7 @@ use App\Enums\StatEnum;
 use App\Models\Pokemon;
 use App\Models\PokemonType;
 use Src\Battle\Domain\Catalog\CatalogoHabilidades;
+use Src\Battle\Domain\Catalog\DepuradorMovimientos;
 use Src\Battle\Domain\Collections\MovimientoBatallaCollection;
 use Src\Battle\Domain\DatosPokemonBatalla;
 use Src\Battle\Domain\Enums\PosturaCombate;
@@ -31,9 +32,12 @@ use Src\Shared\Tipos\TiposCollection;
  */
 class MapeadorPokemonBatalla
 {
+    private const MAX_MOVIMIENTOS_RESPALDO = 8;
+
     public function __construct(
         private readonly GeneradorMovimientosTipo $generadorMovimientos,
         private readonly ?MovimientoRepository $movimientoRepository = null,
+        private readonly DepuradorMovimientos $depurador = new DepuradorMovimientos(),
     ) {
     }
 
@@ -94,7 +98,9 @@ class MapeadorPokemonBatalla
 
     /**
      * Movimientos del catálogo + fallback sintético si no hay ningún
-     * movimiento ofensivo asignado.
+     * movimiento ofensivo asignado. Antes de devolverlos, elimina los
+     * redundantes (mismo tipo/categoría/efectos/precisión) conservando el de
+     * mayor potencia.
      *
      * @param  list<string>|null  $seleccionados
      */
@@ -105,8 +111,10 @@ class MapeadorPokemonBatalla
         ?int $nivelDesbloqueo = null,
     ): MovimientoBatallaCollection {
         $movimientos = $seleccionados !== null && $seleccionados !== []
-            ? $this->movimientosDeSeleccion($seleccionados, $nivelDesbloqueo)
+            ? $this->movimientosDeSeleccion($seleccionados)
             : $this->movimientosDe($pokemon, $nivelDesbloqueo);
+
+        $movimientos = $this->depurador->depurar($movimientos);
 
         foreach ($movimientos as $movimiento) {
             if (! $movimiento->esEstado()) {
@@ -127,11 +135,13 @@ class MapeadorPokemonBatalla
     }
 
     /**
-     * Resuelve una selección de slugs del loadout del reclutado.
+     * Resuelve una selección explícita de slugs (loadout del jugador o set
+     * manual de gimnasio). El controlador valida el nivel antes de guardar;
+     * aquí no se filtra para no romper los sets manuales de gimnasio.
      *
      * @param  array<int, mixed>  $slugs
      */
-    public function movimientosDeSeleccion(array $slugs, ?int $nivelDesbloqueo = null): MovimientoBatallaCollection
+    public function movimientosDeSeleccion(array $slugs): MovimientoBatallaCollection
     {
         if ($this->movimientoRepository === null) {
             return new MovimientoBatallaCollection();
@@ -144,12 +154,9 @@ class MapeadorPokemonBatalla
             }
 
             try {
-                $movimiento = $this->movimientoRepository
+                $movimientos[] = $this->movimientoRepository
                     ->obtenerPorSlug($slug)
                     ->aMovimientoBatalla();
-                if ($nivelDesbloqueo === null || $movimiento->nivelRequerido <= $nivelDesbloqueo) {
-                    $movimientos[] = $movimiento;
-                }
             } catch (MovimientoNoExiste) {
                 // Un slug retirado no debe romper la batalla; el controlador
                 // valida el loadout antes de guardarlo.
@@ -159,9 +166,15 @@ class MapeadorPokemonBatalla
         return new MovimientoBatallaCollection($movimientos);
     }
 
+    public function depurarMovimientos(MovimientoBatallaCollection $movimientos): MovimientoBatallaCollection
+    {
+        return $this->depurador->depurar($movimientos);
+    }
+
     /**
-     * Movimientos reales asignados a la especie. Si no tiene ninguno, el
-     * llamador conserva el fallback sintético por tipos.
+     * Movimientos de nivel de la especie (incluida su línea de preevoluciones)
+     * disponibles al nivel indicado. Los salvajes y entrenadores llevan todos
+     * los que aprenden; las MT/tutores/huevos no entran por defecto.
      */
     public function movimientosDe(Pokemon $pokemon, ?int $nivelDesbloqueo = null): MovimientoBatallaCollection
     {
@@ -173,19 +186,110 @@ class MapeadorPokemonBatalla
 
         $movimientos = [];
         foreach ($pokemon->moves as $move) {
+            if (($move->pivot->source ?? null) !== 'level-up') {
+                continue;
+            }
+
+            $nivelMovimiento = $move->pivot->level ?? null;
+            if ($nivelDesbloqueo !== null
+                && $nivelMovimiento !== null
+                && (int) $nivelMovimiento > $nivelDesbloqueo) {
+                continue;
+            }
+
             try {
-                $movimiento = $this->movimientoRepository
+                $movimientos[] = $this->movimientoRepository
                     ->obtenerPorSlug($move->slug)
                     ->aMovimientoBatalla();
-                if ($nivelDesbloqueo === null || $movimiento->nivelRequerido <= $nivelDesbloqueo) {
-                    $movimientos[] = $movimiento;
-                }
             } catch (MovimientoNoExiste) {
                 // Un movimiento retirado del catálogo no debe romper la batalla.
             }
         }
 
-        return new MovimientoBatallaCollection($movimientos);
+        if ($movimientos !== []) {
+            return new MovimientoBatallaCollection($movimientos);
+        }
+
+        // Especies sin movimientos de nivel (Abra, Unown, Ditto, Smeargle…):
+        // se usa una selección corta de MT/tutor como respaldo para no dejarlas
+        // con el fallback sintético de tipo Normal.
+        return $this->movimientosDeRespaldo($pokemon, $nivelDesbloqueo);
+    }
+
+    /**
+     * Respaldo para especies sin level-up disponible: las 8 mejores MT/tutor
+     * legales al nivel. El depurador posterior elimina redundantes.
+     */
+    private function movimientosDeRespaldo(Pokemon $pokemon, ?int $nivelDesbloqueo): MovimientoBatallaCollection
+    {
+        if ($this->movimientoRepository === null) {
+            return new MovimientoBatallaCollection();
+        }
+
+        $movimientos = [];
+        foreach ($pokemon->moves as $move) {
+            if (! in_array($move->pivot->source ?? null, ['machine', 'tutor', 'custom'], true)) {
+                continue;
+            }
+
+            if ($nivelDesbloqueo !== null && $move->nivelRequeridoEfectivo() > $nivelDesbloqueo) {
+                continue;
+            }
+
+            try {
+                $movimientos[] = $this->movimientoRepository
+                    ->obtenerPorSlug($move->slug)
+                    ->aMovimientoBatalla();
+            } catch (MovimientoNoExiste) {
+                // Un movimiento retirado del catálogo no debe romper la batalla.
+            }
+        }
+
+        $stats = $this->statsDe($pokemon);
+        $tipos = $this->tiposDe($pokemon);
+        $prefiereEspecial = $stats->spAtk > $stats->atk;
+
+        usort(
+            $movimientos,
+            fn (MovimientoBatalla $a, MovimientoBatalla $b): int => $this->puntuarRespaldo($b, $prefiereEspecial, $tipos)
+                <=> $this->puntuarRespaldo($a, $prefiereEspecial, $tipos),
+        );
+
+        return new MovimientoBatallaCollection(
+            array_slice($movimientos, 0, self::MAX_MOVIMIENTOS_RESPALDO),
+        );
+    }
+
+    private function puntuarRespaldo(
+        MovimientoBatalla $movimiento,
+        bool $prefiereEspecial,
+        TiposCollection $tipos,
+    ): float {
+        if ($movimiento->esEstado()) {
+            return 0.0;
+        }
+
+        $puntuacion = max(1, $movimiento->potencia)
+            * max(0.3, $movimiento->perfil->precision);
+
+        if (($movimiento->esEspecial() && $prefiereEspecial)
+            || ($movimiento->esFisico() && ! $prefiereEspecial)) {
+            $puntuacion *= 1.5;
+        }
+
+        if ($tipos->contiene($movimiento->tipo)) {
+            $puntuacion *= 1.5;
+        }
+
+        if ($movimiento->priority > 0) {
+            $puntuacion += $movimiento->priority * 10;
+        }
+
+        if ($movimiento->perfil->recoilFraccion > 0) {
+            $puntuacion *= 0.9;
+        }
+
+        return $puntuacion;
     }
 
     /**

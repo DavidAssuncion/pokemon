@@ -296,36 +296,6 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
                             </svg>
                         </div>
-                        <div class="flex items-center gap-2 px-3 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg">
-                            <span class="text-[11px] font-bold uppercase tracking-wide text-gray-500 dark:text-gray-400">CP</span>
-                            <input
-                                type="number"
-                                min="0"
-                                inputmode="numeric"
-                                x-model="cpMin"
-                                placeholder="Mín"
-                                aria-label="CP mínimo"
-                                class="w-16 px-1 py-0.5 bg-transparent text-sm text-center text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none"
-                            >
-                            <span class="text-gray-300 dark:text-gray-600" aria-hidden="true">–</span>
-                            <input
-                                type="number"
-                                min="0"
-                                inputmode="numeric"
-                                x-model="cpMax"
-                                placeholder="Máx"
-                                aria-label="CP máximo"
-                                class="w-16 px-1 py-0.5 bg-transparent text-sm text-center text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none"
-                            >
-                            <button
-                                type="button"
-                                x-show="cpFiltroActivo()"
-                                @click="cpMin = ''; cpMax = ''"
-                                class="w-5 h-5 flex items-center justify-center rounded text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
-                                title="Quitar filtro de CP"
-                                aria-label="Quitar filtro de CP"
-                            >×</button>
-                        </div>
                     </div>
 
                     <!-- Filtro de tipo: botones con icono, selección múltiple -->
@@ -595,6 +565,7 @@
                                                             </div>
                                                             <span class="text-[10px] text-gray-500 dark:text-gray-400 flex-shrink-0" x-text="huevoEtiquetaRestante(huevo)"></span>
                                                         </div>
+                                                        <p class="text-[10px] text-gray-400 dark:text-gray-500 mt-1" x-text="'Nido Nv ' + (huevo.nido_nivel ?? 0) + ' · IV ' + (huevo.rango_iv?.min ?? 0) + '–' + (huevo.rango_iv?.max ?? 0)"></p>
                                                     </div>
                                                     <template x-if="huevo.puede_eclosionar">
                                                         <button
@@ -635,6 +606,7 @@
                                                     </div>
                                                     <p class="text-[10px] text-gray-600 dark:text-gray-400 truncate mt-1 capitalize" x-text="op.pokemon?.name ?? 'Pokémon'"></p>
                                                     <p class="text-[10px] text-gray-400 dark:text-gray-500" x-text="'Captura ' + (op.capture_rate ?? '—')"></p>
+                                                    <p class="text-[10px] text-amber-700 dark:text-amber-300 font-semibold" x-text="'Nido Nv ' + (op.nido_nivel ?? 0) + ' · IV ' + (op.rango_iv?.min ?? 0) + '–' + (op.rango_iv?.max ?? 0)"></p>
                                                     <button
                                                         @click="ponerHuevo(op.evolution_chain_id)"
                                                         :disabled="huevosActuando || !puedePonerHuevo()"
@@ -1060,6 +1032,12 @@
                                     <h4 class="text-sm font-bold uppercase tracking-wide text-gray-500 dark:text-gray-400">Movimientos disponibles</h4>
                                     <span class="text-[11px] text-gray-400 dark:text-gray-500"><span x-text="movimientosFiltrados.length + ' / ' + (detailPokemon.movimientos_disponibles || []).length"></span> · <span x-text="loadoutMovimientos.length + ' asignados'"></span></span>
                                 </div>
+                                <template x-if="detailMovimientosLoading">
+                                    <p class="text-xs text-gray-400 dark:text-gray-500 animate-pulse">Cargando movimientos…</p>
+                                </template>
+                                <template x-if="detailMovimientosError">
+                                    <p class="text-xs text-orange-600 dark:text-orange-400" role="alert" x-text="detailMovimientosError"></p>
+                                </template>
                                 <template x-if="(detailPokemon.movimientos_disponibles || []).length > 0">
                                     <div class="space-y-2 mb-2">
                                         <div class="relative max-w-sm">
@@ -1083,30 +1061,46 @@
                                     </div>
                                 </template>
                                 <template x-if="(detailPokemon.movimientos_disponibles || []).length > 0">
-                                    <div class="grid grid-cols-1 sm:grid-cols-2 2xl:grid-cols-3 gap-2">
-                                        <template x-for="mov in movimientosFiltrados" :key="'detail-mov-'+mov.slug">
-                                            <div class="flex flex-col rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900/30 p-2.5" :class="mov.desbloqueado === false ? 'opacity-60' : ''">
-                                                <div class="flex items-start justify-between gap-1.5">
-                                                    <p class="min-w-0 text-sm font-semibold leading-tight text-gray-900 dark:text-white" x-text="mov.name"></p>
-                                                    <span class="shrink-0 inline-flex items-center gap-1 pl-0 pr-2 py-0.5 text-[11px] font-semibold rounded-full" :class="tipoClase(tipoDeMovimiento(mov))">
-                                                        <img :src="tipoIconoUrl(mov)" :alt="tipoDeMovimiento(mov) || 'Tipo'" loading="lazy" decoding="async" class="w-[30px] h-[30px] object-contain"><span x-text="tipoDeMovimiento(mov) || '—'"></span>
-                                                    </span>
-                                                </div>
-                                                <div class="mt-1 flex flex-wrap items-center gap-x-1.5 text-xs text-gray-400 dark:text-gray-500">
-                                                    <img :src="categoriaIconoUrl(mov)" :alt="etiquetaCategoria(mov)" loading="lazy" decoding="async" class="w-[30px] h-[30px] object-contain"><span x-text="etiquetaCategoria(mov)"></span>
-                                                    <span x-show="mov.base_power > 0" x-text="'· ' + mov.base_power + ' pot.'"></span>
-                                                    <span x-show="mov.desbloqueado === false" x-text="'· Nv ' + mov.nivel_requerido"></span>
-                                                </div>
-                                                <p class="mt-1.5 flex-1 text-xs leading-snug text-gray-500 dark:text-gray-400" x-text="mov.description || 'Sin descripción.'"></p>
-                                                <button type="button" @click="toggleLoadoutMovimiento(mov.slug)" :disabled="mov.desbloqueado === false" class="mt-2 w-full px-2 py-1 rounded-md text-[11px] font-bold border transition-colors disabled:cursor-not-allowed" :class="mov.desbloqueado === false ? 'border-gray-200 dark:border-gray-700 text-gray-400 dark:text-gray-500' : (loadoutMovimientos.includes(mov.slug) ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300' : 'border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400 hover:border-blue-300')" x-text="mov.desbloqueado === false ? ('Nivel ' + mov.nivel_requerido) : (loadoutMovimientos.includes(mov.slug) ? 'Quitar' : 'Añadir')"></button>
+                                    <div class="space-y-5">
+                                        <!-- Movimientos de nivel -->
+                                        <div>
+                                            <div class="flex items-center justify-between gap-2 mb-2">
+                                                <h5 class="text-xs font-bold uppercase tracking-wide text-gray-500 dark:text-gray-400">Movimientos de nivel</h5>
+                                                <span class="text-[11px] text-gray-400 dark:text-gray-500" x-text="movimientosNivelFiltrados.length + ' movimientos'"></span>
                                             </div>
-                                        </template>
+                                            <div class="grid grid-cols-1 sm:grid-cols-2 2xl:grid-cols-3 gap-2">
+                                                <template x-for="mov in movimientosNivelFiltrados" :key="'detail-mov-nivel-'+mov.slug">
+                                                    @include('equipos.partials.movimiento-card')
+                                                </template>
+                                            </div>
+                                            <p x-show="movimientosNivelFiltrados.length === 0" class="text-xs text-gray-400 dark:text-gray-500">Ningún movimiento de nivel coincide con los filtros.</p>
+                                        </div>
+
+                                        <!-- Desbloqueables (Sendas) -->
+                                        <div>
+                                            <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
+                                                <div>
+                                                    <h5 class="text-xs font-bold uppercase tracking-wide text-amber-600 dark:text-amber-400">Desbloqueables</h5>
+                                                    <p class="text-[10px] text-gray-400 dark:text-gray-500">Se desbloquean en las Sendas y quedan disponibles para toda la cuenta.</p>
+                                                </div>
+                                                <div class="flex items-center gap-2">
+                                                    <span class="text-[11px] text-gray-400 dark:text-gray-500" x-text="movimientosSendaFiltrados.length + ' movimientos'"></span>
+                                                    <a href="/sendas" class="px-2 py-1 rounded-md bg-amber-500 text-white text-[10px] font-bold hover:bg-amber-600 transition-colors">Ir a Sendas</a>
+                                                </div>
+                                            </div>
+                                            <div class="grid grid-cols-1 sm:grid-cols-2 2xl:grid-cols-3 gap-2">
+                                                <template x-for="mov in movimientosSendaFiltrados" :key="'detail-mov-senda-'+mov.slug">
+                                                    @include('equipos.partials.movimiento-card')
+                                                </template>
+                                            </div>
+                                            <p x-show="movimientosSendaFiltrados.length === 0" class="text-xs text-gray-400 dark:text-gray-500">Ningún movimiento desbloqueable coincide con los filtros.</p>
+                                        </div>
                                     </div>
                                 </template>
                                 <template x-if="(detailPokemon.movimientos_disponibles || []).length > 0 && movimientosFiltrados.length === 0">
                                     <p class="text-xs text-gray-400 dark:text-gray-500">Ningún movimiento coincide con los filtros seleccionados.</p>
                                 </template>
-                                <template x-if="(detailPokemon.movimientos_disponibles || []).length === 0">
+                                <template x-if="!detailMovimientosLoading && !detailMovimientosError && (detailPokemon.movimientos_disponibles || []).length === 0">
                                     <p class="text-xs text-gray-400 dark:text-gray-500">Esta especie no tiene movimientos de catálogo.</p>
                                 </template>
                             </div>
@@ -1120,15 +1114,24 @@
                                     <h4 class="text-sm font-bold uppercase tracking-wide text-gray-500 dark:text-gray-400">Stats</h4>
                                     <span class="text-[10px] text-gray-400 dark:text-gray-500" title="Nivel de la cuenta">Nv <span x-text="nivelJugador"></span></span>
                                 </div>
+                                <div class="mb-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[9px] font-semibold text-gray-500 dark:text-gray-400">
+                                    <span class="inline-flex items-center gap-1"><span class="h-1.5 w-3 rounded-full bg-emerald-500"></span>Stats</span>
+                                    <span class="inline-flex items-center gap-1"><span class="h-1.5 w-3 rounded-full bg-blue-500"></span>IV</span>
+                                    <span class="inline-flex items-center gap-1"><span class="h-1.5 w-3 rounded-full bg-amber-500"></span>EV</span>
+                                </div>
                                 <div class="relative w-full" style="height: 180px;"><canvas id="detail-calculated-chart" role="img" aria-label="Gráfico hexagonal de stats"></canvas></div>
                                 <div class="mt-3 space-y-1.5">
-                                    <template x-for="stat in hexStatsCalculados(detailPokemon)" :key="'calc-stat-'+stat.label">
+                                    <template x-for="stat in hexStatsCalculadosConAporte(detailPokemon)" :key="'calc-stat-'+stat.label">
                                         <div class="grid grid-cols-[2.5rem_1fr_2.5rem] items-center gap-2">
                                             <span class="text-[10px] font-semibold text-gray-500 dark:text-gray-400 truncate" x-text="stat.label"></span>
-                                            <div class="h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
-                                                <div class="h-full bg-emerald-500 rounded-full" :style="'width: ' + Math.min(100, (stat.value / escalaCalculada(detailPokemon)) * 100) + '%'"></div>
+                                            <div class="h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden" :title="'Stats ' + stat.base + ' + IV ' + stat.iv + ' + EV ' + stat.ev + ' = ' + stat.total">
+                                                <div class="flex h-full w-full">
+                                                    <div class="h-full bg-emerald-500" :style="'width: ' + Math.min(100, (stat.base / escalaCalculada(detailPokemon)) * 100) + '%'"></div>
+                                                    <div x-show="stat.iv > 0" class="h-full bg-blue-500" :style="'width: ' + Math.min(100, (stat.iv / escalaCalculada(detailPokemon)) * 100) + '%'"></div>
+                                                    <div x-show="stat.ev > 0" class="h-full bg-amber-500" :style="'width: ' + Math.min(100, (stat.ev / escalaCalculada(detailPokemon)) * 100) + '%'"></div>
+                                                </div>
                                             </div>
-                                            <span class="text-[11px] font-bold text-right text-gray-700 dark:text-gray-300" x-text="stat.value"></span>
+                                            <span class="text-[11px] font-bold text-right text-gray-700 dark:text-gray-300" x-text="stat.total"></span>
                                         </div>
                                     </template>
                                 </div>
@@ -1172,7 +1175,7 @@
                                 </div>
                                 <div class="relative w-full" style="height: 180px;"><canvas id="detail-stats-chart" role="img" aria-label="Gráfico hexagonal de stats base"></canvas></div>
                                 <div class="mt-3 space-y-1.5">
-                                    <template x-for="stat in hexStats(detailPokemon)" :key="'base-stat-'+stat.label">
+                                    <template x-for="stat in hexStatsBarras(detailPokemon)" :key="'base-stat-'+stat.label">
                                         <div class="grid grid-cols-[2.5rem_1fr_2.5rem] items-center gap-2">
                                             <span class="text-[10px] font-semibold text-gray-500 dark:text-gray-400 truncate" x-text="stat.label"></span>
                                             <div class="h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
@@ -1204,6 +1207,7 @@
             </div>
         </div>
     </template>
+
 </div>
 
 @push('scripts')
@@ -1245,8 +1249,6 @@ function favoritosApp() {
         // ─── UI: Buscar/filtro ─────────────────────────────────────────────
         searchQuery: '',
         typeFilters: [],
-        cpMin: '',
-        cpMax: '',
 
         selectedTeamId: null,
         showNewTeamForm: false,
@@ -1270,6 +1272,11 @@ function favoritosApp() {
         detailEvolucionesError: false,
         selectedEvolucionId: null,
         detailChartInstances: [],
+        // Catálogo de movimientos cargado bajo demanda al abrir el modal.
+        detailMovimientosLoading: false,
+        detailMovimientosError: '',
+        movimientosCargadosIds: [],
+        movimientosCargandoIds: [],
 
         // ─── Detail: loadout de combate ─────────────────────────────────────
         loadoutHabilidadId: '',
@@ -1326,7 +1333,7 @@ function favoritosApp() {
         // COMPUTED GETTERS
         // ═══════════════════════════════════════════════════════════════════════
 
-        /** Equipos tab: todos los reclutados (libres y asignados) en una sola cuadrícula. */
+        /** Equipos tab: colección ordenada por CP desde el backend; el front solo filtra. */
         get pokemonsEquipoFiltrados() {
             let result = this.reclutados.slice();
             const q = this.normalizarTexto(this.searchQuery).trim();
@@ -1346,17 +1353,7 @@ function favoritosApp() {
                     return tipos.some(t => this.typeFilters.includes(this.tipoIdDe(t)));
                 });
             }
-            if (this.cpFiltroActivo()) {
-                const min = this.cpMin === '' || this.cpMin === null ? null : Number(this.cpMin);
-                const max = this.cpMax === '' || this.cpMax === null ? null : Number(this.cpMax);
-                result = result.filter(r => {
-                    const cp = this.cpDe(r);
-                    if (cp === null) return false;
-                    if (min !== null && Number.isFinite(min) && cp < min) return false;
-                    if (max !== null && Number.isFinite(max) && cp > max) return false;
-                    return true;
-                });
-            }
+
             return result;
         },
 
@@ -1373,13 +1370,7 @@ function favoritosApp() {
 
         hayFiltrosEquipo() {
             return this.searchQuery.trim() !== ''
-                || this.typeFilters.length > 0
-                || this.cpFiltroActivo();
-        },
-
-        cpFiltroActivo() {
-            return String(this.cpMin ?? '').trim() !== ''
-                || String(this.cpMax ?? '').trim() !== '';
+                || this.typeFilters.length > 0;
         },
 
         toggleTypeFilter(tipoId) {
@@ -1509,46 +1500,59 @@ function favoritosApp() {
             ];
         },
 
-        /** Stats base por clave canónica, a partir del array ordenado del serializador. */
-        baseStatsMap(pokemon) {
+        /** Orden de las barras horizontales: SpD y Velocidad al final. */
+        hexStatsBarras(pokemon) {
             const stats = this.statsDe(pokemon);
-            return {
-                hp: Number(stats[0]?.value ?? 0),
-                atk: Number(stats[1]?.value ?? 0),
-                def: Number(stats[2]?.value ?? 0),
-                spAtk: Number(stats[3]?.value ?? 0),
-                spDef: Number(stats[4]?.value ?? 0),
-                speed: Number(stats[5]?.value ?? 0),
-            };
+            return [
+                { label: 'PS', value: Number(stats[0]?.value ?? 0) },
+                { label: 'ATK', value: Number(stats[1]?.value ?? 0) },
+                { label: 'DEF', value: Number(stats[2]?.value ?? 0) },
+                { label: 'SpA', value: Number(stats[3]?.value ?? 0) },
+                { label: 'SpD', value: Number(stats[4]?.value ?? 0) },
+                { label: 'VEL', value: Number(stats[5]?.value ?? 0) },
+            ];
         },
 
-        /** Reproduce la fórmula de BattleStats usando el nivel de la cuenta, igual que el combate. */
-        statsCalculados(pokemon) {
-            const base = this.baseStatsMap(pokemon);
-            const nivel = Math.max(1, Number(this.nivelJugador) || 1);
-            const calcular = (baseStat, iv, ev, esHp) => {
-                const bruto = ((2 * baseStat + (iv * 4) + Math.floor(ev / 4)) * nivel) / 100;
-                return Math.floor(bruto + (esHp ? nivel + 10 : 5));
-            };
-            return {
-                hp: calcular(base.hp, this.ivValue(pokemon, 'hp'), this.evValue(pokemon, 'hp'), true),
-                atk: calcular(base.atk, this.ivValue(pokemon, 'atk'), this.evValue(pokemon, 'atk'), false),
-                def: calcular(base.def, this.ivValue(pokemon, 'def'), this.evValue(pokemon, 'def'), false),
-                spAtk: calcular(base.spAtk, this.ivValue(pokemon, 'spAtk'), this.evValue(pokemon, 'spAtk'), false),
-                spDef: calcular(base.spDef, this.ivValue(pokemon, 'spDef'), this.evValue(pokemon, 'spDef'), false),
-                speed: calcular(base.speed, this.ivValue(pokemon, 'speed'), this.evValue(pokemon, 'speed'), false),
-            };
+        /** Stats finales y su desglose base/IV/EV, calculados por el backend. */
+        statsCalculadosConAporte(pokemon) {
+            const stats = pokemon?.stats_calculados || {};
+            const claves = ['hp', 'atk', 'def', 'spAtk', 'spDef', 'speed'];
+            const resultado = {};
+
+            claves.forEach(clave => {
+                const stat = stats[clave] || {};
+                resultado[clave] = {
+                    base: Number(stat.base ?? 0),
+                    iv: Number(stat.iv ?? 0),
+                    ev: Number(stat.ev ?? 0),
+                    total: Number(stat.total ?? 0),
+                };
+            });
+
+            return resultado;
         },
 
         hexStatsCalculados(pokemon) {
-            const stats = this.statsCalculados(pokemon);
+            const stats = this.statsCalculadosConAporte(pokemon);
             return [
-                { label: 'PS', value: stats.hp },
-                { label: 'ATK', value: stats.atk },
-                { label: 'DEF', value: stats.def },
-                { label: 'VEL', value: stats.speed },
-                { label: 'SpD', value: stats.spDef },
-                { label: 'SpA', value: stats.spAtk },
+                { label: 'PS', value: stats.hp.total },
+                { label: 'ATK', value: stats.atk.total },
+                { label: 'DEF', value: stats.def.total },
+                { label: 'VEL', value: stats.speed.total },
+                { label: 'SpD', value: stats.spDef.total },
+                { label: 'SpA', value: stats.spAtk.total },
+            ];
+        },
+
+        hexStatsCalculadosConAporte(pokemon) {
+            const stats = this.statsCalculadosConAporte(pokemon);
+            return [
+                { label: 'PS', ...stats.hp },
+                { label: 'ATK', ...stats.atk },
+                { label: 'DEF', ...stats.def },
+                { label: 'SpA', ...stats.spAtk },
+                { label: 'SpD', ...stats.spDef },
+                { label: 'VEL', ...stats.speed },
             ];
         },
 
@@ -1741,6 +1745,18 @@ function favoritosApp() {
             });
         },
 
+        get movimientosNivelFiltrados() {
+            return this.movimientosFiltrados
+                .filter(mov => mov.origen === 'nivel')
+                .sort((a, b) => (Number(a.nivel_requerido) - Number(b.nivel_requerido)) || String(a.name).localeCompare(String(b.name)));
+        },
+
+        get movimientosSendaFiltrados() {
+            return this.movimientosFiltrados
+                .filter(mov => mov.origen === 'senda')
+                .sort((a, b) => (Number(a.nivel_senda) - Number(b.nivel_senda)) || (Number(a.type_id) - Number(b.type_id)) || String(a.name).localeCompare(String(b.name)));
+        },
+
         get tiposMovimientoDisponibles() {
             const vistos = new Set();
             const tipos = [];
@@ -1801,7 +1817,9 @@ function favoritosApp() {
         },
 
         movimientoDeReclutado(pokemon, slug) {
-            return (pokemon?.movimientos_disponibles || []).find(mov => mov.slug === slug) || null;
+            return (pokemon?.movimientos_disponibles || []).find(mov => mov.slug === slug)
+                || (pokemon?.movimientos_seleccionados_detalle || []).find(mov => mov.slug === slug)
+                || null;
         },
 
         /** Movimientos del loadout con los datos del catálogo cargado en /equipos. */
@@ -1812,11 +1830,13 @@ function favoritosApp() {
 
         /** Devuelve el movimiento del catálogo a partir de su slug (para chips equipados). */
         movimientoLoadout(slug) {
-            return (this.detailPokemon?.movimientos_disponibles || []).find(mov => mov.slug === slug) || null;
+            return (this.detailPokemon?.movimientos_disponibles || []).find(mov => mov.slug === slug)
+                || (this.detailPokemon?.movimientos_seleccionados_detalle || []).find(mov => mov.slug === slug)
+                || null;
         },
 
         nombreMovimientoLoadout(slug) {
-            const mov = (this.detailPokemon?.movimientos_disponibles || []).find(m => m.slug === slug);
+            const mov = this.movimientoLoadout(slug);
             return mov ? mov.name : slug;
         },
 
@@ -1977,6 +1997,8 @@ function favoritosApp() {
         openDetail(pokemon) {
             this.detailPokemon = pokemon;
             this.detailLoading = false;
+            this.detailMovimientosLoading = false;
+            this.detailMovimientosError = '';
             this.showDetailModal = true;
             this.loadoutHabilidadId = pokemon?.habilidad_activa_id ?? '';
             this.loadoutMovimientos = Array.isArray(pokemon?.movimientos_seleccionados)
@@ -1987,6 +2009,7 @@ function favoritosApp() {
             this.filtroNombreMovimiento = '';
             this.loadoutFeedback = { tipo: '', mensaje: '' };
             this.cargarEvoluciones(pokemon);
+            this.cargarMovimientosDetalle(pokemon);
             setTimeout(() => this.renderDetailCharts(), 50);
         },
 
@@ -1998,6 +2021,8 @@ function favoritosApp() {
             this.detailEvolucionesLoading = false;
             this.detailEvolucionesError = false;
             this.selectedEvolucionId = null;
+            this.detailMovimientosLoading = false;
+            this.detailMovimientosError = '';
             this.detailEvFeedback = { tipo: '', mensaje: '' };
             this.detailEvsFeeding = false;
             this.detailCandyFeeding = false;
@@ -2016,7 +2041,9 @@ function favoritosApp() {
             if (movimiento?.desbloqueado === false) {
                 this.loadoutFeedback = {
                     tipo: 'error',
-                    mensaje: 'Este movimiento requiere nivel ' + movimiento.nivel_requerido + '.',
+                    mensaje: movimiento.origen === 'senda'
+                        ? 'Este movimiento debe desbloquearse en Sendas.'
+                        : 'Este movimiento requiere nivel ' + movimiento.nivel_requerido + ' o desbloquearse en Sendas.',
                 };
                 return;
             }
@@ -2106,6 +2133,61 @@ function favoritosApp() {
                 this.detailEvolucionesError = true;
             } finally {
                 this.detailEvolucionesLoading = false;
+            }
+        },
+
+        /**
+         * El listado de /equipos ya no incluye el catálogo completo de cada
+         * especie. Al abrir el detalle se pide bajo demanda y se cachea en
+         * memoria para el resto de la sesión de la página.
+         */
+        async cargarMovimientosDetalle(pokemon) {
+            const id = pokemon?.id;
+            if (id === undefined || id === null) return;
+
+            const clave = String(id);
+            if (this.movimientosCargadosIds.includes(clave)) return;
+            if (Array.isArray(pokemon.movimientos_disponibles) && pokemon.movimientos_disponibles.length > 0) {
+                this.movimientosCargadosIds.push(clave);
+                return;
+            }
+            if (this.movimientosCargandoIds.includes(clave)) return;
+
+            this.movimientosCargandoIds.push(clave);
+            if (String(this.detailPokemon?.id) === clave) {
+                this.detailMovimientosLoading = true;
+                this.detailMovimientosError = '';
+            }
+
+            try {
+                const response = await fetch('/reclutado/' + id + '/movimientos', {
+                    headers: {
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '',
+                        'Accept': 'application/json',
+                    },
+                });
+                const data = await response.json().catch(() => ({}));
+                if (!response.ok) {
+                    throw new Error(data.message || 'No se pudieron cargar los movimientos.');
+                }
+
+                const movimientos = Array.isArray(data.movimientos_disponibles) ? data.movimientos_disponibles : [];
+                this.movimientosCargadosIds.push(clave);
+                this._actualizarReclutadoEnMemoria({ ...pokemon, movimientos_disponibles: movimientos });
+
+                if (String(this.detailPokemon?.id) === clave) {
+                    this.detailPokemon = { ...this.detailPokemon, movimientos_disponibles: movimientos };
+                }
+            } catch (err) {
+                console.error('Error cargando movimientos:', err);
+                if (String(this.detailPokemon?.id) === clave) {
+                    this.detailMovimientosError = 'No se pudieron cargar los movimientos.';
+                }
+            } finally {
+                this.movimientosCargandoIds = this.movimientosCargandoIds.filter(cargando => cargando !== clave);
+                if (String(this.detailPokemon?.id) === clave) {
+                    this.detailMovimientosLoading = false;
+                }
             }
         },
 
@@ -2216,6 +2298,9 @@ function favoritosApp() {
                     if (nivelado && typeof nivelado === 'object') {
                         const evs = { ...this.evsDe(pokemon), ...nivelado };
                         pokemon.evs = evs;
+                    }
+                    if (data.stats_calculados && typeof data.stats_calculados === 'object') {
+                        pokemon.stats_calculados = data.stats_calculados;
                     }
                     if (data.caramelos_ev && typeof data.caramelos_ev === 'object') {
                         pokemon.caramelos_ev = data.caramelos_ev;

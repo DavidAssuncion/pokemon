@@ -65,12 +65,14 @@ final class DatagridServiceProvider extends ServiceProvider
                 'visto' => 'pokedex.visto',
                 'atrapado' => 'pokedex.atrapado',
             ],
-            with: ['types'],
+            with: ['types', 'habitats'],
             visible: ['id', 'name', 'visto', 'atrapado'],
             boolFields: ['visto', 'atrapado'],
             itemFields: [
                 'icon' => fn (Model $model): string => '/images/iconos_webp/'.($this->requirePokemon($model))->id.'.webp',
                 'types' => fn (Model $model): array => $this->typeNames($this->requirePokemon($model)->types),
+                'habitat' => fn (Model $model): ?string => $this->requirePokemon($model)->habitats->first()?->name,
+                'habitat_id' => fn (Model $model): ?int => $this->requirePokemon($model)->habitats->first()?->id,
             ],
             baseQuery: function (Builder $query): Builder {
                 $userId = Auth::id();
@@ -111,6 +113,8 @@ final class DatagridServiceProvider extends ServiceProvider
                         ->values()
                         ->toArray(),
                     'habitat_name' => $pokemon->habitats->first()?->name,
+                    'habitat_id' => $pokemon->habitats->first()?->id,
+                    'habitats' => $pokemon->habitats->pluck('name')->values()->toArray(),
                 ];
             },
         ));

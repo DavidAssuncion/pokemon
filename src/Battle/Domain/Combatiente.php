@@ -138,6 +138,29 @@ class Combatiente
         $this->movimientos = new EstadoMovimientos();
     }
 
+    /**
+     * Clon profundo para simulaciones de la IA: las colecciones y VOs mutables
+     * (condiciones, efectos, turno, recursos, movimientos, objeto y habilidad)
+     * no deben compartirse con la batalla original.
+     */
+    public function __clone(): void
+    {
+        $this->condiciones = clone $this->condiciones;
+        $this->effects = clone $this->effects;
+        $this->turno = clone $this->turno;
+        $this->recursos = clone $this->recursos;
+        $this->movimientos = clone $this->movimientos;
+        $this->objeto = clone $this->objeto;
+        $this->habilidad = clone $this->habilidad;
+
+        if ($this->jefe !== null) {
+            $this->jefe = clone $this->jefe;
+        }
+
+        $this->estadoManager = new EstadoManager();
+        $this->barrerasVidaManager = new BarrerasVidaManager();
+    }
+
     // ─── Serialización para sesión ────────────────────────────
 
     public function __serialize(): array

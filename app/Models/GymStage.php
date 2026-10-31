@@ -16,12 +16,14 @@ class GymStage extends Model
         'etapa',
         'vanguardia',
         'retaguardia',
+        'movimientos',
     ];
 
     protected $casts = [
         'etapa' => 'integer',
         'vanguardia' => 'array',
         'retaguardia' => 'array',
+        'movimientos' => 'array',
     ];
 
     /**

@@ -60,7 +60,7 @@ final class SelectorMovimientosMeta
         $candidatos = [];
 
         foreach ($pokemon->moves as $move) {
-            if ($nivelDesbloqueo !== null && $move->nivel_requerido > $nivelDesbloqueo) {
+            if ($nivelDesbloqueo !== null && $move->nivelRequeridoEfectivo() > $nivelDesbloqueo) {
                 continue;
             }
 

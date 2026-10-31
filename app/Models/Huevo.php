@@ -20,12 +20,13 @@ class Huevo extends Model
     protected $table = 'huevos';
 
     protected $fillable = [
-        'user_id', 'pokemon_id', 'evolution_chain_id', 'capture_rate', 'hatch', 'es_shiny', 'ivs', 'eclosionado_en',
+        'user_id', 'pokemon_id', 'evolution_chain_id', 'capture_rate', 'hatch', 'nido_nivel', 'es_shiny', 'ivs', 'eclosionado_en',
     ];
 
     protected $casts = [
         'es_shiny' => 'boolean',
         'ivs' => StatsReclutado::class,
+        'nido_nivel' => 'integer',
         'eclosionado_en' => 'datetime',
     ];
 

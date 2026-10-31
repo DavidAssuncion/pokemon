@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Src\Huevos\Domain;
 
 use DateTimeInterface;
+use Src\Huevos\Domain\DataTransferObjects\DatosTiempoHuevo;
 
 /**
  * Estado del huevo calculado on-read a partir de created_at + capture_rate + hatch.
@@ -14,12 +15,11 @@ final class CalculadorEstadoHuevo
 {
     public static function estadoDe(
         DateTimeInterface $creadoEn,
-        int $captureRate,
-        int $hatch,
+        DatosTiempoHuevo $datos,
         DateTimeInterface $ahora,
     ): EstadoCalculadoHuevo {
-        $puestaHoras = CalculadorTiemposHuevo::puestaHoras($captureRate);
-        $eclosionHoras = CalculadorTiemposHuevo::eclosionHoras($hatch);
+        $puestaHoras = CalculadorTiemposHuevo::puestaHoras($datos->captureRate, $datos->nidoNivel);
+        $eclosionHoras = CalculadorTiemposHuevo::eclosionHoras($datos->hatch, $datos->nidoNivel);
 
         $finGestacion = $creadoEn->getTimestamp() + (int) round($puestaHoras * 3600);
 

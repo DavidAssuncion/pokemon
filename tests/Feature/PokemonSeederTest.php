@@ -37,8 +37,8 @@ class PokemonSeederTest extends TestCase
 
     public function test_formas_regionales_presentes(): void
     {
-        $this->assertDatabaseHas('pokemon', ['id' => 10091, 'name' => 'rattata-alola']);
-        $this->assertDatabaseHas('pokemon', ['id' => 10104, 'name' => 'ninetales-alola']);
+        $this->assertDatabaseHas('pokemon', ['id' => 10091, 'name' => 'rattata']);
+        $this->assertDatabaseHas('pokemon', ['id' => 10104, 'name' => 'ninetales']);
     }
 
     public function test_formas_no_regionales_ausentes(): void

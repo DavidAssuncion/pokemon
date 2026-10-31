@@ -60,6 +60,20 @@ class ColeccionEfectos implements \Countable, \IteratorAggregate
         $this->effects[] = $effect;
     }
 
+    /**
+     * Clon profundo: hay efectos con estado mutable (p. ej. Robustez/Undying
+     * guarda si ya se consumió), que no debe filtrarse a la batalla original
+     * durante las simulaciones de la IA.
+     */
+    public function __clone(): void
+    {
+        $effects = [];
+        foreach ($this->effects as $effect) {
+            $effects[] = clone $effect;
+        }
+        $this->effects = $effects;
+    }
+
     public function first(): ?InterfazEfecto
     {
         return $this->effects[0] ?? null;

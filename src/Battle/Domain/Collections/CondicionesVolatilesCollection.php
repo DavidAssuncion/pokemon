@@ -16,6 +16,18 @@ final class CondicionesVolatilesCollection extends Collection
     public string $type = CondicionVolatil::class;
 
     /**
+     * Clon profundo: cada condición guarda turnos y estado mutables.
+     */
+    public function __clone(): void
+    {
+        $items = [];
+        foreach ($this->items as $condicion) {
+            $items[] = clone $condicion;
+        }
+        $this->items = $items;
+    }
+
+    /**
      * @return list<CondicionVolatil>
      */
     public function all(): array

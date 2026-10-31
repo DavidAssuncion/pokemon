@@ -131,10 +131,13 @@ class HabitatRepository implements HabitatRepositoryInterface
             ];
         }
 
+        $imagePath = resource_path("habitats_img/{$habitat->id}.webp");
+        $imageVersion = is_file($imagePath) ? filemtime($imagePath) : 0;
+
         return new DTOHabitatDetalle(
             id: $habitat->id,
             name: $habitat->name,
-            image: "/habitats-img/{$habitat->id}.webp",
+            image: "/habitats-img/{$habitat->id}.webp?v={$imageVersion}",
             levels: $levels,
             min_lvl_1: $this->minLvlNullable($habitat->getAttribute('min_lvl_1')),
             min_lvl_2: $this->minLvlNullable($habitat->getAttribute('min_lvl_2')),

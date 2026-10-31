@@ -676,6 +676,7 @@ class Combate extends Component
 
             $actor->effects()->dispararInicioTurno($actor, $battle);
             $resultado = $servicio->calcularYAplicarDano($accion, $battle);
+            $fallo = $resultado->golpes === 0 && $movimiento->perfil->turnosDanoDiferido <= 0;
             $isAi = $battle->team2->findCombatantById($actor->id()) !== null;
             $this->log[] = ($isAi ? 'RIVAL PRIORIDAD: ' : 'PRIORIDAD: ').$servicio->generarLogMovimiento(
                 $actor,
@@ -685,6 +686,9 @@ class Combate extends Component
                 $resultado->directPct,
                 $defenderTeam->tieneVanguardiaViva(),
             );
+            if ($fallo) {
+                $this->log[] = ($isAi ? 'RIVAL: ' : '')."¡{$movimiento->nombre} falla!";
+            }
 
             $objetivos = $resultado->objetivos;
             foreach ($objetivos as $target) {
@@ -694,9 +698,11 @@ class Combate extends Component
                 }
             }
 
-            $this->applyMoveStatChanges($actor, $movimiento, true);
-            foreach ($objetivos as $target) {
-                $this->applyMoveStatChanges($target, $movimiento, false);
+            if ($resultado->golpes > 0) {
+                $this->applyMoveStatChanges($actor, $movimiento, true);
+                foreach ($objetivos as $target) {
+                    $this->applyMoveStatChanges($target, $movimiento, false);
+                }
             }
 
             $battle->subject()->notifyDamaged($objetivo, $resultado->dano);
@@ -889,12 +895,15 @@ class Combate extends Component
         $previo = $this->capturarEstado($battle);
         $actor->effects()->dispararInicioTurno($actor, $battle);
         $resultado = $servicio->calcularYAplicarDano($accion, $battle);
+        $fallo = $resultado->golpes === 0 && $movimiento->perfil->turnosDanoDiferido <= 0;
         $actual = $this->capturarEstado($battle);
 
         $this->registrarEvento('damage', $previo, $actual, [
             'actorId' => $actor->id(),
             'objetivoId' => $objetivo->id(),
             'movimiento' => $movimiento->nombre,
+            'texto' => $fallo ? '¡Falló!' : '',
+            'forzar' => $fallo,
         ]);
         $previo = $actual;
 
@@ -912,6 +921,9 @@ class Combate extends Component
             $directPct,
             $defenderTeam->tieneVanguardiaViva(),
         );
+        if ($fallo) {
+            $this->log[] = $prefix."¡{$movimiento->nombre} falla!";
+        }
 
         // 3. Aplicar estado y cambios de estadísticas a todos los objetivos
         $objetivos = $resultado->objetivos;
@@ -934,9 +946,11 @@ class Combate extends Component
         ]);
         $previo = $actual;
 
-        $this->applyMoveStatChanges($actor, $movimiento, true);
-        foreach ($objetivos as $target) {
-            $this->applyMoveStatChanges($target, $movimiento, false);
+        if ($resultado->golpes > 0) {
+            $this->applyMoveStatChanges($actor, $movimiento, true);
+            foreach ($objetivos as $target) {
+                $this->applyMoveStatChanges($target, $movimiento, false);
+            }
         }
 
         // 4. Disparar eventos de efectos (items, habilidades, etc.)

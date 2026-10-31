@@ -168,7 +168,7 @@ class EquipoBatalla
                 speed: $member->speed,
             );
 
-            $evs = $member->evs ?? new StatsValue(0, 0, 0, 0, 0, 0);
+            $evs = $member->evs;
             $tipos = new TiposCollection($member->tipos);
 
             $precomputedBattleStats = $member->nivel !== null
@@ -182,6 +182,7 @@ class EquipoBatalla
                 tiposCollection: $tipos,
                 precomputedBattleStats: $precomputedBattleStats,
                 peso: $member->peso,
+                ivs: $member->ivs,
             );
 
             $combatant = new Combatiente($pokemon, $member->posicion);

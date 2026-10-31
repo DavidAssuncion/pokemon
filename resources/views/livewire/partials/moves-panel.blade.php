@@ -111,9 +111,12 @@
                                 </div>
                             @endif
 
-                            {{-- Categoría al pie de la card --}}
-                            <div class="mt-auto">
+                            {{-- Categoría y precisión al pie de la card --}}
+                            <div class="mt-auto d-flex flex-wrap gap-1 align-items-center">
                                 <span class="badge text-bg-{{ $move['categoriaColor'] }} move-cat">{{ $move['categoriaLabel'] }}</span>
+                                <span class="badge text-bg-light border text-dark move-accuracy" title="Precisión del ataque">
+                                    Prec. {{ $move['precisionTexto'] }}
+                                </span>
                             </div>
                         </div>
                     </button>

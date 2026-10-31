@@ -23,6 +23,7 @@ final readonly class PokemonDelPool
         public readonly int $baseExperience = 0,
         public readonly ?int $evolutionChainId = null,
         public readonly int $speciesId = 0,
+        public readonly ?float $pesoOverride = null,
     ) {
     }
 
@@ -44,6 +45,7 @@ final readonly class PokemonDelPool
             baseExperience: (int) ($datos['base_experience'] ?? 0),
             evolutionChainId: isset($datos['evolution_chain_id']) ? (int) $datos['evolution_chain_id'] : null,
             speciesId: (int) ($datos['species_id'] ?? 0),
+            pesoOverride: isset($datos['peso']) ? (float) $datos['peso'] : null,
         );
     }
 
@@ -53,6 +55,10 @@ final readonly class PokemonDelPool
      */
     public function peso(): float
     {
+        if ($this->pesoOverride !== null) {
+            return max(0.0, $this->pesoOverride);
+        }
+
         if ($this->captureRate <= 0) {
             return 0.0;
         }
@@ -88,6 +94,10 @@ final readonly class PokemonDelPool
 
         if ($this->speciesId !== 0) {
             $datos['species_id'] = $this->speciesId;
+        }
+
+        if ($this->pesoOverride !== null) {
+            $datos['peso'] = $this->pesoOverride;
         }
 
         return $datos;

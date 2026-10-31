@@ -51,8 +51,26 @@ class Move extends Model
     public function pokemons(): BelongsToMany
     {
         return $this->belongsToMany(Pokemon::class, 'pokemon_moves')
-            ->withPivot(['slot', 'source'])
+            ->withPivot(['slot', 'source', 'level'])
             ->withTimestamps()
             ->orderByPivot('slot');
+    }
+
+    /**
+     * Nivel efectivo para esta especie: el nivel de aprendizaje de la línea
+     * evolutiva si el movimiento es level-up; en el resto de casos, el nivel
+     * global de desbloqueo de la cuenta.
+     */
+    public function nivelRequeridoEfectivo(): int
+    {
+        $pivot = $this->pivot;
+
+        if ($pivot !== null
+            && ($pivot->source ?? null) === 'level-up'
+            && ($pivot->level ?? null) !== null) {
+            return max(1, (int) $pivot->level);
+        }
+
+        return max(1, (int) $this->nivel_requerido);
     }
 }

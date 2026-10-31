@@ -29,6 +29,21 @@ enum StatEnum: int
     }
 
     /**
+     * Clave canónica corta del frontend ({hp, atk, def, spAtk, spDef, speed}).
+     */
+    public function key(): string
+    {
+        return match ($this) {
+            self::HP => 'hp',
+            self::ATTACK => 'atk',
+            self::DEFENSE => 'def',
+            self::SPECIAL_ATTACK => 'spAtk',
+            self::SPECIAL_DEFENSE => 'spDef',
+            self::SPEED => 'speed',
+        };
+    }
+
+    /**
      * Slug de caramelo EV (contrato del frontend: candy_ev/{slug}.webp).
      */
     public function slug(): string

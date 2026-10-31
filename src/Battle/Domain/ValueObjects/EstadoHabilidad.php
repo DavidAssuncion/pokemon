@@ -26,6 +26,14 @@ final class EstadoHabilidad
         $this->guardados = new ColeccionEfectos();
     }
 
+    /**
+     * Clon profundo de la colección de efectos guardados.
+     */
+    public function __clone(): void
+    {
+        $this->guardados = clone $this->guardados;
+    }
+
     public function anulada(): bool
     {
         return $this->anulada;

@@ -20,6 +20,7 @@
                 ['route' => '/pokedex', 'icon' => '📋', 'label' => 'Pokédex', 'active' => request()->is('pokedex*')],
                 ['route' => '/habitats', 'icon' => '🌿', 'label' => 'Hábitats', 'active' => request()->is('habitats*')],
                 ['route' => '/equipos', 'icon' => '👥', 'label' => 'Equipos', 'active' => request()->is('equipos*')],
+                ['route' => '/sendas', 'icon' => '🛤️', 'label' => 'Sendas', 'active' => request()->is('sendas*')],
                 ['route' => '/reclutamiento', 'icon' => '🎯', 'label' => 'Reclutamiento', 'active' => request()->is('reclutamiento*')],
             ];
         @endphp
