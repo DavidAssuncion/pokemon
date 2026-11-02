@@ -17,6 +17,7 @@ use App\Models\Reclutado;
 use App\Models\Team;
 use App\Models\TeamMember;
 use App\Models\User;
+use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
@@ -241,6 +242,8 @@ class ExploracionesIndividualEndpointsTest extends TestCase
     #[Test]
     public function test_store_individual_crea_exploracion_con_reclutado(): void
     {
+        $this->travelTo(Carbon::parse('2026-08-28 10:00:00'));
+
         $habitat = $this->crearHabitat(1);
         $pokemon = $this->crearPokemonConStats(1, ['hp' => 100, 'atk' => 80, 'def' => 70, 'spAtk' => 90, 'spDef' => 60, 'speed' => 50], TipoEnum::NORMAL);
         $reclutado = $this->crearReclutado($pokemon->id);
@@ -252,7 +255,15 @@ class ExploracionesIndividualEndpointsTest extends TestCase
             'duracion_horas' => 2,
         ]);
 
-        $response->assertStatus(201)->assertJson(['ok' => true]);
+        $response->assertStatus(201)
+            ->assertJson(['ok' => true, 'estado' => 'explorando']);
+
+        /** @var ExploracionActiva $exploracion */
+        $exploracion = ExploracionActiva::query()->firstOrFail();
+        $this->assertNotNull($exploracion->inicio_exploracion);
+        $this->assertTrue($exploracion->inicio_exploracion->equalTo(Carbon::parse('2026-08-28 10:00:00')));
+        $this->assertTrue(Carbon::parse($response->json('inicio'))->equalTo($exploracion->inicio_exploracion));
+        $this->assertTrue(Carbon::parse($response->json('fin'))->equalTo(Carbon::parse('2026-08-28 12:00:00')));
 
         $this->assertDatabaseHas('exploraciones_activas', [
             'user_id' => $this->usuario->id,
@@ -260,6 +271,57 @@ class ExploracionesIndividualEndpointsTest extends TestCase
             'habitat_id' => $habitat->id,
             'nivel' => 1,
             'duracion_horas' => 2,
+        ]);
+    }
+
+    #[Test]
+    public function test_store_individual_con_return_time_pasado_calcula_fin_al_dia_siguiente(): void
+    {
+        $this->travelTo(Carbon::parse('2026-08-28 23:00:00'));
+
+        $habitat = $this->crearHabitat(1);
+        $pokemon = $this->crearPokemonConStats(1, ['hp' => 100, 'atk' => 80, 'def' => 70, 'spAtk' => 90, 'spDef' => 60, 'speed' => 50], TipoEnum::NORMAL);
+        $reclutado = $this->crearReclutado($pokemon->id);
+
+        $response = $this->postJson('/api/exploraciones/store-individual', [
+            'reclutado_id' => $reclutado->id,
+            'habitat_id' => $habitat->id,
+            'level' => 1,
+            'return_time' => '01:00',
+        ]);
+
+        $response->assertStatus(201)
+            ->assertJson(['ok' => true, 'estado' => 'explorando']);
+
+        $this->assertTrue(
+            Carbon::parse($response->json('fin'))->equalTo(Carbon::parse('2026-08-29 01:00:00'))
+        );
+
+        $this->assertDatabaseHas('exploraciones_activas', [
+            'user_id' => $this->usuario->id,
+            'reclutado_id' => $reclutado->id,
+            'hora_limite' => '01:00:00',
+            'indefinido' => false,
+        ]);
+    }
+
+    #[Test]
+    public function test_store_individual_rechaza_duracion_y_return_time_juntos(): void
+    {
+        $habitat = $this->crearHabitat(1);
+        $pokemon = $this->crearPokemonConStats(1, ['hp' => 100, 'atk' => 80, 'def' => 70, 'spAtk' => 90, 'spDef' => 60, 'speed' => 50], TipoEnum::NORMAL);
+        $reclutado = $this->crearReclutado($pokemon->id);
+
+        $this->postJson('/api/exploraciones/store-individual', [
+            'reclutado_id' => $reclutado->id,
+            'habitat_id' => $habitat->id,
+            'level' => 1,
+            'duracion_horas' => 2,
+            'return_time' => '12:00',
+        ])->assertStatus(422);
+
+        $this->assertDatabaseMissing('exploraciones_activas', [
+            'reclutado_id' => $reclutado->id,
         ]);
     }
 

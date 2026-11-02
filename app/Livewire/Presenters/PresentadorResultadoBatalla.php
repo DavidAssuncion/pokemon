@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Livewire\Presenters;
 
-use App\Models\Habitat;
 use App\Support\BattleSessionService;
+use App\Support\CargarMapaSendaJugador;
 use Illuminate\Support\Facades\Auth;
 use Src\Battle\Domain\AgregadoBatalla;
 use Src\Battle\Domain\Combatiente;
@@ -13,10 +13,18 @@ use Src\CombateEntrenadores\App\OtorgarRecompensasEntrenador;
 use Src\CombateEntrenadores\App\RegistrarResultadoEntrenador;
 use Src\CombateEntrenadores\Domain\DataTransferObjects\DatosModalVictoria;
 use Src\CombateRuta\App\RegistrarResultadoRuta;
+use Src\Exploraciones\Domain\DificultadHabitat;
 use Src\Gimnasios\App\RegistrarResultadoGimnasio;
-use Src\Gimnasios\Domain\CatalogoGimnasios;
+use Src\Gimnasios\Domain\Exceptions\GimnasioNoExiste;
+use Src\Gimnasios\Domain\Repositories\GymCatalogoRepositoryInterface;
+use Src\Mazmorras\App\ObtenerConfiguracionMazmorra;
+use Src\Mazmorras\App\OtorgarRecompensasMazmorra;
 use Src\Mazmorras\App\RegistrarResultadoMazmorra;
-use Src\Mazmorras\Domain\ConfiguracionMazmorra;
+use Src\Mazmorras\Domain\ReglasMazmorra;
+use Src\Shared\Domain\DataTransferObjects\ItemCaramelo;
+use Src\Shared\Domain\MultiplicadoresDificultad;
+use Src\Shared\Domain\PoliticaIvsEvs;
+use Src\Shared\Domain\Sendas\MapaSendaJugador;
 
 /**
  * Presentador de presentación: procesa el resultado de una batalla terminada
@@ -65,6 +73,7 @@ final class PresentadorResultadoBatalla
     private static function procesarEntrenador(AgregadoBatalla $battle, array $meta): array
     {
         $habitatId = (int) ($meta['habitat_id'] ?? 0);
+        $userId = (int) ($meta['user_id'] ?? 0);
         $won = ! $battle->team1->todosDebilitados();
         $rewards = [];
 
@@ -72,17 +81,21 @@ final class PresentadorResultadoBatalla
             habitatId: $habitatId,
             nivel: (int) ($meta['nivel'] ?? 0),
             trainerIndex: (int) ($meta['trainer_index'] ?? 0),
-            userId: (int) ($meta['user_id'] ?? 0),
+            userId: $userId,
             fecha: (string) ($meta['fecha'] ?? today()->toDateString()),
             won: $won,
         );
 
         if ($won) {
+            $senda = app(CargarMapaSendaJugador::class)->para($userId);
+
             $datosModal = self::otorgarRecompensas(
-                userId: (int) ($meta['user_id'] ?? 0),
+                userId: $userId,
                 teamId: (int) ($meta['team_id'] ?? 0),
                 battle: $battle,
                 nivel: (int) ($meta['nivel'] ?? 0),
+                dificultad: MultiplicadoresDificultad::para(PoliticaIvsEvs::perfilEntrenador((int) ($meta['nivel'] ?? 1))),
+                senda: $senda,
             );
 
             if ($datosModal !== null) {
@@ -109,7 +122,18 @@ final class PresentadorResultadoBatalla
         $won = ! $battle->team1->todosDebilitados();
         $rewards = [];
 
-        $gimnasio = app(CatalogoGimnasios::class)->porSlug($gymId);
+        $repositorio = app(GymCatalogoRepositoryInterface::class);
+
+        try {
+            $gimnasio = $repositorio->obtenerPorSlugOrFail($gymId);
+            $dificultad = MultiplicadoresDificultad::para(PoliticaIvsEvs::perfilGimnasio(
+                $repositorio->indiceDe($gymId),
+                $stage === 4,
+            ));
+        } catch (GimnasioNoExiste) {
+            $gimnasio = null;
+            $dificultad = null;
+        }
 
         $resultado = app(RegistrarResultadoGimnasio::class)->registrar(
             gymId: $gymId,
@@ -121,12 +145,16 @@ final class PresentadorResultadoBatalla
         );
 
         if ($won && $resultado->avance) {
+            $senda = app(CargarMapaSendaJugador::class)->para($userId);
+
             $datosModal = self::otorgarRecompensas(
                 userId: $userId,
                 teamId: $teamId,
                 battle: $battle,
                 nivel: $nivelRival,
                 multiplicador: OtorgarRecompensasEntrenador::MULTIPLICADOR_GIMNASIO,
+                dificultad: $dificultad,
+                senda: $senda,
             );
 
             if ($datosModal !== null) {
@@ -153,12 +181,10 @@ final class PresentadorResultadoBatalla
         $won = ! $battle->team1->todosDebilitados();
         $log = [];
 
-        $habitat = Habitat::query()->find($habitatId);
-        $config = $habitat !== null
-            ? ConfiguracionMazmorra::desdeJson($habitat->mazmorra)
-            : null;
+        $totalPisos = app(ObtenerConfiguracionMazmorra::class)
+            ->deHabitat($habitatId)?->totalPisos() ?? 0;
 
-        $totalPisos = $config !== null ? $config->totalPisos() : 0;
+        $rewards = [];
 
         $resultado = app(RegistrarResultadoMazmorra::class)->registrar(
             habitatId: $habitatId,
@@ -169,15 +195,43 @@ final class PresentadorResultadoBatalla
             authUserId: (int) Auth::id(),
         );
 
+        if ($won) {
+            $datosModal = app(OtorgarRecompensasMazmorra::class)->otorgar(
+                userId: $userId,
+                teamId: (int) ($meta['team_id'] ?? 0),
+                battle: $battle,
+                nivel: (int) ($meta['nivel_rival'] ?? 0),
+            );
+
+            if ($datosModal !== null) {
+                $caramelos = [];
+                foreach ($datosModal->caramelos as $caramelo) {
+                    if ($caramelo instanceof ItemCaramelo) {
+                        $caramelos[] = [
+                            'nombre' => $caramelo->nombre,
+                            'imagen' => $caramelo->imagen,
+                            'cantidad' => $caramelo->cantidad,
+                        ];
+                    }
+                }
+
+                $rewards = [
+                    'exp_total' => $datosModal->expTotal,
+                    'exp_miembro' => $datosModal->expMiembro,
+                    'caramelos' => $caramelos,
+                ];
+            }
+        }
+
         if ($won && $resultado->completado) {
             $log[] = '¡Has completado la mazmorra!';
         } elseif ($won) {
             $log[] = '¡Piso superado! El siguiente piso ya está disponible.';
         } elseif (! $resultado->avance && $userId === (int) Auth::id()) {
-            $log[] = 'Has perdido. Podrás reintentar el piso en 1 hora.';
+            $log[] = 'Has perdido. Podrás reintentar el piso en '.ReglasMazmorra::HORAS_COOLDOWN.' hora.';
         }
 
-        return ['log' => $log, 'rewards' => [], 'habitatId' => 0];
+        return ['log' => $log, 'rewards' => $rewards, 'habitatId' => 0];
     }
 
     /**
@@ -207,6 +261,8 @@ final class PresentadorResultadoBatalla
             speciesIdsRival: $speciesRival,
             won: $won,
             shinySlots: $shinyRival,
+            dificultad: DificultadHabitat::para((int) ($meta['nivel'] ?? 1)),
+            nivelHabitat: (int) ($meta['nivel'] ?? 1),
         );
 
         return [
@@ -226,6 +282,8 @@ final class PresentadorResultadoBatalla
         AgregadoBatalla $battle,
         int $nivel,
         float $multiplicador = OtorgarRecompensasEntrenador::MULTIPLICADOR_ENTRENADOR,
+        ?MultiplicadoresDificultad $dificultad = null,
+        ?MapaSendaJugador $senda = null,
     ): ?DatosModalVictoria {
         $speciesRival = $battle->team2->combatientesCollection()->map(
             fn (Combatiente $c): int => $c->speciesId(),
@@ -237,6 +295,8 @@ final class PresentadorResultadoBatalla
             speciesIdsRival: $speciesRival,
             nivelEntrenador: $nivel,
             multiplicador: $multiplicador,
+            dificultad: $dificultad,
+            senda: $senda,
         );
     }
 }

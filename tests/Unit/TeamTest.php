@@ -15,12 +15,18 @@ use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
+/**
+ * La exploración es individual por reclutado: el equipo ya no expone estado
+ * de exploración propio. Se cubre `Reclutado::estaEnExploracion()`.
+ */
 class TeamTest extends TestCase
 {
     use RefreshDatabase;
 
     /**
      * Crea un equipo con un miembro (reclutado) y devuelve [team, reclutado].
+     *
+     * @return array{0: Team, 1: Reclutado}
      */
     private function crearEquipoConReclutado(): array
     {
@@ -46,53 +52,58 @@ class TeamTest extends TestCase
         return [$team, $reclutado];
     }
 
-    private function crearExploracion(array $atributos = []): ExploracionActiva
+    private function crearHabitat(): Habitat
     {
         $province = Province::firstOrCreate(['id' => 1], ['name' => 'Kanto']);
-        $habitat = Habitat::firstOrCreate(['id' => 1], ['name' => 'Bosque', 'province_id' => 1]);
-        [$team, $reclutado] = $this->crearEquipoConReclutado();
 
+        return Habitat::firstOrCreate(['id' => 1], ['name' => 'Bosque', 'province_id' => $province->id]);
+    }
+
+    /**
+     * @param  array<string, mixed>  $atributos
+     */
+    private function crearExploracion(Reclutado $reclutado, array $atributos = []): ExploracionActiva
+    {
         return ExploracionActiva::create(array_merge([
-            'user_id' => $team->user_id,
+            'user_id' => $reclutado->user_id,
             'reclutado_id' => $reclutado->id,
-            'habitat_id' => $habitat->id,
+            'habitat_id' => $this->crearHabitat()->id,
             'nivel' => 1,
         ], $atributos));
     }
 
-    public function test_team_is_not_exploring_when_no_exploraciones(): void
+    public function test_reclutado_no_esta_en_exploracion_sin_exploraciones(): void
     {
-        [$team] = $this->crearEquipoConReclutado();
+        [, $reclutado] = $this->crearEquipoConReclutado();
 
-        $this->assertFalse($team->isExploring());
+        $this->assertFalse($reclutado->estaEnExploracion());
     }
 
-    public function test_team_is_exploring_when_has_active_exploration(): void
+    public function test_reclutado_esta_en_exploracion_con_exploracion_activa(): void
     {
-        [$team, $reclutado] = $this->crearEquipoConReclutado();
-        $this->crearExploracion(['user_id' => $team->user_id, 'reclutado_id' => $reclutado->id]);
+        [, $reclutado] = $this->crearEquipoConReclutado();
+        $this->crearExploracion($reclutado);
 
-        $this->assertTrue($team->isExploring());
+        $this->assertTrue($reclutado->estaEnExploracion());
     }
 
-    public function test_team_is_not_exploring_after_exploration_completes(): void
+    public function test_reclutado_no_esta_en_exploracion_tras_regreso(): void
     {
-        [$team, $reclutado] = $this->crearEquipoConReclutado();
-        $exploracion = $this->crearExploracion(['user_id' => $team->user_id, 'reclutado_id' => $reclutado->id]);
+        [, $reclutado] = $this->crearEquipoConReclutado();
+        $exploracion = $this->crearExploracion($reclutado);
         $exploracion->update(['regreso' => now()]);
 
-        $this->assertFalse($team->isExploring());
+        $this->assertFalse($reclutado->estaEnExploracion());
     }
 
-    public function test_team_is_exploring_when_one_of_multiple_explorations_is_active(): void
+    public function test_reclutado_esta_en_exploracion_si_una_de_varias_sigue_activa(): void
     {
-        [$team, $reclutado] = $this->crearEquipoConReclutado();
+        [, $reclutado] = $this->crearEquipoConReclutado();
 
-        $completed = $this->crearExploracion(['user_id' => $team->user_id, 'reclutado_id' => $reclutado->id]);
-        $completed->update(['regreso' => now()]);
+        $completada = $this->crearExploracion($reclutado);
+        $completada->update(['regreso' => now()]);
+        $this->crearExploracion($reclutado, ['nivel' => 2]);
 
-        $this->crearExploracion(['user_id' => $team->user_id, 'reclutado_id' => $reclutado->id, 'nivel' => 2]);
-
-        $this->assertTrue($team->isExploring());
+        $this->assertTrue($reclutado->estaEnExploracion());
     }
 }

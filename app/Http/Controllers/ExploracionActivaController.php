@@ -11,7 +11,9 @@ use App\Models\PokemonStat;
 use App\Models\PokemonType;
 use App\Models\Reclutado;
 use App\Models\User;
+use App\Support\CadenasEvolutivas;
 use Carbon\Carbon;
+use DateTimeInterface;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -19,14 +21,15 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
 use Src\Exploraciones\App\FabricaCapacidadesStats;
-use Src\Exploraciones\App\ProcesarExploracionCommand;
+use Src\Exploraciones\App\ProcesarExploracionesPendientes;
+use Src\Exploraciones\Domain\CalculadorFinExploracion;
+use Src\Exploraciones\Domain\EconomiaRecompensas;
 use Src\Exploraciones\Domain\EstimadorRecompensasExploracion;
 use Src\Exploraciones\Domain\EvaluadorExploracion;
 use Src\Exploraciones\Domain\RolExploracion;
 use Src\Exploraciones\Domain\ValueObjects\PoolHabitat;
 use Src\Exploraciones\Presentation\PresentadorExploraciones;
 use Src\Habitats\App\ValidadorExploracion;
-use Src\Shared\Bus\CommandBus;
 use Src\Shared\Domain\NivelHelper;
 use Src\Shared\Tipos\TipoPokemon;
 
@@ -34,7 +37,7 @@ class ExploracionActivaController extends Controller
 {
     public function __construct(
         private readonly ValidadorExploracion $validadorExploracion,
-        private readonly CommandBus $bus,
+        private readonly ProcesarExploracionesPendientes $pendientes,
         private readonly EstimadorRecompensasExploracion $estimador,
         private readonly PresentadorExploraciones $presentador,
     ) {
@@ -42,18 +45,28 @@ class ExploracionActivaController extends Controller
 
     public function index(): View
     {
-        $activas = ExploracionActiva::whereNull('regreso')
-            ->with('reclutado', 'habitat')
-            ->get();
+        // Procesa bajo demanda solo las expediciones del usuario antes de
+        // renderizar. Los fallos y el lock ocupado se aíslan en el servicio.
+        $resultado = $this->pendientes->paraUsuario((int) Auth::id());
 
-        // RF-A: excluye canceladas de "Resultados por revisar".
-        $terminadas = ExploracionActiva::whereNotNull('regreso')
-            ->with('reclutado', 'habitat')
-            ->get()
-            ->reject(fn (ExploracionActiva $exp): bool => $this->estaCancelada($exp))
+        // Una única consulta y partición en PHP: una expedición finalizada
+        // durante el procesamiento no puede aparecer en activas y terminadas.
+        $exploraciones = ExploracionActiva::with('reclutado.pokemon.types', 'habitat')->get();
+
+        $activas = $exploraciones
+            ->filter(fn (ExploracionActiva $exp): bool => $exp->regreso === null)
             ->values();
 
-        return view('exploraciones.index', $this->presentador->toView($activas, $terminadas, Auth::user()?->nivel()));
+        // RF-A: excluye canceladas de "Resultados por revisar".
+        $terminadas = $exploraciones
+            ->filter(fn (ExploracionActiva $exp): bool => $exp->regreso !== null && ! $this->estaCancelada($exp))
+            ->values();
+
+        $datosVista = $this->presentador->toView($activas, $terminadas, Auth::user()?->nivel());
+        $datosVista['avisoProcesamiento'] = $resultado->fallidas > 0 || $resultado->agotadoPorTiempo;
+        $datosVista['agotadoPorTiempo'] = $resultado->agotadoPorTiempo;
+
+        return view('exploraciones.index', $datosVista);
     }
 
     /**
@@ -104,6 +117,8 @@ class ExploracionActivaController extends Controller
             cadenas: $this->cadenasDelPool($poolArray),
         );
 
+        $economia = EconomiaRecompensas::individual();
+
         return response()->json([
             'capacidades' => $capacidades->todas()->toArray(),
             'nivel_jugador' => $usuario->nivel(),
@@ -114,13 +129,19 @@ class ExploracionActivaController extends Controller
             'rol' => $reclutado->rol()?->value,
             'rol_sugerido' => RolExploracion::sugeridoPara($capacidades)->value,
             'recompensas_esperadas' => $estimacion,
+            'economia' => [
+                'factor' => $economia->factor,
+                'fraccion_cuenta' => $economia->fraccionCuenta,
+                'fraccion_reclutado' => $economia->fraccionDestino,
+            ],
+            'aviso_economia' => 'Las recompensas mostradas ya incluyen el 50 % de la expedición; la EXP se reparte 50 % cuenta / 50 % explorador.',
         ]);
     }
 
     /**
      * Resuelve las horas previstas para la estimación de recompensas (RF-D):
-     * duracion_horas si se indica, return_time → horas hasta hoy a esa hora
-     * (mínimo 1), o 4 horas por defecto.
+     * duracion_horas si se indica, return_time → horas hasta su siguiente
+     * ocurrencia desde ahora (mínimo 1, máximo 72), o 4 horas por defecto.
      *
      * @param  array<string, mixed>  $data
      */
@@ -132,10 +153,14 @@ class ExploracionActivaController extends Controller
         }
 
         if (isset($data['return_time'])) {
-            $limite = Carbon::today()->setTimeFromTimeString((string) $data['return_time']);
-            $horas = max(1, (int) ceil(now()->diffInMinutes($limite, false) / 60));
+            $inicio = now();
+            $fin = CalculadorFinExploracion::calcular((string) $data['return_time'], null, $inicio);
 
-            return min(72, $horas);
+            if ($fin !== null) {
+                $horas = max(1, (int) ceil($inicio->diffInMinutes($fin, false) / 60));
+
+                return min(72, $horas);
+            }
         }
 
         return 4;
@@ -187,7 +212,7 @@ class ExploracionActivaController extends Controller
      * Mapa de especies por cadena evolutiva, para estimar la "fase" de familia.
      *
      * @param  list<array{id:int, capture_rate:int, hatch:int|null, tipos:list<TipoPokemon>, stats:list<array{stat:int,effort:int}>, base_experience:int, evolution_chain_id:?int, species_id:int}>  $pool
-     * @return array<int, list<int>>
+     * @return array<int, array<int, int>|list<int>>
      */
     private function cadenasDelPool(array $pool): array
     {
@@ -200,11 +225,13 @@ class ExploracionActivaController extends Controller
             return [];
         }
 
-        return Pokemon::whereIn('evolution_chain_id', $ids)
+        $legacy = Pokemon::whereIn('evolution_chain_id', $ids)
             ->get(['id', 'species_id', 'evolution_chain_id'])
             ->groupBy('evolution_chain_id')
             ->map(fn ($grupo) => $grupo->pluck('species_id')->unique()->values()->all())
             ->all();
+
+        return array_replace($legacy, CadenasEvolutivas::etapasDe($ids));
     }
 
     public function store(Request $request): RedirectResponse|JsonResponse
@@ -223,8 +250,8 @@ class ExploracionActivaController extends Controller
 
     /**
      * POST /api/exploraciones/store-individual: inicia una exploración
-     * individual (API JSON). Mismo flujo que store pero devuelve JSON.
-     * Sin bayas (TODO).
+     * individual (API JSON). Mismo flujo que store pero devuelve JSON con el
+     * contrato aditivo {ok, id, inicio, fin, estado}. Sin bayas (TODO).
      */
     public function storeIndividual(Request $request): JsonResponse
     {
@@ -233,7 +260,27 @@ class ExploracionActivaController extends Controller
             return response()->json(['message' => $errores], 422);
         }
 
-        return response()->json(['ok' => true, 'id' => $exploracion->id], 201);
+        /** @var Carbon $inicio */
+        $inicio = $exploracion->inicio_exploracion ?? now();
+
+        $horaLimite = $exploracion->getRawOriginal('hora_limite');
+        if ($horaLimite instanceof DateTimeInterface) {
+            $horaLimite = $horaLimite->format('H:i:s');
+        }
+
+        $fin = CalculadorFinExploracion::calcular(
+            is_string($horaLimite) ? $horaLimite : null,
+            $exploracion->duracion_horas !== null ? (int) $exploracion->duracion_horas : null,
+            $inicio,
+        );
+
+        return response()->json([
+            'ok' => true,
+            'id' => $exploracion->id,
+            'inicio' => $inicio->toIso8601String(),
+            'fin' => $fin?->toIso8601String(),
+            'estado' => 'explorando',
+        ], 201);
     }
 
     /**
@@ -255,6 +302,11 @@ class ExploracionActivaController extends Controller
             'indefinido' => 'nullable|boolean',
         ]);
 
+        $tieneDuracion = isset($data['duracion_horas']) || isset($data['duration_hours']);
+        if ($tieneDuracion && isset($data['return_time'])) {
+            return 'No puedes indicar una duración y una hora de vuelta a la vez.';
+        }
+
         if (! $this->validadorExploracion->reclutadoDisponible((int) $data['reclutado_id'])) {
             return 'El reclutado ya está en una exploración activa.';
         }
@@ -264,7 +316,7 @@ class ExploracionActivaController extends Controller
         $minLvl = $habitat?->minLvlParaNivel((int) $data['level']);
 
         if ($minLvl !== null && $usuario instanceof User
-            && ! $this->validadorExploracion->cumpleNivelMinimo($usuario->nivel(), (int) $minLvl)
+            && ! $this->validadorExploracion->cumpleNivelMinimo($usuario->nivel(), $minLvl)
         ) {
             return "Requiere nivel Nv {$minLvl} para explorar esta zona.";
         }
@@ -285,7 +337,7 @@ class ExploracionActivaController extends Controller
             'duracion_horas' => $duracionHoras,
             'hora_limite' => $horaLimite,
             'indefinido' => $indefinido,
-            'inicio_exploracion' => null,
+            'inicio_exploracion' => now(),
             'llegada_destino' => null,
             'regreso' => null,
         ]);
@@ -339,7 +391,15 @@ class ExploracionActivaController extends Controller
      */
     public function recoger(Request $request, ExploracionActiva $exploracion): RedirectResponse|JsonResponse
     {
-        $this->bus->dispatch(new ProcesarExploracionCommand($exploracion, forzarRegreso: true));
+        if (! $this->pendientes->una($exploracion, forzarRegreso: true)) {
+            $mensaje = 'La exploración se está procesando; recarga en unos segundos.';
+
+            if ($request->wantsJson()) {
+                return response()->json(['message' => $mensaje], 409);
+            }
+
+            return redirect()->back()->with('error', $mensaje);
+        }
 
         if ($request->wantsJson()) {
             return response()->json(['ok' => true]);

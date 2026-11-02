@@ -6,6 +6,7 @@ namespace Src\CombateEntrenadores\App;
 
 use App\Models\Habitat;
 use App\Models\Pokemon;
+use App\Support\ConfiguracionCombate;
 use Random\Engine\Mt19937;
 use Random\Randomizer;
 use Src\Battle\Domain\Collections\DatosPokemonBatallaCollection;
@@ -15,7 +16,8 @@ use Src\Exploraciones\Domain\ValueObjects\PoolHabitat;
 use Src\Pokemon\Domain\Stats\DatosStats;
 use Src\Pokemon\Domain\Stats\DatosStatsCollection;
 use Src\Shared\Domain\ClasificadorOfensivaDefensiva;
-use Src\Shared\Domain\IvsRangoEntrenador;
+use Src\Shared\Domain\PerfilIvsEvs;
+use Src\Shared\Domain\PoliticaIvsEvs;
 
 /**
  * Genera el equipo de un entrenador a partir del pool de un hábitat y nivel.
@@ -28,18 +30,33 @@ use Src\Shared\Domain\IvsRangoEntrenador;
  *   el aleatorio es inyectable para tests y determinista por semilla por defecto.
  * - Clasifica cada pokémon en defensivo (vanguardia) u ofensivo (retaguardia)
  *   con ClasificadorOfensivaDefensiva (fórmula determinista, sin random).
+ * - IV/EV se reparten con PoliticaIvsEvs según el nivel de hábitat: 1 → TopUno,
+ *   2 → TopDos, 3 → Completo. Se puede inyectar un perfil explícito.
+ * - Cada Pokémon lleva hasta 6 movimientos elegidos por `SelectorMovimientosRival`
+ *   con el perfil de su tier: nivel disponible + desbloqueos del jugador.
  */
 class GeneradorEquipoEntrenador
 {
+    private readonly SelectorMovimientosRival $selector;
+
+    private readonly ConfiguracionCombate $configuracion;
+
     public function __construct(
         private readonly MapeadorPokemonBatalla $mapeador,
         private readonly ClasificadorOfensivaDefensiva $clasificador,
+        ?SelectorMovimientosRival $selector = null,
+        ?ConfiguracionCombate $configuracion = null,
     ) {
+        $this->selector = $selector ?? new SelectorMovimientosRival($mapeador);
+        $this->configuracion = $configuracion ?? new ConfiguracionCombate();
     }
 
     /**
      * @param  callable(): float  $aleatorio  Fuente aleatoria inyectable para la
      *                                         repetición ponderada (tests lo fijan).
+     * @param  PerfilIvsEvs|null  $perfil  Perfil IV/EV explícito; si es null se
+     *                                      deriva del nivel de hábitat.
+     * @param  list<string>  $movimientosDesbloqueados  slugs desbloqueados por el jugador
      */
     public function generar(
         int $habitatId,
@@ -47,15 +64,16 @@ class GeneradorEquipoEntrenador
         int $entrenadorIndex,
         string $fecha,
         ?int $nivelRival = null,
-        int $ivPrincipal = 0,
-        int $ivResto = 0,
         ?callable $aleatorio = null,
+        ?PerfilIvsEvs $perfil = null,
+        array $movimientosDesbloqueados = [],
     ): DatosPokemonBatallaCollection {
         $pool = $this->poolDelHabitat($habitatId, $nivel);
         if ($pool === []) {
             return new DatosPokemonBatallaCollection();
         }
 
+        $perfil ??= PoliticaIvsEvs::perfilEntrenador($nivel);
         $semilla = crc32("{$habitatId}|{$nivel}|{$entrenadorIndex}|{$fecha}");
         $elegidos = $this->elegirEspecies($pool, $semilla, $aleatorio);
 
@@ -67,17 +85,25 @@ class GeneradorEquipoEntrenador
 
         $equipo = [];
         foreach ($elegidos as $i => $pokemon) {
+            $statsBase = $stats->en($i) ?? new DatosStats(0, 0, 0, 0, 0, 0);
+
+            $perfilMoveset = $this->configuracion->paraEntrenador($nivel, $i + 1);
+            $movimientos = $this->selector->seleccionar(
+                $pokemon,
+                $nivelRival ?? $nivel,
+                $perfilMoveset,
+                $movimientosDesbloqueados,
+            );
+
             $equipo[] = $this->mapeador->desdePokemon(
                 pokemon: $pokemon,
                 id: "entrenador_{$habitatId}_{$nivel}_{$entrenadorIndex}_{$i}",
                 nombre: $pokemon->name,
                 posicion: $posiciones->en($i) ?? Posicion::VANGUARDIA,
                 nivel: $nivelRival,
-                ivs: IvsRangoEntrenador::distribuir(
-                    $ivPrincipal,
-                    $ivResto,
-                    $stats->en($i) ?? new DatosStats(0, 0, 0, 0, 0, 0),
-                ),
+                ivs: PoliticaIvsEvs::ivs($perfil, $statsBase),
+                evs: PoliticaIvsEvs::evs($perfil, $statsBase),
+                movimientos: $movimientos,
             );
         }
 

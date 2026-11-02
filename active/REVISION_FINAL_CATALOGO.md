@@ -16,7 +16,7 @@ Documento de cierre para decidir de una vez qué movimientos y habilidades entra
 
 ## Implementación
 
-- **160 movimientos** nuevos en `storage/data/moves.json` y asignaciones en `storage/data/pokemon_moves_lote9.json`.
+- **160 movimientos** nuevos en `storage/data/moves.json`; las asignaciones por especie se importan ahora desde PokeAPI (`storage/data/pokemon_moves_pokeapi.json`).
 - **88 habilidades** nuevas en `storage/data/abilities_lote3.json` (incluidas Absorbe Agua, Absorbe Electricidad, Absorbe Fuego y Piel Seca).
 - Nuevos ejecutores de movimiento para protección, clima, curación, revivir, cambios de tipo/stats, trampas y utilidades.
 - Nuevas clases de efecto para habilidades de entrada, contacto, clima, absorción, stats, ruinas, equipo y reacciones.

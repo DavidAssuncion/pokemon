@@ -114,3 +114,32 @@ POST /api/huevos/{huevo}/eclosionar   → { reclutado } (ReclutadoSerializer con
 - Refactor Cleaner: `51cc0c9`, `b661fad`, `8d3fd57`, `8eee2ed`
 - Idempotencia eclosión + SESSION_VERSION 10: `869f84a217`
 - Hardening guards capture_rate/hatch (+ doc): `f1ea5d2ebc` (+) `7c919d8f9d`
+---
+
+## Guía de búsqueda (grep)
+
+- Clases: `CalculadorTiemposHuevo`, `CalculadorEstadoHuevo`, `EstadoHuevo`, `EstadoCalculadoHuevo`,
+  `CrearHuevo`, `ListarHuevos`, `EclosionarHuevo`, `HuevoController`, `ReglasHuevo`.
+- Constantes: `CalculadorTiemposHuevo::PUESTA_HORAS_BASE` (255), `DIVISOR_HATCH` (15),
+  `REDUCCION_POR_NIVEL`, `REDUCCION_MAXIMA`; `ReglasHuevo::MAX_GESTANDO`, `MAX_INCUBANDO`,
+  `MAX_ACTIVO_POR_FAMILIA`, `RECLUTADOS_MINIMOS`; `ProbabilidadesShiny::HUEVO` (512).
+- Términos: `GESTANDO`, `INCUBANDO`, `LISTO`, `nido_nivel`, `capture_rate`, `hatch`,
+  `evolution_chain_id`, `eclosionado_en`, `puede_eclosionar`, `progreso`.
+- Tablas: `huevos`, `reclutados`, `pokemon`, `granjas`, `nidos`, `refugios`.
+- Tests: `tests/Feature/Huevos/`, `tests/Unit/Huevos/` (si existen), tests de granjas/nido.
+
+## Deuda y mejoras priorizadas (auditoría 2026-10-31)
+
+- **[Alta] OBS-01/02**: la UI (`equipos/index.blade.php`) bloquea «Poner huevo» con un huevo
+  INCUBANDO o LISTO, más restrictivo que el backend (permite GESTANDO + INCUBANDO de otra familia).
+  Alinear la UI con `limites`.
+- **[Media] `habilidades=[]`** en `ReclutadoSerializer` (falta Ability model/pivot); pending 15 de
+  `docs/context.md`.
+- **[Media] `CrearHuevo`/`ListarHuevos` consultan Eloquent directamente**; extraer repositorio de
+  huevos y un caso de uso de lectura para testear sin BD.
+- **[Media] `CrearHuevo` compara estados con `CalculadorEstadoHuevo` en memoria**; aceptable, pero
+  la consulta de huevos activos no filtra por estado en SQL. Si crece el volumen, añadir índices
+  (`user_id`, `eclosionado_en`, `evolution_chain_id`).
+- **[Baja] `ReglasHuevo::MAX_ACTIVO_POR_FAMILIA`** aún no se usa en la consulta; la unicidad se
+  garantiza en App. Documentar o mover la invariante a un índice único parcial si el producto lo
+  permite.

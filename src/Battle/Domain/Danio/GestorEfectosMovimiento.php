@@ -24,47 +24,53 @@ use Src\Battle\Domain\ValueObjects\EfectoSecundario;
  */
 final class GestorEfectosMovimiento
 {
+    /**
+     * Aplica el estado principal del movimiento al objetivo.
+     *
+     * @return bool true solo si el estado se escribió efectivamente en el
+     *              objetivo declarado; false en cualquier rama de no aplicación.
+     */
     public function aplicarEstado(
         Combatiente $objetivo,
         MovimientoBatalla $movimiento,
         ?AgregadoBatalla $battle = null,
         ?Combatiente $atacante = null,
-    ): void {
+    ): bool {
         if (! $movimiento->tieneStatus() || ! $objetivo->estaVivo()) {
-            return;
+            return false;
         }
 
         if ($objetivo->tieneCondicion(\Src\Battle\Domain\Enums\ClaveCondicion::PROTEGIDO)) {
-            return;
+            return false;
         }
 
         if ($movimiento->perfil->probabilidadEstado < 1.0
             && mt_rand() / mt_getrandmax() >= $movimiento->perfil->probabilidadEstado) {
-            return;
+            return false;
         }
 
         if ($battle !== null) {
             foreach ($battle->equipoDe($objetivo)?->efectos()->all() ?? [] as $efectoEquipo) {
                 if ($efectoEquipo instanceof EfectoEquipoVeloFlor
                     && $efectoEquipo->protegeA($objetivo, $movimiento->statusEffect)) {
-                    return;
+                    return false;
                 }
                 if ($efectoEquipo instanceof EfectoEquipoVeloDulce
                     && $efectoEquipo->bloqueaEstado($movimiento->statusEffect)) {
-                    return;
+                    return false;
                 }
                 if ($efectoEquipo instanceof EfectoEquipoVeloPastel
                     && $efectoEquipo->bloqueaEstado($movimiento->statusEffect)) {
-                    return;
+                    return false;
                 }
                 if ($efectoEquipo instanceof EfectoEquipoSafeguard && $efectoEquipo->estaActivo()) {
-                    return;
+                    return false;
                 }
             }
         }
 
         if ($battle !== null && ! $objetivo->effects()->permiteEstado($objetivo, $movimiento->statusEffect, $battle)) {
-            return;
+            return false;
         }
 
         $objetivo->setEstado($movimiento->statusEffect);
@@ -87,6 +93,8 @@ final class GestorEfectosMovimiento
             || $movimiento->statusEffect === EstadoPokemon::BAD_POISON) {
             $objetivo->aplicarCargaVeneno($movimiento->perfil->cargasVeneno);
         }
+
+        return true;
     }
 
     public function aplicarControl(

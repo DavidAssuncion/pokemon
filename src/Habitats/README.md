@@ -12,10 +12,10 @@ evolutivas y satisface las vistas de administración y de combate.
 | `Domain/ResolvedorCadenasEvolutivas.php` | BFS de la cadena, etapas y reparto base/evoluciones |
 | `Domain/Collections/` | `MiembrosCadenaCollection`, `PokemonCadenaCollection`, `EvolucionCadenaCollection`, `PokemonBasicoCollection` |
 | `Domain/DataTransferObjects/` | `MiembroCadena`, `PokemonCadenaBase`, `EvolucionCadena`, `RepartoFamilia`, `PokemonBasico` |
-| `Domain/Repositories/HabitatRepositoryInterface.php` | Contrato de lectura/gestión de hábitats |
+| `Domain/Repositories/` | `HabitatLecturaRepositoryInterface` (lectura) y `HabitatGestionRepositoryInterface` (gestión) |
 | `App/` | Casos de uso: listar/assignar familias, mover pokémon de nivel, validar exploración |
 | `App/Collections/ExploracionActivaCollection.php` | Exploraciones activas de un hábitat |
-| `Infra/HabitatRepository.php` | Implementación Eloquent |
+| `Infra/` | `HabitatLecturaRepository`, `HabitatGestionRepository` y `Concerns/CadenasFamiliaHabitatsTrait` |
 | `Presentation/` | DTOs de familia/tipo/pokémon para la vista |
 
 ## Puntos de entrada

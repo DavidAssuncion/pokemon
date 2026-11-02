@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace Src\Exploraciones\Domain;
 
+use Src\Exploraciones\Domain\Collections\MatchupCollection;
+use Src\Exploraciones\Domain\DataTransferObjects\Matchup;
+use Src\Shared\Collections\StringCollection;
 use Src\Shared\Tipos\TipoPokemon;
 use Src\Shared\Tipos\TypeChart;
 
@@ -36,17 +39,10 @@ final class CalculadorMatchups
     /**
      * @param  list<array{tipos: list<TipoPokemon>, enPool: bool, rol: RolExploracion, base: int}>  $miembros
      * @param  list<TipoPokemon>  $tiposPool
-     * @return list<array{
-     *     miembro_tipos: list<string>,
-     *     pool_tipo: string,
-     *     defensa: float,
-     *     ataque: float,
-     *     clasificacion: string,
-     * }>
      */
-    public static function calcular(array $miembros, array $tiposPool): array
+    public static function calcular(array $miembros, array $tiposPool): MatchupCollection
     {
-        $matchups = [];
+        $matchups = new MatchupCollection();
 
         foreach ($miembros as $miembro) {
             foreach ($tiposPool as $poolTipo) {
@@ -58,16 +54,16 @@ final class CalculadorMatchups
                     continue;
                 }
 
-                $matchups[] = [
-                    'miembro_tipos' => array_map(
+                $matchups->add(new Matchup(
+                    miembroTipos: new StringCollection(array_map(
                         static fn (TipoPokemon $tipo): string => $tipo->label(),
                         $miembro['tipos'],
-                    ),
-                    'pool_tipo' => $poolTipo->label(),
-                    'defensa' => $defensa,
-                    'ataque' => $ataque,
-                    'clasificacion' => $clasificacion,
-                ];
+                    )),
+                    poolTipo: $poolTipo->label(),
+                    defensa: $defensa,
+                    ataque: $ataque,
+                    clasificacion: $clasificacion,
+                ));
             }
         }
 
@@ -101,19 +97,11 @@ final class CalculadorMatchups
 
     /**
      * ¿Hay algún matchup crítico (negativo o severo)? Dispara el riesgo Extremo.
-     *
-     * @param  list<array{
-     *     miembro_tipos: list<string>,
-     *     pool_tipo: string,
-     *     defensa: float,
-     *     ataque: float,
-     *     clasificacion: string,
-     * }>  $matchups
      */
-    public static function hayMatchupCritico(array $matchups): bool
+    public static function hayMatchupCritico(MatchupCollection $matchups): bool
     {
         foreach ($matchups as $matchup) {
-            if ($matchup['clasificacion'] === self::NEGATIVO || $matchup['clasificacion'] === self::SEVERO) {
+            if ($matchup->clasificacion === self::NEGATIVO || $matchup->clasificacion === self::SEVERO) {
                 return true;
             }
         }

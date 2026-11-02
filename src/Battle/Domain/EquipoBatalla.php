@@ -14,6 +14,7 @@ use Src\Battle\Domain\Enums\PosturaCombate;
 use Src\Pokemon\Domain\PokemonEntity;
 use Src\Pokemon\Domain\Stats\BattleStats;
 use Src\Pokemon\Domain\Stats\StatsValue;
+use Src\Shared\Domain\Sendas\MapaSendaJugador;
 use Src\Shared\Tipos\TiposCollection;
 
 class EquipoBatalla
@@ -193,6 +194,7 @@ class EquipoBatalla
             $combatant->setFormSuffix($member->formSuffix);
             $combatant->setShiny($member->shiny);
             $combatant->setPostura($member->postura);
+            $combatant->setSenda($member->senda ?? MapaSendaJugador::vacio());
 
             // Procesar efectos/habilidades via Factory (una clave puede componer varios efectos)
             foreach ($member->effectKeys as $key) {
@@ -219,6 +221,10 @@ class EquipoBatalla
 
             if ($member->esJefe) {
                 $combatant->configurarJefe($member->fasesJefe, $member->puntosDebiles);
+            }
+
+            if ($member->bonusInicialStats > 0.0) {
+                $combatant->aplicarBonusInicialStats($member->bonusInicialStats);
             }
 
             $team->agregarCombatiente($combatant, $member->posicion);

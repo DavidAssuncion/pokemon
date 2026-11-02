@@ -248,6 +248,38 @@ final class CatalogoGimnasios
         return new GimnasioCollection(array_values($this->gimnasios));
     }
 
+    /**
+     * Gimnasios ordenados por dificultad real: nivelMinimo ASC y, en empate,
+     * slug ASC. El orden de inserción del catálogo no se modifica.
+     */
+    public function ordenados(): GimnasioCollection
+    {
+        return $this->todos()->sort(
+            static fn (Gimnasio $a, Gimnasio $b): int => [$a->nivelMinimo, $a->slug] <=> [$b->nivelMinimo, $b->slug],
+        );
+    }
+
+    /**
+     * Índice 1-18 del gimnasio según el orden de dificultad (nivelMinimo ASC,
+     * slug ASC). 1 = más fácil, 18 = más difícil.
+     *
+     * @throws GimnasioNoExiste
+     */
+    public function indiceDe(string $slug): int
+    {
+        $posicion = array_search(
+            $slug,
+            $this->ordenados()->pluck(static fn (Gimnasio $gimnasio): string => $gimnasio->slug),
+            true,
+        );
+
+        if ($posicion === false) {
+            throw new GimnasioNoExiste();
+        }
+
+        return $posicion + 1;
+    }
+
     public function porSlug(string $slug): ?Gimnasio
     {
         return $this->gimnasios[$slug] ?? null;

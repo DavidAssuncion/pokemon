@@ -1,7 +1,27 @@
 @php
-    $evento = \Src\Exploraciones\Presentation\EventoExploracionVista::toView($evento);
-    $candyFallback ??= "this.src='/images/candy_pokemon/0.webp'; this.onerror=null;";
-    $tipo = $evento['tipo'];
+    $tipo = $evento['tipo'] ?? 'desconocido';
+
+    $candySrc = $evento['candy_src'] ?? null;
+    if (! is_string($candySrc) || trim($candySrc) === '') {
+        $candySrc = null;
+    }
+
+    // Fallback visual de imagen: candy_imagen → candy_src → placeholder.
+    $candyImagen = $evento['candy_imagen'] ?? null;
+    if (! is_string($candyImagen) || trim($candyImagen) === '') {
+        $candyImagen = $candySrc;
+    }
+
+    $candyPlaceholder = '/images/candy_pokemon/0.webp';
+    if ($candyImagen === null) {
+        $candyImagen = $candyPlaceholder;
+    }
+
+    // Encadena candy_imagen → candy_src → placeholder solo cuando hay dos
+    // fuentes distintas; si no, cae directamente al placeholder.
+    $candyFallback = $candySrc !== null && $candySrc !== $candyImagen
+        ? "this.onerror=null; this.src='{$candySrc}'; this.onerror=function(){this.onerror=null; this.src='{$candyPlaceholder}';};"
+        : "this.onerror=null; this.src='{$candyPlaceholder}';";
 @endphp
 <li class="flex items-center gap-3 py-1.5">
     @if($tipo === 'pokemon')
@@ -36,6 +56,9 @@
             <div>
                 <p class="text-sm font-semibold text-red-600 dark:text-red-400">{{ $evento['titulo'] }}</p>
                 <p class="text-xs text-gray-600 dark:text-gray-300">{{ $evento['subtitulo'] }}</p>
+                @if(!empty($evento['detalle_derrota']))
+                    <p class="text-xs font-medium text-red-600 dark:text-red-400">{{ $evento['detalle_derrota'] }}</p>
+                @endif
             </div>
             @if($evento['iconos_pokemon'] !== [])
                 <div class="flex -space-x-2">
@@ -63,7 +86,7 @@
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
         </svg>
         <span class="text-sm text-gray-700 dark:text-gray-300">
-            El equipo se retira: <strong>{{ $evento['reason'] }}</strong>
+            {{ $evento['texto'] ?? 'El explorador se retira' }}
         </span>
     @elseif($tipo === 'grupo')
         <svg class="w-5 h-5 text-blue-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -89,17 +112,11 @@
         </div>
     @elseif($tipo === 'hallazgo')
         @if($evento['subtype'] === 'caramelo_familia')
-            @if($evento['candy_src'] !== null)
-                <img src="{{ $evento['candy_src'] }}" loading="lazy" decoding="async"
-                     alt="{{ $evento['candy_alt'] }}"
-                     title="{{ $evento['candy_alt'] }}"
-                     class="w-10 h-10 object-contain shrink-0"
-                     onerror="{{ $candyFallback }}">
-            @else
-                <svg class="w-5 h-5 text-amber-500 shrink-0" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                    <path d="M10 1.5a3 3 0 013 3v.75h1.25a3 3 0 013 3v3.1a5 5 0 110 4.3v3.1a3 3 0 01-3 3H13v.75a3 3 0 01-6 0v-.75H5.75a3 3 0 01-3-3v-3.1a5 5 0 110-4.3v-3.1a3 3 0 013-3H7v-.75a3 3 0 013-3z"/>
-                </svg>
-            @endif
+            <img src="{{ $candyImagen }}" loading="lazy" decoding="async"
+                 alt="{{ $evento['candy_alt'] }}"
+                 title="{{ $evento['candy_alt'] }}"
+                 class="w-10 h-10 object-contain shrink-0"
+                 onerror="{{ $candyFallback }}">
             <span class="text-sm text-gray-700 dark:text-gray-300">
                 Caramelos de <strong>{{ $evento['candy_nombre'] ?? 'Pokémon' }}</strong>
                 <span class="font-semibold text-gray-900 dark:text-white">×{{ $evento['cantidad'] }}</span>
@@ -145,17 +162,11 @@
             <span class="text-sm text-gray-500 dark:text-gray-400">{{ $evento['texto'] }}</span>
         @endif
     @elseif($tipo === 'caramelo_familia')
-        @if($evento['candy_src'] !== null)
-            <img src="{{ $evento['candy_src'] }}" loading="lazy" decoding="async"
-                 alt="{{ $evento['candy_alt'] }}"
-                 title="{{ $evento['candy_alt'] }}"
-                 class="w-10 h-10 object-contain shrink-0"
-                 onerror="{{ $candyFallback }}">
-        @else
-            <svg class="w-5 h-5 text-amber-500 shrink-0" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                <path d="M10 1.5a3 3 0 013 3v.75h1.25a3 3 0 013 3v3.1a5 5 0 110 4.3v3.1a3 3 0 01-3 3H13v.75a3 3 0 01-6 0v-.75H5.75a3 3 0 01-3-3v-3.1a5 5 0 110-4.3v-3.1a3 3 0 013-3H7v-.75a3 3 0 013-3z"/>
-            </svg>
-        @endif
+        <img src="{{ $candyImagen }}" loading="lazy" decoding="async"
+             alt="{{ $evento['candy_alt'] }}"
+             title="{{ $evento['candy_alt'] }}"
+             class="w-10 h-10 object-contain shrink-0"
+             onerror="{{ $candyFallback }}">
         <span class="text-sm text-gray-700 dark:text-gray-300">
             Caramelos de <strong>{{ $evento['candy_nombre'] ?? 'Pokémon' }}</strong>
             <span class="font-semibold text-gray-900 dark:text-white">×{{ $evento['cantidad'] }}</span>
@@ -201,6 +212,9 @@
                         <span class="text-xs text-gray-500 dark:text-gray-400">(-{{ $evento['duracion'] }} min)</span>
                     @endif
                 </p>
+                @if(!empty($evento['detalle_derrota']))
+                    <p class="text-xs font-medium text-red-600 dark:text-red-400">{{ $evento['detalle_derrota'] }}</p>
+                @endif
             </div>
         </div>
     @elseif($tipo === 'neutral')
@@ -229,9 +243,32 @@
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
         </svg>
         <span class="text-sm text-gray-700 dark:text-gray-300">
-            El equipo descansa
-            @if($evento['duracion'] > 0)
+            {{ $evento['texto'] ?? 'El explorador descansa' }}
+            @if(($evento['hp_recuperado'] ?? 0) > 0)
+                <span class="text-xs font-medium text-green-600 dark:text-green-400">(+{{ $evento['hp_recuperado'] }} PS)</span>
+            @endif
+            @if(($evento['duracion'] ?? 0) > 0)
                 <span class="text-xs text-gray-500 dark:text-gray-400">({{ $evento['duracion'] }} min)</span>
+            @endif
+        </span>
+    @elseif($tipo === 'derrota')
+        <svg class="w-5 h-5 text-red-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+        <span class="text-sm text-gray-700 dark:text-gray-300">
+            {{ $evento['texto'] ?? 'El explorador cae debilitado' }}
+            @if(!empty($evento['reason_texto']))
+                <span class="text-xs text-gray-500 dark:text-gray-400">({{ $evento['reason_texto'] }})</span>
+            @endif
+        </span>
+    @elseif($tipo === 'cancelada')
+        <svg class="w-5 h-5 text-gray-400 dark:text-gray-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/>
+        </svg>
+        <span class="text-sm text-gray-600 dark:text-gray-300">
+            {{ $evento['texto'] ?? 'Expedición cancelada' }}
+            @if(empty($evento['texto']) && !empty($evento['motivo']))
+                <span class="text-xs text-gray-500 dark:text-gray-400">({{ $evento['motivo'] }})</span>
             @endif
         </span>
     @else

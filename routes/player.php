@@ -65,6 +65,7 @@ Route::get('/reclutado/{reclutado}/movimientos', [ReclutadoController::class, 'm
 Route::get('/sendas', [SendasController::class, 'index'])->name('sendas.index');
 Route::get('/sendas/{tipo}', [SendasController::class, 'show'])->name('sendas.show');
 Route::post('/sendas/desbloquear', [SendasController::class, 'desbloquear'])->name('sendas.desbloquear');
+Route::post('/sendas/experiencia', [SendasController::class, 'experiencia'])->name('sendas.experiencia');
 
 // Favoritos y capacidades de reclutados (API JSON)
 Route::get('/api/reclutados', [ReclutadoController::class, 'listarTodos']);

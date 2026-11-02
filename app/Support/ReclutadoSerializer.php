@@ -47,7 +47,7 @@ final class ReclutadoSerializer
     ): array {
         $pokemon = $reclutado->pokemon;
         $expTotal = $reclutado->exp->total();
-        $nivel = $nivelUsuario ?? NivelHelper::nivelDesdeExperiencia($expTotal);
+        $nivel = NivelHelper::nivelDesdeExperiencia($expTotal);
         $movimientosSeleccionados = is_array($reclutado->movimientos)
             ? array_values($reclutado->movimientos)
             : [];
@@ -252,6 +252,11 @@ final class ReclutadoSerializer
     }
 
     /**
+     * `nivel_senda` es el nivel visible (1-3) del nodo de Senda y
+     * `tramo_senda` el `required_level` original (1-5). Los tramos 4-5 se
+     * marcan con `es_maestria`. `coste_senda` se resuelve con el tramo, no con
+     * el nivel visible.
+     *
      * @param  array<int, true>|null  $desbloqueadas  null = loadout ya validado
      * @param  array<int, TypePathNode>|null  $sendas
      * @return array<string, mixed>
@@ -265,8 +270,9 @@ final class ReclutadoSerializer
         $source = $move->pivot->source ?? 'custom';
         $esNivel = $source === 'level-up';
         $nodo = $sendas[(int) $move->id] ?? null;
-        $nivelSenda = $nodo instanceof TypePathNode ? (int) $nodo->required_level : null;
-        $costeSenda = $nivelSenda !== null ? SendaCostes::coste($nivelSenda) : null;
+        $tramo = $nodo instanceof TypePathNode ? max(1, min(5, (int) $nodo->required_level)) : null;
+        $nivelSenda = $tramo !== null ? min(3, $tramo) : null;
+        $costeSenda = $tramo !== null ? SendaCostes::coste($tramo) : null;
         $desbloqueadoPorSenda = $desbloqueadas === null || isset($desbloqueadas[(int) $move->id]);
         $nivelRequerido = $esNivel ? $move->nivelRequeridoEfectivo() : null;
         $desbloqueadoPorNivel = $esNivel
@@ -290,7 +296,9 @@ final class ReclutadoSerializer
             'base_power' => $move->base_power,
             'nivel_requerido' => $nivelRequerido,
             'nivel_senda' => $nivelSenda,
+            'tramo_senda' => $tramo,
             'coste_senda' => $costeSenda,
+            'es_maestria' => $tramo !== null && $tramo >= 4,
             'desbloqueado' => $desbloqueado,
             'bloqueado_por_nivel' => $bloqueadoPorNivel,
             'senda_desbloqueada' => $desbloqueadoPorSenda,
@@ -306,7 +314,7 @@ final class ReclutadoSerializer
     {
         return $movimiento['origen'] === 'nivel'
             ? (int) ($movimiento['nivel_requerido'] ?? 0)
-            : (int) ($movimiento['nivel_senda'] ?? 0);
+            : (int) ($movimiento['tramo_senda'] ?? $movimiento['nivel_senda'] ?? 0);
     }
 
     /**

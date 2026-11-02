@@ -77,4 +77,20 @@ class Reclutado extends Model
     {
         return $this->hasMany(Favorito::class, 'reclutado_id');
     }
+
+    /**
+     * Indica si este reclutado tiene una exploración activa (sin regreso).
+     *
+     * La exploración es individual: solo el reclutado que explora queda
+     * bloqueado; el resto del equipo puede editarse con normalidad.
+     */
+    public function estaEnExploracion(): bool
+    {
+        $consulta = (new ExploracionActiva())->newQuery()
+            ->where('reclutado_id', $this->id);
+
+        return $consulta->toBase()
+            ->whereNull('regreso')
+            ->exists();
+    }
 }

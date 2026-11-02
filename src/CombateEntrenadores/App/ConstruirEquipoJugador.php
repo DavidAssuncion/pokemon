@@ -4,14 +4,18 @@ declare(strict_types=1);
 
 namespace Src\CombateEntrenadores\App;
 
+use App\Models\ExploracionActiva;
 use App\Models\Pokemon;
 use App\Models\Team;
+use App\Support\CargarMapaSendaJugador;
 use Src\Battle\Domain\Collections\DatosPokemonBatallaCollection;
 use Src\Battle\Domain\Enums\PosturaCombate;
 use Src\Battle\Domain\Posicion;
 use Src\CombateEntrenadores\Domain\ValueObjects\FormacionEquipo;
 use Src\Shared\Domain\ClasificadorOfensivaDefensiva;
 use Src\Shared\Domain\Exceptions\ViolacionReglaNegocio;
+use Src\Shared\Domain\ReglasEquipo;
+use Src\Shared\Domain\Sendas\MapaSendaJugador;
 
 /**
  * Construye el equipo de batalla del jugador a partir de un Team de la BD,
@@ -34,13 +38,27 @@ class ConstruirEquipoJugador
      * Construye los datos de batalla del equipo y valida que aporte
      * exactamente 3 combatientes (regla estándar de combate).
      *
+     * Antes de construir los combatientes comprueba que ningún miembro tenga
+     * una exploración activa (regreso IS NULL): el equipo sigue siendo
+     * editable, pero no puede entrar en combate hasta que el miembro vuelva.
+     *
      * @param  FormacionEquipo  $formacion  posición por slot elegida en el popup
      * @param  int|null  $nivel  nivel del jugador (para escalar stats en gimnasios); null = stats base (entrenadores hábitat)
+     * @param  MapaSendaJugador|null  $senda  mapa de Sendas; null = se carga el del dueño del equipo
      *
-     * @throws ViolacionReglaNegocio si el equipo no aporta exactamente 3 combatientes
+     * @throws ViolacionReglaNegocio si algún miembro está en exploración activa
+     *                               o si el equipo no aporta exactamente 3 combatientes
      */
-    public function desdeEquipo(Team $equipo, FormacionEquipo $formacion, ?int $nivel = null): DatosPokemonBatallaCollection
-    {
+    public function desdeEquipo(
+        Team $equipo,
+        FormacionEquipo $formacion,
+        ?int $nivel = null,
+        ?MapaSendaJugador $senda = null,
+    ): DatosPokemonBatallaCollection {
+        $this->asegurarSinExploracionActiva($equipo);
+
+        $senda ??= app(CargarMapaSendaJugador::class)->para($equipo->user_id);
+
         $combatientes = [];
 
         $miembros = $equipo->members->sortBy('slot')->values();
@@ -81,14 +99,51 @@ class ConstruirEquipoJugador
                 postura: $postura,
                 movimientosSeleccionados: is_array($reclutado->movimientos) ? $reclutado->movimientos : null,
                 habilidadActivaId: $reclutado->habilidad_activa_id,
+                senda: $senda,
             );
         }
 
-        if (count($combatientes) !== 3) {
-            throw new ViolacionReglaNegocio('El equipo debe tener exactamente 3 miembros para combatir.');
+        if (count($combatientes) !== ReglasEquipo::MIEMBROS) {
+            throw new ViolacionReglaNegocio(
+                'El equipo debe tener exactamente '.ReglasEquipo::MIEMBROS.' miembros para combatir.'
+            );
         }
 
         return new DatosPokemonBatallaCollection($combatientes);
+    }
+
+    /**
+     * Impide el combate si algún miembro del equipo está en exploración
+     * activa (sin regreso registrado).
+     *
+     * @throws ViolacionReglaNegocio
+     */
+    private function asegurarSinExploracionActiva(Team $equipo): void
+    {
+        /** @var array<int, int> $reclutadoIds */
+        $reclutadoIds = $equipo->members
+            ->pluck('pokemon_id')
+            ->filter()
+            ->unique()
+            ->values()
+            ->all();
+
+        if ($reclutadoIds === []) {
+            return;
+        }
+
+        $consulta = (new ExploracionActiva())->newQuery()
+            ->where('regreso', null);
+
+        $consulta->getQuery()->whereIn('reclutado_id', $reclutadoIds);
+
+        $hayExploracionActiva = $consulta->toBase()->exists();
+
+        if ($hayExploracionActiva) {
+            throw new ViolacionReglaNegocio(
+                'El equipo tiene miembros en exploración; espera a que regresen para combatir.'
+            );
+        }
     }
 
     /**

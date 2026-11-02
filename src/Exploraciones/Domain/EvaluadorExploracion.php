@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace Src\Exploraciones\Domain;
 
+use Src\Exploraciones\Domain\DataTransferObjects\ResolucionContratiempo;
+use Src\Exploraciones\Domain\DataTransferObjects\ResolucionEmboscada;
+use Src\Exploraciones\Domain\DataTransferObjects\ResolucionEncuentro;
 use Src\Exploraciones\Domain\ValueObjects\ColeccionEventosExploracion;
 use Src\Exploraciones\Domain\ValueObjects\EventoExploracion;
 
@@ -72,7 +75,6 @@ final class EvaluadorExploracion
      * equipo. Devuelve la resolución con el tiempo perdido en minutos.
      *
      * @param  list<RolExploracion>  $roles  Modificadores de rol (huida/retirada).
-     * @return array{resolucion: string, duration_loss: int, retirada?: bool, reason?: string}
      */
     public static function resolverEncuentro(
         string $subtipo,
@@ -80,35 +82,35 @@ final class EvaluadorExploracion
         int $peligro,
         callable $aleatorio,
         array $roles = [],
-    ): array {
+    ): ResolucionEncuentro {
         $dificultad = self::dificultad($subtipo, $peligro);
 
         if ($capacidad >= $dificultad) {
-            return ['resolucion' => 'victoria', 'duration_loss' => 0];
+            return new ResolucionEncuentro(resolucion: 'victoria', durationLoss: 0);
         }
 
         if ($capacidad >= $dificultad - self::MARGEN_EXITO_CON_COSTE) {
             $coste = $aleatorio() < 0.5 ? self::COSTE_EXITO_CON_COSTE_MIN : self::COSTE_EXITO_CON_COSTE_MAX;
 
-            return ['resolucion' => 'victoria_con_coste', 'duration_loss' => $coste];
+            return new ResolucionEncuentro(resolucion: 'victoria_con_coste', durationLoss: $coste);
         }
 
         // Desventaja: retirada probable (< dificultad−30) → huida 15 % → derrota −10.
         if ($capacidad < $dificultad - self::UMBRAL_RETIRADA
             && $aleatorio() < self::PROBABILIDAD_RETIRADA * self::multiplicadorRetirada($roles)) {
-            return [
-                'resolucion' => 'retirada',
-                'duration_loss' => 0,
-                'retirada' => true,
-                'reason' => 'grupo_enemigo',
-            ];
+            return new ResolucionEncuentro(
+                resolucion: 'retirada',
+                durationLoss: 0,
+                retirada: true,
+                reason: 'grupo_enemigo',
+            );
         }
 
         if ($aleatorio() < self::PROBABILIDAD_HUIDA_SALVAJE * self::multiplicadorHuida($roles)) {
-            return ['resolucion' => 'huida', 'duration_loss' => 0];
+            return new ResolucionEncuentro(resolucion: 'huida', durationLoss: 0);
         }
 
-        return ['resolucion' => 'derrota', 'duration_loss' => self::COSTE_DERROTA];
+        return new ResolucionEncuentro(resolucion: 'derrota', durationLoss: self::COSTE_DERROTA);
     }
 
     /**
@@ -117,7 +119,6 @@ final class EvaluadorExploracion
      * y deja retirada probable.
      *
      * @param  list<RolExploracion>  $roles
-     * @return array{resolucion: string, duration_loss: int, dificultad: int, retirada_probable?: bool}
      */
     public static function resolverEmboscada(
         bool $detectadaPorVanguardia,
@@ -125,9 +126,13 @@ final class EvaluadorExploracion
         int $peligro,
         callable $aleatorio,
         array $roles = [],
-    ): array {
+    ): ResolucionEmboscada {
         if ($detectadaPorVanguardia && $aleatorio() < self::PROBABILIDAD_EVITAR_EMBOSCADA) {
-            return ['resolucion' => 'evitada', 'duration_loss' => 0, 'dificultad' => self::dificultad('emboscada', $peligro)];
+            return new ResolucionEmboscada(
+                resolucion: 'evitada',
+                durationLoss: 0,
+                dificultad: self::dificultad('emboscada', $peligro),
+            );
         }
 
         $capacidadEfectiva = $detectadaPorVanguardia
@@ -136,20 +141,20 @@ final class EvaluadorExploracion
 
         $resolucion = self::resolverEncuentro('emboscada', $capacidadEfectiva, $peligro, $aleatorio, $roles);
 
-        if (in_array($resolucion['resolucion'], ['victoria', 'victoria_con_coste'], true)) {
-            return [
-                'resolucion' => 'superada',
-                'duration_loss' => self::COSTE_EMBOSCADA_VICTORIA,
-                'dificultad' => self::dificultad('emboscada', $peligro),
-            ];
+        if (in_array($resolucion->resolucion, ['victoria', 'victoria_con_coste'], true)) {
+            return new ResolucionEmboscada(
+                resolucion: 'superada',
+                durationLoss: self::COSTE_EMBOSCADA_VICTORIA,
+                dificultad: self::dificultad('emboscada', $peligro),
+            );
         }
 
-        return [
-            'resolucion' => 'superada_con_cost',
-            'duration_loss' => self::COSTE_EMBOSCADA_DERROTA,
-            'retirada_probable' => true,
-            'dificultad' => self::dificultad('emboscada', $peligro),
-        ];
+        return new ResolucionEmboscada(
+            resolucion: 'superada_con_cost',
+            durationLoss: self::COSTE_EMBOSCADA_DERROTA,
+            retiradaProbable: true,
+            dificultad: self::dificultad('emboscada', $peligro),
+        );
     }
 
     /**
@@ -158,9 +163,8 @@ final class EvaluadorExploracion
      * Combatiente clima).
      *
      * @param  list<RolExploracion>  $roles
-     * @return array{resolucion: string, duration_loss: int}
      */
-    public static function resolverContratiempo(string $subtipo, array $roles): array
+    public static function resolverContratiempo(string $subtipo, array $roles): ResolucionContratiempo
     {
         $base = match ($subtipo) {
             'desorientacion', 'bloqueo' => 15,
@@ -180,7 +184,7 @@ final class EvaluadorExploracion
             $base = (int) ceil($base * 0.5);
         }
 
-        return ['resolucion' => 'mitigado', 'duration_loss' => $base];
+        return new ResolucionContratiempo(resolucion: 'mitigado', durationLoss: $base);
     }
 
     /**

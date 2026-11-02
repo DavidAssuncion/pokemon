@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace Tests\Feature;
 
+use App\Enums\TipoEnum;
+use App\Models\PlayerInventory;
+use App\Models\PlayerTypePath;
 use App\Models\Pokemon;
 use App\Models\Reclutado;
 use App\Models\Team;
@@ -12,6 +15,9 @@ use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Collection;
 use Src\Exploraciones\App\PersistirRecompensas;
+use Src\Exploraciones\Domain\Recompensas\RecompensaEv;
+use Src\Exploraciones\Domain\Recompensas\RecompensaFamilia;
+use Src\Exploraciones\Domain\Recompensas\RecompensaTipo;
 use Src\Exploraciones\Domain\Recompensas\ResultadoRecompensas;
 use Tests\TestCase;
 
@@ -128,5 +134,101 @@ class PersistirRecompensasTest extends TestCase
         $this->assertSame(1250 + 60, $reclutado->exp->total());
         $this->assertSame(100, $reclutado->exp->expTipo('Fuego'));
         $this->assertSame(0, $reclutado->exp->expTipo('Veneno'));
+    }
+
+    public function test_persistir_economia_individual_reparte_la_exp_entre_cuenta_y_reclutado(): void
+    {
+        $ctx = $this->crearEquipoConReclutado();
+
+        $recompensas = new ResultadoRecompensas(
+            capturas: new Collection(),
+            caramelosFamilia: new Collection(),
+            caramelosEv: new Collection(),
+            caramelosTipo: new Collection(),
+            expTotal: 250,
+            expPorMiembro: 250,
+            expTipoPorMiembro: ['Fuego' => 125],
+            expTipoCuenta: ['Fuego' => 125],
+        );
+
+        (new PersistirRecompensas())->persistir($recompensas, $ctx['reclutado'], $this->usuario);
+
+        // Invariante de la economía: cuenta 250 + reclutado 250 = 500 (pool).
+        $this->assertSame(250, $this->usuario->refresh()->experiencia);
+        $reclutado = $ctx['reclutado']->fresh();
+        $this->assertSame(1_250 + 250, $reclutado->exp->total());
+        // El tipo se acumula UNA sola vez en cada lado (sin doble descuento).
+        $this->assertSame(100 + 125, $reclutado->exp->expTipo('Fuego'));
+        $this->assertSame(125, $this->expSenda(TipoEnum::FIRE));
+    }
+
+    public function test_persistir_sin_exp_tipo_cuenta_usa_fallback_legado(): void
+    {
+        $ctx = $this->crearEquipoConReclutado();
+
+        $recompensas = new ResultadoRecompensas(
+            capturas: new Collection(),
+            caramelosFamilia: new Collection(),
+            caramelosEv: new Collection(),
+            caramelosTipo: new Collection(),
+            expTotal: 500,
+            expPorMiembro: 300,
+            expTipoPorMiembro: ['Veneno' => 500],
+            expTipoCuenta: null,
+        );
+
+        (new PersistirRecompensas())->persistir($recompensas, $ctx['equipo'], $this->usuario);
+
+        // Legado: la cuenta usa la misma exp de tipo que cada miembro.
+        $this->assertSame(500, $this->expSenda(TipoEnum::POISON));
+        $this->assertSame(500, $ctx['reclutado']->fresh()->exp->expTipo('Veneno'));
+    }
+
+    public function test_persistir_ignora_caramelos_con_cantidad_cero(): void
+    {
+        $recompensas = new ResultadoRecompensas(
+            capturas: new Collection(),
+            caramelosFamilia: new Collection([new RecompensaFamilia(evolutionChainId: 51, cantidad: 0)]),
+            caramelosEv: new Collection([new RecompensaEv(stat: 6, cantidad: 0)]),
+            caramelosTipo: new Collection([new RecompensaTipo(tipo: 'Fuego', cantidad: 0)]),
+            expTotal: 0,
+        );
+
+        (new PersistirRecompensas())->persistir($recompensas, null, $this->usuario);
+
+        $this->assertSame(
+            0,
+            PlayerInventory::query()->where('user_id', $this->usuario->id)->count(),
+            'No debe crearse ninguna fila de inventario con cantidad 0',
+        );
+    }
+
+    public function test_persistir_incrementa_caramelos_con_cantidad_positiva(): void
+    {
+        $recompensas = new ResultadoRecompensas(
+            capturas: new Collection(),
+            caramelosFamilia: new Collection([new RecompensaFamilia(evolutionChainId: 51, cantidad: 2)]),
+            caramelosEv: new Collection([new RecompensaEv(stat: 6, cantidad: 3)]),
+            caramelosTipo: new Collection([new RecompensaTipo(tipo: 'Fuego', cantidad: 4)]),
+            expTotal: 0,
+        );
+
+        (new PersistirRecompensas())->persistir($recompensas, null, $this->usuario);
+
+        $inventario = PlayerInventory::query()
+            ->where('user_id', $this->usuario->id)
+            ->orderBy('cantidad')
+            ->pluck('cantidad')
+            ->all();
+
+        $this->assertSame([2, 3, 4], $inventario);
+    }
+
+    private function expSenda(TipoEnum $tipo): int
+    {
+        return (int) PlayerTypePath::query()
+            ->where('user_id', $this->usuario->id)
+            ->where('type_id', $tipo->value)
+            ->value('exp');
     }
 }

@@ -13,6 +13,7 @@ use Src\Battle\Domain\AccionBatalla;
 use Src\Battle\Domain\AgregadoBatalla;
 use Src\Battle\Domain\Combatiente;
 use Src\Battle\Domain\Enums\ClaveCondicion;
+use Src\Battle\Domain\Enums\EstadoPokemon;
 use Src\Battle\Domain\Enums\FaseCombate;
 use Src\Battle\Domain\Enums\ObjetivoMovimiento;
 use Src\Battle\Domain\Enums\PosturaCombate;
@@ -691,11 +692,17 @@ class Combate extends Component
             }
 
             $objetivos = $resultado->objetivos;
+            $antesEstado = $this->capturarEstado($battle);
             foreach ($objetivos as $target) {
                 $servicio->aplicarEstado($target, $movimiento, $battle, $actor);
-                if ($movimiento->tieneStatus() && $target->estaVivo()) {
-                    $this->log[] = "{$target->nombre()} sufre {$movimiento->statusEffect->label()}!";
-                }
+            }
+            $cambiosEstado = $this->registrarCambiosDeEstadoEnLog(
+                $battle,
+                $antesEstado,
+                $isAi ? 'RIVAL: ' : '',
+            );
+            if ($cambiosEstado !== null) {
+                $this->log[] = $cambiosEstado;
             }
 
             if ($resultado->golpes > 0) {
@@ -925,24 +932,25 @@ class Combate extends Component
             $this->log[] = $prefix."¡{$movimiento->nombre} falla!";
         }
 
-        // 3. Aplicar estado y cambios de estadísticas a todos los objetivos
+        // 3. Aplicar estado y cambios de estadísticas a todos los objetivos.
+        // El log y el evento se derivan del delta real de `status`, no del
+        // movimiento: el estado puede fallar la tirada o redirigirse.
         $objetivos = $resultado->objetivos;
+        $antesEstado = $previo;
         foreach ($objetivos as $target) {
             $servicio->aplicarEstado($target, $movimiento, $battle, $actor);
-            if ($movimiento->tieneStatus() && $target->estaVivo()) {
-                $label = $movimiento->statusEffect->label();
-                $this->log[] = "{$target->nombre()} sufre {$label}!";
-            }
         }
 
         $actual = $this->capturarEstado($battle);
-        $this->registrarEvento('status', $previo, $actual, [
+        $cambiosEstado = $this->registrarCambiosDeEstadoEnLog($battle, $antesEstado, $prefix);
+        if ($cambiosEstado !== null) {
+            $this->log[] = $cambiosEstado;
+        }
+
+        $this->registrarEvento('status', $antesEstado, $actual, [
             'actorId' => $actor->id(),
             'objetivoId' => $objetivo->id(),
-            'texto' => $movimiento->tieneStatus()
-                ? "{$objetivo->nombre()} sufre {$movimiento->statusEffect->label()}"
-                : '',
-            'forzar' => $movimiento->tieneStatus() && $objetivo->estaVivo(),
+            'texto' => $cambiosEstado ?? '',
         ]);
         $previo = $actual;
 
@@ -1313,6 +1321,44 @@ class Combate extends Component
         }
 
         return $estado;
+    }
+
+    /**
+     * Genera el texto de log de los cambios de estado alterado entre dos
+     * instantáneas. Ignora `statusTurns` para no narrar el avance del sueño.
+     *
+     * @param  array<string, array{hp: float, defHp: float, spDefHp: float, alive: bool, status: string, statusTurns: int}>  $antes
+     */
+    private function registrarCambiosDeEstadoEnLog(
+        AgregadoBatalla $battle,
+        array $antes,
+        string $prefijo = '',
+    ): ?string {
+        $despues = $this->capturarEstado($battle);
+        $mensajes = [];
+
+        foreach ($battle->turnManager()->allCombatants() as $combatiente) {
+            $refId = $combatiente->id();
+            $previo = $antes[$refId] ?? null;
+            $actual = $despues[$refId] ?? null;
+            if ($previo === null || $actual === null || $previo['status'] === $actual['status']) {
+                continue;
+            }
+
+            $estadoPrevio = EstadoPokemon::tryFrom($previo['status']);
+            $estadoActual = EstadoPokemon::tryFrom($actual['status']);
+            if ($estadoActual === null) {
+                continue;
+            }
+
+            $mensajes[] = $prefijo.match (true) {
+                $estadoPrevio === EstadoPokemon::NONE => "{$combatiente->nombre()} sufre {$estadoActual->label()}!",
+                $estadoActual === EstadoPokemon::NONE && $estadoPrevio !== null => "{$combatiente->nombre()} se recupera de {$estadoPrevio->label()}!",
+                default => "{$combatiente->nombre()} sufre {$estadoActual->label()}!",
+            };
+        }
+
+        return $mensajes === [] ? null : implode(' ', $mensajes);
     }
 
     private function iniciarEventos(): void

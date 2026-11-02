@@ -11,18 +11,32 @@ namespace Src\Pokemon\Domain\Stats;
  * Fórmula:
  *   CP = floor(((HP+Atk+Def+SAtk+SDef+Spd) * Level * 6 / 100) + (EV * ((Level / 4) / 100 + 2)))
  *
- * - Para el jugador EV = 0 (Reclutado no tiene EVs).
- * - Para rivales de gimnasio/mazmorra se usa el EV del rival (EvsRangoEntrenador):
- *   la suma de los EVs distribuidos entre los 6 stats.
+ * - El término de stats ya incorpora los EVs/IVs aplicados por BattleStats.
+ * - El segundo término es el índice de esfuerzo agregado del rival/reclutado.
+ * - Nunca devuelve un valor negativo.
  */
 final class CalculadorCP
 {
+    private const FACTOR_STATS = 6;
+
+    private const DIVISOR = 100;
+
+    private const DIVISOR_NIVEL_EV = 4;
+
+    private const BASE_EV = 2;
+
     public static function calcular(BattleStats $stats, int $ev): int
     {
-        $sumaStats = $stats->hp + $stats->attack + $stats->defense + $stats->spAtk + $stats->spDef + $stats->speed;
-        $base = $sumaStats * $stats->nivel() * 5 / 100;
-        //$extra = $ev * (($stats->nivel() / 4) / 100 + 2);
+        $sumaStats = $stats->hp
+            + $stats->attack
+            + $stats->defense
+            + $stats->spAtk
+            + $stats->spDef
+            + $stats->speed;
 
-        return (int) floor($base);
+        $base = $sumaStats * $stats->nivel() * self::FACTOR_STATS / self::DIVISOR;
+        $extra = $ev * (($stats->nivel() / self::DIVISOR_NIVEL_EV) / self::DIVISOR + self::BASE_EV);
+
+        return max(0, (int) floor($base + $extra));
     }
 }

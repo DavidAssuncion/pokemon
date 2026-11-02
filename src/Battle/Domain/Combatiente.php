@@ -29,6 +29,7 @@ use Src\Battle\Domain\ValueObjects\ResultadoAccion;
 use Src\Battle\Domain\ValueObjects\ResultadoDanio;
 use Src\Battle\Domain\ValueObjects\ResultadoSustituto;
 use Src\Pokemon\Domain\PokemonEntity;
+use Src\Shared\Domain\Sendas\MapaSendaJugador;
 use Src\Shared\Domain\ValueObjects\MapaConteo;
 use Src\Shared\Tipos\TipoPokemon;
 use Src\Shared\Tipos\TiposCollection;
@@ -113,6 +114,8 @@ class Combatiente
 
     private Posicion $posicion;
 
+    private MapaSendaJugador $senda;
+
     private EstadoManager $estadoManager;
 
     private BarrerasVidaManager $barrerasVidaManager;
@@ -136,6 +139,7 @@ class Combatiente
         $this->turno = new EstadoTurno();
         $this->recursos = new EstadoRecursos();
         $this->movimientos = new EstadoMovimientos();
+        $this->senda = MapaSendaJugador::vacio();
     }
 
     /**
@@ -218,6 +222,7 @@ class Combatiente
             'effects' => serialize($this->effects),
             'pokemon' => serialize($this->pokemon),
             'posicion' => $this->posicion->value,
+            'senda' => $this->senda->toArray(),
         ];
     }
 
@@ -328,6 +333,7 @@ class Combatiente
         $this->effects = isset($data['effects']) ? unserialize($data['effects']) : new ColeccionEfectos();
         $this->pokemon = isset($data['pokemon']) ? unserialize($data['pokemon']) : throw new \RuntimeException('Missing pokemon data');
         $this->posicion = Posicion::tryFrom($data['posicion'] ?? Posicion::VANGUARDIA->value) ?? Posicion::VANGUARDIA;
+        $this->senda = MapaSendaJugador::desdeArray(is_array($data['senda'] ?? null) ? $data['senda'] : []);
         $this->estadoManager = new EstadoManager();
         $this->barrerasVidaManager = new BarrerasVidaManager();
     }
@@ -1087,6 +1093,23 @@ class Combatiente
         );
     }
 
+    /**
+     * Bonus inicial de estadísticas del jefe (decisión de producto 2026-10-31):
+     * aplica un porcentaje permanente a TODAS las estadísticas al empezar el
+     * combate. Se almacena en la capa base de MultiplicadoresStats, así que
+     * sobrevive a la serialización de sesión sin cambios de versión.
+     */
+    public function aplicarBonusInicialStats(float $porcentaje): void
+    {
+        if ($porcentaje <= 0.0) {
+            return;
+        }
+
+        foreach (StatClave::cases() as $stat) {
+            $this->multiplicadores = $this->multiplicadores->aplicarPorcentaje($stat, $porcentaje);
+        }
+    }
+
     public function esJefe(): bool
     {
         return $this->jefe !== null;
@@ -1240,6 +1263,16 @@ class Combatiente
     public function posicion(): Posicion
     {
         return $this->posicion;
+    }
+
+    public function setSenda(MapaSendaJugador $senda): void
+    {
+        $this->senda = $senda;
+    }
+
+    public function senda(): MapaSendaJugador
+    {
+        return $this->senda;
     }
 
     // ─── Setters (mínimos necesarios) ─────────────────────────

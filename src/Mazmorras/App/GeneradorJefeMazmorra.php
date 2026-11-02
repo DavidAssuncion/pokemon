@@ -8,6 +8,8 @@ use App\Models\Pokemon;
 use Src\Battle\Domain\DatosPokemonBatalla;
 use Src\Battle\Domain\Posicion;
 use Src\CombateEntrenadores\App\MapeadorPokemonBatalla;
+use Src\Mazmorras\Domain\ReglasMazmorra;
+use Src\Pokemon\Domain\Stats\StatsValue;
 
 /**
  * Construye el jefe de un piso de mazmorra: UN solo combatiente (3v1) cuyo
@@ -41,17 +43,18 @@ final class GeneradorJefeMazmorra
             posicion: Posicion::VANGUARDIA,
             shiny: false,
             nivel: $nivel,
+            ivs: StatsValue::ceros(),
         );
 
         return new DatosPokemonBatalla(
             id: $datos->id,
             nombre: $datos->nombre,
-            hp: $stats->hp * 10,
-            atk: $stats->atk * 10,
-            def: $stats->def * 10,
-            spAtk: $stats->spAtk * 10,
-            spDef: $stats->spDef * 10,
-            speed: $stats->speed * 10,
+            hp: $stats->hp * ReglasMazmorra::MULTIPLICADOR_HP_JEFE,
+            atk: $stats->atk * ReglasMazmorra::MULTIPLICADOR_STATS_JEFE,
+            def: $stats->def * ReglasMazmorra::MULTIPLICADOR_STATS_JEFE,
+            spAtk: $stats->spAtk * ReglasMazmorra::MULTIPLICADOR_STATS_JEFE,
+            spDef: $stats->spDef * ReglasMazmorra::MULTIPLICADOR_STATS_JEFE,
+            speed: $stats->speed * ReglasMazmorra::MULTIPLICADOR_STATS_JEFE,
             tipos: $datos->tipos,
             posicion: $datos->posicion,
             moves: $datos->moves,
@@ -66,6 +69,7 @@ final class GeneradorJefeMazmorra
             ivs: $datos->ivs,
             peso: $datos->peso,
             esJefe: true,
+            bonusInicialStats: ReglasMazmorra::BONUS_INICIAL_STATS_JEFE,
             fasesJefe: [
                 ['umbral' => 0.75, 'nombre' => 'Fase 2', 'bonificador_dano' => 1.15, 'bonificador_velocidad' => 1.10],
                 ['umbral' => 0.50, 'nombre' => 'Fase 3', 'bonificador_dano' => 1.30, 'bonificador_velocidad' => 1.20],

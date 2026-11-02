@@ -13,7 +13,7 @@ use App\Models\Province;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
-use Src\Habitats\Infra\HabitatRepository;
+use Src\Habitats\Infra\HabitatLecturaRepository;
 use Tests\TestCase;
 
 class FamiliesTest extends TestCase
@@ -238,7 +238,7 @@ class FamiliesTest extends TestCase
             ['pokemon_id' => 1, 'habitat_id' => $this->habitatId, 'level' => 1],
         ]);
 
-        $detail = (new HabitatRepository())->getHabitatDetail($this->habitatId);
+        $detail = (new HabitatLecturaRepository())->getHabitatDetail($this->habitatId);
 
         $this->assertSame('/images/iconos_webp/1.webp', $detail->levels[1][0]['icon']);
         $this->assertSame('/images/iconos_webp/1.webp', $detail->toArray()['levels'][1][0]['icon']);

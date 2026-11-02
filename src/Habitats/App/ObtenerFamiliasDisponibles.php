@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace Src\Habitats\App;
 
-use Src\Habitats\Domain\Repositories\HabitatRepositoryInterface;
+use Src\Habitats\Domain\Repositories\HabitatLecturaRepositoryInterface;
 use Src\Habitats\Presentation\DTOFamiliasDisponibles;
 
 class ObtenerFamiliasDisponibles
 {
-    public function __construct(private HabitatRepositoryInterface $repository)
+    public function __construct(private HabitatLecturaRepositoryInterface $repository)
     {
     }
 

@@ -4,14 +4,16 @@ declare(strict_types=1);
 
 namespace Src\Mazmorras\App;
 
-use App\Models\Habitat;
 use App\Models\Team;
 use App\Support\CreadorBatallaSesion;
 use Src\Battle\Domain\Collections\DatosPokemonBatallaCollection;
 use Src\CombateEntrenadores\App\ConstruirEquipoJugador;
 use Src\CombateEntrenadores\Domain\ValueObjects\FormacionEquipo;
 use Src\Mazmorras\Domain\ConfiguracionMazmorra;
+use Src\Mazmorras\Domain\Exceptions\PisoNoDisponible;
+use Src\Mazmorras\Domain\ReglasMazmorra;
 use Src\Mazmorras\Domain\Repositories\DungeonProgresoRepositoryInterface;
+use Src\Shared\Domain\Sendas\MapaSendaJugador;
 
 /**
  * Crea la batalla de un piso de mazmorra y la guarda en sesión.
@@ -28,6 +30,7 @@ final class IniciarCombateMazmorra
     public function __construct(
         private readonly DungeonProgresoRepositoryInterface $repositorio,
         private readonly GeneradorJefeMazmorra $generadorJefe,
+        private readonly ObtenerConfiguracionMazmorra $obtenerConfiguracion,
         private readonly ConstruirEquipoJugador $construirEquipoJugador,
         private readonly CreadorBatallaSesion $creadorBatalla,
     ) {
@@ -44,20 +47,19 @@ final class IniciarCombateMazmorra
         int $nivelJugador,
         array $formacion = [],
     ): string {
-        $habitat = Habitat::query()->find($habitatId);
-        $config = $habitat !== null ? ConfiguracionMazmorra::desdeJson($habitat->mazmorra) : null;
+        $config = $this->obtenerConfiguracion->deHabitat($habitatId);
 
         $this->validar($config, $piso, $userId, $habitatId);
 
-        $actual = $this->repositorio->pisoActual($userId, $habitatId) ?? 1;
+        $actual = $this->repositorio->pisoActual($userId, $habitatId) ?? ReglasMazmorra::PISO_MIN;
         if ($piso !== $actual) {
-            throw new \Src\Mazmorras\Domain\Exceptions\PisoNoDisponible('Ese piso no está disponible todavía.');
+            throw new PisoNoDisponible('Ese piso no está disponible todavía.');
         }
 
         $speciesId = $config?->speciesDe($piso);
         $jefe = $speciesId !== null ? $this->generadorJefe->generar($speciesId, $nivelJugador) : null;
         if ($jefe === null) {
-            throw new \Src\Mazmorras\Domain\Exceptions\PisoNoDisponible('El piso no tiene un jefe configurado.');
+            throw new PisoNoDisponible('El piso no tiene un jefe configurado.');
         }
 
         $equipo = Team::with(
@@ -66,7 +68,12 @@ final class IniciarCombateMazmorra
             'members.reclutado.pokemon.abilities',
         )->findOrFail($teamId);
 
-        $datosJugador = $this->construirEquipoJugador->desdeEquipo($equipo, FormacionEquipo::desde($formacion), $nivelJugador);
+        $datosJugador = $this->construirEquipoJugador->desdeEquipo(
+            $equipo,
+            FormacionEquipo::desde($formacion),
+            $nivelJugador,
+            senda: MapaSendaJugador::vacio(),
+        );
 
         return $this->creadorBatalla->crearYGuardar(
             datosJugador: $datosJugador,
@@ -88,12 +95,14 @@ final class IniciarCombateMazmorra
 
     private function validar(?ConfiguracionMazmorra $config, int $piso, int $userId, int $habitatId): void
     {
-        if ($config === null || $piso < 1 || $piso > $config->totalPisos()) {
-            throw new \Src\Mazmorras\Domain\Exceptions\PisoNoDisponible('Ese piso no existe en esta mazmorra.');
+        if ($config === null || $piso < ReglasMazmorra::PISO_MIN || $piso > $config->totalPisos()) {
+            throw new PisoNoDisponible('Ese piso no existe en esta mazmorra.');
         }
 
         if ($this->repositorio->enCooldown($userId, $habitatId, $piso)) {
-            throw new \Src\Mazmorras\Domain\Exceptions\PisoNoDisponible('Este piso está en cooldown. Espera 1 hora.');
+            throw new PisoNoDisponible(
+                'Este piso está en cooldown. Espera '.ReglasMazmorra::HORAS_COOLDOWN.' hora.'
+            );
         }
     }
 }

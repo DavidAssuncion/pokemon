@@ -10,6 +10,7 @@ use Src\Granjas\App\ResolverBonosFamilia;
 use Src\Huevos\Domain\CalculadorEstadoHuevo;
 use Src\Huevos\Domain\DataTransferObjects\DatosTiempoHuevo;
 use Src\Huevos\Domain\EstadoHuevo;
+use Src\Huevos\Domain\ReglasHuevo;
 use Src\Pokemon\Domain\Stats\GeneradorIvs;
 use Src\Shared\Domain\Exceptions\ViolacionReglaNegocio;
 use Src\Shared\Domain\ProbabilidadesShiny;
@@ -40,8 +41,10 @@ final class CrearHuevo
             ->get()
             ->reject(fn (Reclutado $reclutado): bool => $reclutado->pokemon === null);
 
-        if ($reclutados->count() < 2) {
-            throw new ViolacionReglaNegocio('Necesitas 2 reclutados de la misma familia para crear un huevo');
+        if ($reclutados->count() < ReglasHuevo::RECLUTADOS_MINIMOS) {
+            throw new ViolacionReglaNegocio(
+                'Necesitas '.ReglasHuevo::RECLUTADOS_MINIMOS.' reclutados de la misma familia para crear un huevo'
+            );
         }
 
         $huevosActivos = Huevo::where('user_id', $userId)

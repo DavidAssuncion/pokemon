@@ -16,6 +16,8 @@ use Src\Exploraciones\App\PersistirRecompensas;
 use Src\Exploraciones\Domain\CalculadorRecompensas;
 use Src\Exploraciones\Domain\Recompensas\PokemonDerrotado;
 use Src\Exploraciones\Domain\Recompensas\ResultadoRecompensas;
+use Src\Shared\Domain\MultiplicadoresDificultad;
+use Src\Shared\Domain\Sendas\MapaSendaJugador;
 
 /**
  * Otorga las recompensas de un combate contra entrenador ganado: DOBLE de lo
@@ -45,8 +47,15 @@ final class OtorgarRecompensasEntrenador
      * @param  list<int>  $speciesIdsRival  ids de las especies derrotadas (team2)
      * @param  float  $multiplicador  multiplicador sobre la fórmula de exploración
      *                                (MULTIPLICADOR_ENTRENADOR, MULTIPLICADOR_GIMNASIO)
+     * @param  float|null  $multiplicadorExp  multiplicador específico de EXP; `null`
+     *                                        usa `$multiplicador` (mazmorra: 10.0)
+     * @param  MultiplicadoresDificultad|null  $dificultad  multiplicadores por perfil
+     *                                                     del rival; `null` equivale a 1,00
+     * @param  MapaSendaJugador|null  $senda  sendas del jugador; `null` equivale a
+     *                                       sin bonos pasivos. La capa que otorga
+     *                                       decide si aplica (mazmorra no la usa).
      */
-    public function otorgar(int $userId, int $teamId, array $speciesIdsRival, int $nivelEntrenador, float $multiplicador = self::MULTIPLICADOR_ENTRENADOR): ?DatosModalVictoria
+    public function otorgar(int $userId, int $teamId, array $speciesIdsRival, int $nivelEntrenador, float $multiplicador = self::MULTIPLICADOR_ENTRENADOR, ?float $multiplicadorExp = null, ?MultiplicadoresDificultad $dificultad = null, ?MapaSendaJugador $senda = null): ?DatosModalVictoria
     {
         $usuario = User::find($userId);
         $equipo = Team::with('members.reclutado')->find($teamId);
@@ -73,7 +82,8 @@ final class OtorgarRecompensasEntrenador
         }
 
         $miembrosPorCadena = CadenasEvolutivas::miembrosDe($pokemons->pluck('evolution_chain_id'));
-        $derrotados = NormalizadorPokemonDerrotado::normalizar($pokemons, $miembrosPorCadena);
+        $etapasPorCadena = CadenasEvolutivas::etapasDe($pokemons->pluck('evolution_chain_id'));
+        $derrotados = NormalizadorPokemonDerrotado::normalizar($pokemons, $miembrosPorCadena, $etapasPorCadena);
 
         // Combate de entrenadores: nunca hay captura del rival.
         $aleatorioCaptura = static fn (PokemonDerrotado $pokemon): bool => false;
@@ -85,6 +95,9 @@ final class OtorgarRecompensasEntrenador
             $aleatorioCaptura,
             $nivelSalvaje,
             $multiplicador,
+            multiplicadorExp: $multiplicadorExp,
+            dificultad: $dificultad,
+            senda: $senda,
         );
 
         $this->persistir->persistir($recompensas, $equipo, $usuario);

@@ -4,11 +4,10 @@ declare(strict_types=1);
 
 namespace Src\Mazmorras\App;
 
-use App\Models\Habitat;
 use Src\Mazmorras\Domain\Collections\PisoMazmorraCollection;
-use Src\Mazmorras\Domain\ConfiguracionMazmorra;
 use Src\Mazmorras\Domain\DataTransferObjects\PisoMazmorra;
 use Src\Mazmorras\Domain\DataTransferObjects\ResultadoPisosMazmorra;
+use Src\Mazmorras\Domain\ReglasMazmorra;
 use Src\Mazmorras\Domain\Repositories\DungeonProgresoRepositoryInterface;
 
 /**
@@ -21,23 +20,23 @@ final class ObtenerPisosMazmorra
 {
     public function __construct(
         private readonly DungeonProgresoRepositoryInterface $repositorio,
+        private readonly ObtenerConfiguracionMazmorra $obtenerConfiguracion,
     ) {
     }
 
     public function obtener(int $habitatId, int $userId): ResultadoPisosMazmorra
     {
-        $habitat = Habitat::query()->find($habitatId);
-        $config = $habitat !== null ? ConfiguracionMazmorra::desdeJson($habitat->mazmorra) : null;
+        $config = $this->obtenerConfiguracion->deHabitat($habitatId);
 
         if ($config === null) {
             return new ResultadoPisosMazmorra(new PisoMazmorraCollection());
         }
 
-        $actual = $this->repositorio->pisoActual($userId, $habitatId) ?? 1;
+        $actual = $this->repositorio->pisoActual($userId, $habitatId) ?? ReglasMazmorra::PISO_MIN;
         $total = $config->totalPisos();
 
         $pisos = new PisoMazmorraCollection();
-        for ($piso = 1; $piso <= min($actual, $total); $piso++) {
+        for ($piso = ReglasMazmorra::PISO_MIN; $piso <= min($actual, $total); $piso++) {
             $estado = $piso < $actual ? 'ganado' : $this->estadoActual($userId, $habitatId, $piso);
 
             $pisos->add(new PisoMazmorra(

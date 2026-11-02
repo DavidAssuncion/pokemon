@@ -13,10 +13,12 @@ use Carbon\CarbonInterface;
 use Closure;
 use Illuminate\Support\Collection;
 use LogicException;
+use Src\Exploraciones\Domain\CadenciaEventos;
 use Src\Exploraciones\Domain\CalculadorFinExploracion;
 use Src\Exploraciones\Domain\CalculadorVueltaExploracion;
 use Src\Exploraciones\Domain\CapacidadesStats;
 use Src\Exploraciones\Domain\EvaluadorExploracion;
+use Src\Exploraciones\Domain\ReglasExploracion;
 use Src\Exploraciones\Domain\SimuladorEncuentros;
 use Src\Exploraciones\Domain\ValueObjects\EstadoExplorador;
 use Src\Exploraciones\Domain\ValueObjects\PoolHabitat;
@@ -36,7 +38,7 @@ use Src\Shared\Tipos\TipoPokemon;
  *
  * Tras cada combate: victoria → regenera barreras al 100 % (solo si NO es
  * emboscada secuencial); el HP no se cura por combate. Si HP < 50 % → descanso
- * hasta 100 % a 3 %/min real (acumulado en tiempo_perdido + evento bitácora).
+ * hasta 100 % a 1 %/min real (acumulado en tiempo_perdido + evento bitácora).
  * Si el explorador pierde un combate → la exploración termina (derrota).
  *
  * La capa App/ usa Eloquent (App\Models) e Illuminate directamente por
@@ -44,11 +46,6 @@ use Src\Shared\Tipos\TipoPokemon;
  */
 final class ProcesarExploracionHandler implements CommandHandler
 {
-    private const MINUTOS_POR_ENCUENTRO = 15;
-
-    /** Porcentaje de HP recuperado por minuto real de descanso. */
-    private const HP_POR_MINUTO_DESCANSO = 3;
-
     private readonly ?Closure $aleatorio;
 
     /**
@@ -94,7 +91,7 @@ final class ProcesarExploracionHandler implements CommandHandler
         $dificultad = $exploracion->habitat?->minLvlParaNivel($exploracion->nivel)
             ?? EvaluadorExploracion::dificultad('normal', (int) ($exploracion->habitat?->peligro ?? 1));
 
-        [$terminada, $motivo] = $this->procesarTick($exploracion, $eventos, $desde, $hasta, $capacidades, $dificultad);
+        [$terminada, $motivo] = $this->procesarTick($exploracion, $eventos, $inicio, $desde, $hasta, $capacidades, $dificultad);
 
         $completada = $command->forzarRegreso
             || ($inicioVuelta !== null && now()->greaterThanOrEqualTo($inicioVuelta))
@@ -124,11 +121,27 @@ final class ProcesarExploracionHandler implements CommandHandler
     private function procesarTick(
         ExploracionActiva $exploracion,
         Collection $eventos,
+        CarbonInterface $inicio,
         CarbonInterface $desde,
         CarbonInterface $hasta,
         CapacidadesStats $capacidades,
         int $dificultad,
     ): array {
+        $tiempoPerdido = (int) $eventos->get('tiempo_perdido', 0);
+        $intervaloBase = ReglasExploracion::MINUTOS_POR_ENCUENTRO;
+        $reduccionIntervalo = $capacidades->reduccionIntervaloMovilidad($dificultad);
+        $bonusEventos = $capacidades->bonusEventosExploracion($dificultad);
+
+        $eventosGenerados = $this->eventosGeneradosConBackfill(
+            $eventos,
+            $inicio,
+            $hasta,
+            $tiempoPerdido,
+            $intervaloBase,
+            $reduccionIntervalo,
+            $bonusEventos,
+        );
+
         if (! $hasta->greaterThan($desde)) {
             $eventos->put('ultimo_procesado', $hasta->toIso8601String());
             $exploracion->eventos = $eventos;
@@ -141,7 +154,15 @@ final class ProcesarExploracionHandler implements CommandHandler
 
         $nuevos = SimuladorEncuentros::generarEventosDesdePool(
             $pool,
-            $this->numEncuentros((int) abs($hasta->diffInMinutes($desde)), $capacidades, $dificultad),
+            CadenciaEventos::eventosPendientes(
+                $inicio,
+                $hasta,
+                $eventosGenerados,
+                $tiempoPerdido,
+                $intervaloBase,
+                $reduccionIntervalo,
+                $bonusEventos,
+            ),
             $desde,
             $hasta,
             $this->aleatorio,
@@ -156,6 +177,10 @@ final class ProcesarExploracionHandler implements CommandHandler
 
             return [false, ''];
         }
+
+        // Eventos base de la cadencia: los extras por emboscada evitada no
+        // consumen tiempo y no deben contarse como programados por reloj.
+        $programados = count($nuevos);
 
         // Estado del explorador persistido entre ticks (hp/barreras).
         $estadoExplorador = $this->estadoExplorador($eventos);
@@ -211,6 +236,7 @@ final class ProcesarExploracionHandler implements CommandHandler
         $bitacora = $eventos->get('bitacora', []);
         $eventos->put('bitacora', [...$bitacora, ...$resueltos]);
         $eventos->put('tiempo_perdido', (int) $eventos->get('tiempo_perdido', 0) + $perdidoTick);
+        $eventos->put('eventos_generados', $eventosGenerados + $programados);
         $eventos->put('explorador', $estadoExplorador->aArray());
 
         if ($retirada) {
@@ -227,6 +253,47 @@ final class ProcesarExploracionHandler implements CommandHandler
         $exploracion->save();
 
         return [$derrota || $retirada, $derrota ? 'derrota' : ($retirada ? 'retirada' : '')];
+    }
+
+    /**
+     * Contador de eventos ya programados. Para exploraciones iniciadas antes
+     * de que existiera `eventos_generados` hace un backfill determinista: cada
+     * evento ya registrado en la bitácora se asume consumido, acotado por los
+     * `esperados` del reloj. El criterio es conservador (cuenta también
+     * hallazgos y descansos): puede quedarse corto en el tick de recuperación,
+     * pero nunca reprograma slots ya registrados ni supera `esperados`.
+     *
+     * @param  Collection<string, mixed>  $eventos
+     */
+    private function eventosGeneradosConBackfill(
+        Collection $eventos,
+        CarbonInterface $inicio,
+        CarbonInterface $hasta,
+        int $tiempoPerdido,
+        int $intervaloBase,
+        float $reduccionIntervalo,
+        int $bonusEventos,
+    ): int {
+        if ($eventos->has('eventos_generados')) {
+            return (int) $eventos->get('eventos_generados');
+        }
+
+        $bitacora = $eventos->get('bitacora', []);
+        $backfill = min(
+            CadenciaEventos::esperados(
+                $inicio,
+                $hasta,
+                $tiempoPerdido,
+                $intervaloBase,
+                $reduccionIntervalo,
+                $bonusEventos,
+            ),
+            is_array($bitacora) ? count($bitacora) : 0,
+        );
+
+        $eventos->put('eventos_generados', $backfill);
+
+        return $backfill;
     }
 
     /**
@@ -267,7 +334,7 @@ final class ProcesarExploracionHandler implements CommandHandler
                 roles: $roles,
             );
 
-            return array_merge($evento, $resolucion);
+            return array_merge($evento, $resolucion->toArray());
         }
 
         return $evento;
@@ -409,21 +476,6 @@ final class ProcesarExploracionHandler implements CommandHandler
     }
 
     /**
-     * Número de encuentros del tick: el intervalo base (3 min) se reduce con
-     * la movilidad y se suma un bonus por rango de exploración.
-     */
-    private function numEncuentros(int $minutos, CapacidadesStats $capacidades, int $dificultad): int
-    {
-        if ($minutos <= 0) {
-            return 0;
-        }
-
-        $intervaloEfectivo = max(1, (int) floor(self::MINUTOS_POR_ENCUENTRO * (1 - $capacidades->reduccionIntervaloMovilidad($dificultad))));
-
-        return intdiv($minutos, $intervaloEfectivo) + $capacidades->bonusEventosExploracion($dificultad);
-    }
-
-    /**
      * Genera EXACTAMENTE un evento extra (hallazgo/neutral) para compensar una
      * emboscada evitada. Se genera sin emboscadas permitidas: el extra nunca
      * puede ser una emboscada y, por tanto, no añade más eventos.
@@ -492,7 +544,7 @@ final class ProcesarExploracionHandler implements CommandHandler
      */
     private function resolucionCombate(ResultadoBatallaExploracion $resultado, string $resolucionVictoria, EstadoExplorador $estadoExplorador): array
     {
-        return [
+        $resolucion = [
             'resolucion' => $resultado->victoria ? $resolucionVictoria : 'derrota',
             'victoria' => $resultado->victoria,
             'hp_final' => $estadoExplorador->hp,
@@ -503,6 +555,22 @@ final class ProcesarExploracionHandler implements CommandHandler
             'log' => $resultado->log->entries()->toList(),
             'duration_loss' => 0,
         ];
+
+        $pv = [
+            'hp_inicial' => $resultado->hpInicial,
+            'hp_max' => $resultado->hpMax,
+            'rival_hp_inicial' => $resultado->rivalHpInicial,
+            'rival_hp_final' => $resultado->rivalHpFinal,
+            'rival_hp_max' => $resultado->rivalHpMax,
+        ];
+
+        foreach ($pv as $clave => $valor) {
+            if ($valor !== null) {
+                $resolucion[$clave] = $valor;
+            }
+        }
+
+        return $resolucion;
     }
 
     /**
@@ -559,7 +627,7 @@ final class ProcesarExploracionHandler implements CommandHandler
 
     /**
      * Aplica descanso hasta el 100 % del HP si el explorador está por debajo
-     * del 50 %: recupera 3 % por minuto real (modulado por el multiplicador de
+     * del 50 %: recupera 1 % por minuto real (modulado por el multiplicador de
      * recuperación según supervivencia), acumula el tiempo en tiempo_perdido y
      * registra un evento de bitácora. Devuelve los minutos de descanso
      * aplicados (0 si no procede).
@@ -577,7 +645,7 @@ final class ProcesarExploracionHandler implements CommandHandler
         }
 
         $pctFaltante = 100 - $estadoExplorador->pctHp();
-        $duracionMinutos = (int) ceil($pctFaltante / (self::HP_POR_MINUTO_DESCANSO * $multiplicadorRecuperacion));
+        $duracionMinutos = (int) ceil($pctFaltante / (ReglasExploracion::HP_POR_MINUTO_DESCANSO * $multiplicadorRecuperacion));
         $hpRecuperado = $estadoExplorador->hpMax - $estadoExplorador->hp;
 
         $estadoExplorador = $estadoExplorador->conHp($estadoExplorador->hpMax);

@@ -7,6 +7,7 @@ namespace Tests\Unit\Exploraciones;
 use PHPUnit\Framework\TestCase;
 use Src\Exploraciones\Domain\CalculadorMatchups;
 use Src\Exploraciones\Domain\CalculadorRiesgo;
+use Src\Exploraciones\Domain\Collections\MatchupCollection;
 use Src\Exploraciones\Domain\RolExploracion;
 use Src\Shared\Tipos\TipoPokemon;
 
@@ -41,15 +42,15 @@ class CalculadorRiesgoTest extends TestCase
             miembros: $this->miembros([[TipoPokemon::FUEGO], [TipoPokemon::FUEGO]]),
         );
 
-        $this->assertSame(1, $resultado['peligro_estrellas']);
-        $this->assertSame(['Equipo bien preparado para esta zona'], $resultado['advertencias']);
-        $this->assertSame('Bajo', $resultado['riesgo']);
+        $this->assertSame(1, $resultado->peligroEstrellas);
+        $this->assertSame(['Equipo bien preparado para esta zona'], $resultado->advertencias->toList());
+        $this->assertSame('Bajo', $resultado->riesgo);
     }
 
     public function test_peligro_estrellas_se_clampa_a_1_5(): void
     {
         $resultado = CalculadorRiesgo::evaluar(9, 1, 100, [TipoPokemon::PLANTA], $this->miembros([[TipoPokemon::FUEGO]]));
-        $this->assertSame(5, $resultado['peligro_estrellas']);
+        $this->assertSame(5, $resultado->peligroEstrellas);
     }
 
     public function test_tipo_sin_ventaja_genera_fracaso_asegurado(): void
@@ -64,19 +65,20 @@ class CalculadorRiesgoTest extends TestCase
             miembros: $this->miembros([[TipoPokemon::PLANTA]]),
         );
 
-        $this->assertSame('Extremo', $resultado['riesgo']);
-        $this->assertNotEmpty($resultado['advertencias']);
+        $this->assertSame('Extremo', $resultado->riesgo);
+        $this->assertNotEmpty($resultado->advertencias->toList());
         // Los textos de tipo ya NO van en advertencias (viven en matchups).
-        foreach ($resultado['advertencias'] as $advertencia) {
+        foreach ($resultado->advertencias as $advertencia) {
             $this->assertStringNotContainsString('Pokémon de tipo', $advertencia);
         }
-        $this->assertCount(2, $resultado['matchups']);
-        $this->assertSame(['Planta'], $resultado['matchups'][0]['miembro_tipos']);
-        $this->assertSame('Fuego', $resultado['matchups'][0]['pool_tipo']);
-        $this->assertSame(1.5, $resultado['matchups'][0]['defensa']);
-        $this->assertSame(CalculadorMatchups::NEGATIVO, $resultado['matchups'][0]['clasificacion']);
-        $this->assertSame('Volador', $resultado['matchups'][1]['pool_tipo']);
-        $this->assertSame(CalculadorMatchups::NEGATIVO, $resultado['matchups'][1]['clasificacion']);
+        $matchups = $resultado->matchups->toList();
+        $this->assertCount(2, $matchups);
+        $this->assertSame(['Planta'], $matchups[0]->miembroTipos->toList());
+        $this->assertSame('Fuego', $matchups[0]->poolTipo);
+        $this->assertSame(1.5, $matchups[0]->defensa);
+        $this->assertSame(CalculadorMatchups::NEGATIVO, $matchups[0]->clasificacion);
+        $this->assertSame('Volador', $matchups[1]->poolTipo);
+        $this->assertSame(CalculadorMatchups::NEGATIVO, $matchups[1]->clasificacion);
     }
 
     public function test_pokemon_debiles_para_el_nivel_es_fracaso_absoluto(): void
@@ -90,8 +92,8 @@ class CalculadorRiesgoTest extends TestCase
             miembros: $this->miembros([[TipoPokemon::FUEGO]]),
         );
 
-        $this->assertContains('Pokémon débiles para el nivel 3', $resultado['advertencias']);
-        $this->assertSame('Extremo', $resultado['riesgo']);
+        $this->assertContains('Pokémon débiles para el nivel 3', $resultado->advertencias->toList());
+        $this->assertSame('Extremo', $resultado->riesgo);
     }
 
     public function test_roles_se_incluyen_en_el_preview(): void
@@ -101,7 +103,7 @@ class CalculadorRiesgoTest extends TestCase
             ['tipos' => [TipoPokemon::FUEGO], 'enPool' => true, 'rol' => RolExploracion::RASTREADOR, 'base' => 60],
         ]);
 
-        $this->assertSame(['VANGUARDIA', 'RASTREADOR'], $resultado['roles']);
+        $this->assertSame(['VANGUARDIA', 'RASTREADOR'], $resultado->roles->toList());
     }
 
     public function test_recompensa_esperada_es_cualitativa(): void
@@ -109,11 +111,11 @@ class CalculadorRiesgoTest extends TestCase
         $bajo = CalculadorRiesgo::evaluar(1, 1, 100, [TipoPokemon::PLANTA], $this->miembros([[TipoPokemon::FUEGO]]));
         $extremo = CalculadorRiesgo::evaluar(1, 1, 5, [TipoPokemon::FUEGO], $this->miembros([[TipoPokemon::PLANTA]]));
 
-        $this->assertSame('alta', $bajo['recompensa_esperada']);
-        $this->assertSame('mínima', $extremo['recompensa_esperada']);
+        $this->assertSame('alta', $bajo->recompensaEsperada);
+        $this->assertSame('mínima', $extremo->recompensaEsperada);
     }
 
-    public function test_evaluar_incluye_matchups_en_el_json(): void
+    public function test_evaluar_incluye_matchups_en_el_preview(): void
     {
         $resultado = CalculadorRiesgo::evaluar(
             peligro: 1,
@@ -123,19 +125,20 @@ class CalculadorRiesgoTest extends TestCase
             miembros: $this->miembros([[TipoPokemon::FUEGO], [TipoPokemon::AGUA]]),
         );
 
-        $this->assertArrayHasKey('matchups', $resultado);
+        $this->assertInstanceOf(MatchupCollection::class, $resultado->matchups);
         // 2 miembros × 2 tipos pool = 4 matchups total; neutrales filtrados.
         // Fuego vs Agua: negativo; Fuego vs Planta: positivo; Agua vs Agua: positivo; Agua vs Planta: negativo.
-        $this->assertCount(4, $resultado['matchups']);
+        $matchups = $resultado->matchups->toList();
+        $this->assertCount(4, $matchups);
         // Orden: por miembro y por tipo del pool.
-        $this->assertSame('Fuego', $resultado['matchups'][0]['miembro_tipos'][0]);
-        $this->assertSame('Agua', $resultado['matchups'][0]['pool_tipo']);
-        $this->assertSame('Fuego', $resultado['matchups'][1]['miembro_tipos'][0]);
-        $this->assertSame('Planta', $resultado['matchups'][1]['pool_tipo']);
-        $this->assertSame('Agua', $resultado['matchups'][2]['miembro_tipos'][0]);
-        $this->assertSame('Agua', $resultado['matchups'][2]['pool_tipo']);
-        $this->assertSame('Agua', $resultado['matchups'][3]['miembro_tipos'][0]);
-        $this->assertSame('Planta', $resultado['matchups'][3]['pool_tipo']);
+        $this->assertSame('Fuego', $matchups[0]->miembroTipos->toList()[0]);
+        $this->assertSame('Agua', $matchups[0]->poolTipo);
+        $this->assertSame('Fuego', $matchups[1]->miembroTipos->toList()[0]);
+        $this->assertSame('Planta', $matchups[1]->poolTipo);
+        $this->assertSame('Agua', $matchups[2]->miembroTipos->toList()[0]);
+        $this->assertSame('Agua', $matchups[2]->poolTipo);
+        $this->assertSame('Agua', $matchups[3]->miembroTipos->toList()[0]);
+        $this->assertSame('Planta', $matchups[3]->poolTipo);
     }
 
     public function test_matchups_omite_los_neutrales(): void
@@ -149,14 +152,12 @@ class CalculadorRiesgoTest extends TestCase
             miembros: $this->miembros([[TipoPokemon::VENENO]]),
         );
 
-        // Veneno vs Agua = neutral (omitido); Veneno vs Lucha = neutro (defensa 1.0, ataque 1.0) → omitido. Matchups vacío.
-        // Pero Veneno vs Lucha: defensa = Lucha→Veneno = 0.5 → positivo (no neutral).
-        // Lucha row: VENENO 0.5. So defensa = 0.5 → positivo.
-        // Veneno vs Agua: defensa = Agua→Veneno = 1.0, ataque = Veneno→Agua = 1.0 → neutral → omitido.
-        $this->assertCount(1, $resultado['matchups']);
-        $this->assertSame('Veneno', $resultado['matchups'][0]['miembro_tipos'][0]);
-        $this->assertSame('Lucha', $resultado['matchups'][0]['pool_tipo']);
-        $this->assertSame(CalculadorMatchups::POSITIVO, $resultado['matchups'][0]['clasificacion']);
+        // Veneno vs Agua = neutral (omitido); Veneno vs Lucha: defensa = 0.5 → positivo.
+        $matchups = $resultado->matchups->toList();
+        $this->assertCount(1, $matchups);
+        $this->assertSame('Veneno', $matchups[0]->miembroTipos->toList()[0]);
+        $this->assertSame('Lucha', $matchups[0]->poolTipo);
+        $this->assertSame(CalculadorMatchups::POSITIVO, $matchups[0]->clasificacion);
     }
 
     public function test_miembro_con_matchup_severo_advertencias_no_vacias_y_riesgo_extremo(): void
@@ -170,10 +171,11 @@ class CalculadorRiesgoTest extends TestCase
             miembros: $this->miembros([[TipoPokemon::VENENO]]),
         );
 
-        $this->assertNotEmpty($resultado['advertencias']);
-        $this->assertSame('Extremo', $resultado['riesgo']);
-        $this->assertCount(1, $resultado['matchups']);
-        $this->assertSame(CalculadorMatchups::SEVERO, $resultado['matchups'][0]['clasificacion']);
+        $this->assertNotEmpty($resultado->advertencias->toList());
+        $this->assertSame('Extremo', $resultado->riesgo);
+        $matchups = $resultado->matchups->toList();
+        $this->assertCount(1, $matchups);
+        $this->assertSame(CalculadorMatchups::SEVERO, $matchups[0]->clasificacion);
     }
 
     public function test_equipo_con_solo_matchups_positivos_riesgo_por_capacidad_normal(): void
@@ -187,10 +189,11 @@ class CalculadorRiesgoTest extends TestCase
             miembros: $this->miembros([[TipoPokemon::FUEGO]]),
         );
 
-        $this->assertSame('Bajo', $resultado['riesgo']);
-        $this->assertSame(['Equipo bien preparado para esta zona'], $resultado['advertencias']);
-        $this->assertCount(1, $resultado['matchups']);
-        $this->assertSame(CalculadorMatchups::POSITIVO, $resultado['matchups'][0]['clasificacion']);
+        $this->assertSame('Bajo', $resultado->riesgo);
+        $this->assertSame(['Equipo bien preparado para esta zona'], $resultado->advertencias->toList());
+        $matchups = $resultado->matchups->toList();
+        $this->assertCount(1, $matchups);
+        $this->assertSame(CalculadorMatchups::POSITIVO, $matchups[0]->clasificacion);
     }
 
     public function test_matchup_negativo_con_capacidad_alta_sigue_siendo_extremo(): void
@@ -204,9 +207,10 @@ class CalculadorRiesgoTest extends TestCase
             miembros: $this->miembros([[TipoPokemon::FUEGO]]),
         );
 
-        $this->assertSame('Extremo', $resultado['riesgo']);
-        $this->assertSame(['Equipo bien preparado para esta zona'], $resultado['advertencias']);
-        $this->assertCount(1, $resultado['matchups']);
-        $this->assertSame(CalculadorMatchups::NEGATIVO, $resultado['matchups'][0]['clasificacion']);
+        $this->assertSame('Extremo', $resultado->riesgo);
+        $this->assertSame(['Equipo bien preparado para esta zona'], $resultado->advertencias->toList());
+        $matchups = $resultado->matchups->toList();
+        $this->assertCount(1, $matchups);
+        $this->assertSame(CalculadorMatchups::NEGATIVO, $matchups[0]->clasificacion);
     }
 }

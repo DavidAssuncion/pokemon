@@ -23,8 +23,8 @@ class EvaluadorExploracionTest extends TestCase
     {
         // capacidad 77 >= dificultad 35 → victoria.
         $resultado = EvaluadorExploracion::resolverEncuentro('normal', 77, 1, fn (): float => 0.99);
-        $this->assertSame('victoria', $resultado['resolucion']);
-        $this->assertSame(0, $resultado['duration_loss']);
+        $this->assertSame('victoria', $resultado->resolucion);
+        $this->assertSame(0, $resultado->durationLoss);
     }
 
     public function test_entre_dificultad_menos_15_y_dificultad_es_victoria_con_coste(): void
@@ -34,35 +34,35 @@ class EvaluadorExploracionTest extends TestCase
         $conCosteMin = EvaluadorExploracion::resolverEncuentro('normal', 30, 2, fn (): float => 0.4);
         $conCosteMax = EvaluadorExploracion::resolverEncuentro('normal', 30, 2, fn (): float => 0.9);
 
-        $this->assertSame('victoria_con_coste', $conCosteMin['resolucion']);
-        $this->assertSame(5, $conCosteMin['duration_loss']);
-        $this->assertSame('victoria_con_coste', $conCosteMax['resolucion']);
-        $this->assertSame(10, $conCosteMax['duration_loss']);
+        $this->assertSame('victoria_con_coste', $conCosteMin->resolucion);
+        $this->assertSame(5, $conCosteMin->durationLoss);
+        $this->assertSame('victoria_con_coste', $conCosteMax->resolucion);
+        $this->assertSame(10, $conCosteMax->durationLoss);
     }
 
     public function test_desventaja_salvaje_huye_con_quince_por_ciento(): void
     {
         // dificultad 40, capacidad 20 → desventaja (< 25). aleatorio 0.1 < 0.15 → huida.
         $huida = EvaluadorExploracion::resolverEncuentro('normal', 20, 2, fn (): float => 0.1);
-        $this->assertSame('huida', $huida['resolucion']);
-        $this->assertSame(0, $huida['duration_loss']);
+        $this->assertSame('huida', $huida->resolucion);
+        $this->assertSame(0, $huida->durationLoss);
     }
 
     public function test_desventaja_resto_es_derrota_con_diez_minutos(): void
     {
         // aleatorio 0.5 > 0.15 → derrota −10 min.
         $derrota = EvaluadorExploracion::resolverEncuentro('normal', 20, 2, fn (): float => 0.5);
-        $this->assertSame('derrota', $derrota['resolucion']);
-        $this->assertSame(10, $derrota['duration_loss']);
+        $this->assertSame('derrota', $derrota->resolucion);
+        $this->assertSame(10, $derrota->durationLoss);
     }
 
     public function test_muy_por_debajo_es_retirada_probable(): void
     {
         // dificultad 40, capacidad 5 < 40−30 → retirada probable.
         $retirada = EvaluadorExploracion::resolverEncuentro('normal', 5, 2, fn (): float => 0.2);
-        $this->assertSame('retirada', $retirada['resolucion']);
-        $this->assertTrue($retirada['retirada']);
-        $this->assertArrayHasKey('reason', $retirada);
+        $this->assertSame('retirada', $retirada->resolucion);
+        $this->assertTrue($retirada->retirada);
+        $this->assertSame('grupo_enemigo', $retirada->reason);
     }
 
     public function test_rastreador_reduce_la_probabilidad_de_huida(): void
@@ -70,8 +70,8 @@ class EvaluadorExploracionTest extends TestCase
         // Sin rastreador: aleatorio 0.1 < 0.15 → huida. Con rastreador (0.5×): 0.1 >= 0.075 → derrota.
         $huida = EvaluadorExploracion::resolverEncuentro('normal', 20, 2, fn (): float => 0.1);
         $derrota = EvaluadorExploracion::resolverEncuentro('normal', 20, 2, fn (): float => 0.1, [RolExploracion::RASTREADOR]);
-        $this->assertSame('huida', $huida['resolucion']);
-        $this->assertSame('derrota', $derrota['resolucion']);
+        $this->assertSame('huida', $huida->resolucion);
+        $this->assertSame('derrota', $derrota->resolucion);
     }
 
     public function test_combatiente_reduce_la_probabilidad_de_retirada(): void
@@ -79,72 +79,72 @@ class EvaluadorExploracionTest extends TestCase
         // capacidad 5, dificultad 40: sin combatiente aleatorio 0.3 < 0.5 → retirada.
         // con combatiente (0.6×): 0.3 >= 0.3 → se sigue (huida/derrota); aleatorio 0.1 < 0.09? no → derrota.
         $retirada = EvaluadorExploracion::resolverEncuentro('normal', 5, 2, fn (): float => 0.3);
-        $this->assertSame('retirada', $retirada['resolucion']);
+        $this->assertSame('retirada', $retirada->resolucion);
 
         $sinRetirada = EvaluadorExploracion::resolverEncuentro('normal', 5, 2, fn (): float => 0.5, [RolExploracion::COMBATIENTE]);
-        $this->assertNotSame('retirada', $sinRetirada['resolucion']);
+        $this->assertNotSame('retirada', $sinRetirada->resolucion);
     }
 
     public function test_emboscada_sin_vanguardia_superada_al_vencer(): void
     {
         // capacidad 77 >= dificultad emboscada 55 → victoria → superada sin coste de tiempo.
         $resultado = EvaluadorExploracion::resolverEmboscada(false, 77, 1, fn (): float => 0.5);
-        $this->assertSame('superada', $resultado['resolucion']);
-        $this->assertSame(0, $resultado['duration_loss']);
-        $this->assertSame(55, $resultado['dificultad']);
+        $this->assertSame('superada', $resultado->resolucion);
+        $this->assertSame(0, $resultado->durationLoss);
+        $this->assertSame(55, $resultado->dificultad);
     }
 
     public function test_emboscada_pierde_con_quince_minutos_y_retirada_probable(): void
     {
         // capacidad 10 < 55−15 → desventaja; aleatorio 0.9 > 0.15 → derrota → superada_con_cost −15.
         $resultado = EvaluadorExploracion::resolverEmboscada(false, 10, 1, fn (): float => 0.9);
-        $this->assertSame('superada_con_cost', $resultado['resolucion']);
-        $this->assertSame(15, $resultado['duration_loss']);
-        $this->assertTrue($resultado['retirada_probable']);
+        $this->assertSame('superada_con_cost', $resultado->resolucion);
+        $this->assertSame(15, $resultado->durationLoss);
+        $this->assertTrue($resultado->retiradaProbable);
     }
 
     public function test_vanguardia_detecta_y_evita_la_emboscada(): void
     {
         // Vanguardia detecta: aleatorio < 0.5 → evitada sin coste.
         $resultado = EvaluadorExploracion::resolverEmboscada(true, 10, 1, fn (): float => 0.1);
-        $this->assertSame('evitada', $resultado['resolucion']);
-        $this->assertSame(0, $resultado['duration_loss']);
+        $this->assertSame('evitada', $resultado->resolucion);
+        $this->assertSame(0, $resultado->durationLoss);
     }
 
     public function test_vanguardia_detecta_pero_no_evita_y_paga_penalizacion(): void
     {
         // Vanguardia detecta pero no evita: capacidad efectiva = 50% × 10 = 5 → derrota.
         $resultado = EvaluadorExploracion::resolverEmboscada(true, 10, 1, fn (): float => 0.9);
-        $this->assertSame('superada_con_cost', $resultado['resolucion']);
-        $this->assertSame(15, $resultado['duration_loss']);
+        $this->assertSame('superada_con_cost', $resultado->resolucion);
+        $this->assertSame(15, $resultado->durationLoss);
     }
 
     public function test_contratiempos_tienen_costes_base_mitigados_por_rol(): void
     {
         // Base: desorientacion 15, terreno 10, clima 10, bloqueo 15.
-        $this->assertSame(15, EvaluadorExploracion::resolverContratiempo('desorientacion', [])['duration_loss']);
-        $this->assertSame(10, EvaluadorExploracion::resolverContratiempo('terreno', [])['duration_loss']);
-        $this->assertSame(10, EvaluadorExploracion::resolverContratiempo('clima', [])['duration_loss']);
-        $this->assertSame(15, EvaluadorExploracion::resolverContratiempo('bloqueo', [])['duration_loss']);
-        $this->assertSame('mitigado', EvaluadorExploracion::resolverContratiempo('terreno', [])['resolucion']);
+        $this->assertSame(15, EvaluadorExploracion::resolverContratiempo('desorientacion', [])->durationLoss);
+        $this->assertSame(10, EvaluadorExploracion::resolverContratiempo('terreno', [])->durationLoss);
+        $this->assertSame(10, EvaluadorExploracion::resolverContratiempo('clima', [])->durationLoss);
+        $this->assertSame(15, EvaluadorExploracion::resolverContratiempo('bloqueo', [])->durationLoss);
+        $this->assertSame('mitigado', EvaluadorExploracion::resolverContratiempo('terreno', [])->resolucion);
     }
 
     public function test_vanguardia_mitiga_terreno_y_bloqueo(): void
     {
-        $this->assertSame(5, EvaluadorExploracion::resolverContratiempo('terreno', [RolExploracion::VANGUARDIA])['duration_loss']);
-        $this->assertSame(8, EvaluadorExploracion::resolverContratiempo('bloqueo', [RolExploracion::VANGUARDIA])['duration_loss']);
+        $this->assertSame(5, EvaluadorExploracion::resolverContratiempo('terreno', [RolExploracion::VANGUARDIA])->durationLoss);
+        $this->assertSame(8, EvaluadorExploracion::resolverContratiempo('bloqueo', [RolExploracion::VANGUARDIA])->durationLoss);
     }
 
     public function test_combatiente_mitiga_clima(): void
     {
-        $this->assertSame(5, EvaluadorExploracion::resolverContratiempo('clima', [RolExploracion::COMBATIENTE])['duration_loss']);
+        $this->assertSame(5, EvaluadorExploracion::resolverContratiempo('clima', [RolExploracion::COMBATIENTE])->durationLoss);
     }
 
     public function test_rastreador_mitiga_tiempo_perdido_a_nivel_de_tick(): void
     {
         // El −50 % de tiempo perdido general de Rastreador se aplica en el tick
         // sobre el duration_loss acumulado, no dentro del contratiempo.
-        $this->assertSame(15, EvaluadorExploracion::resolverContratiempo('desorientacion', [RolExploracion::RASTREADOR])['duration_loss']);
+        $this->assertSame(15, EvaluadorExploracion::resolverContratiempo('desorientacion', [RolExploracion::RASTREADOR])->durationLoss);
         $this->assertSame(0.5, RolExploracion::RASTREADOR->multiplicadorTiempoPerdido());
     }
 

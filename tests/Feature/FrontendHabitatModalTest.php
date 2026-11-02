@@ -23,7 +23,7 @@ class FrontendHabitatModalTest extends TestCase
             ],
             'teams' => new Collection(),
             'exploracionesActivas' => new Collection(),
-            'equiposEnExploracion' => new Collection(),
+            'reclutadosEnExploracion' => [],
             'sightedPokemonIds' => [],
             'nivelJugador' => 5,
         ], $overrides);
@@ -67,6 +67,12 @@ class FrontendHabitatModalTest extends TestCase
         $view->assertSee('preview.recompensas_esperadas?.items?.length', false);
         $view->assertSee("'entre ' + item.min + ' y ' + item.max", false);
         $view->assertSee('preview.recompensas_esperadas?.aviso', false);
+        // Aviso económico del preview: guarda tolerante, texto accesible y factor
+        $view->assertSee('preview?.aviso_economia', false);
+        $view->assertSee('preview.aviso_economia', false);
+        $view->assertSee('role="note"', false);
+        $view->assertSee('preview?.economia?.factor', false);
+        $view->assertSee('preview.economia.factor', false);
         // Badge de rol del reclutado (rol || rol_sugerido)
         $view->assertSee('preview.rol || preview.rol_sugerido', false);
         $view->assertSee('preview.rol_sugerido', false);
@@ -86,24 +92,45 @@ class FrontendHabitatModalTest extends TestCase
         $view->assertSee('¡Combatir! (Ruta 3v3)', false);
         // Panel ruta (etiqueta 3v3 + selector de nivel)
         $view->assertSee('Combate de Ruta', false);
-        $view->assertSee('selectRutaNivel(lvl)', false);
-        // Fetch de rivales por nivel
-        $view->assertSee('/ruta/rivales?nivel=', false);
-        // Aviso de pool vacío
-        $view->assertSee('No hay Pokémon salvajes disponibles en esta ruta para tu nivel.', false);
+        $view->assertSee('selectRutaNivel(1)', false);
+        // El nivel elegido viaja al iniciar: los rivales se resuelven en servidor
+        // (el preview local de rivales se retiró).
+        $view->assertSee('nivel: this.rutaNivel', false);
+        $view->assertDontSee('/ruta/rivales?nivel=', false);
         // CTA de ruta
         $view->assertSee('openRutaFormacionPopup()', false);
         // POST iniciar (3v3)
         $view->assertSee('/ruta/iniciar', false);
-        // Popup contextual de ruta con chip "Automática" (usa formación persistida)
+        // Popup contextual de ruta: parte de la formación persistida del equipo
         $view->assertSee('Combate de Ruta · Configurar Formación', false);
-        $view->assertSee("'⚙️ Automática'", false);
+        $view->assertSee('formacionInicialDe(this.selectedTeamId)', false);
         // Error 422 inline en el popup (sin redirigir)
         $view->assertSee('rutaCombatError', false);
         // Botones: sin acceso directo a /equipos (el enlace "Favoritos" se elimina);
         // Exploraciones abre el modo pokémon
         $view->assertDontSee('>Favoritos</span>', false);
         $view->assertSee('toggleExploraciones()', false);
+    }
+
+    /**
+     * La exploración es individual: un equipo con un miembro explorando sigue
+     * visible y marcado, pero no se puede seleccionar para combatir.
+     */
+    public function test_habitat_team_with_exploring_member_is_marked_and_not_selectable(): void
+    {
+        $reclutado = (object) ['pokemon_id' => 25, 'nombre' => 'Pikachu'];
+        $miembro = (object) ['pokemon_id' => 25, 'reclutado' => $reclutado];
+        $equipo = (object) ['id' => 1, 'name' => 'Equipo Ruta', 'members' => [$miembro]];
+
+        $view = $this->view('habitats.show', $this->data([
+            'teams' => new Collection([$equipo]),
+            'reclutadosEnExploracion' => [25],
+        ]));
+
+        $view->assertSee('Miembro en exploración', false);
+        $view->assertSee('No disponible para combatir hasta que vuelva', false);
+        $view->assertDontSee('selectTeam(1,', false);
+        $view->assertDontSee('equiposEnExploracion', false);
     }
 
     /**

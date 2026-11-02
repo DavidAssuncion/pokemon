@@ -234,7 +234,7 @@ class EquiposControllerTest extends TestCase
         $response->assertStatus(422)->assertJson(['error' => 'Pokémon ya está en un equipo']);
     }
 
-    public function test_destroy_json_rejects_team_with_active_exploration(): void
+    public function test_destroy_json_permite_borrar_equipo_con_un_miembro_explorando(): void
     {
         $user = $this->actingAsUser();
         $team = Team::create(['name' => 'Exploring', 'user_id' => $user->id]);
@@ -261,9 +261,69 @@ class EquiposControllerTest extends TestCase
 
         $response = $this->deleteJson("/teams/{$team->id}");
 
-        $response->assertStatus(422)
-            ->assertJson(['error' => 'No se puede borrar un equipo con exploraciones activas']);
-        $this->assertDatabaseHas('teams', ['id' => $team->id]);
+        $response->assertOk()->assertJson(['success' => true]);
+        $this->assertDatabaseMissing('teams', ['id' => $team->id]);
+    }
+
+    public function test_equipo_se_edita_con_un_miembro_en_exploracion(): void
+    {
+        $user = $this->actingAsUser();
+        $team = Team::create(['name' => 'Explorando', 'user_id' => $user->id]);
+        $this->createPokemon(1);
+        $this->createPokemon(2);
+        $explorador = $this->createReclutado($user->id, 1, 'Explorador');
+        $companero = $this->createReclutado($user->id, 2, 'Companero');
+        $memberExplorador = TeamMember::create([
+            'team_id' => $team->id,
+            'pokemon_id' => $explorador->id,
+            'slot' => 1,
+            'behavior' => 'VANGUARDIA',
+        ]);
+        $province = Province::create(['id' => 1, 'name' => 'Kanto']);
+        $habitat = Habitat::create(['id' => 1, 'name' => 'Bosque', 'province_id' => $province->id]);
+        ExploracionActiva::create([
+            'user_id' => $user->id,
+            'reclutado_id' => $explorador->id,
+            'habitat_id' => $habitat->id,
+            'nivel' => 1,
+            'duracion_horas' => 2,
+            'inicio_exploracion' => now(),
+            'llegada_destino' => now()->addHour(),
+            'regreso' => null,
+        ]);
+
+        $this->patchJson("/teams/{$team->id}/formacion", [
+            'formacion' => ['1' => 'vanguardia'],
+        ])->assertOk();
+
+        $this->patchJson("/teams/{$team->id}/posturas", [
+            'posturas' => ['1' => 'atacar'],
+        ])->assertOk();
+
+        $this->patchJson("/teams/{$team->id}/items", [
+            'items' => ['1' => ''],
+        ])->assertOk();
+
+        $this->postJson('/teams/add-member', [
+            'team_id' => $team->id,
+            'reclutado_id' => $companero->id,
+            'slot' => 2,
+            'behavior' => 'COMBATIENTE',
+        ])->assertOk();
+
+        $this->postJson('/teams/remove-member', [
+            'member_id' => $memberExplorador->id,
+        ])->assertOk()->assertJson(['success' => true]);
+
+        $this->assertDatabaseMissing('team_members', ['id' => $memberExplorador->id]);
+        $this->assertDatabaseHas('team_members', [
+            'team_id' => $team->id,
+            'pokemon_id' => $companero->id,
+            'slot' => 2,
+        ]);
+        $team->refresh();
+        $this->assertSame(['1' => 'vanguardia'], $team->formacion);
+        $this->assertSame(['1' => 'atacar'], $team->posturas);
     }
 
     public function test_remove_member_json_returns_success(): void
@@ -530,7 +590,7 @@ class EquiposControllerTest extends TestCase
         $this->assertDatabaseHas('team_members', ['id' => $member->id, 'behavior' => 'VANGUARDIA']);
     }
 
-    public function test_update_member_role_via_post_equipo_en_exploracion_devuelve_422(): void
+    public function test_update_member_role_via_post_equipo_en_exploracion_permite_editar(): void
     {
         $user = $this->actingAsUser();
         $team = Team::create(['name' => 'Explorador', 'user_id' => $user->id]);
@@ -560,12 +620,12 @@ class EquiposControllerTest extends TestCase
             'behavior' => 'RASTREADOR',
         ]);
 
-        $response->assertStatus(422)
-            ->assertJson(['error' => 'No se puede modificar un equipo con exploraciones activas']);
-        $this->assertDatabaseHas('team_members', ['id' => $member->id, 'behavior' => 'VANGUARDIA']);
+        $response->assertOk()
+            ->assertJson(['member' => ['id' => $member->id, 'behavior' => 'RASTREADOR']]);
+        $this->assertDatabaseHas('team_members', ['id' => $member->id, 'behavior' => 'RASTREADOR']);
     }
 
-    public function test_update_member_role_equipo_en_exploracion_devuelve_422(): void
+    public function test_update_member_role_equipo_en_exploracion_permite_editar(): void
     {
         $user = $this->actingAsUser();
         $team = Team::create(['name' => 'Explorador', 'user_id' => $user->id]);
@@ -594,9 +654,9 @@ class EquiposControllerTest extends TestCase
             'behavior' => 'RASTREADOR',
         ]);
 
-        $response->assertStatus(422)
-            ->assertJson(['error' => 'No se puede modificar un equipo con exploraciones activas']);
-        $this->assertDatabaseHas('team_members', ['id' => $member->id, 'behavior' => 'VANGUARDIA']);
+        $response->assertOk()
+            ->assertJson(['member' => ['id' => $member->id, 'behavior' => 'RASTREADOR']]);
+        $this->assertDatabaseHas('team_members', ['id' => $member->id, 'behavior' => 'RASTREADOR']);
     }
 
     // ──── equipos payload con behavior y sinergia (Task C) ──────────────────

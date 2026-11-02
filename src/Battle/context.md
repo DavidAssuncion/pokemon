@@ -992,3 +992,45 @@ app/Providers/BattleEffectServiceProvider.php → src/Battle/Domain/Effects/ (Fa
 | `resources/views/livewire/_pokemon-card.blade.php` | Card de pokémon en batalla |
 | `tests/Unit/Battle/` (24 archivos: 23 tests + trait) | Tests unitarios de mecánicas e IA |
 | `tests/Feature/PokemonBattleTest.php` | Test de integración de batalla |
+---
+
+## Guía de búsqueda (grep)
+
+- Clases: `AgregadoBatalla`, `Combatiente`, `EquipoBatalla`, `GestorTurnos`,
+  `ServicioEjecucionBatalla`, `CadenaDanio`, `ManejadorObjetosEquipados`, `FabricaEfectos`,
+  `SelectorAccionIA`, `CalculadorDañoClima`, `ReglasBatalla`.
+- Constantes: `ReglasBatalla::*`, `SESSION_VERSION` (`app/Support/BattleSessionService.php`),
+  `MultiplicadoresStats::DEFAULT_MIN/MAX`, `TURNOS_TEMPORALES`.
+- Términos: `battleId._meta`, `SESSION_VERSION`, `velocidadEfectiva`, `CadenaDanio`, `life_orb`,
+  `esJefe`, `fasesJefe`, `puntosDebiles`, `bonusInicialStats`, `aplicarBonusInicialStats`,
+  `battle_over`, `damage`, `status`, `effect`.
+- **Bonus inicial de jefe**: `DatosPokemonBatalla::$bonusInicialStats` (porcentaje) se aplica en
+  `EquipoBatalla::fromData()` con `Combatiente::aplicarBonusInicialStats()` sobre la capa base de
+  `MultiplicadoresStats`; persiste en la serialización de sesión sin cambiar `SESSION_VERSION`.
+  Mazmorra usa +30 % (`ReglasMazmorra::BONUS_INICIAL_STATS_JEFE`).
+- Tablas/sesión: batallas serializadas en sesión con prefijo `v{version}|`; no hay tabla de
+  batallas.
+- Tests: `tests/Unit/Battle/`, `tests/Feature/PokemonBattleTest.php`,
+  `tests/Feature/CombateRuta/`, `tests/Feature/CombateEntrenadores/`.
+
+## Deuda y mejoras priorizadas (auditoría 2026-10-31)
+
+- **[Alta] `app/Livewire/Combate.php` es un god-component (~53 KB)** con lógica de presentación,
+  turnos, animaciones, recompensas y persistencia de sesión. Extraer casos de uso a `src/Battle/App`
+  (hoy vacío) o `src/Battle/Infra/Livewire`, y dejar el componente como orquestador de UI.
+- **[Alta] `PresentadorResultadoBatalla` consulta `Habitat::query()`** y conoce reglas de
+  gimnasio/mazmorra/ruta. Mover la resolución a casos de uso por modo y pasar un DTO al presentador.
+- **[Media] `Combatiente`/`AgregadoBatalla` siguen siendo god-classes**; el estado serializado en
+  sesión complica extraer servicios. Cualquier extracción debe respetar `SESSION_VERSION`.
+- **[Media] `MovimientoBatalla`/`ColeccionMovimientos` viven en Battle y `PokemonEntity` los
+  importa** (dirección Pokemon → Battle). Mover a `src/Pokemon/Domain/Movement` (pendiente 12 de
+  `docs/context.md`).
+- **[Media] `DTOEquipoBatalla`/`DTOAccionBatalla` en `Presentation`**: el agregado importa
+  `DTOAccionBatalla` (Domain → Presentation). Reubicar el DTO en Domain o eliminarlo si no se usa.
+- **[Baja] `Combatiente::aArrayVista()` devuelve arrays de presentación**: correcto como frontera,
+  pero no debe convertirse en contrato de dominio.
+- **[Media] Tests de serialización/objetos con expectativas dudosas**:
+  `CombatienteAvanzadoTest` espera `speed=100` tras `__unserialize`, pero `BattleStats` a nivel 100
+  con base 100 produce 205; `ManejadorObjetosEquipadosTest` espera 150 con un mapa custom
+  `choice_band=1.50`, pero el handler aplica además el bonus ×1.30 de Cinta Elección (195).
+  Confirmar si el contrato es «mapa custom reemplaza» o «multiplica bonos» y actualizar test/código.

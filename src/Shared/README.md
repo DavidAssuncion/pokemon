@@ -15,7 +15,7 @@ módulos vive aquí.
 | `Domain/Exceptions/` | `DominioExcepcion`, `RecursoNoExiste`, `ViolacionReglaNegocio`, `PermisoDenegado` |
 | `Bus/` | `Command`, `CommandHandler`, `CommandBus`, `UnitOfWork` |
 | `Tipos/` | Enum `TipoPokemon`, `TiposCollection`, `TypeChart` (matriz 18×18) |
-| `Domain/` | `ClasificadorOfensivaDefensiva`, `IvsRangoEntrenador`, `NivelHelper`, `SlugTipo`, `ProbabilidadCaptura`, `ProbabilidadesShiny`, `DistribuidorStatsValor`, `EscaladorNivelRival`, `RangoIvs` |
+| `Domain/` | `ClasificadorOfensivaDefensiva`, `IvsRangoEntrenador`, `NivelHelper`, `SlugTipo`, `ProbabilidadCaptura`, `ProbabilidadesShiny`, `DistribuidorStatsValor`, `EscaladorNivelRival`, `RangoIvs`, `ReglasEquipo` |
 | `UI/TipoBadges.php` | Helpers de badges de tipo |
 
 ## Reglas

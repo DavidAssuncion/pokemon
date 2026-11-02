@@ -5,17 +5,17 @@ declare(strict_types=1);
 namespace Src\Gimnasios\App;
 
 use App\Models\Team;
+use App\Support\CargarMovimientosDesbloqueados;
 use App\Support\CreadorBatallaSesion;
 use Src\CombateEntrenadores\App\ConstruirEquipoJugador;
 use Src\CombateEntrenadores\Domain\ValueObjects\FormacionEquipo;
-use Src\Gimnasios\Domain\EvsRangoEntrenador;
 use Src\Gimnasios\Domain\Exceptions\GimnasioBloqueado;
 use Src\Gimnasios\Domain\Exceptions\GimnasioCompletado;
 use Src\Gimnasios\Domain\Repositories\GymCatalogoRepositoryInterface;
 use Src\Gimnasios\Domain\Repositories\GymProgressRepositoryInterface;
 use Src\Shared\Domain\EscaladorNivelRival;
 use Src\Shared\Domain\Exceptions\ViolacionReglaNegocio;
-use Src\Shared\Domain\IvsRangoEntrenador;
+use Src\Shared\Domain\PoliticaIvsEvs;
 
 /**
  * Crea una batalla contra un gimnasio y la guarda en sesión.
@@ -23,6 +23,10 @@ use Src\Shared\Domain\IvsRangoEntrenador;
  * actual sea la que se va a combatir.
  *
  * El jugador es siempre team1; el rival (generado del catálogo) es team2.
+ *
+ * El perfil IV/EV del rival se deriva del índice de dificultad del gimnasio
+ * (1-18) y de si la etapa es el líder. Las etapas 1-3 usan el perfil base del
+ * índice; la etapa 4 (líder) sube un tier.
  */
 final class IniciarCombateGimnasio
 {
@@ -33,6 +37,7 @@ final class IniciarCombateGimnasio
         private readonly GeneradorPokemonGimnasio $generador,
         private readonly ConstruirEquipoJugador $construirEquipoJugador,
         private readonly CreadorBatallaSesion $creadorBatalla,
+        private readonly CargarMovimientosDesbloqueados $cargarMovimientos,
     ) {
     }
 
@@ -60,20 +65,8 @@ final class IniciarCombateGimnasio
 
         $nivelRival = $this->escalador->escalar($gimnasio->nivelMinimo, $nivelJugador);
 
-        // Etapas 1-3 (entrenadores): 64/64 y IVs 12/10; etapa 4 (líder): 128/64 y IVs 14/12.
-        [$evPrincipal, $evResto, $ivPrincipal, $ivResto] = $etapa === 4
-            ? [
-                EvsRangoEntrenador::LIDER_PRINCIPAL,
-                EvsRangoEntrenador::LIDER_RESTO,
-                IvsRangoEntrenador::LIDER_PRINCIPAL,
-                IvsRangoEntrenador::LIDER_RESTO,
-            ]
-            : [
-                EvsRangoEntrenador::GIMNASIO_PRINCIPAL,
-                EvsRangoEntrenador::GIMNASIO_RESTO,
-                IvsRangoEntrenador::GIMNASIO_PRINCIPAL,
-                IvsRangoEntrenador::GIMNASIO_RESTO,
-            ];
+        $indice = $this->catalogo->indiceDe($gymSlug);
+        $perfil = PoliticaIvsEvs::perfilGimnasio($indice, $etapa === 4);
 
         $equipo = Team::with('members.reclutado.pokemon.stats', 'members.reclutado.pokemon.types')
             ->findOrFail($teamId);
@@ -81,8 +74,16 @@ final class IniciarCombateGimnasio
         $datosJugador = $this->construirEquipoJugador->desdeEquipo($equipo, FormacionEquipo::desde($formacion), $nivelJugador);
 
         $equipoEtapa = $gimnasio->equipoEtapa($etapa);
+        $movimientosDesbloqueados = $this->cargarMovimientos->para($userId);
         $datosRival = $equipoEtapa !== null
-            ? $this->generador->generar($equipoEtapa, $nivelRival, $evPrincipal, $evResto, $ivPrincipal, $ivResto)
+            ? $this->generador->generar(
+                $equipoEtapa,
+                $nivelRival,
+                perfil: $perfil,
+                indiceGimnasio: $indice,
+                esLider: $etapa === 4,
+                movimientosDesbloqueados: $movimientosDesbloqueados,
+            )
             : [];
 
         if ($datosRival->isEmpty()) {

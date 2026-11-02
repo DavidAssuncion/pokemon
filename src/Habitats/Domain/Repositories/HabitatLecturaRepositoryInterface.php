@@ -6,14 +6,14 @@ namespace Src\Habitats\Domain\Repositories;
 
 use Src\Habitats\Domain\Collections\PokemonBasicoCollection;
 use Src\Habitats\Domain\ProvinciasCollection;
-use Src\Habitats\Presentation\DTOFamiliaDisponible;
-use Src\Habitats\Presentation\DTOFamiliaEliminada;
 use Src\Habitats\Presentation\DTOFamiliasDisponibles;
 use Src\Habitats\Presentation\DTOFamiliasSinHabitat;
 use Src\Habitats\Presentation\DTOHabitatDetalle;
-use Src\Habitats\Presentation\DTOPokemonNivelActualizado;
 
-interface HabitatRepositoryInterface
+/**
+ * Lectura de provincias, hábitats y familias (sin mutaciones).
+ */
+interface HabitatLecturaRepositoryInterface
 {
     public function allProvinciasWithHabitats(): ProvinciasCollection;
 
@@ -24,10 +24,4 @@ interface HabitatRepositoryInterface
     public function getFamiliesByHabitat(int $habitatId): DTOFamiliasDisponibles;
 
     public function getUnassignedFamilies(): DTOFamiliasSinHabitat;
-
-    public function assignFamily(int $habitatId, int $evolutionChainId): DTOFamiliaDisponible;
-
-    public function removeFamily(int $habitatId, int $evolutionChainId): DTOFamiliaEliminada;
-
-    public function movePokemonToLevel(int $habitatId, int $pokemonId, int $level): DTOPokemonNivelActualizado;
 }

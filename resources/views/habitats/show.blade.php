@@ -157,7 +157,16 @@
                                     </svg>
                                 </div>
                                 <div>
-                                    <p class="text-sm font-medium text-gray-900 dark:text-white">{{ $exp->reclutado->nombre ?? 'Reclutado eliminado' }}</p>
+                                    @php
+                                        $nombreReclutado = $exp->reclutado?->nombre;
+                                        if (! filled($nombreReclutado)) {
+                                            $nombreReclutado = $exp->reclutado?->pokemon?->name;
+                                        }
+                                        if (! filled($nombreReclutado)) {
+                                            $nombreReclutado = 'Reclutado eliminado';
+                                        }
+                                    @endphp
+                                    <p class="text-sm font-medium text-gray-900 dark:text-white">{{ $nombreReclutado }}</p>
                                     <p class="text-xs text-gray-500 dark:text-gray-400">Nivel {{ $exp->nivel }}</p>
                                 </div>
                             </div>
@@ -175,15 +184,17 @@
 
                 <!-- Teams Panel: 3-column grid of team cards (modo entrenadores / ruta) -->
                 <div class="{{ $cardPanelClass }}" x-show="modo === 'entrenadores' || modo === 'ruta'" x-cloak>
-                    <div class="p-4 border-b border-gray-200 dark:border-gray-700">
-                        <h3 class="text-sm font-semibold text-gray-900 dark:text-white">Equipos</h3>
-                    </div>
                     <div class="p-4">
-                        <div class="grid sm:grid-cols-3 gap-3">
+                        <div class="grid sm:grid-cols-4 gap-4">
                             @forelse($teams as $team)
                             @php
-                                $equipoEnExploracion = $equiposEnExploracion->firstWhere('equipo_id', $team->id);
-                                $bloqueado = $equipoEnExploracion !== null;
+                                // La exploración es individual: el equipo se bloquea solo
+                                // si alguno de sus miembros está explorando.
+                                $miembrosEnExploracion = collect($team->members)
+                                    ->pluck('pokemon_id')
+                                    ->filter()
+                                    ->intersect($reclutadosEnExploracion ?? []);
+                                $bloqueado = $miembrosEnExploracion->isNotEmpty();
                             @endphp
                             <div
                                 class="rounded-lg p-3 border-2 transition-all {{ $bloqueado ? 'bg-gray-100 dark:bg-gray-900/30 border-gray-200 dark:border-gray-700 opacity-60 cursor-not-allowed' : 'bg-gray-50 dark:bg-gray-900/50 cursor-pointer hover:border-gray-300 dark:hover:border-gray-600' }}"
@@ -194,14 +205,16 @@
                                 tabindex="0"
                                 @keydown.space.prevent="selectTeam({{ $team->id }}, $el.dataset.teamName)"
                                 @keydown.enter.prevent="selectTeam({{ $team->id }}, $el.dataset.teamName)"
+                                @else
+                                aria-disabled="true"
                                 @endif
                                 data-team-name="{{ $team->name }}"
-                                aria-label="{{ $bloqueado ? 'Equipo en exploración' : 'Seleccionar equipo ' . $team->name }}"
+                                aria-label="{{ $bloqueado ? 'Equipo con miembro en exploración' : 'Seleccionar equipo ' . $team->name }}"
                             >
                                 <div class="flex items-center justify-between mb-2">
                                     <span class="text-sm font-medium text-gray-900 dark:text-white flex items-center gap-1.5">
                                         @if($bloqueado)
-                                            <svg class="w-3.5 h-3.5 text-gray-500 dark:text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                                            <svg class="w-3.5 h-3.5 text-gray-500 dark:text-gray-400" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
                                                 <path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd"/>
                                             </svg>
                                         @endif
@@ -209,16 +222,16 @@
                                     </span>
                                     @if($bloqueado)
                                         <span class="px-2 py-0.5 bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400 text-[10px] font-bold rounded-full uppercase">
-                                            En exploración
+                                            Miembro en exploración
                                         </span>
                                     @endif
                                 </div>
                                 @if($bloqueado)
                                 <p class="text-[10px] text-gray-500 dark:text-gray-400 mt-1">
-                                    🔒 En exploración ({{ $equipoEnExploracion['habitat_name'] }})
+                                    No disponible para combatir hasta que vuelva
                                 </p>
                                 @endif
-                                <div class="grid grid-cols-3 gap-1">
+                                <div class="grid grid-cols-3 gap-0">
                                     @for($i = 0; $i < 3; $i++)
                                         @if(isset($team->members[$i]))
                                             <div class="text-center min-w-0">
@@ -228,12 +241,9 @@
                                                     decoding="async"
                                                     alt="{{ $team->members[$i]->reclutado->nombre ?? '' }}"
                                                     title="{{ $team->members[$i]->reclutado->nombre ?? '' }}"
-                                                    class="w-full h-14 object-contain mx-auto"
+                                                    class="w-full object-contain mx-auto"
                                                     onerror="this.style.display='none'"
                                                 >
-                                                <p class="text-[10px] text-gray-500 dark:text-gray-400 truncate mt-0.5">
-                                                    {{ $team->members[$i]->reclutado->nombre ?? '---' }}
-                                                </p>
                                             </div>
                                         @else
                                             <div class="text-center min-w-0">
@@ -286,7 +296,7 @@
                             Has alcanzado el máximo de 6 favoritos para este hábitat.
                         </div>
 
-                        <div x-show="!favoritosLoading && favoritos.length > 0" x-cloak class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                        <div x-show="!favoritosLoading && favoritos.length > 0" x-cloak class="grid grid-cols-2 sm:grid-cols-6 gap-3">
                             <template x-for="favorito in favoritos" :key="favorito.id">
                                 <div
                                     class="rounded-lg p-2 border-2 transition-all text-center select-none"
@@ -311,16 +321,15 @@
                                             loading="lazy"
                                             decoding="async"
                                             :alt="favorito.nombre"
-                                            class="w-16 h-16 object-contain mx-auto"
+                                            class="w-96 object-contain mx-auto"
                                             onerror="this.style.display='none'"
                                         >
-                                        <p class="text-[10px] text-gray-700 dark:text-gray-300 truncate mt-1" x-text="favorito.nombre"></p>
                                         <p class="text-[10px] text-gray-400 dark:text-gray-500" x-text="'Nv ' + (favorito.nivel || 1)"></p>
                                     </button>
                                     <button
                                         :disabled="esFavoritoEnExploracion(favorito.id)"
                                         @click="!esFavoritoEnExploracion(favorito.id) && openEnviarHabitat(favorito)"
-                                        class="mt-2 w-full px-2 py-1 bg-green-600 text-white rounded-lg text-[10px] font-bold hover:bg-green-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed uppercase"
+                                        class="mt-2 w-32 px-2 py-1 bg-green-600 text-white rounded-lg text-[10px] font-bold hover:bg-green-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed uppercase"
                                         x-text="esFavoritoEnExploracion(favorito.id) ? 'En exploración' : 'Enviar a explorar'"
                                     ></button>
                                 </div>
@@ -341,9 +350,6 @@
 
                 <!-- Niveles Panel: 3 clickable level rows (ruta = sin fetch; pokémon / entrenadores) -->
                 <div class="{{ $cardPanelClass }}" x-show="modo === 'ruta' || modo === 'pokemon' || modo === 'entrenadores'" x-cloak>
-                    <div class="p-4 border-b border-gray-200 dark:border-gray-700">
-                        <h3 class="text-sm font-semibold text-gray-900 dark:text-white">Niveles</h3>
-                    </div>
                     <div class="p-4 space-y-3">
                         <!-- MODO POKÉMON / RUTA -->
                         <div x-show="modo === 'pokemon' || modo === 'ruta'">
@@ -559,6 +565,16 @@
                                 <template x-if="preview.recompensas_esperadas?.aviso">
                                     <p class="text-[10px] text-gray-400 dark:text-gray-500 italic" x-text="preview.recompensas_esperadas.aviso"></p>
                                 </template>
+                                {{-- Aviso económico: el backend calcula factor y mensaje; la vista solo los presenta. --}}
+                                <template x-if="preview?.aviso_economia">
+                                    <div class="flex items-start gap-1.5 pt-0.5">
+                                        <p role="note" class="text-[10px] leading-snug text-amber-600 dark:text-amber-400" x-text="preview.aviso_economia"></p>
+                                        <template x-if="preview?.economia?.factor">
+                                            <span class="shrink-0 whitespace-nowrap px-1.5 py-0.5 rounded-full border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/20 text-[10px] font-medium text-amber-700 dark:text-amber-300"
+                                                  x-text="'Factor ×' + Number(preview.economia.factor).toLocaleString('es-ES', { maximumFractionDigits: 2 })"></span>
+                                        </template>
+                                    </div>
+                                </template>
                             </div>
                         </div>
                     </template>
@@ -712,10 +728,9 @@
                     <template x-for="miembro in (selectedTeamMembers || [])" :key="miembro.id">
                         <div class="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700 rounded-lg">
                             <div class="flex items-center gap-3">
-                                <img :src="'/images/iconos_webp/' + miembro.reclutado.pokemon_id + '.webp'" loading="lazy" decoding="async" :alt="miembro.reclutado.nombre" class="w-16 h-16 object-contain" onerror="this.style.display='none'">
+                                <img :src="'/images/iconos_webp/' + miembro.reclutado.pokemon_id + '.webp'" loading="lazy" decoding="async" :alt="miembro.reclutado.nombre" class="w-96 object-contain" onerror="this.style.display='none'">
                                 <div>
                                     <p class="text-sm font-medium text-gray-900 dark:text-white" x-text="miembro.reclutado.nombre || miembro.reclutado?.pokemon?.name"></p>
-                                    <p class="text-xs text-gray-500 dark:text-gray-400" x-text="'Posición ' + miembro.slot"></p>
                                 </div>
                             </div>
                             <button
@@ -841,7 +856,10 @@
                                         <p class="text-sm font-medium text-gray-900 dark:text-white truncate" x-text="family.base.name"></p>
                                         <div class="flex flex-wrap justify-center gap-1 mt-1">
                                             <template x-for="tipo in (family.types || [])" :key="tipo.id">
-                                                <span class="px-1.5 py-0.5 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 text-[10px] font-medium rounded">
+                                                <span class="px-1.5 py-0.5 text-[10px] font-medium rounded inline-flex items-center gap-1" :class="tipoBadgePorId(tipo.id).clases">
+                                                    <template x-if="tipoBadgePorId(tipo.id).icono">
+                                                        <img :src="tipoBadgePorId(tipo.id).icono" alt="" loading="lazy" decoding="async" class="w-4 h-4 object-contain">
+                                                    </template>
                                                     <span x-text="tipo.name"></span>
                                                 </span>
                                             </template>
@@ -1122,14 +1140,19 @@
                             <template x-for="familia in (granja.familias || [])" :key="'granja-' + familia.evolution_chain_id">
                                 <div class="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-4 space-y-4">
                                     <div class="flex items-center gap-3">
-                                        <div class="w-14 h-14 shrink-0 rounded-xl bg-gray-100 dark:bg-gray-900 flex items-center justify-center overflow-hidden">
-                                            <img :src="familia.base.icon" loading="lazy" decoding="async" :alt="familia.base.name" class="w-full h-full object-contain" onerror="this.style.display='none'">
+                                        <div class="w-96 shrink-0 rounded-xl bg-gray-100 dark:bg-gray-900 flex items-center justify-center overflow-hidden">
+                                            <img :src="familia.base.icon" loading="lazy" decoding="async" :alt="familia.base.name" class="w-full object-contain" onerror="this.style.display='none'">
                                         </div>
                                         <div class="min-w-0 flex-1">
                                             <p class="text-sm font-bold text-gray-900 dark:text-white truncate" x-text="familia.base.name"></p>
                                             <div class="flex flex-wrap gap-1 mt-1">
                                                 <template x-for="tipo in (familia.types || [])" :key="familia.evolution_chain_id + '-tipo-' + tipo.id">
-                                                    <span class="px-1.5 py-0.5 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 text-[10px] font-medium rounded" x-text="tipo.name"></span>
+                                                    <span class="px-1.5 py-0.5 text-[10px] font-medium rounded inline-flex items-center gap-1" :class="tipoBadgePorId(tipo.id).clases">
+                                                        <template x-if="tipoBadgePorId(tipo.id).icono">
+                                                            <img :src="tipoBadgePorId(tipo.id).icono" alt="" loading="lazy" decoding="async" class="w-4 h-4 object-contain">
+                                                        </template>
+                                                        <span x-text="tipo.name"></span>
+                                                    </span>
                                                 </template>
                                             </div>
                                         </div>
@@ -1243,6 +1266,7 @@
 </div>
 
 @push('scripts')
+@include('partials.tipos-badge-script')
 <script>
 function habitatShow() {
     return {
@@ -1261,7 +1285,6 @@ function habitatShow() {
         sightedPokemonIds: @json($sightedPokemonIds ?? []),
         // TEMPORAL: modo QA, muestra todos los Pokémon del hábitat aunque no estén avistados.
         unlockAll: @json($unlockAll ?? false),
-        equiposEnExploracion: @json($equiposEnExploracion->pluck('equipo_id')->toArray()),
         teams: @json($teams),
         // Favoritos (exploración individual): se cargan desde /api/reclutados/favoritos?habitat_id={id}.
         favoritos: [],
@@ -1725,7 +1748,7 @@ function habitatShow() {
         },
 
         get availableTeams() {
-            return (this.teams || []).filter(t => !this.equiposEnExploracion.includes(t.id));
+            return this.teams || [];
         },
 
         init() {
@@ -1882,9 +1905,6 @@ function habitatShow() {
         },
 
         selectTeam(id, name) {
-            if (this.equiposEnExploracion.includes(id)) {
-                return;
-            }
             this.selectedTeamId = id;
             this.selectedTeamName = name;
             if (this.modo === 'pokemon') {

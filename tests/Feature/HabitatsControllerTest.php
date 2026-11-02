@@ -98,6 +98,43 @@ class HabitatsControllerTest extends TestCase
         $response->assertSee('Alpha');
     }
 
+    public function test_show_muestra_nombre_del_pokemon_si_el_reclutado_no_tiene_nombre(): void
+    {
+        $pokemon = Pokemon::create([
+            'id' => 464,
+            'name' => 'rhyperior',
+            'species_id' => 464,
+            'capture_rate' => 45,
+            'base_experience' => 64,
+            'height' => 7,
+            'weight' => 69,
+            'evolution_chain_id' => 51,
+        ]);
+
+        $reclutado = Reclutado::create([
+            'pokemon_id' => $pokemon->id,
+            'user_id' => $this->usuario->id,
+            'nombre' => null,
+            'exp' => ['total' => 0],
+            'es_shiny' => false,
+            'obj_equipados' => [],
+            'movimientos' => [],
+        ]);
+
+        ExploracionActiva::create([
+            'user_id' => $this->usuario->id,
+            'reclutado_id' => $reclutado->id,
+            'habitat_id' => $this->habitatId,
+            'nivel' => 1,
+        ]);
+
+        $response = $this->get("/habitats/{$this->habitatId}");
+
+        $response->assertStatus(200);
+        $response->assertSee('rhyperior');
+        $response->assertDontSee('Reclutado eliminado');
+    }
+
     public function test_show_passes_equipos_en_exploracion(): void
     {
         $reclutado = $this->crearReclutado(102, 'Bravo');

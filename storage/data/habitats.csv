@@ -15,7 +15,7 @@
 14,7,Cráter
 15,1,Mar Sereno
 16,2,Lago Místico
-17,1,Fosa Abisal 1
+17,1,Monte Disciplina
 18,1,Mina Magnética
 19,5,Pradera Celeste
 20,5,Pradera Salvaje
@@ -28,7 +28,7 @@
 27,7,Sabana
 28,7,Prado Trueno
 29,6,Pozas De Valencia
-30,7,Fosa Abisal 2
+30,7,Bosque Seta
 31,7,Desierto Horno
 33,6,Calvari
 34,3,Pantano Ponzoña
@@ -45,4 +45,13 @@
 46,3,Camara Alfa
 47,3,Vieja Reliquia
 48,6,Tabarca
-49,6,Legendarios
+49,8,Legendarios
+50,6,Cañar
+51,5,Jungla
+52,6,Santa Pola
+53,5,Monte Oscuro
+54,3,Tierra Abrasada
+55,1,Sierra Aitana
+56,3,Cueva del Eco
+57,3,Fosa Abisal
+58,3,Pradera Tranquila

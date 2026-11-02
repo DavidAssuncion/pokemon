@@ -11,8 +11,10 @@ use InvalidArgumentException;
  * Resultado agregado del cálculo de recompensas de una expedición.
  * Inmutable; valida el tipo de cada item de sus colecciones.
  *
- * `expTotal` es la EXP al jugador (100 %); `expPorMiembro` es la EXP que recibe
- * CADA integrante del equipo (reparto 80 % entre 3, D3/RF-14).
+ * `expTotal` es la EXP que recibe la cuenta del jugador; `expPorMiembro` es la
+ * EXP que recibe el destino (cada integrante del equipo en la economía legada
+ * o el reclutado individual). `expTipoCuenta` es la EXP de tipo de la cuenta;
+ * cuando es `null` se usa `expTipoPorMiembro` como fallback (economía legada).
  */
 final class ResultadoRecompensas
 {
@@ -34,7 +36,10 @@ final class ResultadoRecompensas
      * @param  Collection<int, RecompensaEv>|array<int, RecompensaEv>  $caramelosEv
      * @param  Collection<int, RecompensaTipo>|array<int, RecompensaTipo>  $caramelosTipo
      * @param  array<string, int>  $expTipoPorMiembro  EXP de tipo que recibe CADA
-     *                                                 integrante (clave = label de tipo)
+     *                                                 integrante/destino (clave = label de tipo)
+     * @param  array<string, int>|null  $expTipoCuenta  EXP de tipo que recibe la
+     *                                                   cuenta; `null` → fallback a
+     *                                                   `expTipoPorMiembro` (legado)
      */
     public function __construct(
         Collection|array $capturas,
@@ -44,6 +49,7 @@ final class ResultadoRecompensas
         public readonly int $expTotal,
         public readonly int $expPorMiembro = 0,
         public readonly array $expTipoPorMiembro = [],
+        public readonly ?array $expTipoCuenta = null,
     ) {
         $this->capturas = self::coleccionTipada($capturas, RecompensaCaptura::class);
         $this->caramelosFamilia = self::coleccionTipada($caramelosFamilia, RecompensaFamilia::class);
@@ -73,6 +79,7 @@ final class ResultadoRecompensas
             expTotal: $this->expTotal,
             expPorMiembro: $this->expPorMiembro,
             expTipoPorMiembro: $this->expTipoPorMiembro,
+            expTipoCuenta: $this->expTipoCuenta,
         );
     }
 

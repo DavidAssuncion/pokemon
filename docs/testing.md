@@ -55,10 +55,10 @@ Convenciones de ejecución (vigentes en `AGENTS.md` / `docs/conventions.md`):
 ## 3 · IVs / CP / serialización (Unit + Feature)
 
 - **`GeneradorIvs`** — IVs aleatorios en rango 0-15; `maximos()` = 15 en los 6 stats; `huevo()`
-  en rango 10-15 por stat.
+  con rango según el nivel de nido (0–4, 5–8, 9–10, 11–12, 13–14, 15).
 - **`BattleStats`** — propiedad `ivs` opcional (`?StatsValue`): con IVs en 0 y EVs en 0 el
-  resultado equivale al cálculo legacy; cada punto de IV suma ×4 al stat (fórmula
-  `floor((2*base + iv*4 + floor(evs/4)) * nivel/100 + 5)`); payload de sesión **v9** sin la clave
+  resultado equivale al cálculo legacy; cada punto de IV suma ×5 al stat (decisión de producto confirmada 2026-10-31; fórmula
+  `floor((2*base + iv*5 + floor(evs/4)) * nivel/100 + 5)`); payload de sesión **v9** sin la clave
   `ivs` deserializa con `ivs = null` sin TypeError.
 - **`DistribuidorStatsValor`** — los 2 mejores stats base reciben `ivPrincipal` y los 4 restantes
   `ivResto`; empates resueltos por orden fijo (hp, atk, def, spAtk, spDef, speed); determinista.
@@ -79,7 +79,8 @@ Convenciones de ejecución (vigentes en `AGENTS.md` / `docs/conventions.md`):
   aleatorio inyectado (determinismo en tests).
 - `Combatiente::aArrayVista()` — emite `es_shiny` (snake), no `esShiny` (O6).
 - `ResultadoRuta::aArray()` — cada captura lleva `es_shiny` (bool) (O3).
-- Eclosión: huevo shiny → reclutado `es_shiny = true` con IVs 15; huevo no-shiny → IVs 10-15.
+- Eclosión: huevo shiny → reclutado `es_shiny = true` con IVs 15; huevo no-shiny → IVs según el
+  nivel de nido de la familia (0–4 sin nido, 15 a nivel 5).
 
 ## 5 · EVs (Feature)
 
@@ -117,7 +118,8 @@ que deben cumplirse (por lo tanto, propiedades a verificar):
 - **Distribución de IVs**: los 2 stats base máximos reciben `ivPrincipal`; para `ivPrincipal >=
   ivResto` el valor mayor nunca va a un stat con estadística base menor (con el orden fijo de
   desempate, la distribución es determinista).
-- **IVs**: todo IV generado está en [0, 15]; `huevo()` en [10, 15]; shiny == máximo en los 6 stats.
+- **IVs**: todo IV generado está en [0, 15]; `huevo()` respeta el rango del nivel de nido (0–4
+  sin nido hasta 15 a nivel 5); shiny == máximo en los 6 stats.
 - **Probabilidades shiny**: `esShiny(aleatorio)` es true exactamente cuando `aleatorio() % 2048
   == 0` (salvaje) o `% 512 == 0` (huevo); con la misma semilla, la misma decisión (determinismo).
 - **BattleStats**: los stats son no decrecientes en `ivs` y `evs`; incrementar un IV en 1 nunca
@@ -245,3 +247,49 @@ Propiedades a verificar al cierre del módulo (complementan las de la sección 7
   pre-push L6). CRAP no medido (testing diferido); receta:
   `XDEBUG_MODE=coverage vendor/bin/phpunit --coverage-crap4j build/crap4j.xml` (requiere driver de
   cobertura y `<source>` en `phpunit.xml`; ver deuda 17 de `docs/context.md`).
+
+---
+
+## 14 · Ejecución eficiente de tests (corrección y QA)
+
+Directriz del desarrollador (2026-11-01): durante la corrección se lanza **solo el test que falla**,
+se añaden trazas para entender el fallo y se retiran al corregirlo. Repetir suites verdes o volcar
+salidas largas quema tokens sin aportar información.
+
+Reglas operativas:
+
+- **Un test, no la suite** — aislar el caso con `--filter` y la ruta del archivo; añadir
+  `--stop-on-failure` cuando el archivo encadene varios casos.
+- **Trazas temporales mínimas** — en el punto exacto del fallo (`fwrite(STDERR, ...)`, `Log::debug` o
+  un observador de dominio), sin secretos, datos personales ni volcados de arrays completos.
+- **Reproducir con un caso y una semilla** — un escenario, un movimiento, `BATTLE_HARNESS_SEEDS=1`.
+  No lanzar la campaña completa ni el barrido de claves para depurar un fallo concreto.
+- **Quitar las trazas tras el fix** — verificar que no quedan restos con `git diff`/`grep` sobre los
+  archivos tocados.
+- **Validación mínima** — tras el fix, el test que fallaba y los tests directamente relacionados; una
+  única pasada de la suite relevante **al cierre**, no en cada iteración.
+- **Campaña y barrido son manuales** — `BATTLE_HARNESS_CAMPAIGN=1` (`CampanaDiagnosticoTest`, grupo
+  `diagnostic`, se autosalta sin la variable) y `BATTLE_HARNESS_FULL=1` (barrido de claves) solo se
+  ejecutan cuando se piden o al cerrar una fase de diagnóstico.
+- **Salida mínima** — `--no-coverage`, `tail` y filtros; evitar `-v`, dumps y ejecuciones concurrentes
+  innecesarias.
+
+```bash
+# Un solo test
+vendor/bin/phpunit --filter 'test_dragoaliento_que_falla_probabilidad' \
+  tests/Feature/Battle/EstadoAplicadoLivewireTest.php --no-coverage
+
+# Un archivo, parando en el primer fallo
+vendor/bin/phpunit tests/Feature/Battle/HarnessIaVsIaTest.php --no-coverage --stop-on-failure
+
+# Reproducción con una sola semilla (campaña; solo manual)
+BATTLE_HARNESS_CAMPAIGN=1 BATTLE_HARNESS_SEEDS=1 \
+  vendor/bin/phpunit --filter CampanaDiagnostico --no-coverage
+
+# Suite relevante, solo al cierre
+vendor/bin/phpunit tests/Feature/Battle --no-coverage
+vendor/bin/phpunit tests/Unit/Battle tests/Feature/PokemonBattleTest.php --no-coverage
+
+# Verificar que no quedan trazas
+git diff -- <archivos tocados> | grep -nE 'var_dump|dump\(|fwrite\(STDERR|Log::debug|error_log'
+```

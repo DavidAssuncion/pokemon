@@ -76,6 +76,31 @@ class GymCatalogoRepositoryTest extends TestCase
     }
 
     #[Test]
+    public function test_indiceDe_ordena_por_nivel_minimo_y_slug(): void
+    {
+        $repo = $this->app->make(GymCatalogoRepositoryInterface::class);
+        $repo->insertar('dragon', 'Medalla Dragón', TipoPokemon::DRAGON, 100);
+        $repo->insertar('zeta', 'Medalla Z', TipoPokemon::BICHO, 10);
+        $repo->insertar('bug', 'Medalla Bicho', TipoPokemon::BICHO, 10);
+        $repo->insertar('normal', 'Medalla Normal', TipoPokemon::NORMAL, 20);
+
+        $this->assertSame(1, $repo->indiceDe('bug'));
+        $this->assertSame(2, $repo->indiceDe('zeta'));
+        $this->assertSame(3, $repo->indiceDe('normal'));
+        $this->assertSame(4, $repo->indiceDe('dragon'));
+    }
+
+    #[Test]
+    public function test_indiceDe_lanza_GimnasioNoExiste_si_el_slug_no_existe(): void
+    {
+        $repo = $this->app->make(GymCatalogoRepositoryInterface::class);
+        $repo->insertar('bug', 'Medalla Bicho', TipoPokemon::BICHO, 10);
+
+        $this->expectException(GimnasioNoExiste::class);
+        $repo->indiceDe('no-existe');
+    }
+
+    #[Test]
     public function test_actualizarDatos_y_actualizarEtapas(): void
     {
         $repo = $this->app->make(GymCatalogoRepositoryInterface::class);

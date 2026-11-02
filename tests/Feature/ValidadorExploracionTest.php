@@ -50,7 +50,7 @@ class ValidadorExploracionTest extends TestCase
         $this->assertFalse($this->validator->cumpleNivelMinimo(9, 10));
     }
 
-    // ── equipoDisponible (por reclutado tras RFC) ──────────────────────
+    // ── reclutadoEnExploracion / reclutadoDisponible ─────────────────────
 
     /**
      * Crea un equipo con un miembro (reclutado) para el usuario.
@@ -99,28 +99,31 @@ class ValidadorExploracionTest extends TestCase
         ], $atributos));
     }
 
-    public function test_team_is_available_when_no_exploraciones(): void
+    public function test_reclutado_disponible_sin_exploraciones(): void
     {
         $ctx = $this->crearEquipoConReclutado();
 
-        $this->assertTrue($this->validator->equipoDisponible($ctx['team']->id));
+        $this->assertFalse($this->validator->reclutadoEnExploracion($ctx['reclutado']->id));
+        $this->assertTrue($this->validator->reclutadoDisponible($ctx['reclutado']->id));
     }
 
-    public function test_team_is_not_available_when_has_active_exploration(): void
+    public function test_reclutado_no_disponible_con_exploracion_activa(): void
     {
         $ctx = $this->crearEquipoConReclutado();
         $this->crearExploracion(['user_id' => $ctx['usuario']->id, 'reclutado_id' => $ctx['reclutado']->id]);
 
-        $this->assertFalse($this->validator->equipoDisponible($ctx['team']->id));
+        $this->assertTrue($this->validator->reclutadoEnExploracion($ctx['reclutado']->id));
+        $this->assertFalse($this->validator->reclutadoDisponible($ctx['reclutado']->id));
     }
 
-    public function test_team_is_available_after_exploration_completes(): void
+    public function test_reclutado_disponible_tras_finalizar_exploracion(): void
     {
         $ctx = $this->crearEquipoConReclutado();
         $exploracion = $this->crearExploracion(['user_id' => $ctx['usuario']->id, 'reclutado_id' => $ctx['reclutado']->id]);
         $exploracion->update(['regreso' => now()]);
 
-        $this->assertTrue($this->validator->equipoDisponible($ctx['team']->id));
+        $this->assertFalse($this->validator->reclutadoEnExploracion($ctx['reclutado']->id));
+        $this->assertTrue($this->validator->reclutadoDisponible($ctx['reclutado']->id));
     }
 
     // ── habitatTieneExploracionesActivas ───────────────────────────────
@@ -177,30 +180,39 @@ class ValidadorExploracionTest extends TestCase
         $this->assertTrue($this->validator->habitatTieneExploracionesActivas($habitat->id));
     }
 
-    // ── equipoDisponibleParaCombate ─────────────────────────────────────
+    // ── exploración individual: compañeros del mismo equipo ─────────────
 
-    public function test_team_is_available_for_combate_when_no_exploraciones(): void
+    public function test_companero_del_mismo_equipo_sigue_disponible(): void
     {
         $ctx = $this->crearEquipoConReclutado();
 
-        $this->assertTrue($this->validator->equipoDisponibleParaCombate($ctx['team']->id));
-    }
+        $pokemonCompanero = Pokemon::firstOrCreate(['id' => 9101], [
+            'name' => 'recluta-9101',
+            'species_id' => 2,
+            'capture_rate' => 45,
+            'base_experience' => 64,
+            'height' => 7,
+            'weight' => 69,
+            'evolution_chain_id' => 51,
+        ]);
+        $companero = Reclutado::create([
+            'user_id' => $ctx['usuario']->id,
+            'pokemon_id' => $pokemonCompanero->id,
+            'nombre' => 'Compañero',
+            'exp' => ['total' => 0],
+        ]);
+        TeamMember::create([
+            'team_id' => $ctx['team']->id,
+            'pokemon_id' => $companero->id,
+            'slot' => 2,
+        ]);
 
-    public function test_team_is_not_available_for_combate_when_has_active_exploration(): void
-    {
-        $ctx = $this->crearEquipoConReclutado();
         $this->crearExploracion(['user_id' => $ctx['usuario']->id, 'reclutado_id' => $ctx['reclutado']->id]);
 
-        $this->assertFalse($this->validator->equipoDisponibleParaCombate($ctx['team']->id));
-    }
-
-    public function test_team_is_available_for_combate_after_exploration_completes(): void
-    {
-        $ctx = $this->crearEquipoConReclutado();
-        $exploracion = $this->crearExploracion(['user_id' => $ctx['usuario']->id, 'reclutado_id' => $ctx['reclutado']->id]);
-        $exploracion->update(['regreso' => now()]);
-
-        $this->assertTrue($this->validator->equipoDisponibleParaCombate($ctx['team']->id));
+        $this->assertTrue($this->validator->reclutadoEnExploracion($ctx['reclutado']->id));
+        $this->assertFalse($this->validator->reclutadoDisponible($ctx['reclutado']->id));
+        $this->assertFalse($this->validator->reclutadoEnExploracion($companero->id));
+        $this->assertTrue($this->validator->reclutadoDisponible($companero->id));
     }
 
     // ── exploracionesActivas ───────────────────────────────────────────

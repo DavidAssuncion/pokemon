@@ -26,6 +26,7 @@ use Src\Huevos\Domain\DataTransferObjects\ResumenHuevos;
 use Src\Huevos\Domain\DataTransferObjects\TiemposHuevo;
 use Src\Huevos\Domain\EstadoCalculadoHuevo;
 use Src\Huevos\Domain\EstadoHuevo;
+use Src\Huevos\Domain\ReglasHuevo;
 use Src\Pokemon\Domain\Stats\GeneradorIvs;
 use Src\Shared\Domain\DataTransferObjects\PokemonResumen;
 
@@ -184,8 +185,8 @@ final class ListarHuevos
         }
 
         return new LimitesHuevos(
-            maxGestacion: 1,
-            maxIncubando: 1,
+            maxGestacion: ReglasHuevo::MAX_GESTANDO,
+            maxIncubando: ReglasHuevo::MAX_INCUBANDO,
             gestacionActiva: $gestacionActiva,
             incubacionActiva: $incubacionActiva,
         );

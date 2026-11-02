@@ -67,16 +67,9 @@
                             <!-- Team header -->
                             <div class="flex items-center justify-between p-3 border-b border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50">
                                 <div class="flex items-center gap-2 flex-wrap">
-                                    <template x-if="isInExploration(team.id)">
-                                        <svg class="w-4 h-4 text-yellow-500" fill="currentColor" viewBox="0 0 24 24">
-                                            <path d="M12 2C9.243 2 7 4.243 7 7v3H6a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2v-8a2 2 0 00-2-2h-1V7c0-2.757-2.243-5-5-5zm0 2c1.654 0 3 1.346 3 3v3H9V7c0-1.654 1.346-3 3-3zm-6 8h12v8H6v-8z"/>
-                                        </svg>
-                                    </template>
                                     <button
-                                        @click="!isInExploration(team.id) && startRename(team)"
+                                        @click="startRename(team)"
                                         class="text-sm font-medium text-gray-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
-                                        :class="{ 'cursor-not-allowed opacity-50': isInExploration(team.id) }"
-                                        :disabled="isInExploration(team.id)"
                                         x-text="team.name"
                                     ></button>
                                     <template x-if="team.members.length < 3">
@@ -84,10 +77,12 @@
                                             INVÁLIDO
                                         </span>
                                     </template>
-                                    <template x-if="isInExploration(team.id)">
-                                        <span class="px-1.5 py-0.5 bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400 text-[10px] font-bold rounded uppercase">
-                                            En exploración
-                                        </span>
+                                    <template x-if="teamEnExploracion(team) > 0">
+                                        <span
+                                            class="px-1.5 py-0.5 bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400 text-[10px] font-bold rounded uppercase"
+                                            :title="teamEnExploracion(team) + ' miembro(s) del equipo en exploración'"
+                                            x-text="teamEnExploracion(team) + ' en exploración'"
+                                        ></span>
                                     </template>
                                     <template x-if="composicionBadge(team)">
                                         <span
@@ -98,9 +93,8 @@
                                     </template>
                                 </div>
                                 <button
-                                    @click="!isInExploration(team.id) && confirmDeleteTeam(team)"
-                                    :disabled="isInExploration(team.id)"
-                                    class="w-6 h-6 flex items-center justify-center rounded text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                                    @click="confirmDeleteTeam(team)"
+                                    class="w-6 h-6 flex items-center justify-center rounded text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
                                     :aria-label="'Eliminar equipo ' + team.name"
                                 >
                                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -129,9 +123,10 @@
                                                         onerror="this.style.display='none'"
                                                     >
                                                     <button
-                                                        @click="!isInExploration(team.id) && removeMember(team, getMember(team, slot))"
-                                                        :disabled="isInExploration(team.id)"
-                                                        class="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white rounded-full text-[8px] flex items-center justify-center hover:bg-red-600 transition-colors disabled:opacity-30"
+                                                        @click="!enExploracion(getMember(team, slot).id) && removeMember(team, getMember(team, slot))"
+                                                        :disabled="enExploracion(getMember(team, slot).id)"
+                                                        :title="enExploracion(getMember(team, slot).id) ? 'El Pokémon está en exploración' : 'Quitar miembro del equipo'"
+                                                        class="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white rounded-full text-[8px] flex items-center justify-center hover:bg-red-600 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
                                                         aria-label="Quitar miembro"
                                                     >
                                                         ✕
@@ -147,9 +142,8 @@
                                                      <div class="flex flex-row items-center justify-center gap-1">
                                                         <button
                                                             @click="setFormacionSlot(team, slot, 'vanguardia')"
-                                                            :disabled="isInExploration(team.id)"
                                                             :class="formacionDe(team, slot) === 'vanguardia' ? 'bg-blue-600/15 dark:bg-blue-500/20 border-blue-500 text-blue-600 dark:text-blue-400' : 'border-transparent text-gray-400 dark:text-gray-600 hover:text-gray-600 dark:hover:text-gray-400 opacity-70'"
-                                                            class="rounded px-1.5 py-0.5 border transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                                                            class="rounded px-1.5 py-0.5 border transition-colors"
                                                             :aria-label="'Posición vanguardia de ' + nombreFormateado(getMember(team, slot))"
                                                             :aria-pressed="formacionDe(team, slot) === 'vanguardia'"
                                                             :title="'Posición vanguardia de ' + nombreFormateado(getMember(team, slot))"
@@ -160,9 +154,8 @@
                                                         </button>
                                                         <button
                                                             @click="setFormacionSlot(team, slot, 'retaguardia')"
-                                                            :disabled="isInExploration(team.id)"
                                                             :class="formacionDe(team, slot) === 'retaguardia' ? 'bg-red-600/15 dark:bg-red-500/20 border-red-500 text-red-600 dark:text-red-400' : 'border-transparent text-gray-400 dark:text-gray-600 hover:text-gray-600 dark:hover:text-gray-400 opacity-70'"
-                                                            class="rounded px-1.5 py-0.5 border transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                                                            class="rounded px-1.5 py-0.5 border transition-colors"
                                                             :aria-label="'Posición retaguardia de ' + nombreFormateado(getMember(team, slot))"
                                                             :aria-pressed="formacionDe(team, slot) === 'retaguardia'"
                                                             :title="'Posición retaguardia de ' + nombreFormateado(getMember(team, slot))"
@@ -176,8 +169,7 @@
                                                     <select
                                                         :value="posturaDe(team, slot)"
                                                         @change="setPosturaSlot(team, slot, $event.target.value)"
-                                                        :disabled="isInExploration(team.id)"
-                                                        class="mt-1 w-full rounded border border-gray-300 bg-white px-1 py-0.5 text-[9px] text-gray-700 disabled:opacity-40 disabled:cursor-not-allowed dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200"
+                                                        class="mt-1 w-full rounded border border-gray-300 bg-white px-1 py-0.5 text-[9px] text-gray-700 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200"
                                                         :aria-label="'Postura de ' + nombreFormateado(getMember(team, slot))"
                                                         :title="'Postura de ronda de ' + nombreFormateado(getMember(team, slot))"
                                                     >
@@ -188,7 +180,7 @@
                                                     <select
                                                         :value="itemDe(team, slot)"
                                                         @change="guardarItemSlot(team, slot, $event.target.value)"
-                                                        :disabled="isInExploration(team.id) || itemSavingTeamId === team.id"
+                                                        :disabled="itemSavingTeamId === team.id"
                                                         class="mt-1 w-full rounded border border-gray-300 bg-white px-1 py-0.5 text-[9px] text-gray-700 disabled:opacity-40 disabled:cursor-not-allowed dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200"
                                                         :aria-label="'Objeto de ' + nombreFormateado(getMember(team, slot))"
                                                         :title="'Objeto equipado de ' + nombreFormateado(getMember(team, slot))"
@@ -217,7 +209,7 @@
                                 <div class="flex items-center gap-2">
                                     <button
                                         @click="guardarFormacion(team)"
-                                        :disabled="isInExploration(team.id) || formacionSavingTeamId === team.id"
+                                        :disabled="formacionSavingTeamId === team.id"
                                         class="flex-1 px-3 py-1.5 bg-gray-800 dark:bg-gray-200 text-white dark:text-gray-900 rounded-lg text-[10px] font-bold uppercase tracking-wide hover:bg-gray-900 dark:hover:bg-white transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                                         x-text="formacionSavingTeamId === team.id ? 'Guardando...' : 'Guardar formación'"
                                     ></button>
@@ -227,7 +219,7 @@
                                 <div class="flex items-center gap-2 mt-2">
                                     <button
                                         @click="guardarPosturas(team)"
-                                        :disabled="isInExploration(team.id) || posturaSavingTeamId === team.id"
+                                        :disabled="posturaSavingTeamId === team.id"
                                         class="flex-1 px-3 py-1.5 bg-blue-600 dark:bg-blue-500 text-white rounded-lg text-[10px] font-bold uppercase tracking-wide hover:bg-blue-700 dark:hover:bg-blue-400 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                                         x-text="posturaSavingTeamId === team.id ? 'Guardando...' : 'Guardar posturas'"
                                     ></button>
@@ -309,7 +301,7 @@
                             :title="'Filtrar por tipo {{ $tipo['nombre'] }}'"
                             class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full border text-[11px] font-semibold transition-opacity"
                             :class="filtroTipoActivo({{ $tipo['id'] }})
-                                ? tipoClase('{{ $tipo['nombre'] }}') + ' border-gray-900 dark:border-white'
+                                ? '{{ \Src\Shared\UI\TipoBadges::clases($tipo['slug'] ?? $tipo['nombre']) }} border-gray-900 dark:border-white'
                                 : 'bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400 border-gray-200 dark:border-gray-700 opacity-60 hover:opacity-100'"
                         >
                             <img src="/images/type/{{ $tipo['slug'] }}.webp" alt="" loading="lazy" decoding="async" class="w-5 h-5 object-contain">
@@ -427,21 +419,14 @@
                                                     <template x-for="team in teams" :key="'dd-'+team.id">
                                                         <button
                                                             @click="selectTeamForPokemon(pokemon, team); showTeamDropdown = false"
-                                                            :disabled="isInExploration(team.id)"
-                                                            class="w-full text-left px-3 py-1.5 rounded hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-                                                            :title="isInExploration(team.id)
-                                                                ? 'Equipo en exploración'
-                                                                : (team.members.length >= 3 ? 'Equipo completo: elige a quién reemplazar' : 'Añadir al equipo')"
+                                                            class="w-full text-left px-3 py-1.5 rounded hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                                                            :title="team.members.length >= 3 ? 'Equipo completo: elige a quién reemplazar' : 'Añadir al equipo'"
                                                         >
                                                             <span class="block text-xs font-medium text-gray-700 dark:text-gray-300 truncate" x-text="team.name"></span>
                                                             <span
                                                                 class="block text-[9px] font-semibold"
-                                                                :class="isInExploration(team.id)
-                                                                    ? 'text-orange-600 dark:text-orange-400'
-                                                                    : (team.members.length >= 3 ? 'text-amber-600 dark:text-amber-400' : 'text-green-600 dark:text-green-400')"
-                                                                x-text="isInExploration(team.id)
-                                                                    ? 'En exploración'
-                                                                    : (team.members.length >= 3 ? 'Completo · reemplazar' : 'Libre · añadir')"
+                                                                :class="team.members.length >= 3 ? 'text-amber-600 dark:text-amber-400' : 'text-green-600 dark:text-green-400'"
+                                                                x-text="team.members.length >= 3 ? 'Completo · reemplazar' : 'Libre · añadir'"
                                                             ></span>
                                                         </button>
                                                     </template>
@@ -466,7 +451,7 @@
                                         <button
                                             @click="!pokemonEnExploracion(pokemon) && removeFromTeam(pokemon)"
                                             :disabled="pokemonEnExploracion(pokemon)"
-                                            :title="pokemonEnExploracion(pokemon) ? 'El equipo está en exploración' : 'Quitar ' + nombreDe(pokemon) + ' de equipo'"
+                                            :title="pokemonEnExploracion(pokemon) ? 'El Pokémon está en exploración' : 'Quitar ' + nombreDe(pokemon) + ' de equipo'"
                                             class="w-8 h-8 bg-orange-500 text-white rounded-full flex items-center justify-center hover:bg-orange-600 transition-colors text-sm disabled:opacity-30 disabled:cursor-not-allowed"
                                             :aria-label="'Quitar ' + nombreDe(pokemon) + ' de equipo'"
                                         >
@@ -900,7 +885,7 @@
                         <div class="flex items-center gap-1.5 mt-2 flex-wrap">
                             <template x-if="(detailPokemon.pokemon?.types || []).length">
                                 <template x-for="t in detailPokemon.pokemon.types" :key="'header-type-'+(t.id ?? t.slot ?? t.type)">
-                                    <span class="px-2 py-0.5 text-xs font-semibold rounded-full inline-flex items-center gap-1" :class="tipoClase(tipoLabelDel(t))">
+                                    <span class="px-2 py-0.5 text-xs font-semibold rounded-full inline-flex items-center gap-1" :class="tipoBadge(tipoLabelDel(t)).clases">
                                         <img :src="tipoIconoDeTipo(t)" :alt="tipoLabelDel(t)" loading="lazy" decoding="async" class="w-5 h-5 object-contain">
                                         <span x-text="tipoLabelDel(t)"></span>
                                     </span>
@@ -1046,7 +1031,7 @@
                                         </div>
                                         <div class="flex flex-wrap items-center gap-1.5">
                                             <template x-for="tipo in tiposMovimientoDisponibles" :key="'filtro-tipo-'+tipo.slug">
-                                                <button type="button" @click="toggleFiltroTipoMovimiento(tipo.slug)" :aria-pressed="filtroTipoMovimientoActivo(tipo.slug) ? 'true' : 'false'" :title="'Filtrar por tipo ' + tipo.nombre" class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full border text-[11px] font-semibold transition-opacity" :class="filtroTipoMovimientoActivo(tipo.slug) ? tipoClase(tipo.nombre) + ' border-gray-900 dark:border-white' : 'bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400 border-gray-200 dark:border-gray-700 opacity-60 hover:opacity-100'">
+                                                <button type="button" @click="toggleFiltroTipoMovimiento(tipo.slug)" :aria-pressed="filtroTipoMovimientoActivo(tipo.slug) ? 'true' : 'false'" :title="'Filtrar por tipo ' + tipo.nombre" class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full border text-[11px] font-semibold transition-opacity" :class="filtroTipoMovimientoActivo(tipo.slug) ? tipoBadge(tipo.slug).clases + ' border-gray-900 dark:border-white' : 'bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400 border-gray-200 dark:border-gray-700 opacity-60 hover:opacity-100'">
                                                     <img :src="'/images/type/' + tipo.slug + '.webp'" :alt="tipo.nombre" loading="lazy" decoding="async" class="w-5 h-5 object-contain"><span x-text="tipo.nombre"></span>
                                                 </button>
                                             </template>
@@ -1081,7 +1066,7 @@
                                             <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
                                                 <div>
                                                     <h5 class="text-xs font-bold uppercase tracking-wide text-amber-600 dark:text-amber-400">Desbloqueables</h5>
-                                                    <p class="text-[10px] text-gray-400 dark:text-gray-500">Se desbloquean en las Sendas y quedan disponibles para toda la cuenta.</p>
+                                                    <p class="text-[10px] text-gray-400 dark:text-gray-500">Se desbloquean en las Sendas y quedan disponibles para toda la cuenta. Los tramos 4-5 son maestrías pasivas.</p>
                                                 </div>
                                                 <div class="flex items-center gap-2">
                                                     <span class="text-[11px] text-gray-400 dark:text-gray-500" x-text="movimientosSendaFiltrados.length + ' movimientos'"></span>
@@ -1211,6 +1196,7 @@
 </div>
 
 @push('scripts')
+@include('partials.tipos-badge-script')
 <script>
 function favoritosApp() {
     return {
@@ -1220,7 +1206,6 @@ function favoritosApp() {
         reclutadosEnExploracion: @json($reclutadosEnExploracion ?? []),
         teams: @json($teams ?? []),
         teamPokemonIds: @json($teamIds ?? []),
-        equiposEnExploracion: @json($equiposEnExploracion ?? []),
         inventarioCaramelos: @json($inventarioCaramelos ?? ['ev' => []]),
 
         // ─── Formación persistente (combate 3v3) ───────────────────────────
@@ -1394,10 +1379,10 @@ function favoritosApp() {
             return this.reclutadosEnExploracion.includes(reclutadoId);
         },
 
-        isInExploration(teamId) {
-            return this.equiposEnExploracion.some(e =>
-                typeof e === 'object' && e !== null ? e.equipo_id === teamId : e === teamId
-            );
+        /** Número de miembros del equipo que están explorando ahora mismo. */
+        teamEnExploracion(team) {
+            if (!team || !Array.isArray(team.members)) return 0;
+            return team.members.filter(m => this.enExploracion(m.pokemon_id)).length;
         },
 
         // ─── Nivel/exp ─────────────────────────────────────────────────────
@@ -1450,19 +1435,9 @@ function favoritosApp() {
             return '/images/iconos_webp/' + pokemon.pokemon_id + '.webp';
         },
 
-        expParaNivel(nivel) {
-            return 10 * Math.pow(nivel, 3);
-        },
-
         nivelDe(pokemon) {
-            if (pokemon && typeof pokemon.nivel === 'number' && pokemon.nivel >= 1) return pokemon.nivel;
-            const exp = this.expTotalDe(pokemon);
-            if (exp <= 0) return 1;
-            const base = exp / 10;
-            let nivel = Math.floor(Math.cbrt(base));
-            while (Math.pow(nivel + 1, 3) <= base) nivel++;
-            while (Math.pow(nivel, 3) > base) nivel--;
-            return Math.max(1, nivel);
+            // El backend es el dueño del nivel; el front solo presenta el dato.
+            return Number(pokemon?.nivel ?? 1);
         },
 
         formatExp(exp) {
@@ -1752,9 +1727,7 @@ function favoritosApp() {
         },
 
         get movimientosSendaFiltrados() {
-            return this.movimientosFiltrados
-                .filter(mov => mov.origen === 'senda')
-                .sort((a, b) => (Number(a.nivel_senda) - Number(b.nivel_senda)) || (Number(a.type_id) - Number(b.type_id)) || String(a.name).localeCompare(String(b.name)));
+            return this.movimientosFiltrados.filter(mov => mov.origen === 'senda');
         },
 
         get tiposMovimientoDisponibles() {
@@ -1857,12 +1830,7 @@ function favoritosApp() {
             if (!t) return 'Tipo';
             if (t.tipo_nombre) return t.tipo_nombre;
             if (typeof t.type === 'number') {
-                const nombres = {
-                    1: 'Normal', 2: 'Lucha', 3: 'Volador', 4: 'Veneno', 5: 'Tierra', 6: 'Roca',
-                    7: 'Bicho', 8: 'Fantasma', 9: 'Acero', 10: 'Fuego', 11: 'Agua', 12: 'Planta',
-                    13: 'Eléctrico', 14: 'Psíquico', 15: 'Hielo', 16: 'Dragón', 17: 'Siniestro', 18: 'Hada',
-                };
-                return nombres[t.type] || ('#' + t.type);
+                return tipoBadge(t.type).label;
             }
             return t.type || 'Tipo';
         },
@@ -1880,12 +1848,13 @@ function favoritosApp() {
         tipoDeMovimiento(mov) {
             if (!mov) return null;
             if (mov.tipo_nombre) return mov.tipo_nombre;
-            const nombres = {
-                1: 'Normal', 2: 'Lucha', 3: 'Volador', 4: 'Veneno', 5: 'Tierra', 6: 'Roca',
-                7: 'Bicho', 8: 'Fantasma', 9: 'Acero', 10: 'Fuego', 11: 'Agua', 12: 'Planta',
-                13: 'Eléctrico', 14: 'Psíquico', 15: 'Hielo', 16: 'Dragón', 17: 'Siniestro', 18: 'Hada',
-            };
-            return nombres[Number(mov.type_id)] || null;
+            if (mov.type_id !== null && mov.type_id !== undefined && mov.type_id !== '') {
+                return tipoBadge(Number(mov.type_id)).label;
+            }
+            if (mov.tipo_slug) {
+                return tipoBadge(mov.tipo_slug).label;
+            }
+            return null;
         },
 
         tipoSlugDeMovimiento(mov) {
@@ -1930,30 +1899,6 @@ function favoritosApp() {
                 especial: 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300',
                 estado: 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300',
             }[categoria] ?? 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300';
-        },
-
-        tipoClase(nombre) {
-            const mapa = {
-                'normal': 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300',
-                'lucha': 'bg-red-100 text-red-700 dark:bg-red-900/50 dark:text-red-300',
-                'volador': 'bg-sky-100 text-sky-700 dark:bg-sky-900/50 dark:text-sky-300',
-                'veneno': 'bg-purple-100 text-purple-700 dark:bg-purple-900/50 dark:text-purple-300',
-                'tierra': 'bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-300',
-                'roca': 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/50 dark:text-yellow-300',
-                'bicho': 'bg-lime-100 text-lime-700 dark:bg-lime-900/50 dark:text-lime-300',
-                'fantasma': 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/50 dark:text-indigo-300',
-                'acero': 'bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-300',
-                'fuego': 'bg-orange-100 text-orange-700 dark:bg-orange-900/50 dark:text-orange-300',
-                'agua': 'bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300',
-                'planta': 'bg-green-100 text-green-700 dark:bg-green-900/50 dark:text-green-300',
-                'eléctrico': 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/50 dark:text-yellow-300',
-                'psíquico': 'bg-pink-100 text-pink-700 dark:bg-pink-900/50 dark:text-pink-300',
-                'hielo': 'bg-cyan-100 text-cyan-700 dark:bg-cyan-900/50 dark:text-cyan-300',
-                'dragón': 'bg-violet-100 text-violet-700 dark:bg-violet-900/50 dark:text-violet-300',
-                'siniestro': 'bg-gray-200 text-gray-800 dark:bg-gray-800 dark:text-gray-200',
-                'hada': 'bg-rose-100 text-rose-700 dark:bg-rose-900/50 dark:text-rose-300',
-            };
-            return mapa[String(nombre || '').toLowerCase()] || 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300';
         },
 
         riesgoClass(riesgo) {
@@ -2471,15 +2416,8 @@ function favoritosApp() {
         },
 
         huevoProgreso(huevo) {
-            // Contrato nuevo: si el backend expone progreso 0-100, usarlo directamente.
-            if (typeof huevo?.progreso === 'number') {
-                return Math.max(0, Math.min(100, huevo.progreso));
-            }
-            // Fallback: ambos campos en horas (tiempo_total_horas + restante en horas).
-            const total = Number(huevo?.tiempo_total_horas || 0);
-            const restante = Number(huevo?.tiempo_restante_horas ?? huevo?.tiempo_restante ?? total);
-            if (total <= 0) return 0;
-            return Math.max(0, Math.min(100, ((total - restante) / total) * 100));
+            // Contrato backend: progreso 0-100 ya calculado.
+            return Math.max(0, Math.min(100, Number(huevo?.progreso ?? 0)));
         },
 
         huevoEtiquetaRestante(huevo) {
@@ -2560,14 +2498,14 @@ function favoritosApp() {
         },
 
         pokemonEnExploracion(pokemon) {
-            const teamId = this.pokemonTeamId(pokemon);
-            return teamId !== null && this.isInExploration(teamId);
+            if (!pokemon) return false;
+            return this.enExploracion(pokemon.id);
         },
 
         // ─── Asignación / reemplazo en equipos completos ────────────────────
 
         selectTeamForPokemon(pokemon, team) {
-            if (!pokemon || !team || this.isInExploration(team.id)) return;
+            if (!pokemon || !team) return;
             if (team.members.length >= 3) {
                 this.abrirReemplazo(pokemon, team);
                 return;
@@ -2728,7 +2666,6 @@ function favoritosApp() {
 
         async addToTeam(pokemon, team) {
             if (!pokemon || !team) return;
-            if (this.isInExploration(team.id)) return;
 
             const emptySlot = [1, 2, 3].find(s => !team.members.some(m => Number(m.slot) === s));
             if (!emptySlot) {
@@ -2855,7 +2792,6 @@ function favoritosApp() {
         },
 
         setFormacionSlot(team, slot, posicion) {
-            if (this.isInExploration(team.id)) return;
             if (!this.formacionDraft[team.id]) this.formacionDraft[team.id] = {};
             this.formacionDraft[team.id][slot] = posicion;
             this.formacionSaveError = '';
@@ -2863,10 +2799,6 @@ function favoritosApp() {
         },
 
         async guardarFormacion(team) {
-            if (this.isInExploration(team.id)) {
-                alert('No se puede modificar un equipo con exploraciones activas');
-                return;
-            }
             const base = team.formacion || {};
             const draft = this.formacionDraft[team.id] || {};
             const formacionCompleta = {};
@@ -2927,8 +2859,6 @@ function favoritosApp() {
         },
 
         async guardarItemSlot(team, slot, itemKey) {
-            if (this.isInExploration(team.id)) return;
-
             if (!this.itemsDraft[team.id]) this.itemsDraft[team.id] = {};
             this.itemsDraft[team.id][slot] = itemKey;
             this.itemSavingTeamId = team.id;
@@ -2978,7 +2908,6 @@ function favoritosApp() {
         },
 
         setPosturaSlot(team, slot, postura) {
-            if (this.isInExploration(team.id)) return;
             if (!this.posturasDraft[team.id]) this.posturasDraft[team.id] = {};
             this.posturasDraft[team.id][slot] = postura;
             this.posturaSaveError = '';
@@ -2986,11 +2915,6 @@ function favoritosApp() {
         },
 
         async guardarPosturas(team) {
-            if (this.isInExploration(team.id)) {
-                alert('No se puede modificar un equipo con exploraciones activas');
-                return;
-            }
-
             const base = team.posturas || {};
             const draft = this.posturasDraft[team.id] || {};
             const posturasCompletas = {};

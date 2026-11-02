@@ -8,6 +8,7 @@ use App\Enums\StatEnum;
 use App\Models\ExploracionActiva;
 use App\Models\Habitat;
 use App\Models\Pokemon;
+use App\Support\CadenasEvolutivas;
 use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Collection as BaseCollection;
@@ -20,6 +21,12 @@ use Src\Exploraciones\Domain\CalculadorVueltaExploracion;
  */
 final class PresentadorExploraciones
 {
+    /** @var array<int, Collection<int, Pokemon>> */
+    private array $miembrosPorCadenaCache = [];
+
+    /** @var array<int, true> */
+    private array $cadenasConsultadas = [];
+
     /**
      * Datos de stat por id (índice = stat id): nombre en español alineado con
      * el fallback JS de la vista (statName) — StatEnum::label() devuelve
@@ -67,9 +74,23 @@ final class PresentadorExploraciones
         }
 
         foreach ($terminadas as $exp) {
+            foreach ($this->eventosDe($exp)->get('bitacora', []) as $evento) {
+                foreach ($this->idsDeEvento($evento) as $id) {
+                    $ids[] = $id;
+                }
+            }
+
             $resultado = $this->eventosDe($exp)->get('resultado', []);
             foreach ($resultado['capturados'] ?? [] as $capturado) {
                 $ids[] = (int) $capturado['pokemon_id'];
+            }
+
+            // Una captura perdida puede haber quedado fuera de resultado al
+            // restar las pérdidas; su nombre solo se conserva en objetos_perdidos.
+            foreach ($this->eventosDe($exp)->get('objetos_perdidos', []) as $perdida) {
+                if (($perdida['tipo'] ?? null) === 'captura') {
+                    $ids[] = (int) ($perdida['id'] ?? 0);
+                }
             }
         }
 
@@ -84,7 +105,7 @@ final class PresentadorExploraciones
      * Eventos de la expedición como Collection (D11: cast 'collection').
      * null → colección vacía (exploración recién creada sin eventos).
      *
-     * @return BaseCollection<array-key, mixed>
+     * @return BaseCollection<string, mixed>
      */
     public function eventosDe(ExploracionActiva $exp): BaseCollection
     {
@@ -168,13 +189,16 @@ final class PresentadorExploraciones
             $progreso = max(0, min(100, (int) round(($transcurrido / $total) * 100)));
         }
 
-        $bitacora = [];
-        foreach ($this->eventosDe($exp)->get('bitacora', []) as $evento) {
-            $bitacora[] = $this->transformarEvento($evento, $nombres);
-        }
-
         $reclutado = $exp->reclutado;
         $habitat = $exp->habitat;
+
+        $eventos = $this->eventosDe($exp)->all();
+        $explorador = ExploradorVista::toView($reclutado, $eventos);
+        $diario = DiarioExploracion::toView($eventos, $nombres, $explorador['nombre'], completarStats: true);
+
+        $restanteMin = $fin !== null
+            ? max(0, (int) ceil($ahora->diffInMinutes($fin, false)))
+            : null;
 
         return [
             '_vista' => true,
@@ -197,8 +221,13 @@ final class PresentadorExploraciones
                 ? 'bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400'
                 : 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400',
             'progreso' => $progreso,
+            'fase' => $estado === 'volviendo' ? 'vuelta' : 'ida',
+            'restante_min' => $restanteMin,
+            'restante_label' => $restanteMin !== null ? $this->restanteLabel($restanteMin) : null,
+            'explorador' => $explorador,
+            'diario' => $diario,
             'tiempo_perdido' => (int) $this->eventosDe($exp)->get('tiempo_perdido', 0),
-            'bitacora' => $bitacora,
+            'bitacora' => $diario['eventos'],
         ];
     }
 
@@ -255,8 +284,18 @@ final class PresentadorExploraciones
         $reclutado = $exp->reclutado;
         $habitat = $exp->habitat;
 
+        $perdidas = $this->eventosDe($exp)->get('objetos_perdidos', []);
+        $perdidas = is_array($perdidas) ? $perdidas : [];
+
+        $eventos = $this->eventosDe($exp)->all();
+        $explorador = ExploradorVista::toView($reclutado, $eventos);
+        $diario = DiarioExploracion::toView($eventos, $nombres, $explorador['nombre'], completarStats: true);
+
         return ResultadoExploracionVista::toView([
             'id' => $exp->id,
+            'explorador' => $explorador,
+            'diario' => $diario,
+            'exp_reclutado' => (int) ($resultado['exp_reclutado'] ?? 0),
             'equipo' => $reclutado !== null ? $reclutado->nombre : 'Sin reclutado',
             'reclutado' => $reclutado !== null ? $reclutado->nombre : null,
             'habitat' => $habitat !== null ? $habitat->name : 'Sin hábitat',
@@ -271,6 +310,7 @@ final class PresentadorExploraciones
                 'resultado' => (string) ($resultado['resultado'] ?? 'exito'),
                 'duration_real' => (int) ($resultado['duration_real'] ?? 0),
                 'tiempo_perdido' => (int) ($resultado['tiempo_perdido'] ?? 0),
+                'objetos_perdidos' => $perdidas,
                 'incidentes' => $resultado['incidentes'] ?? [
                     'encuentros' => 0,
                     'victorias' => 0,
@@ -279,8 +319,162 @@ final class PresentadorExploraciones
                     'contratiempos' => 0,
                 ],
             ],
+            'objetos_perdidos' => $this->objetosPerdidosVista($perdidas, $nombres),
+            'motivo_perdida' => $perdidas === [] ? null : $this->motivoPerdida($this->eventosDe($exp)),
             'derrotados' => $this->eventosDe($exp)->get('derrotados', []),
         ]);
+    }
+
+    /**
+     * Motivo legible de la pérdida de objetos. Se deriva del evento raíz
+     * `derrota`; sin él se usa el texto genérico de derrota.
+     *
+     * @param  BaseCollection<string, mixed>  $eventos
+     */
+    private function motivoPerdida(BaseCollection $eventos): string
+    {
+        $derrota = $eventos->get('derrota');
+        $reason = is_array($derrota) && is_string($derrota['reason'] ?? null)
+            ? trim($derrota['reason'])
+            : '';
+        $reason = $reason === '' ? null : $reason;
+
+        return match ($reason) {
+            null => 'La expedición terminó en derrota y se perdió parte del botín.',
+            'explorador_debilitado' => 'Tu explorador cayó debilitado en combate y perdió parte del botín.',
+            default => 'La expedición terminó en derrota ('.str_replace('_', ' ', $reason).') y se perdió parte del botín.',
+        };
+    }
+
+    /**
+     * Enriquece las pérdidas persistidas (`tipo`, `id`, `label`,
+     * `cantidad_perdida`) con el nombre y la imagen que consume la vista.
+     * El contrato persistido no cambia: la resolución es solo de presentación.
+     *
+     * @param  list<array<string, mixed>>  $perdidas
+     * @param  array<array-key, string>  $nombres
+     * @return list<array{tipo: string, tipo_label: string, id: int|string, label: string|null, imagen: string|null, cantidad_perdida: int}>
+     */
+    private function objetosPerdidosVista(array $perdidas, array $nombres): array
+    {
+        $cadenas = [];
+        foreach ($perdidas as $perdida) {
+            if (($perdida['tipo'] ?? null) === 'familia') {
+                $cadenas[] = (int) ($perdida['id'] ?? 0);
+            }
+        }
+
+        // Una sola consulta por cadena nueva, cacheada entre tarjetas.
+        $miembrosPorCadena = $this->miembrosDeCadenas($cadenas);
+
+        $vista = [];
+        foreach ($perdidas as $perdida) {
+            $tipo = (string) ($perdida['tipo'] ?? '');
+            $id = $perdida['id'] ?? '';
+            $label = $this->labelPerdidaPersistido($perdida['label'] ?? null);
+            $imagen = null;
+
+            switch ($tipo) {
+                case 'familia':
+                    $miembros = $miembrosPorCadena[(int) $id] ?? null;
+                    $base = $miembros?->sortBy('species_id')->first();
+                    if ($base !== null) {
+                        $label = $base->name;
+                        $imagen = "/images/candy_pokemon/{$base->id}.webp";
+                    }
+                    break;
+                case 'ev':
+                    $stat = StatEnum::fromId((int) $id);
+                    if ($stat !== null) {
+                        $label = $stat->label();
+                        $imagen = "/images/candy_ev/{$stat->slug()}.webp";
+                    }
+                    break;
+                case 'tipo':
+                    $slug = (string) $id;
+                    $label = $label ?? ($slug !== '' ? ucfirst($slug) : null);
+                    $imagen = $slug !== '' ? "/images/candy_type/{$slug}.webp" : null;
+                    break;
+                case 'captura':
+                    $pokemonId = (int) $id;
+                    $label = $nombres[$pokemonId] ?? 'Pokémon #'.$pokemonId;
+                    $imagen = $pokemonId > 0 ? "/images/iconos_webp/{$pokemonId}.webp" : null;
+                    break;
+            }
+
+            $vista[] = [
+                'tipo' => $tipo,
+                'tipo_label' => $this->tipoLabelPerdida($tipo),
+                'id' => $id,
+                'label' => $label,
+                'imagen' => $imagen,
+                'cantidad_perdida' => (int) ($perdida['cantidad_perdida'] ?? 0),
+            ];
+        }
+
+        return $vista;
+    }
+
+    /**
+     * Miembros de las cadenas solicitadas, reutilizando las ya consultadas
+     * durante la misma página para evitar el N+1 entre tarjetas.
+     *
+     * @param  list<int>  $cadenas
+     * @return array<int, Collection<int, Pokemon>>
+     */
+    private function miembrosDeCadenas(array $cadenas): array
+    {
+        $ids = array_values(array_unique(array_filter(
+            $cadenas,
+            static fn (int $id): bool => $id > 0,
+        )));
+
+        if ($ids === []) {
+            return [];
+        }
+
+        $faltan = array_values(array_filter(
+            $ids,
+            fn (int $id): bool => ! isset($this->cadenasConsultadas[$id]),
+        ));
+
+        if ($faltan !== []) {
+            $nuevos = CadenasEvolutivas::miembrosDe($faltan);
+
+            foreach ($faltan as $id) {
+                $this->cadenasConsultadas[$id] = true;
+            }
+
+            $this->miembrosPorCadenaCache += $nuevos;
+        }
+
+        return array_intersect_key($this->miembrosPorCadenaCache, array_flip($ids));
+    }
+
+    /**
+     * Un label numérico es un dato histórico sin valor como nombre: se
+     * descarta para que cada tipo resuelva el suyo.
+     */
+    private function labelPerdidaPersistido(mixed $label): ?string
+    {
+        if (! is_scalar($label)) {
+            return null;
+        }
+
+        $texto = trim((string) $label);
+
+        return $texto === '' || is_numeric($texto) ? null : $texto;
+    }
+
+    private function tipoLabelPerdida(string $tipo): string
+    {
+        return match ($tipo) {
+            'familia' => 'Familia',
+            'ev' => 'EV',
+            'tipo' => 'Tipo',
+            'captura' => 'Captura',
+            default => ucfirst($tipo),
+        };
     }
 
     /**
@@ -298,10 +492,13 @@ final class PresentadorExploraciones
 
         $estado = (string) ($exp['estado'] ?? 'explorando');
         $progreso = max(0, min(100, (int) ($exp['progreso'] ?? 0)));
-        $bitacora = array_map(
-            static fn (array $evento): array => EventoExploracionVista::toView($evento),
-            is_array($exp['bitacora'] ?? null) ? $exp['bitacora'] : [],
-        );
+        $bitacora = array_values(array_filter(
+            array_map(
+                static fn (array $evento): array => EventoExploracionVista::toView($evento),
+                is_array($exp['bitacora'] ?? null) ? $exp['bitacora'] : [],
+            ),
+            static fn (array $evento): bool => ($evento['oculto'] ?? false) !== true,
+        ));
         $minLvl = $exp['min_lvl'] ?? null;
 
         return array_merge($exp, [
@@ -362,5 +559,24 @@ final class PresentadorExploraciones
     public function inicioVuelta(CarbonInterface $inicio, ?CarbonInterface $fin): ?CarbonInterface
     {
         return CalculadorVueltaExploracion::inicioVuelta($inicio, $fin);
+    }
+
+    /**
+     * Etiqueta legible del tiempo restante hasta el fin de la expedición.
+     */
+    private function restanteLabel(int $minutos): string
+    {
+        if ($minutos <= 0) {
+            return 'Menos de 1 min';
+        }
+
+        if ($minutos < 60) {
+            return "{$minutos} min";
+        }
+
+        $horas = intdiv($minutos, 60);
+        $resto = $minutos % 60;
+
+        return $resto === 0 ? "{$horas} h" : "{$horas} h {$resto} min";
     }
 }

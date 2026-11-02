@@ -103,7 +103,7 @@ Entidad de dominio compartida entre batalla automática y manual.
 |---|---|
 | `Domain/` | `HabitatEntity`, `ProvinceEntity`, `HabitatsCollection`, `ProvinciasCollection`, `Repositories/` |
 | `App/` | 8 casos de uso: `ObtenerHabitatsPorProvincia`, `ObtenerHabitatDetalle`, `ObtenerPokemonsPorHabitat`, `ObtenerFamiliasDisponibles`, `ObtenerFamiliasSinHabitat`, `AsignarFamiliaAHabitat`, `EliminarFamiliaDeHabitat`, `MoverPokemonDeNivel` |
-| `Infra/` | `HabitatRepository` (god-class ~477 líneas, pendiente de dividir — ver deuda en `docs/context.md`) |
+| `Infra/` | `HabitatLecturaRepository` + `HabitatGestionRepository` (divididos 2026-10-31; consultas compartidas en `Concerns/CadenasFamiliaHabitatsTrait`) |
 | `Presentation/` | `DTOHabitatDetalle`, `DTOFamiliasDisponibles`, `DTOFamiliasSinHabitat`, `DTOFamiliaDisponible`, `DTOFamiliaSinHabitat`, `DTOFamiliaEliminada`, `DTOPokemonNivelActualizado` |
 
 #### API de familias de hábitats (admin "Gestión")
@@ -172,9 +172,16 @@ incompletos marcados como inválidos).
 
 | Carpeta | Contenido |
 |---|---|
-| `Domain/` | `CalculadorTiempos`, `CalculadorRecompensas`, `SimuladorEncuentros`, `Recompensas/` (`RecompensaFamilia`, `RecompensaEv`, `RecompensaCaptura`, `RecompensaTipo`, `PokemonDerrotado`, `ResultadoRecompensas`) |
-| `App/` | `ProcesarExploracionHandler`/`ProcesarExploracionCommand`, `FinalizarExploracionHandler`/`FinalizarExploracionCommand`, `PersistirRecompensas`, `NormalizadorPokemonDerrotado` |
-| `Presentation/` | `TransformadorResultadoExploracion` (shape de resultados para `/exploraciones`) |
+| `Domain/` | `EconomiaRecompensas`, `CalculadorFinExploracion`, `CalculadorRecompensas`, `SimuladorEncuentros`, `EstimadorRecompensasExploracion`, `Recompensas/` (`RecompensaFamilia`, `RecompensaEv`, `RecompensaCaptura`, `RecompensaTipo`, `PokemonDerrotado`, `ResultadoRecompensas`) |
+| `App/` | `ProcesarExploracionHandler`/`ProcesarExploracionCommand`, `FinalizarExploracionHandler`/`FinalizarExploracionCommand`, `ProcesarExploracionesPendientes`/`ResultadoProcesamientoPendiente`, `PersistirRecompensas`, `NormalizadorPokemonDerrotado` |
+| `Presentation/` | `PresentadorExploraciones`, `TransformadorResultadoExploracion`, `ExploradorVista`, `DiarioExploracion`, `EventoExploracionVista` (shape de resultados para `/exploraciones`) |
+
+La exploración es **individual** (`reclutado_id`, combate 1v1). Economía Fase 1
+(`EconomiaRecompensas::individual()`): factor 0.5 sobre EXP/caramelos/probabilidad de captura y
+reparto `expCuenta = intdiv(pool, 2)` / `expReclutado = pool - expCuenta`; `EconomiaRecompensas::legado()`
+(1.0, 80 %/3) queda para `OtorgarRecompensasRuta`. El procesamiento pendiente usa lock
+`exploracion:procesar:{id}` (TTL 60 s, no bloqueante) y throttle de 30 s.
+Detalle y deudas en `src/Exploraciones/context.md`.
 
 Contrato aditivo de resultados (`TransformadorResultadoExploracion` + `ExploracionActivaController`):
 
@@ -254,8 +261,8 @@ App/Infra con Laravel).
 
 | Carpeta | Propósito | Archivos clave |
 |---|---|---|
-| `Domain/` | Lógica pura de tiempos y estados | `CalculadorTiemposHuevo` (puesta = `255/capture_rate` horas con suelo 1; eclosión = `ceil(hatch/15)` horas, `DIVISOR_HATCH=15`; guards `max(rate,1)`/`max(hatch,1)`), `CalculadorEstadoHuevo` (estado **on-read** desde `created_at` + snapshots; GESTANDO → INCUBANDO → LISTO), `EstadoHuevo` (enum), `EstadoCalculadoHuevo` (VO inmutable con `restanteHoras`) |
-| `App/` | Casos de uso | `ListarHuevos` (serializa en horas float + `progreso` 0-100 + `limites`; `disponibles` por familia: ≥2 individuos, 1 entrada por cadena, sin huevo activo de esa familia, hatch no-nulo, representante de menor `species_id`), `CrearHuevo` (pareja por familia, 1 gestando + 1 incubando + 1 activo por familia, roll shiny 1/512 e IVs 15 o 10-15), `EclosionarHuevo` (idempotente + defensa en profundidad `userId`; crea el reclutado vía `CrearReclutado`) |
+| `Domain/` | Lógica pura de tiempos y estados | `CalculadorTiemposHuevo` (puesta = `255/capture_rate` horas con suelo 1; eclosión = `ceil(hatch/15)` horas, `DIVISOR_HATCH=15`; guards `max(rate,1)`/`max(hatch,1)`; reducción por nivel de nido), `CalculadorEstadoHuevo` (estado **on-read** desde `created_at` + snapshots + `nido_nivel`; GESTANDO → INCUBANDO → LISTO), `EstadoHuevo` (enum), `EstadoCalculadoHuevo` (VO inmutable con `restanteHoras`) |
+| `App/` | Casos de uso | `ListarHuevos` (serializa en horas float + `progreso` 0-100 + `limites` + nido/rango IV; `disponibles` por familia: ≥2 individuos, 1 entrada por cadena, sin huevo activo de esa familia, hatch no-nulo, representante de menor `species_id`), `CrearHuevo` (pareja por familia, 1 gestando + 1 incubando + 1 activo por familia, roll shiny 1/512 e IVs por nivel de nido), `EclosionarHuevo` (idempotente + defensa en profundidad `userId`; crea el reclutado vía `CrearReclutado` con EVs de complementos) |
 | `Infra/Controllers/` | HTTP | `HuevoController` (GET listado, POST crear 201, POST eclosionar → reclutado serializado con CP al nivel del usuario) |
 
 Reglas de negocio clave:
@@ -271,7 +278,7 @@ Reglas de negocio clave:
 4. **Pareja por familia**: ≥2 reclutados DISTINTOS de la misma `evolution_chain_id`; la especie del
    huevo es el miembro de menor `species_id` (regla "primer integrante" del proyecto).
 5. **Shiny de huevo**: 1/512 (`ProbabilidadesShiny::HUEVO`); shiny → IVs máximos (15); no-shiny →
-   `GeneradorIvs::huevo` (10-15 por stat).
+   `GeneradorIvs::huevo` con rango según el nivel de nido (0–4, 5–8, 9–10, 11–12, 13–14, 15).
 6. **Eclosión idempotente**: eclosionar un huevo ya eclosionado → 422; huevo ajeno → 404 (ruta con
    scope `BelongsToUser` + check interno de cinturón).
 

@@ -7,6 +7,7 @@ namespace Tests\Feature\Mazmorras;
 use App\Enums\StatEnum;
 use App\Enums\TipoEnum;
 use App\Models\Habitat;
+use App\Models\PlayerTypePath;
 use App\Models\Pokemon;
 use App\Models\PokemonStat;
 use App\Models\PokemonType;
@@ -117,8 +118,9 @@ class MazmorraApiTest extends TestCase
         $this->assertCount(3, $battle->team1->combatants());
 
         // Jefe al nivel 20 del piso=1 de la config (nivel 20 jugador).
+        // Vida ×7 y resto de stats ×10 (ReglasMazmorra).
         $esperado = new \Src\Pokemon\Domain\Stats\BattleStats(
-            stats: new \Src\Pokemon\Domain\Stats\StatsValue(490, 390, 290, 350, 400, 450),
+            stats: new \Src\Pokemon\Domain\Stats\StatsValue(343, 390, 290, 350, 400, 450),
             evs: new \Src\Pokemon\Domain\Stats\StatsValue(0, 0, 0, 0, 0, 0),
             nivel: 20,
         );
@@ -126,6 +128,10 @@ class MazmorraApiTest extends TestCase
         $this->assertSame((float) $esperado->defenseHp, $rivales->en(0)->defensaHpActual());
         $this->assertSame((float) $esperado->spDefenseHp, $rivales->en(0)->defensaEspHpActual());
         $this->assertSame((float) $esperado->attack, $rivales->en(0)->pokemon()->battleStats()->attack);
+
+        // Bonus inicial del jefe: +30 % a todas las estadísticas (capa base de multiplicadores).
+        $this->assertSame(1.3, $rivales->en(0)->multiplicadores()->obtenerMultiplicador(\Src\Battle\Domain\Enums\StatClave::ATAQUE));
+        $this->assertSame(1.3, $rivales->en(0)->multiplicadores()->obtenerMultiplicador(\Src\Battle\Domain\Enums\StatClave::VELOCIDAD));
     }
 
     #[Test]
@@ -193,7 +199,39 @@ class MazmorraApiTest extends TestCase
         $this->assertSame('disponible', $pisos[0]['estado']);
     }
 
+    #[Test]
+    public function test_combate_de_mazmorra_no_aplica_la_senda_del_jugador(): void
+    {
+        $this->crearProgresoSendaN5(TipoEnum::NORMAL->value);
+        $habitat = $this->crearHabitat($this->configMazmorra(2));
+        $this->crearPokemonJefe(25);
+
+        $response = $this->postJson("/api/habitats/{$habitat->id}/mazmorra/1/combatir", [
+            'team_id' => $this->team->id,
+            'formacion' => [],
+        ]);
+
+        $response->assertOk();
+
+        $payload = session($response->json('battle_id'));
+        $battle = unserialize(explode('|', $payload, 2)[1]);
+
+        foreach ($battle->team1->combatants() as $combatiente) {
+            $this->assertSame([], $combatiente->senda()->toArray());
+        }
+    }
+
     // ─── Helpers ─────────────────────────────────────────────
+
+    private function crearProgresoSendaN5(int $tipoId): PlayerTypePath
+    {
+        return PlayerTypePath::query()->create([
+            'user_id' => $this->user->id,
+            'type_id' => $tipoId,
+            'exp' => 72_000,
+            'level' => 5,
+        ]);
+    }
 
     private function crearHabitat(?array $mazmorra): Habitat
     {

@@ -18,6 +18,7 @@ use Src\CombateEntrenadores\Domain\GeneradorMovimientosTipo;
 use Src\Gimnasios\App\GeneradorPokemonGimnasio;
 use Src\Gimnasios\Domain\DataTransferObjects\EquipoEtapaGimnasio;
 use Src\Shared\Collections\IntCollection;
+use Src\Shared\Domain\PerfilIvsEvs;
 use Tests\TestCase;
 
 class GeneradorPokemonGimnasioTest extends TestCase
@@ -35,66 +36,67 @@ class GeneradorPokemonGimnasioTest extends TestCase
     }
 
     #[Test]
-    public function test_gimnasio_64_64_todos_evs_a_64(): void
+    public function test_perfil_por_defecto_es_top_uno(): void
     {
         $this->crearPokemon(1, ['hp' => 50, 'atk' => 60, 'def' => 50, 'spAtk' => 60, 'spDef' => 50, 'speed' => 55]);
 
         $equipo = $this->generador->generar(new EquipoEtapaGimnasio(
             vanguardia: new IntCollection([1]),
             retaguardia: new IntCollection([]),
-        ), 50, 64, 64);
+        ), 50);
 
         // Escalado 3v3: un DTO de 1 solo combatiente se repite cíclicamente hasta 3.
+        // TopUno: el mejor stat base (atk, desempate por orden fijo) recibe el máximo.
         $this->assertCount(3, $equipo);
         $evs = $equipo->en(0)->evs;
-        $this->assertSame(64.0, $evs->hp);
-        $this->assertSame(64.0, $evs->attack);
-        $this->assertSame(64.0, $evs->defense);
-        $this->assertSame(64.0, $evs->spAtk);
-        $this->assertSame(64.0, $evs->spDef);
-        $this->assertSame(64.0, $evs->speed);
+        $this->assertSame(0.0, $evs->hp);
+        $this->assertSame(255.0, $evs->attack);
+        $this->assertSame(0.0, $evs->defense);
+        $this->assertSame(0.0, $evs->spAtk);
+        $this->assertSame(0.0, $evs->spDef);
+        $this->assertSame(0.0, $evs->speed);
     }
 
     #[Test]
-    public function test_lider_128_64_dos_mejores_stats_a_128_resto_64(): void
+    public function test_perfil_top_dos_reparte_maximo_y_mitad(): void
     {
         // stats: atk=90, spAtk=80, speed=75, hp=50, def=40, spDef=30
-        // Top 2: atk(90), spAtk(80) → 128; resto → 64
+        // Top 2: atk(90), spAtk(80) → máximos; resto → mitad.
         $this->crearPokemon(2, ['hp' => 50, 'atk' => 90, 'def' => 40, 'spAtk' => 80, 'spDef' => 30, 'speed' => 75]);
 
         $equipo = $this->generador->generar(new EquipoEtapaGimnasio(
             vanguardia: new IntCollection([2]),
             retaguardia: new IntCollection([]),
-        ), 50, 128, 64);
+        ), 50, PerfilIvsEvs::TopDos);
 
         $this->assertCount(3, $equipo);
         $evs = $equipo->en(0)->evs;
-        $this->assertSame(64.0, $evs->hp);
-        $this->assertSame(128.0, $evs->attack);
-        $this->assertSame(64.0, $evs->defense);
-        $this->assertSame(128.0, $evs->spAtk);
-        $this->assertSame(64.0, $evs->spDef);
-        $this->assertSame(64.0, $evs->speed);
+        $this->assertSame(128.0, $evs->hp);
+        $this->assertSame(255.0, $evs->attack);
+        $this->assertSame(128.0, $evs->defense);
+        $this->assertSame(255.0, $evs->spAtk);
+        $this->assertSame(128.0, $evs->spDef);
+        $this->assertSame(128.0, $evs->speed);
     }
 
     #[Test]
-    public function test_ruta_0_0_todos_evs_a_0(): void
+    public function test_perfil_completo_maximiza_todos_los_evs(): void
     {
         $this->crearPokemon(3, ['hp' => 100, 'atk' => 90, 'def' => 80, 'spAtk' => 70, 'spDef' => 60, 'speed' => 50]);
 
         $equipo = $this->generador->generar(new EquipoEtapaGimnasio(
             vanguardia: new IntCollection([3]),
             retaguardia: new IntCollection([]),
-        ), 50, 0, 0);
+        ), 50, PerfilIvsEvs::Completo);
 
         $this->assertCount(3, $equipo);
         $evs = $equipo->en(0)->evs;
-        $this->assertSame(0.0, $evs->hp);
-        $this->assertSame(0.0, $evs->attack);
-        $this->assertSame(0.0, $evs->defense);
-        $this->assertSame(0.0, $evs->spAtk);
-        $this->assertSame(0.0, $evs->spDef);
-        $this->assertSame(0.0, $evs->speed);
+        $this->assertSame(255.0, $evs->hp);
+        $this->assertSame(255.0, $evs->attack);
+        $this->assertSame(255.0, $evs->defense);
+        $this->assertSame(255.0, $evs->spAtk);
+        $this->assertSame(255.0, $evs->spDef);
+        $this->assertSame(255.0, $evs->speed);
     }
 
     #[Test]

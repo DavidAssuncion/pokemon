@@ -41,6 +41,7 @@ class PersistirRecompensas
             $recompensas->expTotal,
             $recompensas->expPorMiembro,
             $recompensas->expTipoPorMiembro,
+            $recompensas->expTipoCuenta,
             $destinoExp,
             $usuario,
         );
@@ -78,7 +79,7 @@ class PersistirRecompensas
 
     private function incrementarItem(?User $usuario, string $itemKey, int $cantidad): void
     {
-        if ($usuario === null) {
+        if ($usuario === null || $cantidad <= 0) {
             return;
         }
 
@@ -106,23 +107,34 @@ class PersistirRecompensas
     }
 
     /**
-     * Reparto de EXP (D3/RF-14): el jugador recibe el 100 % del total; cada
-     * miembro del equipo recibe la parte del 80 % repartida entre 3
-     * (expPorMiembro ya calculado por el dominio) y acumula la exp de tipo
-     * correspondiente en `reclutados.exp.tipos`. Si el destino es un reclutado
-     * individual (exploración individual), el reclutado recibe expPorMiembro.
+     * Reparto de EXP: la cuenta del jugador recibe `expTotal` (ya calculado por
+     * el dominio) y el destino —cada miembro del equipo o el reclutado
+     * individual— recibe `expPorMiembro`. La EXP de tipo de la cuenta usa
+     * `expTipoCuenta` y cae a `expTipoPorMiembro` cuando es `null` (economía
+     * legada). El destino acumula su propia exp de tipo en `reclutados.exp.tipos`.
+     *
+     * El factor económico ya viene aplicado por `CalculadorRecompensas`: aquí
+     * no se vuelve a descontar.
      *
      * @param  array<string, int>  $expTipoPorMiembro
+     * @param  array<string, int>|null  $expTipoCuenta
      */
-    private function aplicarExperiencia(int $expTotal, int $expPorMiembro, array $expTipoPorMiembro, Team|Reclutado|null $destinoExp, ?User $usuario): void
-    {
+    private function aplicarExperiencia(
+        int $expTotal,
+        int $expPorMiembro,
+        array $expTipoPorMiembro,
+        ?array $expTipoCuenta,
+        Team|Reclutado|null $destinoExp,
+        ?User $usuario,
+    ): void {
         if ($usuario !== null && $expTotal > 0) {
             $usuario->increment('experiencia', $expTotal);
         }
 
-        // La misma EXP de tipo que recibe cada combatiente/explorador se
-        // acumula UNA sola vez en la cuenta. No genera caramelos.
-        $this->otorgarExpSendas($usuario, $expTipoPorMiembro);
+        // La EXP de tipo de la cuenta se acumula UNA sola vez. En la economía
+        // legada no hay `expTipoCuenta`: se usa la misma que recibe cada
+        // integrante (comportamiento histórico). No genera caramelos.
+        $this->otorgarExpSendas($usuario, $expTipoCuenta ?? $expTipoPorMiembro);
 
         if ($destinoExp === null || $expPorMiembro <= 0) {
             return;

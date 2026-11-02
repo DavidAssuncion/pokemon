@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Src\CombateRuta\App;
 
 use Src\CombateRuta\Domain\DataTransferObjects\ResultadoRuta;
+use Src\Shared\Domain\MultiplicadoresDificultad;
 
 /**
  * Procesa el resultado de un combate de ruta: la derrota no otorga nada y la
@@ -23,6 +24,8 @@ final class RegistrarResultadoRuta
      * @param  list<int>  $speciesIdsRival
      * @param  callable(): float|null  $aleatorio  fuerza el roll de captura en tests
      * @param  array<int, bool>  $shinySlots  flags shiny alineados con $speciesIdsRival
+     * @param  MultiplicadoresDificultad|null  $dificultad  multiplicadores por perfil del rival
+     * @param  int|null  $nivelHabitat  nivel 1-3 del hábitat; `null` equivale a 1
      */
     public function registrar(
         int $userId,
@@ -31,6 +34,8 @@ final class RegistrarResultadoRuta
         bool $won,
         ?callable $aleatorio = null,
         array $shinySlots = [],
+        ?MultiplicadoresDificultad $dificultad = null,
+        ?int $nivelHabitat = null,
     ): ?ResultadoRuta {
         if (! $won) {
             return null;
@@ -42,6 +47,8 @@ final class RegistrarResultadoRuta
             speciesIdsRival: $speciesIdsRival,
             aleatorio: $aleatorio,
             shinySlots: $shinySlots,
+            dificultad: $dificultad,
+            nivelHabitat: $nivelHabitat,
         );
     }
 }

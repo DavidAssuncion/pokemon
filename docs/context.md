@@ -26,18 +26,19 @@ El proyecto tiene funcionalidad base estable:
 - **Ruta/shiny/huevos/EV/IV/CP (2026-09-16)** — 6 mejoras de progresión del jugador:
   1. **Animación de daño en combate** — clase CSS `anim-hit` (parpadeo rojo + sacudida, 600 ms) aplicada al defensor en la ventana de animación (700 ms) vía `$animDefenderId` (`resources/css/combate.css` + `_pokemon-card.blade.php`); respeta `prefers-reduced-motion` (desactiva sacudida y transición).
   2. **Shiny salvaje en ruta** — roll 1/2048 por slot (`ProbabilidadesShiny::SALVAJE`, aleatorio inyectable) en `GeneradorEquipoRuta`; la captura en victoria crea el reclutado DIRECTAMENTE con IVs máximos (15) y `es_shiny=true` (`OtorgarRecompensasRuta` + `CrearReclutado`), sin pasar por reclutables. Icono `/images/iconos_webp/shiny/{id}_s.webp` con fallback onerror → normal. Contrato de key `es_shiny` (snake) en `Combatiente::aArrayVista()` y `ResultadoRuta::aArray()` (capturas del modal).
-  3. **Sistema de huevos** — nuevo módulo `src/Huevos/` (DDD Domain/App/Infra): puesta `255/capture_rate` horas y eclosión `ceil(hatch/15)` horas (contrato B1 del cliente, todo en horas float + `progreso` 0-100); estados GESTANDO/INCUBANDO/LISTO **derivados de timestamps** (on-read, no almacenados); límites 1 gestando + 1 incubando + 1 activo por familia; creación con ≥2 reclutados DISTINTOS de la misma `evolution_chain_id` (especies distintas de la misma cadena valen); shiny 1/512 en eclosión con IVs máximos (15) y no-shiny 10-15 (`GeneradorIvs::huevo`); idempotencia de eclosión (422 si ya eclosionó) + defensa en profundidad (404 si ajeno). Detalle en `src/Huevos/context.md`.
+  3. **Sistema de huevos** — nuevo módulo `src/Huevos/` (DDD Domain/App/Infra): puesta `255/capture_rate` horas y eclosión `ceil(hatch/15)` horas (contrato B1 del cliente, todo en horas float + `progreso` 0-100); estados GESTANDO/INCUBANDO/LISTO **derivados de timestamps** (on-read, no almacenados); límites 1 gestando + 1 incubando + 1 activo por familia; creación con ≥2 reclutados DISTINTOS de la misma `evolution_chain_id` (especies distintas de la misma cadena valen); shiny 1/512 en eclosión con IVs máximos (15) y no-shiny con IVs según el nivel del nido de la familia (0–4 sin nido, 5–8, 9–10, 11–12, 13–14, 15 a nivel 5) (`GeneradorIvs::huevo`); idempotencia de eclosión (422 si ya eclosionó) + defensa en profundidad (404 si ajeno). Detalle en `src/Huevos/context.md`.
   4. **Detalle pokémon (modal /equipos)** — IVs/EVs/habilidades + caramelos EV: `POST /reclutado/{id}/dar-evs` (+10 por caramelo `candy_ev/{slug}` con `lockForUpdate` antifraude, tope 255/stat, 422 si tope/sin stock/en exploración; contrato `stat: hp|atk|def|spAtk|spDef|speed`).
-  5. **IVs 0-15 ×4 por stat** — `BattleStats` incorpora `?StatsValue $ivs` (cada punto de IV suma ×4 al stat en la fórmula); `GeneradorIvs` (aleatorios 0-15 / máximos 15 / huevo 10-15); `IvsRangoEntrenador` + `DistribuidorStatsValor` reparten por dificultad: los 2 mejores stats base reciben `ivPrincipal` y los 4 restantes `ivResto` (gimnasios 12/10, líderes 14/12, entrenadores por nivel 8-12/6-10).
+  5. **IVs 0-15 ×5 por stat** — `BattleStats` incorpora `?StatsValue $ivs` (cada punto de IV suma ×5 al stat en la fórmula (decisión de producto confirmada 2026-10-31)); `GeneradorIvs` (aleatorios 0-15 / máximos 15 / huevo por nivel de nido); `IvsRangoEntrenador` + `DistribuidorStatsValor` reparten por dificultad: los 2 mejores stats base reciben `ivPrincipal` y los 4 restantes `ivResto` (gimnasios 12/10, líderes 14/12, entrenadores por nivel 8-12/6-10).
   6. **CP al nivel del usuario** — `ReclutadoSerializer::cpDe` calcula el CP con `BattleStats` al nivel de `auth()->user()->nivel()` y con los **EV reales** del reclutado (fallback al nivel del reclutado; `ReclutadoSerializerCPTest` conservado). Aplica a `/equipos`, `listarTodos`, `listarFavoritos` y al reclutado de eclosión.
   `SESSION_VERSION` 9 → 10 (mínimo compatible 9): `BattleStats::$ivs` es opcional, los payloads v9 siguen cargando sin migración. 3 migraciones nuevas (ivs/evs, huevos, hatch+evolution_chain_id) → 59 totales.
+- **Granjas por hábitat (2026-10-26)** — módulo `src/Granjas/` (DDD): una granja por `user_id + habitat_id` con nidos, refugios y complementos por familia (`evolution_chain_id`). Nidos 0–5 (25/75/225/450/900 caramelos de familia) reducen 10% el tiempo de huevo por nivel hasta 50% y suben el rango de IVs (0–4, 5–8, 9–10, 11–12, 13–14, 15). Refugios 1–5 (25/75/225/450/2700) multiplican aparición/captura (×1.25/×1.5/×2/×2.5; nivel 5 exclusivo y captura ×3); condiciones insalubres invierten el efecto y bloquean complementos. Complementos EV 1–5 (64/128/256/384/512 EV) cuestan 3× EV + 1× familia y se aplican retroactivamente a todos los reclutados de la familia (cap 512/stat); los nuevos reclutados reciben los EV vigentes. API en `routes/granjas.php`; UI en el modal Granjas de `/habitats/{id}`.
 - **Combate 3v3: equipos de 3, una acción por ronda e invocaciones (2026-10-15 → 2026-10-17)** — modelo estándar de combate:
-  1. **Equipos estándar de exactamente 3** — `TeamController` valida el slot con `max:3`; la migración `2026_10_15_000001` borra los `team_members` con `slot > 3` (`down()` no-op: no son reconstruibles); `ConstruirEquipoJugador::desdeEquipo` (punto único de construcción de los 4 iniciadores) lanza `ViolacionReglaNegocio` 422 «El equipo debe tener exactamente 3 miembros» y retira el pre-check de `IniciarCombateRuta`. Las **exploraciones no añaden validación** (ratificado). El jefe de mazmorra sigue siendo 3v1 (1×10).
+  1. **Equipos estándar de exactamente 3** — `TeamController` valida el slot con `max:3`; la migración `2026_10_15_000001` borra los `team_members` con `slot > 3` (`down()` no-op: no son reconstruibles); `ConstruirEquipoJugador::desdeEquipo` (punto único de construcción de los 4 iniciadores) lanza `ViolacionReglaNegocio` 422 «El equipo debe tener exactamente 3 miembros» y retira el pre-check de `IniciarCombateRuta`. Las **exploraciones no añaden validación** (ratificado). El jefe de mazmorra sigue siendo 3v1 (1 jefe: vida ×7, resto de stats ×10 y +30 % inicial).
   2. **Motor de turnos de una acción por pokémon vivo y ronda** — `GestorTurnos::getNextActor()` elige al vivo con `vecesActuadoEstaRonda === 0` de **mayor velocidad efectiva** (`Combatiente::velocidadEfectiva()` = stat con etapas y parálisis); empates estables por orden de inserción (team1 antes que team2); `consumeAction()` solo marca; `startNewRound()` resetea contadores. Invariante: si `hayAlgunoConAccionPendiente()` es true, `getNextActor()` no es null. Un actor bloqueado (sueño/hielo/parálisis/confusión) consume su acción sin atacar (`Combate::nextActor`). Se elimina la **velocidad acumulada** (`velocidadAcumulada`, `agregarVelocidad`, `menorVelocidadEntreVivos`).
   3. **Invocaciones (solo motor)** — `AgregadoBatalla::incorporarCombatiente(EquipoBatalla, Combatiente, Posicion)` añade el combatiente sin tope, con contador de acciones 0 en la ronda en curso, sin efectos de entrada ni log, compartiendo la colección de `GestorTurnos`.
   4. **Contrato de vista y sesión** — `Combatiente::aArrayVista()` expone `effectiveSpeed` (sustituye a `accumulatedSpeed`); `Combate::buildTurnQueue()` ordena por velocidad efectiva descendente con orden estable (coherente con `getNextActor`); `SESSION_VERSION` 10 → 11 (mínimo compatible 9, los payloads v9/v10 con `velocidadAcumulada` se ignoran best-effort).
   5. **Rivales exactamente 3 y guard 422** — ruta: 3 tiradas ponderadas con reemplazo (`GeneradorEquipoRuta`); entrenador: 3 especies (`GeneradorEquipoEntrenador`, repetición ponderada si el pool es corto); gimnasio: `GeneradorPokemonGimnasio::escalarATres` (>3 recorta a los 3 primeros, <3 repite cíclicamente, vacío → `[]`). Los tres inicios lanzan **422 `ViolacionReglaNegocio`** si el rival sale vacío, sin persistir sesión (`IniciarCombateRuta`; guard replicado en Entrenador y Gimnasio tras el Arquitecto). `CreadorBatallaSesion` no valida tamaño: la guarda vive en cada caso de uso.
-  6. **Log, EXP y mock** — el log de ataque de batallas automáticas recupera el formato histórico con corchetes y velocidad efectiva: `"{vel}vel [{hp}hp] ataca a [{hp}hp] con {mov} -> {daño} de daño"` (sin nombres por decisión). `CalculadorRecompensas::MIEMBROS_EQUIPO = 3` reparte el 80 % de la EXP de exploración entre 3. `FabricaBatallaMock` pasa a 3v3 (`player_*`/`enemy_*` índices 0-2). Detalle en `src/Battle/context.md` y `docs/testing.md` (comportamientos diferidos).
+  6. **Log, EXP y mock** — el log de ataque de batallas automáticas recupera el formato histórico con corchetes y velocidad efectiva: `"{vel}vel [{hp}hp] ataca a [{hp}hp] con {mov} -> {daño} de daño"` (sin nombres por decisión). `CalculadorRecompensas::MIEMBROS_EQUIPO = 3` reparte el 80 % de la EXP entre 3 en la economía **legado**. En exploración individual rige `EconomiaRecompensas::individual()`: factor 0.5 y reparto 50 % cuenta / 50 % reclutado. `FabricaBatallaMock` pasa a 3v3 (`player_*`/`enemy_*` índices 0-2). Detalle en `src/Battle/context.md` y `docs/testing.md` (comportamientos diferidos).
 
 ## Decisiones arquitectónicas clave
 
@@ -55,6 +56,31 @@ El proyecto tiene funcionalidad base estable:
 ## Módulos existentes
 
 Ver `docs/architecture.md` para la descripción detallada de cada módulo.
+
+### Contextos por módulo (fuente de conocimiento y búsqueda)
+
+Cada módulo tiene un `context.md` con propósito, decisiones de producto/funcionamiento, contratos,
+dependencias, deuda priorizada y una **guía de búsqueda (grep)**. Si cambias una regla o contrato,
+actualiza el contexto en el mismo cambio.
+
+| Módulo | Contexto | Propósito |
+|---|---|---|
+| Battle | [`src/Battle/context.md`](../src/Battle/context.md) | Motor de combate 3v3, turnos, daño, efectos, IA. |
+| CombateEntrenadores | [`src/CombateEntrenadores/context.md`](../src/CombateEntrenadores/context.md) | Combate PvE contra entrenadores en hábitats. |
+| CombateRuta | [`src/CombateRuta/context.md`](../src/CombateRuta/context.md) | Combate 3v3 contra salvajes de ruta. |
+| Equipos | [`src/Equipos/context.md`](../src/Equipos/context.md) | Equipos, formación, posturas y objetos. |
+| Exploraciones | [`src/Exploraciones/context.md`](../src/Exploraciones/context.md) | Expediciones individuales, eventos, riesgo y recompensas. |
+| Gimnasios | [`src/Gimnasios/context.md`](../src/Gimnasios/context.md) | Progresión secuencial de gimnasios y medallas. |
+| Granjas | [`src/Granjas/context.md`](../src/Granjas/context.md) | Nidos, refugios y complementos EV por familia. |
+| Habitats | [`src/Habitats/context.md`](../src/Habitats/context.md) | Provincias, hábitats y familias evolutivas. |
+| Huevos | [`src/Huevos/context.md`](../src/Huevos/context.md) | Gestación, incubación y eclosión de huevos. |
+| Mazmorras | [`src/Mazmorras/context.md`](../src/Mazmorras/context.md) | Pisos, jefes, progreso y cooldown. |
+| Pokemon | [`src/Pokemon/context.md`](../src/Pokemon/context.md) | Entidad, stats, IV/EV y CP. |
+| Reclutamiento | [`src/Reclutamiento/context.md`](../src/Reclutamiento/context.md) | Captura y evolución por caramelos de tipo. |
+| Shared | [`src/Shared/context.md`](../src/Shared/context.md) | Colecciones, bus, excepciones, tipos y reglas compartidas. |
+
+Regla operativa de arrays/constantes/capas: [`.ai/rules/arrays-dto-collections.md`](../.ai/rules/arrays-dto-collections.md)
+y [`docs/conventions.md`](conventions.md).
 
 ## Sistema de combate
 
@@ -97,6 +123,9 @@ Seeders: provincias (8), hábitats, pokémon (151+), reclutados.
 
 ## Decisiones y convenciones
 
+- **Modelo canónico (2026-10-31):** todos los agentes usan `opencode-go/deepseek-v4.1-flash`.
+  No cambiar de modelo, proveedor ni variante sin autorización explícita del desarrollador.
+  Regla operativa: `.ai/rules/model-policy.md`.
 - Código en español para nombres de dominio (movimientos, tipos, estados) y lógica de negocio.
 - Nombres de tablas y columnas en inglés (convención Laravel).
 - `MovimientoBatalla` usa el patrón DatosPokemonBatalla para desacoplar datos de combate de la entidad pokémon persistida.
@@ -109,7 +138,9 @@ Seeders: provincias (8), hábitats, pokémon (151+), reclutados.
 2. Cache-busting de iconos: los WebP se sirven con `Cache-Control: immutable`; si un icono cambia con el mismo id, los clientes no lo refrescarán (pendiente de decisión/ticket).
 3. `infection.json5` solo cubre `src/`; el código de `app/` (Datagrid, WebP, comandos) no genera mutaciones.
 4. `phpstan-baseline.php` (L6) y `phpstan-hardener-baseline.php` (L8) congelan los errores tolerados preexistentes; ampliar la limpieza gradualmente (política en el pendiente 17).
-5. `HabitatRepository` vive en `src/Habitats/Infra/` pero recibe datos de `app/` (backlog de arquitectura: mover a infraestructura Laravel o definir interfaz en Domain). Es además una god-class de ~477 líneas pendiente de dividir (asignación de familias, niveles, tipos y detalle conviven en el mismo repositorio).
+5. `HabitatRepository` (god-class de ~477 líneas) **dividido 2026-10-31** en `HabitatLecturaRepository`
+   + `HabitatGestionRepository` con interfaces segregadas en Domain y un trait compartido de
+   consultas de familias (`Infra/Concerns/CadenasFamiliaHabitatsTrait.php`).
 6. Tests: existen pocos tests, la cobertura es baja (aunque Datagrid/WebP/Pokédex ya tienen cobertura de feature/unit).
 7. Manejar migración de sesiones de batalla cuando cambia la estructura serializada.
 8. El módulo Pokemon (`src/Pokemon/Domain`) tiene entidades pero los App/ use cases están vacíos.
@@ -147,27 +178,49 @@ Seeders: provincias (8), hábitats, pokémon (151+), reclutados.
     YA NO es WIP ajeno: es canónico y está commiteado (definía los 3 miembros por equipo).
 17. **Deuda del Hardener tras el combate 3v3 (PASS con observaciones, 2026-10-17)**:
     DRY preexistente entre `GeneradorEquipoRuta` y `GeneradorEquipoEntrenador` (pool + ponderación,
-    ~9-15 líneas) → refactor futuro; constante «3» repetida cross-módulo (futuro `MIEMBROS_EQUIPO`
-    compartido); `Combatiente::$iconName` se serializa pero `aArrayVista()` usa `urlIcono()`
+    ~9-15 líneas) → refactor futuro; constante «3» centralizada en `ReglasEquipo::MIEMBROS`
+    (resuelto 2026-10-31); `Combatiente::$iconName` se serializa pero `aArrayVista()` usa `urlIcono()`
     (sin uso en vista); doble `session->guardar()` en `Combate::initMockBattle`; `EquipoBatalla::lowestSpeed()`/
     `menorVelocidadBase` retenidos (test `EquipoBatallaTest`); `EquipoBatalla::combatants()` deprecado
     en `app/Livewire/Combate.php:513,619,624`; PHPDoc de `buildTurnQueue`; métodos largos (PHPMD)
     preexistentes. **Tooling (actualizado 2026-10-18, `tooling-fase2-calidad-hooks`)**: PHPStan
-    2.2.9 con `phpstan-hardener.neon` válido y baselines incluidos — `phpstan-baseline.php`
-    (221 entradas/279 errores, L6) y `phpstan-hardener-baseline.php` (157/196, L8); congelan deuda
+    2.2.9 con `phpstan-hardener.neon` válido y baselines incluidos — regenerados 2026-10-31 tras
+    la auditoría de módulos: `phpstan-baseline.php` (338 errores, L6) y
+    `phpstan-hardener-baseline.php` (288 errores, L8); congelan deuda
     preexistente, no se añaden entradas nuevas y se regeneran al reducirla. Comandos canónicos:
     `composer run analyse` (L6), `analyse:hard` (L8), `arch` (deptrac), `lint` y `check`
     (`analyse`+`lint`). deptrac 4.7.2 sustituye al shim 1.0.2 con ruleset DDD estricto, pero queda
-    **report-only** (fuera de hooks y de `check`) por **71 violaciones preexistentes**
-    (Infra→Presentation 38, App→Presentation 17, Domain→Presentation 16 — incluye el pendiente 12)
-    y **1126 tokens uncovered** (legado `app/*` y `src/Shared/*`); ampliar colectores y limpiar la
-    deuda siguen pendientes. Hooks `.githooks/` (activación `composer hooks:install`): `pre-commit`
+    **report-only** (fuera de hooks y de `check`); tras la auditoría 2026-10-31 reporta
+    **112 violaciones** y **1570 tokens uncovered** (legado `app/*`, `src/Shared/*` y los archivos
+    nuevos de la auditoría pendientes de colector); ampliar colectores y limpiar la deuda siguen
+    pendientes. Hooks `.githooks/` (activación `composer hooks:install`): `pre-commit`
     = whitespace + Pint sobre PHP staged; `pre-push` = `composer run analyse`; escape
     `git push --no-verify`. En el árbol actual `analyse`/`check` reporta **1 error esperado** por el
     WIP ajeno (`PlayerController:126`, `Guard::id()`), que desaparecerá al aterrizar. CRAP sigue sin
     medir (testing diferido): receta
     `XDEBUG_MODE=coverage vendor/bin/phpunit --coverage-crap4j build/crap4j.xml` (requiere driver
     de cobertura y `<source>` en `phpunit.xml`).
+
+18. **Auditoría de contextos y deuda (2026-10-31)** — se añadió `context.md` a todos los módulos
+    (Equipos, Exploraciones, Granjas, Habitats, Mazmorras, Pokemon, Reclutamiento, Shared) y se
+    ampliaron los existentes con guía de búsqueda y deuda priorizada. Correcciones aplicadas:
+    `CalculadorCP` (factor 6 + término EV; 3 unitarios + 1 feature en verde), `ReglasEquipo`
+    (tamaño/slots), `ReglasMazmorra` (vida jefe ×7, resto ×10, +30 % inicial y IVs 0 deterministas; recompensa 7× gimnasio),
+    `ReglasExploracion` (30 min/1 %/0.8; Fase 1: `FACTOR_RECOMPENSAS` 0.5 y `FRACCION_EXP_INDIVIDUAL` 0.5), `ReglasHuevo` (límites/mínimos), totales de Sendas al
+    controlador, cálculo de nivel/exp duplicado eliminado de `equipos/index.blade.php`, y la
+    **segunda pasada (mismo día)**: IV ×5 confirmado como decisión de producto (docs + test
+    `BattleStatsIvsTest`), contratos `array` de Exploraciones convertidos a DTOs/Collections
+    (`MatchupCollection`, `EvaluacionRiesgo`, `ResolucionEncuentro`, `ResolucionEmboscada`,
+    `HallazgosCalculados`), `TeamController` movido a casos de uso en `src/Equipos/App`,
+    `ObtenerConfiguracionMazmorra` (punto único de lectura de `habitats.mazmorra`) y
+    `HabitatRepository` dividido en lectura/gestión. Deuda abierta priorizada:
+    `ProcesarExploracionHandler` god-handler, payloads `array` de `Presentation/` (frontera),
+    `Combate.php` god-component, `RangoIvs` duplicado, contrato
+    `nivel` de `ReclutadoSerializer` y **resuelto** el divisor 3 de EXP en exploración individual
+    (ahora `EconomiaRecompensas::individual()`: 0.5 y reparto 50/50; el 80 %/3 queda como `legado()`;
+    ver `src/Exploraciones/context.md`). **Mazmorra (2026-10-31)**: jefe con vida ×7, resto de stats ×10, +30 %
+    inicial (capa base de multiplicadores) y recompensa 7× la de un gimnasio (multiplicador 70.0)
+    vía `OtorgarRecompensasMazmorra`; cubierto por `PresentadorMazmorraTest`.
 
 ## Referencias
 
@@ -199,7 +252,7 @@ Seeders: provincias (8), hábitats, pokémon (151+), reclutados.
 - `routes/huevos.php` — Rutas del módulo de huevos (`GET/POST /api/huevos`, `POST /api/huevos/{huevo}/eclosionar`)
 - `src/Shared/Domain/ProbabilidadesShiny.php` — Probabilidades de shiny compartidas (salvaje 1/2048, huevo 1/512)
 - `src/Pokemon/Domain/Stats/GeneradorIvs.php` — Generación de IVs (aleatorios 0-15, máximos 15, huevo 10-15)
-- `src/Pokemon/Domain/Stats/BattleStats.php` — Cálculo de stats con IVs (`+ iv*4` por stat) y EVs
+- `src/Pokemon/Domain/Stats/BattleStats.php` — Cálculo de stats con IVs (`+ iv*5` por stat) y EVs
 - `app/Support/ReclutadoSerializer.php` — Serializador compartido de reclutados (CP al nivel del usuario, IVs/EVs, `habilidades=[]` pendiente)
 - `routes/ruta.php` — Rutas del combate de ruta (`GET/POST /api/habitats/{id}/ruta/rivales|iniciar`)
 - `app/Support/CreadorBatallaSesion.php` — Creación de batallas 3v3 compartida (DRY Ruta/Entrenador/Gimnasio/Mazmorra)

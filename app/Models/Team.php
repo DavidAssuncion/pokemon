@@ -33,22 +33,13 @@ class Team extends Model
     }
 
     /**
+     * Miembros del equipo. La exploración es individual por reclutado, por lo
+     * que el equipo no se bloquea aunque alguno de sus miembros esté explorando.
+     *
      * @return HasMany<TeamMember, $this>
      */
     public function members(): HasMany
     {
         return $this->hasMany(TeamMember::class, 'team_id');
-    }
-
-    /**
-     * Check if this team is currently exploring (any member in active exploration).
-     */
-    public function isExploring(): bool
-    {
-        $memberIds = $this->members()->pluck('pokemon_id');
-
-        return ExploracionActiva::whereNull('regreso')
-            ->whereIn('reclutado_id', $memberIds)
-            ->exists();
     }
 }

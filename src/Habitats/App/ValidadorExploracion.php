@@ -5,21 +5,21 @@ declare(strict_types=1);
 namespace Src\Habitats\App;
 
 use App\Models\ExploracionActiva;
-use App\Models\Team;
 use Src\Habitats\App\Collections\ExploracionActivaCollection;
 
 class ValidadorExploracion
 {
     /**
-     * Check if a team can start a new exploration (not already in one).
-     * Las exploraciones son por reclutado: el equipo está "en exploración"
-     * si alguno de sus miembros tiene una exploración activa. P2: delega en la
-     * implementación canónica Team::isExploring() (misma semántica que la
-     * query directa previa; equipo inexistente → disponible).
+     * Indica si el reclutado tiene una exploración activa (sin regreso).
+     *
+     * La exploración es individual: solo el reclutado que explora queda
+     * bloqueado, no el resto de su equipo.
      */
-    public function equipoDisponible(int $teamId): bool
+    public function reclutadoEnExploracion(int $reclutadoId): bool
     {
-        return ! Team::query()->find($teamId)?->isExploring();
+        return ExploracionActiva::where('reclutado_id', $reclutadoId)
+            ->whereNull('regreso')
+            ->exists();
     }
 
     /**
@@ -27,9 +27,7 @@ class ValidadorExploracion
      */
     public function reclutadoDisponible(int $reclutadoId): bool
     {
-        return !ExploracionActiva::where('reclutado_id', $reclutadoId)
-            ->whereNull('regreso')
-            ->exists();
+        return ! $this->reclutadoEnExploracion($reclutadoId);
     }
 
     /**
@@ -40,14 +38,6 @@ class ValidadorExploracion
     public function cumpleNivelMinimo(int $nivelJugador, ?int $nivelMinimo): bool
     {
         return $nivelMinimo === null || $nivelJugador >= $nivelMinimo;
-    }
-
-    /**
-     * Check if a team can be used for combat (not in active exploration).
-     */
-    public function equipoDisponibleParaCombate(int $teamId): bool
-    {
-        return $this->equipoDisponible($teamId);
     }
 
     /**

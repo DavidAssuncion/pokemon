@@ -19,8 +19,10 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 use Src\Exploraciones\App\FabricaCapacidadesStats;
+use Src\Pokemon\Domain\Stats\StatsValue;
 use Src\Reclutamiento\App\Collections\PokemonCollection;
 use Src\Reclutamiento\App\ServicioEvolucion;
+use Src\Shared\Domain\ReglasEv;
 
 class ReclutadoController extends Controller
 {
@@ -40,11 +42,11 @@ class ReclutadoController extends Controller
             'cantidad' => 'sometimes|integer|min:1|max:100',
         ]);
 
-        // Coherencia con liberar/evolucionar: un pokémon en equipo en
-        // exploración no puede recibir caramelos.
-        if ($reclutado->teamMember?->team?->isExploring()) {
+        // La exploración es individual: solo el reclutado que explora queda
+        // bloqueado, no el resto de su equipo.
+        if ($reclutado->estaEnExploracion()) {
             return response()->json([
-                'error' => 'No se puede dar caramelos a un pokémon de un equipo en exploración',
+                'error' => 'No se puede dar caramelos a un Pokémon en exploración',
             ], 422);
         }
 
@@ -132,67 +134,75 @@ class ReclutadoController extends Controller
             'cantidad' => 'sometimes|integer|min:1|max:100',
         ]);
 
-        if ($reclutado->teamMember?->team?->isExploring()) {
+        if ($reclutado->estaEnExploracion()) {
             return response()->json([
-                'error' => 'No se puede dar caramelos a un pokémon de un equipo en exploración',
+                'error' => 'No se puede dar caramelos a un Pokémon en exploración',
             ], 422);
         }
 
         $stat = (string) $data['stat'];
         $statEnum = StatEnum::fromKey($stat) ?? throw new \InvalidArgumentException("Stat inválido: {$stat}");
 
-        $evsActuales = $reclutado->evs;
-        $valorActual = $evsActuales->valorDe($stat);
-
-        if ($valorActual >= 255) {
-            return response()->json([
-                'error' => 'Ese stat ya está al máximo (255)',
-            ], 422);
-        }
-
         $userId = (int) auth()->id();
 
         $cantidadSolicitada = (int) ($data['cantidad'] ?? 1);
-        $maxPorEv = (int) ceil((255 - $valorActual) / 10);
-        $cantidad = min($cantidadSolicitada, max(1, $maxPorEv));
 
-        $resultado = DB::transaction(function () use ($statEnum, $userId, $cantidad): ?array {
+        // La fila del reclutado se bloquea antes de leer `evs`: dos peticiones
+        // concurrentes deben ver el valor ya aplicado por la primera y no
+        // consumir caramelos de más.
+        $resultado = DB::transaction(function () use ($reclutado, $stat, $statEnum, $userId, $cantidadSolicitada): array {
+            $bloqueado = Reclutado::query()
+                ->lockForUpdate()
+                ->findOrFail($reclutado->getKey());
+
+            $evsActuales = $bloqueado->evs;
+            $valorActual = $evsActuales->valorDe($stat);
+
+            if ($valorActual >= ReglasEv::TOPE) {
+                return ['error' => 'Ese stat ya está al máximo ('.ReglasEv::TOPE.')'];
+            }
+
+            $maxPorEv = ReglasEv::caramelosHastaTope($valorActual, $cantidadSolicitada);
+            $cantidad = max(1, $maxPorEv);
+
             $caramelo = PlayerInventory::where('user_id', $userId)
                 ->where('item_key', ItemCatalogo::keyEv($statEnum->value))
                 ->lockForUpdate()
                 ->first();
 
             if ($caramelo === null || $caramelo->cantidad <= 0) {
-                return null;
+                return ['error' => 'No hay caramelos de EV para ese stat'];
             }
 
             $consumidos = min($cantidad, $caramelo->cantidad);
             $caramelo->decrement('cantidad', $consumidos);
 
+            $nuevo = ReglasEv::aplicar($valorActual, $consumidos);
+            $evsNuevos = $evsActuales->conStat($stat, $nuevo);
+            $bloqueado->evs = $evsNuevos;
+            $bloqueado->save();
+
             return [
+                'reclutado' => $bloqueado,
                 'caramelo' => $caramelo,
                 'consumidos' => $consumidos,
+                'nuevo' => $nuevo,
+                'evs' => $evsNuevos,
             ];
         });
 
-        if ($resultado === null) {
-            return response()->json([
-                'error' => 'No hay caramelos de EV para ese stat',
-            ], 422);
+        /** @var array{error: string}|array{reclutado: Reclutado, caramelo: PlayerInventory, consumidos: int, nuevo: float, evs: StatsValue} $resultado */
+        if (isset($resultado['error'])) {
+            return response()->json(['error' => $resultado['error']], 422);
         }
-
-        $nuevo = min(255.0, $valorActual + 10 * $resultado['consumidos']);
-        $evsNuevos = $evsActuales->conStat($stat, $nuevo);
-        $reclutado->evs = $evsNuevos;
-        $reclutado->save();
 
         return response()->json([
             'success' => true,
-            'actual' => (int) $nuevo,
+            'actual' => (int) $resultado['nuevo'],
             'caramelos_disponibles' => $resultado['caramelo']->cantidad,
             'cantidad_consumida' => $resultado['consumidos'],
-            'evs' => $evsNuevos->toArray(),
-            'stats_calculados' => ReclutadoSerializer::statsCalculados($reclutado, auth()->user()?->nivel()),
+            'evs' => $resultado['evs']->toArray(),
+            'stats_calculados' => ReclutadoSerializer::statsCalculados($resultado['reclutado'], auth()->user()?->nivel()),
         ]);
     }
 
@@ -317,7 +327,7 @@ class ReclutadoController extends Controller
      */
     public function actualizarLoadout(Request $request, Reclutado $reclutado): JsonResponse
     {
-        if ($reclutado->teamMember?->team?->isExploring()) {
+        if ($reclutado->estaEnExploracion()) {
             return response()->json([
                 'error' => 'No se puede modificar el loadout de un Pokémon en exploración',
             ], 422);
@@ -426,20 +436,19 @@ class ReclutadoController extends Controller
      *
      * Anti-IDOR: el route-model binding + global scope BelongsToUser de Reclutado
      * devuelven 404 para reclutados ajenos (mismo patrón que show).
-     * Bloqueado con 422 si el reclutado pertenece a un equipo en exploración.
+     * Bloqueado con 422 si ese reclutado está en exploración (la exploración
+     * es individual: un compañero de equipo puede liberarse con normalidad).
      */
     public function destroy(Reclutado $reclutado): JsonResponse
     {
-        $teamMember = $reclutado->teamMember;
-
-        if ($teamMember?->team?->isExploring()) {
+        if ($reclutado->estaEnExploracion()) {
             return response()->json([
-                'error' => 'No se puede liberar un pokémon de un equipo en exploración',
+                'error' => 'No se puede liberar un Pokémon en exploración',
             ], 422);
         }
 
-        DB::transaction(function () use ($reclutado, $teamMember): void {
-            $teamMember?->delete();
+        DB::transaction(function () use ($reclutado): void {
+            $reclutado->teamMember?->delete();
             $reclutado->delete();
         });
 

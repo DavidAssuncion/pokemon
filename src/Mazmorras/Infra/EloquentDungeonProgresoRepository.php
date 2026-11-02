@@ -7,6 +7,7 @@ namespace Src\Mazmorras\Infra;
 use App\Models\DungeonLog;
 use App\Models\DungeonProgress;
 use Illuminate\Support\Carbon;
+use Src\Mazmorras\Domain\ReglasMazmorra;
 use Src\Mazmorras\Domain\Repositories\DungeonProgresoRepositoryInterface;
 
 final class EloquentDungeonProgresoRepository implements DungeonProgresoRepositoryInterface
@@ -54,7 +55,7 @@ final class EloquentDungeonProgresoRepository implements DungeonProgresoReposito
             ->where('habitat_id', $habitatId)
             ->where('floor', $piso)
             ->where('won', false)
-            ->where('fought_at', '>', now()->subHour())
+            ->where('fought_at', '>', now()->subHours(ReglasMazmorra::HORAS_COOLDOWN))
             ->exists();
     }
 
@@ -65,10 +66,12 @@ final class EloquentDungeonProgresoRepository implements DungeonProgresoReposito
             ->where('habitat_id', $habitatId)
             ->where('floor', $piso)
             ->where('won', false)
-            ->where('fought_at', '>', now()->subHour())
+            ->where('fought_at', '>', now()->subHours(ReglasMazmorra::HORAS_COOLDOWN))
             ->latest('fought_at')
             ->first();
 
-        return $derrota !== null ? $derrota->fought_at->addHour() : null;
+        return $derrota !== null
+            ? $derrota->fought_at->addHours(ReglasMazmorra::HORAS_COOLDOWN)
+            : null;
     }
 }

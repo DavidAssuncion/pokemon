@@ -7,6 +7,7 @@ namespace Src\Battle\Domain;
 use Src\Battle\Domain\Enums\PosturaCombate;
 use Src\Pokemon\Domain\Stats\GeneradorIvs;
 use Src\Pokemon\Domain\Stats\StatsValue;
+use Src\Shared\Domain\Sendas\MapaSendaJugador;
 use Src\Shared\Tipos\TipoPokemon;
 
 class DatosPokemonBatalla
@@ -51,7 +52,10 @@ class DatosPokemonBatalla
         public readonly array $fasesJefe = [],
         /** @var list<array<string, mixed>> */
         public readonly array $puntosDebiles = [],
+        /** Porcentaje de bonus inicial aplicado a todas las estadísticas (0 = sin bonus). */
+        public readonly float $bonusInicialStats = 0.0,
         public readonly float $peso = 0.0,
+        public readonly ?MapaSendaJugador $senda = null,
     ) {
         $this->evs = $evs ?? StatsValue::ceros();
         $this->ivs = $ivs ?? GeneradorIvs::aleatorios();

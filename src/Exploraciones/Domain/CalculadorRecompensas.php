@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Src\Exploraciones\Domain;
 
 use Illuminate\Support\Collection;
+use Src\Exploraciones\Domain\DataTransferObjects\HallazgosCalculados;
 use Src\Exploraciones\Domain\Recompensas\PokemonDerrotado;
 use Src\Exploraciones\Domain\Recompensas\RecompensaCaptura;
 use Src\Exploraciones\Domain\Recompensas\RecompensaEv;
@@ -13,7 +14,9 @@ use Src\Exploraciones\Domain\Recompensas\RecompensaTipo;
 use Src\Exploraciones\Domain\Recompensas\ResultadoRecompensas;
 use Src\Exploraciones\Domain\ValueObjects\ColeccionEventosExploracion;
 use Src\Exploraciones\Domain\ValueObjects\EventoExploracion;
+use Src\Shared\Domain\MultiplicadoresDificultad;
 use Src\Shared\Domain\NivelHelper;
+use Src\Shared\Domain\Sendas\MapaSendaJugador;
 use Src\Shared\Tipos\TipoPokemon;
 
 /**
@@ -21,36 +24,63 @@ use Src\Shared\Tipos\TipoPokemon;
  * y de los hallazgos de la bitácora. Dominio puro: sin Eloquent ni imports de
  * App; recibe datos normalizados.
  *
- * D3/RF-14: caramelos de tipo desde EXP tipada (floor((exp_tipo × 0.2)/100));
- * la cuenta del jugador recibe el 100 % de T y cada integrante floor((T×0.8)/3).
+ * D3/RF-14: caramelos de tipo desde EXP tipada (floor(exp_tipo / 250)).
+ * La política `EconomiaRecompensas` define el factor y el reparto: una sola
+ * ruta calcula pool, fracción de cuenta y resto entre miembros destino para
+ * ambas políticas. `multiplicadorExp` permite separar EXP y caramelos.
  * RF-08: el multiplicador de categoría se aplica (floor) a exp y caramelos.
  */
 final class CalculadorRecompensas
 {
     /**
-     * Miembros del equipo de combate (3v3): divisor del reparto del 80 % de la
-     * EXP entre cada integrante.
-     */
-    public const MIEMBROS_EQUIPO = 3;
-    /**
      * @param  Collection<int, PokemonDerrotado>  $derrotados
      * @param  callable(PokemonDerrotado):bool  $aleatorioCaptura  Decide si el
      *                                                              derrotado se captura.
+     * @param  EconomiaRecompensas|null  $economia  Política económica; `null`
+     *                                              equivale a `legado()`.
+     * @param  float|null  $multiplicadorExp  Multiplicador de EXP; `null` usa
+     *                                        `$multiplicador`. Permite separar
+     *                                        EXP y caramelos (mazmorra).
+     * @param  MultiplicadoresDificultad|null  $dificultad  Multiplicadores por
+     *                                                     perfil del rival; `null`
+     *                                                     equivale a sin dificultad
+     *                                                     (1,00 en los tres ejes).
+     * @param  MapaSendaJugador|null  $senda  Sendas del jugador; `null` equivale a
+     *                                       sin bonos pasivos.
      */
     public function calcular(
         Collection $derrotados,
         callable $aleatorioCaptura,
         int $nivelSalvaje,
         float $multiplicador = 1.0,
+        ?EconomiaRecompensas $economia = null,
+        ?float $multiplicadorExp = null,
+        ?MultiplicadoresDificultad $dificultad = null,
+        ?MapaSendaJugador $senda = null,
     ): ResultadoRecompensas {
+        $economia ??= EconomiaRecompensas::legado();
+        $multiplicadorExp ??= $multiplicador;
+        $dificultad ??= MultiplicadoresDificultad::sinDificultad();
+
+        // Los caramelos usan el multiplicador de categoría × factor × dificultad;
+        // la EXP usa su propio multiplicador × factor (sin dificultad). El factor
+        // y cada multiplicador se aplican UNA sola vez.
+        $multiplicadorCaramelos = $multiplicador * $economia->factor;
+        $multiplicadorFamilia = $multiplicadorCaramelos * $dificultad->familia();
+        $multiplicadorEv = $multiplicadorCaramelos * $dificultad->ev();
+        $multiplicadorTipo = $multiplicadorCaramelos * $dificultad->tipo();
+
+        $exp = $this->calcularExpRepartida($derrotados, $nivelSalvaje, $multiplicadorExp, $economia);
+
         return new ResultadoRecompensas(
             capturas: $this->calcularCapturas($derrotados, $aleatorioCaptura),
-            caramelosFamilia: $this->calcularCaramelosFamilia($derrotados, $multiplicador),
-            caramelosEv: $this->calcularCaramelosEv($derrotados, $multiplicador),
-            caramelosTipo: $this->calcularCaramelosTipo($derrotados, $nivelSalvaje, $multiplicador),
-            expTotal: $this->calcularExp($derrotados, $nivelSalvaje, $multiplicador),
-            expPorMiembro: $this->calcularExpPorMiembro($derrotados, $nivelSalvaje, $multiplicador),
-            expTipoPorMiembro: $this->calcularExpTipoPorMiembro($derrotados, $nivelSalvaje, $multiplicador),
+            caramelosFamilia: $this->calcularCaramelosFamilia($derrotados, $multiplicadorFamilia),
+            caramelosEv: $this->calcularCaramelosEv($derrotados, $multiplicadorEv),
+            caramelosTipo: $this->calcularCaramelosTipo($derrotados, $nivelSalvaje, $multiplicadorTipo, $senda),
+            expTotal: $exp['cuenta'],
+            expPorMiembro: $exp['destino'],
+            expTipoPorMiembro: $exp['tiposDestino'],
+            expTipoCuenta: $exp['tiposCuenta'],
         );
     }
 
@@ -60,16 +90,11 @@ final class CalculadorRecompensas
      *
      * @param  Collection<int, array<string, mixed>>  $hallazgos  Ya filtrados por esHallazgo().
      * @param  array<int, int>  $chainPorPokemon  pokemon_id → evolution_chain_id
-     * @return array{
-     *     caramelosFamilia: Collection<int, RecompensaFamilia>,
-     *     caramelosEv: Collection<int, RecompensaEv>,
-     *     caramelosTipo: Collection<int, RecompensaTipo>,
-     * }
      *
      * @deprecated Frontera (BC con tests unitarios que pasan arrays). El dominio
      * recomienda calcularHallazgosDeEventos() con la colección tipada.
      */
-    public function calcularHallazgos(Collection $hallazgos, array $chainPorPokemon, float $multiplicadorCaramelos = 1.0, int $bonusCaramelos = 0): array
+    public function calcularHallazgos(Collection $hallazgos, array $chainPorPokemon, float $multiplicadorCaramelos = 1.0, int $bonusCaramelos = 0): HallazgosCalculados
     {
         return $this->calcularHallazgosDeEventos(
             ColeccionEventosExploracion::desdeArray(array_values($hallazgos->all())),
@@ -84,16 +109,17 @@ final class CalculadorRecompensas
      * evolution_chain_id), EV (stat) y tipo (tipo_id → label).
      *
      * @param  array<int, int>  $chainPorPokemon  pokemon_id → evolution_chain_id
-     * @return array{
-     *     caramelosFamilia: Collection<int, RecompensaFamilia>,
-     *     caramelosEv: Collection<int, RecompensaEv>,
-     *     caramelosTipo: Collection<int, RecompensaTipo>,
-     * }
      */
-    public function calcularHallazgosDeEventos(ColeccionEventosExploracion $eventos, array $chainPorPokemon, float $multiplicadorCaramelos = 1.0, int $bonusCaramelos = 0): array
+    public function calcularHallazgosDeEventos(ColeccionEventosExploracion $eventos, array $chainPorPokemon, float $multiplicadorCaramelos = 1.0, int $bonusCaramelos = 0): HallazgosCalculados
     {
+        // Cada grupo acumula la cantidad base y el número de hallazgos que lo
+        // alimentan: el multiplicador nunca deja un hallazgo por debajo de 1
+        // caramelo (dos hallazgos de la misma clase dan ≥2, no 1).
+        /** @var array<int, array{cantidad:int, conteo:int}> $familia */
         $familia = [];
+        /** @var array<int, array{cantidad:int, conteo:int}> $ev */
         $ev = [];
+        /** @var array<string, array{cantidad:int, conteo:int}> $tipo */
         $tipo = [];
 
         /** @var list<EventoExploracion> $items */
@@ -117,16 +143,16 @@ final class CalculadorRecompensas
             $this->acumularHallazgoTipoDeEvento($evento, $cantidad, $tipo);
         }
 
-        return [
-            'caramelosFamilia' => $this->aplicarMultiplicadorFamilia($familia, $multiplicadorCaramelos),
-            'caramelosEv' => $this->aplicarMultiplicadorEv($ev, $multiplicadorCaramelos),
-            'caramelosTipo' => $this->aplicarMultiplicadorTipo($tipo, $multiplicadorCaramelos),
-        ];
+        return new HallazgosCalculados(
+            caramelosFamilia: $this->aplicarMultiplicadorFamilia($familia, $multiplicadorCaramelos),
+            caramelosEv: $this->aplicarMultiplicadorEv($ev, $multiplicadorCaramelos),
+            caramelosTipo: $this->aplicarMultiplicadorTipo($tipo, $multiplicadorCaramelos),
+        );
     }
 
     /**
      * @param  array<int, int>  $chainPorPokemon
-     * @param  array<int, int>  $familia
+     * @param  array<int, array{cantidad:int, conteo:int}>  $familia
      */
     private function acumularHallazgoFamiliaDeEvento(EventoExploracion $hallazgo, array $chainPorPokemon, int $cantidad, array &$familia): void
     {
@@ -136,12 +162,14 @@ final class CalculadorRecompensas
 
         $chainId = $chainPorPokemon[$hallazgo->pokemonId ?? 0] ?? null;
         if ($chainId !== null) {
-            $familia[$chainId] = ($familia[$chainId] ?? 0) + $cantidad;
+            $familia[$chainId] ??= ['cantidad' => 0, 'conteo' => 0];
+            $familia[$chainId]['cantidad'] += $cantidad;
+            $familia[$chainId]['conteo']++;
         }
     }
 
     /**
-     * @param  array<int, int>  $ev
+     * @param  array<int, array{cantidad:int, conteo:int}>  $ev
      */
     private function acumularHallazgoEvDeEvento(EventoExploracion $hallazgo, int $cantidad, array &$ev): void
     {
@@ -151,12 +179,14 @@ final class CalculadorRecompensas
 
         $stat = $hallazgo->stat;
         if ($stat !== null && $stat >= 1 && $stat <= 6) {
-            $ev[$stat] = ($ev[$stat] ?? 0) + $cantidad;
+            $ev[$stat] ??= ['cantidad' => 0, 'conteo' => 0];
+            $ev[$stat]['cantidad'] += $cantidad;
+            $ev[$stat]['conteo']++;
         }
     }
 
     /**
-     * @param  array<string, int>  $tipo
+     * @param  array<string, array{cantidad:int, conteo:int}>  $tipo
      */
     private function acumularHallazgoTipoDeEvento(EventoExploracion $hallazgo, int $cantidad, array &$tipo): void
     {
@@ -166,48 +196,51 @@ final class CalculadorRecompensas
 
         $tipoPokemon = TipoPokemon::tryFrom($hallazgo->tipoId ?? 0);
         if ($tipoPokemon !== null) {
-            $tipo[$tipoPokemon->label()] = ($tipo[$tipoPokemon->label()] ?? 0) + $cantidad;
+            $label = $tipoPokemon->label();
+            $tipo[$label] ??= ['cantidad' => 0, 'conteo' => 0];
+            $tipo[$label]['cantidad'] += $cantidad;
+            $tipo[$label]['conteo']++;
         }
     }
 
     /**
-     * @param  array<int, int>  $familia
+     * @param  array<int, array{cantidad:int, conteo:int}>  $familia
      * @return Collection<int, RecompensaFamilia>
      */
     private function aplicarMultiplicadorFamilia(array $familia, float $multiplicador): Collection
     {
         return collect($familia)
-            ->map(fn (int $cantidad, int $chainId): RecompensaFamilia => new RecompensaFamilia(
+            ->map(fn (array $datos, int $chainId): RecompensaFamilia => new RecompensaFamilia(
                 evolutionChainId: $chainId,
-                cantidad: max(0, (int) floor($cantidad * $multiplicador)),
+                cantidad: max($datos['conteo'], (int) floor($datos['cantidad'] * $multiplicador)),
             ))
             ->values();
     }
 
     /**
-     * @param  array<int, int>  $ev
+     * @param  array<int, array{cantidad:int, conteo:int}>  $ev
      * @return Collection<int, RecompensaEv>
      */
     private function aplicarMultiplicadorEv(array $ev, float $multiplicador): Collection
     {
         return collect($ev)
-            ->map(fn (int $cantidad, int $stat): RecompensaEv => new RecompensaEv(
+            ->map(fn (array $datos, int $stat): RecompensaEv => new RecompensaEv(
                 stat: $stat,
-                cantidad: max(0, (int) floor($cantidad * $multiplicador)),
+                cantidad: max($datos['conteo'], (int) floor($datos['cantidad'] * $multiplicador)),
             ))
             ->values();
     }
 
     /**
-     * @param  array<string, int>  $tipo
+     * @param  array<string, array{cantidad:int, conteo:int}>  $tipo
      * @return Collection<int, RecompensaTipo>
      */
     private function aplicarMultiplicadorTipo(array $tipo, float $multiplicador): Collection
     {
         return collect($tipo)
-            ->map(fn (int $cantidad, string $label): RecompensaTipo => new RecompensaTipo(
+            ->map(fn (array $datos, string $label): RecompensaTipo => new RecompensaTipo(
                 tipo: $label,
-                cantidad: max(0, (int) floor($cantidad * $multiplicador)),
+                cantidad: max($datos['conteo'], (int) floor($datos['cantidad'] * $multiplicador)),
             ))
             ->filter(fn (RecompensaTipo $recompensa): bool => $recompensa->cantidad > 0)
             ->values();
@@ -285,15 +318,21 @@ final class CalculadorRecompensas
     }
 
     /**
-     * Caramelos de tipo (D3/RF-14): EXP tipada por victoria (1 tipo → 100 %,
-     * 2 tipos → 50/50); caramelos = floor((exp_tipo × 0.2)/100). Sustituye al
-     * antiguo "1 caramelo por tipo por derrotado".
+     * Caramelos de tipo (D3/RF-14/plan v5): EXP tipada por victoria (1 tipo →
+     * 100 %, 2 tipos → 50/50); caramelos = floor(exp_tipo / 250 × M × m_tipo
+     * × (1 + bono)). La Senda del tipo se aplica una sola vez sobre el mismo
+     * `floor` que el resto de factores. Sustituye al antiguo "1 caramelo por
+     * tipo por derrotado".
      *
      * @param  Collection<int, PokemonDerrotado>  $derrotados
      * @return Collection<int, RecompensaTipo>
      */
-    private function calcularCaramelosTipo(Collection $derrotados, int $nivelSalvaje, float $multiplicador): Collection
-    {
+    private function calcularCaramelosTipo(
+        Collection $derrotados,
+        int $nivelSalvaje,
+        float $multiplicador,
+        ?MapaSendaJugador $senda = null,
+    ): Collection {
         $expTipo = [];
 
         foreach ($derrotados as $pokemon) {
@@ -307,58 +346,52 @@ final class CalculadorRecompensas
             }
         }
 
+        $tipoPorLabel = [];
+        foreach (TipoPokemon::cases() as $tipoPokemon) {
+            $tipoPorLabel[$tipoPokemon->label()] = $tipoPokemon;
+        }
+
         return collect($expTipo)
-            ->map(fn (int $exp, string $tipo): RecompensaTipo => new RecompensaTipo(
-                tipo: $tipo,
-                cantidad: max(0, (int) floor($exp * 0.2 / 100 * $multiplicador)),
-            ))
+            ->map(function (int $exp, string $tipo) use ($multiplicador, $senda, $tipoPorLabel): RecompensaTipo {
+                $tipoPokemon = $tipoPorLabel[$tipo] ?? null;
+                $bono = $tipoPokemon !== null && $senda !== null
+                    ? $senda->bonoCaramelo($tipoPokemon)
+                    : 0.0;
+
+                return new RecompensaTipo(
+                    tipo: $tipo,
+                    // Un solo floor: el bono de Senda multiplica antes de truncar.
+                    cantidad: max(0, (int) floor($exp / 250 * $multiplicador * (1 + $bono))),
+                );
+            })
             ->filter(fn (RecompensaTipo $recompensa): bool => $recompensa->cantidad > 0)
             ->values();
     }
 
     /**
-     * EXP total (cuenta del jugador, 100 %): expDerrota por derrotado.
+     * Reparto único de EXP para ambas políticas: un solo truncado sobre el
+     * agregado (× multiplicador de EXP × factor), fracción de cuenta y el resto
+     * dividido entre los miembros destino con intdiv. Invariante:
+     * cuenta + destino × miembrosDestino <= pool; la diferencia es el resto de
+     * intdiv. El mismo tratamiento se aplica a la EXP agregada de cada tipo.
      *
      * @param  Collection<int, PokemonDerrotado>  $derrotados
+     * @return array{cuenta:int, destino:int, tiposCuenta:array<string, int>, tiposDestino:array<string, int>}
      */
-    private function calcularExp(Collection $derrotados, int $nivelSalvaje, float $multiplicador): int
-    {
+    private function calcularExpRepartida(
+        Collection $derrotados,
+        int $nivelSalvaje,
+        float $multiplicadorExp,
+        EconomiaRecompensas $economia,
+    ): array {
         $total = $derrotados->sum(
             fn (PokemonDerrotado $pokemon): int => NivelHelper::expDerrota($pokemon->baseExperience, $nivelSalvaje)
         );
 
-        return max(0, (int) floor($total * $multiplicador));
-    }
+        $pool = max(0, (int) floor($total * $multiplicadorExp * $economia->factor));
+        $cuenta = (int) floor($pool * $economia->fraccionCuenta);
+        $destino = intdiv($pool - $cuenta, $economia->miembrosDestino);
 
-    /**
-     * EXP por integrante (D3): cada miembro del equipo recibe floor((T×0.8)/3)
-     * por cada derrota (reparto 80 % entre MIEMBROS_EQUIPO).
-     *
-     * @param  Collection<int, PokemonDerrotado>  $derrotados
-     */
-    private function calcularExpPorMiembro(Collection $derrotados, int $nivelSalvaje, float $multiplicador): int
-    {
-        $total = 0;
-
-        foreach ($derrotados as $pokemon) {
-            $exp = NivelHelper::expDerrota($pokemon->baseExperience, $nivelSalvaje);
-            $total += (int) floor($exp * 0.8 / self::MIEMBROS_EQUIPO);
-        }
-
-        return max(0, (int) floor($total * $multiplicador));
-    }
-
-    /**
-     * EXP de tipo por miembro: reparto de la EXP tipada igual que
-     * calcularExpPorMiembro (floor(exp×0.8/3) por derrota), pero DESPUÉS del
-     * reparto por tipo (1 tipo → 100 %, 2 tipos → 50/50). Se acumula por tipo,
-     * se aplica el multiplicador con floor y se filtra exp > 0.
-     *
-     * @param  Collection<int, PokemonDerrotado>  $derrotados
-     * @return array<string, int>
-     */
-    private function calcularExpTipoPorMiembro(Collection $derrotados, int $nivelSalvaje, float $multiplicador): array
-    {
         $expTipo = [];
         foreach ($derrotados as $pokemon) {
             $reparto = $this->expRepartidaPorTipo($pokemon, $nivelSalvaje);
@@ -366,15 +399,31 @@ final class CalculadorRecompensas
                 continue;
             }
 
-            $expMiembro = (int) floor($reparto * 0.8 / self::MIEMBROS_EQUIPO);
-
             foreach ($pokemon->tipos as $tipo) {
-                $expTipo[$tipo] = ($expTipo[$tipo] ?? 0) + $expMiembro;
+                $expTipo[$tipo] = ($expTipo[$tipo] ?? 0) + $reparto;
             }
         }
+
+        $tiposCuenta = [];
+        $tiposDestino = [];
         foreach ($expTipo as $tipo => $exp) {
-            $expTipo[$tipo] = (int) floor($exp * $multiplicador);
+            $poolTipo = max(0, (int) floor($exp * $multiplicadorExp * $economia->factor));
+            $cuentaTipo = (int) floor($poolTipo * $economia->fraccionCuenta);
+            $destinoTipo = intdiv($poolTipo - $cuentaTipo, $economia->miembrosDestino);
+
+            if ($cuentaTipo > 0) {
+                $tiposCuenta[$tipo] = $cuentaTipo;
+            }
+            if ($destinoTipo > 0) {
+                $tiposDestino[$tipo] = $destinoTipo;
+            }
         }
-        return array_filter($expTipo, fn (int $exp): bool => $exp > 0);
+
+        return [
+            'cuenta' => $cuenta,
+            'destino' => $destino,
+            'tiposCuenta' => $tiposCuenta,
+            'tiposDestino' => $tiposDestino,
+        ];
     }
 }

@@ -38,6 +38,11 @@ final readonly class EventoExploracion
         public readonly ?string $resolucion = null,
         public readonly ?bool $victoria = null,
         public readonly ?float $hpFinal = null,
+        public readonly ?float $hpInicial = null,
+        public readonly ?float $hpMax = null,
+        public readonly ?float $rivalHpInicial = null,
+        public readonly ?float $rivalHpFinal = null,
+        public readonly ?float $rivalHpMax = null,
         public readonly ?float $barreraFisicaFinal = null,
         public readonly ?float $barreraEspecialFinal = null,
         public readonly ?float $barreraFisicaMax = null,
@@ -78,6 +83,11 @@ final readonly class EventoExploracion
             resolucion: isset($datos['resolucion']) ? (string) $datos['resolucion'] : null,
             victoria: isset($datos['victoria']) ? (bool) $datos['victoria'] : null,
             hpFinal: isset($datos['hp_final']) ? (float) $datos['hp_final'] : null,
+            hpInicial: isset($datos['hp_inicial']) ? (float) $datos['hp_inicial'] : null,
+            hpMax: isset($datos['hp_max']) ? (float) $datos['hp_max'] : null,
+            rivalHpInicial: isset($datos['rival_hp_inicial']) ? (float) $datos['rival_hp_inicial'] : null,
+            rivalHpFinal: isset($datos['rival_hp_final']) ? (float) $datos['rival_hp_final'] : null,
+            rivalHpMax: isset($datos['rival_hp_max']) ? (float) $datos['rival_hp_max'] : null,
             barreraFisicaFinal: isset($datos['barrera_fisica_final']) ? (float) $datos['barrera_fisica_final'] : null,
             barreraEspecialFinal: isset($datos['barrera_especial_final']) ? (float) $datos['barrera_especial_final'] : null,
             barreraFisicaMax: isset($datos['barrera_fisica_max']) ? (float) $datos['barrera_fisica_max'] : null,
@@ -162,6 +172,26 @@ final readonly class EventoExploracion
             $datos['hp_final'] = $this->hpFinal;
         }
 
+        if ($this->hpInicial !== null) {
+            $datos['hp_inicial'] = $this->hpInicial;
+        }
+
+        if ($this->hpMax !== null) {
+            $datos['hp_max'] = $this->hpMax;
+        }
+
+        if ($this->rivalHpInicial !== null) {
+            $datos['rival_hp_inicial'] = $this->rivalHpInicial;
+        }
+
+        if ($this->rivalHpFinal !== null) {
+            $datos['rival_hp_final'] = $this->rivalHpFinal;
+        }
+
+        if ($this->rivalHpMax !== null) {
+            $datos['rival_hp_max'] = $this->rivalHpMax;
+        }
+
         if ($this->barreraFisicaFinal !== null) {
             $datos['barrera_fisica_final'] = $this->barreraFisicaFinal;
         }
@@ -218,9 +248,10 @@ final readonly class EventoExploracion
     }
 
     /**
-     * RF-07: un evento cuenta como victoria (derrotado) si su resolución es
-     * 'victoria', 'evitada' (emboscada esquivada: doble premio) o si NO tiene
-     * resolución (retrocompat de bitácoras antiguas). Solo los eventos de
+     * RF-07/RF-08: un evento cuenta para la categoría final (ratio de combates)
+     * si su resolución es 'victoria', 'evitada' (emboscada esquivada: cuenta
+     * para el ratio pero NO genera derrotado ni recompensa de combate) o si NO
+     * tiene resolución (retrocompat de bitácoras antiguas). Solo los eventos de
      * combate (encuentro/pokemon/emboscada) pueden ser derrotas.
      */
     public function esVictoria(): bool
@@ -251,8 +282,9 @@ final readonly class EventoExploracion
     }
 
     /**
-     * ¿El evento es una emboscada evitada (detección)? Otorga un hallazgo
-     * equivalente de 1 caramelo de familia (doble premio con esVictoria).
+     * ¿El evento es una emboscada evitada (detección)? Cuenta para la categoría
+     * (ratio RF-08) y aporta un hallazgo equivalente de 1 caramelo de familia,
+     * pero NO genera derrotado ni recompensa de combate.
      */
     public function esEmboscadaEvitada(): bool
     {

@@ -69,12 +69,16 @@ class EquiposViewTest extends TestCase
         $response->assertSee("method: 'DELETE'", false);
         // Guardas de exploración
         $response->assertSee('enExploracion(detailPokemon.id)', false);
-        // Favoritos: toggle y gestión
-        $response->assertSee('toggleFavorito(pokemon)', false);
-        $response->assertSee('Gestionar favoritos', false);
+        // La UI de favoritos (toggle y gestión) se retiró: el modal de envío
+        // individual a exploración ocupa su lugar junto al detalle.
+        $response->assertDontSee('@click="toggleFavorito', false);
+        $response->assertDontSee('Gestionar favoritos', false);
+        $response->assertSee('showExploracionModal', false);
+        $response->assertSee('exploracionPokemon', false);
+        $response->assertSee('Enviar a explorar', false);
         // Exploración individual
         $response->assertSee('/api/exploraciones/store-individual', false);
-        $response->assertSee('/api/reclutados/', false);
+        $response->assertSee('/datagrid/habitat?per_page=200', false);
     }
 
     /**
@@ -127,7 +131,7 @@ class EquiposViewTest extends TestCase
         $response->assertSee('opcionSeleccionada()', false);
         $response->assertSee("formatExp(req.actual) + ' / ' + formatExp(req.necesario)", false);
         // Botón de caramelo con guardas
-        $response->assertSee('alimentarCaramelo(req)', false);
+        $response->assertSee('alimentarCaramelo(req, cantidad)', false);
         $response->assertSee('puedeAlimentar(req)', false);
         $response->assertSee("'/images/candy_type/' + req.slug + '.webp'", false);
         $response->assertSee("'/images/candy_pokemon/0.webp'", false);
@@ -135,9 +139,10 @@ class EquiposViewTest extends TestCase
         $response->assertSee("'/reclutado/' + pokemon.id + '/dar-caramelo'", false);
         // Evolucionar envía el destino seleccionado
         $response->assertSee('evolved_species_id: this.selectedEvolucionId', false);
-        // Sin evolución / error silencioso
-        $response->assertSee('Este Pokémon no tiene evolución.', false);
-        $response->assertSee('No hay información de evolución disponible.', false);
+        // Sin evolución: la sección no se renderiza (x-if) y el error es silencioso
+        $response->assertSee('detailEvoluciones.length > 0', false);
+        $response->assertDontSee('Este Pokémon no tiene evolución.', false);
+        $response->assertSee("console.error('Error cargando evoluciones:', err)", false);
     }
 
     /**
@@ -152,9 +157,9 @@ class EquiposViewTest extends TestCase
         // Grid de slots del equipo a 3
         $response->assertSee('slot in [1,2,3]', false);
         // addToTeam busca el primer slot vacío en 1..3
-        $response->assertSee('[1,2,3].find(s => !team.members.some(m => m.slot === s))', false);
+        $response->assertSee('[1, 2, 3].find(s => !team.members.some(m => Number(m.slot) === s))', false);
         // Editor de formación persistente
-        $response->assertSee('Formación de combate', false);
+        $response->assertSee('Guardar formación', false);
         $response->assertSee('formacionDe(team, slot)', false);
         $response->assertSee('setFormacionSlot(team, slot', false);
         $response->assertSee('guardarFormacion(team)', false);
@@ -164,5 +169,44 @@ class EquiposViewTest extends TestCase
         // Feedback inline de guardado
         $response->assertSee('formacionSaveError', false);
         $response->assertSee('✓ Formación guardada', false);
+    }
+
+    /**
+     * La exploración es individual: editar el equipo (renombrar, borrar,
+     * formación, posturas, items) no se bloquea por tener un miembro ausente.
+     */
+    public function test_equipos_team_actions_are_not_blocked_by_individual_exploration(): void
+    {
+        $response = $this->get('/equipos');
+
+        $response->assertOk();
+        // Sin el bloqueo de equipo heredado
+        $response->assertDontSee('isInExploration', false);
+        $response->assertDontSee('equiposEnExploracion', false);
+        $response->assertDontSee('No se puede modificar un equipo con exploraciones activas', false);
+        // Acciones de equipo siempre disponibles
+        $response->assertSee('@click="startRename(team)"', false);
+        $response->assertSee('@click="confirmDeleteTeam(team)"', false);
+        $response->assertSee('@click="guardarFormacion(team)"', false);
+        $response->assertSee('@click="guardarPosturas(team)"', false);
+        $response->assertDontSee(':disabled="isInExploration', false);
+    }
+
+    /**
+     * Un equipo con miembros explorando muestra un badge con el número de
+     * ausentes, sin deshabilitar la edición del equipo.
+     */
+    public function test_equipos_show_absent_member_badge_without_locking_team(): void
+    {
+        $response = $this->get('/equipos');
+
+        $response->assertOk();
+        $response->assertSee('teamEnExploracion(team)', false);
+        $response->assertSee("' en exploración'", false);
+        $response->assertSee('miembro(s) del equipo en exploración', false);
+        // Solo el miembro ausente queda bloqueado para acciones individuales
+        $response->assertSee('enExploracion(getMember(team, slot).id)', false);
+        $response->assertSee('pokemonEnExploracion(pokemon)', false);
+        $response->assertSee('return this.enExploracion(pokemon.id);', false);
     }
 }

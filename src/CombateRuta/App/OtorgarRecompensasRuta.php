@@ -10,6 +10,7 @@ use App\Models\Pokemon;
 use App\Models\Team;
 use App\Models\User;
 use App\Support\CadenasEvolutivas;
+use App\Support\CargarMapaSendaJugador;
 use App\Support\CrearReclutado;
 use App\Support\ItemCatalogo;
 use Random\Randomizer;
@@ -30,14 +31,19 @@ use Src\Reclutamiento\Domain\DataTransferObjects\DatosNuevoReclutado;
 use Src\Shared\Domain\Collections\ItemModalCollection;
 use Src\Shared\Domain\DataTransferObjects\ItemModal;
 use Src\Shared\Domain\DataTransferObjects\ItemResuelto;
+use Src\Shared\Domain\MultiplicadoresDificultad;
 use Src\Shared\Domain\ProbabilidadCaptura;
+use Src\Shared\Domain\Sendas\MapaSendaJugador;
+use Src\Shared\Domain\Sendas\PoliticaSenda;
+use Src\Shared\Tipos\TipoPokemon;
 
 /**
  * Otorga las recompensas de un combate de ruta ganado: la misma fórmula de
  * exploración con multiplicador 1.0 (sin el ×2 del entrenador), EXP a la
  * cuenta y a cada miembro del equipo, caramelos familia/EV/tipo, CAPTURAS de
- * los salvajes derrotados (ProbabilidadCaptura cap-25 con aleatorio
- * inyectable) y dispara el avistado de cada rival.
+ * los salvajes derrotados (ProbabilidadCaptura con base 25 %, factor de
+ * hábitat y Senda, con aleatorio inyectable) y dispara el avistado de cada
+ * rival.
  *
  * Visionados SHINY (1/2048): captura garantizada → se crea el Reclutado al
  * instante con IVs máximos y aparecen en el modal con cantidad 1; quedan
@@ -59,6 +65,10 @@ final class OtorgarRecompensasRuta
      * @param  list<int>  $speciesIdsRival  ids de las especies derrotadas (team2)
      * @param  callable(): float|null  $aleatorio  fuente [0,1) del roll de captura
      * @param  array<int, bool>  $shinySlots  flags shiny alineados con $speciesIdsRival
+     * @param  MultiplicadoresDificultad|null  $dificultad  multiplicadores por perfil
+     *                                                     del rival; `null` equivale a 1,00
+     * @param  int|null  $nivelHabitat  nivel 1-3 del hábitat; `null` equivale a 1
+     *                                 (factor de captura 1,0)
      */
     public function otorgar(
         int $userId,
@@ -66,6 +76,8 @@ final class OtorgarRecompensasRuta
         array $speciesIdsRival,
         ?callable $aleatorio = null,
         array $shinySlots = [],
+        ?MultiplicadoresDificultad $dificultad = null,
+        ?int $nivelHabitat = null,
     ): ?ResultadoRuta {
         $usuario = User::find($userId);
         $equipo = Team::with('members.reclutado')->find($teamId);
@@ -99,6 +111,7 @@ final class OtorgarRecompensasRuta
         }
 
         $miembrosPorCadena = CadenasEvolutivas::miembrosDe($pokemons->pluck('evolution_chain_id'));
+        $etapasPorCadena = CadenasEvolutivas::etapasDe($pokemons->pluck('evolution_chain_id'));
 
         // Una entrada por slot derrotado (conservando duplicados: 4× Magikarp = 4 entradas).
         $porSlot = collect($soloIds)
@@ -109,7 +122,7 @@ final class OtorgarRecompensasRuta
             return null;
         }
 
-        $derrotados = NormalizadorPokemonDerrotado::normalizar($porSlot, $miembrosPorCadena);
+        $derrotados = NormalizadorPokemonDerrotado::normalizar($porSlot, $miembrosPorCadena, $etapasPorCadena);
 
         // Las claves de $derrotados son los índices de slot originales; ahí se
         // mira el flag shiny (los slots vacíos ya se filtraron arriba).
@@ -120,11 +133,15 @@ final class OtorgarRecompensasRuta
             fn (PokemonDerrotado $pokemon, int $clave): bool => ($soloShiny[$clave] ?? false) !== true
         );
 
+        $senda = app(CargarMapaSendaJugador::class)->para($userId);
+
         $recompensas = $this->calculador->calcular(
             $normales,
-            $this->rollCaptura($aleatorio),
+            $this->rollCaptura($aleatorio, $senda, $nivelHabitat),
             $usuario->nivel(),
             self::MULTIPLICADOR_RUTA,
+            dificultad: $dificultad,
+            senda: $senda,
         );
 
         $this->persistir->persistir($recompensas, $equipo, $usuario);
@@ -162,17 +179,57 @@ final class OtorgarRecompensasRuta
     }
 
     /**
-     * Roll de captura por derrotado con la regla compartida cap-25
-     * (ProbabilidadCaptura::intentar) y aleatorio [0,1) inyectable.
+     * Roll de captura por derrotado con la regla compartida de plan v5:
+     * probabilidad base 25 %, factor de hábitat (1,0 / 0,5 / 0,3) y factor de
+     * Senda del tipo (1 + bono de captura, máximo de los tipos del rival).
+     * Los factores se aplican a la probabilidad final; sin tipos vale 1,0.
      *
      * @param  callable(): float|null  $aleatorio
      * @return callable(PokemonDerrotado): bool
      */
-    private function rollCaptura(?callable $aleatorio): callable
+    private function rollCaptura(?callable $aleatorio, MapaSendaJugador $senda, ?int $nivelHabitat = null): callable
     {
         $aleatorio ??= $this->aleatorioAzar();
+        $factorHabitat = match ($nivelHabitat) {
+            1 => 1.0,
+            2 => 0.5,
+            3 => 0.3,
+            default => 1.0,
+        };
 
-        return static fn (PokemonDerrotado $pokemon): bool => ProbabilidadCaptura::intentar($pokemon->captureRate, $aleatorio);
+        return static function (PokemonDerrotado $pokemon) use ($aleatorio, $senda, $factorHabitat): bool {
+            $factorSenda = PoliticaSenda::factorCaptura($senda, self::tiposPokemon($pokemon));
+
+            return ProbabilidadCaptura::intentarConFactores(
+                $pokemon->captureRate,
+                $factorHabitat,
+                1.0,
+                $aleatorio,
+                $factorSenda,
+            );
+        };
+    }
+
+    /**
+     * Convierte los labels de tipo del derrotado (español) al enum de dominio.
+     *
+     * @return list<TipoPokemon>
+     */
+    private static function tiposPokemon(PokemonDerrotado $pokemon): array
+    {
+        $tipoPorLabel = [];
+        foreach (TipoPokemon::cases() as $tipo) {
+            $tipoPorLabel[$tipo->label()] = $tipo;
+        }
+
+        $tipos = [];
+        foreach ($pokemon->tipos as $label) {
+            if (isset($tipoPorLabel[$label])) {
+                $tipos[] = $tipoPorLabel[$label];
+            }
+        }
+
+        return $tipos;
     }
 
     /**

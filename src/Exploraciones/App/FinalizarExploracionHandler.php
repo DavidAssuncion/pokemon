@@ -8,12 +8,14 @@ use App\Jobs\ActualizarPokedexJob;
 use App\Models\ExploracionActiva;
 use App\Models\Pokemon;
 use App\Support\CadenasEvolutivas;
+use App\Support\CargarMapaSendaJugador;
 use Closure;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Collection as BaseCollection;
 use LogicException;
 use Src\Exploraciones\Domain\CalculadorFinExploracion;
 use Src\Exploraciones\Domain\CalculadorRecompensas;
+use Src\Exploraciones\Domain\EconomiaRecompensas;
 use Src\Exploraciones\Domain\EvaluadorExploracion;
 use Src\Exploraciones\Domain\Recompensas\PokemonDerrotado;
 use Src\Exploraciones\Domain\Recompensas\RecompensaCaptura;
@@ -32,6 +34,9 @@ use Src\Shared\Bus\Command;
 use Src\Shared\Bus\CommandHandler;
 use Src\Shared\Bus\UnitOfWork;
 use Src\Shared\Domain\ProbabilidadCaptura;
+use Src\Shared\Domain\Sendas\MapaSendaJugador;
+use Src\Shared\Domain\Sendas\PoliticaSenda;
+use Src\Shared\Tipos\TipoPokemon;
 
 /**
  * Reparte todas las recompensas de una expedición (pokedex, capturas, caramelos
@@ -88,9 +93,11 @@ final class FinalizarExploracionHandler implements CommandHandler
         $miembrosPorCadena = CadenasEvolutivas::miembrosDe(
             $pokemons->pluck('evolution_chain_id')
         );
+        $etapasPorCadena = CadenasEvolutivas::etapasDe($pokemons->pluck('evolution_chain_id'));
         $derrotados = NormalizadorPokemonDerrotado::normalizar(
             $this->expandirDerrotados($pokemons, $idsDerrotados),
             $miembrosPorCadena,
+            $etapasPorCadena,
         );
 
         $categoria = EvaluadorExploracion::categoriaFinalDeEventos($bitacoraEventos);
@@ -145,11 +152,16 @@ final class FinalizarExploracionHandler implements CommandHandler
             $exploracion->habitat_id,
         );
 
+        $economia = EconomiaRecompensas::individual();
+        $senda = app(CargarMapaSendaJugador::class)->para((int) $exploracion->user_id);
+
         $recompensas = $this->calculador->calcular(
             $derrotados,
-            $this->rollAleatorio($aleatorio, $bonos, $refugios),
+            $this->rollAleatorio($aleatorio, $bonos, $refugios, $senda, nivelHabitat: $exploracion->nivel),
             $usuario !== null ? $usuario->nivel() : 1,
             $multiplicador,
+            $economia,
+            senda: $senda,
         );
 
         // Hallazgos (D8): caramelos de familia/EV/tipo de los eventos hallazgo,
@@ -163,17 +175,18 @@ final class FinalizarExploracionHandler implements CommandHandler
         $caramelosHallazgos = $this->calculador->calcularHallazgosDeEventos(
             $hallazgos,
             $this->chainPorPokemonDeEventos($hallazgos, $pokemons),
-            $this->multiplicadorCaramelosEquipo($exploracion, $multiplicador),
+            $this->multiplicadorCaramelosEquipo($exploracion, $multiplicador, $economia->factor),
             $this->bonusCaramelosRecoleccion($exploracion),
         );
         $recompensas = $recompensas->sumarHallazgos(
-            $caramelosHallazgos['caramelosFamilia'],
-            $caramelosHallazgos['caramelosEv'],
-            $caramelosHallazgos['caramelosTipo'],
+            $caramelosHallazgos->caramelosFamilia,
+            $caramelosHallazgos->caramelosEv,
+            $caramelosHallazgos->caramelosTipo,
         );
 
-        // Derrota → pérdida de objetos: ceil(cantidad/2) de cada recompensa
-        // (familia/EV/tipo/capturas), restado de las recompensas finales.
+        // Derrota → pérdida de objetos: intdiv(cantidad, 2) de cada recompensa
+        // (familia/EV/tipo/capturas), restado de las recompensas finales. Una
+        // cantidad 1 no pierde nada.
         $objetosPerdidos = $this->objetosPerdidos($bitacora, $eventos, $recompensas);
         if ($objetosPerdidos !== []) {
             $recompensas = $this->restarPerdidas($recompensas, $objetosPerdidos);
@@ -206,6 +219,8 @@ final class FinalizarExploracionHandler implements CommandHandler
     /**
      * IDs de pokémon derrotados: solo eventos con resolución victoria (o sin
      * resolución, retrocompat RF-07), expandidos por pokemon_id/pokemon_ids.
+     * Las emboscadas evitadas quedan fuera: ya aportan su hallazgo de familia
+     * y su evento extra, pero no recompensa de combate.
      *
      * @return list<int>
      */
@@ -213,7 +228,7 @@ final class FinalizarExploracionHandler implements CommandHandler
     {
         $ids = [];
         foreach ($bitacora as $evento) {
-            if (! $evento->esVictoria()) {
+            if (! $evento->esVictoria() || $evento->esEmboscadaEvitada()) {
                 continue;
             }
 
@@ -314,8 +329,8 @@ final class FinalizarExploracionHandler implements CommandHandler
 
     /**
      * Cada emboscada evitada produce un hallazgo equivalente de 1 caramelo de
-     * familia del primer pokémon implicado. Además cuenta como victoria en
-     * idsDerrotados (esVictoria): doble premio intencional según spec.
+     * familia del primer pokémon implicado. No genera recompensa de combate:
+     * idsDerrotados() la excluye expresamente.
      *
      * @return list<EventoExploracion>
      */
@@ -351,18 +366,24 @@ final class FinalizarExploracionHandler implements CommandHandler
 
     /**
      * Multiplicador de caramelos de hallazgo: categoría × rol Recolector (+50 %)
-     * × sinergia (prospección/recolección segura, etc.). RFC: el rol se lee del
-     * reclutado individual ($reclutado->rol(), columna behavior propia), ya no
-     * de team_members.behavior, por lo que aplica también sin equipo.
+     * × sinergia (prospección/recolección segura, etc.) × factor global de la
+     * economía individual (0.5). RFC: el rol se lee del reclutado individual
+     * ($reclutado->rol(), columna behavior propia), ya no de
+     * team_members.behavior, por lo que aplica también sin equipo.
      */
-    private function multiplicadorCaramelosEquipo(ExploracionActiva $exploracion, float $multiplicadorCategoria): float
-    {
+    private function multiplicadorCaramelosEquipo(
+        ExploracionActiva $exploracion,
+        float $multiplicadorCategoria,
+        float $factorEconomia,
+    ): float {
         $reclutado = $exploracion->reclutado;
         if ($reclutado === null) {
-            return $multiplicadorCategoria;
+            return $multiplicadorCategoria * $factorEconomia;
         }
 
-        return $multiplicadorCategoria * $reclutado->rol()->multiplicadorCaramelosHallazgo();
+        return $multiplicadorCategoria
+            * $reclutado->rol()->multiplicadorCaramelosHallazgo()
+            * $factorEconomia;
     }
 
     /**
@@ -457,10 +478,13 @@ final class FinalizarExploracionHandler implements CommandHandler
     }
 
     /**
-     * Tirada de captura (regla cap-25, dominio ProbabilidadCaptura): seam de
+     * Tirada de captura (plan v5 §4.3, dominio ProbabilidadCaptura): seam de
      * test con aleatorio [0,1) determinista; por defecto mt_rand(1, 100) / 100.
-     * El factor de refugio se aplica a la probabilidad final (no al capture_rate)
-     * para que no quede topado por el cap-25.
+     * La probabilidad base (cap 25 %) recibe el factor de hábitat 1,0 / 0,5 /
+     * 0,3, el de refugio y el de Senda; todos se aplican a la probabilidad
+     * final (no al capture_rate) y el resultado se topa en 30 %. Sin tipos el
+     * factor de Senda vale 1,0. La captura NO recibe el factor 0.5 de la
+     * economía individual: ese factor solo reduce EXP y caramelos.
      *
      * @param  callable():float|null  $aleatorio
      */
@@ -468,17 +492,58 @@ final class FinalizarExploracionHandler implements CommandHandler
         ?callable $aleatorio = null,
         ?ResolverBonosFamilia $bonos = null,
         ?RefugiosHabitatCollection $refugios = null,
+        ?MapaSendaJugador $senda = null,
+        ?int $nivelHabitat = null,
     ): callable {
         $aleatorio ??= fn (): float => mt_rand(1, 100) / 100;
 
-        return function (PokemonDerrotado $pokemon) use ($aleatorio, $bonos, $refugios): bool {
-            $factor = 1.0;
+        $factorHabitat = match ($nivelHabitat) {
+            1 => 1.0,
+            2 => 0.5,
+            3 => 0.3,
+            default => 1.0,
+        };
+
+        return function (PokemonDerrotado $pokemon) use ($aleatorio, $bonos, $refugios, $senda, $factorHabitat): bool {
+            $factorRefugio = 1.0;
             if ($bonos !== null && $refugios !== null && $pokemon->evolutionChainId !== null) {
-                $factor = $bonos->factorCaptura($refugios, $pokemon->evolutionChainId);
+                $factorRefugio = $bonos->factorCaptura($refugios, $pokemon->evolutionChainId);
             }
 
-            return ProbabilidadCaptura::intentarConFactor($pokemon->captureRate, $factor, $aleatorio);
+            $factorSenda = $senda !== null
+                ? PoliticaSenda::factorCaptura($senda, self::tiposPokemon($pokemon))
+                : 1.0;
+
+            return ProbabilidadCaptura::intentarConFactores(
+                $pokemon->captureRate,
+                $factorHabitat,
+                $factorRefugio,
+                $aleatorio,
+                $factorSenda,
+            );
         };
+    }
+
+    /**
+     * Convierte los labels de tipo del derrotado (español) al enum de dominio.
+     *
+     * @return list<TipoPokemon>
+     */
+    private static function tiposPokemon(PokemonDerrotado $pokemon): array
+    {
+        $tipoPorLabel = [];
+        foreach (TipoPokemon::cases() as $tipo) {
+            $tipoPorLabel[$tipo->label()] = $tipo;
+        }
+
+        $tipos = [];
+        foreach ($pokemon->tipos as $label) {
+            if (isset($tipoPorLabel[$label])) {
+                $tipos[] = $tipoPorLabel[$label];
+            }
+        }
+
+        return $tipos;
     }
 
     /**
@@ -539,8 +604,9 @@ final class FinalizarExploracionHandler implements CommandHandler
     }
 
     /**
-     * Calcula la pérdida de objetos por derrota: ceil(cantidad/2) de cada
-     * recompensa (familia/EV/tipo/capturas). Si no hay derrota, devuelve [].
+     * Calcula la pérdida de objetos por derrota: intdiv(cantidad, 2) de cada
+     * recompensa (familia/EV/tipo/capturas). Una cantidad 1 pierde 0. Si no hay
+     * derrota, devuelve [].
      *
      * @param  list<array<string, mixed>>  $bitacora
      * @param  BaseCollection<string, mixed>  $eventos
@@ -555,7 +621,7 @@ final class FinalizarExploracionHandler implements CommandHandler
         $perdidas = [];
 
         foreach ($recompensas->caramelosFamilia as $recompensa) {
-            $perdida = (int) ceil($recompensa->cantidad / 2);
+            $perdida = intdiv($recompensa->cantidad, 2);
             if ($perdida <= 0) {
                 continue;
             }
@@ -568,7 +634,7 @@ final class FinalizarExploracionHandler implements CommandHandler
         }
 
         foreach ($recompensas->caramelosEv as $recompensa) {
-            $perdida = (int) ceil($recompensa->cantidad / 2);
+            $perdida = intdiv($recompensa->cantidad, 2);
             if ($perdida <= 0) {
                 continue;
             }
@@ -581,7 +647,7 @@ final class FinalizarExploracionHandler implements CommandHandler
         }
 
         foreach ($recompensas->caramelosTipo as $recompensa) {
-            $perdida = (int) ceil($recompensa->cantidad / 2);
+            $perdida = intdiv($recompensa->cantidad, 2);
             if ($perdida <= 0) {
                 continue;
             }
@@ -594,7 +660,7 @@ final class FinalizarExploracionHandler implements CommandHandler
         }
 
         foreach ($recompensas->capturas as $recompensa) {
-            $perdida = (int) ceil($recompensa->cantidad / 2);
+            $perdida = intdiv($recompensa->cantidad, 2);
             if ($perdida <= 0) {
                 continue;
             }
@@ -656,6 +722,7 @@ final class FinalizarExploracionHandler implements CommandHandler
             expTotal: $recompensas->expTotal,
             expPorMiembro: $recompensas->expPorMiembro,
             expTipoPorMiembro: $recompensas->expTipoPorMiembro,
+            expTipoCuenta: $recompensas->expTipoCuenta,
         );
     }
 }

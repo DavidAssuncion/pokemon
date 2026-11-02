@@ -19,6 +19,8 @@ use Src\CombateEntrenadores\App\OtorgarRecompensasEntrenador;
 use Src\CombateEntrenadores\Domain\DataTransferObjects\DatosModalVictoria;
 use Src\Exploraciones\App\PersistirRecompensas;
 use Src\Exploraciones\Domain\CalculadorRecompensas;
+use Src\Shared\Domain\MultiplicadoresDificultad;
+use Src\Shared\Domain\PoliticaIvsEvs;
 use Tests\TestCase;
 
 class MultiplicadorRecompensasTest extends TestCase
@@ -53,6 +55,125 @@ class MultiplicadorRecompensasTest extends TestCase
         $this->assertSame(5 * $entrenador->expTotal, $gimnasio->expTotal);
     }
 
+    #[Test]
+    public function gimnasio_top_uno_no_cambia_las_recompensas(): void
+    {
+        $pokemon = $this->crearPokemonConDificultad(26);
+
+        $base = $this->otorgarConDificultad($pokemon, null);
+        $topUno = $this->otorgarConDificultad(
+            $pokemon,
+            MultiplicadoresDificultad::para(PoliticaIvsEvs::perfilGimnasio(3)),
+        );
+
+        $this->assertNotNull($base);
+        $this->assertNotNull($topUno);
+        $this->assertSame($base->toArray(), $topUno->toArray());
+    }
+
+    #[Test]
+    public function gimnasio_top_dos_aplica_multiplicadores_de_perfil(): void
+    {
+        $pokemon = $this->crearPokemonConDificultad(26);
+
+        $topDos = $this->otorgarConDificultad(
+            $pokemon,
+            MultiplicadoresDificultad::para(PoliticaIvsEvs::perfilGimnasio(9)),
+        );
+
+        $this->assertNotNull($topDos);
+        $caramelos = $topDos->caramelos->toArray();
+
+        $this->assertSame(33, $caramelos[0]['cantidad']);
+        $this->assertSame(18, $caramelos[1]['cantidad']);
+        $this->assertSame(9, $caramelos[2]['cantidad']);
+    }
+
+    #[Test]
+    public function gimnasio_completo_aplica_multiplicadores_de_perfil(): void
+    {
+        $pokemon = $this->crearPokemonConDificultad(26);
+
+        $completo = $this->otorgarConDificultad(
+            $pokemon,
+            MultiplicadoresDificultad::para(PoliticaIvsEvs::perfilGimnasio(15)),
+        );
+
+        $this->assertNotNull($completo);
+        $caramelos = $completo->caramelos->toArray();
+
+        $this->assertSame(33, $caramelos[0]['cantidad']);
+        $this->assertSame(28, $caramelos[1]['cantidad']);
+        $this->assertSame(12, $caramelos[2]['cantidad']);
+    }
+
+    #[Test]
+    public function el_lider_sube_un_tier_en_los_multiplicadores(): void
+    {
+        $pokemon = $this->crearPokemonConDificultad(26);
+
+        $noLider = $this->otorgarConDificultad(
+            $pokemon,
+            MultiplicadoresDificultad::para(PoliticaIvsEvs::perfilGimnasio(6)),
+        );
+        $lider = $this->otorgarConDificultad(
+            $pokemon,
+            MultiplicadoresDificultad::para(PoliticaIvsEvs::perfilGimnasio(6, true)),
+        );
+        $liderTope = $this->otorgarConDificultad(
+            $pokemon,
+            MultiplicadoresDificultad::para(PoliticaIvsEvs::perfilGimnasio(18, true)),
+        );
+
+        $this->assertNotNull($noLider);
+        $this->assertNotNull($lider);
+        $this->assertNotNull($liderTope);
+
+        $this->assertSame(10, $noLider->caramelos->toArray()[1]['cantidad']);
+        $this->assertSame(18, $lider->caramelos->toArray()[1]['cantidad']);
+        $this->assertSame(28, $liderTope->caramelos->toArray()[1]['cantidad']);
+    }
+
+    #[Test]
+    public function entrenador_nivel_dos_aplica_multiplicadores_top_dos(): void
+    {
+        $pokemon = $this->crearPokemonConDificultad(26);
+
+        $entrenador = $this->otorgarConDificultad(
+            $pokemon,
+            MultiplicadoresDificultad::para(PoliticaIvsEvs::perfilEntrenador(2)),
+            multiplicador: 2.0,
+        );
+
+        $this->assertNotNull($entrenador);
+        $caramelos = $entrenador->caramelos->toArray();
+
+        $this->assertSame(6, $caramelos[0]['cantidad']);
+        $this->assertSame(3, $caramelos[1]['cantidad']);
+        $this->assertSame(1, $caramelos[2]['cantidad']);
+    }
+
+    private function otorgarConDificultad(
+        Pokemon $pokemon,
+        ?MultiplicadoresDificultad $dificultad,
+        float $multiplicador = OtorgarRecompensasEntrenador::MULTIPLICADOR_GIMNASIO,
+    ): ?DatosModalVictoria {
+        $persistir = $this->createMock(PersistirRecompensas::class);
+        $persistir->expects($this->once())->method('persistir');
+
+        $otorgar = new OtorgarRecompensasEntrenador(new CalculadorRecompensas(), $persistir);
+
+        // Contrato de producción: `array_unique` cuenta una vez cada especie rival.
+        return $otorgar->otorgar(
+            userId: (int) $this->user->id,
+            teamId: (int) $this->team->id,
+            speciesIdsRival: [(int) $pokemon->id],
+            nivelEntrenador: 10,
+            multiplicador: $multiplicador,
+            dificultad: $dificultad,
+        );
+    }
+
     private function otorgar(?float $multiplicador): ?DatosModalVictoria
     {
         $calculador = new CalculadorRecompensas();
@@ -72,6 +193,35 @@ class MultiplicadorRecompensasTest extends TestCase
         }
 
         return $otorgar->otorgar(...$args);
+    }
+
+    private function crearPokemonConDificultad(int $speciesId): Pokemon
+    {
+        $pokemon = Pokemon::create([
+            'id' => $speciesId,
+            'name' => 'pokemon-dificultad-'.$speciesId,
+            'species_id' => $speciesId,
+            'capture_rate' => 45,
+            'base_experience' => 64,
+            'height' => 7,
+            'weight' => 69,
+            'evolution_chain_id' => 700,
+        ]);
+
+        PokemonStat::create([
+            'pokemon_id' => $pokemon->id,
+            'stat' => StatEnum::HP->value,
+            'base_stat' => 50,
+            'effort' => 1,
+        ]);
+
+        PokemonType::create([
+            'pokemon_id' => $pokemon->id,
+            'type' => TipoEnum::NORMAL,
+            'slot' => 1,
+        ]);
+
+        return $pokemon;
     }
 
     private function crearPokemonCompleto(int $speciesId): Pokemon

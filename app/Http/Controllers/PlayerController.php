@@ -143,19 +143,13 @@ class PlayerController extends Controller
             ->pluck('reclutado_id')
             ->toArray();
 
-        $equiposEnExploracion = $reclutadosEnExploracion !== []
-            ? \App\Models\TeamMember::whereIn('pokemon_id', $reclutadosEnExploracion)
-            ->pluck('team_id')
-            ->unique()
-            ->values()
-            ->toArray()
-            : [];
-
         return view('equipos.index', array_merge([
             'teams' => $teams,
             'reclutados' => $reclutados,
             'teamIds' => $teamIds,
-            'equiposEnExploracion' => $equiposEnExploracion,
+            // @deprecated Compatibilidad temporal con la vista: la exploración
+            // ya es individual y se expone en `reclutadosEnExploracion`.
+            'equiposEnExploracion' => [],
             'reclutadosEnExploracion' => $reclutadosEnExploracion,
             'inventarioCaramelos' => $this->inventarioCaramelos((int) auth()->id()),
             'tipos' => TipoEnum::options(),

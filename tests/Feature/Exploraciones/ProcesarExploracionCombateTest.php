@@ -22,6 +22,7 @@ use Src\Exploraciones\App\CombateExploracion;
 use Src\Exploraciones\App\ProcesarExploracionCommand;
 use Src\Exploraciones\App\ProcesarExploracionHandler;
 use Src\Exploraciones\Domain\ValueObjects\ResultadoBatallaExploracion;
+use Src\Exploraciones\Presentation\EventoExploracionVista;
 use Src\Shared\Bus\CommandBus;
 use Src\Shared\Domain\EscaladorNivelRival;
 use Tests\TestCase;
@@ -94,7 +95,9 @@ class ProcesarExploracionCombateTest extends TestCase
             'nivel' => 1,
             'duracion_horas' => 24,
             'indefinido' => false,
-            'inicio_exploracion' => now()->subMinutes(10),
+            // 60 min de tiempo efectivo superan el intervalo base (30 min)
+            // incluso con el máximo de movilidad y bonus de exploración.
+            'inicio_exploracion' => now()->subMinutes(60),
         ]);
 
         return ['exploracion' => $exploracion, 'reclutado' => $reclutado, 'salvaje' => $salvaje];
@@ -288,14 +291,14 @@ class ProcesarExploracionCombateTest extends TestCase
         $bitacora = $eventos->get('bitacora', []);
 
         // HP al 30 % → falta 70 % → supervivencia MAESTRO (nivel 40, dificultad 35)
-        // → tasa 3 × 1.75 = 5.25 %/min → ceil(70/5.25) = 14 min
+        // → tasa 1 × 1.75 = 1.75 %/min → ceil(70/1.75) = 40 min
         $descanso = collect($bitacora)->first(fn (array $e) => ($e['tipo'] ?? '') === 'descanso');
         $this->assertNotNull($descanso, 'Debe registrarse descanso al quedar HP < 50 %');
-        $this->assertSame(14, $descanso['duracion_minutos']);
+        $this->assertSame(40, $descanso['duracion_minutos']);
         $this->assertSame(70, $descanso['hp_recuperado']);
 
-        // tiempo_perdido acumulado (14 min del descanso)
-        $this->assertGreaterThanOrEqual(14, (int) $eventos->get('tiempo_perdido', 0));
+        // tiempo_perdido acumulado (40 min del descanso)
+        $this->assertGreaterThanOrEqual(40, (int) $eventos->get('tiempo_perdido', 0));
 
         // El estado persistido debe quedar al 100 % HP (JSON normaliza floats → int)
         $estado = $eventos->get('explorador');
@@ -337,5 +340,49 @@ class ProcesarExploracionCombateTest extends TestCase
             'Debe haber exactamente un evento extra por emboscada evitada',
         );
         $this->assertSame('neutral', $extras->first()['tipo'] ?? null);
+    }
+
+    #[Test]
+    public function test_encuentro_derrota_persiste_pv_inicial_y_del_rival(): void
+    {
+        mt_srand(1);
+        $ctx = $this->crearContexto([
+            'explorador_stats' => ['hp' => 30, 'atk' => 25, 'def' => 20, 'spAtk' => 25, 'spDef' => 20, 'speed' => 20],
+            'salvaje_stats' => ['hp' => 200, 'atk' => 180, 'def' => 150, 'spAtk' => 180, 'spDef' => 150, 'speed' => 200],
+        ]);
+        $this->handler()->handle(new ProcesarExploracionCommand($ctx['exploracion']));
+        mt_srand();
+
+        $ctx['exploracion']->refresh();
+        $bitacora = $ctx['exploracion']->eventos->get('bitacora', []);
+
+        $encuentro = collect($bitacora)->first(fn (array $e) => ($e['tipo'] ?? '') === 'encuentro');
+        $this->assertNotNull($encuentro, 'Debe haber un encuentro en la bitácora');
+        $this->assertSame('derrota', $encuentro['resolucion'] ?? null);
+
+        foreach (['hp_inicial', 'hp_max', 'rival_hp_inicial', 'rival_hp_final', 'rival_hp_max'] as $clave) {
+            $this->assertArrayHasKey($clave, $encuentro, "Falta la clave {$clave}");
+        }
+
+        $this->assertGreaterThan(0.0, (float) $encuentro['hp_inicial']);
+        $this->assertSame((float) $encuentro['hp_max'], (float) $encuentro['hp_inicial']);
+        $this->assertSame((float) $encuentro['rival_hp_max'], (float) $encuentro['rival_hp_inicial']);
+        $this->assertGreaterThanOrEqual(0.0, (float) $encuentro['rival_hp_final']);
+        $this->assertLessThanOrEqual((float) $encuentro['rival_hp_max'], (float) $encuentro['rival_hp_final']);
+    }
+
+    #[Test]
+    public function test_evento_historico_sin_claves_de_pv_se_presenta_sin_error(): void
+    {
+        $vista = EventoExploracionVista::toView([
+            'tipo' => 'encuentro',
+            'resolucion' => 'derrota',
+            'nombre' => 'rattata',
+            'hp_final' => 0,
+            'log' => [],
+        ]);
+
+        $this->assertNull($vista['rondas']);
+        $this->assertNull($vista['detalle_derrota']);
     }
 }

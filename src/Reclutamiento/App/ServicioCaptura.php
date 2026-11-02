@@ -27,7 +27,7 @@ class ServicioCaptura
             // Mark as sighted in pokedex
             ActualizarPokedexJob::dispatch($userId, $pokemonId, 'AVISTADO');
 
-            // Attempt capture based on capture_rate (regla cap-45 unificada)
+            // Attempt capture based on capture_rate (regla cap-25 unificada en ProbabilidadCaptura)
             $captureChance = ProbabilidadCaptura::probabilidad($pokemon->capture_rate ?? 45);
             CapturarPokemonJob::dispatch($userId, $pokemonId, $captureChance);
         }

@@ -125,3 +125,29 @@ hoy el modelo estándar es 3v3):
 - Frontend: `68bf20c63b`
 - Cleaner (escalado/limpieza): `5b802bc`, `67577fa`, `b8b5b9d`, `e577b7e`, `b1c44dd`
 - Hardener (Endurecimiento Shared/Domain): `f81c2339d0`
+---
+
+## Guía de búsqueda (grep)
+
+- Clases: `GeneradorEquipoRuta`, `IniciarCombateRuta`, `OtorgarRecompensasRuta`,
+  `RegistrarResultadoRuta`, `ResultadoRuta`, `SelectorMovimientosMeta`.
+- Constantes: `OtorgarRecompensasRuta::MULTIPLICADOR_RUTA` (1.0),
+  `SelectorMovimientosMeta::MOVIMIENTOS_MINIMOS/MAXIMOS`, `ProbabilidadCaptura::CAP`,
+  `ReglasEquipo::MIEMBROS`.
+- Términos: `routes/ruta.php`, `ruta_{habitat}_{nivel}_{i}`, `tipo='ruta'`, `capture_rate/hatch`,
+  `con reemplazo`, `es_shiny`, `ResultadoRuta::aArray`.
+- Tablas: `habitats`, `teams`, `reclutados`, `pokemon`, `player_inventory`.
+- Tests: `tests/Feature/CombateRuta/`.
+
+## Deuda y mejoras priorizadas (auditoría 2026-10-31)
+
+- **[Alta] Duplicación con `CombateEntrenadores`** en generación de pool/equipo rival
+  (`GeneradorEquipoRuta` vs `GeneradorEquipoEntrenador`). Compartir el generador de pool ponderado.
+- **[Media] `SelectorMovimientosMeta` devuelve arrays** (`seleccionar`, `candidatos`, `elegir`).
+  Introducir `MovimientoSeleccionado`/colección tipada en `Domain` y dejar el array solo en la
+  frontera de `DatosPokemonBatalla`.
+- **[Media] `OtorgarRecompensasRuta` usa el mapa array de `CadenasEvolutivas`**; tipar con VO.
+- **[Baja] `ResultadoRuta::aArray()` es un payload de modal**; mantenerlo como `toArray()` de
+  frontera y no usarlo como contrato entre capas.
+- **[Baja] `IniciarCombateRuta` delega el tamaño en `ConstruirEquipoJugador`** (correcto); no
+  duplicar la validación.

@@ -6,6 +6,7 @@ namespace Src\Exploraciones\App;
 
 use App\Models\Pokemon;
 use App\Models\Reclutado;
+use App\Support\CargarMapaSendaJugador;
 use Src\Battle\Domain\AgregadoBatalla;
 use Src\Battle\Domain\Collections\DatosPokemonBatallaCollection;
 use Src\Battle\Domain\DatosPokemonBatalla;
@@ -53,6 +54,8 @@ class CombateExploracion
         $item = array_values($items)[0] ?? null;
         $item = is_string($item) ? $item : null;
 
+        $senda = app(CargarMapaSendaJugador::class)->para((int) $reclutado->user_id);
+
         $explorador = $this->mapeador->desdePokemon(
             pokemon: $reclutado->pokemon,
             id: (string) $reclutado->id,
@@ -66,6 +69,7 @@ class CombateExploracion
             movimientosSeleccionados: is_array($reclutado->movimientos) ? $reclutado->movimientos : null,
             habilidadActivaId: $reclutado->habilidad_activa_id,
             nivelDesbloqueo: $nivelDesbloqueo,
+            senda: $senda,
         );
 
         $salvaje->loadMissing('stats', 'types', 'abilities');
@@ -110,9 +114,15 @@ class CombateExploracion
             $combatiente->setBonificadorDanio($modificadorDanio);
         }
 
+        $rival = $team2->combatientesCollection()->primero();
+        $rivalHpMax = $rival?->pokemon()->battleStats()->hp;
+
         $batalla = new AgregadoBatalla($team1, $team2);
         $batalla->triggerBattleStartEffects();
+        $hpInicial = $combatiente->hpActual();
+        $rivalHpInicial = $rival?->hpActual();
         $log = $batalla->ejecutarBatalla();
+        $rivalHpFinal = $rival?->hpActual();
 
         $hpMax = $combatiente->pokemon()->battleStats()->hp;
         $barreraFisicaMax = $combatiente->pokemon()->battleStats()->defenseHp;
@@ -127,6 +137,10 @@ class CombateExploracion
             barreraFisicaMax: $barreraFisicaMax,
             barreraEspecialMax: $barreraEspecialMax,
             log: $log,
+            hpInicial: $hpInicial,
+            rivalHpInicial: $rivalHpInicial,
+            rivalHpFinal: $rivalHpFinal,
+            rivalHpMax: $rivalHpMax,
         );
     }
 }

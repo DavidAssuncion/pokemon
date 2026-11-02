@@ -8,6 +8,7 @@ combate 3v1 contra el jefe configurado.
 | Ruta | Contenido |
 |---|---|
 | `Domain/ConfiguracionMazmorra.php` | Configuración desde `habitats.mazmorra` (pisos + species_id) |
+| `Domain/ReglasMazmorra.php` | Vida jefe ×7, resto ×10, +30 % inicial, recompensa 7× gimnasio, cooldown 1 h |
 | `Domain/Collections/PisoConfiguracionCollection.php` | Pisos tipados (`PisoConfiguracion`) |
 | `Domain/DataTransferObjects/` | `PisoMazmorra`, `ResultadoPisosMazmorra`, `ResultadoMazmorra`, `PisoConfiguracion` |
 | `Domain/Collections/PisoMazmorraCollection.php` | Pisos con estado para la API |
@@ -15,8 +16,10 @@ combate 3v1 contra el jefe configurado.
 | `Domain/Exceptions/PisoNoDisponible.php` | Piso bloqueado o no alcanzado |
 | `App/ObtenerPisosMazmorra.php` | Lista de pisos alcanzables con estado |
 | `App/IniciarCombateMazmorra.php` | Inicia el combate del piso |
-| `App/GeneradorJefeMazmorra.php` | Genera el jefe (stats ×10, nivel del jugador) |
-| `App/RegistrarResultadoMazmorra.php` | Avance de piso y recompensas |
+| `App/GeneradorJefeMazmorra.php` | Genera el jefe (vida ×7, resto ×10, +30 % inicial, IVs 0) |
+| `App/ObtenerConfiguracionMazmorra.php` | Punto único de lectura de `habitats.mazmorra` |
+| `App/RegistrarResultadoMazmorra.php` | Avance de piso |
+| `App/OtorgarRecompensasMazmorra.php` | Recompensas de victoria (7× gimnasio) |
 | `Infra/` | Repositorio Eloquent, `MazmorraController`, rutas |
 
 ## Flujo

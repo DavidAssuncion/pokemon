@@ -12,14 +12,18 @@ use App\Models\PlayerTypePath;
 use App\Models\TypePathNode;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use Src\Shared\Domain\Sendas\BeneficiosSenda;
+use Src\Shared\Domain\Sendas\NivelSenda;
 use Src\Shared\Domain\SlugTipo;
 use Src\Shared\Tipos\TipoPokemon;
 
 /**
  * Árbol de movimientos desbloqueables por tipo (Sendas).
  *
- * Un nodo pertenece a una Senda de tipo, tiene un nivel requerido 1-5 y su
- * coste se resuelve con SendaCostes. El desbloqueo es de cuenta: una vez
+ * Un nodo pertenece a una Senda de tipo y guarda su tramo original en
+ * `required_level` (1-5). El nivel visible se comprime a 1-3 y el coste se
+ * resuelve con SendaCostes a partir del tramo. Los tramos 4-5 son maestrías
+ * que se desbloquean en el nivel visible 3. El desbloqueo es de cuenta: una vez
  * desbloqueado, el movimiento queda disponible para todos los Pokémon
  * compatibles, sin comprobar el nivel del Pokémon.
  */
@@ -31,9 +35,12 @@ final class ArbolSendas
     /**
      * Resumen de las 18 Sendas para la portada /sendas.
      *
+     * Cada tipo incluye `beneficios` con los porcentajes del nivel actual
+     * (mismo shape que devuelve {@see self::beneficiosDe()}).
+     *
      * @return list<array<string, mixed>>
      */
-    public static function resumen(int $userId, int $nivelCuenta): array
+    public static function resumen(int $userId): array
     {
         $totales = DB::table('type_path_nodes')
             ->selectRaw('type_id, count(*) as total')
@@ -59,11 +66,13 @@ final class ArbolSendas
         foreach (TipoEnum::cases() as $tipo) {
             $path = $paths->get($tipo->value);
             $exp = (int) ($path?->exp ?? 0);
+            $progreso = SendaProgreso::resumen($exp);
 
             $resultado[] = array_merge(
                 self::tipoBase($tipo),
-                SendaProgreso::resumen($exp, $nivelCuenta),
+                $progreso,
                 [
+                    'beneficios' => self::beneficiosDe($progreso['nivel']),
                     'total_nodos' => (int) ($totales[$tipo->value] ?? 0),
                     'desbloqueados' => (int) ($desbloqueados[$tipo->value] ?? 0),
                     'caramelos' => (int) ($caramelos[$tipo->value] ?? 0),
@@ -77,9 +86,14 @@ final class ArbolSendas
     /**
      * Árbol completo de una Senda.
      *
+     * El payload incluye `beneficios` con los porcentajes del nivel actual y
+     * `siguiente_nivel` / `beneficios_siguiente` con los del nivel siguiente.
+     * El nivel siguiente tiene tope en el máximo: en el nivel máximo ambos
+     * bloques coinciden con los del nivel actual.
+     *
      * @return array<string, mixed>
      */
-    public static function para(int $userId, int $nivelCuenta, TipoEnum $tipo): array
+    public static function para(int $userId, TipoEnum $tipo): array
     {
         $nodos = TypePathNode::query()
             ->with('move')
@@ -102,7 +116,9 @@ final class ArbolSendas
             ->where('type_id', $tipo->value)
             ->first();
 
-        $progreso = SendaProgreso::resumen((int) ($path?->exp ?? 0), $nivelCuenta);
+        $progreso = SendaProgreso::resumen((int) ($path?->exp ?? 0));
+        $nivelActual = $progreso['nivel'];
+        $siguienteNivel = min(SendaProgreso::NIVEL_MAXIMO, $nivelActual + 1);
 
         $ramas = [
             'fisico' => [],
@@ -120,10 +136,12 @@ final class ArbolSendas
             $categoria = in_array($nodo->category, self::CATEGORIAS, true)
                 ? $nodo->category
                 : 'estado';
-            $nivelRequerido = max(1, min(5, (int) $nodo->required_level));
-            $coste = SendaCostes::coste($nivelRequerido);
+            $tramo = max(1, min(5, (int) $nodo->required_level));
+            $nivelRequerido = min(3, $tramo);
+            $coste = SendaCostes::coste($tramo);
             $estaDesbloqueado = isset($desbloqueados[(int) $nodo->move_id]);
-            $disponible = (int) $progreso['nivel'] >= $nivelRequerido;
+            $nivelVisibleJugador = min(3, (int) $progreso['nivel']);
+            $disponible = $nivelVisibleJugador >= $nivelRequerido;
 
             $ramas[$categoria][] = [
                 'slug' => (string) $move->slug,
@@ -136,7 +154,9 @@ final class ArbolSendas
                 'base_power' => (int) $move->base_power,
                 'accuracy' => $move->accuracy,
                 'nivel_requerido' => $nivelRequerido,
+                'tramo' => $tramo,
                 'coste' => $coste,
+                'es_maestria' => $tramo >= 4,
                 'desbloqueado' => $estaDesbloqueado,
                 'disponible' => $disponible,
                 'puede_desbloquear' => ! $estaDesbloqueado
@@ -154,10 +174,12 @@ final class ArbolSendas
             usort($nodosRama, static function (array $a, array $b): int {
                 return [
                     $a['nivel_requerido'],
+                    $a['tramo'],
                     $a['base_power'],
                     $a['name'],
                 ] <=> [
                     $b['nivel_requerido'],
+                    $b['tramo'],
                     $b['base_power'],
                     $b['name'],
                 ];
@@ -169,6 +191,9 @@ final class ArbolSendas
             ['tipo' => self::tipoBase($tipo)],
             $progreso,
             [
+                'beneficios' => self::beneficiosDe($nivelActual),
+                'siguiente_nivel' => $siguienteNivel,
+                'beneficios_siguiente' => self::beneficiosDe($siguienteNivel),
                 'caramelos' => $caramelos,
                 'total_nodos' => $nodos->count(),
                 'desbloqueados' => $totalDesbloqueados,
@@ -180,7 +205,7 @@ final class ArbolSendas
     /**
      * @return array<string, mixed>|null
      */
-    public static function nodo(string $slug, int $userId, int $nivelCuenta): ?array
+    public static function nodo(string $slug, int $userId): ?array
     {
         $move = Move::query()->where('slug', $slug)->first();
         if ($move === null) {
@@ -192,7 +217,7 @@ final class ArbolSendas
             return null;
         }
 
-        $arbol = self::para($userId, $nivelCuenta, $tipo);
+        $arbol = self::para($userId, $tipo);
         foreach ($arbol['ramas'] as $nodos) {
             foreach ($nodos as $nodo) {
                 if ($nodo['slug'] === $slug) {
@@ -226,6 +251,39 @@ final class ArbolSendas
             'slug' => SlugTipo::de($tipo->label()),
             'color' => TipoPokemon::tryFrom($tipo->value)?->color() ?? '#6B7280',
         ];
+    }
+
+    /**
+     * Beneficios pasivos del nivel de Senda listos para la UI.
+     *
+     * `captura` y `caramelo_tipo` son incrementos absolutos (0..1) y
+     * `dano_recibido` es la reducción del daño entrante. Los niveles 1-3 no
+     * tienen pasivos y devuelven ceros.
+     *
+     * @return array{captura: float, dano_infligido: float, dano_recibido: float, caramelo_tipo: float}
+     */
+    private static function beneficiosDe(int $nivel): array
+    {
+        $beneficios = BeneficiosSenda::para(NivelSenda::desdeInt($nivel), self::porcentajesBeneficios());
+
+        return [
+            'captura' => $beneficios->captura,
+            'dano_infligido' => $beneficios->danoInfligido,
+            'dano_recibido' => $beneficios->danoRecibido,
+            'caramelo_tipo' => $beneficios->carameloTipo,
+        ];
+    }
+
+    /**
+     * Porcentajes configurados de beneficios de Senda (nivel => 0..1).
+     *
+     * @return array<int, mixed>
+     */
+    private static function porcentajesBeneficios(): array
+    {
+        $beneficios = config('sendas.beneficios', []);
+
+        return is_array($beneficios) ? $beneficios : [];
     }
 
     /**

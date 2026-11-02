@@ -22,6 +22,22 @@
 - Propiedades `private`/`readonly` con getters tipados.
 - Única excepción tolerada: `toArray()` interno requerido por Eloquent para persistencia; nunca como contrato público.
 
+### Arrays, constantes y capas (2026-10-31)
+
+- **Reducir la creación/manejo de arrays al máximo**: si representa negocio, usar DTO readonly,
+  Value Object, Enum, Entidad o colección tipada. Los arrays solo valen como `toArray()` de
+  frontera o dato interno de framework.
+- **Valores de negocio repetidos → constantes/enums/VOs**. Fuentes canónicas:
+  `ReglasEquipo`, `ReglasMazmorra`, `ReglasExploracion`, `ReglasHuevo`, `ReglasBatalla`,
+  `ProbabilidadCaptura`, `ProbabilidadesShiny`.
+- **Frontend solo presentación**: `resources/**` no calcula reglas, stats, CP, niveles,
+  probabilidades, recompensas ni autorización. El backend entrega datos derivados.
+- **`app/` delgada**: controladores/Livewire orquestan; la lógica vive en `src/{{Modulo}}/Domain`
+  y `src/{{Modulo}}/App`.
+- **Reutilización**: código de un módulo vive en ese módulo; código compartido entre módulos vive
+  en `src/Shared` (o `app/Support` solo si es infraestructura Laravel transversal).
+- Regla operativa completa: `.ai/rules/arrays-dto-collections.md`.
+
 ## DRY y reutilización
 
 - Buscar reutilización en el módulo y en `src/Shared` antes de crear código nuevo.

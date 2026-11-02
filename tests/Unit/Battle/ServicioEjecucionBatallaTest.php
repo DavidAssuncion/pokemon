@@ -8,14 +8,23 @@ use PHPUnit\Framework\TestCase;
 use Src\Battle\Domain\AccionBatalla;
 use Src\Battle\Domain\Chain\CadenaDanio;
 use Src\Battle\Domain\Collections\CambiosStatsCollection;
+use Src\Battle\Domain\Collections\FlagsMovimientoCollection;
+use Src\Battle\Domain\Effects\EfectoInmuneEstado;
+use Src\Battle\Domain\Effects\EfectoInmuneFlag;
+use Src\Battle\Domain\Effects\EfectoMarcador;
+use Src\Battle\Domain\Effects\Equipo\EfectoEquipoEspejoMagico;
 use Src\Battle\Domain\Enums\CategoriaMovimiento;
+use Src\Battle\Domain\Enums\ClaveCondicion;
 use Src\Battle\Domain\Enums\EstadoPokemon;
+use Src\Battle\Domain\Enums\FlagMovimiento;
 use Src\Battle\Domain\Enums\StatClave;
 use Src\Battle\Domain\Enums\TipoClima;
 use Src\Battle\Domain\MovimientoBatalla;
 use Src\Battle\Domain\Posicion;
 use Src\Battle\Domain\ServicioEjecucionBatalla;
 use Src\Battle\Domain\ValueObjects\CambioStat;
+use Src\Battle\Domain\ValueObjects\CondicionVolatil;
+use Src\Battle\Domain\ValueObjects\PerfilMovimiento;
 use Src\Battle\Presentation\DTOResultadoDanio;
 use Src\Shared\Tipos\TipoPokemon;
 
@@ -330,5 +339,165 @@ class ServicioEjecucionBatallaTest extends TestCase
 
         // Con daño=0 no debe mostrar penalización ni directo
         $this->assertSame('Atacante usa Golpe', $log);
+    }
+
+    // ─── Retorno booleano de aplicarEstado (contrato TASK-002) ───
+
+    public function test_aplicar_estado_retorna_true_cuando_aplica_paralisis(): void
+    {
+        $objetivo = $this->combatiente(
+            stats: ['hp' => 100, 'spDef' => 100],
+            tipos: [TipoPokemon::AGUA],
+            id: 'd1',
+            nombre: 'Objetivo',
+        );
+
+        $resultado = $this->servicio->aplicarEstado($objetivo, $this->dragoaliento(1.0));
+
+        $this->assertTrue($resultado);
+        $this->assertSame(EstadoPokemon::PARALYSIS, $objetivo->estado());
+    }
+
+    public function test_aplicar_estado_retorna_false_cuando_falla_la_probabilidad(): void
+    {
+        $objetivo = $this->combatiente(
+            stats: ['hp' => 100, 'spDef' => 100],
+            tipos: [TipoPokemon::AGUA],
+            id: 'd1',
+            nombre: 'Objetivo',
+        );
+
+        $resultado = $this->servicio->aplicarEstado($objetivo, $this->dragoaliento(0.0));
+
+        $this->assertFalse($resultado);
+        $this->assertSame(EstadoPokemon::NONE, $objetivo->estado());
+    }
+
+    public function test_aplicar_estado_retorna_false_si_el_objetivo_esta_muerto(): void
+    {
+        $objetivo = $this->combatiente(
+            stats: ['hp' => 100],
+            tipos: [TipoPokemon::AGUA],
+            id: 'd1',
+            nombre: 'Objetivo',
+        );
+        $objetivo->setHpActual(0.0);
+
+        $resultado = $this->servicio->aplicarEstado($objetivo, $this->dragoaliento(1.0));
+
+        $this->assertFalse($resultado);
+        $this->assertSame(EstadoPokemon::NONE, $objetivo->estado());
+    }
+
+    public function test_aplicar_estado_retorna_false_si_el_objetivo_esta_protegido(): void
+    {
+        $objetivo = $this->combatiente(
+            stats: ['hp' => 100],
+            tipos: [TipoPokemon::AGUA],
+            id: 'd1',
+            nombre: 'Objetivo',
+        );
+        $objetivo->agregarCondicion(new CondicionVolatil(ClaveCondicion::PROTEGIDO, 1));
+
+        $resultado = $this->servicio->aplicarEstado($objetivo, $this->dragoaliento(1.0));
+
+        $this->assertFalse($resultado);
+        $this->assertSame(EstadoPokemon::NONE, $objetivo->estado());
+    }
+
+    public function test_aplicar_estado_retorna_false_con_cuerpo_aureo_en_movimiento_de_estado(): void
+    {
+        $objetivo = $this->combatiente(
+            stats: ['hp' => 100],
+            tipos: [TipoPokemon::FUEGO],
+            id: 'd1',
+            nombre: 'Objetivo',
+        );
+        $objetivo->effects()->add(new EfectoMarcador('cuerpo_aureo'));
+
+        $movimiento = new MovimientoBatalla(
+            'Onda Trueno',
+            0,
+            TipoPokemon::ELECTRICO,
+            CategoriaMovimiento::ESTADO,
+            statusEffect: EstadoPokemon::PARALYSIS,
+            perfil: new PerfilMovimiento(probabilidadEstado: 1.0),
+        );
+
+        $this->assertFalse($this->servicio->aplicarEstado($objetivo, $movimiento));
+        $this->assertSame(EstadoPokemon::NONE, $objetivo->estado());
+    }
+
+    public function test_aplicar_estado_retorna_false_si_la_habilidad_bloquea_el_estado(): void
+    {
+        $atacante = $this->combatiente(id: 'a1', nombre: 'Atacante');
+        $objetivo = $this->combatiente(
+            stats: ['hp' => 100],
+            tipos: [TipoPokemon::ELECTRICO],
+            id: 'd1',
+            nombre: 'Objetivo',
+        );
+        $objetivo->effects()->add(new EfectoInmuneEstado('inmunidad', [EstadoPokemon::PARALYSIS]));
+        $battle = $this->batallaMinima($atacante, $objetivo);
+
+        $resultado = $this->servicio->aplicarEstado($objetivo, $this->dragoaliento(1.0), $battle, $atacante);
+
+        $this->assertFalse($resultado);
+        $this->assertSame(EstadoPokemon::NONE, $objetivo->estado());
+    }
+
+    public function test_aplicar_estado_retorna_false_si_el_objetivo_es_inmune_a_la_flag(): void
+    {
+        $objetivo = $this->combatiente(
+            stats: ['hp' => 100],
+            tipos: [TipoPokemon::AGUA],
+            id: 'd1',
+            nombre: 'Objetivo',
+        );
+        $objetivo->effects()->add(new EfectoInmuneFlag('insonorizacion', FlagMovimiento::SONIDO));
+
+        $movimiento = new MovimientoBatalla(
+            'Estruendo',
+            60,
+            TipoPokemon::NORMAL,
+            CategoriaMovimiento::ESPECIAL,
+            statusEffect: EstadoPokemon::PARALYSIS,
+            perfil: new PerfilMovimiento(probabilidadEstado: 1.0),
+            flags: new FlagsMovimientoCollection([FlagMovimiento::SONIDO]),
+        );
+
+        $this->assertFalse($this->servicio->aplicarEstado($objetivo, $movimiento));
+        $this->assertSame(EstadoPokemon::NONE, $objetivo->estado());
+    }
+
+    public function test_espejo_magico_aplica_estado_al_atacante_y_retorna_false(): void
+    {
+        $atacante = $this->combatiente(id: 'a1', nombre: 'Atacante');
+        $objetivo = $this->combatiente(
+            stats: ['hp' => 100],
+            tipos: [TipoPokemon::AGUA],
+            id: 'd1',
+            nombre: 'Objetivo',
+        );
+        $battle = $this->batallaMinima($atacante, $objetivo);
+        $battle->team2->agregarEfecto(new EfectoEquipoEspejoMagico('espejo_magico', 'd1'));
+
+        $resultado = $this->servicio->aplicarEstado($objetivo, $this->dragoaliento(1.0), $battle, $atacante);
+
+        $this->assertFalse($resultado);
+        $this->assertSame(EstadoPokemon::PARALYSIS, $atacante->estado());
+        $this->assertSame(EstadoPokemon::NONE, $objetivo->estado());
+    }
+
+    private function dragoaliento(float $probabilidadEstado): MovimientoBatalla
+    {
+        return new MovimientoBatalla(
+            'Dragoaliento',
+            60,
+            TipoPokemon::DRAGON,
+            CategoriaMovimiento::ESPECIAL,
+            statusEffect: EstadoPokemon::PARALYSIS,
+            perfil: new PerfilMovimiento(probabilidadEstado: $probabilidadEstado),
+        );
     }
 }

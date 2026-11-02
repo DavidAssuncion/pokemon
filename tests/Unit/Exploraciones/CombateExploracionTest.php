@@ -13,6 +13,7 @@ use Src\Battle\Domain\Posicion;
 use Src\CombateEntrenadores\App\MapeadorPokemonBatalla;
 use Src\CombateEntrenadores\Domain\GeneradorMovimientosTipo;
 use Src\Exploraciones\App\CombateExploracion;
+use Src\Pokemon\Domain\Stats\StatsValue;
 use Src\Shared\Tipos\TipoPokemon;
 
 class CombateExploracionTest extends TestCase
@@ -39,6 +40,7 @@ class CombateExploracionTest extends TestCase
             speed: 180,
             tipos: [TipoPokemon::LUCHA],
             posicion: Posicion::VANGUARDIA,
+            ivs: StatsValue::ceros(),
             moves: [
                 new MovimientoBatalla(
                     nombre: 'Megapuño',
@@ -63,6 +65,7 @@ class CombateExploracionTest extends TestCase
             speed: 10,
             tipos: [TipoPokemon::NORMAL],
             posicion: Posicion::VANGUARDIA,
+            ivs: StatsValue::ceros(),
             moves: [
                 new MovimientoBatalla(
                     nombre: 'Placaje',
@@ -87,6 +90,7 @@ class CombateExploracionTest extends TestCase
             speed: 10,
             tipos: [TipoPokemon::NORMAL],
             posicion: Posicion::VANGUARDIA,
+            ivs: StatsValue::ceros(),
             moves: [
                 new MovimientoBatalla(
                     nombre: 'Placaje',
@@ -111,6 +115,7 @@ class CombateExploracionTest extends TestCase
             speed: 180,
             tipos: [TipoPokemon::LUCHA],
             posicion: Posicion::VANGUARDIA,
+            ivs: StatsValue::ceros(),
             moves: [
                 new MovimientoBatalla(
                     nombre: 'Megapuño',
@@ -191,6 +196,7 @@ class CombateExploracionTest extends TestCase
             speed: 90,
             tipos: [TipoPokemon::NORMAL],
             posicion: Posicion::VANGUARDIA,
+            ivs: StatsValue::ceros(),
             moves: [
                 new MovimientoBatalla(
                     nombre: 'Placaje',
@@ -215,12 +221,32 @@ class CombateExploracionTest extends TestCase
             $log,
             static fn (string $line): bool => str_starts_with($line, '--- Ronda'),
         ));
+        // El log de combate de exploraciones usa el formato
+        // "ataca a [...] con <movimiento> -> N de daño". Se suma el daño de
+        // las líneas del movimiento del explorador (Megapuño).
+        $danoTotal = static function (array $log): float {
+            $total = 0.0;
+            foreach ($log as $line) {
+                if (str_contains($line, 'Megapuño')
+                    && preg_match('/-> ([0-9.]+) de daño/', $line, $coincidencias) === 1) {
+                    $total += (float) $coincidencias[1];
+                }
+            }
 
-        // Con el bonus el salvaje cae antes: menos rondas de combate.
-        $this->assertLessThan(
+            return $total;
+        };
+
+        // El daño real infligido al salvaje debe crecer con el bonus, sin
+        // depender de un número de rondas que varía con el HP del rival.
+        $this->assertGreaterThan(
+            $danoTotal($sinBonus->log->entries()->toList()),
+            $danoTotal($conBonus->log->entries()->toList()),
+            'El bonus de daño debe aumentar el daño total infligido al salvaje',
+        );
+        $this->assertLessThanOrEqual(
             $rondas($sinBonus->log->entries()->toList()),
             $rondas($conBonus->log->entries()->toList()),
-            'El bonus de daño debe reducir las rondas del combate',
+            'El bonus de daño no debe aumentar las rondas del combate',
         );
     }
 
@@ -237,5 +263,36 @@ class CombateExploracionTest extends TestCase
         $this->assertObjectHasProperty('barreraFisicaFinal', $resultado);
         $this->assertObjectHasProperty('barreraEspecialFinal', $resultado);
         $this->assertObjectHasProperty('log', $resultado);
+    }
+
+    #[Test]
+    public function test_captura_hp_inicial_y_datos_del_rival(): void
+    {
+        $resultado = $this->combate->combatirDatos(
+            $this->datoExploradorFuerte(),
+            $this->datoSalvajeDebil(),
+        );
+
+        $this->assertSame($resultado->hpMax, $resultado->hpInicial);
+        $this->assertSame($resultado->rivalHpMax, $resultado->rivalHpInicial);
+        $this->assertSame(0.0, $resultado->rivalHpFinal, 'El rival debe quedar debilitado');
+        $this->assertGreaterThan(0.0, $resultado->rivalHpMax);
+    }
+
+    #[Test]
+    public function test_captura_hp_inicial_respetando_el_estado_inicial(): void
+    {
+        mt_srand(1);
+        $resultado = $this->combate->combatirDatos(
+            $this->datoExploradorFuerte(),
+            $this->datoSalvajeDebil(),
+            ['hp' => 75.0, 'barrera_fisica' => 10.0, 'barrera_especial' => 10.0],
+        );
+        mt_srand();
+
+        $this->assertSame(75.0, $resultado->hpInicial);
+        $this->assertGreaterThan(75.0, $resultado->hpMax);
+        $this->assertSame($resultado->rivalHpMax, $resultado->rivalHpInicial);
+        $this->assertSame(0.0, $resultado->rivalHpFinal);
     }
 }

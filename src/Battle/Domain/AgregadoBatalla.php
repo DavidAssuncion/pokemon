@@ -10,6 +10,8 @@ use Src\Battle\Domain\Chain\CadenaDanio;
 use Src\Battle\Domain\Enums\ClaveCondicion;
 use Src\Battle\Domain\Enums\TipoClima;
 use Src\Battle\Domain\Enums\TipoTerreno;
+use Src\Battle\Domain\Exceptions\LimiteRondasAlcanzado;
+use Src\Battle\Domain\Observer\ObservadorEjecucionBatalla;
 use Src\Battle\Domain\Observer\SujetoBatalla;
 use Src\Battle\Domain\ValueObjects\BattleLog;
 use Src\Battle\Presentation\DTOAccionBatalla;
@@ -716,11 +718,33 @@ class AgregadoBatalla
         return false;
     }
 
-    public function ejecutarBatalla(): BattleLog
-    {
+    /**
+     * Ejecuta la batalla hasta que un equipo quede sin combatientes vivos.
+     *
+     * @param  int|null  $maxRondas  Tope opcional de rondas. Sin valor conserva
+     *                               el comportamiento histórico (sin tope).
+     * @param  ObservadorEjecucionBatalla|null  $observador  Observador opcional
+     *                               de ejecución. Se pasa por parámetro y nunca
+     *                               se guarda como propiedad del agregado.
+     *
+     * @throws \InvalidArgumentException si `$maxRondas` es menor que 1.
+     * @throws LimiteRondasAlcanzado si se alcanza el tope antes de terminar.
+     */
+    public function ejecutarBatalla(
+        ?int $maxRondas = null,
+        ?ObservadorEjecucionBatalla $observador = null,
+    ): BattleLog {
+        if ($maxRondas !== null && $maxRondas < 1) {
+            throw new \InvalidArgumentException('maxRondas debe ser mayor o igual que 1');
+        }
+
         $this->agregarLog('¡Comienza la batalla!');
 
         while ($this->turnManager->bothTeamsAlive()) {
+            if ($maxRondas !== null && $this->turnManager->round() >= $maxRondas) {
+                throw new LimiteRondasAlcanzado($maxRondas, $this->turnManager->round());
+            }
+
             $this->turnManager->startNewRound();
             $this->triggerRoundStartEffects();
             $this->agregarLog("--- Ronda {$this->turnManager->round()} ---");
@@ -737,6 +761,7 @@ class AgregadoBatalla
                 if (! $puedeActuar->esPermitida()) {
                     $this->agregarLog("{$actor->nombre()} no puede actuar: {$puedeActuar->motivo()}");
                     $this->turnManager->consumeAction($actor);
+                    $observador?->alFinalizarTurno($this->turnManager->round(), $actor, $this);
 
                     continue;
                 }
@@ -744,6 +769,7 @@ class AgregadoBatalla
                 $actor->effects()->dispararFinTurno($actor, $this);
                 $this->procesarDebilitamientos();
                 $this->turnManager->consumeAction($actor);
+                $observador?->alFinalizarTurno($this->turnManager->round(), $actor, $this);
             }
 
             // Efectos de fin de ronda + daño por estado
@@ -752,6 +778,8 @@ class AgregadoBatalla
             foreach ($this->turnManager->combatientesVivos() as $c) {
                 $this->subject->notifyEndTurn($c);
             }
+
+            $observador?->alFinalizarRonda($this->turnManager->round(), $this);
         }
 
         $winner = ! $this->team1->todosDebilitados() ? $this->team1->name : $this->team2->name;

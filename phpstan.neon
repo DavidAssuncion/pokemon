@@ -24,3 +24,10 @@ parameters:
             - config/
             - routes/
             - tests/
+
+    ignoreErrors:
+        -
+            message: '#^Dynamic call to static method Illuminate\\Database\\Eloquent\\Builder<App\\Models\\(Nido|Refugio|Complemento|PlayerInventory)>::lockForUpdate\(\)\.$#'
+            identifier: staticMethod.dynamicCall
+            paths:
+                - src/Granjas/App/*

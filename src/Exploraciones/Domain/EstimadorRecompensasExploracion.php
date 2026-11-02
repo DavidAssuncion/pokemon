@@ -22,8 +22,8 @@ use Src\Shared\Tipos\TipoPokemon;
  */
 final class EstimadorRecompensasExploracion
 {
-    /** Minutos entre encuentros base; mismo concepto que MINUTOS_POR_ENCUENTRO del handler (15). */
-    public const MINUTOS_POR_ENCUENTRO = 15;
+    /** Minutos entre encuentros base; fuente única en ReglasExploracion. */
+    public const MINUTOS_POR_ENCUENTRO = ReglasExploracion::MINUTOS_POR_ENCUENTRO;
 
     public const RANGO_MIN = 0.75;
 
@@ -33,8 +33,9 @@ final class EstimadorRecompensasExploracion
      * Frontera — estima sobre el shape previo del pool (arrays).
      *
      * @param  list<array{id:int, capture_rate:int, hatch:int|null, tipos:list<TipoPokemon>, stats:list<array{stat:int,effort:int}>, base_experience:int, evolution_chain_id:?int, species_id:int}>  $pool
-     * @param  array<int, list<int>>  $cadenas  especies por cadena (species_id como miembro)
-     * @return array{e:int, items:list<array{tipo:string,label:?string,min:int,max:int}>, por_horas:int, rango_min:float, rango_max:float, aviso:string}
+     * @param  array<int, array<int, int>|list<int>>  $cadenas  etapa por species_id o, en
+     *                                              cadenas sin aristas, lista legacy de especies
+     * @return array{e:int, items:list<array{tipo:string,label:string,min:int,max:int}>, por_horas:int, rango_min:float, rango_max:float, aviso:string}
      *
      * @deprecated Frontera (BC con tests unitarios que pasan arrays). El dominio
      * recomienda estimarDePool() con PoolHabitat.
@@ -58,8 +59,9 @@ final class EstimadorRecompensasExploracion
     }
 
     /**
-     * @param  array<int, list<int>>  $cadenas  especies por cadena (species_id como miembro)
-     * @return array{e:int, items:list<array{tipo:string,label:?string,min:int,max:int}>, por_horas:int, rango_min:float, rango_max:float, aviso:string}
+     * @param  array<int, array<int, int>|list<int>>  $cadenas  etapa por species_id o, en
+     *                                              cadenas sin aristas, lista legacy de especies
+     * @return array{e:int, items:list<array{tipo:string,label:string,min:int,max:int}>, por_horas:int, rango_min:float, rango_max:float, aviso:string}
      */
     public function estimarDePool(
         PoolHabitat $pool,
@@ -80,10 +82,18 @@ final class EstimadorRecompensasExploracion
 
         [$expPromedio, $familiaPromedio, $evPromedio] = $this->nominalesPromedio($pool, $nivelSalvaje, $cadenas);
 
+        // El factor económico (0.5) se aplica UNA sola vez sobre el nominal;
+        // la presentación y PersistirRecompensas no vuelven a descontar.
+        $factor = ReglasExploracion::FACTOR_RECOMPENSAS;
+
         $items = [
-            $this->item('familia', $e * $familiaPromedio, null),
-            $this->item('ev', $e * $evPromedio, null),
-            $this->item('tipo', $e * (int) floor(($expPromedio * 0.2) / 100), TipoPokemon::from($this->tipoDominante($pool))->label()),
+            $this->item('familia', $e * $familiaPromedio * $factor, 'Caramelos de familia'),
+            $this->item('ev', $e * $evPromedio * $factor, 'Caramelos EV'),
+            $this->item(
+                'tipo',
+                $e * (int) floor(($expPromedio * 0.2) / 100) * $factor,
+                'Caramelos de tipo '.TipoPokemon::from($this->tipoDominante($pool))->label(),
+            ),
         ];
 
         return [
@@ -97,7 +107,8 @@ final class EstimadorRecompensasExploracion
     }
 
     /**
-     * @param  array<int, list<int>>  $cadenas  especies por cadena (species_id como miembro)
+     * @param  array<int, array<int, int>|list<int>>  $cadenas  etapa por species_id o, en
+     *                                              cadenas sin aristas, lista legacy de especies
      * @return array{int, float, float} [expPromedio, familiaPromedio, evPromedio]
      */
     private function nominalesPromedio(PoolHabitat $pool, int $nivelSalvaje, array $cadenas): array
@@ -126,8 +137,8 @@ final class EstimadorRecompensasExploracion
         ];
     }
 
-    /** @return array{tipo: string, label: ?string, min: int, max: int} */
-    private function item(string $tipo, float $nominal, ?string $label): array
+    /** @return array{tipo: string, label: string, min: int, max: int} */
+    private function item(string $tipo, float $nominal, string $label): array
     {
         $min = (int) floor($nominal * self::RANGO_MIN);
         $max = (int) ceil($nominal * self::RANGO_MAX);
@@ -151,10 +162,11 @@ final class EstimadorRecompensasExploracion
     }
 
     /**
-     * Fase de la cadena a la que pertenece la especie: 1 si es el miembro base,
-     * 2 si es el segundo, etc. Si no hay datos de cadena se simplifica a 1.
+     * Fase de la cadena a la que pertenece la especie. Admite el mapa real de
+     * etapas (`species_id => etapa`) y la lista legacy de especies ordenadas.
+     * Si no hay datos de cadena se simplifica a 1.
      *
-     * @param  array<int, list<int>>  $cadenas
+     * @param  array<int, array<int, int>|list<int>>  $cadenas
      */
     private function fase(int $speciesId, ?int $evolutionChainId, array $cadenas): float
     {
@@ -163,6 +175,11 @@ final class EstimadorRecompensasExploracion
         }
 
         $miembros = $cadenas[$evolutionChainId];
+
+        if (! array_is_list($miembros)) {
+            return isset($miembros[$speciesId]) ? (float) $miembros[$speciesId] : 1.0;
+        }
+
         $indice = array_search($speciesId, $miembros, true);
 
         return $indice === false ? 1.0 : (float) ($indice + 1);

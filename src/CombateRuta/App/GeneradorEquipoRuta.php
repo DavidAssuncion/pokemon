@@ -6,16 +6,18 @@ namespace Src\CombateRuta\App;
 
 use App\Models\Habitat;
 use App\Models\Pokemon;
+use App\Support\ConfiguracionCombate;
 use Random\Randomizer;
 use Src\Battle\Domain\Collections\DatosPokemonBatallaCollection;
 use Src\Battle\Domain\Posicion;
 use Src\CombateEntrenadores\App\MapeadorPokemonBatalla;
+use Src\CombateEntrenadores\App\SelectorMovimientosRival;
 use Src\Exploraciones\Domain\ValueObjects\ColeccionPoolPonderado;
 use Src\Exploraciones\Domain\ValueObjects\PoolHabitat;
 use Src\Pokemon\Domain\Stats\DatosStats;
 use Src\Pokemon\Domain\Stats\DatosStatsCollection;
-use Src\Pokemon\Domain\Stats\GeneradorIvs;
 use Src\Shared\Domain\ClasificadorOfensivaDefensiva;
+use Src\Shared\Domain\PoliticaIvsEvs;
 use Src\Shared\Domain\ProbabilidadesShiny;
 
 /**
@@ -28,15 +30,26 @@ use Src\Shared\Domain\ProbabilidadesShiny;
  * - El aleatorio es inyectable para tests; por defecto usa azar real.
  * - Pool sin especies con peso (capture_rate <= 0) → retorna [].
  * - Clasifica cada pokémon con ClasificadorOfensivaDefensiva (determinista).
- * - Cada salvaje lleva todos sus movimientos de nivel disponibles (incluida
- *   su línea de preevoluciones); el mapper elimina los redundantes.
+ * - Cada salvaje lleva hasta 6 movimientos elegidos por `SelectorMovimientosRival`
+ *   con el perfil de su tier: nivel disponible + desbloqueos del jugador.
+ * - IV/EV se reparten con PoliticaIvsEvs según el nivel de ruta: 1 → Nulo,
+ *   2 → TopDos, 3 → Completo. El shiny en batalla usa el perfil de su tier;
+ *   al capturarlo, OtorgarRecompensasRuta le asigna IV 15.
  */
 final class GeneradorEquipoRuta
 {
+    private readonly SelectorMovimientosRival $selector;
+
+    private readonly ConfiguracionCombate $configuracion;
+
     public function __construct(
         private readonly MapeadorPokemonBatalla $mapeador,
         private readonly ClasificadorOfensivaDefensiva $clasificador,
+        ?SelectorMovimientosRival $selector = null,
+        ?ConfiguracionCombate $configuracion = null,
     ) {
+        $this->selector = $selector ?? new SelectorMovimientosRival($mapeador);
+        $this->configuracion = $configuracion ?? new ConfiguracionCombate();
     }
 
     /**
@@ -44,6 +57,7 @@ final class GeneradorEquipoRuta
      * @param  int|null  $nivelRival  nivel de stats del rival (nivel del jugador)
      * @param  callable(): float|null  $aleatorio  fuente [0,1) por slot
      * @param  callable(int): int|null  $aleatorioShiny  fuente 1..N del roll shiny (1 = shiny)
+     * @param  list<string>  $movimientosDesbloqueados  slugs desbloqueados por el jugador
      */
     public function generar(
         int $habitatId,
@@ -51,6 +65,7 @@ final class GeneradorEquipoRuta
         ?int $nivelRival = null,
         ?callable $aleatorio = null,
         ?callable $aleatorioShiny = null,
+        array $movimientosDesbloqueados = [],
     ): DatosPokemonBatallaCollection {
         $pool = $this->poolDelHabitat($habitatId, $nivel);
         if ($pool === []) {
@@ -79,12 +94,23 @@ final class GeneradorEquipoRuta
         ));
         $posiciones = $this->clasificador->generarFormacion($stats);
 
+        $perfilIvsEvs = PoliticaIvsEvs::perfilRuta($nivel);
+
         $equipo = [];
         foreach ($seleccionados as $i => $pokemon) {
             $shiny = ProbabilidadesShiny::esShiny(ProbabilidadesShiny::SALVAJE, $aleatorioShiny);
+            $statsBase = $stats->en($i) ?? new DatosStats(0, 0, 0, 0, 0, 0);
 
-            // El salvaje lleva todos los movimientos de nivel disponibles
-            // para su nivel (incluida su línea de preevoluciones).
+            // El salvaje lleva hasta 6 movimientos: los disponibles por nivel
+            // más los que el jugador haya desbloqueado y su especie aprenda.
+            $perfilMoveset = $this->configuracion->paraRuta($nivel, $i + 1);
+            $movimientos = $this->selector->seleccionar(
+                $pokemon,
+                $nivelRival ?? $nivel,
+                $perfilMoveset,
+                $movimientosDesbloqueados,
+            );
+
             $equipo[] = $this->mapeador->desdePokemon(
                 pokemon: $pokemon,
                 id: "ruta_{$habitatId}_{$nivel}_{$i}",
@@ -92,7 +118,9 @@ final class GeneradorEquipoRuta
                 posicion: $posiciones->en($i) ?? Posicion::VANGUARDIA,
                 nivel: $nivelRival,
                 shiny: $shiny,
-                ivs: $shiny ? GeneradorIvs::maximos() : GeneradorIvs::aleatorios(),
+                ivs: PoliticaIvsEvs::ivs($perfilIvsEvs, $statsBase),
+                evs: PoliticaIvsEvs::evs($perfilIvsEvs, $statsBase),
+                movimientos: $movimientos,
             );
         }
 

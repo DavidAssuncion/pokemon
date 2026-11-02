@@ -5,15 +5,16 @@ declare(strict_types=1);
 namespace Src\Gimnasios\App;
 
 use App\Models\Pokemon;
+use App\Support\ConfiguracionCombate;
 use Src\Battle\Domain\Collections\DatosPokemonBatallaCollection;
 use Src\Battle\Domain\Collections\MovimientoBatallaCollection;
 use Src\Battle\Domain\DatosPokemonBatalla;
 use Src\Battle\Domain\Posicion;
 use Src\CombateEntrenadores\App\MapeadorPokemonBatalla;
+use Src\CombateEntrenadores\App\SelectorMovimientosRival;
 use Src\Gimnasios\Domain\DataTransferObjects\EquipoEtapaGimnasio;
-use Src\Gimnasios\Domain\EvsRangoEntrenador;
-use Src\Shared\Domain\IvsRangoEntrenador;
-use Src\Shared\Tipos\TiposCollection;
+use Src\Shared\Domain\PerfilIvsEvs;
+use Src\Shared\Domain\PoliticaIvsEvs;
 
 /**
  * Construye el equipo rival de un gimnasio a partir del EquipoEtapaGimnasio
@@ -24,31 +25,44 @@ use Src\Shared\Tipos\TiposCollection;
  * Las posiciones se respetan literalmente del DTO: vanguardia → VANGUARDIA,
  * retaguardia → RETAGUARDIA (no se reclasifica por stats).
  *
- * Los EVs y los IVs se reparten según los stats base del pokémon: los 2 mejores
- * stats reciben $evPrincipal/$ivPrincipal y los 4 restantes $evResto/$ivResto.
+ * Los EVs y los IVs se reparten con PoliticaIvsEvs según el perfil de dificultad
+ * del gimnasio (top-N por stats base). Sin perfil explícito se usa TopUno: máximos
+ * de IV/EV en el stat con mayor valor base y cero en el resto.
  */
 final class GeneradorPokemonGimnasio
 {
+    private readonly SelectorMovimientosRival $selector;
+
+    private readonly ConfiguracionCombate $configuracion;
+
     public function __construct(
         private readonly MapeadorPokemonBatalla $mapeador,
+        ?SelectorMovimientosRival $selector = null,
+        ?ConfiguracionCombate $configuracion = null,
     ) {
+        $this->selector = $selector ?? new SelectorMovimientosRival($mapeador);
+        $this->configuracion = $configuracion ?? new ConfiguracionCombate();
     }
 
+    /**
+     * @param  list<string>  $movimientosDesbloqueados  slugs desbloqueados por el jugador
+     */
     public function generar(
         EquipoEtapaGimnasio $equipo,
         int $nivelRival,
-        int $evPrincipal = 0,
-        int $evResto = 0,
-        int $ivPrincipal = 0,
-        int $ivResto = 0,
+        ?PerfilIvsEvs $perfil = null,
+        int $indiceGimnasio = 1,
+        bool $esLider = false,
+        array $movimientosDesbloqueados = [],
     ): DatosPokemonBatallaCollection {
+        $perfil ??= PerfilIvsEvs::TopUno;
         $equipoRival = [];
         $indice = 0;
 
         foreach ($this->porPosicion($equipo) as [$posicion, $pokemon]) {
             $statsBase = $this->mapeador->statsDe($pokemon);
-            $evs = EvsRangoEntrenador::distribuir($evPrincipal, $evResto, $statsBase);
-            $ivs = IvsRangoEntrenador::distribuir($ivPrincipal, $ivResto, $statsBase);
+            $evs = PoliticaIvsEvs::evs($perfil, $statsBase);
+            $ivs = PoliticaIvsEvs::ivs($perfil, $statsBase);
 
             $equipoRival[] = new DatosPokemonBatalla(
                 id: "gimnasio_rival_{$indice}",
@@ -63,9 +77,12 @@ final class GeneradorPokemonGimnasio
                 posicion: $posicion,
                 moves: $this->movimientosDe(
                     $pokemon,
-                    $this->mapeador->tiposDe($pokemon),
                     $nivelRival,
+                    $indice + 1,
+                    $indiceGimnasio,
+                    $esLider,
                     $equipo->movimientosDe((int) $pokemon->species_id),
+                    $movimientosDesbloqueados,
                 )->all(),
                 shiny: false,
                 iconName: '',
@@ -178,13 +195,21 @@ final class GeneradorPokemonGimnasio
     }
 
     /**
+     * Set manual con prioridad absoluta; si no hay set (o queda vacío tras la
+     * depuración), el selector compone hasta 6 movimientos con el perfil del
+     * gimnasio.
+     *
      * @param  list<string>  $movimientosManuales
+     * @param  list<string>  $movimientosDesbloqueados
      */
     private function movimientosDe(
         Pokemon $pokemon,
-        TiposCollection $tipos,
         int $nivel,
+        int $slot,
+        int $indiceGimnasio,
+        bool $esLider,
         array $movimientosManuales = [],
+        array $movimientosDesbloqueados = [],
     ): MovimientoBatallaCollection {
         if ($movimientosManuales !== []) {
             $movimientos = $this->mapeador->depurarMovimientos(
@@ -195,6 +220,13 @@ final class GeneradorPokemonGimnasio
             }
         }
 
-        return $this->mapeador->movimientosDeConFallback($pokemon, $tipos, null, $nivel);
+        $perfilMoveset = $this->configuracion->paraGimnasio($indiceGimnasio, $esLider, $slot);
+
+        return $this->selector->seleccionar(
+            $pokemon,
+            $nivel,
+            $perfilMoveset,
+            $movimientosDesbloqueados,
+        );
     }
 }

@@ -16,6 +16,7 @@ use App\Models\TeamMember;
 use App\Models\User;
 use App\Support\BattleSessionService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Bus;
 use PHPUnit\Framework\Attributes\Test;
 use Src\Battle\Domain\AgregadoBatalla;
 use Src\Battle\Domain\EquipoBatalla;
@@ -65,6 +66,36 @@ class PresentadorRutaTest extends TestCase
         $this->assertSame([], $resultado['rewards']);
     }
 
+    #[Test]
+    public function nivel_dos_aplica_el_multiplicador_de_dificultad(): void
+    {
+        Bus::fake();
+        $this->crearPokemonRival(301, baseExperience: 6400);
+
+        [$battle, $battleId] = $this->crearBatalla(['tipo' => 'ruta', 'habitat_id' => 10, 'nivel' => 2, 'user_id' => (int) $this->user->id, 'team_id' => (int) $this->team->id]);
+
+        $resultado = PresentadorResultadoBatalla::procesar($battle, $battleId, app(BattleSessionService::class));
+
+        $caramelosTipo = $resultado['rewards']['caramelos_tipo'];
+        $this->assertCount(1, $caramelosTipo);
+        $this->assertSame(97, $caramelosTipo[0]['cantidad']);
+    }
+
+    #[Test]
+    public function nivel_uno_mantiene_el_multiplicador_base(): void
+    {
+        Bus::fake();
+        $this->crearPokemonRival(301, baseExperience: 6400);
+
+        [$battle, $battleId] = $this->crearBatalla(['tipo' => 'ruta', 'habitat_id' => 10, 'nivel' => 1, 'user_id' => (int) $this->user->id, 'team_id' => (int) $this->team->id]);
+
+        $resultado = PresentadorResultadoBatalla::procesar($battle, $battleId, app(BattleSessionService::class));
+
+        $caramelosTipo = $resultado['rewards']['caramelos_tipo'];
+        $this->assertCount(1, $caramelosTipo);
+        $this->assertSame(51, $caramelosTipo[0]['cantidad']);
+    }
+
     private function crearBatalla(array $meta): array
     {
         $pokemonJugador = $this->crearPokemonBatalla(201);
@@ -108,14 +139,14 @@ class PresentadorRutaTest extends TestCase
         );
     }
 
-    private function crearPokemonRival(int $id): Pokemon
+    private function crearPokemonRival(int $id, int $baseExperience = 64): Pokemon
     {
         $pokemon = Pokemon::create([
             'id' => $id,
             'name' => 'rival-'.$id,
             'species_id' => $id,
             'capture_rate' => 45,
-            'base_experience' => 64,
+            'base_experience' => $baseExperience,
             'height' => 7,
             'weight' => 69,
         ]);

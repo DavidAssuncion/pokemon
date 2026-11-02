@@ -39,9 +39,11 @@ class HabitatsController extends Controller
 
     public function index(): View
     {
-        $provincias = $this->obtenerHabitatsPorProvincia->handle()->toArray();
+        $provincias = $this->obtenerHabitatsPorProvincia->handle();
+        //Quitar Vacio de las provincias, ya que no tiene hábitats asignados y no se quiere mostrar en la vista.
+        $provincias = $provincias->filter(fn ($provincia) => $provincia->name !== 'Vacio');
 
-        return view('habitats.index', ['provincias' => $provincias]);
+        return view('habitats.index', ['provincias' => $provincias->toArray()]);
     }
 
     public function show(Request $request, int $id): View
@@ -50,23 +52,14 @@ class HabitatsController extends Controller
 
         $exploracionesActivas = ExploracionActiva::where('habitat_id', $id)
             ->whereNull('regreso')
-            ->with('reclutado')
+            ->with('reclutado.pokemon')
             ->get();
 
-        // Equipos cuyo miembro está en exploración activa (bloqueo de envío).
-        $expMap = ExploracionActiva::whereNull('regreso')
-            ->get()
-            ->keyBy('reclutado_id');
-        $reclutadoIds = $expMap->keys()->toArray();
-        $equiposEnExploracion = $reclutadoIds !== []
-            ? \App\Models\TeamMember::whereIn('pokemon_id', $reclutadoIds)
-                ->get()
-                ->map(fn (\App\Models\TeamMember $miembro) => [
-                    'equipo_id' => $miembro->team_id,
-                    'habitat_id' => $expMap->get($miembro->pokemon_id)?->habitat_id,
-                    'habitat_name' => $expMap->get($miembro->pokemon_id)?->habitat?->name ?? 'Desconocido',
-                ])
-            : collect();
+        // La exploración es individual: se exponen los IDs de los reclutados
+        // que están explorando para que la vista bloquee solo a esos.
+        $reclutadosEnExploracion = ExploracionActiva::whereNull('regreso')
+            ->pluck('reclutado_id')
+            ->all();
 
         // Get sighted Pokemon IDs from Pokedex for this habitat
         $habitatData = $this->obtenerHabitatDetalle->handle($id)->toArray();
@@ -89,7 +82,10 @@ class HabitatsController extends Controller
             'habitat' => $habitatData,
             'teams' => $this->obtenerEquipos->run()->all(),
             'exploracionesActivas' => $exploracionesActivas,
-            'equiposEnExploracion' => $equiposEnExploracion,
+            // @deprecated Compatibilidad temporal con la vista actual; se
+            // sustituirá por `reclutadosEnExploracion` en el bloque de frontend.
+            'equiposEnExploracion' => collect(),
+            'reclutadosEnExploracion' => $reclutadosEnExploracion,
             'sightedPokemonIds' => $sightedPokemonIds,
             'unlockAll' => $unlockAll,
         ]);

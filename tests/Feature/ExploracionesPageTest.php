@@ -167,6 +167,15 @@ class ExploracionesPageTest extends TestCase
         $this->assertSame('explorando', $activa['estado']);
         $this->assertSame(25, $activa['progreso']);
 
+        // Personalidad: explorador, diario y fase/tiempo restante (contrato aditivo).
+        $this->assertSame('ida', $activa['fase']);
+        $this->assertIsInt($activa['restante_min']);
+        $this->assertGreaterThan(170, $activa['restante_min']);
+        $this->assertMatchesRegularExpression('/^\d+ h( \d+ min)?$/', $activa['restante_label']);
+        $this->assertSame('Equipo Test', $activa['explorador']['nombre']);
+        $this->assertSame(3, $activa['diario']['total']);
+        $this->assertSame($activa['diario']['eventos'], $activa['bitacora']);
+
         $bitacora = $activa['bitacora'];
         $this->assertCount(3, $bitacora);
         $this->assertSame('bulbasaur', $bitacora[0]['nombre']);
@@ -210,6 +219,48 @@ class ExploracionesPageTest extends TestCase
         $this->assertSame(0, $activas[0]['progreso']);
     }
 
+    public function test_index_renderiza_diario_con_candy_imagen_detalle_derrota_y_reason_texto(): void
+    {
+        $pokemons = $this->crearPokemons();
+
+        $this->crearExploracion([
+            'eventos' => [
+                'bitacora' => [
+                    ['tipo' => 'caramelo_familia', 'pokemon_id' => $pokemons['charmander']->id, 'nombre' => 'charmander', 'cantidad' => 2, 'timestamp' => '2026-08-27T12:40:00Z'],
+                    [
+                        'tipo' => 'encuentro',
+                        'subtype' => 'normal',
+                        'pokemon_id' => $pokemons['bulbasaur']->id,
+                        'nombre' => 'bulbasaur',
+                        'resolucion' => 'derrota',
+                        'hp_inicial' => 39,
+                        'hp_max' => 39,
+                        'hp_final' => 0,
+                        'rival_hp_inicial' => 34,
+                        'rival_hp_final' => 12,
+                        'rival_hp_max' => 34,
+                        'log' => ['--- Ronda 1 ---', '--- Ronda 2 ---', '--- Ronda 3 ---', '--- Ronda 4 ---'],
+                        'timestamp' => '2026-08-27T12:45:00Z',
+                    ],
+                    ['tipo' => 'derrota', 'reason' => 'explorador_debilitado', 'timestamp' => '2026-08-27T12:50:00Z'],
+                ],
+                'ultimo_procesado' => now()->toIso8601String(),
+            ],
+        ]);
+
+        $response = $this->get('/exploraciones');
+
+        $response->assertOk();
+        // candy_imagen se resuelve a partir del pokemon_id de la familia.
+        $response->assertSee('/images/iconos_webp/'.$pokemons['charmander']->id.'.webp', false);
+        $response->assertSee('Caramelos de', false);
+        // detalle_derrota se imprime tal cual.
+        $response->assertSee('Entró con 39/39 PS tras 4 rondas; a bulbasaur le quedaban 12/34 PS.', false);
+        // reason_texto humano; el motivo técnico no se muestra en crudo.
+        $response->assertSee('se quedó sin PS', false);
+        $response->assertDontSee('explorador_debilitado', false);
+    }
+
     public function test_terminadas_incluyen_resumen_de_resultado(): void
     {
         $pokemons = $this->crearPokemons();
@@ -231,12 +282,15 @@ class ExploracionesPageTest extends TestCase
                         ['stat' => 2, 'cantidad' => 4],
                     ],
                     'exp' => 250,
+                    'exp_reclutado' => 125,
                 ],
             ],
         ]);
 
+        $response = $this->get('/exploraciones');
+
         /** @var list<array<string, mixed>> $terminadas */
-        $terminadas = $this->get('/exploraciones')->viewData('terminadas');
+        $terminadas = $response->viewData('terminadas');
         $this->assertCount(1, $terminadas);
         $this->assertSame('Equipo Test', $terminadas[0]['equipo']);
         $this->assertSame('Bosque', $terminadas[0]['habitat']);
@@ -261,6 +315,242 @@ class ExploracionesPageTest extends TestCase
             [$pokemons['bulbasaur']->id, $pokemons['bulbasaur']->id],
             $terminadas[0]['derrotados'],
         );
+
+        // Personalidad: explorador, diario, hitos y EXP del reclutado.
+        $this->assertSame('Equipo Test', $terminadas[0]['explorador']['nombre']);
+        $this->assertArrayHasKey('diario', $terminadas[0]);
+        $this->assertSame(0, $terminadas[0]['diario']['total']);
+        $this->assertSame(125, $terminadas[0]['exp_reclutado']);
+        $this->assertSame(125, $terminadas[0]['vista']['exp_reclutado']);
+        $this->assertIsArray($terminadas[0]['hitos']);
+        $this->assertSame($terminadas[0]['hitos'], $terminadas[0]['vista']['hitos']);
+
+        // Capturados y caramelos se agrupan bajo la columna de obtenidas.
+        $response->assertSee('Recompensas obtenidas', false);
+        $response->assertSee('Capturados', false);
+    }
+
+    public function test_terminada_expone_objetos_perdidos_en_resultado_y_vista(): void
+    {
+        $base = Pokemon::create([
+            'id' => 7001,
+            'name' => 'bulbasaur',
+            'species_id' => 0,
+            'capture_rate' => 45,
+            'base_experience' => 64,
+            'height' => 7,
+            'weight' => 69,
+            'evolution_chain_id' => 51,
+        ]);
+
+        $this->crearExploracion([
+            'regreso' => now()->subMinutes(5),
+            'eventos' => [
+                'objetos_perdidos' => [
+                    ['tipo' => 'familia', 'id' => 51, 'label' => 'bulbasaur', 'cantidad_perdida' => 4],
+                    ['tipo' => 'ev', 'id' => 2, 'label' => 'Ataque', 'cantidad_perdida' => 3],
+                ],
+                'derrota' => [
+                    'reason' => 'explorador_debilitado',
+                    'timestamp' => now()->toIso8601String(),
+                ],
+                'resultado' => [
+                    'capturados' => [],
+                    'caramelos_familia' => [],
+                    'caramelos_ev' => [],
+                    'caramelos_tipo' => [],
+                    'exp' => 10,
+                ],
+            ],
+        ]);
+
+        $response = $this->get('/exploraciones');
+        $response->assertOk();
+
+        /** @var list<array<string, mixed>> $terminadas */
+        $terminadas = $response->viewData('terminadas');
+        $this->assertCount(1, $terminadas);
+
+        $perdidas = [
+            ['tipo' => 'familia', 'id' => 51, 'label' => 'bulbasaur', 'cantidad_perdida' => 4],
+            ['tipo' => 'ev', 'id' => 2, 'label' => 'Ataque', 'cantidad_perdida' => 3],
+        ];
+
+        // El contrato persistido no cambia: resultado conserva solo las claves
+        // guardadas en eventos['objetos_perdidos'].
+        $this->assertEquals($perdidas, $terminadas[0]['resultado']['objetos_perdidos']);
+
+        // La vista añade tipo_label e imagen resueltos en presentación.
+        // eventos es jsonb en pgsql y no conserva el orden de claves.
+        $this->assertSame([
+            [
+                'tipo' => 'familia',
+                'tipo_label' => 'Familia',
+                'id' => 51,
+                'label' => 'bulbasaur',
+                'imagen' => "/images/candy_pokemon/{$base->id}.webp",
+                'cantidad_perdida' => 4,
+            ],
+            [
+                'tipo' => 'ev',
+                'tipo_label' => 'EV',
+                'id' => 2,
+                'label' => 'Ataque',
+                'imagen' => '/images/candy_ev/atk.webp',
+                'cantidad_perdida' => 3,
+            ],
+        ], $terminadas[0]['vista']['objetos_perdidos']);
+
+        $this->assertSame(
+            'Tu explorador cayó debilitado en combate y perdió parte del botín.',
+            $terminadas[0]['vista']['motivo_perdida'],
+        );
+
+        $this->assertTrue($terminadas[0]['vista']['tiene_perdidas']);
+        $this->assertFalse($terminadas[0]['vista']['tiene_obtenidas']);
+        $this->assertSame('lg:col-span-3', $terminadas[0]['vista']['span_perdidas']);
+        $this->assertSame('', $terminadas[0]['vista']['span_obtenidas']);
+
+        // La vista renderiza la columna de pérdidas una sola vez, con nombre,
+        // imagen, cantidad y el motivo de la pérdida.
+        $this->assertSame(1, substr_count($response->getContent(), 'Recompensas perdidas'));
+        $this->assertSame(
+            1,
+            substr_count($response->getContent(), 'Tu explorador cayó debilitado en combate y perdió parte del botín.'),
+        );
+        $response->assertSee('grayscale', false);
+        $response->assertSee('Familia', false);
+        $response->assertSee('bulbasaur', false);
+        $response->assertSee("/images/candy_pokemon/{$base->id}.webp", false);
+        $response->assertSee('×4', false);
+        $response->assertSee('Ataque', false);
+        $response->assertSee('/images/candy_ev/atk.webp', false);
+        $response->assertSee('×3', false);
+        // Sin capturados ni caramelos no hay columna de recompensas obtenidas.
+        $response->assertDontSee('Recompensas obtenidas', false);
+    }
+
+    public function test_terminada_resuelve_nombre_e_imagen_de_perdidas_sin_label(): void
+    {
+        $base = Pokemon::create([
+            'id' => 7001,
+            'name' => 'bulbasaur',
+            'species_id' => 0,
+            'capture_rate' => 45,
+            'base_experience' => 64,
+            'height' => 7,
+            'weight' => 69,
+            'evolution_chain_id' => 51,
+        ]);
+
+        Pokemon::create([
+            'id' => 7002,
+            'name' => 'ivysaur',
+            'species_id' => 2,
+            'capture_rate' => 45,
+            'base_experience' => 142,
+            'height' => 10,
+            'weight' => 130,
+            'evolution_chain_id' => 51,
+        ]);
+
+        Pokemon::create([
+            'id' => 1,
+            'name' => 'pikachu',
+            'species_id' => 25,
+            'capture_rate' => 190,
+            'base_experience' => 112,
+            'height' => 4,
+            'weight' => 60,
+            'evolution_chain_id' => 10,
+        ]);
+
+        $this->crearExploracion([
+            'regreso' => now()->subMinutes(5),
+            'eventos' => [
+                'objetos_perdidos' => [
+                    ['tipo' => 'familia', 'id' => 51, 'label' => null, 'cantidad_perdida' => 2],
+                    ['tipo' => 'ev', 'id' => 3, 'label' => null, 'cantidad_perdida' => 1],
+                    ['tipo' => 'tipo', 'id' => 'roca', 'label' => 'Roca', 'cantidad_perdida' => 2],
+                    ['tipo' => 'captura', 'id' => 1, 'label' => null, 'cantidad_perdida' => 1],
+                ],
+                'derrota' => [
+                    'reason' => 'explorador_debilitado',
+                    'timestamp' => now()->toIso8601String(),
+                ],
+                'resultado' => [
+                    'capturados' => [],
+                    'caramelos_familia' => [],
+                    'caramelos_ev' => [],
+                    'caramelos_tipo' => [],
+                    'exp' => 10,
+                ],
+            ],
+        ]);
+
+        $response = $this->get('/exploraciones');
+        $response->assertOk();
+
+        /** @var list<array<string, mixed>> $terminadas */
+        $terminadas = $response->viewData('terminadas');
+        $this->assertCount(1, $terminadas);
+
+        $this->assertSame([
+            [
+                'tipo' => 'familia',
+                'tipo_label' => 'Familia',
+                'id' => 51,
+                'label' => 'bulbasaur',
+                'imagen' => "/images/candy_pokemon/{$base->id}.webp",
+                'cantidad_perdida' => 2,
+            ],
+            [
+                'tipo' => 'ev',
+                'tipo_label' => 'EV',
+                'id' => 3,
+                'label' => 'Defensa',
+                'imagen' => '/images/candy_ev/def.webp',
+                'cantidad_perdida' => 1,
+            ],
+            [
+                'tipo' => 'tipo',
+                'tipo_label' => 'Tipo',
+                'id' => 'roca',
+                'label' => 'Roca',
+                'imagen' => '/images/candy_type/roca.webp',
+                'cantidad_perdida' => 2,
+            ],
+            [
+                'tipo' => 'captura',
+                'tipo_label' => 'Captura',
+                'id' => 1,
+                'label' => 'pikachu',
+                'imagen' => '/images/iconos_webp/1.webp',
+                'cantidad_perdida' => 1,
+            ],
+        ], $terminadas[0]['vista']['objetos_perdidos']);
+
+        $this->assertSame(
+            'Tu explorador cayó debilitado en combate y perdió parte del botín.',
+            $terminadas[0]['vista']['motivo_perdida'],
+        );
+
+        $this->assertTrue($terminadas[0]['vista']['tiene_perdidas']);
+        $this->assertFalse($terminadas[0]['vista']['tiene_obtenidas']);
+        $this->assertSame('lg:col-span-3', $terminadas[0]['vista']['span_perdidas']);
+        $this->assertSame('', $terminadas[0]['vista']['span_obtenidas']);
+
+        // Los datos históricos sin label se resuelven al renderizar: se muestra
+        // el nombre y la imagen, nunca el ID crudo como texto principal.
+        $response->assertSee('Recompensas perdidas', false);
+        $response->assertSee('grayscale', false);
+        $response->assertSee('Familia', false);
+        $response->assertSee('bulbasaur', false);
+        $response->assertSee("/images/candy_pokemon/{$base->id}.webp", false);
+        $response->assertSee('Defensa', false);
+        $response->assertSee('/images/candy_ev/def.webp', false);
+        $response->assertSee('×2', false);
+        $response->assertDontSee('familia 51', false);
     }
 
     public function test_terminada_sin_resultado_devuelve_resumen_vacio(): void
@@ -280,6 +570,7 @@ class ExploracionesPageTest extends TestCase
             'resultado' => 'exito',
             'duration_real' => 0,
             'tiempo_perdido' => 0,
+            'objetos_perdidos' => [],
             'incidentes' => [
                 'encuentros' => 0,
                 'victorias' => 0,
@@ -289,6 +580,79 @@ class ExploracionesPageTest extends TestCase
             ],
         ], $terminadas[0]['resultado']);
         $this->assertSame([], $terminadas[0]['derrotados']);
+        $this->assertSame(0, $terminadas[0]['exp_reclutado']);
+        $this->assertSame([], $terminadas[0]['hitos']);
+        $this->assertNull($terminadas[0]['vista']['motivo_perdida']);
+        $this->assertFalse($terminadas[0]['vista']['tiene_perdidas']);
+        $this->assertFalse($terminadas[0]['vista']['tiene_obtenidas']);
+        $this->assertSame('', $terminadas[0]['vista']['span_perdidas']);
+        $this->assertSame('', $terminadas[0]['vista']['span_obtenidas']);
+    }
+
+    public function test_terminada_con_perdidas_sin_derrota_usa_motivo_generico(): void
+    {
+        $this->crearExploracion([
+            'regreso' => now()->subMinutes(5),
+            'eventos' => [
+                'objetos_perdidos' => [
+                    ['tipo' => 'familia', 'id' => 51, 'label' => 'bulbasaur', 'cantidad_perdida' => 1],
+                ],
+                'resultado' => [
+                    'capturados' => [],
+                    'caramelos_familia' => [],
+                    'caramelos_ev' => [],
+                    'caramelos_tipo' => [],
+                    'exp' => 10,
+                ],
+            ],
+        ]);
+
+        $response = $this->get('/exploraciones');
+        $response->assertOk();
+
+        /** @var list<array<string, mixed>> $terminadas */
+        $terminadas = $response->viewData('terminadas');
+        $this->assertCount(1, $terminadas);
+        $this->assertSame(
+            'La expedición terminó en derrota y se perdió parte del botín.',
+            $terminadas[0]['vista']['motivo_perdida'],
+        );
+        $response->assertSee('La expedición terminó en derrota y se perdió parte del botín.', false);
+    }
+
+    public function test_terminada_con_perdidas_y_reason_vacio_usa_motivo_generico(): void
+    {
+        $this->crearExploracion([
+            'regreso' => now()->subMinutes(5),
+            'eventos' => [
+                'objetos_perdidos' => [
+                    ['tipo' => 'familia', 'id' => 51, 'label' => 'bulbasaur', 'cantidad_perdida' => 1],
+                ],
+                'derrota' => [
+                    'reason' => '   ',
+                    'timestamp' => now()->toIso8601String(),
+                ],
+                'resultado' => [
+                    'capturados' => [],
+                    'caramelos_familia' => [],
+                    'caramelos_ev' => [],
+                    'caramelos_tipo' => [],
+                    'exp' => 10,
+                ],
+            ],
+        ]);
+
+        $response = $this->get('/exploraciones');
+        $response->assertOk();
+
+        /** @var list<array<string, mixed>> $terminadas */
+        $terminadas = $response->viewData('terminadas');
+        $this->assertCount(1, $terminadas);
+        $this->assertSame(
+            'La expedición terminó en derrota y se perdió parte del botín.',
+            $terminadas[0]['vista']['motivo_perdida'],
+        );
+        $response->assertSee('La expedición terminó en derrota y se perdió parte del botín.', false);
     }
 
     public function test_activas_no_incluyen_las_completadas(): void
@@ -308,6 +672,8 @@ class ExploracionesPageTest extends TestCase
         // Regresión bug de zona horaria: el return_time '12:50' del usuario se interpretaba
         // como hora UTC (2h tarde). Con la zona de la app en Europe/Madrid la hora_limite
         // debe representar HOY 12:50 en Madrid (UTC+2 en verano → 10:50Z).
+        $this->travelTo(Carbon::parse('2026-08-28 10:00:00'));
+
         $province = Province::create(['name' => 'Kanto']);
         $habitat = Habitat::create(['name' => 'Bosque', 'province_id' => $province->id]);
         $reclutado = $this->crearReclutado();

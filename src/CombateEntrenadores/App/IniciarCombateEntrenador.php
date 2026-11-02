@@ -5,12 +5,13 @@ declare(strict_types=1);
 namespace Src\CombateEntrenadores\App;
 
 use App\Models\Team;
+use App\Support\CargarMovimientosDesbloqueados;
 use App\Support\CreadorBatallaSesion;
 use Src\CombateEntrenadores\Domain\Exceptions\EntrenadorDerrotadoHoy;
 use Src\CombateEntrenadores\Domain\Repositories\EntrenadorLogRepositoryInterface;
 use Src\CombateEntrenadores\Domain\ValueObjects\FormacionEquipo;
 use Src\Shared\Domain\Exceptions\ViolacionReglaNegocio;
-use Src\Shared\Domain\IvsRangoEntrenador;
+use Src\Shared\Domain\PoliticaIvsEvs;
 
 /**
  * Crea una batalla contra un entrenador del hábitat y la guarda en sesión
@@ -25,6 +26,7 @@ class IniciarCombateEntrenador
         private readonly ConstruirEquipoJugador $construirEquipoJugador,
         private readonly EntrenadorLogRepositoryInterface $logRepository,
         private readonly CreadorBatallaSesion $creadorBatalla,
+        private readonly CargarMovimientosDesbloqueados $cargarMovimientos,
     ) {
     }
 
@@ -52,7 +54,9 @@ class IniciarCombateEntrenador
 
         $nivelRival = $nivelJugador;
 
-        $rangoIvs = IvsRangoEntrenador::rangoPorNivelEntrenador($nivel);
+        $perfil = PoliticaIvsEvs::perfilEntrenador($nivel);
+
+        $movimientosDesbloqueados = $this->cargarMovimientos->para($userId);
 
         $datosRival = $this->generadorEquipo->generar(
             $habitatId,
@@ -60,8 +64,8 @@ class IniciarCombateEntrenador
             $trainerIndex,
             $fecha,
             $nivelRival,
-            $rangoIvs->principal,
-            $rangoIvs->resto,
+            perfil: $perfil,
+            movimientosDesbloqueados: $movimientosDesbloqueados,
         );
 
         if ($datosRival->isEmpty()) {

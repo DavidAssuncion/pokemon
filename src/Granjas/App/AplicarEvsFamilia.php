@@ -6,10 +6,12 @@ namespace Src\Granjas\App;
 
 use App\Enums\StatEnum;
 use App\Models\Reclutado;
+use Src\Shared\Domain\ReglasEv;
 
 /**
  * Aplica el delta de EV de un complemento a todos los reclutados de la
- * familia (incluidos los que ya existían). Cap por stat: 512.
+ * familia (incluidos los que ya existían). Cap por stat: 255. Los EV de
+ * legado superiores a 255 se conservan intactos.
  */
 final class AplicarEvsFamilia
 {
@@ -27,7 +29,12 @@ final class AplicarEvsFamilia
             ->get()
             ->each(function (Reclutado $reclutado) use ($clave, $delta): void {
                 $actual = $reclutado->evs->valorDe($clave);
-                $nuevo = max(0.0, min(512.0, $actual + $delta));
+
+                if ($actual >= ReglasEv::TOPE) {
+                    return;
+                }
+
+                $nuevo = (float) min(ReglasEv::TOPE, max(0.0, $actual + $delta));
 
                 if ($nuevo === $actual) {
                     return;

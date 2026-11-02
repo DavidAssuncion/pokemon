@@ -6,6 +6,7 @@ namespace Tests\Feature;
 
 use App\Models\ExploracionActiva;
 use App\Models\Habitat;
+use App\Models\PlayerInventory;
 use App\Models\Pokemon;
 use App\Models\Province;
 use App\Models\Reclutado;
@@ -101,7 +102,7 @@ class ReclutadoLiberarTest extends TestCase
         $this->assertDatabaseMissing('reclutados', ['id' => $reclutado->id]);
     }
 
-    public function test_liberar_reclutado_en_equipo_en_exploracion_devuelve_422(): void
+    public function test_liberar_reclutado_en_exploracion_devuelve_422(): void
     {
         $user = $this->actingAsUser();
         $team = Team::create(['name' => 'Explorando', 'user_id' => $user->id]);
@@ -118,9 +119,71 @@ class ReclutadoLiberarTest extends TestCase
         $response = $this->deleteJson("/reclutado/{$reclutado->id}");
 
         $response->assertUnprocessable()
-            ->assertJson(['error' => 'No se puede liberar un pokémon de un equipo en exploración']);
+            ->assertJson(['error' => 'No se puede liberar un Pokémon en exploración']);
         $this->assertDatabaseHas('team_members', ['id' => $member->id]);
         $this->assertDatabaseHas('reclutados', ['id' => $reclutado->id]);
+    }
+
+    public function test_companero_del_mismo_equipo_puede_liberarse_aunque_otro_explore(): void
+    {
+        $user = $this->actingAsUser();
+        $team = Team::create(['name' => 'Explorando', 'user_id' => $user->id]);
+        $pokemonExplorador = $this->createPokemon(1);
+        $pokemonCompanero = $this->createPokemon(2);
+        $explorador = $this->createReclutado($user->id, $pokemonExplorador->id, 'Explorador');
+        $companero = $this->createReclutado($user->id, $pokemonCompanero->id, 'Companero');
+        TeamMember::create([
+            'team_id' => $team->id,
+            'pokemon_id' => $explorador->id,
+            'slot' => 1,
+            'behavior' => 'VANGUARDIA',
+        ]);
+        $memberCompanero = TeamMember::create([
+            'team_id' => $team->id,
+            'pokemon_id' => $companero->id,
+            'slot' => 2,
+            'behavior' => 'COMBATIENTE',
+        ]);
+        $this->createExploracionActiva($user->id, $explorador->id);
+
+        $response = $this->deleteJson("/reclutado/{$companero->id}");
+
+        $response->assertOk()->assertJson(['success' => true]);
+        $this->assertDatabaseMissing('team_members', ['id' => $memberCompanero->id]);
+        $this->assertDatabaseMissing('reclutados', ['id' => $companero->id]);
+        $this->assertDatabaseHas('reclutados', ['id' => $explorador->id]);
+    }
+
+    public function test_companero_del_mismo_equipo_puede_recibir_caramelos_ev_aunque_otro_explore(): void
+    {
+        $user = $this->actingAsUser();
+        $team = Team::create(['name' => 'Explorando', 'user_id' => $user->id]);
+        $pokemonExplorador = $this->createPokemon(1);
+        $pokemonCompanero = $this->createPokemon(2);
+        $explorador = $this->createReclutado($user->id, $pokemonExplorador->id, 'Explorador');
+        $companero = $this->createReclutado($user->id, $pokemonCompanero->id, 'Companero');
+        TeamMember::create([
+            'team_id' => $team->id,
+            'pokemon_id' => $explorador->id,
+            'slot' => 1,
+            'behavior' => 'VANGUARDIA',
+        ]);
+        TeamMember::create([
+            'team_id' => $team->id,
+            'pokemon_id' => $companero->id,
+            'slot' => 2,
+            'behavior' => 'COMBATIENTE',
+        ]);
+        $this->createExploracionActiva($user->id, $explorador->id);
+        PlayerInventory::create([
+            'user_id' => $user->id,
+            'item_key' => 'ev:1',
+            'cantidad' => 1,
+        ]);
+
+        $response = $this->postJson("/reclutado/{$companero->id}/dar-evs", ['stat' => 'hp']);
+
+        $response->assertOk()->assertJson(['success' => true, 'actual' => 10]);
     }
 
     public function test_liberar_reclutado_de_otro_usuario_devuelve_404(): void

@@ -369,20 +369,24 @@ class ServicioEjecucionBatalla
 
     /**
      * Aplica el estado secundario del movimiento al objetivo.
+     *
+     * @return bool true solo si el estado se escribió en el objetivo declarado;
+     *              false en cuerpo áureo, inmunidades de flag y Espejo Mágico
+     *              (que redirige el estado al atacante).
      */
     public function aplicarEstado(
         Combatiente $objetivo,
         MovimientoBatalla $movimiento,
         ?AgregadoBatalla $battle = null,
         ?Combatiente $atacante = null,
-    ): void {
+    ): bool {
         if ($movimiento->esEstado() && $objetivo->tieneEfecto('cuerpo_aureo')) {
-            return;
+            return false;
         }
 
         foreach ([\Src\Battle\Domain\Enums\FlagMovimiento::BALA, \Src\Battle\Domain\Enums\FlagMovimiento::SONIDO, \Src\Battle\Domain\Enums\FlagMovimiento::POLVO] as $flag) {
             if ($movimiento->flags->tiene($flag) && $objetivo->esInmuneAFlag($flag)) {
-                return;
+                return false;
             }
         }
 
@@ -392,12 +396,12 @@ class ServicioEjecucionBatalla
                     $this->gestorEfectos->aplicarEstado($atacante, $movimiento, $battle);
                     $battle->agregarLog("¡Espejo Mágico devuelve {$movimiento->nombre} a {$atacante->nombre()}!");
 
-                    return;
+                    return false;
                 }
             }
         }
 
-        $this->gestorEfectos->aplicarEstado($objetivo, $movimiento, $battle);
+        return $this->gestorEfectos->aplicarEstado($objetivo, $movimiento, $battle);
     }
 
     /**

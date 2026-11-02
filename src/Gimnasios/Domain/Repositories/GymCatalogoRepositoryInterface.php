@@ -25,6 +25,13 @@ interface GymCatalogoRepositoryInterface
     public function obtenerPorSlugOrFail(string $slug): Gimnasio;
 
     /**
+     * Índice 1-18 del gimnasio según el orden `nivelMinimo ASC, slug ASC`.
+     *
+     * @throws \Src\Gimnasios\Domain\Exceptions\GimnasioNoExiste
+     */
+    public function indiceDe(string $slug): int;
+
+    /**
      * Crea un gimnasio sin etapas (o con las etapas indicadas). Devuelve la entidad.
      */
     public function insertar(

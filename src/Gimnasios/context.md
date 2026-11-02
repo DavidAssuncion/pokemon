@@ -72,3 +72,30 @@ y las recompensas dobles de `CombateEntrenadores`.
 - `routes/gimnasios.php` — Definición de rutas
 - `app/Models/GymProgress.php` — Modelo Eloquent
 - `database/migrations/2026_09_01_000001_create_gym_progress_table.php` — Migración
+
+---
+
+## Guía de búsqueda (grep)
+
+- Clases: `CatalogoGimnasios`, `GeneradorPokemonGimnasio`, `GeneradorMovimientosTipo`,
+  `IniciarCombateGimnasio`, `RegistrarResultadoGimnasio`, `OtorgarRecompensasEntrenador`,
+  `EvsRangoEntrenador`, `IvsRangoEntrenador`, `GymProgress`.
+- Constantes: `EvsRangoEntrenador::*`, `IvsRangoEntrenador::rangoPorNivelEntrenador`,
+  `OtorgarRecompensasEntrenador::MULTIPLICADOR_GIMNASIO` (10.0), `ReglasEquipo::MIEMBROS`.
+- Términos: `gym_progress`, `current_stage`, `nivel_min`, `nivel_rival`, `slug`, `medalla`,
+  `tipo='gimnasio'`, `CatalogoGimnasios`.
+- Tablas: `gym_progress`, `habitats`, `teams`, `reclutados`, `pokemon`.
+- Tests: `tests/Feature/Gimnasios/`, tests del generador de gimnasio.
+
+## Deuda y mejoras priorizadas (auditoría 2026-10-31)
+
+- **[Corregido 2026-10-31]** `RegistrarResultadoGimnasio::registrar()` ya devuelve el DTO
+  `ResultadoGimnasio` (avance/completado/medalla); la documentación antigua describía un array.
+  No reintroducir arrays en el contrato.
+- **[Media] Catálogo de gimnasios hardcodeado** en `CatalogoGimnasios`; si el producto necesita
+  edición, mover a BD/seeders sin romper el contrato de dominio.
+- **[Media] `GeneradorPokemonGimnasio` duplica escalado de stats** (`GeneradorJefeMazmorra`,
+  `EscaladorNivelRival`). Unificar en un servicio de escalado compartido.
+- **[Media] `PresentadorResultadoBatalla` consulta Eloquent y conoce gimnasio/mazmorra**; mover la
+  resolución a casos de uso.
+- **[Baja] `IniciarCombateGimnasio` usa FQCN de excepciones inline**; importar nombres cortos.

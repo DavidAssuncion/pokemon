@@ -21,6 +21,12 @@ use Src\Exploraciones\App\FinalizarExploracionCommand;
 use Src\Exploraciones\App\FinalizarExploracionHandler;
 use Src\Exploraciones\App\PersistirRecompensas;
 use Src\Exploraciones\Domain\CalculadorRecompensas;
+use Src\Exploraciones\Domain\Recompensas\RecompensaCaptura;
+use Src\Exploraciones\Domain\Recompensas\RecompensaEv;
+use Src\Exploraciones\Domain\Recompensas\RecompensaFamilia;
+use Src\Exploraciones\Domain\Recompensas\RecompensaTipo;
+use Src\Exploraciones\Domain\Recompensas\ResultadoRecompensas;
+use Src\Exploraciones\Domain\ValueObjects\ColeccionEventosExploracion;
 use Src\Exploraciones\Presentation\TransformadorResultadoExploracion;
 use Src\Shared\Bus\UnitOfWork;
 use Tests\TestCase;
@@ -208,7 +214,7 @@ class FinalizarExploracionPerdidasTest extends TestCase
     }
 
     #[Test]
-    public function test_con_derrota_se_pierde_ceil_mitad_de_cada_recompensa(): void
+    public function test_con_derrota_se_pierde_la_mitad_entera_de_cada_recompensa(): void
     {
         $exploracion = $this->exploracionConBitacora(true);
 
@@ -223,24 +229,63 @@ class FinalizarExploracionPerdidasTest extends TestCase
 
         // Categoría exito_parcial (1 victoria de 2 combates, ratio 0.5) → multiplicador 0.7.
         // Rango Recolector del Mewtwo (MAESTRO, dificultad 35) → bonus 3 caramelos.
-        // Familia: hallazgo floor(5*(1+3)*0.7)=14 + derrota floor(1*0.7)=0 → 14 → pierde ceil(14/2)=7 → 7
-        // EV: hallazgo floor(4*4*0.7)=11 + derrota stat1 floor(2*0.7)=1 → pierde ceil(11/2)=6 → 5
-        //      (la entrada de la derrota pierde ceil(1/2)=1 → se filtra a 0)
-        // Tipo: hallazgo floor(6*4*0.7)=16 + derrota 0 → 16 → pierde ceil(16/2)=8 → 8
+        // Economía individual: todas las recompensas se reducen al 50 % (×0.5).
+        // Familia: hallazgo floor(5*(1+3)*0.7*0.5)=floor(7)=7 + derrota floor(1*0.7*0.5)=0
+        //          → 7 → pierde intdiv(7,2)=3 → 4
+        // EV: hallazgo floor(4*4*0.7*0.5)=floor(5.6)=5 + derrota 0 → pierde intdiv(5,2)=2 → 3
+        // Tipo: hallazgo floor(6*4*0.7*0.5)=floor(8.4)=8 + derrota 0 → pierde intdiv(8,2)=4 → 4
         $familia = collect($resultado['caramelos_familia'])->first();
-        $this->assertSame(7, $familia['cantidad'], 'Familia 14 - 7 = 7');
+        $this->assertSame(4, $familia['cantidad'], 'Familia 7 - 3 = 4');
         $ev = collect($resultado['caramelos_ev'])->first();
-        $this->assertSame(5, $ev['cantidad'], 'EV 11 - 6 = 5');
+        $this->assertSame(3, $ev['cantidad'], 'EV 5 - 2 = 3');
         $tipo = collect($resultado['caramelos_tipo'])->first();
-        $this->assertSame(8, $tipo['cantidad'], 'Tipo 16 - 8 = 8');
+        $this->assertSame(4, $tipo['cantidad'], 'Tipo 8 - 4 = 4');
 
         // Las pérdidas están registradas con su cantidad
         $familiaPerdida = collect($perdidas)->first(fn (array $p) => $p['tipo'] === 'familia');
-        $this->assertSame(7, $familiaPerdida['cantidad_perdida']);
+        $this->assertSame(3, $familiaPerdida['cantidad_perdida']);
         $evPerdida = collect($perdidas)->first(fn (array $p) => $p['tipo'] === 'ev' && $p['id'] === 6);
-        $this->assertSame(6, $evPerdida['cantidad_perdida']);
+        $this->assertSame(2, $evPerdida['cantidad_perdida']);
         $tipoPerdida = collect($perdidas)->first(fn (array $p) => $p['tipo'] === 'tipo');
-        $this->assertSame(8, $tipoPerdida['cantidad_perdida']);
+        $this->assertSame(4, $tipoPerdida['cantidad_perdida']);
+    }
+
+    #[Test]
+    public function test_derrota_con_cantidad_uno_no_pierde_nada(): void
+    {
+        $recompensas = new ResultadoRecompensas(
+            capturas: collect([new RecompensaCaptura(pokemonId: 1, cantidad: 1)]),
+            caramelosFamilia: collect([new RecompensaFamilia(evolutionChainId: 51, cantidad: 1)]),
+            caramelosEv: collect([new RecompensaEv(stat: 6, cantidad: 1)]),
+            caramelosTipo: collect([new RecompensaTipo(tipo: 'Fuego', cantidad: 1)]),
+            expTotal: 0,
+        );
+
+        $handler = $this->handler();
+        $metodo = new \ReflectionMethod($handler, 'objetosPerdidos');
+        $perdidas = $metodo->invoke(
+            $handler,
+            [['tipo' => 'encuentro', 'resolucion' => 'derrota']],
+            collect(['derrota' => ['reason' => 'explorador_debilitado']]),
+            $recompensas,
+        );
+
+        $this->assertSame([], $perdidas, 'intdiv(1, 2) = 0: una unidad no se pierde');
+    }
+
+    #[Test]
+    public function test_emboscada_evitada_no_cuenta_como_pokemon_derrotado(): void
+    {
+        $bitacora = ColeccionEventosExploracion::desdeArray([
+            ['tipo' => 'emboscada', 'subtype' => 'normal', 'pokemon_id' => 1, 'resolucion' => 'evitada'],
+            ['tipo' => 'encuentro', 'subtype' => 'normal', 'pokemon_id' => 2, 'resolucion' => 'victoria'],
+        ]);
+
+        $handler = $this->handler();
+        $metodo = new \ReflectionMethod($handler, 'idsDerrotados');
+        $ids = $metodo->invoke($handler, $bitacora);
+
+        $this->assertSame([2], $ids);
     }
 
     #[Test]
@@ -255,5 +300,69 @@ class FinalizarExploracionPerdidasTest extends TestCase
 
         // Contrato aditivo: el resultado incluye la información de pérdidas
         $this->assertNotNull($eventos->get('objetos_perdidos'), 'objetos_perdidos accesible desde eventos');
+    }
+
+    /**
+     * Contexto con un reclutado débil (nivel 1) y entrenador de nivel 1 para que
+     * la emboscada evitada rinda exactamente 1 caramelo de familia: rango de
+     * recolección NOVATO (bonus 0) y rol COMBATIENTE (multiplicador 1,0).
+     */
+    private function contextoConReclutadoDebil(): ExploracionActiva
+    {
+        $ctx = $this->crearContexto();
+        $this->usuario->update(['experiencia' => 0]);
+
+        $debil = Reclutado::create([
+            'user_id' => $this->usuario->id,
+            'pokemon_id' => 1,
+            'nombre' => 'Rattata',
+            'exp' => ['total' => 0],
+            'es_shiny' => false,
+            'obj_equipados' => [],
+            'movimientos' => [],
+        ]);
+
+        $exploracion = $ctx['exploracion'];
+        $exploracion->reclutado_id = $debil->id;
+        $exploracion->save();
+
+        return $exploracion;
+    }
+
+    #[Test]
+    public function test_emboscada_evitada_aporta_un_caramelo_de_familia_y_ninguna_recompensa_de_combate(): void
+    {
+        $exploracion = $this->contextoConReclutadoDebil();
+
+        $exploracion->eventos = [
+            'bitacora' => [
+                [
+                    'tipo' => 'emboscada',
+                    'subtype' => 'normal',
+                    'pokemon_id' => 1,
+                    'timestamp' => '2026-09-01T10:00:00Z',
+                    'resolucion' => 'evitada',
+                ],
+            ],
+            'ultimo_procesado' => now()->toIso8601String(),
+        ];
+        $exploracion->save();
+
+        $this->handler()->handle(new FinalizarExploracionCommand($exploracion));
+
+        $exploracion->refresh();
+        $resultado = $exploracion->eventos->get('resultado');
+
+        $familia = collect($resultado['caramelos_familia']);
+        $this->assertCount(1, $familia, 'La emboscada evitada aporta un único hallazgo de familia');
+        $this->assertSame(51, $familia->first()['evolution_chain_id']);
+        $this->assertSame(1, $familia->first()['cantidad'], '1 base × 0,5 → mínimo 1 caramelo');
+
+        // La emboscada evitada no aporta recompensa de combate: no hay derrotado,
+        // ni caramelos de EV/tipo, ni capturas.
+        $this->assertSame([], $resultado['capturados']);
+        $this->assertSame([], $resultado['caramelos_ev']);
+        $this->assertSame([], $resultado['caramelos_tipo']);
+        $this->assertSame([], $exploracion->eventos->get('derrotados'));
     }
 }

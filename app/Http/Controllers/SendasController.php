@@ -7,8 +7,10 @@ namespace App\Http\Controllers;
 use App\Models\Move;
 use App\Models\PlayerInventory;
 use App\Models\PlayerMoveUnlock;
+use App\Models\PlayerTypePath;
 use App\Support\ArbolSendas;
 use App\Support\ItemCatalogo;
+use App\Support\SendaProgreso;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -22,10 +24,12 @@ class SendasController extends Controller
     public function index(): View
     {
         $userId = (int) auth()->id();
-        $nivelCuenta = (int) (auth()->user()?->nivel() ?? 1);
+        $tipos = ArbolSendas::resumen($userId);
 
         return view('sendas.index', [
-            'tipos' => ArbolSendas::resumen($userId, $nivelCuenta),
+            'tipos' => $tipos,
+            'totalDesbloqueados' => array_sum(array_column($tipos, 'desbloqueados')),
+            'totalNodos' => array_sum(array_column($tipos, 'total_nodos')),
         ]);
     }
 
@@ -35,10 +39,9 @@ class SendasController extends Controller
         abort_if($tipoEnum === null, 404);
 
         $userId = (int) auth()->id();
-        $nivelCuenta = (int) (auth()->user()?->nivel() ?? 1);
 
         return view('sendas.show', [
-            'arbol' => ArbolSendas::para($userId, $nivelCuenta, $tipoEnum),
+            'arbol' => ArbolSendas::para($userId, $tipoEnum),
         ]);
     }
 
@@ -64,8 +67,7 @@ class SendasController extends Controller
         }
 
         $userId = (int) auth()->id();
-        $nivelCuenta = (int) (auth()->user()?->nivel() ?? 1);
-        $nodo = ArbolSendas::nodo((string) $move->slug, $userId, $nivelCuenta);
+        $nodo = ArbolSendas::nodo((string) $move->slug, $userId);
 
         if ($nodo === null) {
             return response()->json(['error' => 'Nodo de Senda no encontrado'], 422);
@@ -121,8 +123,90 @@ class SendasController extends Controller
         return response()->json([
             'success' => true,
             'caramelos' => (int) $resultado->cantidad,
-            'nodo' => ArbolSendas::nodo((string) $move->slug, $userId, $nivelCuenta),
-            'arbol' => ArbolSendas::para($userId, $nivelCuenta, $tipo),
+            'nodo' => ArbolSendas::nodo((string) $move->slug, $userId),
+            'arbol' => ArbolSendas::para($userId, $tipo),
+        ]);
+    }
+
+    public function experiencia(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'tipo' => ['required', 'string', 'max:30'],
+            'cantidad' => ['required', 'integer', 'in:1,10,100'],
+        ]);
+
+        $tipo = ArbolSendas::tipoPorSlug((string) $data['tipo']);
+        if ($tipo === null) {
+            return response()->json(['error' => 'Tipo de Senda desconocido'], 422);
+        }
+
+        $userId = (int) auth()->id();
+        $cantidad = (int) $data['cantidad'];
+        $itemKey = ItemCatalogo::keyTipo($tipo->label());
+        $expMaxima = SendaProgreso::expMaxima();
+        $expPorCaramelo = SendaProgreso::expPorCaramelo();
+
+        $resultado = DB::transaction(function () use ($userId, $cantidad, $itemKey, $tipo, $expMaxima, $expPorCaramelo): array {
+            $path = PlayerTypePath::query()
+                ->withoutGlobalScope(PlayerTypePath::USER_SCOPE_NAME)
+                ->firstOrCreate(
+                    ['user_id' => $userId, 'type_id' => $tipo->value],
+                    ['exp' => 0, 'level' => 1],
+                );
+
+            $path = PlayerTypePath::query()
+                ->withoutGlobalScope(PlayerTypePath::USER_SCOPE_NAME)
+                ->whereKey($path->getKey())
+                ->lockForUpdate()
+                ->firstOrFail();
+
+            $caramelo = PlayerInventory::query()
+                ->withoutGlobalScope(PlayerInventory::USER_SCOPE_NAME)
+                ->where('user_id', $userId)
+                ->where('item_key', $itemKey)
+                ->lockForUpdate()
+                ->first();
+
+            if ($caramelo === null || $caramelo->cantidad <= 0) {
+                return ['error' => "No tienes caramelos de {$tipo->label()}"];
+            }
+
+            $consumidos = min($cantidad, (int) $caramelo->cantidad);
+
+            $expActual = (int) $path->exp;
+            $restante = max(0, $expMaxima - $expActual);
+            $maxPorTope = intdiv($restante, $expPorCaramelo);
+            $consumidos = min($consumidos, $maxPorTope);
+
+            if ($consumidos <= 0) {
+                return [
+                    'error' => "La Senda de {$tipo->label()} ha alcanzado el tope de {$expMaxima} EXP. Te quedan {$restante} EXP para el máximo",
+                ];
+            }
+
+            $path->increment('exp', $expPorCaramelo * $consumidos);
+            $path->refresh();
+            $path->update(['level' => SendaProgreso::nivel((int) $path->exp)]);
+
+            $caramelo->decrement('cantidad', $consumidos);
+
+            return [
+                'caramelos' => (int) $caramelo->cantidad,
+                'consumidos' => $consumidos,
+                'exp_ganada' => $expPorCaramelo * $consumidos,
+            ];
+        });
+
+        if (isset($resultado['error'])) {
+            return response()->json(['error' => $resultado['error']], 422);
+        }
+
+        return response()->json([
+            'success' => true,
+            'caramelos' => $resultado['caramelos'],
+            'cantidad_consumida' => $resultado['consumidos'],
+            'exp_ganada' => $resultado['exp_ganada'],
+            'arbol' => ArbolSendas::para($userId, $tipo),
         ]);
     }
 }

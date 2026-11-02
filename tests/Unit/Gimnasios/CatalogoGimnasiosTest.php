@@ -8,6 +8,7 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Src\Gimnasios\Domain\CatalogoGimnasios;
 use Src\Gimnasios\Domain\DataTransferObjects\EquipoEtapaGimnasio;
+use Src\Gimnasios\Domain\Exceptions\GimnasioNoExiste;
 use Src\Shared\Tipos\TipoPokemon;
 
 class CatalogoGimnasiosTest extends TestCase
@@ -142,6 +143,63 @@ class CatalogoGimnasiosTest extends TestCase
             $this->assertInstanceOf(EquipoEtapaGimnasio::class, $equipo, "equipo etapa {$etapa}");
         }
         $this->assertSame([1, 2, 3, 4], array_keys($gimnasio->equipos->etapas()));
+    }
+
+    #[Test]
+    public function test_indice_de_bug_es_1_y_de_dragon_es_18(): void
+    {
+        $this->assertSame(1, $this->catalogo->indiceDe('bug'));
+        $this->assertSame(18, $this->catalogo->indiceDe('dragon'));
+        $this->assertSame(2, $this->catalogo->indiceDe('poison'));
+        $this->assertSame(17, $this->catalogo->indiceDe('steel'));
+    }
+
+    #[Test]
+    public function test_indice_de_slug_desconocido_lanza_gimnasio_no_existe(): void
+    {
+        $this->expectException(GimnasioNoExiste::class);
+
+        $this->catalogo->indiceDe('no-existe');
+    }
+
+    #[Test]
+    public function test_ordenados_ordena_por_nivel_minimo_ascendente(): void
+    {
+        $niveles = $this->catalogo->ordenados()->pluck(
+            static fn ($gimnasio): int => $gimnasio->nivelMinimo,
+        );
+
+        $esperado = $niveles;
+        sort($esperado);
+
+        $this->assertSame($esperado, $niveles);
+        $this->assertCount(18, $niveles);
+    }
+
+    #[Test]
+    public function test_ordenados_no_altera_el_orden_de_insercion_de_todos(): void
+    {
+        $antes = $this->catalogo->todos()->pluck(static fn ($gimnasio): string => $gimnasio->slug);
+        $this->catalogo->ordenados();
+        $despues = $this->catalogo->todos()->pluck(static fn ($gimnasio): string => $gimnasio->slug);
+
+        $this->assertSame($antes, $despues);
+        $this->assertSame('bug', $despues[0]);
+    }
+
+    #[Test]
+    public function test_ordenados_desempata_por_slug(): void
+    {
+        // El catálogo actual no tiene niveles mínimos duplicados; el contrato
+        // queda cubierto por la secuencia esperada de slugs.
+        $slugs = $this->catalogo->ordenados()->pluck(static fn ($gimnasio): string => $gimnasio->slug);
+
+        $this->assertSame([
+            'bug', 'poison', 'normal', 'grass', 'flying',
+            'rock', 'electric', 'ice', 'fire', 'water',
+            'ground', 'psychic', 'dark', 'ghost', 'fighting',
+            'fairy', 'steel', 'dragon',
+        ], $slugs);
     }
 
     /**

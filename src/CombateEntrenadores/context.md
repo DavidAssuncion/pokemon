@@ -47,3 +47,29 @@ Permite al jugador enfrentarse a entrenadores procedurales desde la vista de un 
 - `routes/entrenadores.php` — Definición de rutas
 - `app/Models/TrainerCombatLog.php` — Modelo Eloquent
 - `database/migrations/2026_08_31_000001_create_trainer_combat_log_table.php` — Migración
+---
+
+## Guía de búsqueda (grep)
+
+- Clases: `GeneradorEquipoEntrenador`, `ConstruirEquipoJugador`, `IniciarCombateEntrenador`,
+  `RegistrarResultadoEntrenador`, `OtorgarRecompensasEntrenador`, `MapeadorPokemonBatalla`,
+  `EntrenadorLogRepositoryInterface`, `EntrenadorDerrotadoHoy`.
+- Constantes: `OtorgarRecompensasEntrenador::MULTIPLICADOR_ENTRENADOR` (2.0),
+  `ReglasEquipo::MIEMBROS` (3), `MapeadorPokemonBatalla::MAX_MOVIMIENTOS_RESPALDO`.
+- Términos: `trainer_combat_log`, `nivel`, `trainer_index`, `fought_at`, `formacion`,
+  `crc32`, `Mt19937`, `tipo='entrenador'`.
+- Tablas: `trainer_combat_log`, `habitats`, `teams`, `reclutados`, `pokemon`.
+- Tests: `tests/Feature/CombateEntrenadores/`, `tests/Unit/CombateEntrenadores/`.
+
+## Deuda y mejoras priorizadas (auditoría 2026-10-31)
+
+- **[Alta] Duplicación `GeneradorEquipoRuta` ↔ `GeneradorEquipoEntrenador`** (pool + ponderación,
+  ~9-15 líneas; pendiente 17 de `docs/context.md`). Extraer un generador de pool compartido.
+- **[Media] `OtorgarRecompensasEntrenador` usa `array<int, Collection<Pokemon>>`** de
+  `CadenasEvolutivas`; tipar con un VO/colección (ver `src/Shared/context.md`).
+- **[Media] `RegistrarResultadoEntrenador`/`RegistrarResultadoGimnasio` devuelven arrays** de
+  resultado; convertirlos a DTOs readonly.
+- **[Baja] `ConstruirEquipoJugador` ya usa `ReglasEquipo::MIEMBROS`**; no reintroducir el literal 3
+  en validaciones/mensajes.
+- **[Baja] `MapeadorPokemonBatalla` normaliza movimientos desde Eloquent**; mantener el mapper como
+  frontera y no filtrar modelos al dominio.

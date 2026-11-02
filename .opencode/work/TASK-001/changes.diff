@@ -1,0 +1,839 @@
+diff --git a/app/Http/Controllers/SendasController.php b/app/Http/Controllers/SendasController.php
+index 73d98e0..5bbff0b 100644
+--- a/app/Http/Controllers/SendasController.php
++++ b/app/Http/Controllers/SendasController.php
+@@ -7,8 +7,10 @@
+ use App\Models\Move;
+ use App\Models\PlayerInventory;
+ use App\Models\PlayerMoveUnlock;
++use App\Models\PlayerTypePath;
+ use App\Support\ArbolSendas;
+ use App\Support\ItemCatalogo;
++use App\Support\SendaProgreso;
+ use Illuminate\Http\JsonResponse;
+ use Illuminate\Http\Request;
+ use Illuminate\Support\Facades\DB;
+@@ -22,10 +24,12 @@ class SendasController extends Controller
+     public function index(): View
+     {
+         $userId = (int) auth()->id();
+-        $nivelCuenta = (int) (auth()->user()?->nivel() ?? 1);
++        $tipos = ArbolSendas::resumen($userId);
+ 
+         return view('sendas.index', [
+-            'tipos' => ArbolSendas::resumen($userId, $nivelCuenta),
++            'tipos' => $tipos,
++            'totalDesbloqueados' => array_sum(array_column($tipos, 'desbloqueados')),
++            'totalNodos' => array_sum(array_column($tipos, 'total_nodos')),
+         ]);
+     }
+ 
+@@ -35,10 +39,9 @@ public function show(string $tipo): View
+         abort_if($tipoEnum === null, 404);
+ 
+         $userId = (int) auth()->id();
+-        $nivelCuenta = (int) (auth()->user()?->nivel() ?? 1);
+ 
+         return view('sendas.show', [
+-            'arbol' => ArbolSendas::para($userId, $nivelCuenta, $tipoEnum),
++            'arbol' => ArbolSendas::para($userId, $tipoEnum),
+         ]);
+     }
+ 
+@@ -64,8 +67,7 @@ public function desbloquear(Request $request): JsonResponse
+         }
+ 
+         $userId = (int) auth()->id();
+-        $nivelCuenta = (int) (auth()->user()?->nivel() ?? 1);
+-        $nodo = ArbolSendas::nodo((string) $move->slug, $userId, $nivelCuenta);
++        $nodo = ArbolSendas::nodo((string) $move->slug, $userId);
+ 
+         if ($nodo === null) {
+             return response()->json(['error' => 'Nodo de Senda no encontrado'], 422);
+@@ -121,8 +123,73 @@ public function desbloquear(Request $request): JsonResponse
+         return response()->json([
+             'success' => true,
+             'caramelos' => (int) $resultado->cantidad,
+-            'nodo' => ArbolSendas::nodo((string) $move->slug, $userId, $nivelCuenta),
+-            'arbol' => ArbolSendas::para($userId, $nivelCuenta, $tipo),
++            'nodo' => ArbolSendas::nodo((string) $move->slug, $userId),
++            'arbol' => ArbolSendas::para($userId, $tipo),
++        ]);
++    }
++
++    public function experiencia(Request $request): JsonResponse
++    {
++        $data = $request->validate([
++            'tipo' => ['required', 'string', 'max:30'],
++            'cantidad' => ['required', 'integer', 'in:1,10,100'],
++        ]);
++
++        $tipo = ArbolSendas::tipoPorSlug((string) $data['tipo']);
++        if ($tipo === null) {
++            return response()->json(['error' => 'Tipo de Senda desconocido'], 422);
++        }
++
++        $userId = (int) auth()->id();
++        $cantidad = (int) $data['cantidad'];
++        $itemKey = ItemCatalogo::keyTipo($tipo->label());
++
++        $resultado = DB::transaction(function () use ($userId, $cantidad, $itemKey, $tipo): ?array {
++            $caramelo = PlayerInventory::query()
++                ->withoutGlobalScope(PlayerInventory::USER_SCOPE_NAME)
++                ->where('user_id', $userId)
++                ->where('item_key', $itemKey)
++                ->lockForUpdate()
++                ->first();
++
++            if ($caramelo === null || $caramelo->cantidad <= 0) {
++                return null;
++            }
++
++            $consumidos = min($cantidad, (int) $caramelo->cantidad);
++
++            $path = PlayerTypePath::query()
++                ->withoutGlobalScope(PlayerTypePath::USER_SCOPE_NAME)
++                ->firstOrCreate(
++                    ['user_id' => $userId, 'type_id' => $tipo->value],
++                    ['exp' => 0, 'level' => 1],
++                );
++
++            $path->increment('exp', SendaProgreso::EXP_POR_CARAMELO * $consumidos);
++            $path->refresh();
++            $path->update(['level' => SendaProgreso::nivel((int) $path->exp)]);
++
++            $caramelo->decrement('cantidad', $consumidos);
++
++            return [
++                'caramelos' => (int) $caramelo->cantidad,
++                'consumidos' => $consumidos,
++                'exp_ganada' => SendaProgreso::EXP_POR_CARAMELO * $consumidos,
++            ];
++        });
++
++        if ($resultado === null) {
++            return response()->json([
++                'error' => "No tienes caramelos de {$tipo->label()}",
++            ], 422);
++        }
++
++        return response()->json([
++            'success' => true,
++            'caramelos' => $resultado['caramelos'],
++            'cantidad_consumida' => $resultado['consumidos'],
++            'exp_ganada' => $resultado['exp_ganada'],
++            'arbol' => ArbolSendas::para($userId, $tipo),
+         ]);
+     }
+ }
+diff --git a/app/Support/ArbolSendas.php b/app/Support/ArbolSendas.php
+index 0325996..9394730 100644
+--- a/app/Support/ArbolSendas.php
++++ b/app/Support/ArbolSendas.php
+@@ -18,7 +18,7 @@
+ /**
+  * Árbol de movimientos desbloqueables por tipo (Sendas).
+  *
+- * Un nodo pertenece a una Senda de tipo, tiene un nivel requerido 1-5 y su
++ * Un nodo pertenece a una Senda de tipo, tiene un nivel requerido y su
+  * coste se resuelve con SendaCostes. El desbloqueo es de cuenta: una vez
+  * desbloqueado, el movimiento queda disponible para todos los Pokémon
+  * compatibles, sin comprobar el nivel del Pokémon.
+@@ -33,7 +33,7 @@ final class ArbolSendas
+      *
+      * @return list<array<string, mixed>>
+      */
+-    public static function resumen(int $userId, int $nivelCuenta): array
++    public static function resumen(int $userId): array
+     {
+         $totales = DB::table('type_path_nodes')
+             ->selectRaw('type_id, count(*) as total')
+@@ -62,7 +62,7 @@ public static function resumen(int $userId, int $nivelCuenta): array
+ 
+             $resultado[] = array_merge(
+                 self::tipoBase($tipo),
+-                SendaProgreso::resumen($exp, $nivelCuenta),
++                SendaProgreso::resumen($exp),
+                 [
+                     'total_nodos' => (int) ($totales[$tipo->value] ?? 0),
+                     'desbloqueados' => (int) ($desbloqueados[$tipo->value] ?? 0),
+@@ -79,7 +79,7 @@ public static function resumen(int $userId, int $nivelCuenta): array
+      *
+      * @return array<string, mixed>
+      */
+-    public static function para(int $userId, int $nivelCuenta, TipoEnum $tipo): array
++    public static function para(int $userId, TipoEnum $tipo): array
+     {
+         $nodos = TypePathNode::query()
+             ->with('move')
+@@ -102,7 +102,7 @@ public static function para(int $userId, int $nivelCuenta, TipoEnum $tipo): arra
+             ->where('type_id', $tipo->value)
+             ->first();
+ 
+-        $progreso = SendaProgreso::resumen((int) ($path?->exp ?? 0), $nivelCuenta);
++        $progreso = SendaProgreso::resumen((int) ($path?->exp ?? 0));
+ 
+         $ramas = [
+             'fisico' => [],
+@@ -180,7 +180,7 @@ public static function para(int $userId, int $nivelCuenta, TipoEnum $tipo): arra
+     /**
+      * @return array<string, mixed>|null
+      */
+-    public static function nodo(string $slug, int $userId, int $nivelCuenta): ?array
++    public static function nodo(string $slug, int $userId): ?array
+     {
+         $move = Move::query()->where('slug', $slug)->first();
+         if ($move === null) {
+@@ -192,7 +192,7 @@ public static function nodo(string $slug, int $userId, int $nivelCuenta): ?array
+             return null;
+         }
+ 
+-        $arbol = self::para($userId, $nivelCuenta, $tipo);
++        $arbol = self::para($userId, $tipo);
+         foreach ($arbol['ramas'] as $nodos) {
+             foreach ($nodos as $nodo) {
+                 if ($nodo['slug'] === $slug) {
+diff --git a/app/Support/SendaProgreso.php b/app/Support/SendaProgreso.php
+index 31ad683..e5a4426 100644
+--- a/app/Support/SendaProgreso.php
++++ b/app/Support/SendaProgreso.php
+@@ -5,103 +5,117 @@
+ namespace App\Support;
+ 
+ /**
+- * Curva de progreso de las Sendas de tipo.
++ * Curva de progreso de las Sendas de tipo (v2, cerrada).
+  *
+- * La experiencia se acumula en la cuenta. El nivel de la Senda se deriva de
+- * la experiencia, pero nunca supera el cap que permite el nivel de cuenta.
++ * La Senda tiene 5 niveles y sus umbrales de entrada son geométricos:
++ * 0 / 15.625 / 31.250 / 62.500 / 125.000. El nivel 5 cubre el tramo
++ * 125.000 → 500.000 ({@see self::EXP_MAXIMA}), que actúa como tope de
++ * presentación. La experiencia real del jugador vive en
++ * `player_type_paths.exp`, puede superar el tope y se sigue acumulando sin
++ * subir más de nivel.
+  */
+ final class SendaProgreso
+ {
++    /**
++     * Nivel máximo alcanzable de una Senda.
++     */
+     public const NIVEL_MAXIMO = 5;
+ 
+-    /** @var array<int, int> */
+-    public const UMBRALES = [
++    /**
++     * Experiencia máxima de presentación: tope del tramo del nivel 5.
++     */
++    public const EXP_MAXIMA = 500_000;
++
++    /**
++     * Experiencia que otorga cada caramelo de tipo consumido.
++     */
++    public const EXP_POR_CARAMELO = 100;
++
++    /**
++     * Umbral de entrada de cada nivel, del 1 al 5.
++     *
++     * @var array<int, int>
++     */
++    private const UMBRALES = [
+         1 => 0,
+-        2 => 500,
+-        3 => 2_000,
+-        4 => 6_000,
+-        5 => 15_000,
++        2 => 15_625,
++        3 => 31_250,
++        4 => 62_500,
++        5 => 125_000,
+     ];
+ 
+-    public const NIVELES_POR_TRAMO_CUENTA = 20;
+-
+-    public static function nivel(int $exp): int
++    /**
++     * Umbral de experiencia para alcanzar el nivel dado.
++     *
++     * Los niveles 1-5 salen de la tabla fija (el nivel se clampa a >= 1).
++     * Por encima de {@see self::NIVEL_MAXIMO} satura en
++     * {@see self::EXP_MAXIMA}, de modo que `umbral(6)` se usa como
++     * `exp_siguiente` del nivel 5 y representa el tope, no un sexto nivel.
++     */
++    public static function umbral(int $nivel): int
+     {
+-        $exp = max(0, $exp);
+-
+-        $nivel = 1;
+-        foreach (self::UMBRALES as $umbralNivel => $umbral) {
+-            if ($exp >= $umbral) {
+-                $nivel = $umbralNivel;
+-            }
++        if ($nivel > self::NIVEL_MAXIMO) {
++            return self::EXP_MAXIMA;
+         }
+ 
+-        return min(self::NIVEL_MAXIMO, $nivel);
++        return self::UMBRALES[max(1, $nivel)];
+     }
+ 
+-    public static function capPorNivelCuenta(int $nivelCuenta): int
++    /**
++     * Nivel alcanzado con la experiencia dada.
++     *
++     * Es el mayor nivel cuyo umbral es menor o igual que la experiencia,
++     * acotado a {@see self::NIVEL_MAXIMO}. La experiencia negativa se trata
++     * como 0 y la que supera el tope mantiene el nivel 5.
++     */
++    public static function nivel(int $exp): int
+     {
+-        $nivelCuenta = max(1, $nivelCuenta);
++        $exp = max(0, $exp);
++        $nivel = 1;
++        while ($nivel < self::NIVEL_MAXIMO && self::umbral($nivel + 1) <= $exp) {
++            $nivel++;
++        }
+ 
+-        return min(
+-            self::NIVEL_MAXIMO,
+-            intdiv($nivelCuenta, self::NIVELES_POR_TRAMO_CUENTA) + 1,
+-        );
++        return $nivel;
+     }
+ 
+     /**
++     * Resumen de progreso listo para presentación.
++     *
++     * `exp` viaja clampeada a `[0, EXP_MAXIMA]`; la experiencia real
++     * acumulada por encima del tope se conserva en `player_type_paths.exp`
++     * y no se expone aquí. En el nivel máximo, `exp_siguiente` es
++     * {@see self::EXP_MAXIMA} (el tope) y `exp_faltante` llega a 0.
++     *
+      * @return array{
+      *     exp: int,
++     *     exp_maxima: int,
+      *     nivel: int,
+-     *     nivel_por_exp: int,
+-     *     cap: int,
+      *     nivel_maximo: int,
+-     *     exp_inicio: int,
+-     *     exp_siguiente: int|null,
++     *     exp_siguiente: int,
+      *     exp_faltante: int,
+      *     porcentaje: int,
+-     *     progreso_vertical: int,
+-     *     maximo: bool,
+-     *     bloqueado_por_cuenta: bool
++     *     exp_por_caramelo: int
+      * }
+      */
+-    public static function resumen(int $exp, int $nivelCuenta): array
++    public static function resumen(int $exp): array
+     {
+-        $exp = max(0, $exp);
+-        $nivelPorExp = self::nivel($exp);
+-        $cap = self::capPorNivelCuenta($nivelCuenta);
+-        $nivel = min($nivelPorExp, $cap);
+-
+-        $expInicio = self::UMBRALES[$nivel];
+-        $expSiguiente = self::UMBRALES[$nivel + 1] ?? null;
+-
+-        if ($expSiguiente === null) {
+-            $porcentaje = 100;
+-        } else {
+-            $rango = $expSiguiente - $expInicio;
+-            $porcentaje = $rango > 0
+-                ? (int) floor((($exp - $expInicio) / $rango) * 100)
+-                : 100;
+-        }
+-
+-        $porcentaje = max(0, min(100, $porcentaje));
+-        $progresoVertical = (int) round(
+-            ((($nivel - 1) + ($porcentaje / 100)) / self::NIVEL_MAXIMO) * 100,
+-        );
++        $expVista = min(max(0, $exp), self::EXP_MAXIMA);
++        $nivel = self::nivel($expVista);
++        $inicio = self::umbral($nivel);
++        $siguiente = self::umbral($nivel + 1);
++        $rango = $siguiente - $inicio;
++        $porcentaje = $rango > 0 ? intdiv(($expVista - $inicio) * 100, $rango) : 0;
+ 
+         return [
+-            'exp' => $exp,
++            'exp' => $expVista,
++            'exp_maxima' => self::EXP_MAXIMA,
+             'nivel' => $nivel,
+-            'nivel_por_exp' => $nivelPorExp,
+-            'cap' => $cap,
+             'nivel_maximo' => self::NIVEL_MAXIMO,
+-            'exp_inicio' => $expInicio,
+-            'exp_siguiente' => $expSiguiente,
+-            'exp_faltante' => $expSiguiente === null ? 0 : max(0, $expSiguiente - $exp),
+-            'porcentaje' => $porcentaje,
+-            'progreso_vertical' => max(0, min(100, $progresoVertical)),
+-            'maximo' => $nivel >= self::NIVEL_MAXIMO,
+-            'bloqueado_por_cuenta' => $nivelPorExp > $cap,
++            'exp_siguiente' => $siguiente,
++            'exp_faltante' => max(0, $siguiente - $expVista),
++            'porcentaje' => max(0, min(100, $porcentaje)),
++            'exp_por_caramelo' => self::EXP_POR_CARAMELO,
+         ];
+     }
+ }
+diff --git a/resources/views/sendas/index.blade.php b/resources/views/sendas/index.blade.php
+index aadd99a..89de530 100644
+--- a/resources/views/sendas/index.blade.php
++++ b/resources/views/sendas/index.blade.php
+@@ -3,10 +3,6 @@
+ @section('title', 'Sendas')
+ 
+ @section('content')
+-@php
+-    $totalDesbloqueados = array_sum(array_column($tipos, 'desbloqueados'));
+-    $totalNodos = array_sum(array_column($tipos, 'total_nodos'));
+-@endphp
+ 
+ <div class="mb-6">
+     <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Sendas</h1>
+@@ -34,9 +30,6 @@ class="group rounded-2xl border border-gray-200 bg-white p-3 shadow-sm transitio
+                     <p class="truncate text-sm font-bold text-gray-900 dark:text-white">{{ $tipo['nombre'] }}</p>
+                     <p class="text-[10px] font-medium text-gray-500 dark:text-gray-400">
+                         Nivel {{ $tipo['nivel'] }} / {{ $tipo['nivel_maximo'] }}
+-                        @if($tipo['bloqueado_por_cuenta'])
+-                            · cap {{ $tipo['cap'] }}
+-                        @endif
+                     </p>
+                 </div>
+                 <span class="text-xs font-bold" style="color: {{ $tipo['color'] }}">{{ $tipo['porcentaje'] }}%</span>
+@@ -48,13 +41,7 @@ class="group rounded-2xl border border-gray-200 bg-white p-3 shadow-sm transitio
+ 
+             <div class="mt-2 flex items-center justify-between gap-2 text-[10px] text-gray-500 dark:text-gray-400">
+                 <span>
+-                    @if($tipo['exp_siguiente'] === null)
+-                        Nivel máximo
+-                    @elseif($tipo['bloqueado_por_cuenta'])
+-                        {{ number_format($tipo['exp'], 0, ',', '.') }} exp · cap {{ $tipo['cap'] }}
+-                    @else
+-                        {{ number_format($tipo['exp'], 0, ',', '.') }} / {{ number_format($tipo['exp_siguiente'], 0, ',', '.') }} exp
+-                    @endif
++                    {{ number_format($tipo['exp'], 0, ',', '.') }} / {{ number_format($tipo['exp_siguiente'], 0, ',', '.') }} exp
+                 </span>
+                 <span class="font-semibold text-gray-600 dark:text-gray-300">{{ $tipo['desbloqueados'] }}/{{ $tipo['total_nodos'] }}</span>
+             </div>
+diff --git a/resources/views/sendas/show.blade.php b/resources/views/sendas/show.blade.php
+index cfce189..344e839 100644
+--- a/resources/views/sendas/show.blade.php
++++ b/resources/views/sendas/show.blade.php
+@@ -18,122 +18,176 @@
+                 </p>
+             </div>
+         </div>
+-        <div class="flex items-center gap-2">
++        <div class="flex flex-col items-end gap-2">
+             <span class="inline-flex items-center gap-1 rounded-full bg-amber-100 px-3 py-1.5 text-sm font-bold text-amber-700 dark:bg-amber-900/30 dark:text-amber-300" title="Caramelos de este tipo">
+                 <img :src="'/images/candy_type/' + arbol.tipo.slug + '.webp'" :alt="'Caramelos de ' + arbol.tipo.nombre" loading="lazy" decoding="async" class="h-5 w-5 object-contain" onerror="this.style.display='none'">
+                 <span x-text="arbol.caramelos"></span>
+             </span>
++            <div class="flex items-center gap-1.5" role="group" aria-label="Consumir caramelos para ganar experiencia">
++                <button
++                    type="button"
++                    @click="consumir(1)"
++                    :disabled="savingExp || arbol.caramelos <= 0"
++                    :aria-label="'Consumir 1 caramelo de ' + arbol.tipo.nombre + ' para ganar experiencia'"
++                    class="rounded-lg border border-amber-300 px-2.5 py-1 text-xs font-bold text-amber-700 transition-colors hover:bg-amber-50 disabled:cursor-not-allowed disabled:border-gray-200 disabled:text-gray-400 dark:border-amber-700 dark:text-amber-300 dark:hover:bg-amber-900/20 dark:disabled:border-gray-700 dark:disabled:text-gray-500"
++                >x1</button>
++                <button
++                    type="button"
++                    @click="consumir(10)"
++                    :disabled="savingExp || arbol.caramelos <= 0"
++                    :aria-label="'Consumir 10 caramelos de ' + arbol.tipo.nombre + ' para ganar experiencia'"
++                    class="rounded-lg border border-amber-300 px-2.5 py-1 text-xs font-bold text-amber-700 transition-colors hover:bg-amber-50 disabled:cursor-not-allowed disabled:border-gray-200 disabled:text-gray-400 dark:border-amber-700 dark:text-amber-300 dark:hover:bg-amber-900/20 dark:disabled:border-gray-700 dark:disabled:text-gray-500"
++                >x10</button>
++                <button
++                    type="button"
++                    @click="consumir(100)"
++                    :disabled="savingExp || arbol.caramelos <= 0"
++                    :aria-label="'Consumir 100 caramelos de ' + arbol.tipo.nombre + ' para ganar experiencia'"
++                    class="rounded-lg border border-amber-300 px-2.5 py-1 text-xs font-bold text-amber-700 transition-colors hover:bg-amber-50 disabled:cursor-not-allowed disabled:border-gray-200 disabled:text-gray-400 dark:border-amber-700 dark:text-amber-300 dark:hover:bg-amber-900/20 dark:disabled:border-gray-700 dark:disabled:text-gray-500"
++                >x100</button>
++            </div>
++            <p class="text-[10px] font-semibold text-gray-400 dark:text-gray-500">+<span x-text="arbol.exp_por_caramelo"></span> exp por caramelo</p>
+         </div>
+     </div>
+ 
+     <template x-if="feedback.mensaje">
+-        <div class="mb-4 rounded-lg px-3 py-2 text-xs" role="status" :class="feedback.tipo === 'error' ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' : 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'" x-text="feedback.mensaje"></div>
++        <div
++            class="mb-4 rounded-lg px-3 py-2 text-xs"
++            :role="feedback.tipo === 'error' ? 'alert' : 'status'"
++            :class="feedback.tipo === 'error' ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' : 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'"
++            x-text="feedback.mensaje"
++        ></div>
+     </template>
+ 
+-    <div class="grid grid-cols-12 gap-4">
+-        <!-- Barra vertical 1/12 -->
+-        <aside class="col-span-12 lg:col-span-1">
+-            <div class="sticky top-24 rounded-2xl border border-gray-200 bg-white p-3 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+-                <p class="mb-2 text-center text-[10px] font-bold uppercase tracking-wide text-gray-500 dark:text-gray-400">Nivel</p>
+-                <div class="mx-auto h-[24rem] w-7 overflow-hidden rounded-full bg-gray-200 dark:bg-gray-700">
+-                    <div class="relative h-full w-full">
+-                        <div class="absolute bottom-0 left-0 right-0 rounded-full transition-all duration-500" :style="'height: ' + arbol.progreso_vertical + '%; background-color: ' + arbol.tipo.color"></div>
+-                        <div class="absolute inset-0 flex flex-col-reverse items-center justify-between py-1 text-[9px] font-bold text-gray-500 dark:text-gray-400">
+-                            <template x-for="nivel in [1, 2, 3, 4, 5]" :key="'nivel-barra-' + nivel">
+-                                <span :class="arbol.nivel >= nivel ? 'text-white drop-shadow' : ''" x-text="nivel"></span>
+-                            </template>
+-                        </div>
+-                    </div>
+-                </div>
+-                <p class="mt-3 text-center text-xs font-bold text-gray-900 dark:text-white"><span x-text="arbol.nivel"></span>/5</p>
+-                <p class="text-center text-[10px] font-semibold" :style="'color: ' + arbol.tipo.color" x-text="arbol.porcentaje + '%'"></p>
+-                <p class="mt-2 text-center text-[9px] leading-tight text-gray-400 dark:text-gray-500" x-text="arbol.exp_siguiente === null ? 'Nivel máximo' : (arbol.bloqueado_por_cuenta ? ('Cap de cuenta: ' + arbol.cap) : (arbol.exp_faltante + ' exp para el siguiente'))"></p>
++    <!-- Filtro de movimientos -->
++    <div class="mb-4 rounded-2xl border border-gray-200 bg-white p-3 shadow-sm dark:border-gray-700 dark:bg-gray-800">
++        <div class="flex flex-wrap items-center gap-2">
++            <div class="relative w-full sm:max-w-sm">
++                <label for="filtro-movimientos" class="sr-only">Filtrar movimientos por nombre</label>
++                <input
++                    id="filtro-movimientos"
++                    type="search"
++                    x-model="filtro"
++                    placeholder="Buscar movimiento por nombre…"
++                    autocomplete="off"
++                    aria-describedby="filtro-movimientos-total"
++                    class="w-full rounded-lg border border-gray-200 bg-white py-1.5 pl-9 pr-3 text-xs text-gray-900 placeholder-gray-400 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
++                >
++                <svg class="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
++                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
++                </svg>
+             </div>
+-        </aside>
+-
+-        <!-- Contenido 11/12 -->
+-        <div class="col-span-12 lg:col-span-11">
+-            <div class="mb-4 rounded-2xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+-                <div class="flex flex-wrap items-center justify-between gap-2">
+-                    <div>
+-                        <p class="text-sm font-bold text-gray-900 dark:text-white">Progreso de la Senda</p>
+-                        <p class="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
+-                            <span x-text="arbol.exp"></span> exp
+-                            <template x-if="arbol.exp_siguiente !== null && !arbol.bloqueado_por_cuenta">
+-                                <span> / <span x-text="arbol.exp_siguiente"></span> exp para nivel <span x-text="arbol.nivel + 1"></span></span>
+-                            </template>
+-                            <template x-if="arbol.bloqueado_por_cuenta">
+-                                <span> · cap alcanzado en nivel <span x-text="arbol.cap"></span></span>
+-                            </template>
+-                        </p>
+-                    </div>
+-                    <div class="text-right">
+-                        <p class="text-xs font-bold" :style="'color: ' + arbol.tipo.color" x-text="arbol.porcentaje + '%'"></p>
+-                        <p class="text-[10px] text-gray-400 dark:text-gray-500">Cap de cuenta: nivel <span x-text="arbol.cap"></span></p>
++            <button
++                type="button"
++                x-show="hayFiltro()"
++                @click="limpiarFiltro()"
++                class="text-xs font-medium text-blue-600 hover:underline dark:text-blue-400"
++            >Limpiar</button>
++            <p id="filtro-movimientos-total" class="ml-auto text-xs text-gray-500 dark:text-gray-400">
++                <span x-text="totalVisible()"></span> movimientos visibles
++            </p>
++        </div>
++    </div>
++
++    <!-- Progreso -->
++    <div class="mb-4 rounded-2xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800">
++        <div class="flex flex-wrap items-center justify-between gap-2">
++            <div>
++                <p class="text-sm font-bold text-gray-900 dark:text-white">Progreso de la Senda</p>
++                <p class="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
++                    <span x-text="arbol.exp.toLocaleString('es-ES')"></span> / <span x-text="arbol.exp_siguiente.toLocaleString('es-ES')"></span> exp
++                </p>
++            </div>
++            <p class="text-xs font-bold" :style="'color: ' + arbol.tipo.color" x-text="arbol.porcentaje + '%'"></p>
++        </div>
++        <div class="mt-3 h-2 overflow-hidden rounded-full bg-gray-100 dark:bg-gray-700" role="progressbar" :aria-valuenow="arbol.porcentaje" aria-valuemin="0" aria-valuemax="100" aria-label="Progreso de la Senda">
++            <div class="h-full rounded-full transition-all duration-500" :style="'width: ' + arbol.porcentaje + '%; background-color: ' + arbol.tipo.color"></div>
++        </div>
++        <template x-if="arbol.nivel >= arbol.nivel_maximo">
++            <p class="mt-2 text-[10px] font-semibold text-amber-600 dark:text-amber-400">
++                Tope de Senda: <span x-text="arbol.exp_maxima.toLocaleString('es-ES')"></span> exp. La experiencia sigue acumulándose.
++            </p>
++        </template>
++    </div>
++
++    <div class="grid grid-cols-1 gap-4 lg:grid-cols-3">
++        <template x-for="categoria in ['fisico', 'especial', 'estado']" :key="'senda-rama-' + categoria">
++            <section class="rounded-2xl border border-gray-200 bg-white p-3 shadow-sm dark:border-gray-700 dark:bg-gray-800">
++                <div class="mb-3 flex items-center justify-between gap-2 border-b border-gray-100 pb-2 dark:border-gray-700">
++                    <div class="flex items-center gap-2">
++                        <img :src="categoriaIcono(categoria)" :alt="etiquetaCategoria(categoria)" loading="lazy" decoding="async" class="h-6 w-6 object-contain">
++                        <h2 class="text-xs font-bold uppercase tracking-wide text-gray-600 dark:text-gray-300" x-text="etiquetaCategoria(categoria)"></h2>
+                     </div>
++                    <span class="text-[10px] font-semibold text-gray-400 dark:text-gray-500" x-text="contadorCategoria(categoria) + ' movimientos'"></span>
+                 </div>
+-                <div class="mt-3 h-2 overflow-hidden rounded-full bg-gray-100 dark:bg-gray-700" role="progressbar" :aria-valuenow="arbol.porcentaje" aria-valuemin="0" aria-valuemax="100">
+-                    <div class="h-full rounded-full transition-all duration-500" :style="'width: ' + arbol.porcentaje + '%; background-color: ' + arbol.tipo.color"></div>
+-                </div>
+-                <template x-if="arbol.bloqueado_por_cuenta">
+-                    <p class="mt-2 text-[10px] font-semibold text-amber-600 dark:text-amber-400">Has alcanzado el cap de tu nivel de cuenta. Sube de nivel para seguir avanzando.</p>
+-                </template>
+-            </div>
+ 
+-            <div class="grid grid-cols-1 gap-4 lg:grid-cols-3">
+-                <template x-for="categoria in ['fisico', 'especial', 'estado']" :key="'senda-rama-' + categoria">
+-                    <section class="rounded-2xl border border-gray-200 bg-white p-3 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+-                        <div class="mb-3 flex items-center justify-between gap-2 border-b border-gray-100 pb-2 dark:border-gray-700">
+-                            <div class="flex items-center gap-2">
+-                                <img :src="categoriaIcono(categoria)" :alt="etiquetaCategoria(categoria)" loading="lazy" decoding="async" class="h-6 w-6 object-contain">
+-                                <h2 class="text-xs font-bold uppercase tracking-wide text-gray-600 dark:text-gray-300" x-text="etiquetaCategoria(categoria)"></h2>
++                <div class="space-y-2">
++                    <template x-for="grupo in gruposDe(categoria)" :key="categoria + '-grupo-' + grupo.nivel">
++                        <div>
++                            <button
++                                type="button"
++                                @click="toggleGrupo(categoria, grupo.nivel)"
++                                :aria-expanded="estaAbierto(categoria, grupo.nivel)"
++                                :aria-controls="'grupo-' + categoria + '-' + grupo.nivel"
++                                class="flex w-full items-center gap-2 rounded-lg bg-gray-50 px-2 py-1.5 text-left transition-colors hover:bg-gray-100 dark:bg-gray-900/40 dark:hover:bg-gray-900/70"
++                            >
++                                <svg class="h-3 w-3 shrink-0 text-gray-400 transition-transform" :class="estaAbierto(categoria, grupo.nivel) ? 'rotate-90' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
++                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
++                                </svg>
++                                <span class="text-[10px] font-bold uppercase tracking-wide text-gray-500 dark:text-gray-400" x-text="'Nv Senda ' + grupo.nivel"></span>
++                                <span class="ml-auto text-[10px] font-semibold text-gray-400 dark:text-gray-500" x-text="contadorGrupo(grupo) + ' movimientos'"></span>
++                            </button>
++
++                            <div :id="'grupo-' + categoria + '-' + grupo.nivel" x-show="estaAbierto(categoria, grupo.nivel)" x-cloak class="mt-2 space-y-2">
++                                <template x-for="nodo in grupo.nodos" :key="'senda-nodo-' + nodo.slug">
++                                    <article
++                                        class="rounded-xl border p-2.5 transition-colors"
++                                        :class="nodo.desbloqueado
++                                            ? 'border-emerald-300 bg-emerald-50/50 dark:border-emerald-700 dark:bg-emerald-900/10'
++                                            : (nodo.puede_desbloquear
++                                                ? 'border-amber-300 bg-white dark:border-amber-700 dark:bg-gray-900/30'
++                                                : 'border-gray-200 bg-white opacity-70 dark:border-gray-700 dark:bg-gray-900/30')"
++                                    >
++                                        <div class="flex items-start justify-between gap-1.5">
++                                            <p class="min-w-0 text-sm font-semibold leading-tight text-gray-900 dark:text-white" x-text="nodo.name"></p>
++                                            <img :src="'/images/type/' + nodo.tipo_slug + '.webp'" :alt="nodo.tipo_nombre" loading="lazy" decoding="async" class="h-6 w-6 shrink-0 object-contain">
++                                        </div>
++                                        <div class="mt-1 flex flex-wrap items-center gap-x-1.5 text-[11px] text-gray-400 dark:text-gray-500">
++                                            <span x-text="etiquetaCategoria(nodo.category)"></span>
++                                            <span x-show="nodo.base_power > 0" x-text="'· ' + nodo.base_power + ' pot.'"></span>
++                                            <span x-text="'· Nv Senda ' + nodo.nivel_requerido"></span>
++                                            <span x-text="'· ' + nodo.coste + ' caramelos'"></span>
++                                        </div>
++                                        <p class="mt-1 text-[11px] leading-snug text-gray-500 dark:text-gray-400" x-text="nodo.description || 'Sin descripción.'"></p>
++
++                                        <template x-if="nodo.desbloqueado">
++                                            <span class="mt-2 block w-full rounded-md bg-emerald-100 px-2 py-1 text-center text-[11px] font-bold text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300">Desbloqueado</span>
++                                        </template>
++                                        <template x-if="!nodo.desbloqueado">
++                                            <button
++                                                type="button"
++                                                @click="desbloquear(nodo)"
++                                                :disabled="!nodo.puede_desbloquear || saving"
++                                                class="mt-2 w-full rounded-md border border-amber-300 px-2 py-1 text-[11px] font-bold text-amber-700 transition-colors hover:bg-amber-50 disabled:cursor-not-allowed disabled:border-gray-200 disabled:text-gray-400 dark:border-amber-700 dark:text-amber-300 dark:hover:bg-amber-900/20 dark:disabled:border-gray-700 dark:disabled:text-gray-500"
++                                                x-text="textoBoton(nodo)"
++                                            ></button>
++                                        </template>
++                                    </article>
++                                </template>
+                             </div>
+-                            <span class="text-[10px] font-semibold text-gray-400 dark:text-gray-500" x-text="arbol.ramas[categoria].length + ' movimientos'"></span>
+                         </div>
++                    </template>
++                </div>
+ 
+-                        <div class="space-y-2">
+-                            <template x-for="nodo in arbol.ramas[categoria]" :key="'senda-nodo-' + nodo.slug">
+-                                <article
+-                                    class="rounded-xl border p-2.5 transition-colors"
+-                                    :class="nodo.desbloqueado
+-                                        ? 'border-emerald-300 bg-emerald-50/50 dark:border-emerald-700 dark:bg-emerald-900/10'
+-                                        : (nodo.puede_desbloquear
+-                                            ? 'border-amber-300 bg-white dark:border-amber-700 dark:bg-gray-900/30'
+-                                            : 'border-gray-200 bg-white opacity-70 dark:border-gray-700 dark:bg-gray-900/30')"
+-                                >
+-                                    <div class="flex items-start justify-between gap-1.5">
+-                                        <p class="min-w-0 text-sm font-semibold leading-tight text-gray-900 dark:text-white" x-text="nodo.name"></p>
+-                                        <img :src="'/images/type/' + nodo.tipo_slug + '.webp'" :alt="nodo.tipo_nombre" loading="lazy" decoding="async" class="h-6 w-6 shrink-0 object-contain">
+-                                    </div>
+-                                    <div class="mt-1 flex flex-wrap items-center gap-x-1.5 text-[11px] text-gray-400 dark:text-gray-500">
+-                                        <span x-text="etiquetaCategoria(nodo.category)"></span>
+-                                        <span x-show="nodo.base_power > 0" x-text="'· ' + nodo.base_power + ' pot.'"></span>
+-                                        <span x-text="'· Nv Senda ' + nodo.nivel_requerido"></span>
+-                                        <span x-text="'· ' + nodo.coste + ' caramelos'"></span>
+-                                    </div>
+-                                    <p class="mt-1 text-[11px] leading-snug text-gray-500 dark:text-gray-400" x-text="nodo.description || 'Sin descripción.'"></p>
+-
+-                                    <template x-if="nodo.desbloqueado">
+-                                        <span class="mt-2 block w-full rounded-md bg-emerald-100 px-2 py-1 text-center text-[11px] font-bold text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300">Desbloqueado</span>
+-                                    </template>
+-                                    <template x-if="!nodo.desbloqueado">
+-                                        <button
+-                                            type="button"
+-                                            @click="desbloquear(nodo)"
+-                                            :disabled="!nodo.puede_desbloquear || saving"
+-                                            class="mt-2 w-full rounded-md border border-amber-300 px-2 py-1 text-[11px] font-bold text-amber-700 transition-colors hover:bg-amber-50 disabled:cursor-not-allowed disabled:border-gray-200 disabled:text-gray-400 dark:border-amber-700 dark:text-amber-300 dark:hover:bg-amber-900/20 dark:disabled:border-gray-700 dark:disabled:text-gray-500"
+-                                            x-text="textoBoton(nodo)"
+-                                        ></button>
+-                                    </template>
+-                                </article>
+-                            </template>
+-                        </div>
++                <p x-show="contadorCategoria(categoria) === 0" class="py-4 text-center text-xs text-gray-400 dark:text-gray-500">Sin movimientos en esta categoría.</p>
++            </section>
++        </template>
++    </div>
+ 
+-                        <p x-show="arbol.ramas[categoria].length === 0" class="py-4 text-center text-xs text-gray-400 dark:text-gray-500">Sin movimientos en esta categoría.</p>
+-                    </section>
+-                </template>
+-            </div>
+-        </div>
++    <!-- Estado vacío global -->
++    <div x-show="totalVisible() === 0" class="mt-4 rounded-2xl border border-dashed border-gray-200 p-6 text-center dark:border-gray-700">
++        <p x-show="hayFiltro()" class="text-sm text-gray-500 dark:text-gray-400">No hay movimientos que coincidan con el filtro.</p>
++        <p x-show="!hayFiltro()" class="text-sm text-gray-500 dark:text-gray-400">Sin movimientos.</p>
+     </div>
+ </div>
+ 
+@@ -142,7 +196,10 @@ class="mt-2 w-full rounded-md border border-amber-300 px-2 py-1 text-[11px] font
+ function sendasApp(arbolInicial) {
+     return {
+         arbol: arbolInicial,
++        filtro: '',
++        gruposCerrados: {},
+         saving: false,
++        savingExp: false,
+         feedback: { tipo: '', mensaje: '' },
+ 
+         etiquetaCategoria(categoria) {
+@@ -153,11 +210,70 @@ function sendasApp(arbolInicial) {
+             return '/images/moves/' + categoria + '.png';
+         },
+ 
++        normalizarTexto(valor) {
++            return String(valor ?? '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
++        },
++
++        filtroNormalizado() {
++            return this.normalizarTexto(this.filtro).trim();
++        },
++
++        hayFiltro() {
++            return this.filtroNormalizado().length > 0;
++        },
++
++        limpiarFiltro() {
++            this.filtro = '';
++        },
++
++        ramasFiltradas(categoria) {
++            const nodos = this.arbol.ramas[categoria] || [];
++            if (!this.hayFiltro()) {
++                return nodos;
++            }
++            const busqueda = this.filtroNormalizado();
++            return nodos.filter((nodo) => this.normalizarTexto(nodo.name).includes(busqueda));
++        },
++
++        gruposDe(categoria) {
++            const grupos = [];
++            const indice = new Map();
++            for (const nodo of this.ramasFiltradas(categoria)) {
++                if (!indice.has(nodo.nivel_requerido)) {
++                    indice.set(nodo.nivel_requerido, grupos.length);
++                    grupos.push({ nivel: nodo.nivel_requerido, nodos: [] });
++                }
++                grupos[indice.get(nodo.nivel_requerido)].nodos.push(nodo);
++            }
++            return grupos;
++        },
++
++        contadorCategoria(categoria) {
++            return this.ramasFiltradas(categoria).length;
++        },
++
++        contadorGrupo(grupo) {
++            return grupo.nodos.length;
++        },
++
++        totalVisible() {
++            return ['fisico', 'especial', 'estado'].reduce((total, categoria) => total + this.contadorCategoria(categoria), 0);
++        },
++
++        estaAbierto(categoria, nivel) {
++            if (this.hayFiltro()) {
++                return true;
++            }
++            return !this.gruposCerrados[categoria + ':' + nivel];
++        },
++
++        toggleGrupo(categoria, nivel) {
++            const clave = categoria + ':' + nivel;
++            this.gruposCerrados[clave] = !this.gruposCerrados[clave];
++        },
++
+         textoBoton(nodo) {
+             if (!nodo.disponible) {
+-                if (this.arbol.bloqueado_por_cuenta && this.arbol.nivel_por_exp >= nodo.nivel_requerido) {
+-                    return 'Cap de cuenta: Nv ' + this.arbol.cap;
+-                }
+                 return 'Nivel de Senda ' + nodo.nivel_requerido;
+             }
+             if (this.arbol.caramelos < nodo.coste) {
+@@ -166,6 +282,40 @@ function sendasApp(arbolInicial) {
+             return 'Desbloquear · ' + nodo.coste + ' caramelos';
+         },
+ 
++        async consumir(cantidad) {
++            if (this.savingExp) {
++                return;
++            }
++            this.savingExp = true;
++            this.feedback = { tipo: '', mensaje: '' };
++            try {
++                const response = await fetch('/sendas/experiencia', {
++                    method: 'POST',
++                    headers: {
++                        'Content-Type': 'application/json',
++                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '',
++                        'Accept': 'application/json',
++                    },
++                    body: JSON.stringify({ tipo: this.arbol.tipo.slug, cantidad }),
++                });
++                const data = await response.json().catch(() => ({}));
++                if (!response.ok) {
++                    this.feedback = { tipo: 'error', mensaje: data.error || data.message || 'No se pudieron consumir los caramelos.' };
++                    return;
++                }
++                this.arbol = data.arbol || this.arbol;
++                this.feedback = {
++                    tipo: 'ok',
++                    mensaje: 'Has usado ' + data.cantidad_consumida + ' caramelo(s): +' + data.exp_ganada + ' exp.',
++                };
++            } catch (err) {
++                console.error('Error consumiendo caramelos de Senda:', err);
++                this.feedback = { tipo: 'error', mensaje: 'No se pudieron consumir los caramelos.' };
++            } finally {
++                this.savingExp = false;
++            }
++        },
++
+         async desbloquear(nodo) {
+             if (!nodo || this.saving) {
+                 return;
+diff --git a/routes/player.php b/routes/player.php
+index 7f15a84..aa81f52 100644
+--- a/routes/player.php
++++ b/routes/player.php
+@@ -65,6 +65,7 @@
+ Route::get('/sendas', [SendasController::class, 'index'])->name('sendas.index');
+ Route::get('/sendas/{tipo}', [SendasController::class, 'show'])->name('sendas.show');
+ Route::post('/sendas/desbloquear', [SendasController::class, 'desbloquear'])->name('sendas.desbloquear');
++Route::post('/sendas/experiencia', [SendasController::class, 'experiencia'])->name('sendas.experiencia');
+ 
+ // Favoritos y capacidades de reclutados (API JSON)
+ Route::get('/api/reclutados', [ReclutadoController::class, 'listarTodos']);

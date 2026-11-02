@@ -24,6 +24,7 @@ miembros y objetos equipados.
 - `CrearEquipoInicial::equiposDefinidos(): EquipoDefinidoCollection`,
   `equiposConNombres(): EquipoInicialResumenCollection`, `crear(userId, teamKey)`.
 - `TeamRepositoryInterface` implementado por `EloquentTeamRepository`.
+- Tamaño/slots canónicos: `Src\Shared\Domain\ReglasEquipo` (`MIEMBROS=3`, `SLOT_MIN=1`, `SLOT_MAX=3`).
 
 ## Notas
 

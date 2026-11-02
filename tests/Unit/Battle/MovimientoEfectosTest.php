@@ -10,7 +10,10 @@ use Src\Battle\Domain\AgregadoBatalla;
 use Src\Battle\Domain\Chain\CadenaDanio;
 use Src\Battle\Domain\Collections\CambiosStatsCollection;
 use Src\Battle\Domain\Combatiente;
+use Src\Battle\Domain\Effects\Equipo\EfectoEquipoEspejoMagico;
 use Src\Battle\Domain\Effects\Equipo\EfectoEquipoPantalla;
+use Src\Battle\Domain\Effects\Equipo\EfectoEquipoSafeguard;
+use Src\Battle\Domain\Effects\Equipo\EfectoEquipoVeloFlor;
 use Src\Battle\Domain\Effects\Movimiento\ColeccionEjecutoresMovimiento;
 use Src\Battle\Domain\Effects\Movimiento\EjecutorCuracion;
 use Src\Battle\Domain\Effects\Movimiento\EjecutorEquipoProteccion;
@@ -1564,5 +1567,74 @@ class MovimientoEfectosTest extends TestCase
         }
 
         return false;
+    }
+
+    // ─── Retorno de aplicarEstado con protecciones de equipo ───
+
+    public function test_aplicar_estado_velo_flor_retorna_false(): void
+    {
+        $atacante = $this->combatiente(id: 'a1', nombre: 'Atacante');
+        $defensor = $this->combatiente(tipos: [TipoPokemon::PLANTA], id: 'd1', nombre: 'Defensor');
+        $battle = $this->batallaMinima($atacante, $defensor);
+        $battle->team2->agregarEfecto(new EfectoEquipoVeloFlor('velo_flor', 'd1'));
+
+        $resultado = (new ServicioEjecucionBatalla(new CadenaDanio()))->aplicarEstado(
+            $defensor,
+            $this->dragoaliento(1.0),
+            $battle,
+            $atacante,
+        );
+
+        $this->assertFalse($resultado);
+        $this->assertSame(EstadoPokemon::NONE, $defensor->estado());
+    }
+
+    public function test_aplicar_estado_safeguard_retorna_false(): void
+    {
+        $atacante = $this->combatiente(id: 'a1', nombre: 'Atacante');
+        $defensor = $this->combatiente(id: 'd1', nombre: 'Defensor');
+        $battle = $this->batallaMinima($atacante, $defensor);
+        $battle->team2->agregarEfecto(new EfectoEquipoSafeguard('safeguard', 5));
+
+        $resultado = (new ServicioEjecucionBatalla(new CadenaDanio()))->aplicarEstado(
+            $defensor,
+            $this->dragoaliento(1.0),
+            $battle,
+            $atacante,
+        );
+
+        $this->assertFalse($resultado);
+        $this->assertSame(EstadoPokemon::NONE, $defensor->estado());
+    }
+
+    public function test_aplicar_estado_espejo_magico_no_marca_al_objetivo(): void
+    {
+        $atacante = $this->combatiente(id: 'a1', nombre: 'Atacante');
+        $defensor = $this->combatiente(id: 'd1', nombre: 'Defensor');
+        $battle = $this->batallaMinima($atacante, $defensor);
+        $battle->team2->agregarEfecto(new EfectoEquipoEspejoMagico('espejo_magico', 'd1'));
+
+        $resultado = (new ServicioEjecucionBatalla(new CadenaDanio()))->aplicarEstado(
+            $defensor,
+            $this->dragoaliento(1.0),
+            $battle,
+            $atacante,
+        );
+
+        $this->assertFalse($resultado);
+        $this->assertSame(EstadoPokemon::NONE, $defensor->estado());
+        $this->assertSame(EstadoPokemon::PARALYSIS, $atacante->estado());
+    }
+
+    private function dragoaliento(float $probabilidadEstado): MovimientoBatalla
+    {
+        return new MovimientoBatalla(
+            'Dragoaliento',
+            60,
+            TipoPokemon::DRAGON,
+            CategoriaMovimiento::ESPECIAL,
+            statusEffect: EstadoPokemon::PARALYSIS,
+            perfil: new PerfilMovimiento(probabilidadEstado: $probabilidadEstado),
+        );
     }
 }

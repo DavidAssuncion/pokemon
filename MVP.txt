@@ -1,0 +1,25 @@
+
+Terminar moves + moveset
+moves: senda
+movesets salvajes aprendibles por lvl + preevoluciones -> Confirmar
+-
+Rutas con sentido -> 70%
+-
+gym ataques/estrategias hasta 4 medallas -> 0%
+Filtro SQL para sacar los peleadores
+
+-
+Modulo Forja
+Como funcionan las granjas/nidos? Y los huevos? Que IV sacan? Se ven beneficiados de las granajs?
+
+Requiere que tengas el nido a cierto nivel, 1-3-5 debloquea los articulos buenos
+
+2-4 para los que no tengan 3 evos, y 3 para los que no tengan evolucion
+
+Armas requieren ataque/spA/spd
+Armadura requieren def/spD/hp
++ Los bonguiris segun la zona
+
+-
+encantamientos esperan
+Encantar movimientos, latigo cepa puede alicar veneno, subir potencias... Requiere Exp del tipo, algo mas?

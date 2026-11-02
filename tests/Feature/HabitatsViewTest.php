@@ -18,7 +18,7 @@ class HabitatsViewTest extends TestCase
     public function test_habitat_show_renders_expedition_preview_panel(): void
     {
         $reclutado = (object) ['pokemon_id' => 25, 'nombre' => 'Pikachu'];
-        $miembro = (object) ['reclutado' => $reclutado];
+        $miembro = (object) ['pokemon_id' => 25, 'reclutado' => $reclutado];
         $equipo = (object) ['id' => 1, 'name' => 'Equipo A', 'members' => [$miembro, null, null]];
 
         $view = $this->view('habitats.show', [
@@ -33,7 +33,7 @@ class HabitatsViewTest extends TestCase
             ],
             'teams' => new Collection([$equipo]),
             'exploracionesActivas' => new Collection(),
-            'equiposEnExploracion' => new Collection(),
+            'reclutadosEnExploracion' => [],
             'sightedPokemonIds' => [],
             'nivelJugador' => 5,
         ]);
@@ -55,5 +55,8 @@ class HabitatsViewTest extends TestCase
         $view->assertSee('Enviar expedición', false);
         $view->assertSee(':disabled="!previewLoaded"', false);
         $view->assertDontSee('>Explorar<', false);
+        // Sin bloqueo de equipo heredado: el equipo sin miembros explorando se puede seleccionar
+        $view->assertSee('selectTeam(1, $el.dataset.teamName)', false);
+        $view->assertDontSee('equiposEnExploracion', false);
     }
 }

@@ -100,6 +100,12 @@
          if ($wire.get('animAttackerId')) programarAccion();
      })">
 
+    {{-- AVISO: perfil del rival --}}
+    <div class="d-flex align-items-start gap-2 rounded-3 bg-body-tertiary px-3 py-2 mb-2 small text-body-secondary" role="note">
+        <span aria-hidden="true">ℹ</span>
+        <p class="mb-0">Los rivales usan 6 movimientos. Pueden usar movimientos que tú aún no has desbloqueado; no heredan tus bonos de Senda.</p>
+    </div>
+
     {{-- TOP: TURN ORDER --}}
     @include('livewire.partials.turn-bar')
 
@@ -129,7 +135,7 @@
                     </div>
                     <div class="modal-body">
                         @if($rewardsVista['layout'] === 'ruta')
-                            {{-- RUTA: caramelos y capturas apilados en una sola tarjeta --}}
+                            {{-- RUTA: capturas y caramelos en columnas separadas --}}
                             <p class="fw-bold text-success mb-3">¡Has derrotado a los pokémon salvajes!</p>
 
                             <div class="d-flex justify-content-between align-items-center mb-2">
@@ -141,67 +147,67 @@
                                 <strong class="text-success">+{{ number_format($rewardsVista['exp_miembro']) }}</strong>
                             </div>
 
-                            <div class="bg-gray-50 dark:bg-gray-900/50 rounded-lg p-3">
-                                @if($rewardsVista['tieneCaramelos'])
-                                    @if(! $rewardsVista['caramelos_familia']->isEmpty())
+                            @php
+                                $tieneCapturas = $rewardsVista['capturas'] !== [];
+                            @endphp
+
+                            <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 items-start">
+                                @if($tieneCapturas)
+                                    <div class="bg-gray-50 dark:bg-gray-900/50 rounded-lg p-3 {{ $rewardsVista['tieneCaramelos'] ? 'lg:col-span-1' : 'lg:col-span-3' }}">
+                                        <p class="text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wide mb-2">Capturados</p>
                                         <div class="flex flex-wrap gap-3">
-                                            @foreach($rewardsVista['caramelos_familia'] as $candy)
-                                                @include('exploraciones._caramelo', ['caramelo' => $candy->toArray()])
-                                            @endforeach
-                                        </div>
-                                        @if(! $rewardsVista['caramelos_ev']->isEmpty() || ! $rewardsVista['caramelos_tipo']->isEmpty())
-                                            <hr class="my-3 border-gray-200 dark:border-gray-700">
-                                        @endif
-                                    @endif
-
-                                    @if(! $rewardsVista['caramelos_ev']->isEmpty())
-                                        <div class="flex flex-wrap gap-3">
-                                            @foreach($rewardsVista['caramelos_ev'] as $candy)
-                                                @include('exploraciones._caramelo', ['caramelo' => $candy->toArray()])
-                                            @endforeach
-                                        </div>
-                                        @if(! $rewardsVista['caramelos_tipo']->isEmpty())
-                                            <hr class="my-3 border-gray-200 dark:border-gray-700">
-                                        @endif
-                                    @endif
-
-                                    @if(! $rewardsVista['caramelos_tipo']->isEmpty())
-                                        <div class="flex flex-wrap gap-3">
-                                            @foreach($rewardsVista['caramelos_tipo'] as $candy)
-                                                @include('exploraciones._caramelo', ['caramelo' => $candy->toArray()])
-                                            @endforeach
-                                        </div>
-                                    @endif
-                                @endif
-
-                                @if($rewardsVista['tieneCaramelos'] && $rewardsVista['capturas'] !== [])
-                                    <hr class="my-3 border-gray-200 dark:border-gray-700">
-                                @endif
-
-                                @if($rewardsVista['capturas'] !== [])
-                                    <p class="text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wide mb-2">Capturados</p>
-                                    <div class="flex flex-wrap gap-3">
-                                        @foreach($rewardsVista['capturas'] as $captura)
-                                            <div class="text-center" title="{{ $captura['title'] }}">
-                                                <div class="relative inline-block {{ $captura['es_shiny'] ? 'ring-2 ring-yellow-400 rounded-full animate-pulse' : '' }}">
-                                                    <img
-                                                        src="{{ $captura['src'] }}"
-                                                        loading="lazy"
-                                                        decoding="async"
-                                                        alt="Capturado"
-                                                        title="Pokémon capturado"
-                                                        class="w-16 h-16 object-contain rounded-full {{ $captura['es_shiny'] ? 'bg-yellow-100 dark:bg-yellow-900/40' : '' }}"
-                                                        onerror="{{ $captura['onerror'] }}"
-                                                    >
-                                                    @if($captura['es_shiny'])
-                                                        <span class="absolute -top-1.5 -left-1.5 px-1 py-0.5 bg-yellow-400 text-yellow-900 text-[10px] font-bold rounded-full shadow" title="Shiny">✨</span>
-                                                    @endif
-                                                    <span class="absolute -top-1.5 -right-1.5 px-1.5 py-0.5 bg-green-600 text-white text-[10px] font-bold rounded-full">
-                                                        ×{{ $captura['cantidad'] }}
-                                                    </span>
+                                            @foreach($rewardsVista['capturas'] as $captura)
+                                                <div class="text-center" title="{{ $captura['title'] }}">
+                                                    <div class="relative inline-block {{ $captura['es_shiny'] ? 'ring-2 ring-yellow-400 rounded-full animate-pulse' : '' }}">
+                                                        <img
+                                                            src="{{ $captura['src'] }}"
+                                                            loading="lazy"
+                                                            decoding="async"
+                                                            alt="Capturado"
+                                                            title="Pokémon capturado"
+                                                            class="w-16 h-16 object-contain rounded-full {{ $captura['es_shiny'] ? 'bg-yellow-100 dark:bg-yellow-900/40' : '' }}"
+                                                            onerror="{{ $captura['onerror'] }}"
+                                                        >
+                                                        @if($captura['es_shiny'])
+                                                            <span class="absolute -top-1.5 -left-1.5 px-1 py-0.5 bg-yellow-400 text-yellow-900 text-[10px] font-bold rounded-full shadow" title="Shiny">✨</span>
+                                                        @endif
+                                                        <span class="absolute -top-1.5 -right-1.5 px-1.5 py-0.5 bg-green-600 text-white text-[10px] font-bold rounded-full">
+                                                            ×{{ $captura['cantidad'] }}
+                                                        </span>
+                                                    </div>
                                                 </div>
-                                            </div>
-                                        @endforeach
+                                            @endforeach
+                                        </div>
+                                    </div>
+                                @endif
+
+                                @if($rewardsVista['tieneCaramelos'])
+                                    <div class="bg-gray-50 dark:bg-gray-900/50 rounded-lg p-3 {{ $tieneCapturas ? 'lg:col-span-2' : 'lg:col-span-3' }}">
+                                        <div class="flex flex-col gap-3">
+                                            @if(! $rewardsVista['caramelos_familia']->isEmpty())
+                                                <div class="flex flex-wrap gap-3">
+                                                    @foreach($rewardsVista['caramelos_familia'] as $candy)
+                                                        @include('exploraciones._caramelo', ['caramelo' => $candy->toArray()])
+                                                    @endforeach
+                                                </div>
+                                            @endif
+
+                                            @if(! $rewardsVista['caramelos_ev']->isEmpty())
+                                                <div class="flex flex-wrap gap-3">
+                                                    @foreach($rewardsVista['caramelos_ev'] as $candy)
+                                                        @include('exploraciones._caramelo', ['caramelo' => $candy->toArray()])
+                                                    @endforeach
+                                                </div>
+                                            @endif
+
+                                            @if(! $rewardsVista['caramelos_tipo']->isEmpty())
+                                                <div class="flex flex-wrap gap-3">
+                                                    @foreach($rewardsVista['caramelos_tipo'] as $candy)
+                                                        @include('exploraciones._caramelo', ['caramelo' => $candy->toArray()])
+                                                    @endforeach
+                                                </div>
+                                            @endif
+                                        </div>
                                     </div>
                                 @endif
                             </div>

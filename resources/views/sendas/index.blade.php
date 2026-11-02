@@ -3,16 +3,13 @@
 @section('title', 'Sendas')
 
 @section('content')
-@php
-    $totalDesbloqueados = array_sum(array_column($tipos, 'desbloqueados'));
-    $totalNodos = array_sum(array_column($tipos, 'total_nodos'));
-@endphp
 
 <div class="mb-6">
     <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Sendas</h1>
     <p class="mt-1 max-w-3xl text-sm text-gray-500 dark:text-gray-400">
         Sube el nivel de cada tipo con la experiencia que ganan tus combatientes y exploradores.
         Los movimientos desbloqueados quedan disponibles para toda la cuenta.
+        Niveles 1-3 desbloquean ataques; los niveles 4-5 añaden maestrías pasivas que mejoran a todos tus combatientes.
     </p>
     <div class="mt-3 flex flex-wrap items-center gap-2 text-xs font-semibold">
         <span class="rounded-full bg-blue-100 px-3 py-1 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300">Nv cuenta {{ $nivelJugador ?? 1 }}</span>
@@ -34,8 +31,8 @@
                     <p class="truncate text-sm font-bold text-gray-900 dark:text-white">{{ $tipo['nombre'] }}</p>
                     <p class="text-[10px] font-medium text-gray-500 dark:text-gray-400">
                         Nivel {{ $tipo['nivel'] }} / {{ $tipo['nivel_maximo'] }}
-                        @if($tipo['bloqueado_por_cuenta'])
-                            · cap {{ $tipo['cap'] }}
+                        @if($tipo['nivel'] >= 4)
+                            <span class="ml-1 rounded-full bg-purple-100 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-purple-700 dark:bg-purple-900/30 dark:text-purple-300">Maestrías</span>
                         @endif
                     </p>
                 </div>
@@ -48,13 +45,7 @@
 
             <div class="mt-2 flex items-center justify-between gap-2 text-[10px] text-gray-500 dark:text-gray-400">
                 <span>
-                    @if($tipo['exp_siguiente'] === null)
-                        Nivel máximo
-                    @elseif($tipo['bloqueado_por_cuenta'])
-                        {{ number_format($tipo['exp'], 0, ',', '.') }} exp · cap {{ $tipo['cap'] }}
-                    @else
-                        {{ number_format($tipo['exp'], 0, ',', '.') }} / {{ number_format($tipo['exp_siguiente'], 0, ',', '.') }} exp
-                    @endif
+                    {{ number_format($tipo['exp'], 0, ',', '.') }} / {{ number_format($tipo['exp_siguiente'], 0, ',', '.') }} exp
                 </span>
                 <span class="font-semibold text-gray-600 dark:text-gray-300">{{ $tipo['desbloqueados'] }}/{{ $tipo['total_nodos'] }}</span>
             </div>

@@ -100,6 +100,24 @@ class ExploracionesTransformadorTest extends TestCase
         ], $resultado['caramelos_familia']);
     }
 
+    public function test_exp_reclutado_expone_la_exp_del_destino(): void
+    {
+        $recompensas = new ResultadoRecompensas(
+            capturas: [],
+            caramelosFamilia: [],
+            caramelosEv: [],
+            caramelosTipo: [],
+            expTotal: 500,
+            expPorMiembro: 250,
+        );
+
+        $resultado = (new TransformadorResultadoExploracion())
+            ->desde($recompensas, new Collection());
+
+        $this->assertSame(500, $resultado['exp']);
+        $this->assertSame(250, $resultado['exp_reclutado']);
+    }
+
     public function test_caramelos_familia_sin_pokemon_de_la_cadena_devuelve_pokemon_id_null(): void
     {
         $recompensas = new ResultadoRecompensas(

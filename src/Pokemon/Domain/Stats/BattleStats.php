@@ -6,8 +6,8 @@ namespace Src\Pokemon\Domain\Stats;
 
 class BattleStats
 {
-    CONST IV = 5;
-    CONST EV = 4;
+    public const IV = 5;
+    public const EV = 4;
 
     public readonly int $nivel;
 

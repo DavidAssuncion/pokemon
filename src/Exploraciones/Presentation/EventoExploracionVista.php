@@ -4,25 +4,22 @@ declare(strict_types=1);
 
 namespace Src\Exploraciones\Presentation;
 
+use App\Enums\StatEnum;
+use App\Enums\TipoEnum;
+use Src\Shared\Domain\SlugTipo;
+
 /**
  * Presentador puro de un evento de bitácora de exploración.
  *
  * Centraliza los textos, iconos y rutas que antes se calculaban dentro de
  * `_evento.blade.php`. La vista sólo decide qué bloque HTML pintar según
  * `tipo`, pero no compone narrativa ni deriva nombres/rutas.
+ *
+ * `oculto` forma parte de la base del contrato: sólo `caramelo_tipo` lo marca
+ * a `true` cuando no puede resolver el tipo, y las colecciones lo filtran.
  */
 final class EventoExploracionVista
 {
-    /** @var array<int, array{nombre: string, slug: string}> */
-    private const STATS = [
-        1 => ['nombre' => 'PS', 'slug' => 'hp'],
-        2 => ['nombre' => 'Ataque', 'slug' => 'atk'],
-        3 => ['nombre' => 'Defensa', 'slug' => 'def'],
-        4 => ['nombre' => 'Ataque Especial', 'slug' => 'spAtk'],
-        5 => ['nombre' => 'Defensa Especial', 'slug' => 'spDef'],
-        6 => ['nombre' => 'Velocidad', 'slug' => 'speed'],
-    ];
-
     /**
      * @param  array<string, mixed>  $evento
      * @param  array<array-key, string>  $nombres
@@ -42,20 +39,27 @@ final class EventoExploracionVista
         $stat = (int) ($evento['stat'] ?? 0);
         $statNombre = $evento['stat_nombre'] ?? null;
         $statSlug = $evento['stat_slug'] ?? null;
+        $statNombre = is_string($statNombre) ? $statNombre : null;
+        $statSlug = is_string($statSlug) ? $statSlug : null;
 
-        // El contrato histórico sólo completa stat desde el catálogo para el
-        // evento raíz `caramelo_ev`; los hallazgos conservan el fallback JS.
-        if ($completarStats && $tipo === 'caramelo_ev') {
-            $statInfo = self::STATS[$stat] ?? null;
-            $statNombre ??= $statInfo['nombre'] ?? null;
-            $statSlug ??= $statInfo['slug'] ?? null;
+        // El contrato histórico sólo completaba stat para el evento raíz
+        // `caramelo_ev`; los hallazgos ya no dependen del fallback JS.
+        $esCarameloEv = $tipo === 'caramelo_ev'
+            || ($tipo === 'hallazgo' && ($evento['subtype'] ?? '') === 'caramelo_ev');
+
+        if ($completarStats && $esCarameloEv) {
+            $statEnum = StatEnum::fromId($stat);
+            $statNombre ??= $statEnum?->label();
+            $statSlug ??= $statEnum?->slug();
         }
-        $duracion = (int) ($evento['duration_loss'] ?? $evento['duracion'] ?? 0);
+        $duracion = (int) ($evento['duration_loss'] ?? $evento['duracion_minutos'] ?? $evento['duracion'] ?? 0);
+        $sujeto = self::sujeto($evento);
         $subtype = (string) ($evento['subtype'] ?? '');
         $resolucion = (string) ($evento['resolucion'] ?? '');
 
         $vista = array_merge($evento, [
             '_vista' => true,
+            'oculto' => false,
             'tipo' => $tipo,
             'nombre' => $nombre,
             'pokemon_id' => $pokemonId,
@@ -81,31 +85,34 @@ final class EventoExploracionVista
             'huida' => array_merge($vista, [
                 'texto' => "Un {$nombre} salvaje huye antes de que comience el combate.",
             ]),
-            'emboscada' => array_merge($vista, self::emboscada($vista, $resolucion, $duracion)),
+            'emboscada' => array_merge($vista, self::emboscada($vista, $sujeto, $resolucion, $duracion, $nombres)),
             'contratiempo' => array_merge($vista, [
-                'texto' => self::textoContratiempo($subtype, $duracion),
+                'texto' => self::textoContratiempo($sujeto, $subtype, $duracion),
             ]),
             'retirada' => array_merge($vista, [
-                'texto' => 'El equipo se retira: '.($evento['reason'] ?? 'motivo desconocido'),
+                'texto' => "{$sujeto} se retira: ".($evento['reason'] ?? 'motivo desconocido'),
                 'reason' => $evento['reason'] ?? 'motivo desconocido',
             ]),
             'grupo' => array_merge($vista, [
-                'texto' => 'El equipo se encuentra con un grupo salvaje',
+                'texto' => "{$sujeto} se encuentra con un grupo salvaje",
             ]),
             'hallazgo' => array_merge($vista, self::hallazgo($vista, $subtype, $stat, $statNombre, $statSlug, $cantidad)),
             'caramelo_familia' => array_merge($vista, self::carameloFamilia($vista)),
             'caramelo_ev' => array_merge($vista, self::carameloEv($vista, $stat, $statNombre, $statSlug)),
-            'encuentro' => array_merge($vista, self::encuentro($vista, $subtype, $resolucion, $duracion)),
+            'encuentro' => array_merge($vista, self::encuentro($vista, $subtype, $resolucion, $duracion, $nombres)),
             'neutral' => array_merge($vista, [
-                'texto' => 'Evento neutral',
+                'texto' => 'Sin incidencias',
             ]),
             'combate' => array_merge($vista, [
                 'resolucion' => $resolucion,
                 'hp_final' => (int) ($evento['hp_final'] ?? 0),
                 'combate_log' => (string) ($evento['combate_log'] ?? ''),
             ]),
-            'descanso' => array_merge($vista, [
-                'duracion' => $duracion,
+            'descanso' => array_merge($vista, self::descanso($sujeto, $duracion, $evento)),
+            'derrota' => array_merge($vista, self::derrota($evento, $sujeto)),
+            'cancelada' => array_merge($vista, [
+                'texto' => 'Expedición cancelada: '.($evento['motivo'] ?? 'motivo desconocido'),
+                'motivo' => $evento['motivo'] ?? 'motivo desconocido',
             ]),
             default => array_merge($vista, [
                 'texto' => 'Evento: '.$tipo.($subtype !== '' ? " ({$subtype})" : ''),
@@ -115,20 +122,22 @@ final class EventoExploracionVista
 
     /**
      * @param  array<string, mixed>  $vista
-     * @return array<string, mixed>
+     * @param  array<array-key, string>  $nombres
+     * @return array{titulo: string, subtitulo: string, rondas: int|null, rival_nombre: string|null, detalle_derrota: string|null}
      */
-    private static function emboscada(array $vista, string $resolucion, int $duracion): array
+    private static function emboscada(array $vista, string $sujeto, string $resolucion, int $duracion, array $nombres = []): array
     {
-        $subtitulo = 'El equipo repele el ataque'.($duracion > 0 ? " (-{$duracion} min)" : '');
+        $subtitulo = "{$sujeto} repele el ataque".($duracion > 0 ? " (-{$duracion} min)" : '');
 
         if (
             str_contains($resolucion, 'huida')
             || str_contains($resolucion, 'escapa')
             || str_contains($resolucion, 'sin_combate')
         ) {
-            $subtitulo = 'El equipo escapa perdiendo tiempo';
+            $subtitulo = "{$sujeto} escapa perdiendo tiempo";
         } elseif (
             $resolucion !== ''
+            && ! in_array($resolucion, ['evitada', 'superada', 'superada_con_cost', 'superada_con_coste'], true)
             && ! str_contains($resolucion, 'combate')
             && ! str_contains($resolucion, 'repele')
             && ! str_contains($resolucion, 'victoria')
@@ -136,23 +145,63 @@ final class EventoExploracionVista
             $subtitulo = $resolucion;
         }
 
+        $rondas = self::rondas($vista['log'] ?? null);
+
         return [
             'titulo' => '¡Emboscada!',
             'subtitulo' => $subtitulo,
+            'rondas' => $rondas,
+            'rival_nombre' => self::rivalNombre($vista, $nombres),
+            'detalle_derrota' => self::detalleDerrota($vista, $rondas, $nombres),
         ];
     }
 
-    private static function textoContratiempo(string $subtype, int $duracion): string
+    private static function textoContratiempo(string $sujeto, string $subtype, int $duracion): string
     {
         $sufijo = $duracion > 0 ? " -{$duracion} min" : '';
 
         return match ($subtype) {
-            'desorientacion' => "El equipo pierde el rastro.{$sufijo}",
+            'desorientacion' => "{$sujeto} pierde el rastro.{$sufijo}",
             'terreno' => "El terreno dificulta el avance.{$sufijo}",
             'clima' => "El clima empeora las condiciones.{$sufijo}",
             'bloqueo' => "Un obstáculo bloquea el camino.{$sufijo}",
-            default => $subtype !== '' ? $subtype : 'El equipo sufre un contratiempo',
+            default => $subtype !== '' ? $subtype : "{$sujeto} sufre un contratiempo",
         };
+    }
+
+    /**
+     * @param  array<string, mixed>  $evento
+     * @return array{texto: string, duracion: int, hp_recuperado: float}
+     */
+    private static function descanso(string $sujeto, int $duracion, array $evento): array
+    {
+        $hpRecuperado = (float) ($evento['hp_recuperado'] ?? 0);
+        $texto = $hpRecuperado > 0
+            ? "{$sujeto} descansa y recupera ".self::numero($hpRecuperado).' HP'
+            : "{$sujeto} descansa";
+
+        return [
+            'texto' => $texto,
+            'duracion' => $duracion,
+            'hp_recuperado' => $hpRecuperado,
+        ];
+    }
+
+    /**
+     * @param  array<string, mixed>  $evento
+     */
+    private static function sujeto(array $evento): string
+    {
+        $nombre = $evento['explorador_nombre'] ?? null;
+
+        return is_string($nombre) && trim($nombre) !== '' ? $nombre : 'El explorador';
+    }
+
+    private static function numero(float $valor): string
+    {
+        return $valor === (float) (int) $valor
+            ? (string) (int) $valor
+            : rtrim(rtrim(number_format($valor, 1, '.', ''), '0'), '.');
     }
 
     /**
@@ -176,16 +225,7 @@ final class EventoExploracionVista
         }
 
         if ($subtype === 'caramelo_tipo') {
-            $slug = (string) ($vista['slug'] ?? '');
-            $nombreTipo = (string) ($vista['tipo_nombre'] ?? $vista['tipo_label'] ?? ($slug !== '' ? ucfirst($slug) : 'Desconocido'));
-
-            return [
-                'candy_slug' => $slug,
-                'candy_nombre' => $nombreTipo,
-                'candy_src' => $slug !== '' ? "/images/candy_type/{$slug}.webp" : null,
-                'candy_alt' => "Caramelo de tipo {$nombreTipo}",
-                'cantidad' => $cantidad,
-            ];
+            return self::carameloTipo($vista, $cantidad);
         }
 
         return ['texto' => 'Hallazgo registrado'];
@@ -193,15 +233,61 @@ final class EventoExploracionVista
 
     /**
      * @param  array<string, mixed>  $vista
-     * @return array<string, mixed>
+     * @return array{oculto: bool, candy_slug: string, candy_nombre: string|null, candy_src: string|null, candy_alt: string, cantidad: int}
+     */
+    private static function carameloTipo(array $vista, int $cantidad): array
+    {
+        $tipoId = isset($vista['tipo_id']) ? (int) $vista['tipo_id'] : 0;
+        $tipo = $tipoId > 0 ? TipoEnum::fromId($tipoId) : null;
+
+        $nombre = $tipo?->label();
+        $slug = $tipo !== null ? SlugTipo::de($tipo->label()) : '';
+
+        if ($nombre === null) {
+            $slugLegacy = $vista['slug'] ?? null;
+            $slugLegacy = is_string($slugLegacy) ? trim($slugLegacy) : '';
+
+            $nombreLegacy = $vista['tipo_nombre'] ?? $vista['tipo_label'] ?? null;
+            $nombreLegacy = is_string($nombreLegacy) ? trim($nombreLegacy) : '';
+
+            if ($slugLegacy !== '') {
+                $slug = $slugLegacy;
+                $nombre = $nombreLegacy !== '' ? $nombreLegacy : ucfirst($slugLegacy);
+            } elseif ($nombreLegacy !== '') {
+                $nombre = $nombreLegacy;
+                $slug = SlugTipo::de($nombreLegacy);
+            }
+        }
+
+        $visible = $nombre !== null && $nombre !== '' && $slug !== '';
+
+        return [
+            'oculto' => ! $visible,
+            'candy_slug' => $slug,
+            'candy_nombre' => $visible ? $nombre : null,
+            'candy_src' => $visible ? "/images/candy_type/{$slug}.webp" : null,
+            'candy_alt' => $visible ? "Caramelo de tipo {$nombre}" : 'Caramelo de tipo',
+            'cantidad' => $cantidad,
+        ];
+    }
+
+    /**
+     * @param  array<string, mixed>  $vista
+     * @return array{candy_src: string|null, candy_imagen: string|null, candy_alt: string, candy_nombre: string|null, cantidad: int}
      */
     private static function carameloFamilia(array $vista): array
     {
         $pokemonId = $vista['pokemon_id'] ?? null;
         $nombre = $vista['nombre'] ?? 'Pokémon';
+        $tienePokemon = is_int($pokemonId) && $pokemonId > 0;
+        $candySrc = $tienePokemon ? "/images/candy_pokemon/{$pokemonId}.webp" : null;
+        $candyImagen = $tienePokemon
+            ? ($vista['icono_pokemon'] ?? $candySrc)
+            : ($vista['candy_src'] ?? $candySrc);
 
         return [
-            'candy_src' => $pokemonId !== null && $pokemonId !== 0 ? "/images/candy_pokemon/{$pokemonId}.webp" : null,
+            'candy_src' => $candySrc,
+            'candy_imagen' => $candyImagen,
             'candy_alt' => "Caramelo de {$nombre}",
             'candy_nombre' => $vista['nombre'] ?? null,
             'cantidad' => (int) ($vista['cantidad'] ?? 1),
@@ -210,7 +296,7 @@ final class EventoExploracionVista
 
     /**
      * @param  array<string, mixed>  $vista
-     * @return array<string, mixed>
+     * @return array{candy_src: string|null, candy_alt: string, candy_nombre: string|null, candy_nombre_js: string|null, cantidad: int}
      */
     private static function carameloEv(array $vista, int $stat, ?string $statNombre, ?string $statSlug): array
     {
@@ -225,9 +311,10 @@ final class EventoExploracionVista
 
     /**
      * @param  array<string, mixed>  $vista
-     * @return array<string, mixed>
+     * @param  array<array-key, string>  $nombres
+     * @return array{titulo: string, resolucion_texto: string, duracion: int, icono_pokemon: string|null, rondas: int|null, rival_nombre: string|null, detalle_derrota: string|null}
      */
-    private static function encuentro(array $vista, string $subtype, string $resolucion, int $duracion): array
+    private static function encuentro(array $vista, string $subtype, string $resolucion, int $duracion, array $nombres = []): array
     {
         $titulo = match ($subtype) {
             'grupo' => 'Grupo salvaje',
@@ -244,12 +331,115 @@ final class EventoExploracionVista
             default => '',
         };
 
+        $rondas = self::rondas($vista['log'] ?? null);
+
         return [
             'titulo' => $titulo,
             'resolucion_texto' => $textoResolucion,
             'duracion' => $duracion,
             'icono_pokemon' => $vista['icono_pokemon'] ?? null,
+            'rondas' => $rondas,
+            'rival_nombre' => self::rivalNombre($vista, $nombres),
+            'detalle_derrota' => self::detalleDerrota($vista, $rondas, $nombres),
         ];
+    }
+
+    /**
+     * @param  array<string, mixed>  $evento
+     * @return array{texto: string, reason: string, reason_texto: string}
+     */
+    private static function derrota(array $evento, string $sujeto): array
+    {
+        $reason = $evento['reason'] ?? null;
+        $reason = is_string($reason) && trim($reason) !== '' ? $reason : null;
+
+        $reasonTexto = match ($reason) {
+            null => 'motivo desconocido',
+            'explorador_debilitado' => 'se quedó sin PS',
+            default => ucfirst(str_replace('_', ' ', $reason)),
+        };
+
+        return [
+            'texto' => "{$sujeto} cae debilitado",
+            'reason' => $reason ?? 'motivo desconocido',
+            'reason_texto' => $reasonTexto,
+        ];
+    }
+
+    private static function rondas(mixed $log): ?int
+    {
+        if (! is_array($log) || $log === []) {
+            return null;
+        }
+
+        $total = 0;
+        foreach ($log as $linea) {
+            if (is_string($linea) && preg_match('/^--- Ronda \d+ ---/', trim($linea)) === 1) {
+                $total++;
+            }
+        }
+
+        return $total;
+    }
+
+    /**
+     * Nombre del rival. En emboscadas multi-Pokémon, los PV pertenecen al
+     * sub-combate decisivo (el último), así que el nombre se resuelve desde
+     * ese `pokemon_id`; si no hay mapa se conserva el nombre actual.
+     *
+     * @param  array<string, mixed>  $vista
+     * @param  array<array-key, string>  $nombres
+     */
+    private static function rivalNombre(array $vista, array $nombres = []): ?string
+    {
+        $subCombates = $vista['sub_combates'] ?? null;
+        if (is_array($subCombates) && $subCombates !== []) {
+            $ultimo = $subCombates[array_key_last($subCombates)];
+            $pokemonId = is_array($ultimo) ? (int) ($ultimo['pokemon_id'] ?? 0) : 0;
+            $nombreSubCombate = $pokemonId > 0 ? ($nombres[$pokemonId] ?? null) : null;
+
+            if (is_string($nombreSubCombate) && trim($nombreSubCombate) !== '') {
+                return $nombreSubCombate;
+            }
+        }
+
+        $nombre = $vista['nombre'] ?? null;
+
+        return is_string($nombre) && trim($nombre) !== '' ? $nombre : null;
+    }
+
+    /**
+     * @param  array<string, mixed>  $vista
+     * @param  array<array-key, string>  $nombres
+     */
+    private static function detalleDerrota(array $vista, ?int $rondas, array $nombres = []): ?string
+    {
+        if (($vista['resolucion'] ?? null) !== 'derrota' || ! array_key_exists('hp_inicial', $vista)) {
+            return null;
+        }
+
+        $hpMax = (float) ($vista['hp_max'] ?? 0);
+        $hpInicial = (float) ($vista['hp_inicial'] ?? 0);
+        $sufijoRondas = $rondas !== null && $rondas > 0
+            ? ' tras '.$rondas.($rondas === 1 ? ' ronda' : ' rondas')
+            : '';
+
+        $rivalNombre = self::rivalNombre($vista, $nombres);
+        $tieneDatosRival = $rivalNombre !== null
+            && array_key_exists('rival_hp_final', $vista)
+            && array_key_exists('rival_hp_max', $vista);
+
+        if ($tieneDatosRival) {
+            $rivalFinal = (float) $vista['rival_hp_final'];
+            $rivalMax = (float) $vista['rival_hp_max'];
+
+            return 'Entró con '.self::numero($hpInicial).'/'.self::numero($hpMax)
+                ." PS{$sufijoRondas}; a {$rivalNombre} le quedaban "
+                .self::numero($rivalFinal).'/'.self::numero($rivalMax).' PS.';
+        }
+
+        return 'Entró con '.self::numero($hpInicial).'/'.self::numero($hpMax)
+            .' PS y cayó'.$sufijoRondas.'.';
     }
 
     /**

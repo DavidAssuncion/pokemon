@@ -7,6 +7,7 @@ namespace Tests\Feature\CombateRuta;
 use App\Enums\StatEnum;
 use App\Enums\TipoEnum;
 use App\Jobs\ActualizarPokedexJob;
+use App\Models\PlayerTypePath;
 use App\Models\Pokemon;
 use App\Models\PokemonStat;
 use App\Models\PokemonType;
@@ -15,6 +16,7 @@ use App\Models\Team;
 use App\Models\TeamMember;
 use App\Models\User;
 use App\Support\CrearReclutado;
+use App\Support\SendaProgreso;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Bus;
 use PHPUnit\Framework\Attributes\Test;
@@ -23,6 +25,8 @@ use Src\CombateRuta\App\RegistrarResultadoRuta;
 use Src\CombateRuta\Domain\DataTransferObjects\ResultadoRuta;
 use Src\Exploraciones\App\PersistirRecompensas;
 use Src\Exploraciones\Domain\CalculadorRecompensas;
+use Src\Exploraciones\Domain\DificultadHabitat;
+use Src\Shared\Domain\MultiplicadoresDificultad;
 use Tests\TestCase;
 
 class OtorgarRecompensasRutaTest extends TestCase
@@ -159,6 +163,153 @@ class OtorgarRecompensasRutaTest extends TestCase
         $this->assertCount(1, $resultado->capturas);
     }
 
+    #[Test]
+    public function dificultad_top_dos_multiplica_familia_ev_y_tipo(): void
+    {
+        $resultado = $this->otorgarConDificultad(DificultadHabitat::para(2));
+
+        // Base por 20 derrotas: familia 20, EV 20, tipo floor(20×256×0,2/100)=10.
+        $this->assertSame(66, $resultado->caramelosFamilia->toArray()[0]['cantidad']);
+        $this->assertSame(37, $resultado->caramelosEv->toArray()[0]['cantidad']);
+        $this->assertSame(19, $resultado->caramelosTipo->toArray()[0]['cantidad']);
+    }
+
+    #[Test]
+    public function dificultad_completo_multiplica_familia_ev_y_tipo(): void
+    {
+        $resultado = $this->otorgarConDificultad(DificultadHabitat::para(3));
+
+        $this->assertSame(67, $resultado->caramelosFamilia->toArray()[0]['cantidad']);
+        $this->assertSame(56, $resultado->caramelosEv->toArray()[0]['cantidad']);
+        $this->assertSame(24, $resultado->caramelosTipo->toArray()[0]['cantidad']);
+    }
+
+    #[Test]
+    public function dificultad_nula_y_nivel_uno_mantienen_las_recompensas_base(): void
+    {
+        $sinDificultad = $this->otorgarConDificultad(null);
+        $nivelUno = $this->otorgarConDificultad(DificultadHabitat::para(1));
+
+        $this->assertSame(20, $sinDificultad->caramelosFamilia->toArray()[0]['cantidad']);
+        $this->assertSame(20, $sinDificultad->caramelosEv->toArray()[0]['cantidad']);
+        $this->assertSame(10, $sinDificultad->caramelosTipo->toArray()[0]['cantidad']);
+
+        $this->assertSame(20, $nivelUno->caramelosFamilia->toArray()[0]['cantidad']);
+        $this->assertSame(20, $nivelUno->caramelosEv->toArray()[0]['cantidad']);
+        $this->assertSame(10, $nivelUno->caramelosTipo->toArray()[0]['cantidad']);
+    }
+
+    #[Test]
+    public function senda_cinco_del_tipo_del_rival_amplia_la_ventana_de_captura(): void
+    {
+        Bus::fake();
+
+        $persistir = $this->createMock(PersistirRecompensas::class);
+        $persistir->expects($this->once())->method('persistir');
+
+        $this->crearProgresoSenda(TipoEnum::NORMAL->value, 5);
+
+        $otorgar = new OtorgarRecompensasRuta(new CalculadorRecompensas(), $persistir, new CrearReclutado());
+        $pokemon = $this->crearPokemonRival(56);
+
+        // p = 25/255 ≈ 0.0980; N5 → 0.0980 × 1.2 ≈ 0.1176.
+        // Roll 0.11 queda entre ambas: solo captura con la Senda.
+        $resultado = $otorgar->otorgar(
+            userId: (int) $this->user->id,
+            teamId: (int) $this->team->id,
+            speciesIdsRival: [(int) $pokemon->id],
+            aleatorio: fn (): float => 0.11,
+        );
+
+        $this->assertInstanceOf(ResultadoRuta::class, $resultado);
+        $this->assertCount(1, $resultado->capturas);
+    }
+
+    #[Test]
+    public function senda_uno_no_amplia_la_ventana_de_captura(): void
+    {
+        Bus::fake();
+
+        $persistir = $this->createMock(PersistirRecompensas::class);
+        $persistir->expects($this->once())->method('persistir');
+
+        $this->crearProgresoSenda(TipoEnum::NORMAL->value, 1);
+
+        $otorgar = new OtorgarRecompensasRuta(new CalculadorRecompensas(), $persistir, new CrearReclutado());
+        $pokemon = $this->crearPokemonRival(57);
+
+        // N1 no tiene pasivos: la probabilidad sigue en ≈0.0980 y 0.11 no captura.
+        $resultado = $otorgar->otorgar(
+            userId: (int) $this->user->id,
+            teamId: (int) $this->team->id,
+            speciesIdsRival: [(int) $pokemon->id],
+            aleatorio: fn (): float => 0.11,
+        );
+
+        $this->assertInstanceOf(ResultadoRuta::class, $resultado);
+        $this->assertCount(0, $resultado->capturas);
+    }
+
+    #[Test]
+    public function la_senda_no_se_aplica_a_la_captura_shiny(): void
+    {
+        Bus::fake();
+
+        $persistir = $this->createMock(PersistirRecompensas::class);
+        $persistir->expects($this->once())->method('persistir');
+
+        $this->crearProgresoSenda(TipoEnum::NORMAL->value, 1);
+
+        $otorgar = new OtorgarRecompensasRuta(new CalculadorRecompensas(), $persistir, new CrearReclutado());
+        $pokemon = $this->crearPokemonRival(58);
+
+        // El shiny es captura garantizada: un roll 1.0 no impide la captura.
+        $resultado = $otorgar->otorgar(
+            userId: (int) $this->user->id,
+            teamId: (int) $this->team->id,
+            speciesIdsRival: [(int) $pokemon->id],
+            aleatorio: fn (): float => 1.0,
+            shinySlots: [true],
+        );
+
+        $this->assertInstanceOf(ResultadoRuta::class, $resultado);
+        $this->assertCount(1, $resultado->capturas);
+        $this->assertTrue($resultado->capturas->en(0)?->esShiny);
+    }
+
+    private function crearProgresoSenda(int $tipoId, int $nivel): PlayerTypePath
+    {
+        return PlayerTypePath::query()->create([
+            'user_id' => $this->user->id,
+            'type_id' => $tipoId,
+            'exp' => SendaProgreso::umbral($nivel),
+            'level' => $nivel,
+        ]);
+    }
+
+    private function otorgarConDificultad(?MultiplicadoresDificultad $dificultad): ResultadoRuta
+    {
+        Bus::fake();
+
+        $persistir = $this->createMock(PersistirRecompensas::class);
+        $persistir->expects($this->once())->method('persistir');
+
+        $otorgar = new OtorgarRecompensasRuta(new CalculadorRecompensas(), $persistir, new CrearReclutado());
+        $this->crearPokemonRivalConDificultad(70);
+
+        $resultado = $otorgar->otorgar(
+            userId: (int) $this->user->id,
+            teamId: (int) $this->team->id,
+            speciesIdsRival: array_fill(0, 20, 70),
+            aleatorio: fn (): float => 1.0,
+            dificultad: $dificultad,
+        );
+
+        $this->assertInstanceOf(ResultadoRuta::class, $resultado);
+
+        return $resultado;
+    }
+
     private function crearPokemonRival(int $speciesId): Pokemon
     {
         $pokemon = Pokemon::create([
@@ -183,6 +334,40 @@ class OtorgarRecompensasRutaTest extends TestCase
             'stat' => StatEnum::ATTACK->value,
             'base_stat' => 60,
             'effort' => 0,
+        ]);
+
+        PokemonType::create([
+            'pokemon_id' => $pokemon->id,
+            'type' => TipoEnum::NORMAL,
+            'slot' => 1,
+        ]);
+
+        return $pokemon;
+    }
+
+    private function crearPokemonRivalConDificultad(int $speciesId): Pokemon
+    {
+        $existente = Pokemon::find($speciesId);
+        if ($existente !== null) {
+            return $existente;
+        }
+
+        $pokemon = Pokemon::create([
+            'id' => $speciesId,
+            'name' => 'rival-dificultad-'.$speciesId,
+            'species_id' => $speciesId,
+            'capture_rate' => 45,
+            'base_experience' => 64,
+            'height' => 7,
+            'weight' => 69,
+            'evolution_chain_id' => 9000 + $speciesId,
+        ]);
+
+        PokemonStat::create([
+            'pokemon_id' => $pokemon->id,
+            'stat' => StatEnum::HP->value,
+            'base_stat' => 50,
+            'effort' => 1,
         ]);
 
         PokemonType::create([

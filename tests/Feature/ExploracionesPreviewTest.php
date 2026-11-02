@@ -148,4 +148,31 @@ class ExploracionesPreviewTest extends TestCase
         $this->getJson('/exploraciones/preview')
             ->assertUnprocessable();
     }
+
+    public function test_preview_expone_economia_y_labels_no_nulos(): void
+    {
+        $ctx = $this->crearContexto();
+
+        $response = $this->getJson('/exploraciones/preview?'.http_build_query([
+            'reclutado_id' => $ctx['reclutado']->id,
+            'habitat_id' => $ctx['habitat']->id,
+            'level' => 1,
+        ]));
+
+        $response->assertOk();
+
+        $json = $response->json();
+        $this->assertSame(0.5, $json['economia']['factor']);
+        $this->assertSame(0.5, $json['economia']['fraccion_cuenta']);
+        $this->assertSame(0.5, $json['economia']['fraccion_reclutado']);
+        $this->assertIsString($json['aviso_economia']);
+        $this->assertNotSame('', trim($json['aviso_economia']));
+
+        $items = $json['recompensas_esperadas']['items'];
+        $this->assertCount(3, $items);
+        foreach ($items as $item) {
+            $this->assertNotNull($item['label']);
+            $this->assertNotSame('', trim((string) $item['label']));
+        }
+    }
 }

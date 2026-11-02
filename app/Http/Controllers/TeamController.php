@@ -10,19 +10,33 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 use Src\Battle\Domain\Catalog\CatalogoObjetos;
+use Src\Equipos\App\ActualizarFormacionEquipo;
 use Src\Equipos\App\ActualizarObjetosEquipo;
-use Src\Equipos\Domain\TeamRepositoryInterface;
+use Src\Equipos\App\ActualizarPosturasEquipo;
+use Src\Equipos\App\ActualizarRolMiembro;
+use Src\Equipos\App\AgregarMiembroEquipo;
+use Src\Equipos\App\EliminarEquipo;
+use Src\Equipos\App\QuitarMiembroEquipo;
 use Src\Equipos\Domain\ValueObjects\ObjetosEquipo;
+use Src\Shared\Domain\ReglasEquipo;
 
+/**
+ * Orquestador HTTP del módulo Equipos. La validación de entrada es del
+ * controlador; las reglas de negocio viven en src/Equipos/App.
+ */
 class TeamController extends Controller
 {
     public function __construct(
-        private readonly TeamRepositoryInterface $teamRepository,
+        private readonly AgregarMiembroEquipo $agregarMiembro,
+        private readonly QuitarMiembroEquipo $quitarMiembro,
+        private readonly ActualizarRolMiembro $actualizarRol,
+        private readonly ActualizarFormacionEquipo $actualizarFormacion,
+        private readonly ActualizarPosturasEquipo $actualizarPosturas,
         private readonly ActualizarObjetosEquipo $actualizarObjetosEquipo,
+        private readonly EliminarEquipo $eliminarEquipo,
     ) {
     }
 
@@ -67,11 +81,7 @@ class TeamController extends Controller
 
     public function destroy(Request $request, Team $team): RedirectResponse|JsonResponse
     {
-        if ($team->isExploring()) {
-            return $this->responderError($request, 'No se puede borrar un equipo con exploraciones activas');
-        }
-
-        $this->teamRepository->eliminar($team->id);
+        $this->eliminarEquipo->ejecutar($team);
 
         if ($request->wantsJson()) {
             return response()->json(['success' => true]);
@@ -87,7 +97,7 @@ class TeamController extends Controller
             // El reclutado debe ser del usuario autenticado (anti-IDOR).
             'reclutado_id' => ['required', Rule::exists('reclutados', 'id')->where('user_id', Auth::id())],
             // Equipos estándar de 3 (combates 3v3 y mazmorra 3v1).
-            'slot' => 'required|integer|min:1|max:3',
+            'slot' => 'required|integer|min:'.ReglasEquipo::SLOT_MIN.'|max:'.ReglasEquipo::SLOT_MAX,
             'behavior' => 'required|in:VANGUARDIA,COMBATIENTE,RECOLECTOR,RASTREADOR',
             // Permite sustituir al miembro que ocupa el slot cuando el equipo está completo.
             'replace' => 'sometimes|boolean',
@@ -97,36 +107,19 @@ class TeamController extends Controller
         // findOrFail devuelve 404 (misma semántica que update/destroy).
         $team = Team::findOrFail($data['team_id']);
 
-        if ($team->isExploring()) {
-            return $this->responderError($request, 'No se puede modificar un equipo con exploraciones activas');
+        $resultado = $this->agregarMiembro->ejecutar(
+            team: $team,
+            reclutadoId: (int) $data['reclutado_id'],
+            slot: (int) $data['slot'],
+            behavior: (string) $data['behavior'],
+            replace: (bool) ($data['replace'] ?? false),
+        );
+
+        if ($resultado->esRechazado()) {
+            return $this->responderError($request, $resultado->error ?? 'No se pudo añadir el miembro');
         }
 
-        $replace = (bool) ($data['replace'] ?? false);
-
-        // ensure slot not taken (salvo que se pida reemplazar explícitamente)
-        $ocupante = TeamMember::where('team_id', $data['team_id'])->where('slot', $data['slot'])->first();
-        if ($ocupante !== null && ! $replace) {
-            return $this->responderError($request, 'Slot ya ocupado');
-        }
-
-        // ensure recultado not already in a team
-        $already = TeamMember::where('pokemon_id', $data['reclutado_id'])->exists();
-        if ($already) {
-            return $this->responderError($request, 'Pokémon ya está en un equipo');
-        }
-
-        $member = DB::transaction(function () use ($data, $ocupante, $replace): TeamMember {
-            if ($ocupante !== null && $replace) {
-                $ocupante->delete();
-            }
-
-            return TeamMember::create([
-                'team_id' => $data['team_id'],
-                'pokemon_id' => $data['reclutado_id'],
-                'slot' => $data['slot'],
-                'behavior' => $data['behavior'],
-            ]);
-        });
+        $member = $resultado->miembro;
 
         if ($request->wantsJson()) {
             return response()->json([
@@ -137,7 +130,7 @@ class TeamController extends Controller
                     'slot' => $member->slot,
                     'behavior' => $member->behavior,
                 ],
-                'replaced_member_id' => $ocupante?->id,
+                'replaced_member_id' => $resultado->miembroReemplazadoId,
             ]);
         }
 
@@ -156,11 +149,7 @@ class TeamController extends Controller
         // la relación resuelve null y abort(404) (anti-IDOR, mismo status que update/destroy).
         abort_unless($member->team?->user_id === Auth::id(), 404);
 
-        if ($member->team?->isExploring()) {
-            return $this->responderError($request, 'No se puede modificar un equipo con exploraciones activas');
-        }
-
-        $member->delete();
+        $this->quitarMiembro->ejecutar($member);
 
         if ($request->wantsJson()) {
             return response()->json(['success' => true]);
@@ -178,16 +167,12 @@ class TeamController extends Controller
     public function updateFormacion(Request $request, Team $team): RedirectResponse|JsonResponse
     {
         // Route-model binding + global scope de Team: 404 para equipos ajenos.
-        if ($team->isExploring()) {
-            return $this->responderError($request, 'No se puede modificar un equipo con exploraciones activas');
-        }
-
         $data = $request->validate([
             'formacion' => 'sometimes|array',
             'formacion.*' => 'in:vanguardia,retaguardia',
         ]);
 
-        $team->update(['formacion' => $data['formacion'] ?? null]);
+        $this->actualizarFormacion->ejecutar($team, $data['formacion'] ?? null);
 
         if ($request->wantsJson()) {
             return response()->json([
@@ -208,16 +193,12 @@ class TeamController extends Controller
      */
     public function updatePosturas(Request $request, Team $team): RedirectResponse|JsonResponse
     {
-        if ($team->isExploring()) {
-            return $this->responderError($request, 'No se puede modificar un equipo con exploraciones activas');
-        }
-
         $data = Validator::make($request->all(), [
             'posturas' => 'sometimes|array',
             'posturas.*' => 'in:atacar,guardia,cubrir',
         ])->validate();
 
-        $team->update(['posturas' => $data['posturas'] ?? null]);
+        $this->actualizarPosturas->ejecutar($team, $data['posturas'] ?? null);
 
         if ($request->wantsJson()) {
             return response()->json([
@@ -239,10 +220,6 @@ class TeamController extends Controller
      */
     public function updateItems(Request $request, Team $team): RedirectResponse|JsonResponse
     {
-        if ($team->isExploring()) {
-            return $this->responderError($request, 'No se puede modificar un equipo con exploraciones activas');
-        }
-
         $data = Validator::make($request->all(), [
             'items' => 'sometimes|array',
             'items.*' => ['nullable', 'string', Rule::in([...CatalogoObjetos::claves()->toList(), ''])],
@@ -269,7 +246,8 @@ class TeamController extends Controller
     /**
      * Actualiza el behavior de un miembro (PATCH /teams/member/{member}/role).
      *
-     * Usa route-model binding (TeamMember). Anti-IDOR y exploración activa.
+     * Usa route-model binding (TeamMember). Anti-IDOR; la exploración es
+     * individual por reclutado y no bloquea la edición del equipo.
      */
     public function updateMemberRole(Request $request, TeamMember $member): RedirectResponse|JsonResponse
     {
@@ -293,7 +271,8 @@ class TeamController extends Controller
     }
 
     /**
-     * Lógica compartida de cambio de behavior: anti-IDOR, isExploring, update.
+     * Lógica compartida de cambio de behavior: anti-IDOR en el controlador
+     * (autorización HTTP) y regla de negocio en ActualizarRolMiembro.
      */
     private function ejecutarCambioBehavior(Request $request, TeamMember $member): RedirectResponse|JsonResponse
     {
@@ -301,15 +280,11 @@ class TeamController extends Controller
         // la relación resuelve null y abort(404) (mismo patrón que removeMember).
         abort_unless($member->team?->user_id === Auth::id(), 404);
 
-        if ($member->team?->isExploring()) {
-            return $this->responderError($request, 'No se puede modificar un equipo con exploraciones activas');
-        }
-
         $data = $request->validate([
             'behavior' => 'required|in:VANGUARDIA,COMBATIENTE,RECOLECTOR,RASTREADOR',
         ]);
 
-        $member->update(['behavior' => $data['behavior']]);
+        $this->actualizarRol->ejecutar($member, (string) $data['behavior']);
 
         if ($request->wantsJson()) {
             return response()->json([

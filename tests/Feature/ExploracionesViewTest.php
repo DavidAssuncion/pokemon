@@ -4,57 +4,44 @@ declare(strict_types=1);
 
 namespace Tests\Feature;
 
+use Src\Exploraciones\Presentation\DiarioExploracion;
+use Src\Exploraciones\Presentation\ResultadoExploracionVista;
 use Tests\TestCase;
 
 class ExploracionesViewTest extends TestCase
 {
     /**
      * El contrato completo del backend (activas + terminadas) renderiza la página
-     * con cards, badges de estado, barra de progreso, bitácora y resumen de resultados.
+     * con cards, ficha del explorador, diario, hitos y resumen de resultados.
      */
     public function test_exploraciones_view_renders_active_and_finished_explorations(): void
     {
         $view = $this->view('exploraciones.index', [
             'activas' => [
-                [
+                $this->activa([
                     'id' => 34,
-                    'equipo' => 'Equipo A',
                     'habitat' => 'Caverna Gélida',
                     'habitat_id' => 13,
                     'nivel' => 1,
-                    'indefinido' => false,
-                    'duracion_horas' => 4,
-                    'inicio' => '2026-08-27T12:36:51Z',
-                    'inicio_vuelta' => '2026-08-27T15:36:51Z',
-                    'fin' => '2026-08-27T16:36:51Z',
-                    'estado' => 'explorando',
                     'progreso' => 45,
                     'bitacora' => [
                         ['tipo' => 'pokemon', 'pokemon_id' => 19, 'nombre' => 'Rattata', 'timestamp' => '2026-08-27T12:37:12Z'],
                         ['tipo' => 'caramelo_familia', 'nombre' => 'Rattata', 'cantidad' => 2, 'timestamp' => '2026-08-27T12:40:00Z'],
                         ['tipo' => 'caramelo_ev', 'stat' => 2, 'stat_nombre' => 'Ataque', 'cantidad' => 1, 'timestamp' => '2026-08-27T12:42:31Z'],
                     ],
-                ],
-                [
+                ]),
+                $this->activa([
                     'id' => 35,
-                    'equipo' => 'Equipo C',
                     'habitat' => 'Lago Místico',
                     'habitat_id' => 7,
                     'nivel' => 3,
-                    'indefinido' => false,
-                    'duracion_horas' => 4,
-                    'inicio' => '2026-08-27T10:00:00Z',
-                    'inicio_vuelta' => '2026-08-27T12:00:00Z',
-                    'fin' => '2026-08-27T14:00:00Z',
                     'estado' => 'volviendo',
                     'progreso' => 90,
-                    'bitacora' => [],
-                ],
+                ]),
             ],
             'terminadas' => [
-                [
+                $this->terminada([
                     'id' => 33,
-                    'equipo' => 'Equipo B',
                     'habitat' => 'Lago Místico',
                     'nivel' => 2,
                     'resultado' => [
@@ -76,15 +63,15 @@ class ExploracionesViewTest extends TestCase
                         ],
                         'exp' => 250,
                     ],
-                ],
+                ]),
             ],
         ]);
 
         $view->assertSee('Exploraciones', false);
-        $view->assertSee('Gestión de expediciones de tus equipos', false);
+        $view->assertSee('Cada explorador vive su propia expedición', false);
 
-        // Activas: card + badges + progreso + tiempos
-        $view->assertSee('Equipo A', false);
+        // Activas: ficha del explorador + badges + progreso + tiempos
+        $view->assertSee('Rex', false);
         $view->assertSee('Caverna Gélida', false);
         $view->assertSee('Nivel 1', false);
         $view->assertSee('Explorando', false);
@@ -95,7 +82,7 @@ class ExploracionesViewTest extends TestCase
         $view->assertSee('Vuelta:', false);
         $view->assertSee('Fin:', false);
 
-        // Bitácora
+        // Diario / bitácora
         $view->assertSee('Bitácora', false);
         $view->assertSee('Encontraste un', false);
         $view->assertSee('Rattata', false);
@@ -104,23 +91,22 @@ class ExploracionesViewTest extends TestCase
         $view->assertSee('/images/iconos_webp/19.webp', false);
 
         // Terminadas: resumen de resultados + cerrar
-        $view->assertSee('Equipo B', false);
         $view->assertSee('Cerrar resultados', false);
         $view->assertSee('/exploraciones/${id}/cerrar', false);
         // "Avistados" ya NO se renderiza (bloque eliminado)
         $view->assertDontSee('Avistados');
-        // Capturados: bloque col 1 intacto (icono + badge verde ×N + nombre)
+        // Capturados y caramelos se agrupan en «Recompensas obtenidas».
+        $view->assertSee('Recompensas obtenidas', false);
         $view->assertSee('Capturados', false);
         $view->assertSee('×3', false);
         // Recompensas: caramelos familia/EV/tipo en formato compacto
-        $view->assertSee('Rattata', false);
         $view->assertSee('×12', false);
         $view->assertSee('Ataque', false);
         $view->assertSee('×8', false);
         $view->assertSee('Fuego', false);
         $view->assertSee('×5', false);
-        // EXP movida al header
-        $view->assertSee('+250 EXP', false);
+        // EXP de cuenta en el header
+        $view->assertSee('+250 EXP cuenta', false);
     }
 
     /**
@@ -134,9 +120,27 @@ class ExploracionesViewTest extends TestCase
         ]);
 
         $view->assertSee('No hay exploraciones activas', false);
-        $view->assertSee('Envía a tu equipo desde un', false);
+        $view->assertSee('Envía a un explorador desde un', false);
         $view->assertSee('href="/habitats"', false);
         $view->assertSee('No hay resultados pendientes de revisar', false);
+    }
+
+    /**
+     * El banner de procesamiento se muestra con role="status" y avisa del
+     * reintento automático y del corte por tiempo.
+     */
+    public function test_exploraciones_view_renders_processing_banner(): void
+    {
+        $view = $this->view('exploraciones.index', [
+            'activas' => [],
+            'terminadas' => [],
+            'avisoProcesamiento' => true,
+            'agotadoPorTiempo' => true,
+        ]);
+
+        $view->assertSee('role="status"', false);
+        $view->assertSee('No se pudieron actualizar todas las expediciones; se reintentará automáticamente.', false);
+        $view->assertSee('Se actualizaron las primeras expediciones; recarga para continuar.', false);
     }
 
     /**
@@ -147,21 +151,17 @@ class ExploracionesViewTest extends TestCase
     {
         $view = $this->view('exploraciones.index', [
             'activas' => [
-                [
+                $this->activa([
                     'id' => 34,
-                    'equipo' => 'Equipo A',
                     'habitat' => 'Caverna Gélida',
                     'habitat_id' => 13,
                     'nivel' => 1,
                     'indefinido' => true,
                     'duracion_horas' => null,
-                    'inicio' => '2026-08-27T12:36:51Z',
                     'inicio_vuelta' => null,
                     'fin' => null,
-                    'estado' => 'explorando',
                     'progreso' => 10,
-                    'bitacora' => [],
-                ],
+                ]),
             ],
             'terminadas' => [],
         ]);
@@ -172,21 +172,13 @@ class ExploracionesViewTest extends TestCase
         // Sin indefinidas el botón no aparece
         $sinIndefinidas = $this->view('exploraciones.index', [
             'activas' => [
-                [
+                $this->activa([
                     'id' => 35,
-                    'equipo' => 'Equipo C',
                     'habitat' => 'Lago Místico',
                     'habitat_id' => 7,
                     'nivel' => 2,
-                    'indefinido' => false,
-                    'duracion_horas' => 4,
-                    'inicio' => '2026-08-27T10:00:00Z',
-                    'inicio_vuelta' => '2026-08-27T12:00:00Z',
-                    'fin' => '2026-08-27T14:00:00Z',
-                    'estado' => 'explorando',
                     'progreso' => 20,
-                    'bitacora' => [],
-                ],
+                ]),
             ],
             'terminadas' => [],
         ]);
@@ -202,30 +194,22 @@ class ExploracionesViewTest extends TestCase
     {
         $view = $this->view('exploraciones.index', [
             'activas' => [
-                [
+                $this->activa([
                     'id' => 34,
-                    'equipo' => 'Equipo A',
                     'habitat' => 'Caverna Gélida',
                     'habitat_id' => 13,
                     'nivel' => 1,
-                    'indefinido' => false,
-                    'duracion_horas' => 4,
-                    'inicio' => '2026-08-27T12:36:51Z',
-                    'inicio_vuelta' => '2026-08-27T15:36:51Z',
-                    'fin' => '2026-08-27T16:36:51Z',
-                    'estado' => 'explorando',
                     'progreso' => 45,
                     'bitacora' => [
                         // Sin stat_nombre → fallback JS statName(2)
                         ['tipo' => 'caramelo_ev', 'stat' => 2, 'cantidad' => 1, 'timestamp' => '2026-08-27T12:42:31Z'],
                         ['tipo' => 'otro', 'timestamp' => '2026-08-27T12:45:00Z'],
                     ],
-                ],
+                ]),
             ],
             'terminadas' => [
-                [
+                $this->terminada([
                     'id' => 33,
-                    'equipo' => 'Equipo B',
                     'habitat' => 'Lago Místico',
                     'nivel' => 2,
                     'resultado' => [
@@ -235,14 +219,13 @@ class ExploracionesViewTest extends TestCase
                         'caramelos_ev' => [],
                         'exp' => 0,
                     ],
-                ],
-                [
+                ]),
+                $this->terminada([
                     'id' => 32,
-                    'equipo' => 'Equipo D',
                     'habitat' => 'Bosque',
                     'nivel' => 1,
                     'resultado' => [],
-                ],
+                ]),
             ],
         ]);
 
@@ -264,9 +247,8 @@ class ExploracionesViewTest extends TestCase
         $view = $this->view('exploraciones.index', [
             'activas' => [],
             'terminadas' => [
-                [
+                $this->terminada([
                     'id' => 33,
-                    'equipo' => 'Equipo B',
                     'habitat' => 'Lago Místico',
                     'nivel' => 2,
                     'resultado' => [
@@ -289,7 +271,7 @@ class ExploracionesViewTest extends TestCase
                         ],
                         'exp' => 100,
                     ],
-                ],
+                ]),
             ],
         ]);
 
@@ -328,9 +310,8 @@ class ExploracionesViewTest extends TestCase
         $soloCapturados = $this->view('exploraciones.index', [
             'activas' => [],
             'terminadas' => [
-                [
+                $this->terminada([
                     'id' => 31,
-                    'equipo' => 'Equipo X',
                     'habitat' => 'Bosque',
                     'nivel' => 1,
                     'resultado' => [
@@ -342,24 +323,24 @@ class ExploracionesViewTest extends TestCase
                         'caramelos_tipo' => [],
                         'exp' => 30,
                     ],
-                ],
+                ]),
             ],
         ]);
+        $soloCapturados->assertSee('Recompensas obtenidas', false);
         $soloCapturados->assertSee('Capturados', false);
         $soloCapturados->assertSee('Rattata', false);
         $soloCapturados->assertSee('×2', false);
-        // Solo capturados (sin derrotados ni recompensas) → bloque a col-span-4
-        $soloCapturados->assertSee('lg:col-span-4', false);
-        $soloCapturados->assertDontSee('lg:col-span-3', false);
+        // Solo capturados (sin derrotados ni pérdidas) → columna a col-span-3
+        $soloCapturados->assertSee('lg:col-span-3', false);
+        $soloCapturados->assertDontSee('lg:col-span-4', false);
         $soloCapturados->assertDontSee('Agua', false);
 
         // Solo recompensas (sin capturados) → recompensas a col-span-4
         $soloRecompensas = $this->view('exploraciones.index', [
             'activas' => [],
             'terminadas' => [
-                [
+                $this->terminada([
                     'id' => 30,
-                    'equipo' => 'Equipo Y',
                     'habitat' => 'Caverna',
                     'nivel' => 1,
                     'resultado' => [
@@ -371,11 +352,13 @@ class ExploracionesViewTest extends TestCase
                         'caramelos_tipo' => [],
                         'exp' => 10,
                     ],
-                ],
+                ]),
             ],
         ]);
+        $soloRecompensas->assertSee('Recompensas obtenidas', false);
         $soloRecompensas->assertSee('Rattata', false);
-        $soloRecompensas->assertSee('lg:col-span-4', false);
+        $soloRecompensas->assertSee('lg:col-span-3', false);
+        $soloRecompensas->assertDontSee('lg:col-span-4', false);
         $soloRecompensas->assertDontSee('Capturados');
     }
 
@@ -390,9 +373,8 @@ class ExploracionesViewTest extends TestCase
         $completo = $this->view('exploraciones.index', [
             'activas' => [],
             'terminadas' => [
-                [
+                $this->terminada([
                     'id' => 71,
-                    'equipo' => 'Equipo Z',
                     'habitat' => 'Cueva',
                     'nivel' => 1,
                     'derrotados' => [19, 19, 129],
@@ -407,7 +389,7 @@ class ExploracionesViewTest extends TestCase
                         'caramelos_tipo' => [],
                         'exp' => 40,
                     ],
-                ],
+                ]),
             ],
         ]);
         $completo->assertSee('Derrotados', false);
@@ -421,9 +403,8 @@ class ExploracionesViewTest extends TestCase
         $sinCapturas = $this->view('exploraciones.index', [
             'activas' => [],
             'terminadas' => [
-                [
+                $this->terminada([
                     'id' => 72,
-                    'equipo' => 'Equipo W',
                     'habitat' => 'Lago',
                     'nivel' => 1,
                     'derrotados' => [25],
@@ -436,11 +417,12 @@ class ExploracionesViewTest extends TestCase
                         'caramelos_tipo' => [],
                         'exp' => 10,
                     ],
-                ],
+                ]),
             ],
         ]);
         $sinCapturas->assertSee('Derrotados', false);
-        $sinCapturas->assertSee('lg:col-span-3', false);
+        $sinCapturas->assertSee('Recompensas obtenidas', false);
+        $sinCapturas->assertSee('lg:col-span-2', false);
         $sinCapturas->assertSee('/images/iconos_webp/25.webp', false);
         $sinCapturas->assertDontSee('Capturados');
 
@@ -448,9 +430,8 @@ class ExploracionesViewTest extends TestCase
         $soloDerrotados = $this->view('exploraciones.index', [
             'activas' => [],
             'terminadas' => [
-                [
+                $this->terminada([
                     'id' => 73,
-                    'equipo' => 'Equipo V',
                     'habitat' => 'Bosque',
                     'nivel' => 1,
                     'derrotados' => [129],
@@ -461,20 +442,20 @@ class ExploracionesViewTest extends TestCase
                         'caramelos_tipo' => [],
                         'exp' => 0,
                     ],
-                ],
+                ]),
             ],
         ]);
         $soloDerrotados->assertSee('Derrotados', false);
-        $soloDerrotados->assertSee('lg:col-span-4', false);
+        $soloDerrotados->assertSee('lg:col-span-3', false);
+        $soloDerrotados->assertDontSee('lg:col-span-4', false);
         $soloDerrotados->assertDontSee('Capturados');
 
         // Sin derrotados → no se renderiza el bloque
         $sinDerrotados = $this->view('exploraciones.index', [
             'activas' => [],
             'terminadas' => [
-                [
+                $this->terminada([
                     'id' => 74,
-                    'equipo' => 'Equipo U',
                     'habitat' => 'Playa',
                     'nivel' => 1,
                     'resultado' => [
@@ -484,10 +465,11 @@ class ExploracionesViewTest extends TestCase
                         'caramelos_tipo' => [],
                         'exp' => 5,
                     ],
-                ],
+                ]),
             ],
         ]);
         $sinDerrotados->assertDontSee('Derrotados');
+        $sinDerrotados->assertDontSee('Recompensas obtenidas');
     }
 
     /**
@@ -499,18 +481,11 @@ class ExploracionesViewTest extends TestCase
     {
         $view = $this->view('exploraciones.index', [
             'activas' => [
-                [
+                $this->activa([
                     'id' => 40,
-                    'equipo' => 'Equipo A',
                     'habitat' => 'Bosque',
                     'habitat_id' => 1,
                     'nivel' => 1,
-                    'indefinido' => false,
-                    'duracion_horas' => 4,
-                    'inicio' => '2026-08-30T10:00:00Z',
-                    'inicio_vuelta' => null,
-                    'fin' => null,
-                    'estado' => 'explorando',
                     'progreso' => 30,
                     'bitacora' => [
                         ['tipo' => 'huida', 'pokemon_id' => 19, 'nombre' => 'Rattata', 'timestamp' => '2026-08-30T10:05:00Z'],
@@ -528,7 +503,7 @@ class ExploracionesViewTest extends TestCase
                         ['tipo' => 'encuentro', 'subtype' => 'grupo', 'pokemon_id' => 25, 'nombre' => 'Pikachu', 'resolucion' => 'derrota', 'duration_loss' => 10, 'timestamp' => '2026-08-30T11:00:00Z'],
                         ['tipo' => 'neutral', 'timestamp' => '2026-08-30T11:05:00Z'],
                     ],
-                ],
+                ]),
             ],
             'terminadas' => [],
         ]);
@@ -539,21 +514,24 @@ class ExploracionesViewTest extends TestCase
         $view->assertSee('/images/iconos_webp/19.webp', false);
         // emboscada: título + subtítulo según resolución + mini-iconos
         $view->assertSee('¡Emboscada!', false);
-        $view->assertSee('El equipo repele el ataque (-10 min)', false);
-        $view->assertSee('El equipo escapa perdiendo tiempo', false);
+        $view->assertSee('repele el ataque (-10 min)', false);
+        $view->assertSee('escapa perdiendo tiempo', false);
         $view->assertSee('/images/iconos_webp/129.webp', false);
         // contratiempo (desorientación)
-        $view->assertSee('El equipo pierde el rastro. -15 min', false);
+        $view->assertSee('pierde el rastro. -15 min', false);
         // retirada
-        $view->assertSee('El equipo se retira:', false);
+        // Blade aún hardcodea el sujeto de retirada (frontend pendiente):
+        // se valida el texto sin fijar "El equipo"/"El explorador".
+        $view->assertSee('se retira:', false);
         $view->assertSee('demasiadas bajas', false);
         // grupo + mini-iconos
-        $view->assertSee('El equipo se encuentra con un grupo salvaje', false);
+        $view->assertSee('se encuentra con un grupo salvaje', false);
         $view->assertSee('/images/iconos_webp/25.webp', false);
         $view->assertSee('/images/iconos_webp/26.webp', false);
-        // hallazgo familia
+        // hallazgo familia: candy_imagen (sprite de especie) antes que candy_src
         $view->assertSee('Caramelos de', false);
-        $view->assertSee('/images/candy_pokemon/19.webp', false);
+        $view->assertSee('/images/iconos_webp/19.webp', false);
+        $view->assertDontSee('src="/images/candy_pokemon/19.webp"', false);
         $view->assertSee('×2', false);
         // hallazgo EV (sin stat_nombre → fallback JS statName)
         $view->assertSee('Caramelo EV', false);
@@ -574,13 +552,102 @@ class ExploracionesViewTest extends TestCase
         $view->assertSee('· Victoria con coste', false);
         $view->assertSee('(-12 min)', false);
         $view->assertSee('/images/iconos_webp/129.webp', false);
-        // encuentro grupo + derrota
+        // encuentro grupo + derrota (sin claves de PV → sin detalle adicional)
         $view->assertSee('Grupo salvaje', false);
         $view->assertSee('· Derrota', false);
         $view->assertSee('/images/iconos_webp/25.webp', false);
+        $view->assertDontSee('Entró con', false);
         // neutral → texto + SVG informativo (sin imagen de pokémon)
-        $view->assertSee('Evento neutral', false);
+        $view->assertSee('Sin incidencias', false);
         $view->assertDontSee('Derrotados');
+    }
+
+    /**
+     * El diario usa `candy_imagen` en las dos ramas de caramelo de familia
+     * (evento raíz y hallazgo) y cae al placeholder cuando no hay imagen.
+     */
+    public function test_diario_usa_candy_imagen_y_fallback_en_caramelo_familia(): void
+    {
+        $view = $this->view('exploraciones.index', [
+            'activas' => [
+                $this->activa([
+                    'id' => 41,
+                    'bitacora' => [
+                        ['tipo' => 'caramelo_familia', 'pokemon_id' => 81, 'nombre' => 'Magnemite', 'cantidad' => 2, 'timestamp' => '2026-08-30T11:10:00Z'],
+                        ['tipo' => 'hallazgo', 'subtype' => 'caramelo_familia', 'pokemon_id' => 81, 'nombre' => 'Magnemite', 'cantidad' => 3, 'timestamp' => '2026-08-30T11:11:00Z'],
+                        ['tipo' => 'caramelo_familia', 'cantidad' => 1, 'timestamp' => '2026-08-30T11:12:00Z'],
+                    ],
+                ]),
+            ],
+            'terminadas' => [],
+        ]);
+
+        // Ambas ramas renderizan el sprite de especie que envía candy_imagen.
+        $view->assertSee('src="/images/iconos_webp/81.webp"', false);
+        // El onerror encadena candy_src antes del placeholder.
+        $view->assertSee('src=&#039;/images/candy_pokemon/81.webp&#039;', false);
+        $view->assertSee('src=&#039;/images/candy_pokemon/0.webp&#039;', false);
+        $view->assertDontSee('src="/images/candy_pokemon/81.webp"', false);
+        $view->assertSee('Caramelos de', false);
+        $view->assertSee('Magnemite', false);
+        $view->assertSee('×2', false);
+        $view->assertSee('×3', false);
+        // Sin candy_imagen ni candy_src → placeholder explícito.
+        $view->assertSee('src="/images/candy_pokemon/0.webp"', false);
+    }
+
+    /**
+     * `detalle_derrota` se imprime tal cual bajo el título del combate, y el
+     * evento raíz `derrota` muestra `reason_texto`, nunca el motivo técnico.
+     */
+    public function test_diario_muestra_detalle_derrota_y_reason_texto(): void
+    {
+        $log = ['--- Ronda 1 ---', '--- Ronda 2 ---', '--- Ronda 3 ---', '--- Ronda 4 ---'];
+
+        $view = $this->view('exploraciones.index', [
+            'activas' => [
+                $this->activa([
+                    'id' => 42,
+                    'bitacora' => [
+                        [
+                            'tipo' => 'encuentro',
+                            'subtype' => 'normal',
+                            'pokemon_id' => 436,
+                            'nombre' => 'Bronzor',
+                            'resolucion' => 'derrota',
+                            'hp_inicial' => 39,
+                            'hp_max' => 39,
+                            'hp_final' => 0,
+                            'rival_hp_inicial' => 34,
+                            'rival_hp_final' => 12,
+                            'rival_hp_max' => 34,
+                            'log' => $log,
+                            'timestamp' => '2026-08-30T11:20:00Z',
+                        ],
+                        [
+                            'tipo' => 'emboscada',
+                            'pokemon_id' => 436,
+                            'nombre' => 'Bronzor',
+                            'resolucion' => 'derrota',
+                            'hp_inicial' => 39,
+                            'hp_max' => 39,
+                            'hp_final' => 0,
+                            'rival_hp_inicial' => 34,
+                            'rival_hp_final' => 12,
+                            'rival_hp_max' => 34,
+                            'log' => $log,
+                            'timestamp' => '2026-08-30T11:25:00Z',
+                        ],
+                        ['tipo' => 'derrota', 'reason' => 'explorador_debilitado', 'timestamp' => '2026-08-30T11:30:00Z'],
+                    ],
+                ]),
+            ],
+            'terminadas' => [],
+        ]);
+
+        $view->assertSee('Entró con 39/39 PS tras 4 rondas; a Bronzor le quedaban 12/34 PS.', false);
+        $view->assertSee('(se quedó sin PS)', false);
+        $view->assertDontSee('explorador_debilitado', false);
     }
 
     /**
@@ -592,9 +659,8 @@ class ExploracionesViewTest extends TestCase
         $view = $this->view('exploraciones.index', [
             'activas' => [],
             'terminadas' => [
-                [
+                $this->terminada([
                     'id' => 50,
-                    'equipo' => 'Equipo B',
                     'habitat' => 'Bosque',
                     'nivel' => 2,
                     'resultado' => [
@@ -614,7 +680,7 @@ class ExploracionesViewTest extends TestCase
                         'caramelos_tipo' => [],
                         'exp' => 50,
                     ],
-                ],
+                ]),
             ],
         ]);
 
@@ -637,28 +703,20 @@ class ExploracionesViewTest extends TestCase
     {
         $view = $this->view('exploraciones.index', [
             'activas' => [
-                [
+                $this->activa([
                     'id' => 60,
-                    'equipo' => 'Equipo A',
                     'habitat' => 'Bosque',
                     'habitat_id' => 1,
                     'nivel' => 1,
-                    'indefinido' => false,
-                    'duracion_horas' => 4,
-                    'inicio' => '2026-08-30T10:00:00Z',
-                    'inicio_vuelta' => null,
-                    'fin' => null,
-                    'estado' => 'explorando',
                     'progreso' => 10,
                     'bitacora' => [
                         ['tipo' => 'pokemon', 'pokemon_id' => 19, 'nombre' => 'Rattata', 'timestamp' => '2026-08-30T10:05:00Z'],
                     ],
-                ],
+                ]),
             ],
             'terminadas' => [
-                [
+                $this->terminada([
                     'id' => 61,
-                    'equipo' => 'Equipo B',
                     'habitat' => 'Bosque',
                     'nivel' => 1,
                     'resultado' => [
@@ -668,7 +726,7 @@ class ExploracionesViewTest extends TestCase
                         'caramelos_tipo' => [],
                         'exp' => 0,
                     ],
-                ],
+                ]),
             ],
         ]);
 
@@ -680,5 +738,208 @@ class ExploracionesViewTest extends TestCase
         $view->assertDontSee('min efectivos');
         $view->assertDontSee('Encuentros');
         $view->assertSee('+0 EXP', false);
+    }
+
+    /**
+     * El partial de pérdidas muestra imagen, tipo, nombre y cantidad, y deja
+     * el ID solo en el `title` para conservar la trazabilidad.
+     */
+    public function test_perdidas_partial_renderiza_imagen_nombre_y_cantidad(): void
+    {
+        $view = $this->view('exploraciones._perdidas', [
+            'perdidas' => [
+                [
+                    'tipo' => 'familia',
+                    'tipo_label' => 'Familia',
+                    'id' => 299,
+                    'label' => 'Nosepass',
+                    'imagen' => '/images/candy_pokemon/299.webp',
+                    'cantidad_perdida' => 2,
+                ],
+                [
+                    'tipo' => 'ev',
+                    'tipo_label' => 'EV',
+                    'id' => 3,
+                    'label' => 'Defensa',
+                    'imagen' => '/images/candy_ev/def.webp',
+                    'cantidad_perdida' => 1,
+                ],
+            ],
+            'motivo' => 'Tu explorador cayó debilitado en combate y perdió parte del botín.',
+        ]);
+
+        $view->assertSee('Recompensas perdidas', false);
+        $view->assertSee('grayscale', false);
+        $view->assertSee('Tu explorador cayó debilitado en combate y perdió parte del botín.', false);
+        $view->assertSee('src="/images/candy_pokemon/299.webp"', false);
+        $view->assertSee('alt="Nosepass"', false);
+        $view->assertSee('Familia', false);
+        $view->assertSee('Nosepass', false);
+        $view->assertSee('×2', false);
+        $view->assertSee('src="/images/candy_ev/def.webp"', false);
+        $view->assertSee('alt="Defensa"', false);
+        $view->assertSee('EV', false);
+        $view->assertSee('Defensa', false);
+        $view->assertSee('×1', false);
+        $view->assertSee('title="Familia #299"', false);
+        $view->assertSee('title="EV #3"', false);
+    }
+
+    /**
+     * Sin pérdidas el partial no renderiza ningún bloque.
+     */
+    public function test_perdidas_partial_no_renderiza_nada_sin_perdidas(): void
+    {
+        $this->view('exploraciones._perdidas', ['perdidas' => []])
+            ->assertDontSee('Recompensas perdidas', false);
+    }
+
+    /**
+     * Con pérdidas pero sin motivo no se renderiza el párrafo explicativo.
+     */
+    public function test_perdidas_partial_sin_motivo_no_renderiza_parrafo(): void
+    {
+        $view = $this->view('exploraciones._perdidas', [
+            'perdidas' => [
+                [
+                    'tipo' => 'familia',
+                    'tipo_label' => 'Familia',
+                    'id' => 299,
+                    'label' => 'Nosepass',
+                    'imagen' => '/images/candy_pokemon/299.webp',
+                    'cantidad_perdida' => 2,
+                ],
+            ],
+        ]);
+
+        $view->assertSee('Recompensas perdidas', false);
+        $view->assertDontSee('Tu explorador cayó debilitado en combate y perdió parte del botín.', false);
+    }
+
+    /**
+     * Contrato mínimo de una exploración activa: incluye la ficha del explorador
+     * y el diario transformado a partir de la bitácora.
+     *
+     * @param  array<string, mixed>  $overrides
+     * @return array<string, mixed>
+     */
+    private function activa(array $overrides = []): array
+    {
+        $estado = (string) ($overrides['estado'] ?? 'explorando');
+        $bitacora = is_array($overrides['bitacora'] ?? null) ? $overrides['bitacora'] : [];
+
+        return array_merge([
+            'id' => 34,
+            'equipo' => 'Equipo A',
+            'reclutado' => 'Rex',
+            'habitat' => 'Caverna Gélida',
+            'habitat_id' => 13,
+            'nivel' => 1,
+            'min_lvl' => null,
+            'requiere_nivel' => false,
+            'indefinido' => false,
+            'duracion_horas' => 4,
+            'inicio' => '2026-08-27T12:36:51Z',
+            'inicio_vuelta' => '2026-08-27T15:36:51Z',
+            'fin' => '2026-08-27T16:36:51Z',
+            'estado' => $estado,
+            'estado_label' => $estado === 'volviendo' ? 'Volviendo' : 'Explorando',
+            'estado_clase' => $estado === 'volviendo'
+                ? 'bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400'
+                : 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400',
+            'progreso' => 45,
+            'restante_label' => '2 h',
+            'explorador' => $this->explorador(),
+            'diario' => $this->diario($bitacora),
+            'bitacora' => [],
+        ], $overrides);
+    }
+
+    /**
+     * Contrato mínimo de una exploración terminada, normalizado por el
+     * presentador de resultados (añade `vista`, `hitos`, spans y flags).
+     *
+     * @param  array<string, mixed>  $overrides
+     * @return array<string, mixed>
+     */
+    private function terminada(array $overrides = []): array
+    {
+        $bitacora = is_array($overrides['bitacora'] ?? null) ? $overrides['bitacora'] : [];
+
+        return ResultadoExploracionVista::toView(array_merge([
+            'id' => 33,
+            'equipo' => 'Equipo B',
+            'reclutado' => 'Rex',
+            'habitat' => 'Lago Místico',
+            'nivel' => 2,
+            'min_lvl' => null,
+            'requiere_nivel' => false,
+            'explorador' => $this->explorador(),
+            'diario' => $this->diario($bitacora),
+            'exp_reclutado' => 0,
+            'derrotados' => [],
+            'resultado' => [
+                'capturados' => [],
+                'caramelos_familia' => [],
+                'caramelos_ev' => [],
+                'caramelos_tipo' => [],
+                'exp' => 0,
+            ],
+        ], $overrides));
+    }
+
+    /**
+     * Ficha mínima del explorador consumida por `_explorador.blade.php`.
+     *
+     * @param  array<string, mixed>  $overrides
+     * @return array<string, mixed>
+     */
+    private function explorador(array $overrides = []): array
+    {
+        return array_merge([
+            'id' => 1,
+            'nombre' => 'Rex',
+            'pokemon_id' => 25,
+            'icono' => '/images/iconos_webp/25.webp',
+            'nivel' => 5,
+            'exp_total' => 1000,
+            'exp_tipos' => ['electrico' => 1000],
+            'es_shiny' => false,
+            'rol' => 'COMBATIENTE',
+            'rol_label' => 'Combatiente',
+            'tipos' => [
+                ['nombre' => 'Eléctrico', 'slug' => 'electrico'],
+            ],
+            'hp_actual' => 40,
+            'hp_max' => 50,
+            'hp_pct' => 80,
+            'hp_estado' => 'sano',
+            'hp_label' => '40 / 50 PS (80%)',
+            'hp_clase' => 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400',
+            'barreras' => [],
+            'animo' => ['texto' => 'Con ganas de explorar.', 'tono' => 'positivo'],
+            'progreso_nivel' => 40,
+        ], $overrides);
+    }
+
+    /**
+     * Diario normalizado a partir de la bitácora. Sin eventos devuelve el
+     * contrato vacío que la vista sabe renderizar.
+     *
+     * @param  list<array<string, mixed>>  $bitacora
+     * @return array{total: int, eventos: list<array<string, mixed>>, grupos: list<array<string, mixed>>, hitos: list<array<string, mixed>>}
+     */
+    private function diario(array $bitacora): array
+    {
+        if ($bitacora === []) {
+            return [
+                'total' => 0,
+                'eventos' => [],
+                'grupos' => [],
+                'hitos' => [],
+            ];
+        }
+
+        return DiarioExploracion::toView(['bitacora' => $bitacora], [], 'Rex');
     }
 }

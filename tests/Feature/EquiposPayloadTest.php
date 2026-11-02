@@ -273,7 +273,7 @@ class EquiposPayloadTest extends TestCase
         $this->assertNotContains($r1->id, $response->viewData('reclutadosEnExploracion'));
     }
 
-    public function test_equipos_en_exploracion_devuelve_team_ids_con_miembros_en_exploracion(): void
+    public function test_equipos_en_exploracion_vacio_y_reclutados_en_exploracion_con_ids(): void
     {
         $user = $this->actingAsUser();
         $this->createPokemon(1);
@@ -330,13 +330,16 @@ class EquiposPayloadTest extends TestCase
         $response = $this->get('/equipos');
 
         $response->assertOk();
-        $equiposEnExploracion = $response->viewData('equiposEnExploracion');
-        $this->assertIsArray($equiposEnExploracion);
-        $this->assertContains($team1->id, $equiposEnExploracion);
-        $this->assertNotContains($team2->id, $equiposEnExploracion);
-        // Array plano de enteros
-        foreach ($equiposEnExploracion as $teamId) {
-            $this->assertIsInt($teamId);
+        // Compatibilidad temporal con la vista: ya no se bloquean equipos completos.
+        $this->assertSame([], $response->viewData('equiposEnExploracion'));
+
+        $reclutadosEnExploracion = $response->viewData('reclutadosEnExploracion');
+        $this->assertIsArray($reclutadosEnExploracion);
+        $this->assertContains($r1->id, $reclutadosEnExploracion);
+        $this->assertNotContains($r2->id, $reclutadosEnExploracion);
+        $this->assertNotContains($r3->id, $reclutadosEnExploracion);
+        foreach ($reclutadosEnExploracion as $reclutadoId) {
+            $this->assertIsInt($reclutadoId);
         }
     }
 

@@ -275,20 +275,20 @@ class ExploracionesTest extends TestCase
             $this->assertDatabaseHas('reclutables', ['pokemon_id' => $pokemonId, 'cantidad' => $cantidad]);
         }
 
-        // Caramelos de familia: phase × count (bulbasaur phase 1, charmander phase 2),
-        // persistidos en el inventario del dueño de la exploración.
-        $familiaEsperada = ($conteos[1] ?? 0) * 1 + ($conteos[2] ?? 0) * 2;
+        // Caramelos de familia: phase × count, reducidos al 50 % por la economía
+        // individual (bulbasaur phase 1, charmander phase 2).
+        $familiaEsperada = (int) floor((($conteos[1] ?? 0) * 1 + ($conteos[2] ?? 0) * 2) * 0.5);
         $this->assertDatabaseHas('player_inventory', [
             'user_id' => $ctx['user']->id,
             'item_key' => 'familia:'.$ctx['chainId'],
             'cantidad' => $familiaEsperada,
         ]);
 
-        // Caramelos EV: solo stats con effort > 0, con item_key 'ev:{stat}'
+        // Caramelos EV: solo stats con effort > 0, también al 50 %.
         $evEsperado = [
-            1 => 2 * ($conteos[1] ?? 0),
-            2 => 1 * ($conteos[2] ?? 0),
-            3 => 1 * ($conteos[1] ?? 0),
+            1 => (int) floor(2 * ($conteos[1] ?? 0) * 0.5),
+            2 => (int) floor(1 * ($conteos[2] ?? 0) * 0.5),
+            3 => (int) floor(1 * ($conteos[1] ?? 0) * 0.5),
         ];
         $filasEv = PlayerInventory::where('item_key', 'like', 'ev:%')->orderBy('item_key')->get();
         $this->assertCount(count(array_filter($evEsperado, fn (int $cantidad) => $cantidad > 0)), $filasEv);
@@ -302,15 +302,18 @@ class ExploracionesTest extends TestCase
             }
         }
 
-        // RFC individual: la exp va SOLO al reclutado que exploró (reclutado1);
-        // el otro miembro del equipo (reclutado2) ya no recibe (destinoExp =
-        // exploracion->reclutado). user (nivel 5) recibe el 100 %.
-        $expEsperado = ($conteos[1] ?? 0) * NivelHelper::expDerrota(64, 5)
+        // RFC individual + economía Fase 1: la EXP va SOLO al reclutado que
+        // exploró (reclutado1). Pool = floor(T×0.5); cuenta = intdiv(pool,2);
+        // reclutado = pool − cuenta. El usuario recibe la cuenta.
+        $expTotal = ($conteos[1] ?? 0) * NivelHelper::expDerrota(64, 5)
             + ($conteos[2] ?? 0) * NivelHelper::expDerrota(62, 5);
-        $expMiembroEsperado = ($conteos[1] ?? 0) * (int) floor(NivelHelper::expDerrota(64, 5) * 0.8 / CalculadorRecompensas::MIEMBROS_EQUIPO)
-            + ($conteos[2] ?? 0) * (int) floor(NivelHelper::expDerrota(62, 5) * 0.8 / CalculadorRecompensas::MIEMBROS_EQUIPO);
-        $this->assertSame(1_250 + $expEsperado, $ctx['user']->refresh()->experiencia);
-        $this->assertSame($expMiembroEsperado, $ctx['reclutado1']->refresh()->exp->total());
+        $poolExp = max(0, (int) floor($expTotal * 0.5));
+        $expCuentaEsperada = intdiv($poolExp, 2);
+        $expReclutadoEsperado = $poolExp - $expCuentaEsperada;
+
+        $this->assertSame($poolExp, $expCuentaEsperada + $expReclutadoEsperado);
+        $this->assertSame(1_250 + $expCuentaEsperada, $ctx['user']->refresh()->experiencia);
+        $this->assertSame($expReclutadoEsperado, $ctx['reclutado1']->refresh()->exp->total());
         $this->assertSame(0, $ctx['reclutado2']->refresh()->exp->total());
     }
 
@@ -346,7 +349,9 @@ class ExploracionesTest extends TestCase
 
     public function test_ticks_repetidos_no_duplican_encuentros(): void
     {
-        $ctx = $this->crearContexto(['duracion_horas' => 4, 'inicio' => now()->subHour()]);
+        // 30 min: por debajo del tope de 12 eventos del procesamiento, para que
+        // el segundo tick no tenga backlog pendiente por programar.
+        $ctx = $this->crearContexto(['duracion_horas' => 4, 'inicio' => now()->subMinutes(30)]);
 
         $this->artisan('exploraciones:procesar')->assertSuccessful();
         $primeraPasada = count($ctx['exploracion']->refresh()->eventos['bitacora']);
@@ -357,13 +362,88 @@ class ExploracionesTest extends TestCase
         $this->assertSame($primeraPasada, $segundaPasada);
     }
 
+    public function test_tick_usa_el_contador_persistido_de_eventos_generados(): void
+    {
+        $this->travelTo(Carbon::parse('2026-11-02 10:00:00'));
+        $this->bindProcesarConAleatorio(fn (): float => 0.3);
+
+        // 60 min desde el inicio, intervalo efectivo 4 min (movilidad MAESTRO
+        // + bonus 3) → 15 esperados. Con 10 ya generados, solo faltan 5.
+        $ctx = $this->crearContexto(['indefinido' => true, 'inicio' => now()->subMinutes(60)]);
+        $ctx['exploracion']->update([
+            'eventos' => [
+                'bitacora' => [],
+                'eventos_generados' => 10,
+                'ultimo_procesado' => now()->subMinutes(10)->toIso8601String(),
+            ],
+        ]);
+
+        $this->artisan('exploraciones:procesar')->assertSuccessful();
+
+        $ctx['exploracion']->refresh();
+        $eventos = $ctx['exploracion']->eventos;
+
+        $this->assertSame(5, count($eventos->get('bitacora', [])), 'Solo deben programarse los 5 eventos pendientes');
+        $this->assertSame(15, (int) $eventos->get('eventos_generados'), 'El contador acumula los programados del tick');
+
+        $this->travelBack();
+    }
+
+    public function test_exploracion_antigua_sin_contador_hace_backfill_sin_duplicar(): void
+    {
+        $this->travelTo(Carbon::parse('2026-11-02 10:00:00'));
+        $this->bindProcesarConAleatorio(fn (): float => 0.3);
+
+        // 60 min desde el inicio, intervalo efectivo 4 min (movilidad MAESTRO
+        // + bonus 3) → 15 esperados. Sin contador y con 12 eventos ya
+        // registrados, el backfill fija 12 y solo programa los 3 que faltan.
+        $ctx = $this->crearContexto(['indefinido' => true, 'inicio' => now()->subMinutes(60)]);
+
+        $bitacora = [];
+        for ($i = 0; $i < 12; $i++) {
+            $bitacora[] = [
+                'tipo' => 'hallazgo',
+                'subtype' => 'caramelo_ev',
+                'stat' => 6,
+                'cantidad' => 1,
+                'timestamp' => now()->subMinutes(60 - $i * 4)->toIso8601String(),
+            ];
+        }
+
+        $ctx['exploracion']->update([
+            'eventos' => [
+                'bitacora' => $bitacora,
+                'ultimo_procesado' => now()->subMinutes(10)->toIso8601String(),
+            ],
+        ]);
+
+        $this->artisan('exploraciones:procesar')->assertSuccessful();
+
+        $ctx['exploracion']->refresh();
+        $eventos = $ctx['exploracion']->eventos;
+
+        $this->assertSame(
+            15,
+            (int) $eventos->get('eventos_generados'),
+            'El backfill arranca en los 12 eventos ya registrados y suma los 3 pendientes',
+        );
+        $this->assertCount(
+            15,
+            $eventos->get('bitacora', []),
+            'No se duplican los 12 eventos ya registrados en la bitácora',
+        );
+
+        $this->travelBack();
+    }
+
     public function test_tick_con_ultimo_procesado_hace_10_min_genera_eventos(): void
     {
-        // Tras 10 min sin procesar, el tick divide el intervalo (base 3 min,
-        // modulado por el rango de movilidad/exploración del reclutado) y
-        // genera varios eventos. La cadencia exacta es dominio puro y se
-        // cubre en CapacidadesStatsTest; aquí se validan invariantes del
-        // pipeline (genera eventos, no duplica, avanza ultimo_procesado).
+        // La cadencia se calcula por tiempo efectivo desde el inicio de la
+        // exploración (no por el hueco desde ultimo_procesado), con intervalo
+        // base de 30 min modulado por movilidad y bonus de exploración. Aquí
+        // se validan invariantes del pipeline (genera eventos, no duplica,
+        // avanza ultimo_procesado); la fórmula exacta se cubre en
+        // CadenciaEventosTest.
         $ctx = $this->crearContexto(['indefinido' => true, 'inicio' => now()->subMinutes(30)]);
         $ctx['exploracion']->update([
             'eventos' => [
@@ -441,10 +521,11 @@ class ExploracionesTest extends TestCase
 
         $this->assertNotNull($ctx['exploracion']->refresh()->regreso);
 
-        // Nivel salvaje 1: exp de derrota del bulbasaur (base_experience 64) con nivel 1.
-        // D3: cada integrante recibe floor((T×0.8)/3) con T = exp de derrota del salvaje a nivel 1.
-        $expPorMiembro = (int) floor(NivelHelper::expDerrota(64, 1) * 0.8 / CalculadorRecompensas::MIEMBROS_EQUIPO);
-        $this->assertSame($expPorMiembro, $ctx['reclutado1']->refresh()->exp->total());
+        // Nivel salvaje 1: T = expDerrota(64, 1) = 12. Economía individual:
+        // pool floor(12×0.5) = 6; cuenta 3, reclutado 3.
+        $pool = max(0, (int) floor(NivelHelper::expDerrota(64, 1) * 0.5));
+        $expReclutado = $pool - intdiv($pool, 2);
+        $this->assertSame($expReclutado, $ctx['reclutado1']->refresh()->exp->total());
 
         // El usuario no recibe exp ni caramelos (no hay dueño resuelto).
         $this->assertSame(1_250, $ctx['user']->refresh()->experiencia);
@@ -498,6 +579,29 @@ class ExploracionesTest extends TestCase
         $this->assertNotEmpty($ctx['exploracion']->eventos['bitacora']);
     }
 
+    public function test_captura_no_aplica_el_factor_0_5_de_la_economia(): void
+    {
+        // capture_rate 255 → p = 25/255 ≈ 0.098. Roll 0.06 queda entre p×0.5
+        // (≈0.049) y p: si la economía individual redujera la captura, fallaría.
+        $this->bindHandlerConAleatorio(fn (): float => 0.06);
+        $this->bindProcesarConAleatorio(fn (): float => 0.3);
+
+        $ctx = $this->crearContexto(['duracion_horas' => 1, 'inicio' => now()->subHours(2)]);
+
+        $this->artisan('exploraciones:procesar')->assertSuccessful();
+
+        $ctx['exploracion']->refresh();
+        $derrotados = $ctx['exploracion']->eventos['derrotados'];
+        $capturados = $ctx['exploracion']->eventos['resultado']['capturados'] ?? [];
+
+        $this->assertNotEmpty($derrotados);
+        $this->assertNotEmpty(
+            $capturados,
+            'Con roll 0.06 y p≈0.098 la captura debe ocurrir; el factor 0.5 la anularía',
+        );
+        $this->assertDatabaseCount('reclutables', 1);
+    }
+
     public function test_servicio_guarda_resumen_de_resultado_en_eventos(): void
     {
         // Fuerza captura (aleatorio 0.0) para no depender del RNG (regla cap-25).
@@ -534,15 +638,15 @@ class ExploracionesTest extends TestCase
         $this->assertSame('bulbasaur', $familia['nombre']);
         $this->assertSame(1, $familia['pokemon_id']);
         $this->assertSame(
-            ($conteos[1] ?? 0) * 1 + ($conteos[2] ?? 0) * 2,
+            (int) floor((($conteos[1] ?? 0) * 1 + ($conteos[2] ?? 0) * 2) * 0.5),
             $familia['cantidad'],
         );
 
-        // Caramelos EV: solo stats con effort > 0, agrupados por stat
+        // Caramelos EV: solo stats con effort > 0, agrupados por stat y al 50 %.
         $evEsperado = [
-            1 => 2 * ($conteos[1] ?? 0),
-            2 => 1 * ($conteos[2] ?? 0),
-            3 => 1 * ($conteos[1] ?? 0),
+            1 => (int) floor(2 * ($conteos[1] ?? 0) * 0.5),
+            2 => (int) floor(1 * ($conteos[2] ?? 0) * 0.5),
+            3 => (int) floor(1 * ($conteos[1] ?? 0) * 0.5),
         ];
         $evEsperado = array_filter($evEsperado, fn (int $cantidad) => $cantidad > 0);
         $this->assertSame(
@@ -553,10 +657,11 @@ class ExploracionesTest extends TestCase
             $this->assertSame($evEsperado[$caramelo['stat']], $caramelo['cantidad']);
         }
 
-        // EXP: mismo total que el incremento del usuario (nivel 5)
-        $expEsperado = ($conteos[1] ?? 0) * NivelHelper::expDerrota(64, 5)
+        // EXP: `exp` del resultado es la EXP de cuenta (mitad del pool).
+        $expTotal = ($conteos[1] ?? 0) * NivelHelper::expDerrota(64, 5)
             + ($conteos[2] ?? 0) * NivelHelper::expDerrota(62, 5);
-        $this->assertSame($expEsperado, $resultado['exp']);
+        $poolExp = max(0, (int) floor($expTotal * 0.5));
+        $this->assertSame(intdiv($poolExp, 2), $resultado['exp']);
     }
 
     public function test_finalizacion_otorga_caramelos_de_tipo_desde_exp_tipada_d3(): void
@@ -589,7 +694,8 @@ class ExploracionesTest extends TestCase
         // T por derrota (nivel salvaje 5); 2 tipos → 50/50; caramelos = floor((T/2 × N × 0.2)/100).
         $T = NivelHelper::expDerrota(5000, 5);
         $expTipoPorDerrota = intdiv($T, 2);
-        $caramelosEsperados = (int) floor($expTipoPorDerrota * ($conteos[2] ?? 0) * 0.2 / 100);
+        // Economía individual: la tasa de caramelos se reduce al 50 %.
+        $caramelosEsperados = (int) floor($expTipoPorDerrota * ($conteos[2] ?? 0) * 0.2 / 100 * 0.5);
 
         $this->assertGreaterThan(0, $caramelosEsperados);
         $this->assertDatabaseHas('player_inventory', [
@@ -637,11 +743,12 @@ class ExploracionesTest extends TestCase
         $conteos = $this->conteoPorEspecie($ctx['exploracion']->eventos['bitacora']);
         $this->assertGreaterThan(0, $conteos[2] ?? 0);
 
-        // T por derrota (nivel salvaje 5); 2 tipos → 50/50; por miembro
-        // floor((T/2)×0.8/3) por derrota y por tipo.
+        // T por derrota (nivel salvaje 5); 2 tipos → 50/50. Agregado por tipo,
+        // pool floor(expTipo×0.5) y destino = pool − intdiv(pool, 2).
         $T = NivelHelper::expDerrota(5000, 5);
-        $expTipoPorDerrota = (int) floor(intdiv($T, 2) * 0.8 / CalculadorRecompensas::MIEMBROS_EQUIPO);
-        $esperadoPorTipo = $expTipoPorDerrota * ($conteos[2] ?? 0);
+        $expTipoAgregado = intdiv($T, 2) * ($conteos[2] ?? 0);
+        $poolTipo = max(0, (int) floor($expTipoAgregado * 0.5));
+        $esperadoPorTipo = $poolTipo - intdiv($poolTipo, 2);
         $this->assertGreaterThan(0, $esperadoPorTipo);
 
         // RFC individual: la exp (también la de tipo) se acumula SOLO en el
@@ -733,6 +840,17 @@ class ExploracionesTest extends TestCase
         $this->bindHandlerConAleatorio(fn (): float => 1.0);
 
         $ctx = $this->crearExploracionParaFinalizar(captureRate: 0);
+        // Dos derrotas: con la economía al 50 % el caramelo de familia sigue
+        // siendo 1 (floor(2×1×0.5)), lo que permite detectar duplicados.
+        $ctx['exploracion']->update([
+            'eventos' => [
+                'bitacora' => [
+                    ['tipo' => 'pokemon', 'pokemon_id' => 1],
+                    ['tipo' => 'pokemon', 'pokemon_id' => 1],
+                ],
+                'ultimo_procesado' => now()->toIso8601String(),
+            ],
+        ]);
         $bus = app(CommandBus::class);
         $exploracion = $this->mockExploracionQueFallaAlMarcarRegreso($ctx['exploracion']);
 
@@ -768,8 +886,9 @@ class ExploracionesTest extends TestCase
 
     public function test_procesar_con_forzar_regreso_y_finalizar_fallando_hace_rollback_total(): void
     {
-        // Bitacora vacía con ultimo_procesado hace 10 min: el tick GENERARÁ
-        // encuentros (3) que deberán revertirse junto con las recompensas.
+        // Bitacora vacía con ultimo_procesado hace 10 min: el tick generará
+        // encuentros (según el tiempo transcurrido desde el inicio) que deberán
+        // revertirse junto con las recompensas.
         $ctx = $this->crearContexto(['indefinido' => true, 'inicio' => now()->subMinutes(30)]);
         $ctx['exploracion']->update([
             'eventos' => [
@@ -848,11 +967,11 @@ class ExploracionesTest extends TestCase
 
         $this->assertNotNull($ctx['exploracion']->fresh()->regreso);
 
-        // Caramelos de familia: fase 1 (bulbasaur, min species_id 1) × 2 derrotas = 2
+        // Caramelos de familia: fase 1 × 2 derrotas = 2, reducidos al 50 % = 1.
         $this->assertDatabaseHas('player_inventory', [
             'user_id' => $ctx['user']->id,
             'item_key' => 'familia:51',
-            'cantidad' => 2,
+            'cantidad' => 1,
         ]);
 
         // Resultado: base = menor species_id de TODA la familia (bulbasaur, id 1).
@@ -863,7 +982,7 @@ class ExploracionesTest extends TestCase
                 'evolution_chain_id' => 51,
                 'nombre' => 'bulbasaur',
                 'pokemon_id' => 1,
-                'cantidad' => 2,
+                'cantidad' => 1,
             ],
         ], $resultado['caramelos_familia']);
     }
@@ -893,11 +1012,12 @@ class ExploracionesTest extends TestCase
 
         $this->assertNotNull($ctx['exploracion']->fresh()->regreso);
 
-        // Caramelos de familia: UNA fila para la cadena 51 con 2 derrotas × fase 2 = 4
+        // Caramelos de familia: UNA fila para la cadena 51 con 2 derrotas × fase 2 = 4,
+        // reducidos al 50 % = 2.
         $this->assertDatabaseHas('player_inventory', [
             'user_id' => $ctx['user']->id,
             'item_key' => 'familia:51',
-            'cantidad' => 4,
+            'cantidad' => 2,
         ]);
         $this->assertSame(1, PlayerInventory::where('item_key', 'familia:51')->count());
 
@@ -909,7 +1029,7 @@ class ExploracionesTest extends TestCase
                 'evolution_chain_id' => 51,
                 'nombre' => 'bulbasaur',
                 'pokemon_id' => 1,
-                'cantidad' => 4,
+                'cantidad' => 2,
             ],
         ], $resultado['caramelos_familia']);
     }
@@ -927,6 +1047,7 @@ class ExploracionesTest extends TestCase
             'eventos' => [
                 'bitacora' => [
                     ['tipo' => 'pokemon', 'pokemon_id' => 1], // victoria (retrocompat)
+                    ['tipo' => 'pokemon', 'pokemon_id' => 1], // segunda victoria (economía al 50 %)
                     ['tipo' => 'retirada', 'resolucion' => 'retirada', 'reason' => 'grupo_enemigo', 'timestamp' => now()->toIso8601String()],
                 ],
                 'ultimo_procesado' => now()->toIso8601String(),
@@ -939,7 +1060,7 @@ class ExploracionesTest extends TestCase
         $this->assertNotNull($fresh->regreso);
         $this->assertSame('retirada', $fresh->eventos->get('resultado')['resultado']);
 
-        // La victoria previa se conserva: caramelo de familia fase 1 × 1.
+        // Las victorias previas se conservan: fase 1 × 2 derrotas × 0.5 = 1.
         $this->assertDatabaseHas('player_inventory', [
             'user_id' => $ctx['user']->id,
             'item_key' => 'familia:'.$ctx['chainId'],
@@ -1015,9 +1136,9 @@ class ExploracionesTest extends TestCase
         $ctx['exploracion']->update([
             'eventos' => [
                 'bitacora' => [
-                    ['tipo' => 'hallazgo', 'subtype' => 'caramelo_familia', 'pokemon_id' => 1, 'cantidad' => 2, 'timestamp' => now()->toIso8601String()],
-                    ['tipo' => 'hallazgo', 'subtype' => 'caramelo_ev', 'stat' => 2, 'cantidad' => 1, 'timestamp' => now()->toIso8601String()],
-                    ['tipo' => 'hallazgo', 'subtype' => 'caramelo_tipo', 'tipo_id' => 10, 'cantidad' => 1, 'timestamp' => now()->toIso8601String()],
+                    ['tipo' => 'hallazgo', 'subtype' => 'caramelo_familia', 'pokemon_id' => 1, 'cantidad' => 4, 'timestamp' => now()->toIso8601String()],
+                    ['tipo' => 'hallazgo', 'subtype' => 'caramelo_ev', 'stat' => 2, 'cantidad' => 2, 'timestamp' => now()->toIso8601String()],
+                    ['tipo' => 'hallazgo', 'subtype' => 'caramelo_tipo', 'tipo_id' => 10, 'cantidad' => 2, 'timestamp' => now()->toIso8601String()],
                 ],
                 'ultimo_procesado' => now()->toIso8601String(),
             ],
@@ -1025,6 +1146,7 @@ class ExploracionesTest extends TestCase
 
         app(CommandBus::class)->dispatch(new FinalizarExploracionCommand($ctx['exploracion']));
 
+        // Hallazgos reducidos al 50 %: 4→2 familia, 2→1 EV, 2→1 tipo.
         $this->assertDatabaseHas('player_inventory', [
             'user_id' => $ctx['user']->id,
             'item_key' => 'familia:'.$ctx['chainId'],
@@ -1052,6 +1174,7 @@ class ExploracionesTest extends TestCase
                 'bitacora' => [
                     ['tipo' => 'emboscada', 'pokemon_ids' => [1, 2], 'resolucion' => 'superada', 'duration_loss' => 10, 'timestamp' => now()->toIso8601String()],
                     ['tipo' => 'pokemon', 'pokemon_id' => 1, 'timestamp' => now()->toIso8601String()],
+                    ['tipo' => 'pokemon', 'pokemon_id' => 1, 'timestamp' => now()->toIso8601String()],
                 ],
                 'ultimo_procesado' => now()->toIso8601String(),
             ],
@@ -1063,9 +1186,9 @@ class ExploracionesTest extends TestCase
         $this->assertDatabaseHas('pokedex', ['pokemon_id' => 1, 'visto' => true]);
         $this->assertDatabaseHas('pokedex', ['pokemon_id' => 2, 'visto' => true]);
 
-        // Derrotados: solo la victoria del encuentro → caramelo familia fase 1 × 1.
+        // Derrotados: las victorias del encuentro → caramelo familia fase 1 × 2 × 0.5 = 1.
         $fresh = $ctx['exploracion']->fresh();
-        $this->assertSame([1], $fresh->eventos->get('derrotados'));
+        $this->assertSame([1, 1], $fresh->eventos->get('derrotados'));
         $this->assertDatabaseHas('player_inventory', [
             'user_id' => $ctx['user']->id,
             'item_key' => 'familia:'.$ctx['chainId'],
@@ -1081,6 +1204,7 @@ class ExploracionesTest extends TestCase
             'eventos' => [
                 'bitacora' => [
                     ['tipo' => 'encuentro', 'subtype' => 'normal', 'pokemon_id' => 1, 'timestamp' => now()->toIso8601String()],
+                    ['tipo' => 'encuentro', 'subtype' => 'normal', 'pokemon_id' => 1, 'timestamp' => now()->toIso8601String()],
                 ],
                 'ultimo_procesado' => now()->toIso8601String(),
             ],
@@ -1089,7 +1213,7 @@ class ExploracionesTest extends TestCase
         app(CommandBus::class)->dispatch(new FinalizarExploracionCommand($ctx['exploracion']));
 
         $fresh = $ctx['exploracion']->fresh();
-        $this->assertSame([1], $fresh->eventos->get('derrotados'));
+        $this->assertSame([1, 1], $fresh->eventos->get('derrotados'));
         $this->assertDatabaseHas('pokedex', ['pokemon_id' => 1, 'visto' => true]);
         $this->assertDatabaseHas('player_inventory', [
             'user_id' => $ctx['user']->id,
@@ -1144,8 +1268,8 @@ class ExploracionesTest extends TestCase
         $resultado = $ctx['exploracion']->fresh()->eventos->get('resultado');
         $this->assertSame('fracaso', $resultado['resultado']);
 
-        // T = expDerrota(5000, 5) = 5000; 1 derrota × 0.25 = 1250 exp.
-        $this->assertSame(1250, $resultado['exp']);
-        $this->assertSame(1_250 + 1250, $ctx['user']->refresh()->experiencia);
+        // T = 5000; pool floor(5000×0.25×0.5) = 625; cuenta intdiv(625,2) = 312.
+        $this->assertSame(312, $resultado['exp']);
+        $this->assertSame(1_250 + 312, $ctx['user']->refresh()->experiencia);
     }
 }

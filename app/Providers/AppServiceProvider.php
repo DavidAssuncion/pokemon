@@ -24,8 +24,10 @@ use Src\Gimnasios\Domain\Repositories\GymCatalogoRepositoryInterface;
 use Src\Gimnasios\Domain\Repositories\GymProgressRepositoryInterface;
 use Src\Gimnasios\Infra\EloquentGymCatalogoRepository;
 use Src\Gimnasios\Infra\EloquentGymProgressRepository;
-use Src\Habitats\Domain\Repositories\HabitatRepositoryInterface;
-use Src\Habitats\Infra\HabitatRepository;
+use Src\Habitats\Domain\Repositories\HabitatGestionRepositoryInterface;
+use Src\Habitats\Domain\Repositories\HabitatLecturaRepositoryInterface;
+use Src\Habitats\Infra\HabitatGestionRepository;
+use Src\Habitats\Infra\HabitatLecturaRepository;
 use Src\Mazmorras\Domain\Repositories\DungeonProgresoRepositoryInterface;
 use Src\Mazmorras\Infra\EloquentDungeonProgresoRepository;
 use Src\Shared\Bus\CommandBus;
@@ -41,7 +43,8 @@ class AppServiceProvider extends ServiceProvider
     {
         $this->app->bind(TeamRepositoryInterface::class, EloquentTeamRepository::class);
         $this->app->bind(FabricaBatallaInterface::class, FabricaBatallaMock::class);
-        $this->app->bind(HabitatRepositoryInterface::class, HabitatRepository::class);
+        $this->app->bind(HabitatLecturaRepositoryInterface::class, HabitatLecturaRepository::class);
+        $this->app->bind(HabitatGestionRepositoryInterface::class, HabitatGestionRepository::class);
         $this->app->bind(WebpConverterInterface::class, WebpConverter::class);
         $this->app->bind(CommandBus::class, LaravelCommandBus::class);
         $this->app->bind(UnitOfWork::class, DatabaseUnitOfWork::class);

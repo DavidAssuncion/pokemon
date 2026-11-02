@@ -43,6 +43,25 @@ final class EloquentGymCatalogoRepository implements GymCatalogoRepositoryInterf
         return $this->desdeModelo($model);
     }
 
+    public function indiceDe(string $slug): int
+    {
+        $gimnasios = $this->obtenerTodos()->sort(
+            static fn (Gimnasio $a, Gimnasio $b): int => [$a->nivelMinimo, $a->slug] <=> [$b->nivelMinimo, $b->slug],
+        );
+
+        $posicion = array_search(
+            $slug,
+            $gimnasios->pluck(static fn (Gimnasio $gimnasio): string => $gimnasio->slug),
+            true,
+        );
+
+        if ($posicion === false) {
+            throw new GimnasioNoExiste();
+        }
+
+        return $posicion + 1;
+    }
+
     public function insertar(string $slug, string $medalla, TipoPokemon $tipo, int $nivelMinimo, EquipoEtapaGimnasioCollection $equipos = new EquipoEtapaGimnasioCollection()): Gimnasio
     {
         $gym = Gym::query()->updateOrCreate(

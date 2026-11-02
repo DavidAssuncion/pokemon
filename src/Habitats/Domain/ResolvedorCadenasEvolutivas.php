@@ -13,15 +13,19 @@ use Src\Habitats\Domain\DataTransferObjects\PokemonCadenaBase;
 use Src\Habitats\Domain\DataTransferObjects\RepartoFamilia;
 use Src\Habitats\Presentation\ColeccionPokemonFamilia;
 use Src\Habitats\Presentation\DTOPokemonFamilia;
+use Src\Pokemon\Domain\Evolution\AristaEvolutiva;
+use Src\Pokemon\Domain\Evolution\PokemonFamilia;
+use Src\Pokemon\Domain\Evolution\ResolvedorFamiliaEvolutiva;
 
 /**
- * Resuelve cadenas evolutivas: miembros y etapas por BFS, orden por species_id
- * mínimo y reparto de niveles.
+ * Resuelve cadenas evolutivas: miembros y etapas, orden por species_id mínimo
+ * y reparto de niveles.
  *
  * Vive en Domain porque es lógica de dominio pura: recibe los datos ya cargados
- * por el repositorio (sin Eloquent) y solo procesa BFS/orden/reparto. El icono
- * de cada pokémon se construye con el callable inyectado (responsabilidad de la
- * capa Infra, que posee la ruta).
+ * por el repositorio (sin Eloquent) y delega el cálculo de etapas en el
+ * resolvedor de familias de Pokémon en modo compatibilidad (una sola raíz y
+ * máximo tres etapas). El icono de cada pokémon se construye con el callable
+ * inyectado (responsabilidad de la capa Infra, que posee la ruta).
  */
 final class ResolvedorCadenasEvolutivas
 {
@@ -36,8 +40,12 @@ final class ResolvedorCadenasEvolutivas
     }
 
     /**
-     * Resuelve todos los miembros de la cadena con su etapa evolutiva,
-     * empezando por la base (evolves_from_species_id null) y haciendo BFS.
+     * Resuelve todos los miembros de la cadena con su etapa evolutiva.
+     *
+     * Delega en `ResolvedorFamiliaEvolutiva` con `multiRaiz = false` y
+     * `maxEtapas = 3`, que reproduce el BFS histórico: una única base y las
+     * etapas 1-3. Los miembros no alcanzados conservan el fallback histórico
+     * de etapa 3.
      *
      * Se espera `$pokemon` ya ordenado por species_id asc (desempate por id): el
      * "primer integrante" de la familia es el de menor species_id (criterio de
@@ -52,58 +60,41 @@ final class ResolvedorCadenasEvolutivas
             return new MiembrosCadenaCollection();
         }
 
-        $idsSet = array_fill_keys(
-            $pokemon->map(fn (PokemonCadenaBase $p): int => $p->id),
-            true,
-        );
+        $nodos = $pokemon->map(fn (PokemonCadenaBase $p): PokemonFamilia => new PokemonFamilia(
+            id: $p->id,
+            nombre: $p->nombre,
+            speciesId: $p->speciesId,
+        ));
 
-        /** @var array<int, int|null> $evolvesFrom */
-        $evolvesFrom = [];
+        $aristas = [];
+
         foreach ($evolutions as $row) {
-            if (! isset($idsSet[$row->evolvedSpeciesId])) {
+            if ($row->evolvesFromSpeciesId === null) {
                 continue;
             }
-            $evolvesFrom[$row->evolvedSpeciesId] = $row->evolvesFromSpeciesId;
+
+            $aristas[] = new AristaEvolutiva(
+                desdeSpeciesId: $row->evolvesFromSpeciesId,
+                haciaSpeciesId: $row->evolvedSpeciesId,
+                nivelMinimo: null,
+            );
         }
 
-        // Base = el miembro cuyo evolves_from es null o no está en la familia.
-        $baseId = null;
-        foreach ($pokemon as $p) {
-            $from = $evolvesFrom[$p->id] ?? null;
-            if ($from === null || ! isset($idsSet[$from])) {
-                $baseId = $p->id;
-                break;
-            }
-        }
-        if ($baseId === null) {
-            $baseId = $pokemon->first()?->id;
-        }
-
-        // BFS: base stage 1, hijos directos stage 2, resto stage 3.
-        $stages = [];
-        $stage = 1;
-        $current = [$baseId];
-        while ($current !== [] && $stage <= 3) {
-            $next = [];
-            foreach ($current as $pid) {
-                $stages[$pid] = $stage;
-                foreach ($evolvesFrom as $evolvedId => $fromId) {
-                    if ($fromId === $pid && ! isset($stages[$evolvedId])) {
-                        $next[] = $evolvedId;
-                    }
-                }
-            }
-            $current = $next;
-            $stage++;
-        }
+        $familia = (new ResolvedorFamiliaEvolutiva())->resolver(
+            $nodos,
+            $aristas,
+            multiRaiz: false,
+            maxEtapas: 3,
+        );
 
         $miembros = new MiembrosCadenaCollection();
+
         foreach ($pokemon as $p) {
             $miembros->add(new MiembroCadena(
                 id: $p->id,
                 nombre: $p->nombre,
                 icono: ($this->iconPath)($p->id),
-                stage: $stages[$p->id] ?? 3,
+                stage: $familia->stageDe($p->id) ?? 3,
                 speciesId: $p->speciesId,
             ));
         }

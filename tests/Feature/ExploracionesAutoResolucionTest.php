@@ -181,9 +181,8 @@ class ExploracionesAutoResolucionTest extends TestCase
 
     public function test_comando_procesa_exploraciones_activas_al_ejecutarse(): void
     {
-        // Adaptación RFC: el tick ya NO se dispara al cargar /exploraciones
-        // (index es solo lectura). La auto-resolución vive en el comando
-        // exploraciones:procesar (programado cada 5 min).
+        // GET /exploraciones procesa bajo demanda; el comando
+        // exploraciones:procesar sigue siendo la vía programada (cada 5 min).
         $this->bindHandlersDeterministas();
         $ctx = $this->crearContexto(['duracion_horas' => 2, 'inicio' => now()->subHours(3)]);
 
@@ -192,7 +191,10 @@ class ExploracionesAutoResolucionTest extends TestCase
         $ctx['exploracion']->refresh();
         $this->assertNotNull($ctx['exploracion']->regreso, 'La exploración debió finalizarse.');
         $this->assertNotEmpty($ctx['exploracion']->eventos['bitacora'], 'La bitácora no debe estar vacía.');
-        $this->assertNotEmpty($ctx['exploracion']->eventos['derrotados'] ?? [], 'Debe haber derrotados.');
+        $resultado = $ctx['exploracion']->eventos['resultado'] ?? null;
+        $this->assertIsArray($resultado, 'El resultado de la exploración debe existir.');
+        $this->assertNotEmpty($resultado, 'El resultado no debe estar vacío.');
+        $this->assertArrayHasKey('exp', $resultado);
     }
 
     public function test_comando_no_reprocesa_exploracion_ya_finalizada(): void
@@ -235,10 +237,11 @@ class ExploracionesAutoResolucionTest extends TestCase
         $this->assertNotNull($ajena->regreso, 'El comando global debe procesar también la exploración ajena.');
     }
 
-    public function test_index_no_dispara_ticks_ni_se_bloquea_con_bus_roto(): void
+    public function test_index_aisla_el_fallo_del_bus_y_no_se_bloquea(): void
     {
-        // RFC: index es solo lectura (no despacha ticks). Aunque el bus esté
-        // roto, la página carga y la exploración no se toca.
+        // Procesamiento bajo demanda: index intenta procesar, pero un fallo
+        // del bus se aísla por exploración. La página carga y la expedición
+        // permanece activa para reintentarse.
         $busMock = $this->createMock(CommandBus::class);
         $busMock->method('dispatch')
             ->willThrowException(new \RuntimeException('Fallo simulado'));
@@ -252,7 +255,7 @@ class ExploracionesAutoResolucionTest extends TestCase
             $this->fail('La página no debe bloquearse aunque falle un tick: '.$e->getMessage());
         }
 
-        // La exploración sigue activa (el index no la procesa)
+        // La exploración sigue activa: el fallo no se propaga ni deja datos a medias.
         $ctx['exploracion']->refresh();
         $this->assertNull($ctx['exploracion']->regreso);
     }

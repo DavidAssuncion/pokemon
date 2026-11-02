@@ -180,7 +180,87 @@ class GeneradorEquipoEntrenadorTest extends TestCase
         );
     }
 
-    private function crearPokemon(int $id, Habitat $habitat, int $captureRate = 45, int $hatch = 10): Pokemon
+
+    #[Test]
+    public function nivel_1_aplica_top_uno_con_el_mejor_stat_al_maximo_y_el_resto_a_cero(): void
+    {
+        $habitat = $this->crearHabitatConPokemon('Entrenador P1', 1);
+
+        $equipo = $this->crearGenerador()->generar((int) $habitat->id, 1, 0, '2026-09-12');
+
+        $this->assertCount(3, $equipo);
+        foreach ($equipo->all() as $datos) {
+            $this->assertSame(
+                ['hp' => 15, 'atk' => 0, 'def' => 0, 'spAtk' => 0, 'spDef' => 0, 'speed' => 0],
+                $datos->ivs->toArray(),
+            );
+            $this->assertSame(
+                ['hp' => 255, 'atk' => 0, 'def' => 0, 'spAtk' => 0, 'spDef' => 0, 'speed' => 0],
+                $datos->evs->toArray(),
+            );
+        }
+    }
+
+    #[Test]
+    public function nivel_2_aplica_top_dos_y_mitad_al_resto(): void
+    {
+        $habitat = $this->crearHabitatConPokemon('Entrenador P2', 2);
+
+        $equipo = $this->crearGenerador()->generar((int) $habitat->id, 2, 0, '2026-09-12');
+
+        $this->assertCount(3, $equipo);
+        foreach ($equipo->all() as $datos) {
+            $this->assertSame(
+                ['hp' => 15, 'atk' => 15, 'def' => 8, 'spAtk' => 8, 'spDef' => 8, 'speed' => 8],
+                $datos->ivs->toArray(),
+            );
+            $this->assertSame(
+                ['hp' => 255, 'atk' => 255, 'def' => 128, 'spAtk' => 128, 'spDef' => 128, 'speed' => 128],
+                $datos->evs->toArray(),
+            );
+        }
+    }
+
+    #[Test]
+    public function nivel_3_aplica_perfil_completo_en_los_seis_stats(): void
+    {
+        $habitat = $this->crearHabitatConPokemon('Entrenador P3', 3);
+
+        $equipo = $this->crearGenerador()->generar((int) $habitat->id, 3, 0, '2026-09-12');
+
+        $this->assertCount(3, $equipo);
+        foreach ($equipo->all() as $datos) {
+            $this->assertSame(
+                ['hp' => 15, 'atk' => 15, 'def' => 15, 'spAtk' => 15, 'spDef' => 15, 'speed' => 15],
+                $datos->ivs->toArray(),
+            );
+            $this->assertSame(
+                ['hp' => 255, 'atk' => 255, 'def' => 255, 'spAtk' => 255, 'spDef' => 255, 'speed' => 255],
+                $datos->evs->toArray(),
+            );
+        }
+    }
+
+    private function crearGenerador(): GeneradorEquipoEntrenador
+    {
+        return new GeneradorEquipoEntrenador(
+            new MapeadorPokemonBatalla(new GeneradorMovimientosTipo()),
+            new ClasificadorOfensivaDefensiva(),
+        );
+    }
+
+    private function crearHabitatConPokemon(string $nombre, int $nivel): Habitat
+    {
+        $habitat = $this->crearHabitat($nombre);
+
+        foreach ([9101, 9102, 9103] as $id) {
+            $this->crearPokemon($id, $habitat, level: $nivel);
+        }
+
+        return $habitat;
+    }
+
+    private function crearPokemon(int $id, Habitat $habitat, int $captureRate = 45, int $hatch = 10, int $level = 1): Pokemon
     {
         $pokemon = Pokemon::create([
             'id' => $id,
@@ -206,7 +286,7 @@ class GeneradorEquipoEntrenadorTest extends TestCase
             'slot' => 1,
         ]);
 
-        $habitat->pokemon()->attach($pokemon->id, ['level' => 1]);
+        $habitat->pokemon()->attach($pokemon->id, ['level' => $level]);
 
         return $pokemon;
     }

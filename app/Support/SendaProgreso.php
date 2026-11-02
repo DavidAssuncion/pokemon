@@ -4,104 +4,156 @@ declare(strict_types=1);
 
 namespace App\Support;
 
+use Src\Shared\Domain\Sendas\CurvaSenda;
+
 /**
- * Curva de progreso de las Sendas de tipo.
+ * Adaptador de la curva de progreso de las Sendas de tipo.
  *
- * La experiencia se acumula en la cuenta. El nivel de la Senda se deriva de
- * la experiencia, pero nunca supera el cap que permite el nivel de cuenta.
+ * La regla pura vive en {@see CurvaSenda}. Este adaptador permite ajustar los
+ * umbrales y la experiencia desde `config/sendas.php` manteniendo la API
+ * pública histórica.
+ *
+ * La Senda tiene 5 niveles con umbrales 0 / 9.000 / 18.000 / 36.000 / 72.000.
+ * El nivel 5 coincide con {@see self::EXP_MAXIMA}, el tope de presentación.
  */
 final class SendaProgreso
 {
-    public const NIVEL_MAXIMO = 5;
+    /**
+     * Nivel máximo alcanzable de una Senda.
+     */
+    public const NIVEL_MAXIMO = CurvaSenda::NIVEL_MAXIMO;
 
-    /** @var array<int, int> */
-    public const UMBRALES = [
-        1 => 0,
-        2 => 500,
-        3 => 2_000,
-        4 => 6_000,
-        5 => 15_000,
-    ];
+    /**
+     * Experiencia máxima de presentación: tope del nivel 5.
+     */
+    public const EXP_MAXIMA = CurvaSenda::EXP_MAXIMA;
 
-    public const NIVELES_POR_TRAMO_CUENTA = 20;
+    /**
+     * Experiencia que otorga cada caramelo de tipo consumido.
+     */
+    public const EXP_POR_CARAMELO = CurvaSenda::EXP_POR_CARAMELO;
 
-    public static function nivel(int $exp): int
+    /**
+     * Umbral de entrada de cada nivel, del 1 al 5.
+     *
+     * @return array<int, int>
+     */
+    public static function umbrales(): array
     {
-        $exp = max(0, $exp);
+        $umbrales = CurvaSenda::UMBRALES;
+        $config = config('sendas.umbrales');
 
-        $nivel = 1;
-        foreach (self::UMBRALES as $umbralNivel => $umbral) {
-            if ($exp >= $umbral) {
-                $nivel = $umbralNivel;
+        if (! is_array($config)) {
+            return $umbrales;
+        }
+
+        foreach ($umbrales as $nivel => $defecto) {
+            if (isset($config[$nivel]) && is_numeric($config[$nivel])) {
+                $umbrales[$nivel] = (int) $config[$nivel];
             }
         }
 
-        return min(self::NIVEL_MAXIMO, $nivel);
-    }
-
-    public static function capPorNivelCuenta(int $nivelCuenta): int
-    {
-        $nivelCuenta = max(1, $nivelCuenta);
-
-        return min(
-            self::NIVEL_MAXIMO,
-            intdiv($nivelCuenta, self::NIVELES_POR_TRAMO_CUENTA) + 1,
-        );
+        return $umbrales;
     }
 
     /**
-     * @return array{
-     *     exp: int,
-     *     nivel: int,
-     *     nivel_por_exp: int,
-     *     cap: int,
-     *     nivel_maximo: int,
-     *     exp_inicio: int,
-     *     exp_siguiente: int|null,
-     *     exp_faltante: int,
-     *     porcentaje: int,
-     *     progreso_vertical: int,
-     *     maximo: bool,
-     *     bloqueado_por_cuenta: bool
-     * }
+     * Umbral de experiencia para alcanzar el nivel dado.
+     *
+     * Los niveles 1-5 salen de la tabla configurada (el nivel se clampa a >= 1).
+     * Por encima de {@see self::NIVEL_MAXIMO} satura en {@see self::expMaxima()},
+     * de modo que `umbral(6)` se usa como `exp_siguiente` del nivel 5 y
+     * representa el tope, no un sexto nivel.
      */
-    public static function resumen(int $exp, int $nivelCuenta): array
+    public static function umbral(int $nivel): int
     {
-        $exp = max(0, $exp);
-        $nivelPorExp = self::nivel($exp);
-        $cap = self::capPorNivelCuenta($nivelCuenta);
-        $nivel = min($nivelPorExp, $cap);
-
-        $expInicio = self::UMBRALES[$nivel];
-        $expSiguiente = self::UMBRALES[$nivel + 1] ?? null;
-
-        if ($expSiguiente === null) {
-            $porcentaje = 100;
-        } else {
-            $rango = $expSiguiente - $expInicio;
-            $porcentaje = $rango > 0
-                ? (int) floor((($exp - $expInicio) / $rango) * 100)
-                : 100;
+        if ($nivel > self::NIVEL_MAXIMO) {
+            return self::expMaxima();
         }
 
-        $porcentaje = max(0, min(100, $porcentaje));
-        $progresoVertical = (int) round(
-            ((($nivel - 1) + ($porcentaje / 100)) / self::NIVEL_MAXIMO) * 100,
-        );
+        return self::umbrales()[max(1, $nivel)];
+    }
+
+    /**
+     * Nivel alcanzado con la experiencia dada.
+     *
+     * Es el mayor nivel cuyo umbral es menor o igual que la experiencia,
+     * acotado a {@see self::NIVEL_MAXIMO}. La experiencia negativa se trata
+     * como 0 y la que supera el tope mantiene el nivel 5.
+     */
+    public static function nivel(int $exp): int
+    {
+        $exp = max(0, $exp);
+        $nivel = 1;
+        while ($nivel < self::NIVEL_MAXIMO && self::umbral($nivel + 1) <= $exp) {
+            $nivel++;
+        }
+
+        return $nivel;
+    }
+
+    /**
+     * Resumen de progreso listo para presentación.
+     *
+     * `exp` viaja clampeada a `[0, exp_maxima]`; la experiencia real acumulada
+     * por encima del tope se conserva en `player_type_paths.exp` y no se expone
+     * aquí. En el nivel máximo `exp_siguiente` es el tope, `exp_faltante` es 0
+     * y el porcentaje es 100.
+     *
+     * @return array{
+     *     exp: int,
+     *     exp_maxima: int,
+     *     nivel: int,
+     *     nivel_maximo: int,
+     *     exp_siguiente: int,
+     *     exp_faltante: int,
+     *     porcentaje: int,
+     *     exp_por_caramelo: int
+     * }
+     */
+    public static function resumen(int $exp): array
+    {
+        $expMaxima = self::expMaxima();
+        $expVista = min(max(0, $exp), $expMaxima);
+        $nivel = self::nivel($expVista);
+        $inicio = self::umbral($nivel);
+        $siguiente = $nivel >= self::NIVEL_MAXIMO ? $expMaxima : self::umbral($nivel + 1);
+        $rango = $siguiente - $inicio;
+        $porcentaje = $rango > 0
+            ? intdiv(($expVista - $inicio) * 100, $rango)
+            : ($nivel >= self::NIVEL_MAXIMO ? 100 : 0);
 
         return [
-            'exp' => $exp,
+            'exp' => $expVista,
+            'exp_maxima' => $expMaxima,
             'nivel' => $nivel,
-            'nivel_por_exp' => $nivelPorExp,
-            'cap' => $cap,
             'nivel_maximo' => self::NIVEL_MAXIMO,
-            'exp_inicio' => $expInicio,
-            'exp_siguiente' => $expSiguiente,
-            'exp_faltante' => $expSiguiente === null ? 0 : max(0, $expSiguiente - $exp),
-            'porcentaje' => $porcentaje,
-            'progreso_vertical' => max(0, min(100, $progresoVertical)),
-            'maximo' => $nivel >= self::NIVEL_MAXIMO,
-            'bloqueado_por_cuenta' => $nivelPorExp > $cap,
+            'exp_siguiente' => $siguiente,
+            'exp_faltante' => max(0, $siguiente - $expVista),
+            'porcentaje' => max(0, min(100, $porcentaje)),
+            'exp_por_caramelo' => self::expPorCaramelo(),
         ];
+    }
+
+    /**
+     * Tope de experiencia configurado.
+     */
+    public static function expMaxima(): int
+    {
+        return self::enteroConfigurado('sendas.experiencia.maxima', self::EXP_MAXIMA);
+    }
+
+    /**
+     * Experiencia por caramelo configurada.
+     */
+    public static function expPorCaramelo(): int
+    {
+        return self::enteroConfigurado('sendas.experiencia.por_caramelo', self::EXP_POR_CARAMELO);
+    }
+
+    private static function enteroConfigurado(string $clave, int $defecto): int
+    {
+        $valor = config($clave);
+
+        return is_numeric($valor) ? (int) $valor : $defecto;
     }
 }

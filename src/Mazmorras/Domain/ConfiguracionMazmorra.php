@@ -38,7 +38,7 @@ final class ConfiguracionMazmorra
 
             $numero = (int) $piso['piso'];
             $speciesId = (int) $piso['species_id'];
-            if ($numero < 1 || $speciesId < 1) {
+            if ($numero < ReglasMazmorra::PISO_MIN || $speciesId < 1) {
                 continue;
             }
 

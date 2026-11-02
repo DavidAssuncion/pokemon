@@ -7,11 +7,13 @@ namespace Tests\Unit\Exploraciones;
 use Illuminate\Support\Collection;
 use PHPUnit\Framework\TestCase;
 use Src\Exploraciones\Domain\CalculadorRecompensas;
+use Src\Exploraciones\Domain\EconomiaRecompensas;
 use Src\Exploraciones\Domain\Recompensas\PokemonDerrotado;
 use Src\Exploraciones\Domain\Recompensas\RecompensaCaptura;
 use Src\Exploraciones\Domain\Recompensas\RecompensaEv;
 use Src\Exploraciones\Domain\Recompensas\RecompensaFamilia;
 use Src\Exploraciones\Domain\Recompensas\RecompensaTipo;
+use Src\Exploraciones\Domain\ValueObjects\ColeccionEventosExploracion;
 use Src\Shared\Domain\NivelHelper;
 
 class CalculadorRecompensasTest extends TestCase
@@ -210,7 +212,7 @@ class CalculadorRecompensasTest extends TestCase
         $this->assertTrue($resultado->caramelosTipo->isEmpty());
     }
 
-    public function test_exp_total_suma_exp_derrota_con_el_nivel_salvaje(): void
+    public function test_exp_total_es_la_fraccion_de_cuenta_del_pool_con_el_nivel_salvaje(): void
     {
         $derrotados = collect([
             $this->derrotado(id: 1, baseExperience: 64),
@@ -220,17 +222,19 @@ class CalculadorRecompensasTest extends TestCase
 
         $resultado = $this->calculador->calcular($derrotados, fn (): bool => false, 5);
 
-        $esperado = NivelHelper::expDerrota(64, 5)
+        $pool = NivelHelper::expDerrota(64, 5)
             + NivelHelper::expDerrota(62, 5)
             + NivelHelper::expDerrota(100, 5);
 
-        $this->assertSame($esperado, $resultado->expTotal);
+        // pool 226 → cuenta floor(226×0.5) = 113; destino intdiv(113, 3) = 37.
+        $this->assertSame(113, $resultado->expTotal);
+        $this->assertSame(37, $resultado->expPorMiembro);
+        $this->assertSame(226, $pool);
     }
 
-    public function test_exp_por_miembro_reparte_el_80_entre_tres(): void
+    public function test_exp_por_miembro_reparte_la_mitad_entre_tres(): void
     {
-        // D3: cada integrante += floor((T×0.8)/3) por derrota.
-        // T(64, 5) = 64 → floor(51.2/3) = 17; T(62, 5) = 62 → floor(49.6/3) = 16.
+        // Legado: pool = T (64 + 62 = 126); cuenta 63; intdiv(63, 3) = 21.
         $derrotados = collect([
             $this->derrotado(id: 1, baseExperience: 64),
             $this->derrotado(id: 2, baseExperience: 62),
@@ -238,7 +242,9 @@ class CalculadorRecompensasTest extends TestCase
 
         $resultado = $this->calculador->calcular($derrotados, fn (): bool => false, 5);
 
-        $this->assertSame(17 + 16, $resultado->expPorMiembro);
+        $this->assertSame(63, $resultado->expTotal);
+        $this->assertSame(21, $resultado->expPorMiembro);
+        $this->assertSame(126, $resultado->expTotal + $resultado->expPorMiembro * 3);
     }
 
     public function test_multiplicador_de_categoria_se_aplica_a_exp_y_caramelos(): void
@@ -250,9 +256,10 @@ class CalculadorRecompensasTest extends TestCase
 
         $resultado = $this->calculador->calcular($derrotados, fn (): bool => false, 100, 0.7);
 
-        // T = 10000 → expTotal 7000; expPorMiembro floor(floor(10000×0.8/3)×0.7) = floor(2666×0.7) = 1866.
-        $this->assertSame(7000, $resultado->expTotal);
-        $this->assertSame(1866, $resultado->expPorMiembro);
+        // T = 10000 → pool 7000; cuenta 3500; intdiv(3500, 3) = 1166.
+        $this->assertSame(3500, $resultado->expTotal);
+        $this->assertSame(1166, $resultado->expPorMiembro);
+        $this->assertSame(6998, $resultado->expTotal + $resultado->expPorMiembro * 3);
 
         // Caramelo familia: 1 (fase 1) × 0.7 → 0 (floor 0.7).
         $this->assertSame(0, $resultado->caramelosFamilia->sum('cantidad'));
@@ -272,16 +279,45 @@ class CalculadorRecompensasTest extends TestCase
 
         $this->assertEquals(
             new RecompensaFamilia(evolutionChainId: 51, cantidad: 2),
-            $resultado['caramelosFamilia']->first(),
+            $resultado->caramelosFamilia->first(),
         );
         $this->assertEquals(
             new RecompensaEv(stat: 2, cantidad: 1),
-            $resultado['caramelosEv']->first(),
+            $resultado->caramelosEv->first(),
         );
         $this->assertEquals(
             new RecompensaTipo(tipo: 'Fuego', cantidad: 3),
-            $resultado['caramelosTipo']->first(),
+            $resultado->caramelosTipo->first(),
         );
+    }
+
+    public function test_hallazgo_con_multiplicador_medio_conserva_al_menos_un_caramelo_por_clase(): void
+    {
+        $eventos = ColeccionEventosExploracion::desdeArray([
+            ['tipo' => 'hallazgo', 'subtype' => 'caramelo_familia', 'pokemon_id' => 1, 'cantidad' => 1],
+            ['tipo' => 'hallazgo', 'subtype' => 'caramelo_ev', 'stat' => 2, 'cantidad' => 1],
+            ['tipo' => 'hallazgo', 'subtype' => 'caramelo_tipo', 'tipo_id' => 10, 'cantidad' => 1],
+        ]);
+
+        $resultado = $this->calculador->calcularHallazgosDeEventos($eventos, [1 => 51], 0.5);
+
+        $this->assertSame(1, $resultado->caramelosFamilia->first()->cantidad);
+        $this->assertSame(1, $resultado->caramelosEv->first()->cantidad);
+        $this->assertSame(1, $resultado->caramelosTipo->first()->cantidad);
+    }
+
+    public function test_dos_hallazgos_de_la_misma_familia_con_multiplicador_medio_dan_dos(): void
+    {
+        $eventos = ColeccionEventosExploracion::desdeArray([
+            ['tipo' => 'hallazgo', 'subtype' => 'caramelo_familia', 'pokemon_id' => 1, 'cantidad' => 1],
+            ['tipo' => 'hallazgo', 'subtype' => 'caramelo_familia', 'pokemon_id' => 1, 'cantidad' => 1],
+        ]);
+
+        $resultado = $this->calculador->calcularHallazgosDeEventos($eventos, [1 => 51], 0.5);
+
+        // Base 1 + 1 = 2 → floor(2×0.5) = 1; dos hallazgos → mínimo 2.
+        $this->assertCount(1, $resultado->caramelosFamilia);
+        $this->assertSame(2, $resultado->caramelosFamilia->first()->cantidad);
     }
 
     public function test_calcular_hallazgos_ignora_hallazgos_sin_chain_conocida(): void
@@ -292,7 +328,7 @@ class CalculadorRecompensasTest extends TestCase
 
         $resultado = $this->calculador->calcularHallazgos($hallazgos, []);
 
-        $this->assertTrue($resultado['caramelosFamilia']->isEmpty());
+        $this->assertTrue($resultado->caramelosFamilia->isEmpty());
     }
 
     public function test_calcular_hallazgos_aplica_bonus_de_caramelos_del_rango_recolector(): void
@@ -306,9 +342,9 @@ class CalculadorRecompensasTest extends TestCase
         // Rango Recolector bonus 3 → cada hallazgo rinde ×(1 + 3) = ×4.
         $resultado = $this->calculador->calcularHallazgos($hallazgos, [1 => 51], 1.0, 3);
 
-        $this->assertSame(8, $resultado['caramelosFamilia']->first()->cantidad);
-        $this->assertSame(4, $resultado['caramelosEv']->first()->cantidad);
-        $this->assertSame(12, $resultado['caramelosTipo']->first()->cantidad);
+        $this->assertSame(8, $resultado->caramelosFamilia->first()->cantidad);
+        $this->assertSame(4, $resultado->caramelosEv->first()->cantidad);
+        $this->assertSame(12, $resultado->caramelosTipo->first()->cantidad);
     }
 
     public function test_sumar_hallazgos_a_resultado_existente_agrupa_cantidades(): void
@@ -325,9 +361,9 @@ class CalculadorRecompensasTest extends TestCase
         ]), [1 => 51]);
 
         $combinado = $recompensas->sumarHallazgos(
-            $hallazgos['caramelosFamilia'],
-            $hallazgos['caramelosEv'],
-            $hallazgos['caramelosTipo'],
+            $hallazgos->caramelosFamilia,
+            $hallazgos->caramelosEv,
+            $hallazgos->caramelosTipo,
         );
 
         // familia: 1 (derrota) + 3 (hallazgo) = 4; tipo: 20 + 1 = 21.
@@ -351,8 +387,8 @@ class CalculadorRecompensasTest extends TestCase
     public function test_calcular_incluye_exp_tipo_por_miembro(): void
     {
         // exp = expDerrota(500, 100) = intdiv(50000, 5) = 10000.
-        // Doble tipo → intdiv(10000, 2) = 5000 → por miembro floor(5000×0.8/3) = 1333.
-        // Tipo único → 10000 → por miembro floor(10000×0.8/3) = 2666.
+        // Eléctrico: 5000 → cuenta 2500, destino intdiv(2500, 3) = 833.
+        // Fuego agregado: 5000 + 10000 = 15000 → cuenta 7500, destino intdiv(7500, 3) = 2500.
         $derrotados = collect([
             $this->derrotado(id: 1, baseExperience: 500, tipos: ['Eléctrico', 'Fuego']),
             $this->derrotado(id: 2, baseExperience: 500, tipos: ['Fuego']),
@@ -360,8 +396,10 @@ class CalculadorRecompensasTest extends TestCase
 
         $resultado = $this->calculador->calcular($derrotados, fn (): bool => false, 100);
 
-        $this->assertSame(1333, $resultado->expTipoPorMiembro['Eléctrico']);
-        $this->assertSame(1333 + 2666, $resultado->expTipoPorMiembro['Fuego']);
+        $this->assertSame(833, $resultado->expTipoPorMiembro['Eléctrico']);
+        $this->assertSame(2500, $resultado->expTipoPorMiembro['Fuego']);
+        $this->assertSame(2500, $resultado->expTipoCuenta['Eléctrico']);
+        $this->assertSame(7500, $resultado->expTipoCuenta['Fuego']);
     }
 
     public function test_calcular_exp_tipo_por_miembro_aplica_multiplicador(): void
@@ -372,8 +410,8 @@ class CalculadorRecompensasTest extends TestCase
 
         $resultado = $this->calculador->calcular($derrotados, fn (): bool => false, 100, 2.0);
 
-        // floor(2666 × 2.0) = 5332.
-        $this->assertSame(5332, $resultado->expTipoPorMiembro['Fuego']);
+        // poolTipo 20000 → cuenta 10000; intdiv(10000, 3) = 3333.
+        $this->assertSame(3333, $resultado->expTipoPorMiembro['Fuego']);
     }
 
     public function test_calcular_exp_tipo_por_miembro_ignora_pokemon_sin_tipos(): void
@@ -397,5 +435,257 @@ class CalculadorRecompensasTest extends TestCase
         $combinado = $recompensas->sumarHallazgos(collect(), collect(), collect());
 
         $this->assertSame($recompensas->expTipoPorMiembro, $combinado->expTipoPorMiembro);
+    }
+
+    public function test_economia_individual_aplica_el_factor_y_reparte_la_exp_50_50(): void
+    {
+        // T = expDerrota(5000, 1) = 1000 → pool floor(1000×1×0.5) = 500.
+        $derrotados = collect([
+            $this->derrotado(id: 1, baseExperience: 5000),
+        ]);
+
+        $resultado = $this->calculador->calcular(
+            $derrotados,
+            fn (): bool => false,
+            1,
+            1.0,
+            EconomiaRecompensas::individual(),
+        );
+
+        $this->assertSame(250, $resultado->expTotal);
+        $this->assertSame(250, $resultado->expPorMiembro);
+        $this->assertSame(500, $resultado->expTotal + $resultado->expPorMiembro);
+        // EXP de tipo: un tipo → pool 500, cuenta 250 / destino 250.
+        $this->assertSame(['Fuego' => 250], $resultado->expTipoCuenta);
+        $this->assertSame(['Fuego' => 250], $resultado->expTipoPorMiembro);
+    }
+
+    public function test_economia_individual_con_pool_impar_da_el_resto_al_reclutado(): void
+    {
+        // T = expDerrota(15, 1) = 3 → pool floor(3×0.5) = 1; cuenta 0, reclutado 1.
+        $derrotados = collect([
+            $this->derrotado(id: 1, baseExperience: 15, tipos: []),
+        ]);
+
+        $resultado = $this->calculador->calcular(
+            $derrotados,
+            fn (): bool => false,
+            1,
+            1.0,
+            EconomiaRecompensas::individual(),
+        );
+
+        $this->assertSame(0, $resultado->expTotal);
+        $this->assertSame(1, $resultado->expPorMiembro);
+        $this->assertSame(1, $resultado->expTotal + $resultado->expPorMiembro);
+        $this->assertSame([], $resultado->expTipoCuenta);
+        $this->assertSame([], $resultado->expTipoPorMiembro);
+    }
+
+    public function test_economia_individual_aplica_el_multiplicador_de_categoria_sobre_el_agregado(): void
+    {
+        // T = 1000, categoría 0.7 → pool floor(1000×0.7×0.5) = 350.
+        $derrotados = collect([
+            $this->derrotado(id: 1, baseExperience: 5000, tipos: []),
+        ]);
+
+        $resultado = $this->calculador->calcular(
+            $derrotados,
+            fn (): bool => false,
+            1,
+            0.7,
+            EconomiaRecompensas::individual(),
+        );
+
+        $this->assertSame(175, $resultado->expTotal);
+        $this->assertSame(175, $resultado->expPorMiembro);
+        $this->assertSame(350, $resultado->expTotal + $resultado->expPorMiembro);
+    }
+
+    public function test_economia_individual_reduce_los_caramelos_al_50_por_ciento(): void
+    {
+        // Familia: fase 10 → floor(10×0.5) = 5. EV: effort 10 → 5.
+        $derrotados = collect([
+            $this->derrotado(
+                id: 1,
+                baseExperience: 100,
+                evolutionChainId: 7,
+                tipos: [],
+                stats: [['stat' => 1, 'effort' => 10]],
+                fase: 10,
+            ),
+        ]);
+
+        $resultado = $this->calculador->calcular(
+            $derrotados,
+            fn (): bool => false,
+            1,
+            1.0,
+            EconomiaRecompensas::individual(),
+        );
+
+        $this->assertSame(5, $resultado->caramelosFamilia->first()->cantidad);
+        $this->assertSame(5, $resultado->caramelosEv->first()->cantidad);
+    }
+
+    public function test_economia_individual_reparte_la_exp_de_cada_tipo_50_50(): void
+    {
+        // T por derrota = 1000; 2 tipos → 500 por tipo; tipo único → 1000.
+        // Agregado: Eléctrico 500, Fuego 500 + 1000 = 1500.
+        // Pools: 250 y 750; cuentas 125 y 375; destinos 125 y 375.
+        $derrotados = collect([
+            $this->derrotado(id: 1, baseExperience: 5000, tipos: ['Eléctrico', 'Fuego']),
+            $this->derrotado(id: 2, baseExperience: 5000, tipos: ['Fuego']),
+        ]);
+
+        $resultado = $this->calculador->calcular(
+            $derrotados,
+            fn (): bool => false,
+            1,
+            1.0,
+            EconomiaRecompensas::individual(),
+        );
+
+        $this->assertSame(500, $resultado->expTotal);
+        $this->assertSame(500, $resultado->expPorMiembro);
+
+        $this->assertSame(125, $resultado->expTipoCuenta['Eléctrico']);
+        $this->assertSame(375, $resultado->expTipoCuenta['Fuego']);
+        $this->assertSame(125, $resultado->expTipoPorMiembro['Eléctrico']);
+        $this->assertSame(375, $resultado->expTipoPorMiembro['Fuego']);
+    }
+
+    public function test_la_rama_legada_reparte_la_mitad_entre_la_cuenta_y_tres_miembros(): void
+    {
+        $derrotados = collect([
+            $this->derrotado(id: 1, baseExperience: 5000, tipos: ['Fuego']),
+        ]);
+
+        $resultado = $this->calculador->calcular(
+            $derrotados,
+            fn (): bool => false,
+            1,
+            1.0,
+            EconomiaRecompensas::legado(),
+        );
+
+        // T = 1000 → pool 1000; cuenta 500; intdiv(500, 3) = 166.
+        $this->assertSame(500, $resultado->expTotal);
+        $this->assertSame(166, $resultado->expPorMiembro);
+        $this->assertSame(166, $resultado->expTipoPorMiembro['Fuego']);
+        $this->assertSame(['Fuego' => 500], $resultado->expTipoCuenta);
+        $this->assertSame(998, $resultado->expTotal + $resultado->expPorMiembro * 3);
+    }
+
+    public function test_sin_economia_se_usa_la_politica_legada(): void
+    {
+        $derrotados = collect([
+            $this->derrotado(id: 1, baseExperience: 5000, tipos: ['Fuego']),
+        ]);
+
+        $resultado = $this->calculador->calcular($derrotados, fn (): bool => false, 1);
+
+        $this->assertSame(500, $resultado->expTotal);
+        $this->assertSame(166, $resultado->expPorMiembro);
+        $this->assertSame(['Fuego' => 500], $resultado->expTipoCuenta);
+    }
+
+    public function test_sumar_hallazgos_conserva_exp_tipo_de_la_cuenta(): void
+    {
+        $derrotados = collect([
+            $this->derrotado(id: 1, baseExperience: 5000, tipos: ['Fuego']),
+        ]);
+        $recompensas = $this->calculador->calcular(
+            $derrotados,
+            fn (): bool => false,
+            1,
+            1.0,
+            EconomiaRecompensas::individual(),
+        );
+
+        $combinado = $recompensas->sumarHallazgos(collect(), collect(), collect());
+
+        $this->assertSame(['Fuego' => 250], $combinado->expTipoCuenta);
+        $this->assertSame(['Fuego' => 250], $combinado->expTipoPorMiembro);
+    }
+    public function test_legado_reparte_el_pool_entre_la_cuenta_y_tres_miembros(): void
+    {
+        // 3 derrotados con expDerrota(400, 5) = 400 cada uno → pool 1200.
+        $derrotados = collect([
+            $this->derrotado(id: 1, baseExperience: 400, tipos: ['Fuego']),
+            $this->derrotado(id: 2, baseExperience: 400, tipos: ['Fuego']),
+            $this->derrotado(id: 3, baseExperience: 400, tipos: ['Fuego']),
+        ]);
+
+        $resultado = $this->calculador->calcular($derrotados, fn (): bool => false, 5);
+
+        // Cuenta floor(1200×0.5) = 600; destino intdiv(600, 3) = 200.
+        $this->assertSame(600, $resultado->expTotal);
+        $this->assertSame(200, $resultado->expPorMiembro);
+        $this->assertSame(1200, $resultado->expTotal + $resultado->expPorMiembro * 3);
+        $this->assertSame(['Fuego' => 600], $resultado->expTipoCuenta);
+        $this->assertSame(['Fuego' => 200], $resultado->expTipoPorMiembro);
+    }
+
+    public function test_mazmorra_separa_el_multiplicador_de_exp_y_caramelos(): void
+    {
+        // 3 derrotados con expDerrota(250, 5) = 250 cada uno → Σe = 750.
+        $derrotados = collect([
+            $this->derrotado(id: 1, baseExperience: 250, evolutionChainId: 7, tipos: ['Fuego'], stats: [['stat' => 1, 'effort' => 1]]),
+            $this->derrotado(id: 2, baseExperience: 250, evolutionChainId: 7, tipos: ['Fuego'], stats: [['stat' => 1, 'effort' => 1]]),
+            $this->derrotado(id: 3, baseExperience: 250, evolutionChainId: 7, tipos: ['Fuego'], stats: [['stat' => 1, 'effort' => 1]]),
+        ]);
+
+        // Mazmorra: caramelos ×70, EXP ×10 (la EXP no hereda el 70).
+        $resultado = $this->calculador->calcular(
+            $derrotados,
+            fn (): bool => false,
+            5,
+            multiplicador: 70.0,
+            economia: EconomiaRecompensas::legado(),
+            multiplicadorExp: 10.0,
+        );
+
+        // pool = floor(750×10×1.0) = 7500; cuenta 3750; intdiv(3750, 3) = 1250.
+        $this->assertSame(3750, $resultado->expTotal);
+        $this->assertSame(1250, $resultado->expPorMiembro);
+        $this->assertSame(7500, $resultado->expTotal + $resultado->expPorMiembro * 3);
+        // Caramelos: familia 3×70 = 210; EV 3×70 = 210.
+        $this->assertSame(210, $resultado->caramelosFamilia->sum('cantidad'));
+        $this->assertSame(210, $resultado->caramelosEv->sum('cantidad'));
+    }
+
+    public function test_pool_impar_con_tres_miembros_deja_el_resto_de_intdiv(): void
+    {
+        // expDerrota(1003, 5) = 1003 → pool 1003; cuenta 501; resto 502.
+        $derrotados = collect([
+            $this->derrotado(id: 1, baseExperience: 1003, tipos: []),
+        ]);
+
+        $resultado = $this->calculador->calcular($derrotados, fn (): bool => false, 5);
+
+        // intdiv(502, 3) = 167; 501 + 167×3 = 1002, sobra 1.
+        $this->assertSame(501, $resultado->expTotal);
+        $this->assertSame(167, $resultado->expPorMiembro);
+        $this->assertSame(1002, $resultado->expTotal + $resultado->expPorMiembro * 3);
+        $this->assertSame(1, 1003 - ($resultado->expTotal + $resultado->expPorMiembro * 3));
+    }
+
+    public function test_caramelos_familia_suman_fases_reales_1_2_3(): void
+    {
+        // Pichu/Pikachu/Raichu con etapas reales 1/2/3 → 6 × multiplicador.
+        $derrotados = collect([
+            $this->derrotado(id: 172, evolutionChainId: 10, speciesId: 172, fase: 1),
+            $this->derrotado(id: 25, evolutionChainId: 10, speciesId: 25, fase: 2),
+            $this->derrotado(id: 26, evolutionChainId: 10, speciesId: 26, fase: 3),
+        ]);
+
+        $resultado = $this->calculador->calcular($derrotados, fn (): bool => false, 1, 2.0);
+
+        $this->assertCount(1, $resultado->caramelosFamilia);
+        $this->assertEquals(
+            new RecompensaFamilia(evolutionChainId: 10, cantidad: 12),
+            $resultado->caramelosFamilia->first(),
+        );
     }
 }

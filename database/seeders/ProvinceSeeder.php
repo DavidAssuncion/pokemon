@@ -16,6 +16,7 @@ class ProvinceSeeder extends Seeder
     {
         $provinces = [
             //Bonguri Blanco
+            //Bonguri Blanco
             'Galicia',
             //Bonguri Amarillo
             'Euskadi',
@@ -29,6 +30,7 @@ class ProvinceSeeder extends Seeder
             'Mutxamel',
             //Bonguri Rojo
             'Andalucia',
+            'Vacio',
         ];
 
 

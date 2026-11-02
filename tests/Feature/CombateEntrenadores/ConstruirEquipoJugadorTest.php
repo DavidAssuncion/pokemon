@@ -6,9 +6,12 @@ namespace Tests\Feature\CombateEntrenadores;
 
 use App\Enums\StatEnum;
 use App\Enums\TipoEnum;
+use App\Models\ExploracionActiva;
+use App\Models\Habitat;
 use App\Models\Pokemon;
 use App\Models\PokemonStat;
 use App\Models\PokemonType;
+use App\Models\Province;
 use App\Models\Reclutado;
 use App\Models\Team;
 use App\Models\TeamMember;
@@ -105,6 +108,49 @@ class ConstruirEquipoJugadorTest extends TestCase
     }
 
     #[Test]
+    public function desde_equipo_rechaza_combate_si_un_miembro_esta_en_exploracion_activa(): void
+    {
+        $pokemonA = $this->crearPokemon(851, 'a', atk: 100, def: 30);
+        $pokemonB = $this->crearPokemon(852, 'b', atk: 30, def: 100);
+        $pokemonC = $this->crearPokemon(853, 'c', atk: 60, def: 60);
+        $team = $this->crearEquipoCon($pokemonA, $pokemonB, $pokemonC);
+
+        $reclutadoId = (int) $team->members()->orderBy('slot')->first()->pokemon_id;
+        $this->crearExploracionActiva($reclutadoId, regreso: null);
+
+        $construir = new ConstruirEquipoJugador(
+            app(MapeadorPokemonBatalla::class),
+            new ClasificadorOfensivaDefensiva(),
+        );
+
+        $this->expectException(ViolacionReglaNegocio::class);
+        $this->expectExceptionMessage('miembros en exploración');
+
+        $construir->desdeEquipo($team, FormacionEquipo::vacia());
+    }
+
+    #[Test]
+    public function desde_equipo_permite_combate_si_la_exploracion_ya_finalizo(): void
+    {
+        $pokemonA = $this->crearPokemon(861, 'a', atk: 100, def: 30);
+        $pokemonB = $this->crearPokemon(862, 'b', atk: 30, def: 100);
+        $pokemonC = $this->crearPokemon(863, 'c', atk: 60, def: 60);
+        $team = $this->crearEquipoCon($pokemonA, $pokemonB, $pokemonC);
+
+        $reclutadoId = (int) $team->members()->orderBy('slot')->first()->pokemon_id;
+        $this->crearExploracionActiva($reclutadoId, regreso: now());
+
+        $construir = new ConstruirEquipoJugador(
+            app(MapeadorPokemonBatalla::class),
+            new ClasificadorOfensivaDefensiva(),
+        );
+
+        $combatientes = $construir->desdeEquipo($team, FormacionEquipo::vacia());
+
+        $this->assertCount(3, $combatientes);
+    }
+
+    #[Test]
     public function endpoint_guarda_formacion_persistida(): void
     {
         $pokemonA = $this->crearPokemon(911, 'a', atk: 100, def: 30);
@@ -166,6 +212,27 @@ class ConstruirEquipoJugadorTest extends TestCase
         ]);
 
         return $pokemon;
+    }
+
+    private function crearExploracionActiva(int $reclutadoId, ?\DateTimeInterface $regreso): ExploracionActiva
+    {
+        $province = Province::firstOrCreate(['id' => 999], ['name' => 'Provincia Test']);
+        $habitat = Habitat::firstOrCreate(['id' => 999], [
+            'province_id' => $province->id,
+            'name' => 'Habitat Test',
+        ]);
+
+        return ExploracionActiva::create([
+            'user_id' => $this->user->id,
+            'reclutado_id' => $reclutadoId,
+            'habitat_id' => $habitat->id,
+            'nivel' => 1,
+            'duracion_horas' => 2,
+            'indefinido' => false,
+            'eventos' => [],
+            'inicio_exploracion' => now(),
+            'regreso' => $regreso,
+        ]);
     }
 
     private function crearEquipoCon(Pokemon ...$pokemons): Team
