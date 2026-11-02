@@ -6,6 +6,7 @@ namespace Tests\Feature;
 
 use App\Models\PlayerInventory;
 use App\Models\Pokemon;
+use App\Models\PokemonEvolution;
 use App\Models\Reclutable;
 use App\Models\Reclutado;
 use App\Models\User;
@@ -247,6 +248,42 @@ class ReclutamientoControllerTest extends TestCase
             'user_id' => $this->usuario->id,
             'item_key' => 'familia:51',
             'cantidad' => 10,
+        ]);
+    }
+
+
+    public function test_discard_all_usa_la_etapa_real_de_pichu_pikachu_raichu(): void
+    {
+        $pichu = $this->crearPokemon(172, 'pichu', 172, 10);
+        $pikachu = $this->crearPokemon(25, 'pikachu', 25, 10);
+        $raichu = $this->crearPokemon(26, 'raichu', 26, 10);
+
+        PokemonEvolution::create([
+            'evolved_species_id' => $pikachu->id,
+            'evolves_from_species_id' => $pichu->species_id,
+            'minimum_level' => 15,
+        ]);
+        PokemonEvolution::create([
+            'evolved_species_id' => $raichu->id,
+            'evolves_from_species_id' => $pikachu->species_id,
+            'minimum_level' => 25,
+        ]);
+
+        $this->crearReclutable($pichu->id, 3);
+        $this->crearReclutable($pikachu->id, 1);
+        $this->crearReclutable($raichu->id, 1);
+
+        $response = $this->postJson('/reclutamiento/discard-all');
+
+        // Etapas reales: 3×1 + 1×2 + 1×3 = 8 (el fallback por species_id daría 12).
+        $response->assertOk()->assertJson([
+            'success' => true,
+            'candies' => [10 => 8],
+        ]);
+        $this->assertDatabaseHas('player_inventory', [
+            'user_id' => $this->usuario->id,
+            'item_key' => 'familia:10',
+            'cantidad' => 8,
         ]);
     }
 

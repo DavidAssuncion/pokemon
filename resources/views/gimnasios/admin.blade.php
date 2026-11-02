@@ -4,8 +4,8 @@
 
 @section('content')
 @php
-    $tipoBadges = \Src\Shared\UI\TipoBadges::MAP;
-    $defaultBadge = \Src\Shared\UI\TipoBadges::DEFAULT;
+    $tipoBadges = \Src\Shared\UI\TipoBadges::etiquetasPorId();
+    $defaultBadge = \Src\Shared\UI\TipoBadges::DEFAULT['label'];
     $cardPanelClass = 'bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden';
 @endphp
 
@@ -84,7 +84,7 @@
                                         <div class="flex flex-wrap items-center gap-2 mt-1.5">
                                             <span class="px-2 py-0.5 text-[10px] font-bold rounded-full uppercase text-white"
                                                   :style="'background-color:' + gym.tipo_color"
-                                                  x-text="gym.tipo_nombre || tipoBadge(gym.tipo)[0]"></span>
+                                                  x-text="gym.tipo_nombre || tipoBadge(gym.tipo)"></span>
                                             <span class="text-[10px] text-gray-500 dark:text-gray-400" x-text="'Niv mín ' + gym.nivel_minimo"></span>
                                         </div>
                                     </div>
@@ -139,7 +139,7 @@
                                         <select id="edit-tipo" x-model.number="form.tipo"
                                                 class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-white">
                                             <template x-for="(badge, tipoId) in tipoBadges" :key="tipoId">
-                                                <option :value="Number(tipoId)" x-text="badge[0]"></option>
+                                                <option :value="Number(tipoId)" x-text="badge"></option>
                                             </template>
                                         </select>
                                     </div>
@@ -198,7 +198,7 @@
                             <section aria-labelledby="pokemon-heading">
                                 <div class="flex items-center justify-between mb-2">
                                     <h3 id="pokemon-heading" class="text-xs font-bold uppercase tracking-wide text-gray-700 dark:text-gray-300">
-                                        Pokémon de tipo <span class="text-blue-600 dark:text-blue-400" x-text="tipoBadge(detail.tipo)[0]"></span>
+                                        Pokémon de tipo <span class="text-blue-600 dark:text-blue-400" x-text="tipoBadge(detail.tipo)"></span>
                                         <span class="text-gray-400 dark:text-gray-500">(última evolución)</span>
                                     </h3>
                                     <span class="text-[10px] text-gray-500 dark:text-gray-400" x-text="pokemonFiltered.length + ' pokémon'"></span>
@@ -293,7 +293,7 @@ function gimnasioAdminApp() {
         showGestionModal: false,
         showDetailModal: false,
 
-        // Mapeo tipo int → [nombre, clases badge].
+        // Mapeo tipo int → nombre español.
         tipoBadges: @json($tipoBadges),
 
         tipoBadge(tipo) {

@@ -7,37 +7,237 @@ namespace Src\Shared\UI;
 use Src\Shared\Tipos\TipoPokemon;
 
 /**
- * Constantes de presentación: colores Tailwind por tipo de Pokémon.
- * Single source of truth para badges de tipo en vistas Blade/Alpine.
+ * Fuente única de presentación de los 18 tipos de Pokémon.
+ *
+ * Expone etiqueta, slug ASCII, clases Tailwind literales e icono para badges
+ * server-side (Blade) y client-side (Alpine/JS). No contiene lógica de negocio.
  */
 final class TipoBadges
 {
     /**
-     * Mapa de TipoPokemon::value (int 1-18) → ['label', 'tailwind_classes'].
+     * Clases Tailwind literales por slug.
      *
-     * @var array<int, array{0: string, 1: string}>
+     * Paleta canónica: `tipoClase` de `resources/views/equipos/index.blade.php`,
+     * la misma del badge de `equipos/partials/movimiento-card.blade.php`.
+     *
+     * @var array<string, string>
      */
-    public const MAP = [
-        TipoPokemon::NORMAL->value => ['Normal', 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300'],
-        TipoPokemon::LUCHA->value => ['Lucha', 'bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400'],
-        TipoPokemon::VOLADOR->value => ['Volador', 'bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-400'],
-        TipoPokemon::VENENO->value => ['Veneno', 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400'],
-        TipoPokemon::TIERRA->value => ['Tierra', 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400'],
-        TipoPokemon::ROCA->value => ['Roca', 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400'],
-        TipoPokemon::BICHO->value => ['Bicho', 'bg-lime-100 dark:bg-lime-900/30 text-lime-700 dark:text-lime-400'],
-        TipoPokemon::FANTASMA->value => ['Fantasma', 'bg-violet-100 dark:bg-violet-900/30 text-violet-700 dark:text-violet-400'],
-        TipoPokemon::ACERO->value => ['Acero', 'bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300'],
-        TipoPokemon::FUEGO->value => ['Fuego', 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400'],
-        TipoPokemon::AGUA->value => ['Agua', 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400'],
-        TipoPokemon::PLANTA->value => ['Planta', 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400'],
-        TipoPokemon::ELECTRICO->value => ['Eléctrico', 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400'],
-        TipoPokemon::PSIQUICO->value => ['Psíquico', 'bg-pink-100 dark:bg-pink-900/30 text-pink-700 dark:text-pink-400'],
-        TipoPokemon::HIELO->value => ['Hielo', 'bg-cyan-100 dark:bg-cyan-900/30 text-cyan-700 dark:text-cyan-400'],
-        TipoPokemon::DRAGON->value => ['Dragón', 'bg-teal-100 dark:bg-teal-900/30 text-teal-700 dark:text-teal-400'],
-        TipoPokemon::SINIESTRO->value => ['Siniestro', 'bg-zinc-800 dark:bg-gray-600 text-white'],
-        TipoPokemon::HADA->value => ['Hada', 'bg-rose-100 dark:bg-rose-900/30 text-rose-700 dark:text-rose-400'],
+    private const CLASES = [
+        'normal' => 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300',
+        'lucha' => 'bg-red-100 text-red-700 dark:bg-red-900/50 dark:text-red-300',
+        'volador' => 'bg-sky-100 text-sky-700 dark:bg-sky-900/50 dark:text-sky-300',
+        'veneno' => 'bg-purple-100 text-purple-700 dark:bg-purple-900/50 dark:text-purple-300',
+        'tierra' => 'bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-300',
+        'roca' => 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/50 dark:text-yellow-300',
+        'bicho' => 'bg-lime-100 text-lime-700 dark:bg-lime-900/50 dark:text-lime-300',
+        'fantasma' => 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/50 dark:text-indigo-300',
+        'acero' => 'bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-300',
+        'fuego' => 'bg-orange-100 text-orange-700 dark:bg-orange-900/50 dark:text-orange-300',
+        'agua' => 'bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300',
+        'planta' => 'bg-green-100 text-green-700 dark:bg-green-900/50 dark:text-green-300',
+        'electrico' => 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/50 dark:text-yellow-300',
+        'psiquico' => 'bg-pink-100 text-pink-700 dark:bg-pink-900/50 dark:text-pink-300',
+        'hielo' => 'bg-cyan-100 text-cyan-700 dark:bg-cyan-900/50 dark:text-cyan-300',
+        'dragon' => 'bg-violet-100 text-violet-700 dark:bg-violet-900/50 dark:text-violet-300',
+        'siniestro' => 'bg-gray-200 text-gray-800 dark:bg-gray-800 dark:text-gray-200',
+        'hada' => 'bg-rose-100 text-rose-700 dark:bg-rose-900/50 dark:text-rose-300',
     ];
 
-    /** @var array{0: string, 1: string} */
-    public const DEFAULT = ['Desconocido', 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300'];
+    /**
+     * Presentación de un tipo desconocido.
+     *
+     * `id` 0, `slug` e `icono` vacíos: no existe asset genérico, por lo que el
+     * consumidor decide si oculta la imagen. Se usa como fallback de todos los
+     * métodos de resolución.
+     *
+     * @var array{id:int,label:string,slug:string,clases:string,icono:string}
+     */
+    public const DEFAULT = [
+        'id' => 0,
+        'label' => 'Desconocido',
+        'slug' => '',
+        'clases' => 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300',
+        'icono' => '',
+    ];
+
+    /**
+     * Badge de un tipo por id de `TipoPokemon` (1-18).
+     *
+     * @return array{id:int,label:string,slug:string,clases:string,icono:string}
+     */
+    public static function porId(int $id): array
+    {
+        $tipo = TipoPokemon::tryFrom($id);
+
+        return $tipo === null ? self::DEFAULT : self::para($tipo);
+    }
+
+    /**
+     * Badge de un tipo por slug ASCII (`electrico`, `psiquico`, `dragon`).
+     *
+     * La comparación ignora mayúsculas y espacios sobrantes.
+     *
+     * @return array{id:int,label:string,slug:string,clases:string,icono:string}
+     */
+    public static function porSlug(string $slug): array
+    {
+        $slug = strtolower(trim($slug));
+
+        foreach (TipoPokemon::cases() as $tipo) {
+            if ($tipo->slug() === $slug) {
+                return self::para($tipo);
+            }
+        }
+
+        return self::DEFAULT;
+    }
+
+    /**
+     * Badge de un tipo por etiqueta en español (`Eléctrico`, `Psíquico`).
+     *
+     * La comparación ignora mayúsculas y espacios sobrantes.
+     *
+     * @return array{id:int,label:string,slug:string,clases:string,icono:string}
+     */
+    public static function porLabel(string $label): array
+    {
+        $label = mb_strtolower(trim($label));
+
+        foreach (TipoPokemon::cases() as $tipo) {
+            if (mb_strtolower($tipo->label()) === $label) {
+                return self::para($tipo);
+            }
+        }
+
+        return self::DEFAULT;
+    }
+
+    /**
+     * Resuelve un badge aceptando id, slug o etiqueta.
+     *
+     * Prioridad: id (int o cadena numérica), slug y etiqueta. Cualquier valor
+     * nulo, vacío o desconocido devuelve `DEFAULT`.
+     *
+     * @return array{id:int,label:string,slug:string,clases:string,icono:string}
+     */
+    public static function resolver(int|string|null $tipo): array
+    {
+        if ($tipo === null) {
+            return self::DEFAULT;
+        }
+
+        if (is_int($tipo)) {
+            return self::porId($tipo);
+        }
+
+        $tipo = trim($tipo);
+
+        if ($tipo === '') {
+            return self::DEFAULT;
+        }
+
+        if (ctype_digit($tipo)) {
+            return self::porId((int) $tipo);
+        }
+
+        $slug = strtolower($tipo);
+
+        foreach (TipoPokemon::cases() as $caso) {
+            if ($caso->slug() === $slug) {
+                return self::para($caso);
+            }
+        }
+
+        return self::porLabel($tipo);
+    }
+
+    /**
+     * Clases Tailwind del tipo; las de `DEFAULT` si no se reconoce.
+     */
+    public static function clases(int|string|null $tipo): string
+    {
+        return self::resolver($tipo)['clases'];
+    }
+
+    /**
+     * Ruta del icono del tipo (`/images/type/{slug}.webp`).
+     *
+     * Devuelve cadena vacía si el tipo no se reconoce, porque no hay icono
+     * genérico y el consumidor debe decidir cómo representarlo.
+     */
+    public static function icono(int|string|null $tipo): string
+    {
+        return self::resolver($tipo)['icono'];
+    }
+
+    /**
+     * Etiquetas por id de tipo (id → label), para vistas que solo necesitan texto.
+     *
+     * @return array<int, string>
+     */
+    public static function etiquetasPorId(): array
+    {
+        $etiquetas = [];
+
+        foreach (TipoPokemon::cases() as $tipo) {
+            $etiquetas[$tipo->value] = $tipo->label();
+        }
+
+        return $etiquetas;
+    }
+
+    /**
+     * Datos de badge por slug, listos para serializar a JavaScript.
+     *
+     * @return array<string, array{label:string,clases:string,icono:string}>
+     */
+    public static function paraJs(): array
+    {
+        $datos = [];
+
+        foreach (TipoPokemon::cases() as $tipo) {
+            $badge = self::para($tipo);
+            $datos[$badge['slug']] = [
+                'label' => $badge['label'],
+                'clases' => $badge['clases'],
+                'icono' => $badge['icono'],
+            ];
+        }
+
+        return $datos;
+    }
+
+    /**
+     * Correspondencia id → slug, para resolver ids desde JavaScript.
+     *
+     * @return array<int, string>
+     */
+    public static function idsParaJs(): array
+    {
+        $ids = [];
+
+        foreach (TipoPokemon::cases() as $tipo) {
+            $ids[$tipo->value] = $tipo->slug();
+        }
+
+        return $ids;
+    }
+
+    /**
+     * Construye el badge de un tipo conocido.
+     *
+     * @return array{id:int,label:string,slug:string,clases:string,icono:string}
+     */
+    private static function para(TipoPokemon $tipo): array
+    {
+        $slug = $tipo->slug();
+
+        return [
+            'id' => $tipo->value,
+            'label' => $tipo->label(),
+            'slug' => $slug,
+            'clases' => self::CLASES[$slug] ?? self::DEFAULT['clases'],
+            'icono' => '/images/type/'.$slug.'.webp',
+        ];
+    }
 }

@@ -14,6 +14,7 @@ compartida por Battle, Exploraciones y los módulos de combate.
 | `Domain/Stats/DatosStatsCollection.php` | Colección tipada de `DatosStats` |
 | `Domain/Stats/GeneradorIvs.php` | IVs aleatorios y máximos |
 | `Domain/Stats/CalculadorCP.php` | Cálculo de CP |
+| `Domain/Evolution/` | Familia evolutiva: nodos y aristas (`PokemonFamilia`, `AristaEvolutiva`), miembros (`MiembroFamiliaEvolutiva`, `FamiliaEvolutiva`) y resolvedor de etapas y ramas (`ResolvedorFamiliaEvolutiva`) |
 
 ## Puntos de entrada
 
@@ -26,8 +27,11 @@ compartida por Battle, Exploraciones y los módulos de combate.
 
 - `Battle` consume `PokemonEntity`/`DatosStats` para crear combatientes.
 - `Exploraciones` usa `DatosStats` para capacidad y matchup.
+- `Habitats` delega en `ResolvedorFamiliaEvolutiva` (modo compatibilidad: una raíz, tres etapas)
+  a través de `ResolvedorCadenasEvolutivas`; el detalle de Pokédex lo consume vía
+  `App\Support\FamiliaPokemon`.
 - Los modelos Eloquent viven en `app/Models/Pokemon.php` (no en este módulo).
 
 ## Tests
 
-`tests/Unit/Pokemon/` (stats, CP, IVs) y tests de integración en `Battle`.
+`tests/Unit/Pokemon/` (stats, CP, IVs, familias evolutivas) y tests de integración en `Battle`.

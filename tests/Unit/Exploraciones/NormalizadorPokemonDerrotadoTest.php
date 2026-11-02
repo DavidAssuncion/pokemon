@@ -172,4 +172,21 @@ class NormalizadorPokemonDerrotadoTest extends TestCase
         $this->assertCount(1, $derrotados);
         $this->assertSame(1, $derrotados->get(0)->id);
     }
+
+    public function test_pichu_pikachu_raichu_usan_el_mapa_real_de_etapas(): void
+    {
+        Pokemon::create(['id' => 172, 'name' => 'pichu', 'species_id' => 172, 'capture_rate' => 190, 'base_experience' => 41, 'height' => 3, 'weight' => 20, 'hatch' => 10, 'evolution_chain_id' => 10]);
+        Pokemon::create(['id' => 25, 'name' => 'pikachu', 'species_id' => 25, 'capture_rate' => 190, 'base_experience' => 112, 'height' => 4, 'weight' => 60, 'hatch' => 10, 'evolution_chain_id' => 10]);
+        Pokemon::create(['id' => 26, 'name' => 'raichu', 'species_id' => 26, 'capture_rate' => 75, 'base_experience' => 243, 'height' => 8, 'weight' => 300, 'hatch' => 10, 'evolution_chain_id' => 10]);
+
+        $derrotados = NormalizadorPokemonDerrotado::normalizar(
+            $this->expandirDerrotados($this->cargarConRelaciones(), [172, 25, 26]),
+            $this->miembrosPorCadena(),
+            [10 => [172 => 1, 25 => 2, 26 => 3]],
+        );
+
+        $this->assertSame(1, $derrotados->get(0)->fase);
+        $this->assertSame(2, $derrotados->get(1)->fase);
+        $this->assertSame(3, $derrotados->get(2)->fase);
+    }
 }

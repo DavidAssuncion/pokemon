@@ -20,6 +20,7 @@ use Src\CombateEntrenadores\Domain\GeneradorMovimientosTipo;
 use Src\Pokemon\Domain\Stats\DatosStats;
 use Src\Pokemon\Domain\Stats\StatsValue;
 use Src\Shared\Collections\StringCollection;
+use Src\Shared\Domain\Sendas\MapaSendaJugador;
 use Src\Shared\Tipos\TipoPokemon;
 use Src\Shared\Tipos\TiposCollection;
 
@@ -43,6 +44,8 @@ class MapeadorPokemonBatalla
 
     /**
      * @param  list<string>|null  $movimientosSeleccionados
+     * @param  MovimientoBatallaCollection|null  $movimientos  set ya calculado
+     *         (selector rival); si es null se resuelven por nivel/fallback
      */
     public function desdePokemon(
         Pokemon $pokemon,
@@ -58,17 +61,21 @@ class MapeadorPokemonBatalla
         ?array $movimientosSeleccionados = null,
         ?int $habilidadActivaId = null,
         ?int $nivelDesbloqueo = null,
+        ?MapaSendaJugador $senda = null,
+        ?MovimientoBatallaCollection $movimientos = null,
     ): DatosPokemonBatalla {
         $stats = $this->statsDe($pokemon);
 
         $tipos = $this->tiposDe($pokemon);
 
-        $movimientos = $this->movimientosDeConFallback(
-            $pokemon,
-            $tipos,
-            $movimientosSeleccionados,
-            $nivelDesbloqueo ?? $nivel,
-        );
+        $movimientos = $movimientos !== null
+            ? $this->depurador->depurar($movimientos)
+            : $this->movimientosDeConFallback(
+                $pokemon,
+                $tipos,
+                $movimientosSeleccionados,
+                $nivelDesbloqueo ?? $nivel,
+            );
 
         return new DatosPokemonBatalla(
             id: $id,
@@ -93,6 +100,7 @@ class MapeadorPokemonBatalla
             ivs: $ivs,
             postura: $postura,
             peso: max(0.0, (float) $pokemon->weight / 10.0),
+            senda: $senda,
         );
     }
 

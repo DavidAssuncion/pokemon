@@ -149,4 +149,34 @@ class PokedexViewTest extends TestCase
         $view->assertSee("'/images/iconos/' + pokemon.id + '.png'", false);
         $view->assertDontSee("'/images/iconos_webp/' + pokemon.id + '.png'", false);
     }
+
+    /**
+     * El detalle del modal presenta los tipos con el badge genérico, la familia
+     * evolutiva agrupada por etapa y la ubicación con enlace; además propaga
+     * ?unlock=1 cuando el modo test está activo.
+     */
+    public function test_pokedex_detail_renders_type_badges_family_and_location(): void
+    {
+        $view = $this->view('pokedex.index', [
+            'pokemons' => [
+                'data' => [],
+                'meta' => [
+                    'page' => 1,
+                    'last_page' => 1,
+                    'counts' => ['total' => 0, 'vistos' => 0, 'atrapados' => 0, 'no_vistos' => 0],
+                ],
+            ],
+            'counts' => ['total' => 0, 'vistos' => 0, 'atrapados' => 0, 'no_vistos' => 0],
+            'tipos' => TipoEnum::options(),
+        ]);
+
+        $view->assertSee('detail.type_details', false);
+        $view->assertSee('tipoBadge(', false);
+        $view->assertSee('detail.family', false);
+        $view->assertSee('detail.location', false);
+        $view->assertSee('Sin hábitat asignado', false);
+        $view->assertSee('Ir al hábitat', false);
+        $view->assertSee('?unlock=1', false);
+        $view->assertDontSee('getTypeClass', false);
+    }
 }

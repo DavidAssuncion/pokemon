@@ -4,8 +4,8 @@
 
 @section('content')
 @php
-    $tipoBadges = \Src\Shared\UI\TipoBadges::MAP;
-    $defaultBadge = \Src\Shared\UI\TipoBadges::DEFAULT;
+    $tipoBadges = \Src\Shared\UI\TipoBadges::etiquetasPorId();
+    $defaultBadge = \Src\Shared\UI\TipoBadges::DEFAULT['label'];
 @endphp
 
 <div x-data="gimnasiosIndex()" x-init="init()">
@@ -145,7 +145,7 @@ function gimnasiosIndex() {
         loading: false,
         error: '',
 
-        // Mapeo tipo int (TipoPokemon) → [nombre español, clases badge] (fallback de textos).
+        // Mapeo tipo int (TipoPokemon) → nombre español (fallback de textos).
         tipoBadges: @json($tipoBadges),
 
         tipoBadge(tipo) {

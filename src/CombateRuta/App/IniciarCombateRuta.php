@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Src\CombateRuta\App;
 
 use App\Models\Team;
+use App\Support\CargarMovimientosDesbloqueados;
 use App\Support\CreadorBatallaSesion;
 use Src\CombateEntrenadores\App\ConstruirEquipoJugador;
 use Src\CombateEntrenadores\Domain\ValueObjects\FormacionEquipo;
@@ -25,6 +26,7 @@ final class IniciarCombateRuta
         private readonly GeneradorEquipoRuta $generadorEquipo,
         private readonly ConstruirEquipoJugador $construirEquipoJugador,
         private readonly CreadorBatallaSesion $creadorBatalla,
+        private readonly CargarMovimientosDesbloqueados $cargarMovimientos,
     ) {
     }
 
@@ -44,7 +46,14 @@ final class IniciarCombateRuta
 
         $datosJugador = $this->construirEquipoJugador->desdeEquipo($equipo, FormacionEquipo::desde($formacion), $nivelJugador);
 
-        $datosRival = $this->generadorEquipo->generar($habitatId, $nivel, $nivelJugador);
+        $movimientosDesbloqueados = $this->cargarMovimientos->para($userId);
+
+        $datosRival = $this->generadorEquipo->generar(
+            $habitatId,
+            $nivel,
+            $nivelJugador,
+            movimientosDesbloqueados: $movimientosDesbloqueados,
+        );
         if ($datosRival->isEmpty()) {
             throw new ViolacionReglaNegocio('No hay Pokémon salvajes disponibles en esta ruta para tu nivel.');
         }

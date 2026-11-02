@@ -25,9 +25,12 @@ final class NormalizadorPokemonDerrotado
      *                                              miembros de cada familia, keyed por
      *                                              evolution_chain_id (columna). Sin mapa (o sin
      *                                              la cadena), la fase no se puede calcular → 1.
+     * @param  array<int, array<int, int>>|null  $etapasPorCadena  Etapa real por species_id y
+     *                                              evolution_chain_id. Si falta la cadena o la
+     *                                              especie, se usa el cálculo legacy por species_id.
      * @return Collection<int, PokemonDerrotado>
      */
-    public static function normalizar(Collection $pokemons, ?array $miembrosPorCadena = null): Collection
+    public static function normalizar(Collection $pokemons, ?array $miembrosPorCadena = null, ?array $etapasPorCadena = null): Collection
     {
         return $pokemons->map(
             fn (Pokemon $pokemon): PokemonDerrotado => new PokemonDerrotado(
@@ -38,7 +41,7 @@ final class NormalizadorPokemonDerrotado
                 captureRate: $pokemon->capture_rate,
                 tipos: self::tipos($pokemon),
                 stats: self::esfuerzos($pokemon),
-                fase: self::fase($pokemon, $miembrosPorCadena),
+                fase: self::fase($pokemon, $miembrosPorCadena, $etapasPorCadena),
             )
         );
     }
@@ -64,19 +67,30 @@ final class NormalizadorPokemonDerrotado
     }
 
     /**
-     * Fase evolutiva: nº de miembros de la familia (por columna
-     * evolution_chain_id) con species_id <= al actual. Sin familia en el mapa
-     * → fase 1 (equivalente al caso antiguo de relación null).
+     * Fase evolutiva: usa la etapa real de `pokemon_evolution` cuando está
+     * disponible; si no, mantiene el cálculo legacy por species_id (nº de
+     * miembros de la familia con species_id <= al actual). Sin familia en el
+     * mapa → fase 1 (equivalente al caso antiguo de relación null).
      *
      * @param  array<int, Collection<int, Pokemon>>|null  $miembrosPorCadena
+     * @param  array<int, array<int, int>>|null  $etapasPorCadena
      */
-    private static function fase(Pokemon $pokemon, ?array $miembrosPorCadena): int
+    private static function fase(Pokemon $pokemon, ?array $miembrosPorCadena, ?array $etapasPorCadena): int
     {
-        if ($pokemon->evolution_chain_id === null || $miembrosPorCadena === null) {
+        $chainId = $pokemon->evolution_chain_id;
+
+        if ($chainId !== null && $etapasPorCadena !== null) {
+            $etapa = $etapasPorCadena[$chainId][$pokemon->species_id] ?? null;
+            if (is_int($etapa)) {
+                return $etapa;
+            }
+        }
+
+        if ($chainId === null || $miembrosPorCadena === null) {
             return 1;
         }
 
-        $miembros = $miembrosPorCadena[$pokemon->evolution_chain_id] ?? null;
+        $miembros = $miembrosPorCadena[$chainId] ?? null;
 
         if ($miembros === null) {
             return 1;

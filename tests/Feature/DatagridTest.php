@@ -9,6 +9,7 @@ use App\Enums\TipoEnum;
 use App\Models\Habitat;
 use App\Models\Pokedex;
 use App\Models\Pokemon;
+use App\Models\PokemonEvolution;
 use App\Models\PokemonStat;
 use App\Models\PokemonType;
 use App\Models\Province;
@@ -33,17 +34,27 @@ class DatagridTest extends TestCase
      * @param  list<TipoEnum>  $types
      * @param  array<int, int>  $stats
      * @param  array<int, int>  $efforts  stat => effort (EVs otorgados)
+     * @param  int|null  $speciesId  Por defecto, el id del Pokémon
+     * @param  int|null  $evolutionChainId  Cadena evolutiva del Pokémon
      */
-    private function createPokemon(int $id, string $name, array $types = [], array $stats = [], array $efforts = []): void
-    {
+    private function createPokemon(
+        int $id,
+        string $name,
+        array $types = [],
+        array $stats = [],
+        array $efforts = [],
+        ?int $speciesId = null,
+        ?int $evolutionChainId = null,
+    ): void {
         Pokemon::create([
             'id' => $id,
             'name' => $name,
-            'species_id' => $id,
+            'species_id' => $speciesId ?? $id,
             'capture_rate' => 45,
             'base_experience' => 60,
             'height' => 10,
             'weight' => 100,
+            'evolution_chain_id' => $evolutionChainId,
         ]);
 
         foreach ($types as $index => $type) {
@@ -282,6 +293,23 @@ class DatagridTest extends TestCase
         $this->assertSame(['Planta', 'Veneno'], $response->json('types'));
         $this->assertSame('Bosque', $response->json('habitat_name'));
 
+        $this->assertSame([
+            ['id' => 12, 'label' => 'Planta', 'slug' => 'planta', 'icon' => '/images/type/planta.webp'],
+            ['id' => 4, 'label' => 'Veneno', 'slug' => 'veneno', 'icon' => '/images/type/veneno.webp'],
+        ], $response->json('type_details'));
+
+        $location = $response->json('location');
+        $this->assertSame(1, $location['habitat_id']);
+        $this->assertSame('Bosque', $location['habitat_name']);
+        $this->assertSame('/habitats-img/1.webp?v=1', $location['habitat_image']);
+        $this->assertSame(1, $location['province_id']);
+        $this->assertSame('Kanto', $location['province_name']);
+        $this->assertSame('/habitats/1', $location['url']);
+
+        $this->assertNull($response->json('family.evolution_chain_id'));
+        $this->assertCount(1, $response->json('family.members'));
+        $this->assertTrue($response->json('family.members.0.is_current'));
+
         $stats = $response->json('stats');
         $this->assertCount(6, $stats);
         $this->assertSame('PS (HP)', $stats[0]['name']);
@@ -297,19 +325,155 @@ class DatagridTest extends TestCase
         $this->getJson('/datagrid/pokemon/999/detalle')->assertNotFound();
     }
 
-    public function test_pokemon_detail_unseen_returns_false_booleans(): void
+    public function test_pokemon_detail_unseen_returns_404(): void
     {
         $this->actingAsUser();
         $this->createPokemon(1, 'bulbasaur');
 
-        $response = $this->getJson('/datagrid/pokemon/1/detalle');
+        $this->getJson('/datagrid/pokemon/1/detalle')->assertNotFound();
+    }
+
+    public function test_pokemon_detail_unseen_with_unlock_returns_detail(): void
+    {
+        $this->actingAsUser();
+        $this->createPokemon(1, 'bulbasaur', [TipoEnum::GRASS], [StatEnum::HP->value => 45]);
+
+        $response = $this->getJson('/datagrid/pokemon/1/detalle?unlock=1');
 
         $response->assertOk();
         $this->assertFalse($response->json('visto'));
         $this->assertFalse($response->json('atrapado'));
-        $this->assertSame([], $response->json('types'));
-        $this->assertSame([], $response->json('stats'));
+        $this->assertSame(['Planta'], $response->json('types'));
+        $this->assertSame('Planta', $response->json('type_details.0.label'));
+        $this->assertSame('planta', $response->json('type_details.0.slug'));
+        $this->assertSame('/images/type/planta.webp', $response->json('type_details.0.icon'));
+        $this->assertSame([['name' => 'PS (HP)', 'value' => 45]], $response->json('stats'));
         $this->assertNull($response->json('habitat_name'));
+        $this->assertNull($response->json('location'));
+        $this->assertNull($response->json('family.evolution_chain_id'));
+        $this->assertCount(1, $response->json('family.members'));
+    }
+
+    public function test_pokemon_detail_type_details_are_ordered_by_slot(): void
+    {
+        $user = $this->actingAsUser();
+        $this->createPokemon(1, 'bulbasaur');
+
+        PokemonType::create(['pokemon_id' => 1, 'type' => TipoEnum::POISON, 'slot' => 2]);
+        PokemonType::create(['pokemon_id' => 1, 'type' => TipoEnum::GRASS, 'slot' => 1]);
+
+        Pokedex::create(['user_id' => $user->id, 'pokemon_id' => 1, 'visto' => true, 'atrapado' => false]);
+
+        $response = $this->getJson('/datagrid/pokemon/1/detalle');
+
+        $response->assertOk();
+        $this->assertSame(['Planta', 'Veneno'], array_column($response->json('type_details'), 'label'));
+        $this->assertSame(['planta', 'veneno'], array_column($response->json('type_details'), 'slug'));
+    }
+
+    public function test_pokemon_detail_family_orders_branches_and_levels(): void
+    {
+        $user = $this->actingAsUser();
+
+        $this->createPokemon(1, 'base', evolutionChainId: 400);
+        $this->createPokemon(2, 'rama-baja', evolutionChainId: 400);
+        $this->createPokemon(3, 'rama-alta', evolutionChainId: 400);
+
+        PokemonEvolution::create([
+            'evolved_species_id' => 2,
+            'evolves_from_species_id' => 1,
+            'minimum_level' => 16,
+        ]);
+        PokemonEvolution::create([
+            'evolved_species_id' => 3,
+            'evolves_from_species_id' => 1,
+            'minimum_level' => 32,
+        ]);
+
+        Pokedex::create(['user_id' => $user->id, 'pokemon_id' => 1, 'visto' => true, 'atrapado' => false]);
+
+        $response = $this->getJson('/datagrid/pokemon/1/detalle');
+
+        $response->assertOk();
+        $this->assertSame(400, $response->json('family.evolution_chain_id'));
+
+        $members = $response->json('family.members');
+        $this->assertCount(3, $members);
+        $this->assertSame([1, 2, 3], array_column($members, 'id'));
+        $this->assertSame([1, 2, 2], array_column($members, 'stage'));
+        $this->assertSame([null, 1, 1], array_column($members, 'parent_id'));
+        $this->assertSame([null, 16, 32], array_column($members, 'minimum_level'));
+        $this->assertSame([0, 0, 1], array_column($members, 'branch_index'));
+        $this->assertSame('/images/iconos_webp/1.webp', $members[0]['icon']);
+        $this->assertTrue($members[0]['is_current']);
+        $this->assertFalse($members[1]['is_current']);
+        $this->assertSame(count($members), count(array_unique(array_column($members, 'id'))));
+    }
+
+    public function test_pokemon_detail_family_singleton_without_chain(): void
+    {
+        $this->actingAsUser();
+        $this->createPokemon(7, 'eevee');
+
+        $response = $this->getJson('/datagrid/pokemon/7/detalle?unlock=1');
+
+        $response->assertOk();
+        $this->assertNull($response->json('family.evolution_chain_id'));
+
+        $member = $response->json('family.members.0');
+        $this->assertCount(1, $response->json('family.members'));
+        $this->assertSame(7, $member['id']);
+        $this->assertSame(7, $member['species_id']);
+        $this->assertSame(1, $member['stage']);
+        $this->assertNull($member['parent_id']);
+        $this->assertNull($member['minimum_level']);
+        $this->assertSame(0, $member['branch_index']);
+        $this->assertTrue($member['is_current']);
+        $this->assertNull($response->json('location'));
+    }
+
+    public function test_pokemon_detail_family_includes_regional_form_across_chains(): void
+    {
+        $user = $this->actingAsUser();
+
+        $this->createPokemon(172, 'pichu', evolutionChainId: 10);
+        $this->createPokemon(25, 'pikachu', evolutionChainId: 10);
+        $this->createPokemon(26, 'raichu', evolutionChainId: 10);
+        $this->createPokemon(10100, 'raichu-alola', speciesId: 10100, evolutionChainId: 11010);
+
+        PokemonEvolution::create([
+            'evolved_species_id' => 25,
+            'evolves_from_species_id' => 172,
+            'minimum_level' => 5,
+        ]);
+        PokemonEvolution::create([
+            'evolved_species_id' => 26,
+            'evolves_from_species_id' => 25,
+            'minimum_level' => 20,
+        ]);
+        PokemonEvolution::create([
+            'evolved_species_id' => 10100,
+            'evolves_from_species_id' => 25,
+            'minimum_level' => 20,
+        ]);
+
+        Pokedex::create(['user_id' => $user->id, 'pokemon_id' => 10100, 'visto' => true, 'atrapado' => false]);
+
+        $response = $this->getJson('/datagrid/pokemon/10100/detalle');
+
+        $response->assertOk();
+        $this->assertSame(11010, $response->json('family.evolution_chain_id'));
+
+        $members = $response->json('family.members');
+        $this->assertCount(4, $members);
+        $this->assertSame([172, 25, 26, 10100], array_column($members, 'id'));
+        $this->assertSame([1, 2, 3, 3], array_column($members, 'stage'));
+
+        $regional = $members[3];
+        $this->assertSame(25, $regional['parent_id']);
+        $this->assertSame(20, $regional['minimum_level']);
+        $this->assertTrue($regional['is_current']);
+        $this->assertFalse($members[0]['is_current']);
     }
 
     public function test_registered_models_respond_200(): void

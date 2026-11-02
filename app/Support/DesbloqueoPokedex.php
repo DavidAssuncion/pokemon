@@ -10,7 +10,8 @@ use Illuminate\Http\Request;
  * Flag TEMPORAL de QA: desbloquea la Pokédex y los hábitats para ver todos
  * los Pokémon aunque no hayan sido avistados.
  *
- * Se activa con POKEDEX_UNLOCK_ALL=true o, en local/debug, con ?unlock=1.
+ * Se activa con POKEDEX_UNLOCK_ALL=true o, solo en local/testing, con ?unlock=1.
+ * Fuera de esos entornos, APP_DEBUG no habilita el flag.
  */
 final class DesbloqueoPokedex
 {
@@ -21,6 +22,6 @@ final class DesbloqueoPokedex
         }
 
         return $request->boolean('unlock')
-            && (app()->environment('local', 'testing') || config('app.debug'));
+            && app()->environment('local', 'testing');
     }
 }

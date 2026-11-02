@@ -14,11 +14,12 @@ use App\Models\GymStage;
 use App\Models\Habitat;
 use App\Models\Pokedex;
 use App\Models\Pokemon;
-use App\Models\PokemonStat;
 use App\Models\PokemonType;
 use App\Models\Province;
 use App\Models\Reclutado;
 use App\Models\Team;
+use App\Support\DesbloqueoPokedex;
+use App\Support\PresentadorDetallePokemon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Query\JoinClause;
@@ -94,28 +95,14 @@ final class DatagridServiceProvider extends ServiceProvider
                 return $query;
             },
             counts: fn (): array => $this->pokemonCounts(),
-            detail: function (Model $model): array {
+            detail: function (Model $model): ?array {
                 $pokemon = $this->requirePokemon($model);
-                $pokemon->loadMissing(['stats', 'types', 'habitats']);
 
-                return [
-                    'id' => $pokemon->id,
-                    'name' => $pokemon->name,
-                    'visto' => (bool) $pokemon->getAttribute('visto'),
-                    'atrapado' => (bool) $pokemon->getAttribute('atrapado'),
-                    'types' => $this->typeNames($pokemon->types),
-                    'stats' => $pokemon->stats
-                        ->sortBy(fn (PokemonStat $stat): int => $stat->stat->value)
-                        ->map(fn (PokemonStat $stat): array => [
-                            'name' => $stat->stat_nombre,
-                            'value' => $stat->base_stat,
-                        ])
-                        ->values()
-                        ->toArray(),
-                    'habitat_name' => $pokemon->habitats->first()?->name,
-                    'habitat_id' => $pokemon->habitats->first()?->id,
-                    'habitats' => $pokemon->habitats->pluck('name')->values()->toArray(),
-                ];
+                if (! DesbloqueoPokedex::activo(request()) && ! (bool) $pokemon->getAttribute('visto')) {
+                    return null;
+                }
+
+                return PresentadorDetallePokemon::para($pokemon);
             },
         ));
 

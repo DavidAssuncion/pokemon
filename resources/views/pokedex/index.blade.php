@@ -347,16 +347,63 @@
                     <!-- Detail content -->
                     <template x-if="!detailLoading && !detailError && (selectedPokemon.visto || unlockAll) && detail">
                         <!-- Types -->
-                        <template x-if="detail.types && detail.types.length > 0">
+                        <template x-if="typePills.length > 0">
                             <div>
                                 <h3 class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">Tipo</h3>
-                                <div class="flex gap-2">
-                                    <template x-for="type in detail.types" :key="type">
+                                <div class="flex flex-wrap gap-2">
+                                    <template x-for="t in typePills" :key="t.slug + '-' + t.id">
                                         <span
-                                            class="px-3 py-1 text-xs font-medium rounded-full"
-                                            :class="getTypeClass(type)"
-                                            x-text="type"
-                                        ></span>
+                                            class="inline-flex items-center gap-1 rounded-full py-0.5 pl-0 pr-2 text-[11px] font-semibold"
+                                            :class="tipoBadge(t.slug).clases"
+                                        >
+                                            <img
+                                                :src="t.icon"
+                                                alt=""
+                                                class="w-[30px] h-[30px] object-contain"
+                                                loading="lazy"
+                                                decoding="async"
+                                            >
+                                            <span x-text="t.label"></span>
+                                        </span>
+                                    </template>
+                                </div>
+                            </div>
+                        </template>
+
+                        <!-- Familia evolutiva -->
+                        <template x-if="detail.family?.members?.length">
+                            <div>
+                                <h3 class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">Familia evolutiva</h3>
+                                <div class="space-y-3">
+                                    <template x-for="etapa in familyStages" :key="etapa.stage">
+                                        <div>
+                                            <p class="text-[11px] font-medium text-gray-400 dark:text-gray-500 mb-1.5" x-text="'Etapa ' + etapa.stage"></p>
+                                            <div class="flex flex-wrap gap-2">
+                                                <template x-for="member in etapa.members" :key="member.id">
+                                                    <div
+                                                        class="flex items-center gap-2 rounded-lg border px-2 py-1.5"
+                                                        :class="member.is_current ? 'border-blue-500 bg-blue-50 dark:border-blue-400 dark:bg-blue-900/30' : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800'"
+                                                        :aria-current="member.is_current ? 'true' : null"
+                                                    >
+                                                        <img
+                                                            :src="member.icon"
+                                                            alt=""
+                                                            loading="lazy"
+                                                            decoding="async"
+                                                            class="w-8 h-8 object-contain"
+                                                        >
+                                                        <div class="min-w-0">
+                                                            <p class="text-xs font-medium text-gray-900 dark:text-white truncate" x-text="nombrePokemon(member.name)"></p>
+                                                            <div class="flex items-center gap-1.5">
+                                                                <span x-show="member.minimum_level" class="text-[10px] text-gray-500 dark:text-gray-400" x-text="'Nv ' + member.minimum_level"></span>
+                                                                <span x-show="member.is_current" class="text-[10px] font-semibold text-blue-600 dark:text-blue-400">Actual</span>
+                                                            </div>
+                                                            <p x-show="familyParentName(member)" class="text-[10px] text-gray-400 dark:text-gray-500" x-text="'Evoluciona de ' + familyParentName(member)"></p>
+                                                        </div>
+                                                    </div>
+                                                </template>
+                                            </div>
+                                        </div>
                                     </template>
                                 </div>
                             </div>
@@ -384,27 +431,36 @@
                             </div>
                         </template>
 
-                        <!-- Habitat -->
-                        <template x-if="detail.habitat_name">
-                            <div>
-                                <h3 class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">Hábitat</h3>
-                                <template x-if="detail.habitat_id">
-                                    <a :href="'/habitats/' + detail.habitat_id" class="block group/habitat">
-                                        <img
-                                            :src="'/habitats-img/' + detail.habitat_id + '.webp?v=1'"
-                                            :alt="detail.habitat_name"
-                                            loading="lazy"
-                                            decoding="async"
-                                            class="w-full h-24 object-cover rounded-lg border border-gray-200 dark:border-gray-700 transition-transform group-hover/habitat:scale-[1.02]"
+                        <!-- Ubicación -->
+                        <div>
+                            <h3 class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">Ubicación</h3>
+                            <template x-if="detail.location">
+                                <div class="rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
+                                    <template x-if="detail.location.province_name">
+                                        <p class="px-3 pt-2 text-[11px] uppercase tracking-wide text-gray-400 dark:text-gray-500" x-text="detail.location.province_name"></p>
+                                    </template>
+                                    <img
+                                        :src="detail.location.habitat_image"
+                                        :alt="'Hábitat ' + detail.location.habitat_name"
+                                        loading="lazy"
+                                        decoding="async"
+                                        class="w-full h-24 object-cover"
+                                    >
+                                    <div class="p-3 flex items-center justify-between gap-3">
+                                        <p class="text-sm font-medium text-gray-900 dark:text-white" x-text="detail.location.habitat_name"></p>
+                                        <a
+                                            :href="detail.location.url"
+                                            class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-600 text-white text-xs font-medium hover:bg-blue-700 transition-colors"
                                         >
-                                        <p class="mt-1 text-sm text-blue-600 dark:text-blue-400 group-hover/habitat:underline" x-text="(detail.habitats && detail.habitats.length) ? detail.habitats.join(', ') : detail.habitat_name"></p>
-                                    </a>
-                                </template>
-                                <template x-if="!detail.habitat_id">
-                                    <p class="text-sm text-gray-900 dark:text-white" x-text="(detail.habitats && detail.habitats.length) ? detail.habitats.join(', ') : detail.habitat_name"></p>
-                                </template>
-                            </div>
-                        </template>
+                                            Ir al hábitat
+                                        </a>
+                                    </div>
+                                </div>
+                            </template>
+                            <template x-if="!detail.location">
+                                <p class="text-sm text-gray-500 dark:text-gray-400 italic">Sin hábitat asignado.</p>
+                            </template>
+                        </div>
                     </template>
                 </div>
             </div>
@@ -413,6 +469,7 @@
 </div>
 
 @push('scripts')
+@include('partials.tipos-badge-script')
 <script>
 function pokedexApp() {
     return {
@@ -465,6 +522,53 @@ function pokedexApp() {
                 return this.items.length > 0;
             }
             return this.page < this.lastPage;
+        },
+
+        get typePills() {
+            if (!this.detail) {
+                return [];
+            }
+            if (Array.isArray(this.detail.type_details) && this.detail.type_details.length > 0) {
+                return this.detail.type_details;
+            }
+            const tipos = Array.isArray(this.detail.types) ? this.detail.types : [];
+            return tipos.map((tipo) => {
+                const badge = window.tipoBadge(tipo);
+                return { id: badge.slug, label: badge.label, slug: badge.slug, icon: badge.icono };
+            });
+        },
+
+        get familyStages() {
+            const miembros = this.detail?.family?.members;
+            if (!Array.isArray(miembros) || miembros.length === 0) {
+                return [];
+            }
+            const etapas = new Map();
+            miembros.forEach((miembro) => {
+                const stage = Number(miembro.stage) || 1;
+                if (!etapas.has(stage)) {
+                    etapas.set(stage, []);
+                }
+                etapas.get(stage).push(miembro);
+            });
+            return Array.from(etapas, ([stage, members]) => ({ stage, members }))
+                .sort((a, b) => a.stage - b.stage);
+        },
+
+        nombrePokemon(nombre) {
+            if (!nombre) {
+                return '';
+            }
+            const texto = String(nombre);
+            return texto.charAt(0).toUpperCase() + texto.slice(1);
+        },
+
+        familyParentName(member) {
+            if (!member || !member.parent_id) {
+                return '';
+            }
+            const padre = (this.detail?.family?.members ?? []).find((m) => m.id === member.parent_id);
+            return padre ? this.nombrePokemon(padre.name) : '';
         },
 
         init() {
@@ -708,7 +812,8 @@ function pokedexApp() {
             this.detailError = false;
             this.detail = null;
             try {
-                const response = await fetch('/datagrid/pokemon/' + id + '/detalle', {
+                const unlock = this.unlockAll ? '?unlock=1' : '';
+                const response = await fetch('/datagrid/pokemon/' + id + '/detalle' + unlock, {
                     signal: controller.signal,
                     headers: { 'Accept': 'application/json' },
                 });
@@ -735,30 +840,6 @@ function pokedexApp() {
             if (this.selectedPokemon) {
                 this.loadDetail(this.selectedPokemon.id);
             }
-        },
-
-        getTypeClass(type) {
-            const classes = {
-                'Normal': 'bg-gray-200 text-gray-700 dark:bg-gray-600 dark:text-gray-200',
-                'Fuego': 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400',
-                'Agua': 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-400',
-                'Planta': 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-400',
-                'Eléctrico': 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-400',
-                'Hielo': 'bg-cyan-100 text-cyan-700 dark:bg-cyan-900/40 dark:text-cyan-400',
-                'Lucha': 'bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-400',
-                'Veneno': 'bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-400',
-                'Tierra': 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-400',
-                'Volador': 'bg-sky-100 text-sky-700 dark:bg-sky-900/40 dark:text-sky-400',
-                'Psíquico': 'bg-pink-100 text-pink-700 dark:bg-pink-900/40 dark:text-pink-400',
-                'Bicho': 'bg-lime-100 text-lime-700 dark:bg-lime-900/40 dark:text-lime-400',
-                'Roca': 'bg-stone-100 text-stone-700 dark:bg-stone-700 dark:text-stone-300',
-                'Fantasma': 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-400',
-                'Dragón': 'bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-400',
-                'Siniestro': 'bg-gray-800 text-gray-100 dark:bg-gray-600 dark:text-gray-200',
-                'Acero': 'bg-slate-200 text-slate-700 dark:bg-slate-600 dark:text-slate-200',
-                'Hada': 'bg-fuchsia-100 text-fuchsia-700 dark:bg-fuchsia-900/40 dark:text-fuchsia-400',
-            };
-            return classes[type] || 'bg-gray-200 text-gray-700 dark:bg-gray-600 dark:text-gray-200';
         },
 
         getStatColor(statName) {

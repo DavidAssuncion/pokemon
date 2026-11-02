@@ -30,6 +30,8 @@ class CadenaDanio
             new ManejadorObjetosEquipados(),
             new ManejadorBonusDaño(),
             new ManejadorBonificadorDanio(),
+            new ManejadorSendaOfensiva(),
+            new ManejadorSendaDefensiva(),
             new ManejadorAguante(),
         ];
 

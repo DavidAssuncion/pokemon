@@ -4,8 +4,8 @@
 
 @section('content')
 @php
-    $tipoBadges = \Src\Shared\UI\TipoBadges::MAP;
-    $defaultBadge = \Src\Shared\UI\TipoBadges::DEFAULT;
+    $tipoBadges = \Src\Shared\UI\TipoBadges::etiquetasPorId();
+    $defaultBadge = \Src\Shared\UI\TipoBadges::DEFAULT['label'];
     $cardPanelClass = 'bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden';
 @endphp
 
@@ -254,7 +254,7 @@ function gimnasioShow(slug) {
         combating: false,
         teams: @json($teams),
 
-        // Mapeo tipo int (TipoPokemon) → [nombre español, clases badge].
+        // Mapeo tipo int (TipoPokemon) → nombre español.
         tipoBadges: @json($tipoBadges),
 
         tipoBadge(tipo) {

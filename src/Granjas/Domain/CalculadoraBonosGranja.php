@@ -91,11 +91,11 @@ final class CalculadoraBonosGranja
     public static function costeNido(int $nivelSiguiente): int
     {
         return match ($nivelSiguiente) {
-            1 => 25,
-            2 => 75,
-            3 => 225,
-            4 => 450,
-            5 => 900,
+            1 => 10,
+            2 => 20,
+            3 => 30,
+            4 => 40,
+            5 => 50,
             default => 0,
         };
     }
@@ -103,30 +103,38 @@ final class CalculadoraBonosGranja
     public static function costeRefugio(int $nivelSiguiente): int
     {
         return match ($nivelSiguiente) {
-            1 => 25,
-            2 => 75,
-            3 => 225,
-            4 => 450,
-            5 => 2700,
+            1 => 15,
+            2 => 25,
+            3 => 35,
+            4 => 45,
+            5 => 60,
             default => 0,
         };
     }
 
     public static function costeComplemento(int $nivelSiguiente): CosteCaramelos
     {
-        $ev = self::evComplemento($nivelSiguiente);
-
-        return new CosteCaramelos(ev: $ev * 3, familia: $ev);
+        return new CosteCaramelos(
+            ev: self::evComplemento($nivelSiguiente),
+            familia: match ($nivelSiguiente) {
+                1 => 30,
+                2 => 40,
+                3 => 50,
+                4 => 60,
+                5 => 70,
+                default => 0,
+            },
+        );
     }
 
     public static function evComplemento(int $nivel): int
     {
         return match (max(0, min(self::MAX_COMPLEMENTO, $nivel))) {
-            1 => 64,
-            2 => 128,
-            3 => 256,
-            4 => 384,
-            5 => 512,
+            1 => 51,
+            2 => 102,
+            3 => 153,
+            4 => 204,
+            5 => 255,
             default => 0,
         };
     }

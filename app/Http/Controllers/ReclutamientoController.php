@@ -73,27 +73,34 @@ class ReclutamientoController extends Controller
             'cantidad' => 'required|integer|min:1',
         ]);
 
-        $reclutable = Reclutable::with('pokemon')
-            ->findOrFail($data['reclutable_id']);
+        return DB::transaction(function () use ($data): JsonResponse {
+            // Lock de la fila antes de leer `cantidad`: dos descartes
+            // concurrentes no pueden premiar la misma unidad.
+            $reclutable = Reclutable::with('pokemon')
+                ->lockForUpdate()
+                ->findOrFail($data['reclutable_id']);
 
-        $cantidad = min((int) $data['cantidad'], $reclutable->cantidad);
+            $cantidad = min((int) $data['cantidad'], $reclutable->cantidad);
 
-        $this->otorgarCaramelos([$reclutable], auth()->id(), $cantidad);
+            $this->otorgarCaramelos([$reclutable], auth()->id(), $cantidad);
 
-        if ($cantidad >= $reclutable->cantidad) {
-            $reclutable->delete();
-        } else {
-            $reclutable->decrement('cantidad', $cantidad);
-        }
+            if ($cantidad >= $reclutable->cantidad) {
+                $reclutable->delete();
+            } else {
+                $reclutable->decrement('cantidad', $cantidad);
+            }
 
-        return response()->json(['success' => true]);
+            return response()->json(['success' => true]);
+        });
     }
 
     public function discardAll(): JsonResponse
     {
         return DB::transaction(function (): JsonResponse {
             // Global scope BelongsToUser: solo los reclutables del usuario autenticado.
-            $reclutables = Reclutable::with('pokemon')->get();
+            // Lock de las filas antes de calcular la recompensa: dos descartes
+            // concurrentes no pueden premiar las mismas unidades.
+            $reclutables = Reclutable::with('pokemon')->lockForUpdate()->get();
 
             $candyRewards = $this->otorgarCaramelos($reclutables->all(), auth()->id());
 
@@ -116,6 +123,9 @@ class ReclutamientoController extends Controller
         $miembrosPorCadena = CadenasEvolutivas::miembrosDe(
             collect($reclutables)->map(fn (Reclutable $reclutable): ?int => $reclutable->pokemon?->evolution_chain_id)
         );
+        $etapasPorCadena = CadenasEvolutivas::etapasDe(
+            collect($reclutables)->map(fn (Reclutable $reclutable): ?int => $reclutable->pokemon?->evolution_chain_id)
+        );
 
         foreach ($reclutables as $reclutable) {
             $pokemon = $reclutable->pokemon;
@@ -124,7 +134,7 @@ class ReclutamientoController extends Controller
             }
 
             $miembros = $miembrosPorCadena[$pokemon->evolution_chain_id] ?? null;
-            $phase = $miembros?->where('species_id', '<=', $pokemon->species_id)->count() ?? 1;
+            $phase = $etapasPorCadena[$pokemon->evolution_chain_id][$pokemon->species_id] ?? ($miembros?->where('species_id', '<=', $pokemon->species_id)->count() ?? 1);
 
             $descartados = $cantidad ?? $reclutable->cantidad;
             $chainId = $pokemon->evolution_chain_id;
