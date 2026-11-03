@@ -7,12 +7,7 @@
     <a href="{{ url('/equipos') }}" class="text-sm text-blue-600 dark:text-blue-400 hover:underline">&larr; Volver a equipos</a>
 
     <div class="mt-4 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 flex items-center gap-6">
-        <img
-            src="{{ $reclutado['imagen'] }}"
-            alt="{{ $reclutado['pokemon_nombre'] }}"
-            class="w-24 h-24 object-contain"
-            onerror="this.src='/images/iconos/{{ $reclutado['pokemon_id'] }}.png'"
-        >
+        <x-sprite :id="$reclutado['pokemon_id']" :name="$reclutado['pokemon_nombre']" size="128" wrapper-class="mx-auto" />
         <div>
             <h1 class="text-2xl font-bold text-gray-900 dark:text-white capitalize">
                 {{ $reclutado['nombre_formateado'] }}

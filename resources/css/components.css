@@ -70,6 +70,11 @@
         box-shadow: var(--shadow-card);
     }
 
+    /* Fondo tokenizado del backdrop del modal nativo */
+    .ui-modal::backdrop {
+        background-color: color-mix(in oklab, var(--color-ink) 50%, transparent);
+    }
+
     /* Badge de tipo; el consumidor define --type-color */
     .tipo-badge {
         display: inline-flex;
@@ -81,6 +86,6 @@
         line-height: var(--text-3xs--line-height);
         background-color: color-mix(in oklab, var(--type-color, var(--color-line)) 14%, var(--color-surface));
         border: 1px solid color-mix(in oklab, var(--type-color, var(--color-line)) 40%, var(--color-line));
-        color: var(--type-color, var(--color-ink));
+        color: color-mix(in oklab, var(--type-color, var(--color-ink)) 60%, var(--color-ink));
     }
 }

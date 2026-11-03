@@ -8,9 +8,6 @@
     <p class="text-gray-500 dark:text-gray-400 mb-8 max-w-md">
         Gestiona tus equipos, explora hábitats y recluta Pokémon.
     </p>
-    <a href="/habitats"
-       class="px-6 py-3 bg-blue-600 text-white rounded-xl text-sm font-medium hover:bg-blue-700 transition-colors">
-        Ir a Hábitats
-    </a>
+    <x-ui.button href="/habitats">Ir a Hábitats</x-ui.button>
 </div>
 @endsection
