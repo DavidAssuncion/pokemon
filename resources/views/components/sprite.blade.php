@@ -4,6 +4,7 @@
     Props:
     - id: especie; construye /images/iconos_webp/{id}{suffix}.webp
     - src: URL explícita; tiene prioridad sobre id
+    - fallback: URL alternativa intermedia antes de 0.webp
     - name: texto alternativo
     - shiny: usa /images/iconos_webp/shiny/{id}{suffix}_s.webp
     - suffix: sufijo de forma regional añadido al id
@@ -14,11 +15,13 @@
     - wrapperClass: clases extra para el contenedor
 
     Los atributos no declarados se aplican al <img> (x-bind:src, x-bind:alt,
-    x-on:error, class, etc.). El fallback estático es shiny → normal → 0.webp.
+    x-on:error, class, etc.). El fallback estático es fallback → 0.webp,
+    shiny → normal → 0.webp o directo a 0.webp.
 --}}
 @props([
     'id' => null,
     'src' => null,
+    'fallback' => null,
     'name' => '',
     'shiny' => false,
     'suffix' => '',
@@ -43,6 +46,8 @@
         $resolvedSrc = $shiny ? $shinySrc : $normalSrc;
     }
 
+    $fallbackUrl = $fallback !== null && $fallback !== '' ? (string) $fallback : null;
+
     $alt = $decorative ? '' : (string) $name;
     $wrapperClasses = trim('sprite sprite--' . $spriteSize . ' ' . $wrapperClass);
 
@@ -52,7 +57,9 @@
     if (! $hasAlpineError) {
         $zeroFallback = \Illuminate\Support\Js::from('/images/iconos_webp/0.webp')->toHtml();
 
-        if ($shiny && $normalSrc !== null) {
+        if ($fallbackUrl !== null && $fallbackUrl !== $resolvedSrc) {
+            $onError = 'this.onerror=function(){this.onerror=null;this.src=' . $zeroFallback . '};this.src=' . \Illuminate\Support\Js::from($fallbackUrl)->toHtml() . ';';
+        } elseif ($shiny && $normalSrc !== null) {
             $normalFallback = \Illuminate\Support\Js::from($normalSrc)->toHtml();
             $onError = 'this.onerror=function(){this.onerror=null;this.src=' . $zeroFallback . '};this.src=' . $normalFallback . ';';
         } else {

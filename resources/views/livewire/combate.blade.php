@@ -127,11 +127,11 @@
         <div class="modal fade show d-block reward-modal scrim {{ !empty($eventos) ? 'modal-pendiente' : '' }}"
              x-data
              x-init="if ($el.classList.contains('modal-pendiente')) setTimeout(() => $el.classList.remove('modal-pendiente'), 8000)"
-             tabindex="-1" role="dialog" aria-modal="true">
+             tabindex="-1" role="dialog" aria-modal="true" aria-labelledby="victory-modal-title">
             <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h5 class="modal-title text-success-ink fw-bold">🏆 ¡Victoria!</h5>
+                        <h5 id="victory-modal-title" class="modal-title text-success-ink fw-bold">🏆 ¡Victoria!</h5>
                     </div>
                     <div class="modal-body">
                         @if($rewardsVista['layout'] === 'ruta')

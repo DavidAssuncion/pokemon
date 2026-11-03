@@ -112,9 +112,7 @@
                 :src="$p['icon']"
                 :name="$p['nombre']"
                 :shiny="$p['es_shiny']"
-                @if($p['es_shiny'])
-                    x-on:error="this.onerror=null; this.src='{{ $p['iconoNormal'] }}'"
-                @endif
+                :fallback="$p['iconoNormal']"
                 class="pokemon-sprite"
             />
         </div>

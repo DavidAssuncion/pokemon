@@ -24,7 +24,7 @@
                 @foreach($team1Vista as $pokemon)
                     @if($pokemon['alive'])
                         <div class="d-inline-flex align-items-center gap-1 bg-surface border rounded px-1 py-0.5" title="Postura de {{ $pokemon['nombre'] }}">
-                            <img src="{{ $pokemon['icon'] }}" alt="" width="18" height="18" style="object-fit:contain">
+                            <x-sprite size="inline" :src="$pokemon['icon']" :name="$pokemon['nombre']" wrapper-class="shrink-0" />
                             <select class="form-select form-select-sm border-0 bg-transparent text-2xs p-0" style="width: 5.4rem;" wire:change="cambiarPostura('{{ $pokemon['refId'] }}', $event.target.value)" aria-label="Postura de {{ $pokemon['nombre'] }}" {{ ($processing || $animAttackerId !== '') ? 'disabled' : '' }}>
                                 <option value="atacar" @selected(($posturas[$pokemon['refId']] ?? 'atacar') === 'atacar')>Atacar</option>
                                 <option value="guardia" @selected(($posturas[$pokemon['refId']] ?? 'atacar') === 'guardia')>Guardia</option>

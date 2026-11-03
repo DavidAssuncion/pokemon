@@ -27,7 +27,7 @@
     @if($tipo === 'pokemon')
         <x-sprite
             :src="$evento['icono_pokemon']"
-            :name="$evento['nombre'] ?? 'Pokémon'"
+            decorative
             size="64"
         />
         <span class="text-sm text-ink">
@@ -36,7 +36,7 @@
     @elseif($tipo === 'huida')
         <x-sprite
             :src="$evento['icono_pokemon']"
-            :name="$evento['nombre'] ?? 'Pokémon'"
+            decorative
             size="64"
         />
         <span class="text-sm text-ink">

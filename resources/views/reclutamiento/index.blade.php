@@ -77,7 +77,7 @@
 
     <!-- Confirm Discard All Modal -->
     <template x-if="showDiscardAllModal">
-        <div class="fixed inset-0 z-50 flex items-center justify-center p-4" @keydown.escape.window="showDiscardAllModal = false">
+        <div class="fixed inset-0 z-50 flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="discard-all-title" @keydown.escape.window="showDiscardAllModal = false">
             <div class="absolute inset-0 scrim" @click="showDiscardAllModal = false"></div>
             <div class="relative bg-surface-raised rounded-panel shadow-modal w-full max-w-sm p-6">
                 <div class="text-center mb-4">
@@ -86,7 +86,7 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z"/>
                         </svg>
                     </div>
-                    <h3 class="text-lg font-bold text-ink">Descartar todos</h3>
+                    <h3 id="discard-all-title" class="text-lg font-bold text-ink">Descartar todos</h3>
                     <p class="text-sm text-ink-muted mt-2">
                         Se descartarán todos los Pokémon y generarán caramelos de experiencia. Esta acción no se puede deshacer.
                     </p>
@@ -113,13 +113,14 @@
     <template x-if="showDiscardModal && discardItem">
         <div
             class="fixed inset-0 z-50 flex items-center justify-center p-4"
+            role="dialog" aria-modal="true" aria-labelledby="discard-one-title"
             @keydown.escape.window="showDiscardModal = false; discardItem = null"
         >
             <!-- Backdrop -->
             <div class="absolute inset-0 scrim" @click="showDiscardModal = false; discardItem = null"></div>
             <!-- Modal content -->
             <div class="relative bg-surface-raised rounded-panel shadow-modal w-full max-w-sm p-6">
-                <h3 class="text-lg font-bold text-ink mb-4">
+                <h3 id="discard-one-title" class="text-lg font-bold text-ink mb-4">
                     Descartar <span x-text="discardItem.nombre"></span>
                 </h3>
 
