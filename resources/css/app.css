@@ -1,4 +1,4 @@
-@layer bootstrap;
+@layer properties, theme, base, bootstrap, components, utilities;
 
 @import "tailwindcss";
 @import "./tokens.css";
