@@ -4,40 +4,40 @@
 
 @section('content')
 <div class="max-w-2xl mx-auto p-4">
-    <a href="{{ url('/equipos') }}" class="text-sm text-blue-600 dark:text-blue-400 hover:underline">&larr; Volver a equipos</a>
+    <a href="{{ url('/equipos') }}" class="text-sm text-primary-ink hover:underline">&larr; Volver a equipos</a>
 
-    <div class="mt-4 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 flex items-center gap-6">
+    <div class="mt-4 bg-surface rounded-card shadow-sm border border-line p-6 flex items-center gap-6">
         <x-sprite :id="$reclutado['pokemon_id']" :name="$reclutado['pokemon_nombre']" size="128" wrapper-class="mx-auto" />
         <div>
-            <h1 class="text-2xl font-bold text-gray-900 dark:text-white capitalize">
+            <h1 class="text-2xl font-bold text-ink capitalize">
                 {{ $reclutado['nombre_formateado'] }}
             </h1>
-            <p class="text-sm text-gray-500 dark:text-gray-400">
+            <p class="text-sm text-ink-muted">
                 Nivel {{ $reclutado['nivel'] }} &middot; {{ $reclutado['exp_total_formateado'] }} exp
                 @if(!empty($reclutado['cp']))
-                    &middot; <span class="font-bold text-purple-600 dark:text-purple-400">CP {{ number_format($reclutado['cp']) }}</span>
+                    &middot; <span class="font-bold text-info-ink">CP {{ number_format($reclutado['cp']) }}</span>
                 @endif
             </p>
         </div>
     </div>
 
     @if ($siguiente)
-        <div class="mt-4 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-            <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Próxima evolución</h2>
+        <div class="mt-4 bg-surface rounded-card shadow-sm border border-line p-6">
+            <h2 class="text-lg font-semibold text-ink">Próxima evolución</h2>
             <div class="mt-3 flex items-center gap-4">
-                <img src="{{ $siguiente['imagen'] }}" alt="{{ $siguiente['nombre'] }}" class="w-16 h-16 object-contain">
-                <p class="text-gray-700 dark:text-gray-300">{{ $siguiente['nombre_formateado'] }}</p>
+                <x-sprite :id="$siguiente['pokemon_id']" :name="$siguiente['nombre']" size="64" />
+                <p class="text-ink">{{ $siguiente['nombre_formateado'] }}</p>
             </div>
 
             <div class="mt-4 space-y-3">
                 @foreach ($requisitos as $requisito)
-                    <div class="flex items-center justify-between gap-4 border-t border-gray-100 dark:border-gray-700 pt-3" data-tipo="{{ $requisito['tipo'] }}">
+                    <div class="flex items-center justify-between gap-4 border-t border-line pt-3" data-tipo="{{ $requisito['tipo'] }}">
                         <div>
-                            <p class="font-medium text-gray-800 dark:text-gray-200">{{ $requisito['tipo'] }}</p>
-                            <p class="text-sm text-gray-500 dark:text-gray-400">
+                            <p class="font-medium text-ink">{{ $requisito['tipo'] }}</p>
+                            <p class="text-sm text-ink-muted">
                                 {{ $requisito['actual_formateado'] }} / {{ $requisito['necesario_formateado'] }} exp
                             </p>
-                            <p class="text-xs text-gray-400 dark:text-gray-500">
+                            <p class="text-xs text-ink-subtle">
                                 Caramelos de tipo: {{ $requisito['caramelosDisponibles'] ?? 0 }}
                             </p>
                         </div>
@@ -45,7 +45,7 @@
                             @foreach ([1, 10, 100] as $cantidad)
                                 <button
                                     type="button"
-                                    class="px-2.5 py-2 bg-blue-600 text-white rounded-lg text-xs font-bold hover:bg-blue-700 transition-colors dar-caramelo-btn disabled:opacity-40 disabled:cursor-not-allowed"
+                                    class="px-2.5 py-2 bg-primary text-on-primary rounded-control text-xs font-bold hover:bg-primary-hover focus-ring transition-colors dar-caramelo-btn disabled:opacity-40 disabled:cursor-not-allowed"
                                     data-url="{{ url('/reclutado/'.$reclutado['id'].'/dar-caramelo') }}"
                                     data-tipo="{{ $requisito['tipo'] }}"
                                     data-cantidad="{{ $cantidad }}"
@@ -62,15 +62,15 @@
             @if ($puedeEvolucionar)
                 <form method="POST" action="{{ url('/reclutado/'.$reclutado['id'].'/evolucionar') }}" class="mt-5">
                     @csrf
-                    <button type="submit" class="w-full px-4 py-3 bg-green-600 text-white rounded-xl text-sm font-bold hover:bg-green-700 transition-colors">
+                    <button type="submit" class="w-full px-4 py-3 bg-success text-on-primary rounded-card text-sm font-bold hover:bg-success/90 focus-ring transition-colors">
                         ¡Evolucionar a {{ $siguiente['nombre_formateado'] }}!
                     </button>
                 </form>
             @endif
         </div>
     @else
-        <div class="mt-4 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-            <p class="text-gray-500 dark:text-gray-400">Este Pokémon no tiene evolución.</p>
+        <div class="mt-4 bg-surface rounded-card shadow-sm border border-line p-6">
+            <p class="text-ink-muted">Este Pokémon no tiene evolución.</p>
         </div>
     @endif
 </div>

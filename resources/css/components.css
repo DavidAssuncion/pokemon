@@ -70,6 +70,11 @@
         box-shadow: var(--shadow-card);
     }
 
+    /* Scrim tokenizado para overlays y fondos de modal */
+    .scrim {
+        background-color: var(--color-scrim);
+    }
+
     /* Fondo tokenizado del backdrop del modal nativo */
     .ui-modal::backdrop {
         background-color: color-mix(in oklab, var(--color-ink) 50%, transparent);

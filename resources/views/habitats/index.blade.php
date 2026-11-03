@@ -3,7 +3,7 @@
 @section('title', 'Hábitats')
 
 @section('content')
-<h1 class="text-2xl font-bold text-gray-900 dark:text-white mb-6">Provincias</h1>
+<h1 class="text-2xl font-bold text-ink mb-6">Provincias</h1>
 
 <div x-data="habitatsApp()">
     <!-- Tabs -->
@@ -14,9 +14,9 @@
                 role="tab"
                 @click="activeTab = {{ $i }}"
                 :class="activeTab === {{ $i }}
-                    ? 'bg-blue-600 text-white shadow'
-                    : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700'"
-                class="px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+                    ? 'bg-primary text-on-primary shadow'
+                    : 'bg-surface text-ink border border-line hover:bg-surface-sunken'"
+                class="px-4 py-2 rounded-control text-sm font-medium transition-colors focus-ring"
             >
                 {{ $province['name'] }}
             </button>
@@ -26,17 +26,17 @@
     <!-- Province panels -->
     @foreach($provincias as $i => $province)
         <div x-show="activeTab === {{ $i }}" x-cloak class="province-panel">
-            <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">{{ $province['name'] }}</h2>
+            <h2 class="text-lg font-semibold text-ink mb-4">{{ $province['name'] }}</h2>
             <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-6">
                 @foreach($province['habitats'] as $habitat)
                     <div class="relative group">
                         <a
                             href="/habitats/{{ $habitat['id'] }}"
-                            class="block bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden hover:shadow-md transition-all hover:border-blue-300 dark:hover:border-blue-600"
-                            :class="{ 'ring-2 ring-yellow-400 dark:ring-yellow-500': isFavorito({{ $habitat['id'] }}) }"
+                            class="block bg-surface rounded-card shadow-sm border border-line overflow-hidden hover:shadow-md transition-all hover:border-primary"
+                            :class="{ 'ring-2 ring-warning': isFavorito({{ $habitat['id'] }}) }"
                         >
                             <!-- Image container: fixed 300x300 -->
-                            <div class="w-full aspect-square bg-gray-100 dark:bg-gray-900 flex items-center justify-center overflow-hidden">
+                            <div class="w-full aspect-square bg-surface-sunken flex items-center justify-center overflow-hidden">
                                 @php
                                     $habitatImagePath = resource_path('habitats_img/'.$habitat['id'].'.webp');
                                     $habitatImageVersion = is_file($habitatImagePath) ? filemtime($habitatImagePath) : 0;
@@ -49,18 +49,18 @@
                                 >
                             </div>
                             <!-- Name: white padding area -->
-                            <div class="px-4 py-3 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700">
-                                <p class="text-sm font-medium text-center text-gray-900 dark:text-white">{{ $habitat['name'] }}</p>
+                            <div class="px-4 py-3 bg-surface border-t border-line">
+                                <p class="text-sm font-medium text-center text-ink">{{ $habitat['name'] }}</p>
                             </div>
                         </a>
                         <!-- Favorite toggle button (corner) -->
                         <button
                             @click.stop="toggleFavoritoHabitat({{ $habitat['id'] }})"
                             :disabled="togglingHabitat === {{ $habitat['id'] }}"
-                            class="absolute top-2 right-2 w-8 h-8 rounded-full flex items-center justify-center transition-all shadow-sm"
+                            class="absolute top-2 right-2 w-8 h-8 rounded-full flex items-center justify-center transition-all shadow-sm focus-ring"
                             :class="isFavorito({{ $habitat['id'] }})
-                                ? 'bg-yellow-400 text-white hover:bg-yellow-500'
-                                : 'bg-white/80 dark:bg-gray-800/80 text-gray-400 dark:text-gray-500 hover:bg-yellow-100 dark:hover:bg-yellow-900/40 hover:text-yellow-500 dark:hover:text-yellow-400'"
+                                ? 'bg-warning text-on-primary ring-2 ring-warning hover:bg-warning/90'
+                                : 'bg-surface/80 text-ink-subtle hover:bg-warning-soft hover:text-warning'"
                             :title="isFavorito({{ $habitat['id'] }}) ? 'Quitar de favoritos' : 'Añadir a favoritos'"
                             :aria-label="isFavorito({{ $habitat['id'] }}) ? 'Quitar de favoritos' : 'Añadir a favoritos'"
                         >

@@ -6,50 +6,59 @@
 <div x-data="misionesPage()">
     <!-- Header -->
     <div class="mb-6">
-        <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Misiones</h1>
-        <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Acepta misiones y cumple los objetivos para ganar recompensas</p>
+        <h1 class="text-2xl font-bold text-ink">Misiones</h1>
+        <p class="text-sm text-ink-muted mt-1">Acepta misiones y cumple los objetivos para ganar recompensas</p>
     </div>
 
     <!-- Avance de carga global -->
-    <div x-show="misionesLoading || activaLoading" x-cloak role="status" class="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 mb-4">
-        <svg class="w-4 h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
-        </svg>
-        Cargando misiones...
-    </div>
+    <x-ui.alert variant="info" x-show="misionesLoading || activaLoading" x-cloak class="mb-4">
+        <span class="inline-flex items-center gap-2">
+            <svg class="w-4 h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+            </svg>
+            Cargando misiones...
+        </span>
+    </x-ui.alert>
 
     <!-- Aviso de error (tolerante: el backend puede estar en preparación) -->
-    <div x-show="misionesError" x-cloak role="alert" class="mb-4 px-4 py-3 rounded-lg bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 text-sm text-orange-700 dark:text-orange-300">
-        ⚠️ <span x-text="misionesError"></span>
-    </div>
+    <x-ui.alert variant="warning" x-show="misionesError" x-cloak class="mb-4">
+        <span aria-hidden="true">⚠️</span> <span x-text="misionesError"></span>
+    </x-ui.alert>
 
     <!-- Aviso puntual (resultado de una acción) -->
-    <div x-show="aviso" x-cloak x-transition class="mb-4 px-4 py-3 rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 text-sm text-blue-700 dark:text-blue-300" role="status">
+    <x-ui.alert variant="info" x-show="aviso" x-cloak x-transition class="mb-4">
         <span x-text="aviso"></span>
-    </div>
+    </x-ui.alert>
 
     <!-- Misión activa -->
     <template x-if="activa">
         <section class="mb-8" aria-labelledby="activa-title">
-            <div class="flex items-center justify-between bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-2 mb-4">
-                <h2 id="activa-title" class="text-sm font-bold uppercase tracking-wide text-gray-700 dark:text-gray-300">Misión activa</h2>
-                <span class="px-2 py-0.5 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 text-[10px] font-bold rounded-full uppercase" x-text="estadoLabel(activa.estado)"></span>
+            <div class="flex items-center justify-between bg-surface-sunken border border-line rounded-control px-4 py-2 mb-4">
+                <h2 id="activa-title" class="text-sm font-bold uppercase tracking-wide text-ink">Misión activa</h2>
+                <span class="px-2 py-0.5 bg-success-soft text-success-ink border border-success text-2xs font-bold rounded-full uppercase" x-text="estadoLabel(activa.estado)"></span>
             </div>
 
-            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
-                <div class="px-4 py-3 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50">
-                    <h3 class="text-sm font-semibold text-gray-900 dark:text-white" x-text="activa.titulo"></h3>
-                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5" x-text="activa.objetivo_texto || progresoTexto(activa)"></p>
+            <div class="bg-surface rounded-card shadow-card border border-line overflow-hidden">
+                <div class="px-4 py-3 border-b border-line bg-surface-sunken">
+                    <h3 class="text-sm font-semibold text-ink" x-text="activa.titulo"></h3>
+                    <p class="text-xs text-ink-muted mt-0.5" x-text="activa.objetivo_texto || progresoTexto(activa)"></p>
                 </div>
                 <div class="p-4 space-y-4">
                     <!-- Barra de progreso -->
                     <div>
                         <div class="flex items-center justify-between mb-1">
-                            <span class="text-xs text-gray-500 dark:text-gray-400">Progreso</span>
-                            <span class="text-xs font-medium text-gray-700 dark:text-gray-300" x-text="progresoTexto(activa) || progresoPorcentaje(activa) + '%'"></span>
+                            <span class="text-xs text-ink-muted" id="activa-progreso-label">Progreso</span>
+                            <span class="text-xs font-medium text-ink" x-text="progresoTexto(activa) || progresoPorcentaje(activa) + '%'"></span>
                         </div>
-                        <div class="h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
-                            <div class="h-2 bg-green-500 rounded-full transition-all" :style="'width: ' + progresoPorcentaje(activa) + '%'"></div>
+                        <div
+                            class="h-2 bg-surface-sunken rounded-full overflow-hidden"
+                            role="progressbar"
+                            aria-labelledby="activa-progreso-label"
+                            aria-valuemin="0"
+                            aria-valuemax="100"
+                            :aria-valuenow="progresoPorcentaje(activa)"
+                        >
+                            <div class="h-2 bg-success rounded-full transition-all" :style="'width: ' + progresoPorcentaje(activa) + '%'"></div>
                         </div>
                     </div>
 
@@ -59,7 +68,7 @@
                             type="button"
                             @click="cancelarMision()"
                             :disabled="accionando"
-                            class="px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg text-sm font-medium hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                            class="px-4 py-2 bg-surface-sunken text-ink rounded-control text-sm font-medium hover:bg-line transition-colors disabled:opacity-50 disabled:cursor-not-allowed focus-ring"
                         >
                             Cancelar misión
                         </button>
@@ -67,7 +76,7 @@
                             type="button"
                             x-show="activa.estado === 'listo_para_pelea'"
                             @click="pelearMision()"
-                            class="px-4 py-2 bg-red-600 text-white rounded-lg text-sm font-bold hover:bg-red-700 transition-colors"
+                            class="px-4 py-2 bg-danger text-on-primary rounded-control text-sm font-bold hover:bg-danger/90 transition-colors focus-ring"
                         >
                             ¡Pelea!
                         </button>
@@ -79,37 +88,37 @@
 
     <!-- Listado de misiones disponibles (no se muestra la ya aceptada) -->
     <section aria-labelledby="misiones-disponibles-title">
-        <div class="flex items-center justify-between bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-2 mb-4">
-            <h2 id="misiones-disponibles-title" class="text-sm font-bold uppercase tracking-wide text-gray-700 dark:text-gray-300">Disponibles</h2>
-            <span x-show="misionesDisponibles().length > 0" class="px-2 py-0.5 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 text-xs font-bold rounded-full" x-text="misionesDisponibles().length"></span>
+        <div class="flex items-center justify-between bg-surface-sunken border border-line rounded-control px-4 py-2 mb-4">
+            <h2 id="misiones-disponibles-title" class="text-sm font-bold uppercase tracking-wide text-ink">Disponibles</h2>
+            <span x-show="misionesDisponibles().length > 0" class="px-2 py-0.5 bg-primary-soft text-primary-ink text-xs font-bold rounded-full" x-text="misionesDisponibles().length"></span>
         </div>
 
         <template x-if="!misionesLoading && !misionesError && misionesDisponibles().length === 0">
-            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-8 text-center">
-                <svg class="w-12 h-12 mx-auto text-gray-300 dark:text-gray-600 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div class="bg-surface rounded-card shadow-card border border-line p-8 text-center" role="status">
+                <svg class="w-12 h-12 mx-auto text-ink-subtle mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2m-6 0a2 2 0 002 2h2a2 2 0 002-2m-6 0a2 2 0 012-2h2a2 2 0 012 2"/>
                 </svg>
-                <p class="text-sm text-gray-500 dark:text-gray-400 mb-1">No hay misiones disponibles ahora</p>
-                <p class="text-xs text-gray-400 dark:text-gray-500">Vuelve pronto o revisa tu misión activa</p>
+                <p class="text-sm text-ink-muted mb-1">No hay misiones disponibles ahora</p>
+                <p class="text-xs text-ink-subtle">Vuelve pronto o revisa tu misión activa</p>
             </div>
         </template>
 
         <template x-for="mision in misionesDisponibles()" :key="mision.id">
-            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden mb-4">
-                <div class="px-4 py-3 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 flex items-center justify-between flex-wrap gap-2">
-                    <h3 class="text-sm font-semibold text-gray-900 dark:text-white" x-text="mision.titulo"></h3>
+            <div class="bg-surface rounded-card shadow-card border border-line overflow-hidden mb-4">
+                <div class="px-4 py-3 border-b border-line bg-surface-sunken flex items-center justify-between flex-wrap gap-2">
+                    <h3 class="text-sm font-semibold text-ink" x-text="mision.titulo"></h3>
                     <template x-if="mision.nivel_requerido">
-                        <span class="px-2 py-0.5 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 text-[10px] font-bold rounded-full uppercase">Nv <span x-text="mision.nivel_requerido"></span></span>
+                        <span class="px-2 py-0.5 bg-warning-soft text-warning-ink border border-warning text-2xs font-bold rounded-full uppercase">Nv <span x-text="mision.nivel_requerido"></span></span>
                     </template>
                 </div>
                 <div class="p-4 space-y-3">
-                    <p class="text-sm text-gray-600 dark:text-gray-300" x-text="objetivoTexto(mision)"></p>
+                    <p class="text-sm text-ink-muted" x-text="objetivoTexto(mision)"></p>
 
                     <template x-if="recompensasLista(mision).length > 0">
                         <div class="flex items-center gap-2 flex-wrap">
-                            <span class="text-xs text-gray-500 dark:text-gray-400">Recompensa:</span>
+                            <span class="text-xs text-ink-muted">Recompensa:</span>
                             <template x-for="(recompensa, i) in recompensasLista(mision)" :key="i">
-                                <span class="px-2 py-0.5 bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 text-[10px] font-bold rounded-full" x-text="recompensa"></span>
+                                <span class="px-2 py-0.5 bg-info-soft text-info-ink border border-info text-2xs font-bold rounded-full" x-text="recompensa"></span>
                             </template>
                         </div>
                     </template>
@@ -119,7 +128,7 @@
                             type="button"
                             @click="abrirAceptar(mision)"
                             :disabled="accionando"
-                            class="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                            class="px-4 py-2 bg-primary text-on-primary rounded-control text-sm font-medium hover:bg-primary-hover transition-colors disabled:opacity-50 disabled:cursor-not-allowed focus-ring"
                         >
                             Aceptar
                         </button>
@@ -131,26 +140,32 @@
 
     <!-- Modal: aceptar misión (elegir reclutado y hábitat) -->
     <template x-if="acceptMissionId !== null">
-        <div class="fixed inset-0 z-50 flex items-center justify-center p-4" @keydown.escape.window="cerrarAceptar()">
-            <div class="absolute inset-0 bg-black/60" @click="cerrarAceptar()"></div>
-            <div class="relative bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-md p-6">
-                <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-1">Aceptar misión</h3>
-                <p class="text-sm text-gray-600 dark:text-gray-300 mb-4">
+        <div
+            class="fixed inset-0 z-50 flex items-center justify-center p-4"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="aceptar-mision-title"
+            @keydown.escape.window="cerrarAceptar()"
+        >
+            <div class="absolute inset-0 scrim" @click="cerrarAceptar()"></div>
+            <div class="relative bg-surface-raised rounded-panel shadow-modal w-full max-w-md p-6">
+                <h3 id="aceptar-mision-title" class="text-lg font-bold text-ink mb-1">Aceptar misión</h3>
+                <p class="text-sm text-ink-muted mb-4">
                     Elige un reclutado y la zona donde cumplirás el objetivo de
-                    <strong class="text-gray-900 dark:text-white" x-text="misionTitulo(acceptMissionId)"></strong>
+                    <strong class="text-ink" x-text="misionTitulo(acceptMissionId)"></strong>
                 </p>
 
                 <!-- Select reclutado -->
                 <div class="mb-4">
-                    <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1" for="mision-reclutado">Reclutado</label>
+                    <label class="block text-xs font-medium text-ink-muted mb-1" for="mision-reclutado">Reclutado</label>
                     <template x-if="reclutados.length === 0 && !reclutadosError">
-                        <p class="text-sm text-gray-400 dark:text-gray-500">Cargando reclutados...</p>
+                        <p class="text-sm text-ink-subtle">Cargando reclutados...</p>
                     </template>
                     <template x-if="reclutadosError">
-                        <p class="text-sm text-orange-600 dark:text-orange-400" role="alert">⚠️ <span x-text="reclutadosError"></span></p>
+                        <p class="text-sm text-danger-ink" role="alert"><span aria-hidden="true">⚠️</span> <span x-text="reclutadosError"></span></p>
                     </template>
                     <template x-if="reclutados.length > 0">
-                        <select id="mision-reclutado" x-model="acceptReclutadoId" class="w-full px-3 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <select id="mision-reclutado" x-model="acceptReclutadoId" class="w-full px-3 py-2 bg-surface-sunken border border-line rounded-control text-sm text-ink focus-ring">
                             <option value="">Selecciona un reclutado</option>
                             <template x-for="r in reclutados" :key="r.id">
                                 <option :value="r.id" x-text="nombreDe(r)"></option>
@@ -161,15 +176,15 @@
 
                 <!-- Select hábitat (el contrato de aceptar requiere habitat_id) -->
                 <div class="mb-4">
-                    <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1" for="mision-habitat">Zona</label>
+                    <label class="block text-xs font-medium text-ink-muted mb-1" for="mision-habitat">Zona</label>
                     <template x-if="habitats.length === 0 && !habitatsError">
-                        <p class="text-sm text-gray-400 dark:text-gray-500">Cargando zonas...</p>
+                        <p class="text-sm text-ink-subtle">Cargando zonas...</p>
                     </template>
                     <template x-if="habitatsError">
-                        <p class="text-sm text-orange-600 dark:text-orange-400" role="alert">⚠️ <span x-text="habitatsError"></span></p>
+                        <p class="text-sm text-danger-ink" role="alert"><span aria-hidden="true">⚠️</span> <span x-text="habitatsError"></span></p>
                     </template>
                     <template x-if="habitats.length > 0">
-                        <select id="mision-habitat" x-model="acceptHabitatId" class="w-full px-3 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <select id="mision-habitat" x-model="acceptHabitatId" class="w-full px-3 py-2 bg-surface-sunken border border-line rounded-control text-sm text-ink focus-ring">
                             <option value="">Selecciona una zona</option>
                             <template x-for="h in habitats" :key="h.id">
                                 <option :value="h.id" x-text="h.name"></option>
@@ -184,7 +199,7 @@
                         type="button"
                         @click="cerrarAceptar()"
                         :disabled="accionando"
-                        class="flex-1 px-4 py-2.5 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg text-sm font-medium hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors disabled:opacity-50"
+                        class="flex-1 px-4 py-2.5 bg-surface-sunken text-ink rounded-control text-sm font-medium hover:bg-line transition-colors disabled:opacity-50 focus-ring"
                     >
                         Cancelar
                     </button>
@@ -192,7 +207,7 @@
                         type="button"
                         @click="aceptarMision()"
                         :disabled="accionando || !acceptReclutadoId || !acceptHabitatId"
-                        class="flex-1 px-4 py-2.5 bg-green-600 text-white rounded-lg text-sm font-bold hover:bg-green-700 transition-colors disabled:bg-gray-300 dark:disabled:bg-gray-700 disabled:text-gray-500 dark:disabled:text-gray-500 disabled:cursor-not-allowed"
+                        class="flex-1 px-4 py-2.5 bg-success text-on-primary rounded-control text-sm font-bold hover:bg-success/90 transition-colors disabled:bg-surface-sunken disabled:text-ink-subtle disabled:cursor-not-allowed focus-ring"
                     >
                         Confirmar
                     </button>
