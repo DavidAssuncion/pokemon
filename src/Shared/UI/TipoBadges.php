@@ -9,40 +9,11 @@ use Src\Shared\Tipos\TipoPokemon;
 /**
  * Fuente única de presentación de los 18 tipos de Pokémon.
  *
- * Expone etiqueta, slug ASCII, clases Tailwind literales e icono para badges
- * server-side (Blade) y client-side (Alpine/JS). No contiene lógica de negocio.
+ * Expone etiqueta, slug ASCII e icono para badges server-side (Blade) y
+ * client-side (Alpine/JS). No contiene lógica de negocio.
  */
 final class TipoBadges
 {
-    /**
-     * Clases Tailwind literales por slug.
-     *
-     * Paleta canónica: `tipoClase` de `resources/views/equipos/index.blade.php`,
-     * la misma del badge de `equipos/partials/movimiento-card.blade.php`.
-     *
-     * @var array<string, string>
-     */
-    private const CLASES = [
-        'normal' => 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300',
-        'lucha' => 'bg-red-100 text-red-700 dark:bg-red-900/50 dark:text-red-300',
-        'volador' => 'bg-sky-100 text-sky-700 dark:bg-sky-900/50 dark:text-sky-300',
-        'veneno' => 'bg-purple-100 text-purple-700 dark:bg-purple-900/50 dark:text-purple-300',
-        'tierra' => 'bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-300',
-        'roca' => 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/50 dark:text-yellow-300',
-        'bicho' => 'bg-lime-100 text-lime-700 dark:bg-lime-900/50 dark:text-lime-300',
-        'fantasma' => 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/50 dark:text-indigo-300',
-        'acero' => 'bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-300',
-        'fuego' => 'bg-orange-100 text-orange-700 dark:bg-orange-900/50 dark:text-orange-300',
-        'agua' => 'bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300',
-        'planta' => 'bg-green-100 text-green-700 dark:bg-green-900/50 dark:text-green-300',
-        'electrico' => 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/50 dark:text-yellow-300',
-        'psiquico' => 'bg-pink-100 text-pink-700 dark:bg-pink-900/50 dark:text-pink-300',
-        'hielo' => 'bg-cyan-100 text-cyan-700 dark:bg-cyan-900/50 dark:text-cyan-300',
-        'dragon' => 'bg-violet-100 text-violet-700 dark:bg-violet-900/50 dark:text-violet-300',
-        'siniestro' => 'bg-gray-200 text-gray-800 dark:bg-gray-800 dark:text-gray-200',
-        'hada' => 'bg-rose-100 text-rose-700 dark:bg-rose-900/50 dark:text-rose-300',
-    ];
-
     /**
      * Presentación de un tipo desconocido.
      *
@@ -50,20 +21,19 @@ final class TipoBadges
      * consumidor decide si oculta la imagen. Se usa como fallback de todos los
      * métodos de resolución.
      *
-     * @var array{id:int,label:string,slug:string,clases:string,icono:string}
+     * @var array{id:int,label:string,slug:string,icono:string}
      */
     public const DEFAULT = [
         'id' => 0,
         'label' => 'Desconocido',
         'slug' => '',
-        'clases' => 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300',
         'icono' => '',
     ];
 
     /**
      * Badge de un tipo por id de `TipoPokemon` (1-18).
      *
-     * @return array{id:int,label:string,slug:string,clases:string,icono:string}
+     * @return array{id:int,label:string,slug:string,icono:string}
      */
     public static function porId(int $id): array
     {
@@ -77,7 +47,7 @@ final class TipoBadges
      *
      * La comparación ignora mayúsculas y espacios sobrantes.
      *
-     * @return array{id:int,label:string,slug:string,clases:string,icono:string}
+     * @return array{id:int,label:string,slug:string,icono:string}
      */
     public static function porSlug(string $slug): array
     {
@@ -97,7 +67,7 @@ final class TipoBadges
      *
      * La comparación ignora mayúsculas y espacios sobrantes.
      *
-     * @return array{id:int,label:string,slug:string,clases:string,icono:string}
+     * @return array{id:int,label:string,slug:string,icono:string}
      */
     public static function porLabel(string $label): array
     {
@@ -118,7 +88,7 @@ final class TipoBadges
      * Prioridad: id (int o cadena numérica), slug y etiqueta. Cualquier valor
      * nulo, vacío o desconocido devuelve `DEFAULT`.
      *
-     * @return array{id:int,label:string,slug:string,clases:string,icono:string}
+     * @return array{id:int,label:string,slug:string,icono:string}
      */
     public static function resolver(int|string|null $tipo): array
     {
@@ -152,14 +122,6 @@ final class TipoBadges
     }
 
     /**
-     * Clases Tailwind del tipo; las de `DEFAULT` si no se reconoce.
-     */
-    public static function clases(int|string|null $tipo): string
-    {
-        return self::resolver($tipo)['clases'];
-    }
-
-    /**
      * Ruta del icono del tipo (`/images/type/{slug}.webp`).
      *
      * Devuelve cadena vacía si el tipo no se reconoce, porque no hay icono
@@ -189,7 +151,7 @@ final class TipoBadges
     /**
      * Datos de badge por slug, listos para serializar a JavaScript.
      *
-     * @return array<string, array{label:string,clases:string,icono:string}>
+     * @return array<string, array{label:string,icono:string}>
      */
     public static function paraJs(): array
     {
@@ -199,7 +161,6 @@ final class TipoBadges
             $badge = self::para($tipo);
             $datos[$badge['slug']] = [
                 'label' => $badge['label'],
-                'clases' => $badge['clases'],
                 'icono' => $badge['icono'],
             ];
         }
@@ -226,7 +187,7 @@ final class TipoBadges
     /**
      * Construye el badge de un tipo conocido.
      *
-     * @return array{id:int,label:string,slug:string,clases:string,icono:string}
+     * @return array{id:int,label:string,slug:string,icono:string}
      */
     private static function para(TipoPokemon $tipo): array
     {
@@ -236,7 +197,6 @@ final class TipoBadges
             'id' => $tipo->value,
             'label' => $tipo->label(),
             'slug' => $slug,
-            'clases' => self::CLASES[$slug] ?? self::DEFAULT['clases'],
             'icono' => '/images/type/'.$slug.'.webp',
         ];
     }
