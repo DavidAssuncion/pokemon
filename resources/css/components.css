@@ -92,5 +92,8 @@
         background-color: color-mix(in oklab, var(--type-color, var(--color-line)) 14%, var(--color-surface));
         border: 1px solid color-mix(in oklab, var(--type-color, var(--color-line)) 40%, var(--color-line));
         color: color-mix(in oklab, var(--type-color, var(--color-ink)) 60%, var(--color-ink));
+        padding: 0;
+        border-left: none;
+        padding-right: 10px;
     }
 }

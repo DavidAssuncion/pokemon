@@ -110,7 +110,7 @@
                                             <template x-if="getMember(team, slot)">
                                                 <div class="relative">
                                                     <x-sprite
-                                                        size="96"
+                                                        size="128"
                                                         wrapper-class="mx-auto cursor-pointer"
                                                         x-bind:src="iconoDe(getMember(team, slot))"
                                                         x-on:error="onSpriteError($event, getMember(team, slot).pokemon_id, getMember(team, slot).es_shiny)"

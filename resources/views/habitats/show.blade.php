@@ -234,7 +234,7 @@
                                                     :id="$team->members[$i]->reclutado->pokemon_id"
                                                     :name="$team->members[$i]->reclutado->nombre"
                                                     :shiny="$team->members[$i]->reclutado->es_shiny"
-                                                    size="96"
+                                                    size="128"
                                                     wrapper-class="mx-auto"
                                                     :title="$team->members[$i]->reclutado->nombre"
                                                 />

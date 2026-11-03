@@ -100,12 +100,6 @@
          if ($wire.get('animAttackerId')) programarAccion();
      })">
 
-    {{-- AVISO: perfil del rival --}}
-    <div class="d-flex align-items-start gap-2 rounded-3 bg-body-tertiary px-3 py-2 mb-2 small text-body-secondary" role="note">
-        <span aria-hidden="true">ℹ</span>
-        <p class="mb-0">Los rivales usan 6 movimientos. Pueden usar movimientos que tú aún no has desbloqueado; no heredan tus bonos de Senda.</p>
-    </div>
-
     {{-- TOP: TURN ORDER --}}
     @include('livewire.partials.turn-bar')
 
