@@ -30,7 +30,8 @@
         @if(!empty($explorador['icono']))
             <div class="relative shrink-0">
                 <x-sprite
-                    :src="$explorador['icono']"
+                    :id="$explorador['pokemon_id']"
+                    :shiny="$explorador['es_shiny'] ?? false"
                     :name="'Icono de '.$nombre"
                     size="64"
                 />

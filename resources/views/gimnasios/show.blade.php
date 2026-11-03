@@ -193,7 +193,8 @@
                             <div class="flex items-center gap-3 min-w-0">
                                 <x-sprite
                                     size="64"
-                                    x-bind:src="'/images/iconos_webp/' + miembro.reclutado.pokemon_id + '.webp'"
+                                    x-bind:src="iconoReclutado(miembro.reclutado)"
+                                    x-on:error="onSpriteError($event, miembro.reclutado.pokemon_id, miembro.reclutado.es_shiny)"
                                     x-bind:alt="miembro.reclutado.nombre"
                                 />
                                 <div class="min-w-0">
@@ -291,6 +292,35 @@ function gimnasioShow(slug) {
                 ? this.gym.etapas.find(e => e.etapa === etapa - 1)?.nombre
                 : null;
             return anterior ? '🔒 Derrota antes a ' + anterior : '🔒 Etapa bloqueada';
+        },
+
+        /** URL del sprite de un reclutado; shiny usa el sufijo _s. */
+        iconoReclutado(reclutado) {
+            if (!reclutado || !reclutado.pokemon_id) return '/images/iconos_webp/0.webp';
+            if (reclutado.es_shiny) return '/images/iconos_webp/shiny/' + reclutado.pokemon_id + '_s.webp';
+            return '/images/iconos_webp/' + reclutado.pokemon_id + '.webp';
+        },
+
+        /** Fallback de sprites: shiny → normal → 0.webp → ocultar. */
+        onSpriteError(event, pokemonId, esShiny) {
+            const img = event?.target;
+            if (!img) return;
+            if (!pokemonId) {
+                img.style.display = 'none';
+                return;
+            }
+            const intento = img.dataset.intento || (esShiny ? 'shiny' : 'normal');
+            if (intento === 'shiny') {
+                img.dataset.intento = 'normal';
+                img.src = '/images/iconos_webp/' + pokemonId + '.webp';
+                return;
+            }
+            if (intento === 'normal') {
+                img.dataset.intento = 'cero';
+                img.src = '/images/iconos_webp/0.webp';
+                return;
+            }
+            img.style.display = 'none';
         },
 
         async init() {

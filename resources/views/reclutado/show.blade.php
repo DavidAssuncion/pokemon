@@ -7,7 +7,7 @@
     <a href="{{ url('/equipos') }}" class="text-sm text-primary-ink hover:underline">&larr; Volver a equipos</a>
 
     <div class="mt-4 bg-surface rounded-card shadow-sm border border-line p-6 flex items-center gap-6">
-        <x-sprite :id="$reclutado['pokemon_id']" :name="$reclutado['pokemon_nombre']" size="128" wrapper-class="mx-auto" />
+        <x-sprite :id="$reclutado['pokemon_id']" :shiny="$reclutado['es_shiny'] ?? false" :name="$reclutado['pokemon_nombre']" size="128" wrapper-class="mx-auto" />
         <div>
             <h1 class="text-2xl font-bold text-ink capitalize">
                 {{ $reclutado['nombre_formateado'] }}

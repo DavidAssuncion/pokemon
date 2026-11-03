@@ -233,6 +233,7 @@
                                                 <x-sprite
                                                     :id="$team->members[$i]->reclutado->pokemon_id"
                                                     :name="$team->members[$i]->reclutado->nombre"
+                                                    :shiny="$team->members[$i]->reclutado->es_shiny"
                                                     size="96"
                                                     wrapper-class="mx-auto"
                                                     :title="$team->members[$i]->reclutado->nombre"
@@ -312,7 +313,8 @@
                                         <x-sprite
                                             size="96"
                                             wrapper-class="mx-auto"
-                                            x-bind:src="'/images/iconos_webp/' + favorito.pokemon_id + '.webp'"
+                                            x-bind:src="iconoReclutado(favorito)"
+                                            x-on:error="onSpriteError($event, favorito.pokemon_id, favorito.es_shiny)"
                                             x-bind:alt="favorito.nombre"
                                         />
                                         <p class="text-2xs text-ink-subtle" x-text="'Nv ' + (favorito.nivel || 1)"></p>
@@ -667,7 +669,8 @@
                                     <div class="w-24 h-24 mx-auto">
                                         <x-sprite
                                             size="96"
-                                            x-bind:src="'/images/iconos_webp/' + pokemon.pokemon_id + '.webp'"
+                                            x-bind:src="iconoReclutado(pokemon)"
+                                            x-on:error="onSpriteError($event, pokemon.pokemon_id, pokemon.es_shiny)"
                                             x-bind:alt="pokemon.nombre"
                                         />
                                     </div>
@@ -716,7 +719,7 @@
                     <template x-for="miembro in (selectedTeamMembers || [])" :key="miembro.id">
                         <div class="flex items-center justify-between p-3 bg-surface-sunken border border-line rounded-control">
                             <div class="flex items-center gap-3">
-                                <x-sprite size="64" x-bind:src="'/images/iconos_webp/' + miembro.reclutado.pokemon_id + '.webp'" x-bind:alt="miembro.reclutado.nombre" />
+                                <x-sprite size="64" x-bind:src="iconoReclutado(miembro.reclutado)" x-on:error="onSpriteError($event, miembro.reclutado.pokemon_id, miembro.reclutado.es_shiny)" x-bind:alt="miembro.reclutado.nombre" />
                                 <div>
                                     <p class="text-sm font-medium text-ink" x-text="miembro.reclutado.nombre || miembro.reclutado?.pokemon?.name"></p>
                                 </div>
@@ -1036,7 +1039,7 @@
                                         <template x-for="miembro in (mazmorraTeamMembers || [])" :key="miembro.id">
                                             <div class="flex items-center justify-between p-3 bg-surface-sunken border border-line rounded-control">
                                                 <div class="flex items-center gap-3">
-                                                    <x-sprite size="64" x-bind:src="'/images/iconos_webp/' + miembro.reclutado.pokemon_id + '.webp'" x-bind:alt="miembro.reclutado.nombre" />
+                                                    <x-sprite size="64" x-bind:src="iconoReclutado(miembro.reclutado)" x-on:error="onSpriteError($event, miembro.reclutado.pokemon_id, miembro.reclutado.es_shiny)" x-bind:alt="miembro.reclutado.nombre" />
                                                     <div>
                                                         <p class="text-sm font-medium text-ink" x-text="miembro.reclutado.nombre || miembro.reclutado?.pokemon?.name"></p>
                                                         <p class="text-xs text-ink-muted" x-text="'Posición ' + miembro.slot"></p>
@@ -1738,6 +1741,35 @@ function habitatShow() {
             // Cargar favoritos para la exploración individual. Tolerante: si el
             // endpoint aún no está disponible, se muestra el estado vacío/error.
             this.cargarFavoritos();
+        },
+
+        /** URL del sprite de un reclutado; shiny usa el sufijo _s. */
+        iconoReclutado(reclutado) {
+            if (!reclutado || !reclutado.pokemon_id) return '/images/iconos_webp/0.webp';
+            if (reclutado.es_shiny) return '/images/iconos_webp/shiny/' + reclutado.pokemon_id + '_s.webp';
+            return '/images/iconos_webp/' + reclutado.pokemon_id + '.webp';
+        },
+
+        /** Fallback de sprites: shiny → normal → 0.webp → ocultar. */
+        onSpriteError(event, pokemonId, esShiny) {
+            const img = event?.target;
+            if (!img) return;
+            if (!pokemonId) {
+                img.style.display = 'none';
+                return;
+            }
+            const intento = img.dataset.intento || (esShiny ? 'shiny' : 'normal');
+            if (intento === 'shiny') {
+                img.dataset.intento = 'normal';
+                img.src = '/images/iconos_webp/' + pokemonId + '.webp';
+                return;
+            }
+            if (intento === 'normal') {
+                img.dataset.intento = 'cero';
+                img.src = '/images/iconos_webp/0.webp';
+                return;
+            }
+            img.style.display = 'none';
         },
 
         async cargarFavoritos() {

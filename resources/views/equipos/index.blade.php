@@ -113,6 +113,7 @@
                                                         size="96"
                                                         wrapper-class="mx-auto cursor-pointer"
                                                         x-bind:src="iconoDe(getMember(team, slot))"
+                                                        x-on:error="onSpriteError($event, getMember(team, slot).pokemon_id, getMember(team, slot).es_shiny)"
                                                         x-bind:alt="nombreFormateado(getMember(team, slot))"
                                                         x-bind:title="'Ver detalle de ' + nombreFormateado(getMember(team, slot))"
                                                         @click="openMemberDetail(team, slot)"
@@ -345,6 +346,7 @@
                                     size="96"
                                     wrapper-class="mx-auto"
                                     x-bind:src="iconoDe(pokemon)"
+                                    x-on:error="onSpriteError($event, pokemon.pokemon_id, pokemon.es_shiny)"
                                     x-bind:alt="pokemon.nombre || pokemon.pokemon_id || 'Pokémon'"
                                     x-bind:title="(pokemon.nombre || pokemon.pokemon_id || 'Pokémon') + (pokemonTeamId(pokemon) !== null ? ' — ' + getTeamName(pokemonTeamId(pokemon)) : '')"
                                     x-bind:class="pokemonTeamId(pokemon) !== null ? 'grayscale opacity-60' : ''"
@@ -814,6 +816,7 @@
                                 <x-sprite
                                     size="64"
                                     x-bind:src="iconoDe(reclutadoDeSlot(replaceTeam, slot))"
+                                    x-on:error="onSpriteError($event, reclutadoDeSlot(replaceTeam, slot).pokemon_id, reclutadoDeSlot(replaceTeam, slot).es_shiny)"
                                     x-bind:alt="nombreFormateado(reclutadoDeSlot(replaceTeam, slot))"
                                 />
                                 <div class="flex-1 min-w-0">
@@ -1402,9 +1405,10 @@ function favoritosApp() {
             return raw.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
         },
 
-        /** URL del icono WebP normal; fallback a 0.webp si falta el id. */
+        /** URL del icono WebP; shiny usa `_s` y el fallback a 0.webp si falta el id. */
         iconoDe(pokemon) {
             if (!pokemon || !pokemon.pokemon_id) return '/images/iconos_webp/0.webp';
+            if (pokemon.es_shiny) return '/images/iconos_webp/shiny/' + pokemon.pokemon_id + '_s.webp';
             return '/images/iconos_webp/' + pokemon.pokemon_id + '.webp';
         },
 

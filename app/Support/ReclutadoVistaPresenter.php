@@ -20,7 +20,9 @@ final class ReclutadoVistaPresenter
 {
     /**
      * @return array{
-     *     reclutado: array<string, mixed>,
+     *     reclutado: array{
+     *         es_shiny: bool
+     *     }&array<string, mixed>,
      *     siguiente: array<string, mixed>|null,
      *     requisitos: list<array<string, mixed>>,
      *     puedeEvolucionar: bool
@@ -55,6 +57,7 @@ final class ReclutadoVistaPresenter
                 'nombre_formateado' => Str::ucfirst($nombre ?? ''),
                 'pokemon_id' => $reclutado->pokemon_id,
                 'pokemon_nombre' => $reclutado->pokemon?->name,
+                'es_shiny' => (bool) $reclutado->es_shiny,
                 'nivel' => NivelHelper::nivelDesdeExperiencia($expTotal),
                 'exp_total' => $expTotal,
                 'exp_total_formateado' => number_format($expTotal),
