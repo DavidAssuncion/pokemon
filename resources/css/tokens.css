@@ -1,0 +1,149 @@
+/* ============================================================
+   TASK-009 F1 — Tokens de tema (única fuente de valores)
+   ============================================================
+   - Claro: `@theme static` emite todas las variables aunque aún
+     no exista una utilidad que las consuma.
+   - Oscuro: `.dark` redefine variables sin capa ni `!important`.
+   - Los `--type-*` los emite Blade desde TipoPokemon::color().
+   ============================================================ */
+
+@theme static {
+    /* Superficies y líneas */
+    --color-canvas: #f9fafb;
+    --color-surface: #ffffff;
+    --color-surface-raised: #ffffff;
+    --color-surface-sunken: #f3f4f6;
+    --color-line: #e5e7eb;
+    --color-line-strong: #d1d5db;
+
+    /* Texto */
+    --color-ink: #111827;
+    --color-ink-muted: #6b7280;
+    --color-ink-subtle: #9ca3af;
+    --color-ink-inverse: #ffffff;
+
+    /* Acción primaria */
+    --color-primary: #2563eb;
+    --color-primary-hover: #1d4ed8;
+    --color-primary-soft: color-mix(in oklab, var(--color-primary) 12%, var(--color-surface));
+    --color-primary-ink: #1d4ed8;
+    --color-on-primary: #ffffff;
+
+    /* Estados */
+    --color-success: #16a34a;
+    --color-success-soft: color-mix(in oklab, var(--color-success) 12%, var(--color-surface));
+    --color-success-ink: #15803d;
+    --color-warning: #d97706;
+    --color-warning-soft: color-mix(in oklab, var(--color-warning) 12%, var(--color-surface));
+    --color-warning-ink: #b45309;
+    --color-danger: #dc2626;
+    --color-danger-soft: color-mix(in oklab, var(--color-danger) 12%, var(--color-surface));
+    --color-danger-ink: #b91c1c;
+    --color-info: #0284c7;
+    --color-info-soft: color-mix(in oklab, var(--color-info) 12%, var(--color-surface));
+    --color-info-ink: #0369a1;
+
+    /* Foco */
+    --color-focus: var(--color-primary);
+
+    /* Tipografía */
+    --text-2xs: 0.625rem;
+    --text-2xs--line-height: 0.875rem;
+    --text-3xs: 0.6875rem;
+    --text-3xs--line-height: 1rem;
+
+    /* Radios */
+    --radius-control: 0.5rem;
+    --radius-card: 0.75rem;
+    --radius-panel: 1rem;
+    --radius-full: 9999px;
+
+    /* Sombras */
+    --shadow-card: 0 1px 2px rgb(0 0 0 / 0.05);
+    --shadow-modal: 0 10px 30px rgb(0 0 0 / 0.12);
+
+    /* Espaciado semántico (aditivo, no altera la escala numérica) */
+    --spacing-gutter: 0.75rem;
+    --spacing-section: 1.5rem;
+
+    /* Sprites: tamaños de visualización */
+    --sprite-128: 8rem;
+    --sprite-96: 6rem;
+    --sprite-64: 4rem;
+    --sprite-inline: 2rem;
+    --sprite-combat: 8rem;
+
+    /* Tipos Pokémon: mapeo estático a las variables emitidas por Blade */
+    --color-type-normal: var(--type-normal);
+    --color-type-lucha: var(--type-lucha);
+    --color-type-volador: var(--type-volador);
+    --color-type-veneno: var(--type-veneno);
+    --color-type-tierra: var(--type-tierra);
+    --color-type-roca: var(--type-roca);
+    --color-type-bicho: var(--type-bicho);
+    --color-type-fantasma: var(--type-fantasma);
+    --color-type-acero: var(--type-acero);
+    --color-type-fuego: var(--type-fuego);
+    --color-type-agua: var(--type-agua);
+    --color-type-planta: var(--type-planta);
+    --color-type-electrico: var(--type-electrico);
+    --color-type-psiquico: var(--type-psiquico);
+    --color-type-hielo: var(--type-hielo);
+    --color-type-dragon: var(--type-dragon);
+    --color-type-siniestro: var(--type-siniestro);
+    --color-type-hada: var(--type-hada);
+
+    /* Calidad IV */
+    --quality-normal: #94a3b8;
+    --quality-good: #4ade80;
+    --quality-great: #38bdf8;
+    --quality-excellent: #c084fc;
+    --quality-perfect: #facc15;
+
+    /* Alias para JS (Chart.js lee valores resueltos con getComputedStyle) */
+    --quality-color-normal: var(--quality-normal);
+    --quality-color-good: var(--quality-good);
+    --quality-color-great: var(--quality-great);
+    --quality-color-excellent: var(--quality-excellent);
+    --quality-color-perfect: var(--quality-perfect);
+}
+
+/* Modo oscuro: solo variables, sin capa y sin `!important`. */
+.dark {
+    color-scheme: dark;
+
+    --color-canvas: #111827;
+    --color-surface: #1f2937;
+    --color-surface-raised: #1f2937;
+    --color-surface-sunken: #111827;
+    --color-line: #374151;
+    --color-line-strong: #4b5563;
+
+    --color-ink: #f9fafb;
+    --color-ink-muted: #9ca3af;
+    --color-ink-subtle: #6b7280;
+    --color-ink-inverse: #111827;
+
+    --color-primary: #2563eb;
+    --color-primary-hover: #3b82f6;
+    --color-primary-soft: color-mix(in oklab, var(--color-primary) 12%, var(--color-surface));
+    --color-primary-ink: #93c5fd;
+    --color-on-primary: #ffffff;
+
+    --color-success: #22c55e;
+    --color-success-soft: color-mix(in oklab, var(--color-success) 12%, var(--color-surface));
+    --color-success-ink: #86efac;
+    --color-warning: #f59e0b;
+    --color-warning-soft: color-mix(in oklab, var(--color-warning) 12%, var(--color-surface));
+    --color-warning-ink: #fcd34d;
+    --color-danger: #ef4444;
+    --color-danger-soft: color-mix(in oklab, var(--color-danger) 12%, var(--color-surface));
+    --color-danger-ink: #fca5a5;
+    --color-info: #38bdf8;
+    --color-info-soft: color-mix(in oklab, var(--color-info) 12%, var(--color-surface));
+    --color-info-ink: #7dd3fc;
+
+    --color-focus: var(--color-primary);
+
+    --shadow-modal: 0 10px 30px rgb(0 0 0 / 0.5);
+}

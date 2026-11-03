@@ -1,12 +1,15 @@
+@layer bootstrap;
+
 @import "tailwindcss";
+@import "./tokens.css";
+@import "./components.css";
+
 @source "../../src";
 
 @custom-variant dark (&:where(.dark, .dark *));
 
-/* ─── Dark mode: restaurar fondo/texto de Tailwind cuando .dark está en <html> ─── */
+/* ─── Dark mode ─── */
 .dark { color-scheme: dark; }
-.dark body { background-color: #111827 !important; color: #f9fafb; }
-.dark header, .dark main { color: inherit; }
 
 /* Icono de medalla de gimnasio */
 .medalla-icon {

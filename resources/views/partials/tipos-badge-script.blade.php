@@ -6,6 +6,9 @@
 
 <script>
     window.TIPOS_BADGE = @json($tiposBadge);
+    Object.entries(window.TIPOS_BADGE).forEach(function ([slug, badge]) {
+        badge.color = (window.TIPOS_COLOR || {})[slug] || '';
+    });
     window.TIPOS_BADGE_POR_ID = @json($tiposBadgePorId);
     window.TIPOS_BADGE_DEFAULT = @json($tiposBadgeDefault);
 
