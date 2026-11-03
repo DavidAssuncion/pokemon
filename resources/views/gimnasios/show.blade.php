@@ -6,14 +6,13 @@
 @php
     $tipoBadges = \Src\Shared\UI\TipoBadges::etiquetasPorId();
     $defaultBadge = \Src\Shared\UI\TipoBadges::DEFAULT['label'];
-    $cardPanelClass = 'bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden';
 @endphp
 
 <div x-data="gimnasioShow('{{ $slug }}')" x-init="init()">
     <div class="max-w-4xl mx-auto space-y-6">
         {{-- Volver --}}
         <a href="{{ route('gimnasios.index') }}" aria-label="Volver a gimnasios" title="Volver a gimnasios"
-           class="inline-flex items-center gap-2 text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
+           class="inline-flex items-center gap-2 rounded-control text-sm font-medium text-ink-muted transition-colors hover:text-primary-ink focus-ring">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
             </svg>
@@ -21,7 +20,7 @@
         </a>
 
         {{-- Loading --}}
-        <div x-show="loading" x-cloak role="status" class="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
+        <div x-show="loading" x-cloak role="status" class="flex items-center gap-2 text-sm text-ink-muted">
             <svg class="w-5 h-5 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
             </svg>
@@ -29,25 +28,25 @@
         </div>
 
         {{-- Error --}}
-        <div x-show="error" x-cloak role="alert" class="text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg px-3 py-2">
+        <div x-show="error" x-cloak role="alert" class="text-sm text-danger-ink bg-danger-soft border border-danger rounded-control px-3 py-2">
             <span x-text="error"></span>
         </div>
 
         <template x-if="!loading && !error && gym">
             <div class="space-y-6">
                 {{-- Cabecera --}}
-                <div class="{{ $cardPanelClass }}">
+                <div class="card-surface">
                     <div class="p-5">
                         <div class="flex flex-wrap items-start justify-between gap-4">
                             <div class="flex items-center gap-3 min-w-0">
                                 <span class="text-4xl shrink-0" aria-hidden="true"><img :src="'images/medallas/' + gym.tipo_slug + '.webp'" :alt="gym.tipo_medalla" onerror="this.style.display='none'"></span>
                                 <div class="min-w-0">
-                                    <h1 class="text-xl font-bold text-gray-900 dark:text-white truncate" x-text="gym.tipo_medalla"></h1>
-                                    <span class="px-2 py-0.5 text-[10px] font-bold rounded-full uppercase text-white inline-block"
-                                          :style="'background-color:' + gym.tipo_color"
+                                    <h1 class="text-xl font-bold text-ink truncate" x-text="gym.tipo_medalla"></h1>
+                                    <span class="inline-block rounded-full px-2 py-0.5 text-2xs font-bold uppercase text-on-primary"
+                                          :style="'background-color: var(--type-' + gym.tipo_slug + ')'"
                                           x-text="gym.tipo_nombre"></span>
                                     <div class="flex flex-wrap items-center gap-2 mt-4">
-                                        <span class="text-xs text-gray-500 dark:text-gray-400">
+                                        <span class="text-xs text-ink-muted">
                                             Nivel mínimo: <strong x-text="'Nv ' + gym.nivel_minimo"></strong>
                                         </span>
                                     </div>
@@ -57,17 +56,17 @@
                             <div class="text-right">
                                 <template x-if="gym.estado === 'disponible'">
                                     <div>
-                                        <span class="text-xs text-gray-500 dark:text-gray-400">Etapa actual</span>
-                                        <p class="text-2xl font-bold text-blue-600 dark:text-blue-400"
+                                        <span class="text-xs text-ink-muted">Etapa actual</span>
+                                        <p class="text-2xl font-bold text-primary-ink"
                                            x-text="gym.etapa_actual + ' / 4'"></p>
                                     </div>
                                 </template>
                                 <template x-if="gym.estado === 'completado'">
                                     <div class="flex items-center gap-2">
-                                        <svg class="w-5 h-5 text-green-600 dark:text-green-400" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                                        <svg class="w-5 h-5 text-success-ink" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
                                             <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
                                         </svg>
-                                        <span class="text-sm font-bold text-green-700 dark:text-green-400">✔ Medalla ganada</span>
+                                        <span class="text-sm font-bold text-success-ink">✔ Medalla ganada</span>
                                     </div>
                                 </template>
                             </div>
@@ -77,7 +76,7 @@
 
                 {{-- Aviso bloqueado --}}
                 <div x-show="gym.estado === 'bloqueado'" x-cloak role="alert"
-                     class="flex items-center gap-3 px-4 py-3 bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-xl text-sm text-orange-700 dark:text-orange-400">
+                     class="flex items-center gap-3 rounded-card border border-warning bg-warning-soft px-4 py-3 text-sm text-warning-ink">
                     <svg class="w-5 h-5 shrink-0" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
                         <path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd"/>
                     </svg>
@@ -87,51 +86,51 @@
                 {{-- Etapas --}}
                 <div class="space-y-3">
                     <template x-for="(etapa, idx) in gym.etapas" :key="etapa.etapa">
-                        <div class="{{ $cardPanelClass }}"
+                        <div class="card-surface"
                              :class="etapaEstado(etapa.etapa) === 'actual' && gym.estado === 'disponible'
-                                 ? 'border-blue-400 dark:border-blue-600 ring-1 ring-blue-200 dark:ring-blue-800'
+                                 ? 'border-primary ring-1 ring-primary'
                                  : ''">
                             <div class="px-4 py-3 flex items-center justify-between gap-3">
                                 <div class="flex items-center gap-3 min-w-0">
                                     {{-- Icono de estado --}}
                                     <template x-if="etapaEstado(etapa.etapa) === 'superada'">
-                                        <span class="w-7 h-7 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center shrink-0">
-                                            <svg class="w-4 h-4 text-green-600 dark:text-green-400" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                                        <span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-success-soft">
+                                            <svg class="h-4 w-4 text-success-ink" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
                                                 <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
                                             </svg>
                                         </span>
                                     </template>
                                     <template x-if="etapaEstado(etapa.etapa) === 'actual'">
-                                        <span class="w-7 h-7 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center shrink-0">
-                                            <span class="w-3 h-3 rounded-full bg-blue-600 animate-pulse"></span>
+                                        <span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary-soft">
+                                            <span class="h-3 w-3 animate-pulse rounded-full bg-primary"></span>
                                         </span>
                                     </template>
                                     <template x-if="etapaEstado(etapa.etapa) === 'bloqueada'">
-                                        <span class="w-7 h-7 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center shrink-0">
-                                            <svg class="w-4 h-4 text-gray-500 dark:text-gray-400" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                                        <span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-surface-sunken">
+                                            <svg class="h-4 w-4 text-ink-muted" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
                                                 <path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd"/>
                                             </svg>
                                         </span>
                                     </template>
                                     <div class="min-w-0">
-                                        <p class="text-sm font-semibold text-gray-900 dark:text-white" x-text="etapa.nombre"></p>
-                                        <p class="text-xs text-gray-500 dark:text-gray-400" x-text="etapaDescripcion(etapa.etapa)"></p>
+                                        <p class="text-sm font-semibold text-ink" x-text="etapa.nombre"></p>
+                                        <p class="text-xs text-ink-muted" x-text="etapaDescripcion(etapa.etapa)"></p>
                                     </div>
                                 </div>
                                 <div class="flex items-center gap-3 shrink-0">
                                     {{-- Avatar/placeholder genérico de entrenador (sin revelar su equipo) --}}
-                                    <span class="w-9 h-9 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center shrink-0"
-                                          :class="etapaEstado(etapa.etapa) === 'actual' ? 'bg-blue-100 dark:bg-blue-900/30' : ''"
+                                    <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-surface-sunken"
+                                          :class="etapaEstado(etapa.etapa) === 'actual' ? 'bg-primary-soft' : ''"
                                           :title="'Entrenador: ' + etapa.nombre"
                                           aria-hidden="true">
-                                        <svg class="w-5 h-5 text-gray-500 dark:text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                                        <svg class="h-5 w-5 text-ink-muted" fill="currentColor" viewBox="0 0 20 20">
                                             <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"/>
                                         </svg>
                                     </span>
                                     {{-- Botón combatir (solo etapa actual y gimnasio disponible) --}}
                                     <template x-if="etapaEstado(etapa.etapa) === 'actual' && gym.estado === 'disponible'">
                                         <button @click="openCombatPopup()"
-                                                class="shrink-0 px-4 py-2 bg-red-600 text-white rounded-lg text-sm font-bold uppercase tracking-wide transition-colors hover:bg-red-700"
+                                                class="shrink-0 rounded-control bg-danger px-4 py-2 text-sm font-bold uppercase tracking-wide text-on-primary transition-colors hover:bg-danger/90 focus-ring disabled:cursor-not-allowed disabled:opacity-50"
                                                 :disabled="combating">
                                             ¡Combatir!
                                         </button>
@@ -147,36 +146,38 @@
 
     {{-- Popup: selección de equipo + formación (patrón de habitats/show) --}}
     <template x-if="showFormacionPopup">
-        <div class="fixed inset-0 z-50 flex items-center justify-center p-4" @keydown.escape.window="closeFormacionPopup()">
-            <div class="absolute inset-0 bg-black/60" @click="closeFormacionPopup()"></div>
-            <div class="relative bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-md p-6">
-                <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-4">Configurar Formación</h3>
-                <p class="text-sm text-gray-600 dark:text-gray-300 mb-4">
+        <div class="fixed inset-0 z-50 flex items-center justify-center p-4"
+             role="dialog" aria-modal="true" aria-labelledby="formacion-modal-title"
+             @keydown.escape.window="closeFormacionPopup()">
+            <div class="absolute inset-0 scrim" @click="closeFormacionPopup()"></div>
+            <div class="relative w-full max-w-md rounded-panel bg-surface-raised p-6 shadow-modal">
+                <h3 id="formacion-modal-title" class="mb-4 text-lg font-bold text-ink">Configurar Formación</h3>
+                <p class="mb-4 text-sm text-ink-muted">
                     Selecciona un equipo y ajusta la posición de cada pokémon antes del combate contra
-                    <strong class="text-gray-900 dark:text-white" x-text="gym ? gym.tipo_medalla : ''"></strong>.
+                    <strong class="text-ink" x-text="gym ? gym.tipo_medalla : ''"></strong>.
                 </p>
 
                 {{-- Error del popup --}}
-                <div x-show="popupError" x-cloak role="alert" class="text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg px-3 py-2 mb-4">
+                <div x-show="popupError" x-cloak role="alert" class="text-sm text-danger-ink bg-danger-soft border border-danger rounded-control px-3 py-2 mb-4">
                     <span x-text="popupError"></span>
                 </div>
 
                 {{-- Selección de equipo --}}
                 <div class="space-y-2 mb-5">
-                    <p class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Equipo</p>
+                    <p class="text-xs font-semibold uppercase tracking-wide text-ink-muted">Equipo</p>
                     <template x-if="teams.length === 0">
-                        <p class="text-sm text-gray-400 dark:text-gray-500 text-center py-2">No tienes equipos creados</p>
+                        <p class="py-2 text-center text-sm text-ink-subtle">No tienes equipos creados</p>
                     </template>
                     <template x-for="team in teams" :key="team.id">
                         <button type="button" @click="selectTeam(team.id, team.name)"
                                 :class="selectedTeamId === team.id
-                                    ? 'border-blue-500 dark:border-blue-400 bg-blue-50 dark:bg-blue-900/20'
-                                    : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'"
-                                class="w-full p-3 rounded-lg border-2 text-left transition-all flex items-center justify-between"
+                                    ? 'border-primary bg-primary-soft'
+                                    : 'border-line hover:border-line-strong'"
+                                class="flex w-full items-center justify-between rounded-control border-2 p-3 text-left transition-all focus-ring"
                                 :aria-label="'Seleccionar equipo ' + team.name">
-                            <span class="text-sm font-medium text-gray-900 dark:text-white" x-text="team.name"></span>
+                            <span class="text-sm font-medium text-ink" x-text="team.name"></span>
                             <template x-if="selectedTeamId === team.id">
-                                <svg class="w-5 h-5 text-blue-600 dark:text-blue-400" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                                <svg class="h-5 w-5 text-primary-ink" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
                                     <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
                                 </svg>
                             </template>
@@ -186,42 +187,44 @@
 
                 {{-- Formación --}}
                 <div x-show="selectedTeamId" x-cloak class="space-y-3 mb-6">
-                    <p class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Formación</p>
+                    <p class="text-xs font-semibold uppercase tracking-wide text-ink-muted">Formación</p>
                     <template x-for="miembro in (selectedTeamMembers || [])" :key="miembro.id">
-                        <div class="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700 rounded-lg">
+                        <div class="flex items-center justify-between rounded-control border border-line bg-surface-sunken p-3">
                             <div class="flex items-center gap-3 min-w-0">
-                                <img :src="'/images/iconos_webp/' + miembro.reclutado.pokemon_id + '.webp'" loading="lazy" decoding="async"
-                                     :alt="miembro.reclutado.nombre" class="w-12 h-12 object-contain shrink-0"
-                                     onerror="this.style.display='none'">
+                                <x-sprite
+                                    size="64"
+                                    x-bind:src="'/images/iconos_webp/' + miembro.reclutado.pokemon_id + '.webp'"
+                                    x-bind:alt="miembro.reclutado.nombre"
+                                />
                                 <div class="min-w-0">
-                                    <p class="text-sm font-medium text-gray-900 dark:text-white truncate" x-text="miembro.reclutado.nombre"></p>
-                                    <p class="text-xs text-gray-500 dark:text-gray-400" x-text="'Posición ' + miembro.slot"></p>
+                                    <p class="truncate text-sm font-medium text-ink" x-text="miembro.reclutado.nombre"></p>
+                                    <p class="text-xs text-ink-muted" x-text="'Posición ' + miembro.slot"></p>
                                 </div>
                             </div>
                             <button type="button"
                                     @click="toggleFormacionSlot(miembro.slot)"
                                     :class="formacion[miembro.slot] === 'vanguardia'
-                                        ? 'bg-blue-600 text-white border-blue-600'
-                                        : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600'"
-                                    class="px-3 py-1.5 rounded-lg text-xs font-bold border transition-colors shrink-0"
+                                        ? 'border-primary bg-primary text-on-primary'
+                                        : 'border-line bg-surface-sunken text-ink'"
+                                    class="shrink-0 rounded-control border px-3 py-1.5 text-xs font-bold transition-colors focus-ring"
                                     x-text="(formacion[miembro.slot] === 'vanguardia' ? '🛡️ Vanguardia' : '⚔️ Retaguardia')">
                             </button>
                         </div>
                     </template>
                     <template x-if="!selectedTeamMembers || selectedTeamMembers.length === 0">
-                        <p class="text-sm text-gray-400 dark:text-gray-500 text-center py-4">Selecciona un equipo primero</p>
+                        <p class="py-4 text-center text-sm text-ink-subtle">Selecciona un equipo primero</p>
                     </template>
                 </div>
 
                 {{-- Botones --}}
                 <div class="flex gap-3">
                     <button @click="closeFormacionPopup()"
-                            class="flex-1 px-4 py-2.5 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg text-sm font-medium hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">
+                            class="flex-1 rounded-control bg-surface-sunken px-4 py-2.5 text-sm font-medium text-ink transition-colors hover:bg-line focus-ring">
                         Cancelar
                     </button>
                     <button @click="confirmarCombate()"
                             :disabled="!selectedTeamId || combating"
-                            class="flex-1 px-4 py-2.5 bg-red-600 text-white rounded-lg text-sm font-bold hover:bg-red-700 transition-colors disabled:bg-gray-300 dark:disabled:bg-gray-700 disabled:text-gray-500 dark:disabled:text-gray-500 disabled:cursor-not-allowed">
+                            class="flex-1 rounded-control bg-danger px-4 py-2.5 text-sm font-bold text-on-primary transition-colors hover:bg-danger/90 disabled:cursor-not-allowed disabled:opacity-50 focus-ring">
                         <span x-show="!combating">¡Combatir!</span>
                         <span x-show="combating" x-cloak class="inline-flex items-center gap-2">
                             <svg class="w-4 h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">

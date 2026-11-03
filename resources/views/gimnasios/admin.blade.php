@@ -6,28 +6,27 @@
 @php
     $tipoBadges = \Src\Shared\UI\TipoBadges::etiquetasPorId();
     $defaultBadge = \Src\Shared\UI\TipoBadges::DEFAULT['label'];
-    $cardPanelClass = 'bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden';
 @endphp
 
 <div x-data="gimnasioAdminApp()" x-init="init()">
     {{-- Volver --}}
     <a href="{{ route('gimnasios.index') }}" aria-label="Volver a gimnasios" title="Volver a gimnasios"
-       class="inline-flex items-center gap-2 text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
+       class="inline-flex items-center gap-2 rounded-control text-sm font-medium text-ink-muted transition-colors hover:text-primary-ink focus-ring">
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
         </svg>
         Volver a gimnasios
     </a>
 
-    <div class="mt-4 {{ $cardPanelClass }}">
+    <div class="mt-4 card-surface">
         <div class="p-6 text-center">
-            <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Gestión-Admin de Gimnasios</h1>
-            <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
+            <h1 class="text-2xl font-bold text-ink">Gestión-Admin de Gimnasios</h1>
+            <p class="text-sm text-ink-muted mt-1">
                 Administra los gimnasios: edita datos y los entrenadores de cada etapa (etapas 1-4).
             </p>
             <button
                 @click="openGestionModal()"
-                class="mt-5 inline-flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-xl text-sm font-bold uppercase tracking-wide transition-colors hover:bg-blue-700"
+                class="mt-5 inline-flex items-center gap-2 rounded-control bg-primary px-6 py-3 text-sm font-bold uppercase tracking-wide text-on-primary transition-colors hover:bg-primary-hover focus-ring"
             >
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
@@ -40,29 +39,31 @@
 
     {{-- ══════════════ CAPA 1: Popup listado de TODOS los gyms ══════════════ --}}
     <template x-if="showGestionModal">
-        <div class="fixed inset-0 z-50 flex items-center justify-center p-4" @keydown.escape.window="closeGestionModal()">
-            <div class="absolute inset-0 bg-black/60" @click="closeGestionModal()"></div>
-            <div class="relative bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-2xl max-h-[85vh] overflow-hidden flex flex-col">
-                <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-700">
-                    <h2 class="text-lg font-bold text-gray-900 dark:text-white">Todos los gimnasios</h2>
-                    <button @click="closeGestionModal()" class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400" aria-label="Cerrar">
+        <div class="fixed inset-0 z-50 flex items-center justify-center p-4"
+             role="dialog" aria-modal="true" aria-labelledby="gestion-modal-title"
+             @keydown.escape.window="closeGestionModal()">
+            <div class="absolute inset-0 scrim" @click="closeGestionModal()"></div>
+            <div class="relative bg-surface-raised rounded-panel shadow-modal w-full max-w-2xl max-h-[85vh] overflow-hidden flex flex-col">
+                <div class="flex items-center justify-between px-6 py-4 border-b border-line">
+                    <h2 id="gestion-modal-title" class="text-lg font-bold text-ink">Todos los gimnasios</h2>
+                    <button @click="closeGestionModal()" class="rounded-control p-2 text-ink-muted hover:bg-surface-sunken focus-ring" aria-label="Cerrar">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
                     </button>
                 </div>
 
                 <div class="flex-1 overflow-y-auto p-6">
-                    <div x-show="gestionLoading" x-cloak role="status" class="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
+                    <div x-show="gestionLoading" x-cloak role="status" class="flex items-center gap-2 text-sm text-ink-muted">
                         <svg class="w-4 h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
                         Cargando gimnasios...
                     </div>
 
-                    <div x-show="gestionError" x-cloak role="alert" class="text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg px-3 py-2">
+                    <div x-show="gestionError" x-cloak role="alert" class="text-sm text-danger-ink bg-danger-soft border border-danger rounded-control px-3 py-2">
                         <span x-text="gestionError"></span>
                         <button @click="loadGyms()" class="ml-2 underline font-medium">Reintentar</button>
                     </div>
 
                     <template x-if="!gestionLoading && !gestionError && gyms.length === 0">
-                        <div class="text-center py-10 text-gray-500 dark:text-gray-400">
+                        <div class="text-center py-10 text-ink-muted">
                             <p>No hay gimnasios disponibles.</p>
                         </div>
                     </template>
@@ -72,24 +73,24 @@
                             <button
                                 type="button"
                                 @click="openGymDetail(gym)"
-                                class="group {{ $cardPanelClass }} p-4 flex items-start justify-between gap-3 text-left hover:border-blue-300 dark:hover:border-blue-600 hover:shadow-md transition-all"
+                                class="group card-surface p-4 flex items-start justify-between gap-3 text-left transition-all hover:border-primary hover:shadow-modal"
                                 :aria-label="'Gestionar ' + gym.tipo_medalla"
                                 :title="'Gestionar ' + gym.tipo_medalla"
                             >
                                 <div class="flex items-center gap-3 min-w-0">
                                     <span class="text-3xl shrink-0" aria-hidden="true">🏅</span>
                                     <div class="min-w-0">
-                                        <p class="text-sm font-bold text-gray-900 dark:text-white truncate" x-text="gym.tipo_medalla"></p>
-                                        <p class="text-xs text-gray-500 dark:text-gray-400" x-text="'Slug: ' + gym.slug"></p>
+                                        <p class="text-sm font-bold text-ink truncate" x-text="gym.tipo_medalla"></p>
+                                        <p class="text-xs text-ink-muted" x-text="'Slug: ' + gym.slug"></p>
                                         <div class="flex flex-wrap items-center gap-2 mt-1.5">
-                                            <span class="px-2 py-0.5 text-[10px] font-bold rounded-full uppercase text-white"
-                                                  :style="'background-color:' + gym.tipo_color"
+                                            <span class="px-2 py-0.5 text-2xs font-bold rounded-full uppercase text-on-primary"
+                                                  :style="'background-color: var(--type-' + gym.tipo_slug + ')'"
                                                   x-text="gym.tipo_nombre || tipoBadge(gym.tipo)"></span>
-                                            <span class="text-[10px] text-gray-500 dark:text-gray-400" x-text="'Niv mín ' + gym.nivel_minimo"></span>
+                                            <span class="text-2xs text-ink-muted" x-text="'Niv mín ' + gym.nivel_minimo"></span>
                                         </div>
                                     </div>
                                 </div>
-                                <svg class="w-5 h-5 text-gray-400 group-hover:text-blue-600 dark:group-hover:text-blue-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                <svg class="w-5 h-5 shrink-0 text-ink-subtle group-hover:text-primary-ink" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
                                 </svg>
                             </button>
@@ -102,23 +103,25 @@
 
     {{-- ══════════════ CAPA 2: Popup detalle de gym (4 pestañas + pokémon + edición) ══════════════ --}}
     <template x-if="showDetailModal">
-        <div class="fixed inset-0 z-[60] flex items-center justify-center p-4" @keydown.escape.window="closeDetailModal()">
-            <div class="absolute inset-0 bg-black/60" @click="closeDetailModal()"></div>
-            <div class="relative bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
-                <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-700">
-                    <h2 class="text-lg font-bold text-gray-900 dark:text-white capitalize" x-text="detail ? detail.tipo_medalla : ''"></h2>
-                    <button @click="closeDetailModal()" class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400" aria-label="Cerrar">
+        <div class="fixed inset-0 z-[60] flex items-center justify-center p-4"
+             role="dialog" aria-modal="true" aria-labelledby="detail-modal-title"
+             @keydown.escape.window="closeDetailModal()">
+            <div class="absolute inset-0 scrim" @click="closeDetailModal()"></div>
+            <div class="relative bg-surface-raised rounded-panel shadow-modal w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
+                <div class="flex items-center justify-between px-6 py-4 border-b border-line">
+                    <h2 id="detail-modal-title" class="text-lg font-bold capitalize text-ink" x-text="detail ? detail.tipo_medalla : ''"></h2>
+                    <button @click="closeDetailModal()" class="rounded-control p-2 text-ink-muted hover:bg-surface-sunken focus-ring" aria-label="Cerrar">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
                     </button>
                 </div>
 
                 <div class="flex-1 overflow-y-auto">
-                    <div x-show="detailLoading" x-cloak role="status" class="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 p-6">
+                    <div x-show="detailLoading" x-cloak role="status" class="flex items-center gap-2 p-6 text-sm text-ink-muted">
                         <svg class="w-4 h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
                         Cargando detalle...
                     </div>
 
-                    <div x-show="detailError" x-cloak role="alert" class="text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg m-6 px-3 py-2">
+                    <div x-show="detailError" x-cloak role="alert" class="text-sm text-danger-ink bg-danger-soft border border-danger rounded-control m-6 px-3 py-2">
                         <span x-text="detailError"></span>
                         <button @click="loadDetail(currentSlug)" class="ml-2 underline font-medium">Reintentar</button>
                     </div>
@@ -127,34 +130,34 @@
                         <div class="p-6 space-y-6">
                             {{-- Datos editables --}}
                             <section class="space-y-3" aria-labelledby="datos-gym-heading">
-                                <h3 id="datos-gym-heading" class="text-xs font-bold uppercase tracking-wide text-gray-700 dark:text-gray-300">Datos del gimnasio</h3>
+                                <h3 id="datos-gym-heading" class="text-xs font-bold uppercase tracking-wide text-ink-muted">Datos del gimnasio</h3>
                                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                                     <div>
-                                        <label class="block text-[10px] font-medium text-gray-500 dark:text-gray-400 mb-1" for="edit-medalla">Medalla</label>
+                                        <label class="mb-1 block text-2xs font-medium text-ink-muted" for="edit-medalla">Medalla</label>
                                         <input id="edit-medalla" type="text" x-model="form.medalla"
-                                               class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-white">
+                                               class="w-full rounded-control border border-line bg-surface px-3 py-2 text-sm text-ink focus-ring">
                                     </div>
                                     <div>
-                                        <label class="block text-[10px] font-medium text-gray-500 dark:text-gray-400 mb-1" for="edit-tipo">Tipo</label>
+                                        <label class="mb-1 block text-2xs font-medium text-ink-muted" for="edit-tipo">Tipo</label>
                                         <select id="edit-tipo" x-model.number="form.tipo"
-                                                class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-white">
+                                                class="w-full rounded-control border border-line bg-surface px-3 py-2 text-sm text-ink focus-ring">
                                             <template x-for="(badge, tipoId) in tipoBadges" :key="tipoId">
                                                 <option :value="Number(tipoId)" x-text="badge"></option>
                                             </template>
                                         </select>
                                     </div>
                                     <div>
-                                        <label class="block text-[10px] font-medium text-gray-500 dark:text-gray-400 mb-1" for="edit-nivel-minimo">Nivel mínimo</label>
+                                        <label class="mb-1 block text-2xs font-medium text-ink-muted" for="edit-nivel-minimo">Nivel mínimo</label>
                                         <input id="edit-nivel-minimo" type="number" min="1" max="100" x-model.number="form.nivel_minimo"
-                                               class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-white">
+                                               class="w-full rounded-control border border-line bg-surface px-3 py-2 text-sm text-ink focus-ring">
                                     </div>
                                 </div>
                             </section>
 
                             {{-- 4 pestañas (etapas / entrenadores) --}}
                             <section aria-labelledby="etapas-heading">
-                                <h3 id="etapas-heading" class="text-xs font-bold uppercase tracking-wide text-gray-700 dark:text-gray-300 mb-2">Entrenadores por etapa</h3>
-                                <div class="border-b border-gray-200 dark:border-gray-700">
+                                <h3 id="etapas-heading" class="text-xs font-bold uppercase tracking-wide text-ink-muted mb-2">Entrenadores por etapa</h3>
+                                <div class="border-b border-line">
                                     <nav class="flex gap-2" role="tablist" aria-label="Etapas del gimnasio">
                                         <template x-for="etapa in [1,2,3,4]" :key="'tab-'+etapa">
                                             <button
@@ -162,8 +165,8 @@
                                                 role="tab"
                                                 :aria-selected="activeTab === etapa"
                                                 :class="activeTab === etapa
-                                                    ? 'border-blue-500 text-blue-600 dark:text-blue-400'
-                                                    : 'border-transparent text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'"
+                                                    ? 'border-primary text-primary-ink'
+                                                    : 'border-transparent text-ink-muted hover:text-ink'"
                                                 @click="activeTab = etapa"
                                                 class="px-4 py-2 text-sm font-medium border-b-2 transition-colors"
                                                 x-text="'Etapa ' + etapa"
@@ -176,18 +179,18 @@
                                     <template x-for="etapa in [1,2,3,4]" :key="'panel-'+etapa">
                                         <div x-show="activeTab === etapa" x-cloak class="grid grid-cols-2 gap-3">
                                             <div>
-                                                <label class="block text-[10px] font-medium text-gray-500 dark:text-gray-400 mb-1" x-text="'Vanguardia (etapa ' + etapa + ') — species_id'"></label>
+                                                <label class="mb-1 block text-2xs font-medium text-ink-muted" x-text="'Vanguardia (etapa ' + etapa + ') — species_id'"></label>
                                                 <input type="text"
                                                        x-model="form.etapas[etapa].vanguardia"
                                                        placeholder="Ej: 268, 266"
-                                                       class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-white">
+                                                       class="w-full rounded-control border border-line bg-surface px-3 py-2 text-sm text-ink focus-ring">
                                             </div>
                                             <div>
-                                                <label class="block text-[10px] font-medium text-gray-500 dark:text-gray-400 mb-1" x-text="'Retaguardia (etapa ' + etapa + ') — species_id'"></label>
+                                                <label class="mb-1 block text-2xs font-medium text-ink-muted" x-text="'Retaguardia (etapa ' + etapa + ') — species_id'"></label>
                                                 <input type="text"
                                                        x-model="form.etapas[etapa].retaguardia"
                                                        placeholder="Ej: 900"
-                                                       class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-white">
+                                                       class="w-full rounded-control border border-line bg-surface px-3 py-2 text-sm text-ink focus-ring">
                                             </div>
                                         </div>
                                     </template>
@@ -197,36 +200,37 @@
                             {{-- Pokémon del tipo del gym, SOLO última evolución --}}
                             <section aria-labelledby="pokemon-heading">
                                 <div class="flex items-center justify-between mb-2">
-                                    <h3 id="pokemon-heading" class="text-xs font-bold uppercase tracking-wide text-gray-700 dark:text-gray-300">
-                                        Pokémon de tipo <span class="text-blue-600 dark:text-blue-400" x-text="tipoBadge(detail.tipo)"></span>
-                                        <span class="text-gray-400 dark:text-gray-500">(última evolución)</span>
+                                    <h3 id="pokemon-heading" class="text-xs font-bold uppercase tracking-wide text-ink-muted">
+                                        Pokémon de tipo <span class="text-primary-ink" x-text="tipoBadge(detail.tipo)"></span>
+                                        <span class="text-ink-subtle">(última evolución)</span>
                                     </h3>
-                                    <span class="text-[10px] text-gray-500 dark:text-gray-400" x-text="pokemonFiltered.length + ' pokémon'"></span>
+                                    <span class="text-2xs text-ink-muted" x-text="pokemonFiltered.length + ' pokémon'"></span>
                                 </div>
 
-                                <div x-show="pokemonLoading" x-cloak role="status" class="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
+                                <div x-show="pokemonLoading" x-cloak role="status" class="flex items-center gap-2 text-sm text-ink-muted">
                                     <svg class="w-4 h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
                                         Cargando pokémon...
                                 </div>
-                                <div x-show="pokemonError" x-cloak role="alert" class="text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg px-3 py-2">
+                                <div x-show="pokemonError" x-cloak role="alert" class="text-sm text-danger-ink bg-danger-soft border border-danger rounded-control px-3 py-2">
                                     <span x-text="pokemonError"></span>
                                 </div>
                                 <template x-if="!pokemonLoading && !pokemonError && pokemonFiltered.length === 0">
-                                    <div class="text-center py-8 text-gray-500 dark:text-gray-400 border border-dashed border-gray-200 dark:border-gray-700 rounded-xl">
+                                    <div class="rounded-card border border-dashed border-line py-8 text-center text-ink-muted">
                                         <p>No hay pokémon de este tipo con última evolución.</p>
                                     </div>
                                 </template>
 
                                 <div x-show="!pokemonLoading && !pokemonError" class="grid grid-cols-3 sm:grid-cols-5 md:grid-cols-6 gap-2">
                                     <template x-for="p in pokemonFiltered" :key="p.species_id">
-                                        <div class="bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700 rounded-lg p-2 text-center">
-                                            <img :src="'/images/iconos_webp/' + p.species_id + '.webp'"
-                                                 loading="lazy" decoding="async"
-                                                 :alt="p.name"
-                                                 :title="p.name + ' (species ' + p.species_id + ')'"
-                                                 class="w-12 h-12 object-contain mx-auto"
-                                                 onerror="this.style.display='none'">
-                                            <p class="text-[10px] text-gray-700 dark:text-gray-300 truncate mt-1" x-text="p.name"></p>
+                                        <div class="rounded-control border border-line bg-surface-sunken p-2 text-center">
+                                            <x-sprite
+                                                size="96"
+                                                wrapper-class="mx-auto"
+                                                x-bind:src="'/images/iconos_webp/' + p.species_id + '.webp'"
+                                                x-bind:alt="p.name"
+                                                x-bind:title="p.name + ' (species ' + p.species_id + ')'"
+                                            />
+                                            <p class="mt-1 truncate text-2xs text-ink" x-text="p.name"></p>
                                         </div>
                                     </template>
                                 </div>
@@ -235,18 +239,18 @@
                             {{-- Acciones --}}
                             <div x-show="saveMsg" x-cloak class="px-3 py-2 rounded-lg text-sm font-medium"
                                  :class="saveMsgType === 'error'
-                                     ? 'bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400'
-                                     : 'bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 text-green-700 dark:text-green-400'"
+                                     ? 'bg-danger-soft border border-danger text-danger-ink'
+                                     : 'bg-success-soft border border-success text-success-ink'"
                                  x-text="saveMsg"></div>
 
-                            <div class="flex gap-3 pt-2 border-t border-gray-200 dark:border-gray-700">
+                            <div class="flex gap-3 border-t border-line pt-2">
                                 <button @click="closeDetailModal()"
-                                        class="flex-1 px-4 py-2.5 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg text-sm font-medium hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">
+                                        class="flex-1 rounded-control bg-surface-sunken px-4 py-2.5 text-sm font-medium text-ink transition-colors hover:bg-line focus-ring">
                                     Cancelar
                                 </button>
                                 <button @click="guardarGym()"
                                         :disabled="saving"
-                                        class="flex-1 px-4 py-2.5 bg-blue-600 text-white rounded-lg text-sm font-bold hover:bg-blue-700 transition-colors disabled:bg-gray-300 dark:disabled:bg-gray-700 disabled:text-gray-500 disabled:cursor-not-allowed">
+                                        class="flex-1 rounded-control bg-primary px-4 py-2.5 text-sm font-bold text-on-primary transition-colors hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-50 focus-ring">
                                     <span x-show="!saving">Guardar cambios</span>
                                     <span x-show="saving" x-cloak class="inline-flex items-center gap-2">
                                         <svg class="w-4 h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>

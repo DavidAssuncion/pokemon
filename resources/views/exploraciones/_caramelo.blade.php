@@ -12,15 +12,15 @@
             class="w-12 h-12 object-contain"
             onerror="{{ $candyFallback }}"
         >
-        <span class="absolute -top-1.5 -right-1.5 px-1.5 py-0.5 bg-amber-600 text-white text-[10px] font-bold rounded-full">
+        <span class="absolute -top-1.5 -right-1.5 px-1.5 py-0.5 bg-warning-soft text-warning-ink border border-warning text-2xs font-bold rounded-full">
             ×{{ $caramelo['cantidad'] }}
         </span>
     </div>
     @if(!empty($caramelo['nombre_js']))
-        <p class="text-[10px] text-gray-500 dark:text-gray-400 truncate w-12" x-text="{{ $caramelo['nombre_js'] }}"></p>
+        <p class="text-2xs text-ink-muted truncate w-12" x-text="{{ $caramelo['nombre_js'] }}"></p>
     @elseif(!empty($caramelo['nombre']))
-        <p class="text-[10px] text-gray-500 dark:text-gray-400 truncate w-12">{{ $caramelo['nombre'] }}</p>
+        <p class="text-2xs text-ink-muted truncate w-12">{{ $caramelo['nombre'] }}</p>
     @else
-        <p class="text-[10px] text-gray-400 dark:text-gray-500 truncate w-12">—</p>
+        <p class="text-2xs text-ink-subtle truncate w-12">—</p>
     @endif
 </div>

@@ -7,14 +7,14 @@
         <!-- Header -->
         <div class="mb-6 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
             <div>
-                <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Pokédex</h1>
-                <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                <h1 class="text-2xl font-bold text-ink">Pokédex</h1>
+                <p class="text-sm text-ink-muted mt-1">
                     <span x-text="counts.vistos"></span> vistos · <span x-text="counts.atrapados"></span> atrapados · <span x-text="counts.total"></span> totales
                 </p>
             </div>
             <template x-if="unlockAll">
-                <span class="inline-flex items-center gap-2 self-start px-3 py-1.5 rounded-lg bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300 text-xs font-medium border border-amber-200 dark:border-amber-800">
-                    <span class="w-2 h-2 rounded-full bg-amber-500"></span>
+                <span class="inline-flex items-center gap-2 self-start px-3 py-1.5 rounded-control bg-warning-soft text-warning-ink text-xs font-medium border border-line">
+                    <span class="w-2 h-2 rounded-full bg-warning"></span>
                     Modo test: todos desbloqueados
                 </span>
             </template>
@@ -28,7 +28,7 @@
                     role="tab"
                     :aria-selected="activeFilter === 'vistos'"
                     :class="tabClass('vistos')"
-                    class="px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+                    class="px-4 py-2 rounded-control text-sm font-medium transition-colors focus-ring"
                 >
                     Vistos
                 </button>
@@ -37,7 +37,7 @@
                     role="tab"
                     :aria-selected="activeFilter === 'no_vistos'"
                     :class="tabClass('no_vistos')"
-                    class="px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+                    class="px-4 py-2 rounded-control text-sm font-medium transition-colors focus-ring"
                 >
                     No vistos
                 </button>
@@ -46,7 +46,7 @@
                     role="tab"
                     :aria-selected="activeFilter === 'atrapados'"
                     :class="tabClass('atrapados')"
-                    class="px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+                    class="px-4 py-2 rounded-control text-sm font-medium transition-colors focus-ring"
                 >
                     Atrapados
                 </button>
@@ -56,14 +56,14 @@
                     role="tab"
                     :aria-selected="activeFilter === 'todos'"
                     :class="tabClass('todos')"
-                    class="px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+                    class="px-4 py-2 rounded-control text-sm font-medium transition-colors focus-ring"
                 >
                     Todos
                 </button>
                 <div class="relative">
                     <button
                         @click="showTypeFilter = !showTypeFilter"
-                        class="px-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors flex items-center gap-2"
+                        class="px-4 py-2 bg-surface border border-line rounded-control text-sm text-ink-muted hover:bg-surface-sunken transition-colors flex items-center gap-2 focus-ring"
                         aria-haspopup="listbox"
                         :aria-expanded="showTypeFilter"
                     >
@@ -74,17 +74,17 @@
                         <span
                             x-show="typeFilter"
                             @click.stop="clearTypeFilter()"
-                            class="ml-0.5 text-red-500 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 font-bold"
+                            class="ml-0.5 text-danger-ink hover:text-danger font-bold"
                             aria-label="Quitar filtro de tipo"
                             title="Quitar filtro de tipo"
                         >✕</span>
                     </button>
                     <template x-if="showTypeFilter">
-                        <div class="absolute left-0 top-full mt-1 z-40 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-lg p-3 w-48 max-h-64 overflow-y-auto">
+                        <div class="absolute left-0 top-full mt-1 z-40 bg-surface-raised border border-line rounded-card shadow-modal p-3 w-48 max-h-64 overflow-y-auto">
                             <button
                                 @click="selectType(null)"
-                                class="w-full text-left px-3 py-1.5 text-sm rounded hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-                                :class="typeFilter === null ? 'text-blue-600 dark:text-blue-400 font-medium' : 'text-gray-700 dark:text-gray-300'"
+                                class="w-full text-left px-3 py-1.5 text-sm rounded-control hover:bg-surface-sunken transition-colors focus-ring"
+                                :class="typeFilter === null ? 'text-primary-ink font-medium' : 'text-ink-muted'"
                             >
                                 Todos
                             </button>
@@ -94,8 +94,8 @@
                             @foreach($tipos as $id => $nombre)
                             <button
                                 @click="selectType('{{ $nombre }}')"
-                                class="w-full text-left px-3 py-1.5 text-sm rounded hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-                                :class="typeFilter === '{{ $nombre }}' ? 'text-blue-600 dark:text-blue-400 font-medium' : 'text-gray-700 dark:text-gray-300'"
+                                class="w-full text-left px-3 py-1.5 text-sm rounded-control hover:bg-surface-sunken transition-colors focus-ring"
+                                :class="typeFilter === '{{ $nombre }}' ? 'text-primary-ink font-medium' : 'text-ink-muted'"
                             >
                                 {{ $nombre }}
                             </button>
@@ -106,7 +106,7 @@
                 <div class="relative">
                     <button
                         @click="showEffortFilter = !showEffortFilter"
-                        class="px-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors flex items-center gap-2"
+                        class="px-4 py-2 bg-surface border border-line rounded-control text-sm text-ink-muted hover:bg-surface-sunken transition-colors flex items-center gap-2 focus-ring"
                         aria-haspopup="listbox"
                         :aria-expanded="showEffortFilter"
                     >
@@ -117,17 +117,17 @@
                         <span
                             x-show="effortFilter"
                             @click.stop="clearEffortFilter()"
-                            class="ml-0.5 text-red-500 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 font-bold"
+                            class="ml-0.5 text-danger-ink hover:text-danger font-bold"
                             aria-label="Quitar filtro de esfuerzo"
                             title="Quitar filtro de esfuerzo"
                         >✕</span>
                     </button>
                     <template x-if="showEffortFilter">
-                        <div class="absolute left-0 top-full mt-1 z-40 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-lg p-3 w-48 max-h-64 overflow-y-auto">
+                        <div class="absolute left-0 top-full mt-1 z-40 bg-surface-raised border border-line rounded-card shadow-modal p-3 w-48 max-h-64 overflow-y-auto">
                             <button
                                 @click="selectEffort(null)"
-                                class="w-full text-left px-3 py-1.5 text-sm rounded hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-                                :class="effortFilter === null ? 'text-blue-600 dark:text-blue-400 font-medium' : 'text-gray-700 dark:text-gray-300'"
+                                class="w-full text-left px-3 py-1.5 text-sm rounded-control hover:bg-surface-sunken transition-colors focus-ring"
+                                :class="effortFilter === null ? 'text-primary-ink font-medium' : 'text-ink-muted'"
                             >
                                 Todos
                             </button>
@@ -137,8 +137,8 @@
                             @foreach($stats as $id => $nombre)
                             <button
                                 @click="selectEffort('{{ $nombre }}')"
-                                class="w-full text-left px-3 py-1.5 text-sm rounded hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-                                :class="effortFilter === '{{ $nombre }}' ? 'text-blue-600 dark:text-blue-400 font-medium' : 'text-gray-700 dark:text-gray-300'"
+                                class="w-full text-left px-3 py-1.5 text-sm rounded-control hover:bg-surface-sunken transition-colors focus-ring"
+                                :class="effortFilter === '{{ $nombre }}' ? 'text-primary-ink font-medium' : 'text-ink-muted'"
                             >
                                 {{ $nombre }}
                             </button>
@@ -154,9 +154,9 @@
                     @input.debounce.300ms="onSearchInput()"
                     placeholder="Buscar por nombre o número..."
                     aria-label="Buscar por nombre o número"
-                    class="w-full px-4 py-2 pl-10 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+                    class="w-full px-4 py-2 pl-10 bg-surface border border-line rounded-control text-sm text-ink placeholder:text-ink-subtle focus-ring focus:border-primary transition-colors"
                 >
-                <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-ink-subtle" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
                 </svg>
             </div>
@@ -164,11 +164,11 @@
 
         <!-- Fetch error banner (non-blocking: the list stays visible) -->
         <template x-if="error">
-            <div role="alert" class="mb-4 px-4 py-3 rounded-lg bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-300 border border-red-200 dark:border-red-800 text-sm flex items-center justify-between gap-3">
+            <div role="alert" class="mb-4 px-4 py-3 rounded-control bg-danger-soft text-danger-ink border border-danger/40 text-sm flex items-center justify-between gap-3">
                 <span>No se pudo cargar la Pokédex. Revisa tu conexión.</span>
                 <button
                     @click="resetAndFetch()"
-                    class="px-3 py-1 bg-red-600 text-white rounded-lg text-xs font-medium hover:bg-red-700 transition-colors"
+                    class="px-3 py-1 bg-danger text-on-primary rounded-control text-xs font-medium hover:bg-danger/90 transition-colors focus-ring"
                 >
                     Reintentar
                 </button>
@@ -180,8 +180,8 @@
             <template x-for="pokemon in items" :key="pokemon.id">
                 <div
                     @click="openDetail(pokemon)"
-                    class="relative bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden cursor-pointer transition-all hover:shadow-md hover:border-blue-300 dark:hover:border-blue-600 group"
-                    :class="{ 'border-green-500 dark:border-green-400': pokemon.atrapado }"
+                    class="relative bg-surface rounded-card shadow-card border border-line overflow-hidden cursor-pointer transition-all hover:shadow-modal hover:border-primary/40 group focus-ring"
+                    :class="{ 'border-success': pokemon.atrapado }"
                     role="button"
                     tabindex="0"
                     @keydown.space.prevent="openDetail(pokemon)"
@@ -189,42 +189,42 @@
                     :aria-label="'Pokemon #' + pokemon.id + ' ' + ((pokemon.visto || unlockAll) ? pokemon.name : 'No visto')"
                 >
                     <!-- Image / placeholder -->
-                    <div class="aspect-square relative bg-gray-50 dark:bg-gray-900 p-2">
+                    <div class="aspect-square relative bg-surface-sunken p-2">
                         <template x-if="!pokemon.visto && !unlockAll">
                             <div
-                                class="w-full h-full rounded-lg bg-gray-200 dark:bg-gray-700 bg-linear-to-br from-gray-200 to-gray-300 dark:from-gray-700 dark:to-gray-800 flex items-center justify-center"
+                                class="w-full h-full rounded-control bg-surface-sunken flex items-center justify-center"
                                 aria-hidden="true"
                             >
-                                <span class="text-2xl font-bold text-gray-400 dark:text-gray-600 select-none">?</span>
+                                <span class="text-2xl font-bold text-ink-subtle select-none">?</span>
                             </div>
                         </template>
                         <template x-if="pokemon.visto || unlockAll">
-                            <img
-                                :src="iconUrl(pokemon)"
+                            <x-sprite
+                                size="96"
+                                wrapper-class="mx-auto"
+                                class="transition-transform group-hover:scale-110"
+                                x-bind:src="iconUrl(pokemon)"
+                                x-bind:alt="pokemon.name"
                                 x-on:error="onIconError($event, pokemon)"
-                                :alt="pokemon.name"
-                                loading="lazy"
-                                decoding="async"
-                                class="w-full h-full object-contain transition-transform group-hover:scale-110"
-                            >
+                            />
                         </template>
                         <!-- Captured badge -->
                         <template x-if="pokemon.atrapado">
-                            <span class="absolute top-1 right-1 px-1 py-0.5 bg-green-500 text-white text-[10px] font-bold rounded">
+                            <span class="absolute top-1 right-1 px-1 py-0.5 bg-success text-on-primary text-2xs font-bold rounded">
                                 ★
                             </span>
                         </template>
                     </div>
                     <!-- Info -->
                     <div class="px-2 pb-2 text-center">
-                        <p class="text-[10px] text-gray-400 dark:text-gray-500" x-text="'#' + pokemon.id"></p>
+                        <p class="text-2xs text-ink-subtle" x-text="'#' + pokemon.id"></p>
                         <p
-                            class="text-xs font-medium text-gray-900 dark:text-white truncate"
-                            :class="{ 'text-gray-400 dark:text-gray-500': !pokemon.visto && !unlockAll }"
+                            class="text-xs font-medium text-ink truncate"
+                            :class="{ 'text-ink-subtle': !pokemon.visto && !unlockAll }"
                             x-text="(pokemon.visto || unlockAll) ? pokemon.name : '???'"
                         ></p>
                         <template x-if="pokemon.habitat && (pokemon.visto || unlockAll)">
-                            <p class="text-[10px] text-blue-600 dark:text-blue-400 truncate" x-text="pokemon.habitat"></p>
+                            <p class="text-2xs text-primary-ink truncate" x-text="pokemon.habitat"></p>
                         </template>
                     </div>
                 </div>
@@ -233,13 +233,13 @@
 
         <!-- Loading more -->
         <div x-show="loading && items.length > 0" class="flex justify-center py-6" aria-busy="true">
-            <div class="animate-spin rounded-full h-8 w-8 border-4 border-blue-500 border-t-transparent"></div>
+            <div class="animate-spin rounded-full h-8 w-8 border-4 border-primary border-t-transparent"></div>
         </div>
 
         <!-- No more pages -->
         <p
             x-show="lastPage !== null && page >= lastPage && items.length > 0"
-            class="text-center text-sm text-gray-400 dark:text-gray-500 py-6"
+            class="text-center text-sm text-ink-subtle py-6"
         >
             No hay más Pokémon
         </p>
@@ -250,10 +250,10 @@
         <!-- Empty state -->
         <template x-if="!loading && !error && items.length === 0">
             <div class="text-center py-16">
-                <svg class="w-16 h-16 mx-auto text-gray-300 dark:text-gray-600 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg class="w-16 h-16 mx-auto text-ink-subtle mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
                 </svg>
-                <p class="text-gray-500 dark:text-gray-400" x-text="emptyMessage"></p>
+                <p class="text-ink-muted" x-text="emptyMessage"></p>
             </div>
         </template>
 
@@ -267,13 +267,13 @@
             @keydown.escape.window="closeDetail()"
         >
             <!-- Backdrop -->
-            <div class="absolute inset-0 bg-black/60" @click="closeDetail()"></div>
+            <div class="absolute inset-0 scrim" @click="closeDetail()"></div>
             <!-- Modal content -->
-            <div class="relative bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
+            <div class="relative bg-surface-raised rounded-panel shadow-modal w-full max-w-lg max-h-[90vh] overflow-y-auto">
                 <!-- Close button -->
                 <button
                     @click="closeDetail()"
-                    class="absolute top-3 right-3 z-10 w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                    class="absolute top-3 right-3 z-10 w-8 h-8 flex items-center justify-center rounded-full bg-surface-sunken text-ink-muted hover:bg-line transition-colors focus-ring"
                     aria-label="Cerrar"
                 >
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -282,29 +282,29 @@
                 </button>
 
                 <!-- Header -->
-                <div class="p-6 pb-4 text-center border-b border-gray-200 dark:border-gray-700">
+                <div class="p-6 pb-4 text-center border-b border-line">
                     <template x-if="!selectedPokemon.visto && !unlockAll">
                         <div
-                            class="w-24 h-24 rounded-xl bg-gray-200 dark:bg-gray-700 bg-linear-to-br from-gray-200 to-gray-300 dark:from-gray-700 dark:to-gray-800 flex items-center justify-center mx-auto mb-3"
+                            class="w-32 h-32 rounded-panel bg-surface-sunken flex items-center justify-center mx-auto mb-3"
                             aria-hidden="true"
                         >
-                            <span class="text-3xl font-bold text-gray-400 dark:text-gray-600 select-none">?</span>
+                            <span class="text-3xl font-bold text-ink-subtle select-none">?</span>
                         </div>
                     </template>
                     <template x-if="selectedPokemon.visto || unlockAll">
-                        <img
-                            :src="iconUrl(selectedPokemon)"
+                        <x-sprite
+                            size="128"
+                            wrapper-class="mx-auto mb-3"
+                            loading="eager"
+                            x-bind:src="iconUrl(selectedPokemon)"
+                            x-bind:alt="selectedPokemon.name"
                             x-on:error="onIconError($event, selectedPokemon)"
-                            :alt="selectedPokemon.name"
-                            loading="lazy"
-                            decoding="async"
-                            class="w-24 h-24 object-contain mx-auto mb-3"
-                        >
+                        />
                     </template>
-                    <p class="text-xs text-gray-400 dark:text-gray-500" x-text="'#' + selectedPokemon.id"></p>
-                    <h2 id="pokedex-modal-title" class="text-xl font-bold text-gray-900 dark:text-white" x-text="(selectedPokemon.visto || unlockAll) ? selectedPokemon.name : '???'"></h2>
+                    <p class="text-xs text-ink-subtle" x-text="'#' + selectedPokemon.id"></p>
+                    <h2 id="pokedex-modal-title" class="text-xl font-bold text-ink" x-text="(selectedPokemon.visto || unlockAll) ? selectedPokemon.name : '???'"></h2>
                     <template x-if="selectedPokemon.atrapado">
-                        <span class="inline-block mt-2 px-3 py-1 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 text-xs font-medium rounded-full">
+                        <span class="inline-block mt-2 px-3 py-1 bg-success-soft text-success-ink text-xs font-medium rounded-full">
                             Atrapado
                         </span>
                     </template>
@@ -315,22 +315,22 @@
                     <!-- Loading skeleton -->
                     <template x-if="detailLoading">
                         <div class="space-y-4">
-                            <div class="h-6 bg-gray-100 dark:bg-gray-700 rounded animate-pulse"></div>
+                            <div class="h-6 bg-surface-sunken rounded animate-pulse"></div>
                             <div class="space-y-2">
-                                <div class="h-2 bg-gray-100 dark:bg-gray-700 rounded animate-pulse"></div>
-                                <div class="h-2 bg-gray-100 dark:bg-gray-700 rounded animate-pulse"></div>
+                                <div class="h-2 bg-surface-sunken rounded animate-pulse"></div>
+                                <div class="h-2 bg-surface-sunken rounded animate-pulse"></div>
                             </div>
-                            <div class="h-6 bg-gray-100 dark:bg-gray-700 rounded animate-pulse"></div>
+                            <div class="h-6 bg-surface-sunken rounded animate-pulse"></div>
                         </div>
                     </template>
 
                     <!-- Error with retry -->
                     <template x-if="detailError">
                         <div class="text-center py-6" role="alert">
-                            <p class="text-red-500 dark:text-red-400 text-sm mb-3">No se pudo cargar el detalle de este Pokémon.</p>
+                            <p class="text-danger-ink text-sm mb-3">No se pudo cargar el detalle de este Pokémon.</p>
                             <button
                                 @click="retryDetail()"
-                                class="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors"
+                                class="px-4 py-2 bg-danger text-on-primary rounded-control text-sm font-medium hover:bg-danger/90 transition-colors focus-ring"
                             >
                                 Reintentar
                             </button>
@@ -340,7 +340,7 @@
                     <!-- Not viewed message (no fetch for unseen pokemon) -->
                     <template x-if="!detailLoading && !detailError && !selectedPokemon.visto && !unlockAll">
                         <div class="text-center py-6">
-                            <p class="text-gray-400 dark:text-gray-500 italic">Este Pokémon aún no ha sido avistado.</p>
+                            <p class="text-ink-subtle italic">Este Pokémon aún no ha sido avistado.</p>
                         </div>
                     </template>
 
@@ -349,17 +349,17 @@
                         <!-- Types -->
                         <template x-if="typePills.length > 0">
                             <div>
-                                <h3 class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">Tipo</h3>
+                                <h3 class="text-xs font-semibold text-ink-muted uppercase tracking-wide mb-2">Tipo</h3>
                                 <div class="flex flex-wrap gap-2">
                                     <template x-for="t in typePills" :key="t.slug + '-' + t.id">
                                         <span
-                                            class="inline-flex items-center gap-1 rounded-full py-0.5 pl-0 pr-2 text-[11px] font-semibold"
-                                            :class="tipoBadge(t.slug).clases"
+                                            class="tipo-badge shrink-0 py-0.5 pl-0 pr-2"
+                                            :style="'--type-color: ' + tipoBadge(t.slug).color"
                                         >
                                             <img
                                                 :src="t.icon"
                                                 alt=""
-                                                class="w-[30px] h-[30px] object-contain"
+                                                class="w-7 h-7 object-contain"
                                                 loading="lazy"
                                                 decoding="async"
                                             >
@@ -373,32 +373,30 @@
                         <!-- Familia evolutiva -->
                         <template x-if="detail.family?.members?.length">
                             <div>
-                                <h3 class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">Familia evolutiva</h3>
+                                <h3 class="text-xs font-semibold text-ink-muted uppercase tracking-wide mb-2">Familia evolutiva</h3>
                                 <div class="space-y-3">
                                     <template x-for="etapa in familyStages" :key="etapa.stage">
                                         <div>
-                                            <p class="text-[11px] font-medium text-gray-400 dark:text-gray-500 mb-1.5" x-text="'Etapa ' + etapa.stage"></p>
+                                            <p class="text-3xs font-medium text-ink-subtle mb-1.5" x-text="'Etapa ' + etapa.stage"></p>
                                             <div class="flex flex-wrap gap-2">
                                                 <template x-for="member in etapa.members" :key="member.id">
                                                     <div
-                                                        class="flex items-center gap-2 rounded-lg border px-2 py-1.5"
-                                                        :class="member.is_current ? 'border-blue-500 bg-blue-50 dark:border-blue-400 dark:bg-blue-900/30' : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800'"
+                                                        class="flex items-center gap-2 rounded-control border px-2 py-1.5"
+                                                        :class="member.is_current ? 'border-primary bg-primary-soft' : 'border-line bg-surface'"
                                                         :aria-current="member.is_current ? 'true' : null"
                                                     >
-                                                        <img
-                                                            :src="member.icon"
-                                                            alt=""
-                                                            loading="lazy"
-                                                            decoding="async"
-                                                            class="w-8 h-8 object-contain"
-                                                        >
+                                                        <x-sprite
+                                                            size="64"
+                                                            x-bind:src="member.icon"
+                                                            x-bind:alt="nombrePokemon(member.name)"
+                                                        />
                                                         <div class="min-w-0">
-                                                            <p class="text-xs font-medium text-gray-900 dark:text-white truncate" x-text="nombrePokemon(member.name)"></p>
+                                                            <p class="text-xs font-medium text-ink truncate" x-text="nombrePokemon(member.name)"></p>
                                                             <div class="flex items-center gap-1.5">
-                                                                <span x-show="member.minimum_level" class="text-[10px] text-gray-500 dark:text-gray-400" x-text="'Nv ' + member.minimum_level"></span>
-                                                                <span x-show="member.is_current" class="text-[10px] font-semibold text-blue-600 dark:text-blue-400">Actual</span>
+                                                                <span x-show="member.minimum_level" class="text-2xs text-ink-muted" x-text="'Nv ' + member.minimum_level"></span>
+                                                                <span x-show="member.is_current" class="text-2xs font-semibold text-primary-ink">Actual</span>
                                                             </div>
-                                                            <p x-show="familyParentName(member)" class="text-[10px] text-gray-400 dark:text-gray-500" x-text="'Evoluciona de ' + familyParentName(member)"></p>
+                                                            <p x-show="familyParentName(member)" class="text-2xs text-ink-subtle" x-text="'Evoluciona de ' + familyParentName(member)"></p>
                                                         </div>
                                                     </div>
                                                 </template>
@@ -412,19 +410,19 @@
                         <!-- Stats bars -->
                         <template x-if="detail.stats && detail.stats.length > 0">
                             <div>
-                                <h3 class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">Estadísticas</h3>
+                                <h3 class="text-xs font-semibold text-ink-muted uppercase tracking-wide mb-2">Estadísticas</h3>
                                 <div class="space-y-2">
                                     <template x-for="stat in detail.stats" :key="stat.name">
                                         <div class="flex items-center gap-3">
-                                            <span class="text-xs text-gray-600 dark:text-gray-400 w-20 text-right" x-text="stat.name"></span>
-                                            <div class="flex-1 h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                                            <span class="text-xs text-ink-muted w-20 text-right" x-text="stat.name"></span>
+                                            <div class="flex-1 h-2 bg-surface-sunken rounded-full overflow-hidden">
                                                 <div
                                                     class="h-full rounded-full transition-all duration-500"
                                                     :class="getStatColor(stat.name)"
                                                     :style="'width: ' + Math.min((stat.value / 255) * 100, 100) + '%'"
                                                 ></div>
                                             </div>
-                                            <span class="text-xs font-medium text-gray-900 dark:text-white w-8" x-text="stat.value"></span>
+                                            <span class="text-xs font-medium text-ink w-8" x-text="stat.value"></span>
                                         </div>
                                     </template>
                                 </div>
@@ -433,11 +431,11 @@
 
                         <!-- Ubicación -->
                         <div>
-                            <h3 class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">Ubicación</h3>
+                            <h3 class="text-xs font-semibold text-ink-muted uppercase tracking-wide mb-2">Ubicación</h3>
                             <template x-if="detail.location">
-                                <div class="rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
+                                <div class="rounded-control border border-line overflow-hidden">
                                     <template x-if="detail.location.province_name">
-                                        <p class="px-3 pt-2 text-[11px] uppercase tracking-wide text-gray-400 dark:text-gray-500" x-text="detail.location.province_name"></p>
+                                        <p class="px-3 pt-2 text-3xs uppercase tracking-wide text-ink-subtle" x-text="detail.location.province_name"></p>
                                     </template>
                                     <img
                                         :src="detail.location.habitat_image"
@@ -447,10 +445,10 @@
                                         class="w-full h-24 object-cover"
                                     >
                                     <div class="p-3 flex items-center justify-between gap-3">
-                                        <p class="text-sm font-medium text-gray-900 dark:text-white" x-text="detail.location.habitat_name"></p>
+                                        <p class="text-sm font-medium text-ink" x-text="detail.location.habitat_name"></p>
                                         <a
                                             :href="detail.location.url"
-                                            class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-600 text-white text-xs font-medium hover:bg-blue-700 transition-colors"
+                                            class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-control bg-primary text-on-primary text-xs font-medium hover:bg-primary-hover transition-colors focus-ring"
                                         >
                                             Ir al hábitat
                                         </a>
@@ -458,7 +456,7 @@
                                 </div>
                             </template>
                             <template x-if="!detail.location">
-                                <p class="text-sm text-gray-500 dark:text-gray-400 italic">Sin hábitat asignado.</p>
+                                <p class="text-sm text-ink-muted italic">Sin hábitat asignado.</p>
                             </template>
                         </div>
                     </template>
@@ -737,8 +735,8 @@ function pokedexApp() {
 
         tabClass(tab) {
             return this.activeFilter === tab
-                ? 'bg-blue-600 text-white dark:bg-blue-500'
-                : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-700';
+                ? 'bg-primary text-on-primary'
+                : 'bg-surface text-ink-muted hover:bg-surface-sunken border border-line';
         },
 
         onSearchInput() {
@@ -768,14 +766,18 @@ function pokedexApp() {
         },
 
         iconUrl(pokemon) {
-            return pokemon.icon || '/images/iconos/' + pokemon.id + '.png';
+            return pokemon.icon || '/images/iconos_webp/' + pokemon.id + '.webp';
         },
 
-        // Fallback de icono: webp -> png -> ocultar si el png también falta
+        // Fallback de icono: shiny -> normal -> 0.webp -> ocultar
         onIconError(e, pokemon) {
             const img = e.target;
-            if (img.src.includes('.webp')) {
-                img.src = '/images/iconos/' + pokemon.id + '.png';
+            const normal = '/images/iconos_webp/' + pokemon.id + '.webp';
+            const placeholder = '/images/iconos_webp/0.webp';
+            if (img.src.includes('/shiny/')) {
+                img.src = normal;
+            } else if (!img.src.endsWith(placeholder)) {
+                img.src = placeholder;
             } else {
                 img.style.display = 'none';
             }
@@ -844,14 +846,14 @@ function pokedexApp() {
 
         getStatColor(statName) {
             const colors = {
-                'PS (HP)': 'bg-green-500',
-                'Ataque': 'bg-red-500',
-                'Defensa': 'bg-blue-500',
-                'Ataque Especial': 'bg-purple-500',
-                'Defensa Especial': 'bg-teal-500',
-                'Velocidad': 'bg-yellow-500',
+                'PS (HP)': 'bg-success',
+                'Ataque': 'bg-danger',
+                'Defensa': 'bg-primary',
+                'Ataque Especial': 'bg-info',
+                'Defensa Especial': 'bg-warning',
+                'Velocidad': 'bg-ink-subtle',
             };
-            return colors[statName] || 'bg-gray-500';
+            return colors[statName] || 'bg-ink-subtle';
         },
     };
 }
