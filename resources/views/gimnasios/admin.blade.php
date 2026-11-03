@@ -53,7 +53,7 @@
 
                 <div class="flex-1 overflow-y-auto p-6">
                     <div x-show="gestionLoading" x-cloak role="status" class="flex items-center gap-2 text-sm text-ink-muted">
-                        <svg class="w-4 h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                        <svg class="w-8 h-8 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
                         Cargando gimnasios...
                     </div>
 
@@ -78,7 +78,6 @@
                                 :title="'Gestionar ' + gym.tipo_medalla"
                             >
                                 <div class="flex items-center gap-3 min-w-0">
-                                    <span class="text-3xl shrink-0" aria-hidden="true">🏅</span>
                                     <div class="min-w-0">
                                         <p class="text-sm font-bold text-ink truncate" x-text="gym.tipo_medalla"></p>
                                         <p class="text-xs text-ink-muted" x-text="'Slug: ' + gym.slug"></p>
@@ -117,7 +116,7 @@
 
                 <div class="flex-1 overflow-y-auto">
                     <div x-show="detailLoading" x-cloak role="status" class="flex items-center gap-2 p-6 text-sm text-ink-muted">
-                        <svg class="w-4 h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                        <svg class="w-8 h-8 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
                         Cargando detalle...
                     </div>
 
@@ -208,7 +207,7 @@
                                 </div>
 
                                 <div x-show="pokemonLoading" x-cloak role="status" class="flex items-center gap-2 text-sm text-ink-muted">
-                                    <svg class="w-4 h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                                    <svg class="w-8 h-8 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
                                         Cargando pokémon...
                                 </div>
                                 <div x-show="pokemonError" x-cloak role="alert" class="text-sm text-danger-ink bg-danger-soft border border-danger rounded-control px-3 py-2">
@@ -253,7 +252,7 @@
                                         class="flex-1 rounded-control bg-primary px-4 py-2.5 text-sm font-bold text-on-primary transition-colors hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-50 focus-ring">
                                     <span x-show="!saving">Guardar cambios</span>
                                     <span x-show="saving" x-cloak class="inline-flex items-center gap-2">
-                                        <svg class="w-4 h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                                        <svg class="w-8 h-8 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
                                         Guardando...
                                     </span>
                                 </button>

@@ -1,7 +1,7 @@
 <div class="battle-field">
     @if($phase === 'battle_over')
         <div class="alert {{ $battleField['claseFin'] }} fin-batalla {{ $battleField['ocultarFin'] ? 'd-none' : '' }} text-center fw-bold py-2 mb-2" role="status">
-            {{ $battleField['victoria'] ? '🏆 ¡Victoria!' : '💀 Derrota...' }}
+            {{ $battleField['victoria'] ? '¡Victoria!' : 'Derrota...' }}
         </div>
     @endif
 

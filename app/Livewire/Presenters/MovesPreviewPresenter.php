@@ -181,7 +181,7 @@ final class MovesPreviewPresenter
             'directo' => ! $esEstado && $directPct > 0,
             'statusEffect' => $estadoEfecto->value,
             'statusLabel' => self::estadoLabel($estadoEfecto),
-            'statusEmoji' => self::estadoEmoji($estadoEfecto),
+            'statusEmoji' => '',
             'selfStatChanges' => self::cambiosParaVista($move->selfStatChanges),
             'targetStatChanges' => self::cambiosParaVista($move->targetStatChanges),
             'golpes' => $golpes,
@@ -247,19 +247,6 @@ final class MovesPreviewPresenter
             EstadoPokemon::SLEEP => 'DORMIR',
             EstadoPokemon::FREEZE => 'CONGELAR',
             EstadoPokemon::CONFUSION => 'CONFUNDIR',
-            EstadoPokemon::NONE => '',
-        };
-    }
-
-    private static function estadoEmoji(EstadoPokemon $estado): string
-    {
-        return match ($estado) {
-            EstadoPokemon::BURN => '🔥',
-            EstadoPokemon::POISON, EstadoPokemon::BAD_POISON => '☠',
-            EstadoPokemon::PARALYSIS => '⚡',
-            EstadoPokemon::SLEEP => '💤',
-            EstadoPokemon::FREEZE => '❄',
-            EstadoPokemon::CONFUSION => '😵',
             EstadoPokemon::NONE => '',
         };
     }

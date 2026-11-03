@@ -68,7 +68,7 @@
 }
 
 .active-turn {
-    background: linear-gradient(145deg, #fde047 0%, #facc15 45%, #ca8a04 100%) !important;
+    background: linear-gradient(360deg, #fde047 0%, #facc15 45%, #ca8a04 100%) !important;
     color: #1e293b;
     border-color: #facc15 !important;
 }
@@ -127,6 +127,7 @@
 /* El borde del combatiente activo usa el amarillo de calidad perfecta. */
 .pokemon-card.acting-card {
     border-color: #facc15 !important;
+    background: linear-gradient(360deg, #fde047 0%, #facc15 45%, #ca8a04 100%) !important;
 }
 
 .pokemon-card.vanguardia-rival.targeted-card,
@@ -202,11 +203,8 @@
 }
 
 /* ─── Barras de vitales: doble altura y texto siempre visible encima ─── */
-.barrier-progress {
-    height: 20px;
-}
 
-.hp-progress {
+.hp-progress, .barrier-progress {
     height: 16px;
 }
 

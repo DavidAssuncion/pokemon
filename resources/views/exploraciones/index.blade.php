@@ -41,7 +41,7 @@
                         <h3 class="text-sm font-semibold text-ink">
                             {{ $exp['explorador']['nombre'] ?? $exp['reclutado'] ?? 'Sin reclutado' }}
                         </h3>
-                        <svg class="w-4 h-4 text-ink-subtle" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                        <svg class="w-8 h-8 text-ink-subtle" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
                         </svg>
                         <span class="text-sm text-ink-muted">{{ $exp['habitat'] ?? 'Sin hábitat' }}</span>
@@ -180,7 +180,7 @@
                         <h3 class="text-sm font-semibold text-ink">
                             {{ $terminada['explorador']['nombre'] ?? $terminada['reclutado'] ?? 'Sin reclutado' }}
                         </h3>
-                        <svg class="w-4 h-4 text-ink-subtle" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                        <svg class="w-8 h-8 text-ink-subtle" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
                         </svg>
                         <span class="text-sm text-ink-muted">{{ $terminada['habitat'] ?? 'Sin hábitat' }}</span>
@@ -262,7 +262,7 @@
                             @if($terminada['tieneDerrotados'] ?? false)
                                 <div class="bg-surface-sunken rounded-control p-3 {{ $terminada['spanDerrotados'] ?? '' }}">
                                     <p class="text-xs font-semibold text-ink-muted uppercase tracking-wide mb-2 flex items-center gap-1.5">
-                                        <svg class="w-4 h-4 text-ink-subtle" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                        <svg class="w-8 h-8 text-ink-subtle" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
                                         </svg>
                                         Derrotados

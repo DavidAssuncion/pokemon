@@ -23,7 +23,7 @@ class TipoBadgeBladeTest extends TestCase
             ->assertSee('alt=""', false)
             ->assertSee('rounded-full', false)
             ->assertSee('Eléctrico')
-            ->assertSee('w-4 h-4', false);
+            ->assertSee('w-8 h-8', false);
     }
 
     #[Test]

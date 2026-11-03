@@ -16,16 +16,16 @@ use Src\Shared\Collections\StringCollection;
  */
 final class CatalogoObjetos
 {
-    /** @var array<string, array{nombre: string, cargas: int, icono: string}> */
+    /** @var array<string, array{nombre: string, cargas: int}> */
     private const OBJETOS = [
-        'life_orb' => ['nombre' => 'Orbe Vida', 'cargas' => -1, 'icono' => '🔮'],
-        'leftovers' => ['nombre' => 'Restos', 'cargas' => -1, 'icono' => '🧴'],
-        'focus_sash' => ['nombre' => 'Banda Focus', 'cargas' => 1, 'icono' => '🎗️'],
-        'sitrus_berry' => ['nombre' => 'Baya Sitrus', 'cargas' => 1, 'icono' => '🍊'],
-        'lum_berry' => ['nombre' => 'Baya Lum', 'cargas' => 1, 'icono' => '🍒'],
-        'choice_band' => ['nombre' => 'Cinta Elección', 'cargas' => -1, 'icono' => '🎀'],
-        'choice_specs' => ['nombre' => 'Gafas Elección', 'cargas' => -1, 'icono' => '🕶️'],
-        'assault_vest' => ['nombre' => 'Chaleco Asalto', 'cargas' => -1, 'icono' => '🦺'],
+        'life_orb' => ['nombre' => 'Orbe Vida', 'cargas' => -1],
+        'leftovers' => ['nombre' => 'Restos', 'cargas' => -1],
+        'focus_sash' => ['nombre' => 'Banda Focus', 'cargas' => 1],
+        'sitrus_berry' => ['nombre' => 'Baya Sitrus', 'cargas' => 1],
+        'lum_berry' => ['nombre' => 'Baya Lum', 'cargas' => 1],
+        'choice_band' => ['nombre' => 'Cinta Elección', 'cargas' => -1],
+        'choice_specs' => ['nombre' => 'Gafas Elección', 'cargas' => -1],
+        'assault_vest' => ['nombre' => 'Chaleco Asalto', 'cargas' => -1],
     ];
 
     public static function existe(string $clave): bool
@@ -40,7 +40,7 @@ final class CatalogoObjetos
 
     public static function iconoDe(string $clave): string
     {
-        return self::OBJETOS[$clave]['icono'] ?? '📦';
+        return '';
     }
 
     /**

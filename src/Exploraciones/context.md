@@ -210,7 +210,7 @@ enriquece **solo en presentación**:
 - Las cadenas se consultan una vez por página y se cachean entre tarjetas (`miembrosDeCadenas()`).
 - `ResultadoExploracionVista::objetosPerdidos()` conserva los campos enriquecidos y, en llamadas
   directas con datos antiguos, deriva `tipo_label` e `imagen` de EV/tipo sin consultar la BD.
-- `resources/views/exploraciones/_perdidas.blade.php` pinta el aviso «⚠️ Perdiste objetos» con
+- `resources/views/exploraciones/_perdidas.blade.php` pinta el aviso «Recompensas perdidas» con
   imagen, tipo, nombre y cantidad. Se incluye **solo en la tarjeta de resultados** (`role="alert"`);
   el diario ya no muestra el aviso (v4).
 - `motivo_perdida` — se deriva de `eventos['derrota']['reason']` (con `trim`; vacío → `null`):

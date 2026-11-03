@@ -67,7 +67,7 @@
                         aria-haspopup="listbox"
                         :aria-expanded="showTypeFilter"
                     >
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/>
                         </svg>
                         <span x-text="typeFilter || 'Tipo'"></span>
@@ -110,7 +110,7 @@
                         aria-haspopup="listbox"
                         :aria-expanded="showEffortFilter"
                     >
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
                         </svg>
                         <span x-text="effortFilter || 'Esfuerzo'"></span>
@@ -156,7 +156,7 @@
                     aria-label="Buscar por nombre o número"
                     class="w-full px-4 py-2 pl-10 bg-surface border border-line rounded-control text-sm text-ink placeholder:text-ink-subtle focus-ring focus:border-primary transition-colors"
                 >
-                <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-ink-subtle" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-8 h-8 text-ink-subtle" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
                 </svg>
             </div>
@@ -211,7 +211,7 @@
                         <!-- Captured badge -->
                         <template x-if="pokemon.atrapado">
                             <span class="absolute top-1 right-1 px-1 py-0.5 bg-success text-on-primary text-2xs font-bold rounded">
-                                ★
+                                Atrapado
                             </span>
                         </template>
                     </div>
@@ -276,7 +276,7 @@
                     class="absolute top-3 right-3 z-10 w-8 h-8 flex items-center justify-center rounded-full bg-surface-sunken text-ink-muted hover:bg-line transition-colors focus-ring"
                     aria-label="Cerrar"
                 >
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
                     </svg>
                 </button>

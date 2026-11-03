@@ -15,7 +15,7 @@
                     <div class="alert {{ $battleField['clima']['variante'] }} weather-{{ $battleField['clima']['tipo'] }} py-1 px-2 mb-0 d-inline-flex align-items-center gap-2"
                          role="status"
                          title="Clima actual: {{ $battleField['clima']['label'] }}">
-                        <span class="weather-label fw-semibold">{{ $battleField['clima']['icono'] }} {{ $battleField['clima']['label'] }}</span>
+                        <span class="weather-label fw-semibold">{{ $battleField['clima']['label'] }}</span>
                         @if($battleField['clima']['mostrarBonusRoca'])
                             <span class="weather-power small" title="+500 potencia a movimientos Roca">(+500 Roca)</span>
                         @endif
@@ -27,7 +27,7 @@
                             data-bs-toggle="modal"
                             data-bs-target="#preparacion-modal"
                             title="Ajusta posturas y movimientos de prioridad al inicio de la ronda">
-                        🧭 Preparación
+                        Preparación
                     </button>
                 @endif
                 @if($turnBar['mostrarEsperar'])
@@ -36,7 +36,7 @@
                             wire:click="pasarTurno"
                             wire:loading.attr="disabled"
                             title="Consume tu acción sin atacar">
-                        ⏭ Esperar
+                        Esperar
                     </button>
                 @endif
                 @if($turnBar['puedeRetrasar'])
@@ -45,7 +45,7 @@
                             wire:click="retrasarTurno"
                             wire:loading.attr="disabled"
                             title="Actúa al final de la ronda; no consume tu acción">
-                        ⏳ Retrasar turno
+                        Retrasar turno
                     </button>
                 @endif
                 @if($turnBar['puedeCambiarTurno'])
@@ -54,7 +54,7 @@
                             wire:click="swapTurno"
                             wire:loading.attr="disabled"
                             title="Adelanta el turno de {{ $turnBar['siguienteTurno']['nombre'] }}; el pokémon actual actuará después">
-                        ⇄ Atacar con {{ $turnBar['siguienteTurno']['nombre'] }}
+                        Atacar con {{ $turnBar['siguienteTurno']['nombre'] }}
                     </button>
                 @endif
                 <button type="button"
@@ -62,7 +62,7 @@
                         data-bs-toggle="modal"
                         data-bs-target="#battle-log-modal"
                         title="Consultar el registro de batalla">
-                    📜 Registro
+                    Registro
                 </button>
             </div>
         </div>

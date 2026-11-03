@@ -13,7 +13,7 @@
     <!-- Avance de carga global -->
     <x-ui.alert variant="info" x-show="misionesLoading || activaLoading" x-cloak class="mb-4">
         <span class="inline-flex items-center gap-2">
-            <svg class="w-4 h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <svg class="w-8 h-8 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
             </svg>
             Cargando misiones...
@@ -22,7 +22,7 @@
 
     <!-- Aviso de error (tolerante: el backend puede estar en preparación) -->
     <x-ui.alert variant="warning" x-show="misionesError" x-cloak class="mb-4">
-        <span aria-hidden="true">⚠️</span> <span x-text="misionesError"></span>
+        <span x-text="misionesError"></span>
     </x-ui.alert>
 
     <!-- Aviso puntual (resultado de una acción) -->
@@ -162,7 +162,7 @@
                         <p class="text-sm text-ink-subtle">Cargando reclutados...</p>
                     </template>
                     <template x-if="reclutadosError">
-                        <p class="text-sm text-danger-ink" role="alert"><span aria-hidden="true">⚠️</span> <span x-text="reclutadosError"></span></p>
+                        <p class="text-sm text-danger-ink" role="alert"><span x-text="reclutadosError"></span></p>
                     </template>
                     <template x-if="reclutados.length > 0">
                         <select id="mision-reclutado" x-model="acceptReclutadoId" class="w-full px-3 py-2 bg-surface-sunken border border-line rounded-control text-sm text-ink focus-ring">
@@ -181,7 +181,7 @@
                         <p class="text-sm text-ink-subtle">Cargando zonas...</p>
                     </template>
                     <template x-if="habitatsError">
-                        <p class="text-sm text-danger-ink" role="alert"><span aria-hidden="true">⚠️</span> <span x-text="habitatsError"></span></p>
+                        <p class="text-sm text-danger-ink" role="alert"><span x-text="habitatsError"></span></p>
                     </template>
                     <template x-if="habitats.length > 0">
                         <select id="mision-habitat" x-model="acceptHabitatId" class="w-full px-3 py-2 bg-surface-sunken border border-line rounded-control text-sm text-ink focus-ring">

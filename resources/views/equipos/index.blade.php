@@ -256,7 +256,7 @@
                             ? 'bg-surface text-primary-ink shadow-sm'
                             : 'text-ink-muted hover:text-ink'"
                     >
-                        ⚔️ Pokémon
+                        Pokémon
                     </button>
                     <button
                         @click="cambiarSeccion('huevos')"
@@ -267,7 +267,7 @@
                             ? 'bg-surface text-primary-ink shadow-sm'
                             : 'text-ink-muted hover:text-ink'"
                     >
-                        🥚 Huevos
+                        Huevos
                     </button>
                 </div>
 
@@ -484,7 +484,7 @@
                             <!-- Límite de huevos activo -->
                             <template x-if="limiteExcedido()">
                                 <div class="px-3 py-2 rounded-control bg-primary-soft text-primary-ink text-xs" role="status">
-                                    ⏳ <span x-text="limiteMensaje()"></span>
+                                    <span x-text="limiteMensaje()"></span>
                                 </div>
                             </template>
 
@@ -552,7 +552,7 @@
                                                             class="shrink-0 px-3 py-1.5 bg-info text-on-primary rounded-control text-xs font-bold hover:bg-info/90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                                                         >
                                                             <span x-show="huevosAccionId === huevo.id" x-cloak>Eclosionando…</span>
-                                                            <span x-show="huevosAccionId !== huevo.id">🥚 Eclosionar</span>
+                                                            <span x-show="huevosAccionId !== huevo.id">Eclosionar</span>
                                                         </button>
                                                     </template>
                                                 </div>
@@ -628,7 +628,7 @@
                     </template>
                     <template x-if="habitatsError">
                         <p class="text-sm text-warning-ink bg-warning-soft border border-warning rounded-control px-3 py-2" role="alert">
-                            ⚠️ <span x-text="habitatsError"></span>
+                            <span x-text="habitatsError"></span>
                         </p>
                     </template>
                     <template x-if="!habitatsLoading && !habitatsError && habitats.length > 0">
@@ -864,7 +864,7 @@
                         <div class="flex items-center gap-2 flex-wrap">
                             <h3 id="detail-modal-title" class="text-2xl font-bold text-ink capitalize truncate" x-text="nombreDe(detailPokemon)"></h3>
                             <template x-if="detailPokemon.es_shiny">
-                                <span class="px-1.5 py-0.5 bg-warning-soft text-warning-ink text-2xs font-bold rounded uppercase" title="Shiny">★ Shiny</span>
+                                <span class="px-1.5 py-0.5 bg-warning-soft text-warning-ink text-2xs font-bold rounded uppercase" title="Shiny">Shiny</span>
                             </template>
                         </div>
                         <div class="flex items-center gap-1.5 mt-2 flex-wrap">
@@ -2293,11 +2293,11 @@ function favoritosApp() {
                         const data = await response.json();
                         message = data.error || data.message || message;
                     } catch (err) {}
-                    this.detailEvFeedback = { tipo: 'error', mensaje: '⚠️ ' + message };
+                    this.detailEvFeedback = { tipo: 'error', mensaje: message };
                 }
             } catch (err) {
                 console.error('Error dando caramelo EV:', err);
-                this.detailEvFeedback = { tipo: 'error', mensaje: '⚠️ Error de conexión al dar el caramelo EV.' };
+                this.detailEvFeedback = { tipo: 'error', mensaje: 'Error de conexión al dar el caramelo EV.' };
             } finally {
                 this.detailEvsFeeding = false;
             }
@@ -2390,7 +2390,7 @@ function favoritosApp() {
                 });
                 if (response.ok) {
                     const data = await response.json();
-                    this.huevosFeedback = { tipo: 'success', mensaje: data.message || '🥚 El huevo ha empezado a gestarse.' };
+                    this.huevosFeedback = { tipo: 'success', mensaje: data.message || 'El huevo ha empezado a gestarse.' };
                     await this.cargarHuevos(true);
                 } else {
                     let message = 'No se pudo poner el huevo.';
@@ -2398,11 +2398,11 @@ function favoritosApp() {
                         const data = await response.json();
                         message = data.error || data.message || message;
                     } catch (err) {}
-                    this.huevosFeedback = { tipo: 'error', mensaje: '⚠️ ' + message };
+                    this.huevosFeedback = { tipo: 'error', mensaje: message };
                 }
             } catch (err) {
                 console.error('Error poniendo huevo:', err);
-                this.huevosFeedback = { tipo: 'error', mensaje: '⚠️ Error de conexión al poner el huevo.' };
+                this.huevosFeedback = { tipo: 'error', mensaje: 'Error de conexión al poner el huevo.' };
             } finally {
                 this.huevosActuando = false;
             }
@@ -2424,7 +2424,7 @@ function favoritosApp() {
                 if (response.ok) {
                     const data = await response.json();
                     const nacido = data.pokemon?.name || data.nombre || data.pokemon_name || '';
-                    this.huevosFeedback = { tipo: 'success', mensaje: '🎉 ¡Eclosionó' + (nacido ? ' un ' + nacido : '') + '!' };
+                    this.huevosFeedback = { tipo: 'success', mensaje: '¡Eclosionó' + (nacido ? ' un ' + nacido : '') + '!' };
                     await this.cargarHuevos(true);
                 } else {
                     let message = 'No se pudo eclosionar el huevo.';
@@ -2432,11 +2432,11 @@ function favoritosApp() {
                         const data = await response.json();
                         message = data.error || data.message || message;
                     } catch (err) {}
-                    this.huevosFeedback = { tipo: 'error', mensaje: '⚠️ ' + message };
+                    this.huevosFeedback = { tipo: 'error', mensaje: message };
                 }
             } catch (err) {
                 console.error('Error eclosionando huevo:', err);
-                this.huevosFeedback = { tipo: 'error', mensaje: '⚠️ Error de conexión al eclosionar el huevo.' };
+                this.huevosFeedback = { tipo: 'error', mensaje: 'Error de conexión al eclosionar el huevo.' };
             } finally {
                 this.huevosActuando = false;
                 this.huevosAccionId = null;

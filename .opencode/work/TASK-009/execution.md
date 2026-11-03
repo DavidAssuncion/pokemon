@@ -136,6 +136,23 @@
 - Se preserva el commit del desarrollador `f30a02b fixes` (tamaños 128, nota de combate, badges, Zone.Identifier).
 - Decisión: el criterio F5 de «0 hex en `combate.css`» deja de aplicarse por petición explícita del desarrollador; los colores de combate vuelven a ser fijos.
 
+## Preferencias de UI y flujo (2026-11-03)
+
+- **Sin emojis en la UI.** Si hace falta un icono, se puede valorar Font Awesome, pero hay que preguntar antes de añadirlo. Se retiró el emoji del botón «Preparación»; no se añadió ningún icono.
+- **Reviewer desactivado por defecto.** No se lanza automáticamente en las tareas; se ejecutará solo bajo petición del desarrollador al terminar la tarea.
+- El desarrollador ha ido ajustando y commiteando la UI de combate (`916d644 fixes`). El árbol queda con la retirada del emoji y el cambio de modo de `.githooks/pre-commit` (ajeno).
+
+## Retirada de emojis de la UI (2026-11-03)
+
+- **0 pictogramas** (`\p{Extended_Pictographic}`) en `resources/views`, `resources/js` y `resources/css`.
+- Vistas: eliminados emojis de tema claro/oscuro, Pokédex (Atrapado), shiny (Shiny), hábitats (Sin imagen, Nido, Refugio, Complementos EV, caramelos, Piso superado), equipos, gimnasios, misiones, exploraciones y combate (victoria/derrota, ataques, turnos, registro).
+- Contratos de presentación preservados con valores vacíos: `statusEmoji`, `clima.icono`, `itemIcono`; las vistas usan `statusLabel`, `clima.label` e `itemNombre`.
+- `CatalogoObjetos` sin iconos; `iconoDe()` devuelve `''`. `starRating()` devuelve `N/5`.
+- Sin Font Awesome, SVG ni iconos nuevos.
+- Docs de Exploraciones actualizadas a «Recompensas perdidas» (sin `⚠️`).
+- Verificación: `view:cache`/`view:clear`, `npm run build`, `php -l` de los 4 PHP y `git diff --check` OK. Sin tests, commit ni push.
+- Reviewer no lanzado (desactivado por el desarrollador; queda bajo petición).
+
 ## Estado
 
-`COMPLETED` — rama `refactor/ui-tokens`, 14 commits, 55 archivos. Pendiente validación visual manual y decisión de fusión (sin push).
+`COMPLETED` — rama `refactor/ui-tokens`, pendiente la revisión que se lanzará bajo petición del desarrollador. Sin `git push`.

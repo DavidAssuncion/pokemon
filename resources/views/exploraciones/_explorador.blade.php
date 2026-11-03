@@ -36,12 +36,7 @@
                     size="64"
                 />
                 @if($explorador['es_shiny'] ?? false)
-                    <span
-                        class="absolute -top-1 -right-1 text-warning text-sm leading-none"
-                        role="img"
-                        aria-label="Variante shiny"
-                        title="Variante shiny"
-                    >★</span>
+                    <span class="absolute -top-1 -right-1 px-1 py-0.5 bg-warning-soft text-warning-ink text-2xs font-bold rounded" title="Variante shiny">Shiny</span>
                 @endif
             </div>
         @endif

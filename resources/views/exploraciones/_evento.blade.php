@@ -214,7 +214,7 @@
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
         </svg>
         <div class="flex flex-wrap items-center gap-2">
-            <span class="text-sm font-semibold text-danger-ink">⚔️ Combate</span>
+            <span class="text-sm font-semibold text-danger-ink">Combate</span>
             @if($evento['resolucion'] !== '')
                 <span class="text-xs text-ink-muted">· {{ $evento['resolucion'] }}</span>
             @endif

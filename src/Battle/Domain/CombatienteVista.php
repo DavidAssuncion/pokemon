@@ -70,7 +70,7 @@ final class CombatienteVista
             'status' => $estado->value,
             'statusLabel' => $estado === EstadoPokemon::NONE ? '' : $estado->label(),
             'statusIcono' => self::iconoEstado($estado),
-            'statusEmoji' => self::emojiEstado($estado),
+            'statusEmoji' => '',
             'statusTurns' => $combatiente->turnosEstado(),
             'statusTurnsTexto' => $combatiente->turnosEstado() > 0
                 ? ' ('.$combatiente->turnosEstado().' turnos)'
@@ -216,7 +216,7 @@ final class CombatienteVista
                 'clase' => $roto ? 'bg-secondary text-decoration-line-through' : 'bg-dark',
                 'hpTexto' => (string) ceil($hp),
                 'hpMaxTexto' => (string) ceil($hpMax),
-                'texto' => $roto ? '✖' : (string) ceil($hp),
+                'texto' => $roto ? '0' : (string) ceil($hp),
             ]);
         }
 
@@ -251,16 +251,6 @@ final class CombatienteVista
             EstadoPokemon::BURN => '/images/type/fuego.webp',
             EstadoPokemon::POISON, EstadoPokemon::BAD_POISON => '/images/type/veneno.webp',
             EstadoPokemon::PARALYSIS => '/images/type/electrico.webp',
-            default => null,
-        };
-    }
-
-    private static function emojiEstado(EstadoPokemon $estado): ?string
-    {
-        return match ($estado) {
-            EstadoPokemon::SLEEP => '💤',
-            EstadoPokemon::FREEZE => '❄',
-            EstadoPokemon::CONFUSION => '😵',
             default => null,
         };
     }

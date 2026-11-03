@@ -27,13 +27,13 @@
         const VITALES = ['hp', 'def', 'spdef'];
 
         const ESTADOS = {
-            burn: { icono: '🔥', label: 'Quemadura' },
-            poison: { icono: '☠', label: 'Veneno' },
-            bad_poison: { icono: '☠', label: 'Tóxico' },
-            paralysis: { icono: '⚡', label: 'Parálisis' },
-            sleep: { icono: '💤', label: 'Sueño' },
-            freeze: { icono: '❄', label: 'Congelado' },
-            confusion: { icono: '😵', label: 'Confusión' },
+            burn: { label: 'Quemadura' },
+            poison: { label: 'Veneno' },
+            bad_poison: { label: 'Tóxico' },
+            paralysis: { label: 'Parálisis' },
+            sleep: { label: 'Sueño' },
+            freeze: { label: 'Congelado' },
+            confusion: { label: 'Confusión' },
         };
 
         function instantaneaVitales() {
@@ -441,23 +441,18 @@
             carta.style.setProperty('--hit-force', fuerza.toFixed(2));
             reiniciarAnimacion(carta, 'hitToken', ['anim-hit', 'anim-impacto'], 800);
 
-            const esTick = evento.tipo === 'round' || evento.tipo === 'status_block';
-            const estado = esTick && cambio.actual && cambio.actual.status !== 'none'
-                ? (ESTADOS[cambio.actual.status] || null)
-                : null;
-            const prefijo = estado ? estado.icono + ' ' : '';
             let offset = 0;
 
             if ((delta.def || 0) < 0) {
-                mostrarPildora(carta, prefijo + '-' + Math.ceil(Math.abs(delta.def)) + ' DEF', 'vital-delta-barrera', offset);
+                mostrarPildora(carta, '-' + Math.ceil(Math.abs(delta.def)) + ' DEF', 'vital-delta-barrera', offset);
                 offset -= 18;
             }
             if ((delta.spdef || 0) < 0) {
-                mostrarPildora(carta, prefijo + '-' + Math.ceil(Math.abs(delta.spdef)) + ' DEF.ESP', 'vital-delta-barrera', offset);
+                mostrarPildora(carta, '-' + Math.ceil(Math.abs(delta.spdef)) + ' DEF.ESP', 'vital-delta-barrera', offset);
                 offset -= 18;
             }
             if ((delta.hp || 0) < 0) {
-                mostrarPildora(carta, prefijo + '-' + Math.ceil(Math.abs(delta.hp)) + ' PS', 'vital-delta-dano', offset);
+                mostrarPildora(carta, '-' + Math.ceil(Math.abs(delta.hp)) + ' PS', 'vital-delta-dano', offset);
                 offset -= 18;
             }
 
@@ -499,7 +494,7 @@
                 : null;
 
             if (estado) {
-                mostrarPildora(carta, estado.icono + ' ' + estado.label.toUpperCase(), 'vital-delta-estado', desplazamiento);
+                mostrarPildora(carta, estado.label.toUpperCase(), 'vital-delta-estado', desplazamiento);
             } else if (evento.texto) {
                 mostrarPildora(carta, evento.texto, 'vital-delta-estado', desplazamiento);
             }

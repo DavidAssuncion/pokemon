@@ -17,7 +17,7 @@
 @php
     $badge = \Src\Shared\UI\TipoBadges::resolver($tipo ?? $slug ?? $label);
     $tamanosIcono = [
-        'xs' => 'w-4 h-4',
+        'xs' => 'w-8 h-8',
         'sm' => 'w-5 h-5',
         'md' => 'w-7 h-7',
     ];

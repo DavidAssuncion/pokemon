@@ -16,11 +16,11 @@
             @if(!empty($p['item']))
                 <span class="badge bg-surface border text-ink {{ $p['itemActivo'] ? '' : 'opacity-50' }}"
                       title="{{ $p['itemNombre'] }}{{ $p['itemActivo'] ? '' : ' (bloqueado)' }}">
-                    {{ $p['itemIcono'] }}{{ $p['itemBloqueado'] ? ' 🚫' : '' }}
+                    {{ $p['itemNombre'] }}{{ $p['itemBloqueado'] ? ' (bloqueado)' : '' }}
                 </span>
             @endif
             @if($p['habilidadAnulada'])
-                <span class="badge bg-ink text-ink-inverse" title="Habilidad anulada">HAB ✖</span>
+                <span class="badge bg-ink text-ink-inverse" title="Habilidad anulada">HAB</span>
             @endif
             @if($p['esJefe'])
                 <span class="badge bg-danger-soft text-danger-ink" title="Jefe">JEFE</span>
@@ -42,7 +42,7 @@
                     @if($p['statusIcono'] !== null)
                         <img src="{{ $p['statusIcono'] }}" alt="{{ $p['statusLabel'] }}" style="width:20px;height:20px;object-fit:contain">
                     @else
-                        {{ $p['statusEmoji'] }}
+                        {{ $p['statusLabel'] }}
                     @endif
                 </span>
             @endif

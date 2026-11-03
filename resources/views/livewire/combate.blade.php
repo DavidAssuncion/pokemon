@@ -129,7 +129,7 @@
             <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h5 id="victory-modal-title" class="modal-title text-success-ink fw-bold">🏆 ¡Victoria!</h5>
+                        <h5 id="victory-modal-title" class="modal-title text-success-ink fw-bold">¡Victoria!</h5>
                     </div>
                     <div class="modal-body">
                         @if($rewardsVista['layout'] === 'ruta')
@@ -166,7 +166,7 @@
                                                             class="rounded-full {{ $captura['es_shiny'] ? 'bg-warning-soft' : '' }}"
                                                         />
                                                         @if($captura['es_shiny'])
-                                                            <span class="absolute -top-1.5 -left-1.5 px-1 py-0.5 bg-warning-soft text-warning-ink text-2xs font-bold rounded-full shadow" title="Shiny">✨</span>
+                                                            <span class="absolute -top-1.5 -left-1.5 px-1 py-0.5 bg-warning-soft text-warning-ink text-2xs font-bold rounded-full shadow" title="Shiny">Shiny</span>
                                                         @endif
                                                         <span class="absolute -top-1.5 -right-1.5 px-1.5 py-0.5 bg-success text-on-primary text-2xs font-bold rounded-full">
                                                             ×{{ $captura['cantidad'] }}
@@ -215,7 +215,6 @@
                             {{-- Medalla (gimnasio) --}}
                             @if($rewardsVista['medalla'] !== null)
                             <div class="alert alert-warning text-center py-3 mb-3" role="alert">
-                                <span class="d-block" style="font-size:2rem;">🏅</span>
                                 <strong class="d-block text-warning-ink mt-1" style="font-size:1.1rem;">
                                     ¡Has ganado la {{ $rewardsVista['medalla'] }}!
                                 </strong>

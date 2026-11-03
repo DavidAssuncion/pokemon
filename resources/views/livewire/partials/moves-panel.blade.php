@@ -17,7 +17,7 @@
              pendiente (ver ANALISIS_FRONTEND 2026-10-21). --}}
         <div class="waiting d-flex align-items-center gap-2 text-muted" role="status">
             <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-            <span>⚔ {{ $animAttackerNombre }} usa {{ $animMoveNombre !== '' ? $animMoveNombre : 'un ataque' }}...</span>
+            <span>{{ $animAttackerNombre }} usa {{ $animMoveNombre !== '' ? $animMoveNombre : 'un ataque' }}...</span>
         </div>
     @elseif($phase === 'player_move')
         {{-- Ataques en cards: 2 por fila en móvil, 3 en tablet y 1 en el panel lateral de escritorio. --}}
@@ -76,7 +76,7 @@
                             @if($move['statusLabel'] !== '')
                                 <div class="d-flex flex-wrap gap-1">
                                     <span class="badge bg-warning-soft text-warning-ink status-badge">
-                                        {{ $move['statusEmoji'] }} {{ $move['statusLabel'] }}
+                                        {{ $move['statusLabel'] }}
                                     </span>
                                 </div>
                             @endif
@@ -128,7 +128,7 @@
     @elseif($phase === 'animating')
         <div class="waiting d-flex align-items-center gap-2 text-muted">
             <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-            <span>⚔ Ejecutando turno...</span>
+            <span>Ejecutando turno...</span>
         </div>
     @else
         <div class="waiting d-flex align-items-center gap-2 text-muted">

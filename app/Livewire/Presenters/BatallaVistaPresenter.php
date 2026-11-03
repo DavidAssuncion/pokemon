@@ -261,7 +261,7 @@ final class BatallaVistaPresenter
             $clima = [
                 'tipo' => $weather,
                 'label' => $tipoClima?->label() ?? $weather,
-                'icono' => self::iconoClima($weather),
+                'icono' => '',
                 'variante' => in_array($weather, ['sequia', 'tormenta_arena'], true)
                     ? 'alert-warning'
                     : 'alert-info',
@@ -435,18 +435,5 @@ final class BatallaVistaPresenter
             'nombre' => $caramelo['nombre'] ?? 'Caramelo',
             'cantidad' => (int) ($caramelo['cantidad'] ?? 0),
         ], $caramelos);
-    }
-
-    private static function iconoClima(string $weather): string
-    {
-        return match ($weather) {
-            'sequia' => '☀️',
-            'diluvio' => '🌧',
-            'niebla' => '🌫',
-            'granizo' => '❄️',
-            'tormenta_arena' => '🌪',
-            'turbulencias' => '💨',
-            default => '🌤',
-        };
     }
 }

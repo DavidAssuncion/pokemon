@@ -30,7 +30,7 @@
                     >
                     @else
                     <div class="w-48 h-32 rounded-control bg-surface-sunken flex items-center justify-center">
-                        <span class="text-4xl">🏔️</span>
+                        <span class="text-xs text-ink-muted">Sin imagen</span>
                     </div>
                     @endif
                     <h1 class="absolute bottom-0 inset-x-0 px-3 py-2 text-on-primary text-sm font-bold truncate rounded-b-lg"
@@ -462,7 +462,7 @@
                     :disabled="!selectedTeamId"
                     class="w-full px-4 py-3 bg-danger text-on-primary rounded-card text-sm font-bold transition-all hover:bg-danger/90 disabled:bg-surface-sunken disabled:text-ink-muted disabled:cursor-not-allowed uppercase tracking-wide"
                 >
-                    ⚔️ Combate de Ruta
+                    Combate de Ruta
                 </button>
                 <button
                     x-show="modo === 'entrenadores'"
@@ -730,7 +730,7 @@
                                     ? 'bg-primary text-on-primary border-primary'
                                     : 'bg-surface-sunken text-ink border-line-strong'"
                                 class="px-3 py-1.5 rounded-control text-xs font-bold border transition-colors"
-                                x-text="formacion[miembro.slot] === 'vanguardia' ? '🛡️ Vanguardia' : '⚔️ Retaguardia'"
+                                x-text="formacion[miembro.slot] === 'vanguardia' ? 'Vanguardia' : 'Retaguardia'"
                             ></button>
                         </div>
                     </template>
@@ -754,7 +754,7 @@
                             : (!selectedTeamId || !selectedTrainer)"
                         class="flex-1 px-4 py-2.5 bg-danger text-on-primary rounded-control text-sm font-bold hover:bg-danger/90 transition-colors disabled:bg-surface-sunken disabled:text-ink-muted disabled:cursor-not-allowed"
                         x-text="formacionContexto === 'ruta'
-                            ? (rutaCombatiendo ? 'Iniciando combate...' : '⚔️ ¡Combatir! (Ruta 3v3)')
+                            ? (rutaCombatiendo ? 'Iniciando combate...' : '¡Combatir! (Ruta 3v3)')
                             : '¡Combatir!'"
                     ></button>
                 </div>
@@ -1051,7 +1051,7 @@
                                                         ? 'bg-primary text-on-primary border-primary'
                                                         : 'bg-surface-sunken text-ink border-line-strong'"
                                                     class="px-3 py-1.5 rounded-control text-xs font-bold border transition-colors shrink-0"
-                                                    x-text="(mazmorraFormacion[miembro.slot] === 'vanguardia' ? '🛡️ Vanguardia' : '⚔️ Retaguardia')"
+                                                    x-text="(mazmorraFormacion[miembro.slot] === 'vanguardia' ? 'Vanguardia' : 'Retaguardia')"
                                                 ></button>
                                             </div>
                                         </template>
@@ -1144,7 +1144,7 @@
                                         </div>
                                         <div class="text-right shrink-0">
                                             <p class="text-2xs uppercase tracking-wide text-ink-subtle">Caramelos familia</p>
-                                            <p class="text-sm font-bold text-ink">🍬 <span x-text="saldoFamilia(familia.evolution_chain_id)"></span></p>
+                                            <p class="text-sm font-bold text-ink"><span x-text="saldoFamilia(familia.evolution_chain_id)"></span></p>
                                         </div>
                                     </div>
 
@@ -1152,7 +1152,7 @@
                                         <!-- Nido -->
                                         <div class="rounded-card border border-warning bg-warning-soft p-3">
                                             <div class="flex items-center justify-between gap-2">
-                                                <p class="text-sm font-bold text-ink">🪺 Nido</p>
+                                                <p class="text-sm font-bold text-ink">Nido</p>
                                                 <span class="text-xs font-semibold text-warning-ink" x-text="'Nv ' + familia.nido.nivel + '/' + familia.nido.max"></span>
                                             </div>
                                             <p class="text-xs text-ink-muted mt-2">
@@ -1167,14 +1167,14 @@
                                                 :disabled="granjaAccionando || !familia.nido.puede_mejorar"
                                                 class="mt-3 w-full px-3 py-2 rounded-control text-xs font-bold transition-colors disabled:bg-surface-sunken disabled:text-ink-muted disabled:cursor-not-allowed bg-warning text-on-primary hover:bg-warning/90"
                                             >
-                                                <span x-text="familia.nido.coste_siguiente !== null ? (familia.nido.nivel === 0 ? 'Construir nido' : 'Mejorar nido') + ' · ' + familia.nido.coste_siguiente + ' 🍬' : 'Nido al máximo'"></span>
+                                                <span x-text="familia.nido.coste_siguiente !== null ? (familia.nido.nivel === 0 ? 'Construir nido' : 'Mejorar nido') + ' · ' + familia.nido.coste_siguiente + ' caramelos' : 'Nido al máximo'"></span>
                                             </button>
                                         </div>
 
                                         <!-- Refugio -->
                                         <div class="rounded-card border border-success bg-success-soft p-3">
                                             <div class="flex items-center justify-between gap-2">
-                                                <p class="text-sm font-bold text-ink">🏕️ Refugio</p>
+                                                <p class="text-sm font-bold text-ink">Refugio</p>
                                                 <span class="text-xs font-semibold text-success-ink" x-text="'Nv ' + familia.refugio.nivel + '/' + familia.refugio.max"></span>
                                             </div>
                                             <p class="text-xs text-ink-muted mt-2">
@@ -1196,7 +1196,7 @@
                                                 :disabled="granjaAccionando || !familia.refugio.puede_mejorar"
                                                 class="mt-3 w-full px-3 py-2 rounded-control text-xs font-bold transition-colors disabled:bg-surface-sunken disabled:text-ink-muted disabled:cursor-not-allowed bg-success text-on-primary hover:bg-success/90"
                                             >
-                                                <span x-text="familia.refugio.coste_siguiente !== null ? (familia.refugio.nivel === 0 ? 'Construir refugio' : 'Mejorar refugio') + ' · ' + familia.refugio.coste_siguiente + ' 🍬' : 'Refugio al máximo'"></span>
+                                                <span x-text="familia.refugio.coste_siguiente !== null ? (familia.refugio.nivel === 0 ? 'Construir refugio' : 'Mejorar refugio') + ' · ' + familia.refugio.coste_siguiente + ' caramelos' : 'Refugio al máximo'"></span>
                                             </button>
                                             <button
                                                 type="button"
@@ -1212,7 +1212,7 @@
                                     <!-- Complementos -->
                                     <div>
                                         <div class="flex items-center justify-between gap-2">
-                                            <p class="text-sm font-bold text-ink">🧪 Complementos EV</p>
+                                            <p class="text-sm font-bold text-ink">Complementos EV</p>
                                             <span class="text-xs font-semibold text-primary-ink" x-text="'Total familia: +' + familia.ev_total + ' EV'"></span>
                                         </div>
                                         <p x-show="familia.refugio.insalubres" class="text-xs text-danger-ink mt-1">
@@ -1227,7 +1227,7 @@
                                                     </div>
                                                     <p class="text-3xs text-primary-ink mt-1">+<span x-text="comp.ev"></span> EV</p>
                                                     <p class="text-2xs text-ink-muted">
-                                                        <span x-show="comp.coste_ev !== null" x-text="comp.coste_ev + ' EV 🍬 + ' + comp.coste_familia + ' fam. 🍬'"></span>
+                                                        <span x-show="comp.coste_ev !== null" x-text="comp.coste_ev + ' EV + ' + comp.coste_familia + ' caramelos familia'"></span>
                                                         <span x-show="comp.coste_ev === null">Máximo</span>
                                                     </p>
                                                     <button
@@ -1557,7 +1557,7 @@ function habitatShow() {
         },
 
         estadoPisoTexto(piso) {
-            if (piso.estado === 'ganado') return '✔ Piso superado';
+            if (piso.estado === 'ganado') return 'Piso superado';
             if (piso.estado === 'cooldown') {
                 const hasta = piso.cooldown_hasta;
                 if (hasta) return 'Cooldown hasta ' + new Date(hasta).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
@@ -1998,7 +1998,7 @@ function habitatShow() {
 
         starRating(n) {
             const valor = Math.max(0, Math.min(5, Number(n) || 0));
-            return '★'.repeat(valor) + '☆'.repeat(5 - valor);
+            return valor + '/5';
         },
 
         riesgoClass(riesgo) {

@@ -35,7 +35,7 @@ reclutado** (`reclutado_id`); no hay equipo de expedición.
 | `Presentation/EventoExploracionVista.php` | Contrato del diario: narrativa, caramelos, PV de derrota y `reason_texto` |
 | `Presentation/HitoExploracion.php`, `FraseAnimo.php` | Hitos y textos de ánimo |
 | `Presentation/DTOIncidentesExploracion.php`, `DTOObjetoPerdido.php` | DTOs de incidentes y objetos perdidos |
-| `resources/views/exploraciones/_perdidas.blade.php` | Partial «⚠️ Perdiste objetos» (solo tarjeta de resultados) |
+| `resources/views/exploraciones/_perdidas.blade.php` | Partial «Recompensas perdidas» (solo tarjeta de resultados) |
 
 ## Puntos de entrada
 
