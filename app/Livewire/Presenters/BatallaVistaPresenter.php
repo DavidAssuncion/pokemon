@@ -134,7 +134,7 @@ final class BatallaVistaPresenter
                 $clases[] = 'opacity-50';
             }
             if ($p['acting'] === true) {
-                $clases[] = 'border border-2 border-warning';
+                $clases[] = 'acting-card';
             }
             if ($p['targeted'] === true) {
                 $clases[] = 'targeted-card';
@@ -207,13 +207,15 @@ final class BatallaVistaPresenter
                 continue;
             }
 
+            $esActual = $idx === 0 || $p['refId'] === $actingRefId;
+
             $items[] = [
                 'key' => $idx.'-'.$turn['team'].'-'.$turn['index'],
                 'nombre' => $p['nombre'],
                 'icon' => $p['icon'],
                 'velocidad' => (int) round((float) $p['effectiveSpeed']),
-                'badgeClass' => $idx === 0 ? 'bg-primary' : 'bg-secondary',
-                'activeClass' => $idx === 0 || $p['refId'] === $actingRefId ? 'active-turn' : '',
+                'badgeClass' => $turn['team'] === 0 ? 'turn-ally' : 'turn-enemy',
+                'activeClass' => $esActual ? 'active-turn' : '',
             ];
         }
 

@@ -103,18 +103,22 @@
     {{-- TOP: TURN ORDER --}}
     @include('livewire.partials.turn-bar')
 
-    {{-- PREPARACIÓN DE RONDA --}}
-    @include('livewire.partials.preparacion-panel')
-
-    {{-- CAMPO Y ATAQUES A ANCHO COMPLETO --}}
-    <div class="d-flex flex-column gap-3">
-        @include('livewire.partials.battle-field')
-        @include('livewire.partials.moves-panel')
+    {{-- CAMPO (2/3) Y ATAQUES (1/3) --}}
+    <div class="row g-3">
+        <div class="col-12 col-lg-9">
+            @include('livewire.partials.battle-field')
+        </div>
+        <div class="col-12 col-lg-3">
+            @include('livewire.partials.moves-panel')
+        </div>
     </div>
 </div>
 
 {{-- REGISTRO DE BATALLA: se consulta en modal para liberar la columna --}}
 @include('livewire.partials.battle-log-modal')
+
+{{-- PREPARACIÓN DE RONDA: se ajusta en modal para no ocupar espacio --}}
+@include('livewire.partials.preparacion-modal')
 
     {{-- MODAL VICTORIA: recompensas al ganar --}}
     @if($phase === 'battle_over' && $rewardsVista !== null)

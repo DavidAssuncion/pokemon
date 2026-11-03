@@ -5,15 +5,6 @@
         </div>
     @endif
 
-    @if($battleField['clima'] !== null)
-        <div class="alert {{ $battleField['clima']['variante'] }} weather-{{ $battleField['clima']['tipo'] }} py-1 px-3 mb-2" role="status">
-            <span class="weather-label fw-semibold">{{ $battleField['clima']['icono'] }} {{ $battleField['clima']['label'] }}</span>
-            @if($battleField['clima']['mostrarBonusRoca'])
-                <span class="weather-power d-block small">(+500 potencia a movimientos Roca)</span>
-            @endif
-        </div>
-    @endif
-
     @if($battleField['mostrarAnimacion'])
         <div class="alert alert-info py-1 px-3 mb-2 d-flex align-items-center gap-2 flex-wrap" role="status">
             <span class="anim-attacker fw-bold">{{ $battleField['animAttackerNombre'] }}</span>

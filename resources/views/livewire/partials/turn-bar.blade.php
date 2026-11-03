@@ -11,6 +11,25 @@
             @endforelse
 
             <div class="ms-auto d-flex align-items-center gap-2">
+                @if($battleField['clima'] !== null)
+                    <div class="alert {{ $battleField['clima']['variante'] }} weather-{{ $battleField['clima']['tipo'] }} py-1 px-2 mb-0 d-inline-flex align-items-center gap-2"
+                         role="status"
+                         title="Clima actual: {{ $battleField['clima']['label'] }}">
+                        <span class="weather-label fw-semibold">{{ $battleField['clima']['icono'] }} {{ $battleField['clima']['label'] }}</span>
+                        @if($battleField['clima']['mostrarBonusRoca'])
+                            <span class="weather-power small" title="+500 potencia a movimientos Roca">(+500 Roca)</span>
+                        @endif
+                    </div>
+                @endif
+                @if($preparacionPendiente)
+                    <button type="button"
+                            class="btn btn-sm btn-outline-primary"
+                            data-bs-toggle="modal"
+                            data-bs-target="#preparacion-modal"
+                            title="Ajusta posturas y movimientos de prioridad al inicio de la ronda">
+                        🧭 Preparación
+                    </button>
+                @endif
                 @if($turnBar['mostrarEsperar'])
                     <button type="button"
                             class="btn btn-sm btn-outline-secondary"
