@@ -6,7 +6,7 @@
         {{-- Sin nombre: el sprite y las insignias identifican al pokémon --}}
         <div class="d-flex flex-wrap align-items-center gap-1">
             @if(! empty($p['cp']))
-                <span class="badge bg-purple-100 text-purple-700 small" title="Poder de combate">CP {{ number_format($p['cp']) }}</span>
+                <span class="badge bg-info-soft text-info-ink small" title="Poder de combate">CP {{ number_format($p['cp']) }}</span>
             @endif
             @if($p['alive'])
                 <span class="badge {{ $p['posturaClase'] }}" title="Postura de ronda: {{ $p['posturaLabel'] }}">
@@ -14,21 +14,21 @@
                 </span>
             @endif
             @if(!empty($p['item']))
-                <span class="badge bg-light border text-dark {{ $p['itemActivo'] ? '' : 'opacity-50' }}"
+                <span class="badge bg-surface border text-ink {{ $p['itemActivo'] ? '' : 'opacity-50' }}"
                       title="{{ $p['itemNombre'] }}{{ $p['itemActivo'] ? '' : ' (bloqueado)' }}">
                     {{ $p['itemIcono'] }}{{ $p['itemBloqueado'] ? ' 🚫' : '' }}
                 </span>
             @endif
             @if($p['habilidadAnulada'])
-                <span class="badge bg-dark" title="Habilidad anulada">HAB ✖</span>
+                <span class="badge bg-ink text-ink-inverse" title="Habilidad anulada">HAB ✖</span>
             @endif
             @if($p['esJefe'])
-                <span class="badge bg-danger" title="Jefe">JEFE</span>
-                <span class="badge bg-warning text-dark" title="Fase actual">
+                <span class="badge bg-danger-soft text-danger-ink" title="Jefe">JEFE</span>
+                <span class="badge bg-warning-soft text-warning-ink" title="Fase actual">
                     {{ $p['jefe']['nombreFase'] ?? 'Fase 1' }}
                 </span>
                 @if(!empty($p['jefe']['enrage']))
-                    <span class="badge bg-danger" title="Enrage activo">ENRAGE</span>
+                    <span class="badge bg-danger-soft text-danger-ink" title="Enrage activo">ENRAGE</span>
                 @endif
                 @foreach($p['jefePartes'] as $parte)
                     <span class="badge {{ $parte['clase'] }}"
@@ -38,7 +38,7 @@
                 @endforeach
             @endif
             @if($p['statusLabel'] !== '')
-                <span class="badge bg-danger status-badge" title="{{ $p['statusLabel'] }}{{ $p['statusTurnsTexto'] }}">
+                <span class="badge bg-danger-soft text-danger-ink status-badge" title="{{ $p['statusLabel'] }}{{ $p['statusTurnsTexto'] }}">
                     @if($p['statusIcono'] !== null)
                         <img src="{{ $p['statusIcono'] }}" alt="{{ $p['statusLabel'] }}" style="width:20px;height:20px;object-fit:contain">
                     @else
@@ -47,18 +47,18 @@
                 </span>
             @endif
             @if(! $p['alive'])
-                <span class="badge bg-dark ko-badge">K.O.</span>
+                <span class="badge bg-ink text-ink-inverse ko-badge">K.O.</span>
             @endif
             @if($p['esInvocacion'])
-                <span class="badge bg-dark" title="Invocación temporal">INV {{ $p['turnosInvocacion'] }}</span>
+                <span class="badge bg-ink text-ink-inverse" title="Invocación temporal">INV {{ $p['turnosInvocacion'] }}</span>
             @endif
             @if($p['combo'] > 0)
-                <span class="badge bg-info text-dark" title="Racha de combo">
+                <span class="badge bg-info-soft text-info-ink" title="Racha de combo">
                     COMBO {{ $p['combo'] }} · ×{{ number_format($p['comboMultiplicador'], 2) }}
                 </span>
             @endif
             @foreach($p['condicionesBadge'] as $condicion)
-                <span class="badge bg-secondary" title="{{ $condicion['turnos'] }} turnos">
+                <span class="badge bg-surface-sunken text-ink-muted" title="{{ $condicion['turnos'] }} turnos">
                     {{ $condicion['label'] }}
                 </span>
             @endforeach
@@ -107,7 +107,16 @@
 
         {{-- El pokémon va debajo de las barras, centrado --}}
         <div class="text-center pt-1">
-            <img src="{{ $p['icon'] }}" alt="{{ $p['nombre'] }}" class="img-fluid rounded pokemon-sprite" style="width:72px; height:72px; object-fit:contain; margin: 0 auto;" loading="lazy" @if($p['es_shiny']) onerror="this.onerror=null; this.src='{{ $p['iconoNormal'] }}';" @endif>
+            <x-sprite
+                size="combat"
+                :src="$p['icon']"
+                :name="$p['nombre']"
+                :shiny="$p['es_shiny']"
+                @if($p['es_shiny'])
+                    x-on:error="this.onerror=null; this.src='{{ $p['iconoNormal'] }}'"
+                @endif
+                class="pokemon-sprite"
+            />
         </div>
     </div>
 </div>

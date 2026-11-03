@@ -1,65 +1,86 @@
 @import "bootstrap/dist/css/bootstrap.min.css" layer(bootstrap);
 
 /* ─── Estilos de combate (los que Bootstrap no cubre) ─── */
-.border-primary { border: 2px solid #0d6efd !important; }
+.border-primary { border: 2px solid var(--color-primary) !important; }
 .cursor-pointer { cursor: pointer; }
 .cursor-not-allowed { cursor: not-allowed; }
-.bg-hp-low { background-color: #dc3545; }
-.bg-hp-mid { background-color: #ffc107; }
-.bg-hp-high { background-color: #198754; }
-.stage-up { background-color: #d1e7dd; color: #0f5132; }
-.stage-down { background-color: #f8d7da; color: #842029; }
-.weather-sequia { background: #78350f; color: #fcd34d; border-color: #92400e; }
-.weather-diluvio { background: #1e3a5f; color: #93c5fd; border-color: #1d4ed8; }
-.weather-niebla { background: #475569; color: #e2e8f0; border-color: #64748b; }
-.weather-granizo { background: #1e293b; color: #93c5fd; border-color: #475569; }
-.weather-tormenta_arena { background: #78350f; color: #fcd34d; border-color: #92400e; }
-.weather-turbulencias { background: #4c1d95; color: #d8b4fe; border-color: #6d28d9; }
-.active-turn { background: #fecc3833 !important; }
+.bg-hp-low { background-color: var(--color-danger); }
+.bg-hp-mid { background-color: var(--color-warning); }
+.bg-hp-high { background-color: var(--color-success); }
+.stage-up { background-color: var(--color-success-soft); color: var(--color-success-ink); }
+.stage-down { background-color: var(--color-danger-soft); color: var(--color-danger-ink); }
+.weather-sequia {
+    background: color-mix(in oklab, var(--color-warning) 65%, var(--color-ink));
+    color: var(--color-warning-soft);
+    border-color: color-mix(in oklab, var(--color-warning) 55%, var(--color-ink));
+}
+.weather-diluvio {
+    background: color-mix(in oklab, var(--color-primary) 65%, var(--color-ink));
+    color: var(--color-primary-soft);
+    border-color: color-mix(in oklab, var(--color-primary) 55%, var(--color-ink));
+}
+.weather-niebla {
+    background: color-mix(in oklab, var(--color-ink-muted) 65%, var(--color-ink));
+    color: var(--color-ink-inverse);
+    border-color: color-mix(in oklab, var(--color-ink-muted) 55%, var(--color-ink));
+}
+.weather-granizo {
+    background: color-mix(in oklab, var(--color-primary) 65%, var(--color-ink));
+    color: var(--color-primary-soft);
+    border-color: color-mix(in oklab, var(--color-primary) 55%, var(--color-ink));
+}
+.weather-tormenta_arena {
+    background: color-mix(in oklab, var(--color-warning) 65%, var(--color-ink));
+    color: var(--color-warning-soft);
+    border-color: color-mix(in oklab, var(--color-warning) 55%, var(--color-ink));
+}
+.weather-turbulencias {
+    background: color-mix(in oklab, var(--color-info) 65%, var(--color-ink));
+    color: var(--color-info-soft);
+    border-color: color-mix(in oklab, var(--color-info) 55%, var(--color-ink));
+}
+.active-turn { background: color-mix(in oklab, var(--color-warning) 20%, transparent) !important; }
 .targeted-card {
-    background: #ff000033;
-    border: 2px solid #dc3545 !important;
+    background: color-mix(in oklab, var(--color-danger) 20%, transparent);
+    border: 2px solid var(--color-danger) !important;
 }
 
 /* ─── Pokemon cards: fondo explícito, contenido contenido, tamaño uniforme ─── */
 .pokemon-card {
-    background-color: #fff;
+    background-color: var(--color-surface);
     overflow: hidden;
     min-height: 96px;
-}
-.dark .pokemon-card {
-    background-color: #1f2937;
 }
 
 /* ─── Vanguardia: color propio de cada equipo ─── */
 .pokemon-card.vanguardia-jugador,
 .pokemon-card.equipo-jugador {
-    border: 2px solid rgb(39, 200, 237);
-    background-color: rgb(22, 78, 103);
-    color: #f8fafc;
+    border: 2px solid var(--color-primary);
+    background-color: color-mix(in oklab, var(--color-primary) 28%, var(--color-surface));
+    color: var(--color-ink);
 }
 .pokemon-card.vanguardia-rival,
 .pokemon-card.equipo-rival {
-    border: 2px solid rgb(255, 99, 123) !important;
-    background-color: rgb(112, 42, 60);
-    color: #f8fafc;
+    border: 2px solid var(--color-danger) !important;
+    background-color: color-mix(in oklab, var(--color-danger) 28%, var(--color-surface));
+    color: var(--color-ink);
 }
 .pokemon-card.vanguardia-jugador .vital-label-row,
 .pokemon-card.equipo-jugador .vital-label-row,
 .pokemon-card.vanguardia-rival .vital-label-row,
 .pokemon-card.equipo-rival .vital-label-row {
-    color: #e5e7eb;
+    color: var(--color-ink-muted);
 }
 /* El borde de turno activo y el de objetivo siguen teniendo prioridad. */
 .pokemon-card.vanguardia-jugador.border-warning,
 .pokemon-card.equipo-jugador.border-warning,
 .pokemon-card.vanguardia-rival.border-warning,
 .pokemon-card.equipo-rival.border-warning {
-    border-color: var(--bs-warning) !important;
+    border-color: var(--color-warning) !important;
 }
 .pokemon-card.vanguardia-rival.targeted-card,
 .pokemon-card.equipo-rival.targeted-card {
-    border-color: #dc3545 !important;
+    border-color: var(--color-danger) !important;
 }
 .pokemon-card .progress {
     max-width: 100%;
@@ -84,7 +105,7 @@
     left: 50%;
     width: 2px;
     border-radius: 999px;
-    background: linear-gradient(180deg, transparent, rgba(100, 116, 139, .55) 12%, rgba(100, 116, 139, .55) 88%, transparent);
+    background: linear-gradient(180deg, transparent, color-mix(in oklab, var(--color-line-strong) 55%, transparent) 12%, color-mix(in oklab, var(--color-line-strong) 55%, transparent) 88%, transparent);
     transform: translateX(-50%);
     pointer-events: none;
 }
@@ -112,7 +133,7 @@
     }
     .battle-teams .row > .col-6:nth-child(3),
     .battle-teams .row > .col-6:nth-child(4) {
-        border-top: 2px solid rgba(100, 116, 139, .55);
+        border-top: 2px solid color-mix(in oklab, var(--color-line-strong) 55%, transparent);
         padding-top: .75rem;
         margin-top: .5rem;
     }
@@ -131,13 +152,10 @@
     justify-content: space-between;
     gap: .35rem;
     margin-bottom: .2rem;
-    color: #495057;
+    color: var(--color-ink-muted);
     font-size: .7rem;
     font-weight: 600;
     line-height: 1;
-}
-.dark .vital-label-row {
-    color: #cbd5e1;
 }
 .vital-label-row .vital-label {
     min-width: 0;
@@ -156,20 +174,14 @@
 }
 .move-card:hover {
     transform: translateY(-2px);
-    box-shadow: 0 0.4rem 0.9rem rgba(0, 0, 0, 0.16);
+    box-shadow: var(--shadow-card);
 }
 .move-card.move-best {
-    box-shadow: 0 0 0 2px #0d6efd, 0 0.4rem 0.9rem rgba(13, 110, 253, 0.25);
+    box-shadow: 0 0 0 2px var(--color-primary), var(--shadow-card);
 }
 .move-card:focus-visible {
-    outline: 2px solid #0d6efd;
+    outline: 2px solid var(--color-focus);
     outline-offset: 2px;
-}
-.dark .move-card:hover {
-    box-shadow: 0 0.4rem 0.9rem rgba(0, 0, 0, 0.5);
-}
-.dark .move-card.move-best {
-    box-shadow: 0 0 0 2px #60a5fa, 0 0.4rem 0.9rem rgba(96, 165, 250, 0.3);
 }
 
 /* ─── Dark mode: Bootstrap no es consciente de .dark en <html> ─── */
@@ -177,43 +189,43 @@
     color-scheme: dark;
 
     /* Body y texto base (consistentes con Tailwind gray-900/gray-100) */
-    --bs-body-bg: #111827;
-    --bs-body-color: #f9fafb;
+    --bs-body-bg: var(--color-canvas);
+    --bs-body-color: var(--color-ink);
     --bs-body-color-rgb: 249, 250, 251;
 
     /* Fondos secundarios/terciarios (progress track, header del registro) */
-    --bs-secondary-bg: #1f2937;
+    --bs-secondary-bg: var(--color-surface);
     --bs-secondary-bg-rgb: 31, 41, 55;
-    --bs-tertiary-bg: #1f2937;
+    --bs-tertiary-bg: var(--color-surface);
     --bs-tertiary-bg-rgb: 31, 41, 55;
 
     /* Texto muted (labels, "Sin eventos", "Próximos turnos") */
-    --bs-secondary-color: #9ca3af;
+    --bs-secondary-color: var(--color-ink-muted);
 
     /* Cards (pokemon, turnos, registro) */
-    --bs-card-bg: #1f2937;
-    --bs-card-color: #f9fafb;
-    --bs-card-border-color: #374151;
+    --bs-card-bg: var(--color-surface);
+    --bs-card-color: var(--color-ink);
+    --bs-card-border-color: var(--color-line);
 
     /* List group del registro de batalla */
-    --bs-list-group-bg: #1f2937;
-    --bs-list-group-color: #f9fafb;
-    --bs-list-group-border-color: #374151;
+    --bs-list-group-bg: var(--color-surface);
+    --bs-list-group-color: var(--color-ink);
+    --bs-list-group-border-color: var(--color-line);
 
     /* Enlaces (si algún componente Bootstrap los usa) */
-    --bs-link-color: #93c5fd;
-    --bs-link-hover-color: #60a5fa;
+    --bs-link-color: var(--color-primary-ink);
+    --bs-link-hover-color: var(--color-primary);
 }
 
 /* Modal del registro en dark mode (Bootstrap no detecta la clase .dark). */
 .dark .modal-content {
-    background-color: #1f2937;
-    color: #f9fafb;
-    border-color: #374151;
+    background-color: var(--color-surface);
+    color: var(--color-ink);
+    border-color: var(--color-line);
 }
 .dark .modal-header,
 .dark .modal-footer {
-    border-color: #374151;
+    border-color: var(--color-line);
 }
 .dark .modal .btn-close {
     filter: invert(1) grayscale(100%) brightness(200%);
@@ -249,9 +261,9 @@
     transition: width 600ms ease-in 400ms;
 }
 
-.vital-hp-trail { background-color: rgba(220, 53, 69, 0.45); }
-.vital-def-trail { background-color: rgba(13, 202, 240, 0.45); }
-.vital-spdef-trail { background-color: rgba(13, 110, 253, 0.45); }
+.vital-hp-trail { background-color: color-mix(in oklab, var(--color-danger) 45%, transparent); }
+.vital-def-trail { background-color: color-mix(in oklab, var(--color-info) 45%, transparent); }
+.vital-spdef-trail { background-color: color-mix(in oklab, var(--color-primary) 45%, transparent); }
 
 /* ─── Píldora flotante con el delta de vitales (±N) ───
    Decorativa (aria-hidden): los contadores numéricos siguen siendo la fuente de datos. */
@@ -271,44 +283,39 @@
     animation: vital-delta-flota 1200ms ease-out forwards;
 }
 .vital-delta-dano {
-    color: #842029;
-    background-color: rgba(220, 53, 69, .18);
-    border: 1px solid rgba(220, 53, 69, .55);
+    color: var(--color-danger-ink);
+    background-color: color-mix(in oklab, var(--color-danger) 18%, transparent);
+    border: 1px solid color-mix(in oklab, var(--color-danger) 55%, transparent);
 }
 .vital-delta-cura {
-    color: #0f5132;
-    background-color: rgba(25, 135, 84, .18);
-    border: 1px solid rgba(25, 135, 84, .55);
+    color: var(--color-success-ink);
+    background-color: color-mix(in oklab, var(--color-success) 18%, transparent);
+    border: 1px solid color-mix(in oklab, var(--color-success) 55%, transparent);
 }
 .vital-delta-barrera {
-    color: #0e7490;
-    background-color: rgba(13, 202, 240, .18);
-    border: 1px solid rgba(13, 202, 240, .65);
+    color: var(--color-info-ink);
+    background-color: color-mix(in oklab, var(--color-info) 18%, transparent);
+    border: 1px solid color-mix(in oklab, var(--color-info) 65%, transparent);
 }
 .vital-delta-ko {
-    color: #fff;
-    background-color: #7f1d1d;
-    border: 1px solid #ef4444;
+    color: var(--color-ink-inverse);
+    background-color: var(--color-danger);
+    border: 1px solid var(--color-danger-ink);
     font-size: .85rem;
     letter-spacing: .08em;
 }
 .vital-delta-estado {
-    color: #78350f;
-    background-color: rgba(245, 158, 11, .22);
-    border: 1px solid rgba(245, 158, 11, .65);
+    color: var(--color-warning-ink);
+    background-color: color-mix(in oklab, var(--color-warning) 22%, transparent);
+    border: 1px solid color-mix(in oklab, var(--color-warning) 65%, transparent);
     font-size: .72rem;
 }
 .vital-delta-bloqueo {
-    color: #374151;
-    background-color: rgba(107, 114, 128, .18);
-    border: 1px solid rgba(107, 114, 128, .55);
+    color: var(--color-ink-muted);
+    background-color: color-mix(in oklab, var(--color-ink-muted) 18%, transparent);
+    border: 1px solid color-mix(in oklab, var(--color-ink-muted) 55%, transparent);
     font-size: .72rem;
 }
-.dark .vital-delta-dano { color: #fca5a5; }
-.dark .vital-delta-cura { color: #6ee7b7; }
-.dark .vital-delta-barrera { color: #67e8f9; }
-.dark .vital-delta-estado { color: #fcd34d; }
-.dark .vital-delta-bloqueo { color: #d1d5db; background-color: rgba(107, 114, 128, .3); }
 
 @keyframes vital-delta-flota {
     0%   { opacity: 0; transform: translate(-50%, 6px) scale(.85); }
@@ -323,7 +330,7 @@
 .anim-ataque {
     --anim-ataque-dir: 14px;
     animation: anim-ataque-embestida 500ms ease-in-out 1;
-    box-shadow: 0 0 0 2px rgba(255, 193, 7, 0.85), 0 0 16px rgba(255, 193, 7, 0.45) !important;
+    box-shadow: 0 0 0 2px color-mix(in oklab, var(--color-warning) 85%, transparent), 0 0 16px color-mix(in oklab, var(--color-warning) 45%, transparent) !important;
 }
 .pokemon-card[data-team="1"].anim-ataque {
     --anim-ataque-dir: -14px;
@@ -342,8 +349,8 @@
 }
 
 @keyframes anim-cura-brillo {
-    0%   { box-shadow: 0 0 0 2px rgba(25, 135, 84, 0.85), 0 0 16px rgba(25, 135, 84, 0.45); }
-    100% { box-shadow: 0 0 0 2px rgba(25, 135, 84, 0), 0 0 16px rgba(25, 135, 84, 0); }
+    0%   { box-shadow: 0 0 0 2px color-mix(in oklab, var(--color-success) 85%, transparent), 0 0 16px color-mix(in oklab, var(--color-success) 45%, transparent); }
+    100% { box-shadow: 0 0 0 2px color-mix(in oklab, var(--color-success) 0%, transparent), 0 0 16px color-mix(in oklab, var(--color-success) 0%, transparent); }
 }
 
 /* ─── Animación de daño recibido ───
@@ -361,7 +368,7 @@
 
 .anim-hit {
     animation: anim-hit-shake 600ms ease-in-out 1;
-    box-shadow: 0 0 0 2px rgba(220, 53, 69, 0.9), 0 0 18px rgba(220, 53, 69, 0.55) !important;
+    box-shadow: 0 0 0 2px color-mix(in oklab, var(--color-danger) 90%, transparent), 0 0 18px color-mix(in oklab, var(--color-danger) 55%, transparent) !important;
 }
 
 /* ─── Cola de eventos: hit-stop, impacto, barrera rota, KO y estados ─── */
@@ -383,9 +390,9 @@
     animation: barrera-rota-flash 700ms ease-out 1;
 }
 @keyframes barrera-rota-flash {
-    0%   { box-shadow: 0 0 0 0 rgba(13, 202, 240, 0); }
-    30%  { box-shadow: 0 0 0 3px rgba(13, 202, 240, .95), 0 0 18px rgba(13, 202, 240, .7); }
-    100% { box-shadow: 0 0 0 0 rgba(13, 202, 240, 0); }
+    0%   { box-shadow: 0 0 0 0 color-mix(in oklab, var(--color-info) 0%, transparent); }
+    30%  { box-shadow: 0 0 0 3px color-mix(in oklab, var(--color-info) 95%, transparent), 0 0 18px color-mix(in oklab, var(--color-info) 70%, transparent); }
+    100% { box-shadow: 0 0 0 0 color-mix(in oklab, var(--color-info) 0%, transparent); }
 }
 
 .anim-ko {
@@ -413,7 +420,7 @@
 .hp-bajo .vital-hp { animation: hp-alerta 1.4s ease-in-out infinite; }
 .hp-critico .vital-hp { animation-duration: .8s; }
 @keyframes hp-alerta {
-    50% { filter: brightness(1.4); box-shadow: 0 0 8px rgba(220, 53, 69, .85); }
+    50% { filter: brightness(1.4); box-shadow: 0 0 8px color-mix(in oklab, var(--color-danger) 85%, transparent); }
 }
 
 .move-breakdown { display: flex; gap: .35rem; flex-wrap: wrap; }
@@ -428,7 +435,7 @@
 
 .round-pulso { animation: ronda-pulso 650ms ease-out 1; }
 @keyframes ronda-pulso {
-    40% { transform: scale(1.12); box-shadow: 0 0 0 3px rgba(13, 110, 253, .35); }
+    40% { transform: scale(1.12); box-shadow: 0 0 0 3px color-mix(in oklab, var(--color-primary) 35%, transparent); }
 }
 
 .fin-batalla { animation: fin-batalla-entrada 450ms ease-out 1; }

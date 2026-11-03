@@ -3,7 +3,7 @@
         <h3 class="h5 mb-0">Ataques</h3>
         <div class="d-flex align-items-center gap-2">
             @if($movesResumen['comboActual'] > 0)
-                <span class="badge bg-info text-dark" title="Racha de combo">
+                <span class="badge bg-info-soft text-info-ink" title="Racha de combo">
                     COMBO {{ $movesResumen['comboActual'] }} · ×{{ number_format($movesResumen['comboMultiplicador'], 2) }}
                 </span>
             @endif
@@ -26,7 +26,7 @@
                 <div class="col-6 col-md-4 col-xl-2">
                     <button type="button"
                             class="card move-card h-100 w-100 text-start position-relative {{ $move['esMejor'] ? 'move-best' : '' }} {{ $move['disponible'] ? '' : 'opacity-50' }}"
-                            style="background-color: {{ $move['tipoColor'] }}; color: #fff"
+                            style="background-color: var(--type-{{ $move['tipoSlug'] }}); color: var(--color-on-primary)"
                             @disabled(! $move['disponible'])
                             title="{{ $move['disponible'] ? '' : $move['motivoTexto'] }}"
                             wire:click="selectMove({{ $idx }})">
@@ -41,11 +41,11 @@
                             @if($move['potencia'] > 0)
                                 <div class="lh-1">
                                     <span class="fs-5 fw-bold move-dmg">{{ ceil($move['daño']) }}</span>
-                                    <span class="small text-white-50">daño</span>
+                                    <span class="small text-on-primary/70">daño</span>
                                 </div>
 
                                 @if($move['danoHp'] > 0 || $move['danoBarrera'] > 0)
-                                    <div class="small text-white-50 lh-sm move-breakdown">
+                                    <div class="small text-on-primary/70 lh-sm move-breakdown">
                                         @if($move['danoBarrera'] > 0)
                                             <span>{{ ceil($move['danoBarrera']) }} {{ $move['barreraLabel'] }}</span>
                                         @endif
@@ -55,24 +55,24 @@
                                     </div>
                                 @endif
                                 @if($move['letal'])
-                                    <span class="badge text-bg-danger move-lethal">LETAL</span>
+                                    <span class="badge bg-danger-soft text-danger-ink move-lethal">LETAL</span>
                                 @endif
                             @endif
 
                             @if($move['cargaMaxima'] > 0 || $move['usosMaximos'] > 0 || ! $move['disponible'])
                                 <div class="d-flex flex-wrap gap-1">
                                     @if($move['cargaMaxima'] > 0)
-                                        <span class="badge {{ $move['cargaActual'] >= $move['cargaMaxima'] ? 'text-bg-success' : 'text-bg-secondary' }}">
+                                        <span class="badge {{ $move['cargaActual'] >= $move['cargaMaxima'] ? 'bg-success-soft text-success-ink' : 'bg-surface-sunken text-ink-muted' }}">
                                             Carga {{ $move['cargaActual'] }}/{{ $move['cargaMaxima'] }}
                                         </span>
                                     @endif
                                     @if($move['usosMaximos'] > 0)
-                                        <span class="badge {{ $move['usosRestantes'] > 0 ? 'text-bg-info' : 'text-bg-dark' }}">
+                                        <span class="badge {{ $move['usosRestantes'] > 0 ? 'bg-info-soft text-info-ink' : 'bg-ink text-ink-inverse' }}">
                                             Usos {{ max(0, $move['usosRestantes']) }}/{{ $move['usosMaximos'] }}
                                         </span>
                                     @endif
                                     @if(! $move['disponible'] && $move['motivoTexto'] !== '')
-                                        <span class="badge text-bg-dark">{{ $move['motivoTexto'] }}</span>
+                                        <span class="badge bg-surface-sunken text-ink-muted border border-line">{{ $move['motivoTexto'] }}</span>
                                     @endif
                                 </div>
                             @endif
@@ -88,7 +88,7 @@
                                         @endif
                                     @endif
                                     @if($move['statusLabel'] !== '')
-                                        <span class="badge text-bg-warning status-badge">
+                                        <span class="badge bg-warning-soft text-warning-ink status-badge">
                                             {{ $move['statusEmoji'] }} {{ $move['statusLabel'] }}
                                         </span>
                                     @endif
@@ -114,7 +114,7 @@
                             {{-- Categoría y precisión al pie de la card --}}
                             <div class="mt-auto d-flex flex-wrap gap-1 align-items-center">
                                 <span class="badge text-bg-{{ $move['categoriaColor'] }} move-cat">{{ $move['categoriaLabel'] }}</span>
-                                <span class="badge text-bg-light border text-dark move-accuracy" title="Precisión del ataque">
+                                <span class="badge bg-surface-sunken border text-ink-muted move-accuracy" title="Precisión del ataque">
                                     Prec. {{ $move['precisionTexto'] }}
                                 </span>
                             </div>

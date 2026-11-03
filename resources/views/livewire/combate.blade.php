@@ -124,27 +124,27 @@
 
     {{-- MODAL VICTORIA: recompensas al ganar --}}
     @if($phase === 'battle_over' && $rewardsVista !== null)
-        <div class="modal fade show d-block reward-modal {{ !empty($eventos) ? 'modal-pendiente' : '' }}"
+        <div class="modal fade show d-block reward-modal scrim {{ !empty($eventos) ? 'modal-pendiente' : '' }}"
              x-data
              x-init="if ($el.classList.contains('modal-pendiente')) setTimeout(() => $el.classList.remove('modal-pendiente'), 8000)"
-             tabindex="-1" role="dialog" aria-modal="true" style="background: rgba(0,0,0,0.6);">
+             tabindex="-1" role="dialog" aria-modal="true">
             <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h5 class="modal-title text-success fw-bold">🏆 ¡Victoria!</h5>
+                        <h5 class="modal-title text-success-ink fw-bold">🏆 ¡Victoria!</h5>
                     </div>
                     <div class="modal-body">
                         @if($rewardsVista['layout'] === 'ruta')
                             {{-- RUTA: capturas y caramelos en columnas separadas --}}
-                            <p class="fw-bold text-success mb-3">¡Has derrotado a los pokémon salvajes!</p>
+                            <p class="fw-bold text-success-ink mb-3">¡Has derrotado a los pokémon salvajes!</p>
 
                             <div class="d-flex justify-content-between align-items-center mb-2">
                                 <span>EXP para tu cuenta</span>
-                                <strong class="text-success">+{{ number_format($rewardsVista['exp_total']) }}</strong>
+                                <strong class="text-success-ink">+{{ number_format($rewardsVista['exp_total']) }}</strong>
                             </div>
                             <div class="d-flex justify-content-between align-items-center mb-3">
                                 <span>EXP para cada pokémon</span>
-                                <strong class="text-success">+{{ number_format($rewardsVista['exp_miembro']) }}</strong>
+                                <strong class="text-success-ink">+{{ number_format($rewardsVista['exp_miembro']) }}</strong>
                             </div>
 
                             @php
@@ -153,25 +153,24 @@
 
                             <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 items-start">
                                 @if($tieneCapturas)
-                                    <div class="bg-gray-50 dark:bg-gray-900/50 rounded-lg p-3 {{ $rewardsVista['tieneCaramelos'] ? 'lg:col-span-1' : 'lg:col-span-3' }}">
-                                        <p class="text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wide mb-2">Capturados</p>
+                                    <div class="bg-surface-sunken rounded-control p-3 {{ $rewardsVista['tieneCaramelos'] ? 'lg:col-span-1' : 'lg:col-span-3' }}">
+                                        <p class="text-xs font-semibold text-ink-muted uppercase tracking-wide mb-2">Capturados</p>
                                         <div class="flex flex-wrap gap-3">
                                             @foreach($rewardsVista['capturas'] as $captura)
                                                 <div class="text-center" title="{{ $captura['title'] }}">
-                                                    <div class="relative inline-block {{ $captura['es_shiny'] ? 'ring-2 ring-yellow-400 rounded-full animate-pulse' : '' }}">
-                                                        <img
-                                                            src="{{ $captura['src'] }}"
-                                                            loading="lazy"
-                                                            decoding="async"
-                                                            alt="Capturado"
+                                                    <div class="relative inline-block {{ $captura['es_shiny'] ? 'ring-2 ring-warning rounded-full animate-pulse' : '' }}">
+                                                        <x-sprite
+                                                            size="64"
+                                                            :id="$captura['pokemon_id']"
+                                                            :shiny="$captura['es_shiny']"
+                                                            name="Capturado"
                                                             title="Pokémon capturado"
-                                                            class="w-16 h-16 object-contain rounded-full {{ $captura['es_shiny'] ? 'bg-yellow-100 dark:bg-yellow-900/40' : '' }}"
-                                                            onerror="{{ $captura['onerror'] }}"
-                                                        >
+                                                            class="rounded-full {{ $captura['es_shiny'] ? 'bg-warning-soft' : '' }}"
+                                                        />
                                                         @if($captura['es_shiny'])
-                                                            <span class="absolute -top-1.5 -left-1.5 px-1 py-0.5 bg-yellow-400 text-yellow-900 text-[10px] font-bold rounded-full shadow" title="Shiny">✨</span>
+                                                            <span class="absolute -top-1.5 -left-1.5 px-1 py-0.5 bg-warning-soft text-warning-ink text-2xs font-bold rounded-full shadow" title="Shiny">✨</span>
                                                         @endif
-                                                        <span class="absolute -top-1.5 -right-1.5 px-1.5 py-0.5 bg-green-600 text-white text-[10px] font-bold rounded-full">
+                                                        <span class="absolute -top-1.5 -right-1.5 px-1.5 py-0.5 bg-success text-on-primary text-2xs font-bold rounded-full">
                                                             ×{{ $captura['cantidad'] }}
                                                         </span>
                                                     </div>
@@ -182,7 +181,7 @@
                                 @endif
 
                                 @if($rewardsVista['tieneCaramelos'])
-                                    <div class="bg-gray-50 dark:bg-gray-900/50 rounded-lg p-3 {{ $tieneCapturas ? 'lg:col-span-2' : 'lg:col-span-3' }}">
+                                    <div class="bg-surface-sunken rounded-control p-3 {{ $tieneCapturas ? 'lg:col-span-2' : 'lg:col-span-3' }}">
                                         <div class="flex flex-col gap-3">
                                             @if(! $rewardsVista['caramelos_familia']->isEmpty())
                                                 <div class="flex flex-wrap gap-3">
@@ -213,13 +212,13 @@
                             </div>
                         @else
                             {{-- ENTRENADOR / GIMNASIO: lista plana legada --}}
-                            <p class="fw-bold text-success mb-3">Has derrotado al entrenador</p>
+                            <p class="fw-bold text-success-ink mb-3">Has derrotado al entrenador</p>
 
                             {{-- Medalla (gimnasio) --}}
                             @if($rewardsVista['medalla'] !== null)
                             <div class="alert alert-warning text-center py-3 mb-3" role="alert">
                                 <span class="d-block" style="font-size:2rem;">🏅</span>
-                                <strong class="d-block text-warning-emphasis mt-1" style="font-size:1.1rem;">
+                                <strong class="d-block text-warning-ink mt-1" style="font-size:1.1rem;">
                                     ¡Has ganado la {{ $rewardsVista['medalla'] }}!
                                 </strong>
                             </div>
@@ -228,11 +227,11 @@
                             <ul class="list-group list-group-flush">
                                 <li class="list-group-item d-flex justify-content-between align-items-center">
                                     <span>EXP para tu cuenta</span>
-                                    <strong class="text-success">+{{ number_format($rewardsVista['exp_total']) }}</strong>
+                                    <strong class="text-success-ink">+{{ number_format($rewardsVista['exp_total']) }}</strong>
                                 </li>
                                 <li class="list-group-item d-flex justify-content-between align-items-center">
                                     <span>EXP para cada pokémon</span>
-                                    <strong class="text-success">+{{ number_format($rewardsVista['exp_miembro']) }}</strong>
+                                    <strong class="text-success-ink">+{{ number_format($rewardsVista['exp_miembro']) }}</strong>
                                 </li>
                                 @foreach($rewardsVista['caramelos'] as $caramelo)
                                     <li class="list-group-item d-flex justify-content-between align-items-center">
@@ -240,7 +239,7 @@
                                             <img src="{{ $caramelo['imagen'] }}" alt="{{ $caramelo['nombre'] }}" style="width:28px;height:28px;object-fit:contain" loading="lazy">
                                             {{ $caramelo['nombre'] }}
                                         </span>
-                                        <strong class="text-success">+{{ $caramelo['cantidad'] }}</strong>
+                                        <strong class="text-success-ink">+{{ $caramelo['cantidad'] }}</strong>
                                     </li>
                                 @endforeach
                             </ul>
