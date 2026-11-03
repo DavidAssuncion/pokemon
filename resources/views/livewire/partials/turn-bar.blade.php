@@ -3,10 +3,8 @@
         <div class="d-flex align-items-center gap-2 flex-wrap">
             <span class="text-uppercase small fw-bold text-muted me-1">Próximos turnos</span>
             @forelse($turnBar['items'] as $item)
-                <span class="badge rounded-pill {{ $item['badgeClass'] }} d-inline-flex align-items-center gap-1 {{ $item['activeClass'] }}" title="{{ $item['nombre'] }}">
-                    <x-sprite size="inline" :src="$item['icon']" :name="$item['nombre']" wrapper-class="shrink-0" />
-                    {{ $item['nombre'] }}
-                    <small class="opacity-75">{{ $item['velocidad'] }}</small>
+                <span class="badge {{ $item['badgeClass'] }} d-inline-flex align-items-center gap-1 {{ $item['activeClass'] }}" title="{{ $item['nombre'] }}">
+                    <x-sprite size="48" :src="$item['icon']" :name="$item['nombre']" wrapper-class="shrink-0" />
                 </span>
             @empty
                 <span class="text-muted small">Esperando...</span>

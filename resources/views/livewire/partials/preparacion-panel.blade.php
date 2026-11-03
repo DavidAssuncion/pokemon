@@ -1,5 +1,5 @@
 @if($preparacionPendiente)
-    <div class="card mb-3 border border-primary">
+    <div class="card mb-3 border border-2 border-primary">
         <div class="card-body py-3">
             <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
                 <div>

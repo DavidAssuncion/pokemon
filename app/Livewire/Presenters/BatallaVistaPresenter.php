@@ -140,7 +140,7 @@ final class BatallaVistaPresenter
                 $clases[] = 'targeted-card';
             }
             if ($p['selectable'] === true) {
-                $clases[] = 'cursor-pointer border-primary';
+                $clases[] = 'cursor-pointer';
             }
             if ($p['blocked'] === true) {
                 $clases[] = 'opacity-50 cursor-not-allowed';
