@@ -3,12 +3,6 @@
 @section('title', 'Hábitat - ' . ($habitat['name'] ?? ''))
 
 @section('content')
-@php
-    // Clases shell compartidas (dedup de patrones repetidos en paneles/modal).
-    $cardPanelClass = 'bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden';
-    $constructionButtonClass = 'w-full px-4 py-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-sm font-medium text-gray-700 dark:text-gray-300 transition-colors flex items-center gap-3';
-    $familyCardClass = 'bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-3 text-center';
-@endphp
 <div x-data="habitatShow()" x-init="init()">
         <!-- Main: Left 1/5 (back/image/construction) + Right 4/5 (explorations/teams/levels) -->
         <div class="grid lg:grid-cols-5 gap-6">
@@ -16,30 +10,31 @@
             <div class="lg:col-span-1 space-y-4">
                 <!-- Back card (visual) -->
                 <a href="/habitats" aria-label="Volver a hábitats" title="Volver a hábitats"
-                   class="{{ $cardPanelClass }} p-3 flex items-center gap-3 cursor-pointer transition-all hover:shadow-md hover:border-blue-300 dark:hover:border-blue-600 group">
+                   class="card-surface p-3 flex items-center gap-3 cursor-pointer transition-all hover:shadow-md hover:border-primary group">
                     <span class="w-8 shrink-0 flex justify-center">
-                        <svg class="w-5 h-5 text-gray-500 dark:text-gray-400 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg class="w-5 h-5 text-ink-muted group-hover:text-primary-ink transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
                         </svg>
                     </span>
-                    <span class="flex-1 text-sm font-medium text-gray-700 dark:text-gray-300 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">Volver a hábitats</span>
+                    <span class="flex-1 text-sm font-medium text-ink group-hover:text-primary-ink transition-colors">Volver a hábitats</span>
                 </a>
 
                 <!-- Image card with title overlay -->
-                <div class="{{ $cardPanelClass }} relative p-3 overflow-hidden w-fit min-h-[6rem] flex items-center justify-center">
+                <div class="card-surface relative p-3 overflow-hidden w-fit min-h-[6rem] flex items-center justify-center">
                     @if(!empty($habitat['image']))
                     <img
                         src="{{ $habitat['image'] }}"
                         alt="{{ $habitat['name'] }}"
-                        class="w-auto h-auto max-w-full rounded-lg"
+                        class="w-auto h-auto max-w-full rounded-control"
                         onerror="this.style.display='none'"
                     >
                     @else
-                    <div class="w-48 h-32 rounded-lg bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
+                    <div class="w-48 h-32 rounded-control bg-surface-sunken flex items-center justify-center">
                         <span class="text-4xl">🏔️</span>
                     </div>
                     @endif
-                    <h1 class="absolute bottom-0 inset-x-0 px-3 py-2 bg-gradient-to-t from-black/70 to-transparent text-white text-sm font-bold truncate rounded-b-lg"
+                    <h1 class="absolute bottom-0 inset-x-0 px-3 py-2 text-on-primary text-sm font-bold truncate rounded-b-lg"
+                        style="background: linear-gradient(to top, var(--color-scrim), transparent)"
                         title="{{ $habitat['name'] }}">{{ $habitat['name'] }}</h1>
                 </div>
 
@@ -53,67 +48,67 @@
                         @click="{{ $bloqueadoConstruccion ? '' : 'setModoRuta()' }}"
                         {{ $bloqueadoConstruccion ? 'disabled' : '' }}
                         @if($bloqueadoConstruccion) title="No disponible durante exploraciones activas" @endif
-                        class="{{ $constructionButtonClass }} {{ $bloqueadoConstruccion ? 'opacity-50 cursor-not-allowed' : '' }}"
-                        :class="modo === 'ruta' ? 'ring-2 ring-blue-400 border-blue-400 dark:border-blue-600 bg-blue-50 dark:bg-blue-900/20' : 'hover:bg-gray-50 dark:hover:bg-gray-700'"
+                        class="w-full px-4 py-3 bg-surface border border-line rounded-card text-sm font-medium text-ink transition-colors flex items-center gap-3 {{ $bloqueadoConstruccion ? 'opacity-50 cursor-not-allowed' : '' }}"
+                        :class="modo === 'ruta' ? 'ring-2 ring-primary border-primary bg-primary-soft' : 'hover:bg-surface-sunken'"
                     >
                         <span class="w-8 shrink-0 flex justify-center">
-                            <svg class="w-6 h-6 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                            <svg class="w-6 h-6 text-danger-ink" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
                             </svg>
                         </span>
-                        <span class="flex-1 text-sm text-left font-medium text-gray-700 dark:text-gray-300">Combate de ruta</span>
+                        <span class="flex-1 text-sm text-left font-medium text-ink">Combate de ruta</span>
                     </button>
                     <button
                         @click="{{ $bloqueadoConstruccion ? '' : 'openGranjaModal()' }}"
                         {{ $bloqueadoConstruccion ? 'disabled' : '' }}
                         @if($bloqueadoConstruccion) title="No disponible durante exploraciones activas" @endif
-                        class="{{ $constructionButtonClass }} {{ $bloqueadoConstruccion ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-50 dark:hover:bg-gray-700' }}"
+                        class="w-full px-4 py-3 bg-surface border border-line rounded-card text-sm font-medium text-ink transition-colors flex items-center gap-3 {{ $bloqueadoConstruccion ? 'opacity-50 cursor-not-allowed' : 'hover:bg-surface-sunken' }}"
                     >
                         <span class="w-8 shrink-0 flex justify-center">
                             <img src="/images/misc/farm.webp" loading="lazy" decoding="async" class="w-8 h-8 object-contain" alt="Granjas">
                         </span>
-                        <span class="flex-1 text-sm text-left font-medium text-gray-700 dark:text-gray-300">Granjas</span>
+                        <span class="flex-1 text-sm text-left font-medium text-ink">Granjas</span>
                     </button>
                     <button
                         @click="{{ $bloqueadoConstruccion ? '' : "toggleEntrenadores()" }}"
                         {{ $bloqueadoConstruccion ? 'disabled' : '' }}
                         @if($bloqueadoConstruccion) title="No disponible durante exploraciones activas" @endif
-                        class="{{ $constructionButtonClass }} {{ $bloqueadoConstruccion ? 'opacity-50 cursor-not-allowed' : '' }}"
-                        :class="modo === 'entrenadores' ? 'ring-2 ring-blue-400 border-blue-400 dark:border-blue-600 bg-blue-50 dark:bg-blue-900/20' : 'hover:bg-gray-50 dark:hover:bg-gray-700'"
+                        class="w-full px-4 py-3 bg-surface border border-line rounded-card text-sm font-medium text-ink transition-colors flex items-center gap-3 {{ $bloqueadoConstruccion ? 'opacity-50 cursor-not-allowed' : '' }}"
+                        :class="modo === 'entrenadores' ? 'ring-2 ring-primary border-primary bg-primary-soft' : 'hover:bg-surface-sunken'"
                     >
                         <span class="w-8 shrink-0 flex justify-center">
                             <img src="/images/misc/trainer.webp" loading="lazy" decoding="async" class="w-8 h-8 object-contain" alt="Entrenadores">
                         </span>
-                        <span class="flex-1 text-sm text-left font-medium text-gray-700 dark:text-gray-300">Entrenadores</span>
+                        <span class="flex-1 text-sm text-left font-medium text-ink">Entrenadores</span>
                     </button>
                     <button
                         @click="{{ $bloqueadoConstruccion ? '' : "toggleExploraciones()" }}"
                         {{ $bloqueadoConstruccion ? 'disabled' : '' }}
                         @if($bloqueadoConstruccion) title="No disponible durante exploraciones activas" @endif
-                        class="{{ $constructionButtonClass }} {{ $bloqueadoConstruccion ? 'opacity-50 cursor-not-allowed' : '' }}"
-                        :class="modo === 'pokemon' ? 'ring-2 ring-blue-400 border-blue-400 dark:border-blue-600 bg-blue-50 dark:bg-blue-900/20' : 'hover:bg-gray-50 dark:hover:bg-gray-700'"
+                        class="w-full px-4 py-3 bg-surface border border-line rounded-card text-sm font-medium text-ink transition-colors flex items-center gap-3 {{ $bloqueadoConstruccion ? 'opacity-50 cursor-not-allowed' : '' }}"
+                        :class="modo === 'pokemon' ? 'ring-2 ring-primary border-primary bg-primary-soft' : 'hover:bg-surface-sunken'"
                     >
                         <span class="w-8 shrink-0 flex justify-center">
-                            <svg class="w-6 h-6 text-yellow-500" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                            <svg class="w-6 h-6 text-warning-ink" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
                                 <path d="M10 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 004 14h12a1 1 0 00.707-1.707L16 11.586V8a6 6 0 00-6-6z"/>
                             </svg>
                         </span>
-                        <span class="flex-1 text-sm text-left font-medium text-gray-700 dark:text-gray-300">Exploraciones</span>
+                        <span class="flex-1 text-sm text-left font-medium text-ink">Exploraciones</span>
                     </button>
                     <button
                         @click="{{ $bloqueadoConstruccion ? '' : 'openMazmorraModal()' }}"
                         {{ $bloqueadoConstruccion ? 'disabled' : '' }}
                         @if($bloqueadoConstruccion) title="No disponible durante exploraciones activas" @endif
-                        class="{{ $constructionButtonClass }} {{ $bloqueadoConstruccion ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-50 dark:hover:bg-gray-700' }}"
+                        class="w-full px-4 py-3 bg-surface border border-line rounded-card text-sm font-medium text-ink transition-colors flex items-center gap-3 {{ $bloqueadoConstruccion ? 'opacity-50 cursor-not-allowed' : 'hover:bg-surface-sunken' }}"
                     >
                         <span class="w-8 shrink-0 flex justify-center">
                             <img src="/images/misc/raid.webp" loading="lazy" decoding="async" class="w-8 h-8 object-contain" alt="Mazmorras">
                         </span>
-                        <span class="flex-1 text-sm text-left font-medium text-gray-700 dark:text-gray-300">Mazmorras</span>
+                        <span class="flex-1 text-sm text-left font-medium text-ink">Mazmorras</span>
                     </button>
                     <button
                         @click="openGestionModal()"
-                        class="w-full px-4 py-3 bg-blue-600 text-white rounded-xl text-sm font-bold transition-colors hover:bg-blue-700 flex items-center gap-3 uppercase tracking-wide"
+                        class="w-full px-4 py-3 bg-primary text-on-primary rounded-card text-sm font-bold transition-colors hover:bg-primary-hover flex items-center gap-3 uppercase tracking-wide"
                     >
                         <span class="w-8 shrink-0 flex justify-center">
                             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -125,7 +120,7 @@
                     </button>
                 </div>
                 @if($bloqueadoConstruccion)
-                <p class="text-xs text-center text-orange-600 dark:text-orange-400">
+                <p class="text-xs text-center text-warning-ink">
                     No disponible durante exploraciones activas
                 </p>
                 @endif
@@ -135,24 +130,24 @@
             <div class="lg:col-span-4 space-y-6">
                 <!-- Active Explorations List -->
                 @if($exploracionesActivas && $exploracionesActivas->count() > 0)
-                <div class="{{ $cardPanelClass }}">
-                    <div class="px-4 py-3 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
-                        <h3 class="text-sm font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-                            <svg class="w-4 h-4 text-yellow-500" fill="currentColor" viewBox="0 0 20 20">
+                <div class="card-surface">
+                    <div class="px-4 py-3 border-b border-line flex items-center justify-between">
+                        <h3 class="text-sm font-semibold text-ink flex items-center gap-2">
+                            <svg class="w-4 h-4 text-warning-ink" fill="currentColor" viewBox="0 0 20 20">
                                 <path d="M10 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 004 14h12a1 1 0 00.707-1.707L16 11.586V8a6 6 0 00-6-6z"/>
                             </svg>
                             Exploraciones activas
                         </h3>
-                        <span class="px-2 py-0.5 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 text-xs font-bold rounded-full">
+                        <span class="px-2 py-0.5 bg-warning-soft text-warning-ink text-xs font-bold rounded-full">
                             {{ $exploracionesActivas->count() }}
                         </span>
                     </div>
-                    <div class="divide-y divide-gray-200 dark:divide-gray-700">
+                    <div class="divide-y divide-line">
                         @foreach($exploracionesActivas as $exp)
                         <div class="px-4 py-3 flex items-center justify-between">
                             <div class="flex items-center gap-3">
-                                <div class="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
-                                    <svg class="w-4 h-4 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <div class="w-8 h-8 rounded-full bg-primary-soft flex items-center justify-center">
+                                    <svg class="w-4 h-4 text-primary-ink" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
                                     </svg>
                                 </div>
@@ -166,14 +161,14 @@
                                             $nombreReclutado = 'Reclutado eliminado';
                                         }
                                     @endphp
-                                    <p class="text-sm font-medium text-gray-900 dark:text-white">{{ $nombreReclutado }}</p>
-                                    <p class="text-xs text-gray-500 dark:text-gray-400">Nivel {{ $exp->nivel }}</p>
+                                    <p class="text-sm font-medium text-ink">{{ $nombreReclutado }}</p>
+                                    <p class="text-xs text-ink-muted">Nivel {{ $exp->nivel }}</p>
                                 </div>
                             </div>
-                            <span class="px-2 py-0.5 text-[10px] font-bold rounded-full uppercase
+                            <span class="px-2 py-0.5 text-2xs font-bold rounded-full uppercase
                                 {{ $exp->inicio_exploracion
-                                    ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400'
-                                    : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400' }}">
+                                    ? 'bg-success-soft text-success-ink'
+                                    : 'bg-surface-sunken text-ink-muted' }}">
                                 {{ $exp->inicio_exploracion ? 'En curso' : 'Preparando' }}
                             </span>
                         </div>
@@ -183,7 +178,7 @@
                 @endif
 
                 <!-- Teams Panel: 3-column grid of team cards (modo entrenadores / ruta) -->
-                <div class="{{ $cardPanelClass }}" x-show="modo === 'entrenadores' || modo === 'ruta'" x-cloak>
+                <div class="card-surface" x-show="modo === 'entrenadores' || modo === 'ruta'" x-cloak>
                     <div class="p-4">
                         <div class="grid sm:grid-cols-4 gap-4">
                             @forelse($teams as $team)
@@ -197,8 +192,8 @@
                                 $bloqueado = $miembrosEnExploracion->isNotEmpty();
                             @endphp
                             <div
-                                class="rounded-lg p-3 border-2 transition-all {{ $bloqueado ? 'bg-gray-100 dark:bg-gray-900/30 border-gray-200 dark:border-gray-700 opacity-60 cursor-not-allowed' : 'bg-gray-50 dark:bg-gray-900/50 cursor-pointer hover:border-gray-300 dark:hover:border-gray-600' }}"
-                                :class="{{ $bloqueado ? 'false' : "selectedTeamId === {$team->id} ? 'border-blue-500 dark:border-blue-400 ring-1 ring-blue-200 dark:ring-blue-800' : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'" }}"
+                                class="rounded-control p-3 border-2 transition-all {{ $bloqueado ? 'bg-surface-sunken border-line opacity-60 cursor-not-allowed' : 'bg-surface-sunken cursor-pointer hover:border-line-strong' }}"
+                                :class="{{ $bloqueado ? 'false' : "selectedTeamId === {$team->id} ? 'border-primary ring-1 ring-primary' : 'border-line hover:border-line-strong'" }}"
                                 @if(!$bloqueado)
                                 @click="selectTeam({{ $team->id }}, $el.dataset.teamName)"
                                 role="button"
@@ -212,22 +207,22 @@
                                 aria-label="{{ $bloqueado ? 'Equipo con miembro en exploración' : 'Seleccionar equipo ' . $team->name }}"
                             >
                                 <div class="flex items-center justify-between mb-2">
-                                    <span class="text-sm font-medium text-gray-900 dark:text-white flex items-center gap-1.5">
+                                    <span class="text-sm font-medium text-ink flex items-center gap-1.5">
                                         @if($bloqueado)
-                                            <svg class="w-3.5 h-3.5 text-gray-500 dark:text-gray-400" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                                            <svg class="w-3.5 h-3.5 text-ink-muted" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
                                                 <path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd"/>
                                             </svg>
                                         @endif
                                         {{ $team->name }}
                                     </span>
                                     @if($bloqueado)
-                                        <span class="px-2 py-0.5 bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400 text-[10px] font-bold rounded-full uppercase">
+                                        <span class="px-2 py-0.5 bg-warning-soft text-warning-ink text-2xs font-bold rounded-full uppercase">
                                             Miembro en exploración
                                         </span>
                                     @endif
                                 </div>
                                 @if($bloqueado)
-                                <p class="text-[10px] text-gray-500 dark:text-gray-400 mt-1">
+                                <p class="text-2xs text-ink-muted mt-1">
                                     No disponible para combatir hasta que vuelva
                                 </p>
                                 @endif
@@ -235,20 +230,18 @@
                                     @for($i = 0; $i < 3; $i++)
                                         @if(isset($team->members[$i]))
                                             <div class="text-center min-w-0">
-                                                <img
-                                                    src="/images/iconos_webp/{{ $team->members[$i]->reclutado->pokemon_id }}.webp"
-                                                    loading="lazy"
-                                                    decoding="async"
-                                                    alt="{{ $team->members[$i]->reclutado->nombre ?? '' }}"
-                                                    title="{{ $team->members[$i]->reclutado->nombre ?? '' }}"
-                                                    class="w-full object-contain mx-auto"
-                                                    onerror="this.style.display='none'"
-                                                >
+                                                <x-sprite
+                                                    :id="$team->members[$i]->reclutado->pokemon_id"
+                                                    :name="$team->members[$i]->reclutado->nombre"
+                                                    size="96"
+                                                    wrapper-class="mx-auto"
+                                                    :title="$team->members[$i]->reclutado->nombre"
+                                                />
                                             </div>
                                         @else
                                             <div class="text-center min-w-0">
-                                                <div class="w-full h-14 mx-auto rounded border-2 border-dashed border-gray-300 dark:border-gray-600"></div>
-                                                <p class="text-[10px] text-gray-400 dark:text-gray-500 mt-0.5">Vacío</p>
+                                                <div class="w-full h-14 mx-auto rounded border-2 border-dashed border-line-strong"></div>
+                                                <p class="text-2xs text-ink-subtle mt-0.5">Vacío</p>
                                             </div>
                                         @endif
                                     @endfor
@@ -256,10 +249,10 @@
                             </div>
                             @empty
                             <div class="sm:col-span-3 text-center py-8">
-                                <svg class="w-12 h-12 mx-auto text-gray-300 dark:text-gray-600 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <svg class="w-12 h-12 mx-auto text-ink-subtle mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
                                 </svg>
-                                <p class="text-sm text-gray-500 dark:text-gray-400">No hay equipos creados</p>
+                                <p class="text-sm text-ink-muted">No hay equipos creados</p>
                             </div>
                             @endforelse
                         </div>
@@ -267,24 +260,24 @@
                 </div>
 
                 <!-- Favoritos Panel (exploración individual; modo pokémon) -->
-                <div class="{{ $cardPanelClass }}" x-show="modo === 'pokemon'" x-cloak>
-                    <div class="p-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between flex-wrap gap-2">
-                        <h3 class="text-sm font-semibold text-gray-900 dark:text-white">Tus favoritos para este hábitat</h3>
-                        <span class="px-2 py-0.5 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 text-[10px] font-bold rounded-full" x-text="favoritos.length + '/6'"></span>
+                <div class="card-surface" x-show="modo === 'pokemon'" x-cloak>
+                    <div class="p-4 border-b border-line flex items-center justify-between flex-wrap gap-2">
+                        <h3 class="text-sm font-semibold text-ink">Tus favoritos para este hábitat</h3>
+                        <span class="px-2 py-0.5 bg-warning-soft text-warning-ink text-2xs font-bold rounded-full" x-text="favoritos.length + '/6'"></span>
                     </div>
                     <div class="p-4">
-                        <div x-show="favoritosLoading" x-cloak role="status" class="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
+                        <div x-show="favoritosLoading" x-cloak role="status" class="flex items-center gap-2 text-sm text-ink-muted">
                             <svg class="w-4 h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
                             Cargando favoritos...
                         </div>
-                        <div x-show="favoritosError" x-cloak role="alert" class="text-sm text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg px-3 py-2">
+                        <div x-show="favoritosError" x-cloak role="alert" class="text-sm text-warning-ink bg-warning-soft border border-warning rounded-control px-3 py-2">
                             <span x-text="favoritosError"></span>
                         </div>
                         <div x-show="!favoritosLoading && !favoritosError && favoritos.length === 0" x-cloak class="text-center py-6">
-                            <p class="text-sm text-gray-500 dark:text-gray-400">No tienes Pokémon favoritos para este hábitat</p>
+                            <p class="text-sm text-ink-muted">No tienes Pokémon favoritos para este hábitat</p>
                             <button
                                 @click="openGestionFavoritosHabitat()"
-                                class="mt-3 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors"
+                                class="mt-3 px-4 py-2 bg-primary text-on-primary rounded-control text-sm font-medium hover:bg-primary-hover transition-colors"
                             >
                                 + Añadir favorito
                             </button>
@@ -292,22 +285,22 @@
 
                         <!-- Aviso preventivo: máx. 6 favoritos por hábitat -->
                         <div x-show="!favoritosLoading && favoritos.length >= 6" x-cloak role="status"
-                             class="mb-3 px-3 py-2 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 text-xs text-amber-700 dark:text-amber-300">
+                             class="mb-3 px-3 py-2 rounded-control bg-warning-soft border border-warning text-xs text-warning-ink">
                             Has alcanzado el máximo de 6 favoritos para este hábitat.
                         </div>
 
                         <div x-show="!favoritosLoading && favoritos.length > 0" x-cloak class="grid grid-cols-2 sm:grid-cols-6 gap-3">
                             <template x-for="favorito in favoritos" :key="favorito.id">
                                 <div
-                                    class="rounded-lg p-2 border-2 transition-all text-center select-none"
+                                    class="rounded-control p-2 border-2 transition-all text-center select-none"
                                     :class="esFavoritoEnExploracion(favorito.id)
-                                        ? 'bg-gray-100 dark:bg-gray-900/30 border-gray-200 dark:border-gray-700 opacity-60'
+                                        ? 'bg-surface-sunken border-line opacity-60'
                                         : (selectedFavoritoId === favorito.id
-                                            ? 'border-blue-500 dark:border-blue-400 bg-blue-50 dark:bg-blue-900/20 ring-1 ring-blue-200 dark:ring-blue-800'
-                                            : 'border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50')"
+                                            ? 'border-primary bg-primary-soft ring-1 ring-primary'
+                                            : 'border-line bg-surface-sunken')"
                                 >
                                     <div class="flex items-center justify-end mb-1" x-show="esFavoritoEnExploracion(favorito.id)">
-                                        <span class="px-1.5 py-0.5 bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400 text-[10px] font-bold rounded-full uppercase">En exploración</span>
+                                        <span class="px-1.5 py-0.5 bg-warning-soft text-warning-ink text-2xs font-bold rounded-full uppercase">En exploración</span>
                                     </div>
                                     <button
                                         type="button"
@@ -316,20 +309,18 @@
                                         class="w-full text-center disabled:cursor-not-allowed"
                                         :aria-label="esFavoritoEnExploracion(favorito.id) ? 'Pokémon en exploración' : 'Seleccionar ' + favorito.nombre"
                                     >
-                                        <img
-                                            :src="'/images/iconos_webp/' + favorito.pokemon_id + '.webp'"
-                                            loading="lazy"
-                                            decoding="async"
-                                            :alt="favorito.nombre"
-                                            class="w-96 object-contain mx-auto"
-                                            onerror="this.style.display='none'"
-                                        >
-                                        <p class="text-[10px] text-gray-400 dark:text-gray-500" x-text="'Nv ' + (favorito.nivel || 1)"></p>
+                                        <x-sprite
+                                            size="96"
+                                            wrapper-class="mx-auto"
+                                            x-bind:src="'/images/iconos_webp/' + favorito.pokemon_id + '.webp'"
+                                            x-bind:alt="favorito.nombre"
+                                        />
+                                        <p class="text-2xs text-ink-subtle" x-text="'Nv ' + (favorito.nivel || 1)"></p>
                                     </button>
                                     <button
                                         :disabled="esFavoritoEnExploracion(favorito.id)"
                                         @click="!esFavoritoEnExploracion(favorito.id) && openEnviarHabitat(favorito)"
-                                        class="mt-2 w-32 px-2 py-1 bg-green-600 text-white rounded-lg text-[10px] font-bold hover:bg-green-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed uppercase"
+                                        class="mt-2 w-32 px-2 py-1 bg-success text-on-primary rounded-control text-2xs font-bold hover:bg-success/90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed uppercase"
                                         x-text="esFavoritoEnExploracion(favorito.id) ? 'En exploración' : 'Enviar a explorar'"
                                     ></button>
                                 </div>
@@ -340,7 +331,7 @@
                         <div x-show="!favoritosLoading && !favoritosError && favoritos.length > 0 && favoritos.length < 6" class="mt-3">
                             <button
                                 @click="openGestionFavoritosHabitat()"
-                                class="w-full px-4 py-2.5 border border-dashed border-gray-300 dark:border-gray-600 rounded-lg text-sm font-medium text-gray-600 dark:text-gray-300 hover:border-blue-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                                class="w-full px-4 py-2.5 border border-dashed border-line-strong rounded-control text-sm font-medium text-ink-muted hover:border-primary hover:text-primary-ink transition-colors"
                             >
                                 + Añadir favorito
                             </button>
@@ -349,12 +340,12 @@
                 </div>
 
                 <!-- Niveles Panel: 3 clickable level rows (ruta = sin fetch; pokémon / entrenadores) -->
-                <div class="{{ $cardPanelClass }}" x-show="modo === 'ruta' || modo === 'pokemon' || modo === 'entrenadores'" x-cloak>
+                <div class="card-surface" x-show="modo === 'ruta' || modo === 'pokemon' || modo === 'entrenadores'" x-cloak>
                     <div class="p-4 space-y-3">
                         <!-- MODO POKÉMON / RUTA -->
                         <div x-show="modo === 'pokemon' || modo === 'ruta'">
                             <p x-show="avisoNivel && modo === 'pokemon'" x-cloak x-text="avisoNivel" role="status"
-                               class="text-xs text-orange-700 dark:text-orange-300 bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg px-3 py-2"></p>
+                               class="text-xs text-warning-ink bg-warning-soft border border-warning rounded-control px-3 py-2"></p>
                             @foreach([1,2,3] as $level)
                             @php
                                 $minLvl = $habitat['min_lvl_' . $level] ?? null;
@@ -366,19 +357,19 @@
                                 @if($bloqueadoNivel) title="Requiere Nv {{ $minLvl }}" @endif
                                 :class="[
                                     (modo === 'ruta' ? rutaNivel : selectedLevel) === {{ $level }}
-                                        ? 'border-blue-500 dark:border-blue-400 bg-blue-50 dark:bg-blue-900/20'
-                                        : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600',
+                                        ? 'border-primary bg-primary-soft'
+                                        : 'border-line hover:border-line-strong',
                                     modo === 'pokemon' && {{ $bloqueadoNivel ? 'true' : 'false' }}
                                         ? 'opacity-60 cursor-not-allowed border-dashed'
                                         : ''
                                 ]"
-                                class="w-full p-4 rounded-xl border-2 text-left transition-all"
+                                class="w-full p-4 rounded-card border-2 text-left transition-all"
                                 aria-label="Nivel {{ $level }}"
                             >
                                 <div class="flex items-center justify-between mb-2">
-                                    <span class="text-sm font-semibold text-gray-900 dark:text-white flex items-center gap-1.5">
+                                    <span class="text-sm font-semibold text-ink flex items-center gap-1.5">
                                         @if($bloqueadoNivel)
-                                            <svg x-show="modo === 'pokemon'" x-cloak class="w-3.5 h-3.5 text-orange-500" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                                            <svg x-show="modo === 'pokemon'" x-cloak class="w-3.5 h-3.5 text-warning-ink" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
                                                 <path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd"/>
                                             </svg>
                                         @endif
@@ -386,11 +377,11 @@
                                     </span>
                                     <span class="flex items-center gap-2">
                                         @if($bloqueadoNivel)
-                                            <span x-show="modo === 'pokemon'" x-cloak class="px-2 py-0.5 bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400 text-[10px] font-bold rounded-full">
+                                            <span x-show="modo === 'pokemon'" x-cloak class="px-2 py-0.5 bg-warning-soft text-warning-ink text-2xs font-bold rounded-full">
                                                 Requiere Nv {{ $minLvl }}
                                             </span>
                                         @endif
-                                        <span class="text-xs text-gray-500 dark:text-gray-400">{{ count($habitat['levels'][$level] ?? []) }} pokémon</span>
+                                        <span class="text-xs text-ink-muted">{{ count($habitat['levels'][$level] ?? []) }} pokémon</span>
                                     </span>
                                 </div>
                                 <div class="flex flex-wrap gap-2">
@@ -402,11 +393,11 @@
                                     </template>
                                     <template x-if="isSighted({{ $pokemon['id'] ?? $pokemon['species_id'] ?? 0 }})">
                                         <div class="relative w-24 h-24">
-                                            <img src="{{ $pokemon['icon'] }}" loading="lazy" decoding="async" alt="{{ $pokemon['name'] }}" title="{{ $pokemon['name'] }}" class="w-full h-full object-contain" onerror="this.style.display='none'">
+                                            <x-sprite :src="$pokemon['icon']" :name="$pokemon['name']" size="96" :title="$pokemon['name']" />
                                         </div>
                                     </template>
                                     @empty
-                                    <span class="text-xs text-gray-400 dark:text-gray-500">Sin Pokémon en este nivel</span>
+                                    <span class="text-xs text-ink-subtle">Sin Pokémon en este nivel</span>
                                     @endforelse
                                 </div>
                             </button>
@@ -416,32 +407,32 @@
                         <!-- MODO ENTRENADORES -->
                         <div x-show="modo === 'entrenadores'" x-cloak>
                             <template x-if="!trainers && !trainersLoading">
-                                <p class="text-xs text-gray-500 dark:text-gray-400">No hay entrenadores disponibles</p>
+                                <p class="text-xs text-ink-muted">No hay entrenadores disponibles</p>
                             </template>
                             <template x-if="trainersLoading">
-                                <p class="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-2">
+                                <p class="text-xs text-ink-muted flex items-center gap-2">
                                     <svg class="w-4 h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
                                     Cargando entrenadores...
                                 </p>
                             </template>
                             <template x-for="(levelData, levelIdx) in (trainers || [])" :key="'level-' + levelIdx">
                                 <div class="mb-4">
-                                    <h4 class="text-sm font-semibold text-gray-900 dark:text-white mb-2" x-text="'Nivel ' + levelIdx"></h4>
+                                    <h4 class="text-sm font-semibold text-ink mb-2" x-text="'Nivel ' + levelIdx"></h4>
                                     <div class="grid grid-cols-3 gap-2">
                                         <template x-for="(entrenador, eIdx) in levelData" :key="eIdx">
                                             <button
                                                 @click="selectTrainer(levelIdx, entrenador.indice)"
                                                 :disabled="!entrenador.desbloqueado || !selectedTeamId"
                                                 :class="{
-                                                    'border-green-500 dark:border-green-400 bg-green-50 dark:bg-green-900/20': entrenador.desbloqueado && selectedTeamId,
-                                                    'border-gray-200 dark:border-gray-700 opacity-50 cursor-not-allowed': !entrenador.desbloqueado || !selectedTeamId,
-                                                    'hover:border-green-300 dark:hover:border-green-600': entrenador.desbloqueado && selectedTeamId
+                                                    'border-success bg-success-soft': entrenador.desbloqueado && selectedTeamId,
+                                                    'border-line opacity-50 cursor-not-allowed': !entrenador.desbloqueado || !selectedTeamId,
+                                                    'hover:border-success': entrenador.desbloqueado && selectedTeamId
                                                 }"
-                                                class="w-full p-2 rounded-xl border-2 text-left transition-all"
+                                                class="w-full p-2 rounded-card border-2 text-left transition-all"
                                             >
                                                 <div class="flex items-center gap-2 mb-1">
-                                                    <span class="text-xs font-semibold text-gray-900 dark:text-white" x-text="'Entrenador ' + entrenador.indice"></span>
-                                                    <span x-show="!entrenador.desbloqueado" class="px-1.5 py-0.5 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 text-[10px] font-bold rounded-full">Derrotado</span>
+                                                    <span class="text-xs font-semibold text-ink" x-text="'Entrenador ' + entrenador.indice"></span>
+                                                    <span x-show="!entrenador.desbloqueado" class="px-1.5 py-0.5 bg-danger-soft text-danger-ink text-2xs font-bold rounded-full">Derrotado</span>
                                                 </div>
                                             </button>
                                         </template>
@@ -458,7 +449,7 @@
                     x-cloak
                     @click="checkAndOpenModal()"
                     :disabled="!canStartExploration"
-                    class="w-full px-4 py-3 bg-green-600 text-white rounded-xl text-sm font-bold transition-all hover:bg-green-700 disabled:bg-gray-300 dark:disabled:bg-gray-700 disabled:text-gray-500 dark:disabled:text-gray-500 disabled:cursor-not-allowed uppercase tracking-wide"
+                    class="w-full px-4 py-3 bg-success text-on-primary rounded-card text-sm font-bold transition-all hover:bg-success/90 disabled:bg-surface-sunken disabled:text-ink-muted disabled:cursor-not-allowed uppercase tracking-wide"
                 >
                     Iniciar Exploración
                 </button>
@@ -467,7 +458,7 @@
                     x-cloak
                     @click="openRutaFormacionPopup()"
                     :disabled="!selectedTeamId"
-                    class="w-full px-4 py-3 bg-red-600 text-white rounded-xl text-sm font-bold transition-all hover:bg-red-700 disabled:bg-gray-300 dark:disabled:bg-gray-700 disabled:text-gray-500 dark:disabled:text-gray-500 disabled:cursor-not-allowed uppercase tracking-wide"
+                    class="w-full px-4 py-3 bg-danger text-on-primary rounded-card text-sm font-bold transition-all hover:bg-danger/90 disabled:bg-surface-sunken disabled:text-ink-muted disabled:cursor-not-allowed uppercase tracking-wide"
                 >
                     ⚔️ Combate de Ruta
                 </button>
@@ -475,7 +466,7 @@
                     x-show="modo === 'entrenadores'"
                     @click="openFormacionPopup()"
                     :disabled="!selectedTeamId || !selectedTrainer"
-                    class="w-full px-4 py-3 bg-red-600 text-white rounded-xl text-sm font-bold transition-all hover:bg-red-700 disabled:bg-gray-300 dark:disabled:bg-gray-700 disabled:text-gray-500 dark:disabled:text-gray-500 disabled:cursor-not-allowed uppercase tracking-wide"
+                    class="w-full px-4 py-3 bg-danger text-on-primary rounded-card text-sm font-bold transition-all hover:bg-danger/90 disabled:bg-surface-sunken disabled:text-ink-muted disabled:cursor-not-allowed uppercase tracking-wide"
                 >
                     Iniciar Combate contra Entrenador
                 </button>
@@ -484,44 +475,44 @@
 
     <!-- Exploration Modal (individual) -->
     <template x-if="showExplorationModal">
-        <div class="fixed inset-0 z-50 flex items-center justify-center p-4" @keydown.escape.window="closeExplorationModal()">
-            <div class="absolute inset-0 bg-black/60" @click="closeExplorationModal()"></div>
-            <div class="relative bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-md p-6">
-                <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-4">Confirmar Exploración</h3>
-                <p class="text-sm text-gray-600 dark:text-gray-300 mb-4">
-                    ¿Quieres enviar a explorar a <strong class="text-gray-900 dark:text-white capitalize" x-text="selectedFavoritoName"></strong> a la zona <strong class="text-gray-900 dark:text-white">{{ $habitat['name'] }}</strong>?
+        <div class="fixed inset-0 z-50 flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="exploration-modal-title" @keydown.escape.window="closeExplorationModal()">
+            <div class="absolute inset-0 scrim" @click="closeExplorationModal()"></div>
+            <div class="relative bg-surface-raised rounded-panel shadow-modal w-full max-w-md p-6">
+                <h3 id="exploration-modal-title" class="text-lg font-bold text-ink mb-4">Confirmar Exploración</h3>
+                <p class="text-sm text-ink-muted mb-4">
+                    ¿Quieres enviar a explorar a <strong class="text-ink capitalize" x-text="selectedFavoritoName"></strong> a la zona <strong class="text-ink">{{ $habitat['name'] }}</strong>?
                 </p>
 
                 <!-- Preparación de la expedición (preview individual) -->
                 <div class="mb-4">
-                    <div x-show="previewLoading" x-cloak role="status" class="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2">
+                    <div x-show="previewLoading" x-cloak role="status" class="flex items-center gap-2 text-sm text-ink-muted bg-surface-sunken border border-line rounded-control px-3 py-2">
                         <svg class="w-4 h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
                         </svg>
                         Calculando la preparación de la expedición...
                     </div>
-                    <div x-show="previewError" x-cloak role="alert" class="text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg px-3 py-2">
+                    <div x-show="previewError" x-cloak role="alert" class="text-sm text-danger-ink bg-danger-soft border border-danger rounded-control px-3 py-2">
                         <span x-text="previewError"></span>
                     </div>
                     <template x-if="previewLoaded && preview">
-                        <div class="space-y-3 bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700 rounded-lg p-3">
+                        <div class="space-y-3 bg-surface-sunken border border-line rounded-control p-3">
                             <div class="flex items-center justify-between">
-                                <span class="text-xs font-medium text-gray-600 dark:text-gray-300">Peligro de la zona</span>
-                                <span class="text-sm text-amber-500 tracking-tight" x-html="starRating(preview.peligro)"
+                                <span class="text-xs font-medium text-ink-muted">Peligro de la zona</span>
+                                <span class="text-sm text-warning-ink tracking-tight" x-html="starRating(preview.peligro)"
                                       :title="'Peligro ' + preview.peligro + ' de 5 estrellas'" aria-hidden="true"></span>
                             </div>
                             <div class="flex items-center justify-between">
-                                <span class="text-xs font-medium text-gray-600 dark:text-gray-300">Nivel del Pokémon</span>
-                                <span class="text-sm font-medium text-gray-900 dark:text-white" x-text="'Nv ' + preview.nivel_pokemon"></span>
+                                <span class="text-xs font-medium text-ink-muted">Nivel del Pokémon</span>
+                                <span class="text-sm font-medium text-ink" x-text="'Nv ' + preview.nivel_pokemon"></span>
                             </div>
                             <template x-if="preview.capacidades">
                                 <div>
-                                    <p class="text-xs font-medium text-gray-600 dark:text-gray-300 mb-1.5">Capacidades del Pokémon</p>
+                                    <p class="text-xs font-medium text-ink-muted mb-1.5">Capacidades del Pokémon</p>
                                     <div class="grid grid-cols-2 gap-2">
                                         <template x-for="(valor, key) in preview.capacidades" :key="key">
-                                            <div class="flex items-center justify-between px-2 py-1 bg-white dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-700">
-                                                <span class="text-[10px] text-gray-500 dark:text-gray-400 capitalize" x-text="key"></span>
-                                                <span class="text-[10px] font-medium text-gray-700 dark:text-gray-300" x-text="Math.round(valor * 100) / 100"></span>
+                                            <div class="flex items-center justify-between px-2 py-1 bg-surface rounded border border-line">
+                                                <span class="text-2xs text-ink-muted capitalize" x-text="key"></span>
+                                                <span class="text-2xs font-medium text-ink" x-text="Math.round(valor * 100) / 100"></span>
                                             </div>
                                         </template>
                                     </div>
@@ -529,48 +520,48 @@
                             </template>
                             <template x-if="preview.min_lvl">
                                 <div class="flex items-center justify-between">
-                                    <span class="text-xs font-medium text-gray-600 dark:text-gray-300">Nivel mínimo requerido</span>
-                                    <span class="text-xs font-medium text-gray-700 dark:text-gray-300">Nv <span x-text="preview.min_lvl"></span></span>
+                                    <span class="text-xs font-medium text-ink-muted">Nivel mínimo requerido</span>
+                                    <span class="text-xs font-medium text-ink">Nv <span x-text="preview.min_lvl"></span></span>
                                 </div>
                             </template>
                             <div class="flex items-center justify-between">
-                                <span class="px-2 py-0.5 text-[10px] font-bold rounded-full uppercase" :class="riesgoClass(preview.riesgo)" x-text="'Riesgo ' + preview.riesgo"></span>
+                                <span class="px-2 py-0.5 text-2xs font-bold rounded-full uppercase" :class="riesgoClass(preview.riesgo)" x-text="'Riesgo ' + preview.riesgo"></span>
                             </div>
                             <template x-if="preview.rol || preview.rol_sugerido">
                                 <div class="flex items-center justify-between">
-                                    <span class="text-xs font-medium text-gray-600 dark:text-gray-300">Rol</span>
-                                    <span class="px-2 py-0.5 text-[10px] font-bold rounded-full uppercase bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300" x-text="preview.rol || preview.rol_sugerido"></span>
+                                    <span class="text-xs font-medium text-ink-muted">Rol</span>
+                                    <span class="px-2 py-0.5 text-2xs font-bold rounded-full uppercase bg-info-soft text-info-ink" x-text="preview.rol || preview.rol_sugerido"></span>
                                 </div>
                             </template>
                             <!-- Recompensas esperadas (tolerante: se oculta si el backend aún no las expone) -->
-                            <div class="space-y-1.5 pt-2 border-t border-gray-200 dark:border-gray-700"
+                            <div class="space-y-1.5 pt-2 border-t border-line"
                                  x-show="previewLoaded && preview?.recompensas_esperadas">
-                                <p class="text-xs font-bold text-gray-700 dark:text-gray-300">Ganarás esto</p>
+                                <p class="text-xs font-bold text-ink">Ganarás esto</p>
                                 <template x-if="preview.recompensas_esperadas?.por_horas">
-                                    <p class="text-xs text-gray-500 dark:text-gray-400">
+                                    <p class="text-xs text-ink-muted">
                                         Duración estimada:
-                                        <span class="font-medium text-gray-700 dark:text-gray-300" x-text="preview.recompensas_esperadas.por_horas + ' h'"></span>
+                                        <span class="font-medium text-ink" x-text="preview.recompensas_esperadas.por_horas + ' h'"></span>
                                     </p>
                                 </template>
                                 <template x-if="preview.recompensas_esperadas?.items?.length">
                                     <ul class="space-y-1">
                                         <template x-for="(item, i) in preview.recompensas_esperadas.items" :key="i">
-                                            <li class="flex items-center justify-between gap-3 text-xs text-gray-500 dark:text-gray-400">
+                                            <li class="flex items-center justify-between gap-3 text-xs text-ink-muted">
                                                 <span x-text="item.label"></span>
-                                                <span class="font-medium text-gray-700 dark:text-gray-300" x-text="'entre ' + item.min + ' y ' + item.max"></span>
+                                                <span class="font-medium text-ink" x-text="'entre ' + item.min + ' y ' + item.max"></span>
                                             </li>
                                         </template>
                                     </ul>
                                 </template>
                                 <template x-if="preview.recompensas_esperadas?.aviso">
-                                    <p class="text-[10px] text-gray-400 dark:text-gray-500 italic" x-text="preview.recompensas_esperadas.aviso"></p>
+                                    <p class="text-2xs text-ink-subtle italic" x-text="preview.recompensas_esperadas.aviso"></p>
                                 </template>
                                 {{-- Aviso económico: el backend calcula factor y mensaje; la vista solo los presenta. --}}
                                 <template x-if="preview?.aviso_economia">
                                     <div class="flex items-start gap-1.5 pt-0.5">
-                                        <p role="note" class="text-[10px] leading-snug text-amber-600 dark:text-amber-400" x-text="preview.aviso_economia"></p>
+                                        <p role="note" class="text-2xs leading-snug text-warning-ink" x-text="preview.aviso_economia"></p>
                                         <template x-if="preview?.economia?.factor">
-                                            <span class="shrink-0 whitespace-nowrap px-1.5 py-0.5 rounded-full border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/20 text-[10px] font-medium text-amber-700 dark:text-amber-300"
+                                            <span class="shrink-0 whitespace-nowrap px-1.5 py-0.5 rounded-full border border-warning bg-warning-soft text-2xs font-medium text-warning-ink"
                                                   x-text="'Factor ×' + Number(preview.economia.factor).toLocaleString('es-ES', { maximumFractionDigits: 2 })"></span>
                                         </template>
                                     </div>
@@ -582,34 +573,34 @@
 
                 <!-- Duration options (copied from existing) -->
                 <div class="space-y-3 mb-6">
-                    <label class="flex items-center gap-3 p-3 rounded-lg border border-gray-200 dark:border-gray-700 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
-                        :class="{ 'border-blue-500 dark:border-blue-400 bg-blue-50 dark:bg-blue-900/20': durationMode === 'hours' }"
+                    <label class="flex items-center gap-3 p-3 rounded-control border border-line cursor-pointer hover:bg-surface-sunken transition-colors"
+                        :class="{ 'border-primary bg-primary-soft': durationMode === 'hours' }"
                     >
-                        <input type="radio" x-model="durationMode" value="hours" class="w-4 h-4 text-blue-600" @change="loadPreview()">
-                        <span class="text-sm text-gray-700 dark:text-gray-300">Duración: </span>
+                        <input type="radio" x-model="durationMode" value="hours" class="w-4 h-4 text-primary-ink" @change="loadPreview()">
+                        <span class="text-sm text-ink">Duración: </span>
                         <input
                             type="number"
                             x-model.number="durationHours"
                             min="1"
                             max="72"
                             :disabled="durationMode !== 'hours'"
-                            class="w-16 px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-900 text-gray-900 dark:text-white disabled:opacity-50"
+                            class="w-16 px-2 py-1 text-sm border border-line-strong rounded bg-surface text-ink disabled:opacity-50"
                             @click.stop
                             @change="loadPreview()"
                         >
-                        <span class="text-sm text-gray-500 dark:text-gray-400">horas</span>
+                        <span class="text-sm text-ink-muted">horas</span>
                     </label>
 
-                    <label class="flex items-center gap-3 p-3 rounded-lg border border-gray-200 dark:border-gray-700 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
-                        :class="{ 'border-blue-500 dark:border-blue-400 bg-blue-50 dark:bg-blue-900/20': durationMode === 'return_time' }"
+                    <label class="flex items-center gap-3 p-3 rounded-control border border-line cursor-pointer hover:bg-surface-sunken transition-colors"
+                        :class="{ 'border-primary bg-primary-soft': durationMode === 'return_time' }"
                     >
-                        <input type="radio" x-model="durationMode" value="return_time" class="w-4 h-4 text-blue-600" @change="loadPreview()">
-                        <span class="text-sm text-gray-700 dark:text-gray-300">Regresar antes de las </span>
+                        <input type="radio" x-model="durationMode" value="return_time" class="w-4 h-4 text-primary-ink" @change="loadPreview()">
+                        <span class="text-sm text-ink">Regresar antes de las </span>
                         <input
                             type="time"
                             x-model="returnTime"
                             :disabled="durationMode !== 'return_time'"
-                            class="px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-900 text-gray-900 dark:text-white disabled:opacity-50"
+                            class="px-2 py-1 text-sm border border-line-strong rounded bg-surface text-ink disabled:opacity-50"
                             @click.stop
                             @change="loadPreview()"
                         >
@@ -620,14 +611,14 @@
                 <div class="flex gap-3">
                     <button
                         @click="closeExplorationModal()"
-                        class="flex-1 px-4 py-2.5 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg text-sm font-medium hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                        class="flex-1 px-4 py-2.5 bg-surface-sunken text-ink rounded-control text-sm font-medium hover:bg-line transition-colors"
                     >
                         Cancelar
                     </button>
                     <button
                         @click="confirmExploration()"
                         :disabled="!previewLoaded"
-                        class="flex-1 px-4 py-2.5 bg-green-600 text-white rounded-lg text-sm font-bold hover:bg-green-700 transition-colors disabled:bg-gray-300 dark:disabled:bg-gray-700 disabled:text-gray-500 dark:disabled:text-gray-500 disabled:cursor-not-allowed"
+                        class="flex-1 px-4 py-2.5 bg-success text-on-primary rounded-control text-sm font-bold hover:bg-success/90 transition-colors disabled:bg-surface-sunken disabled:text-ink-muted disabled:cursor-not-allowed"
                     >
                         Enviar expedición
                     </button>
@@ -638,68 +629,65 @@
 
     <!-- Gestion Favoritos Habitat Modal -->
     <template x-if="showGestionFavoritosModal">
-        <div class="fixed inset-0 z-50 flex items-center justify-center p-4" @keydown.escape.window="closeGestionFavoritosModal()">
-            <div class="absolute inset-0 bg-black/60" @click="closeGestionFavoritosModal()"></div>
-            <div class="relative bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-2xl max-h-[85vh] overflow-hidden flex flex-col">
+        <div class="fixed inset-0 z-50 flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="gestion-favoritos-title" @keydown.escape.window="closeGestionFavoritosModal()">
+            <div class="absolute inset-0 scrim" @click="closeGestionFavoritosModal()"></div>
+            <div class="relative bg-surface-raised rounded-panel shadow-modal w-full max-w-2xl max-h-[85vh] overflow-hidden flex flex-col">
                 <!-- Header -->
-                <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-700">
-                    <h3 class="text-lg font-bold text-gray-900 dark:text-white">Favoritos de esta hábitat</h3>
-                    <button @click="closeGestionFavoritosModal()" class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400" aria-label="Cerrar">
+                <div class="flex items-center justify-between px-6 py-4 border-b border-line">
+                    <h3 id="gestion-favoritos-title" class="text-lg font-bold text-ink">Favoritos de esta hábitat</h3>
+                    <button @click="closeGestionFavoritosModal()" class="p-2 rounded-control hover:bg-surface-sunken text-ink-muted focus-ring" aria-label="Cerrar">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
                     </button>
                 </div>
                 <!-- Content -->
                 <div class="flex-1 overflow-y-auto p-6">
-                    <div x-show="gestionFavoritosLoading" x-cloak role="status" class="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
+                    <div x-show="gestionFavoritosLoading" x-cloak role="status" class="flex items-center gap-2 text-sm text-ink-muted">
                         <svg class="w-4 h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
                         Cargando...
                     </div>
-                    <div x-show="gestionFavoritosError" x-cloak role="alert" class="text-sm text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg px-3 py-2">
+                    <div x-show="gestionFavoritosError" x-cloak role="alert" class="text-sm text-warning-ink bg-warning-soft border border-warning rounded-control px-3 py-2">
                         <span x-text="gestionFavoritosError"></span>
                     </div>
                     <div x-show="!gestionFavoritosLoading && !gestionFavoritosError">
                         <!-- Máximo alcanzado -->
-                        <div x-show="favoritos.length >= 6" class="mb-3 px-3 py-2 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 text-xs text-amber-700 dark:text-amber-300">
+                        <div x-show="favoritos.length >= 6" class="mb-3 px-3 py-2 rounded-control bg-warning-soft border border-warning text-xs text-warning-ink">
                             Ya tienes 6 favoritos en este hábitat (máximo). Quita uno para poder añadir otro.
                         </div>
                         <!-- Grid de reclutados del usuario -->
                         <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
                             <template x-for="pokemon in allReclutados" :key="pokemon.id">
                                 <div
-                                    class="relative bg-white dark:bg-gray-800 rounded-lg shadow-sm border text-center p-2 transition-all cursor-pointer select-none"
+                                    class="relative bg-surface rounded-control shadow-sm border text-center p-2 transition-all cursor-pointer select-none"
                                     :class="esFavoritoHabitat(pokemon.id)
-                                        ? 'border-yellow-500 dark:border-yellow-400 ring-1 ring-yellow-500/30'
-                                        : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'"
+                                        ? 'border-warning ring-1 ring-warning/30'
+                                        : 'border-line hover:border-line-strong'"
                                     @click="toggleFavoritoHabitat(pokemon)"
                                     :title="esFavoritoHabitat(pokemon.id) ? 'Quitar de favoritos de este hábitat' : 'Añadir a favoritos de este hábitat'"
                                 >
-                                    <div class="w-16 h-16 mx-auto">
-                                        <img
-                                            :src="'/images/iconos_webp/' + pokemon.pokemon_id + '.webp'"
-                                            loading="lazy"
-                                            decoding="async"
-                                            :alt="pokemon.nombre"
-                                            class="w-full h-full object-contain"
-                                            onerror="this.style.display='none'"
-                                        >
+                                    <div class="w-24 h-24 mx-auto">
+                                        <x-sprite
+                                            size="96"
+                                            x-bind:src="'/images/iconos_webp/' + pokemon.pokemon_id + '.webp'"
+                                            x-bind:alt="pokemon.nombre"
+                                        />
                                     </div>
-                                    <p class="text-[10px] text-gray-600 dark:text-gray-400 truncate mt-1" x-text="pokemon.nombre"></p>
-                                    <p class="text-[10px] text-gray-400 dark:text-gray-500" x-text="'Nv ' + (pokemon.nivel || 1)"></p>
+                                    <p class="text-2xs text-ink-muted truncate mt-1" x-text="pokemon.nombre"></p>
+                                    <p class="text-2xs text-ink-subtle" x-text="'Nv ' + (pokemon.nivel || 1)"></p>
                                     <div class="mt-1">
                                         <template x-if="esFavoritoHabitat(pokemon.id)">
-                                            <span class="inline-flex items-center gap-1 px-1.5 py-0.5 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 text-[10px] font-bold rounded-full">
+                                            <span class="inline-flex items-center gap-1 px-1.5 py-0.5 bg-warning-soft text-warning-ink text-2xs font-bold rounded-full">
                                                 <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
                                                 Favorito
                                             </span>
                                         </template>
                                         <template x-if="!esFavoritoHabitat(pokemon.id)">
-                                            <span class="text-[10px] text-gray-400 dark:text-gray-500">Click para marcar</span>
+                                            <span class="text-2xs text-ink-subtle">Click para marcar</span>
                                         </template>
                                     </div>
                                 </div>
                             </template>
                         </div>
-                        <div x-show="allReclutados.length === 0" class="text-center py-12 text-gray-500 dark:text-gray-400">
+                        <div x-show="allReclutados.length === 0" class="text-center py-12 text-ink-muted">
                             <p>No hay Pokémon disponibles</p>
                         </div>
                     </div>
@@ -710,41 +698,41 @@
 
     <!-- Formacion Modal (Entrenadores / Ruta) -->
     <template x-if="showFormacionPopup">
-        <div class="fixed inset-0 z-50 flex items-center justify-center p-4" @keydown.escape.window="closeFormacionPopup()">
-            <div class="absolute inset-0 bg-black/60" @click="closeFormacionPopup()"></div>
-            <div class="relative bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-md p-6">
-                <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-4" x-text="formacionContexto === 'ruta' ? 'Combate de Ruta · Configurar Formación' : 'Configurar Formación'"></h3>
-                <p class="text-sm text-gray-600 dark:text-gray-300 mb-4">
+        <div class="fixed inset-0 z-50 flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="formacion-modal-title" @keydown.escape.window="closeFormacionPopup()">
+            <div class="absolute inset-0 scrim" @click="closeFormacionPopup()"></div>
+            <div class="relative bg-surface-raised rounded-panel shadow-modal w-full max-w-md p-6">
+                <h3 id="formacion-modal-title" class="text-lg font-bold text-ink mb-4" x-text="formacionContexto === 'ruta' ? 'Combate de Ruta · Configurar Formación' : 'Configurar Formación'"></h3>
+                <p class="text-sm text-ink-muted mb-4">
                     Ajusta la posición de cada pokémon antes del combate.
                 </p>
 
                 <!-- Error 422 inline (ruta: sin redirigir) -->
-                <div x-show="rutaCombatError" x-cloak role="alert" class="mb-4 text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg px-3 py-2">
+                <div x-show="rutaCombatError" x-cloak role="alert" class="mb-4 text-sm text-danger-ink bg-danger-soft border border-danger rounded-control px-3 py-2">
                     <span x-text="rutaCombatError"></span>
                 </div>
 
                 <!-- Miembros del equipo con toggle -->
                 <div class="space-y-3 mb-6">
                     <template x-for="miembro in (selectedTeamMembers || [])" :key="miembro.id">
-                        <div class="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700 rounded-lg">
+                        <div class="flex items-center justify-between p-3 bg-surface-sunken border border-line rounded-control">
                             <div class="flex items-center gap-3">
-                                <img :src="'/images/iconos_webp/' + miembro.reclutado.pokemon_id + '.webp'" loading="lazy" decoding="async" :alt="miembro.reclutado.nombre" class="w-96 object-contain" onerror="this.style.display='none'">
+                                <x-sprite size="64" x-bind:src="'/images/iconos_webp/' + miembro.reclutado.pokemon_id + '.webp'" x-bind:alt="miembro.reclutado.nombre" />
                                 <div>
-                                    <p class="text-sm font-medium text-gray-900 dark:text-white" x-text="miembro.reclutado.nombre || miembro.reclutado?.pokemon?.name"></p>
+                                    <p class="text-sm font-medium text-ink" x-text="miembro.reclutado.nombre || miembro.reclutado?.pokemon?.name"></p>
                                 </div>
                             </div>
                             <button
                                 @click="toggleFormacionSlot(miembro.slot)"
                                 :class="formacion[miembro.slot] === 'vanguardia'
-                                    ? 'bg-blue-600 text-white border-blue-600'
-                                    : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600'"
-                                class="px-3 py-1.5 rounded-lg text-xs font-bold border transition-colors"
+                                    ? 'bg-primary text-on-primary border-primary'
+                                    : 'bg-surface-sunken text-ink border-line-strong'"
+                                class="px-3 py-1.5 rounded-control text-xs font-bold border transition-colors"
                                 x-text="formacion[miembro.slot] === 'vanguardia' ? '🛡️ Vanguardia' : '⚔️ Retaguardia'"
                             ></button>
                         </div>
                     </template>
                     <template x-if="!selectedTeamMembers || selectedTeamMembers.length === 0">
-                        <p class="text-sm text-gray-400 dark:text-gray-500 text-center py-4">Selecciona un equipo primero</p>
+                        <p class="text-sm text-ink-subtle text-center py-4">Selecciona un equipo primero</p>
                     </template>
                 </div>
 
@@ -752,7 +740,7 @@
                 <div class="flex gap-3">
                     <button
                         @click="closeFormacionPopup()"
-                        class="flex-1 px-4 py-2.5 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg text-sm font-medium hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                        class="flex-1 px-4 py-2.5 bg-surface-sunken text-ink rounded-control text-sm font-medium hover:bg-line transition-colors"
                     >
                         Cancelar
                     </button>
@@ -761,7 +749,7 @@
                         :disabled="formacionContexto === 'ruta'
                             ? (!selectedTeamId || rutaCombatiendo)
                             : (!selectedTeamId || !selectedTrainer)"
-                        class="flex-1 px-4 py-2.5 bg-red-600 text-white rounded-lg text-sm font-bold hover:bg-red-700 transition-colors disabled:bg-gray-300 dark:disabled:bg-gray-700 disabled:text-gray-500 dark:disabled:text-gray-500 disabled:cursor-not-allowed"
+                        class="flex-1 px-4 py-2.5 bg-danger text-on-primary rounded-control text-sm font-bold hover:bg-danger/90 transition-colors disabled:bg-surface-sunken disabled:text-ink-muted disabled:cursor-not-allowed"
                         x-text="formacionContexto === 'ruta'
                             ? (rutaCombatiendo ? 'Iniciando combate...' : '⚔️ ¡Combatir! (Ruta 3v3)')
                             : '¡Combatir!'"
@@ -773,24 +761,24 @@
 
     <!-- Admin Gestion Modal -->
     <template x-if="showGestionModal">
-        <div class="fixed inset-0 z-50 flex items-center justify-center p-4" @keydown.escape.window="closeGestionModal()">
-            <div class="absolute inset-0 bg-black/60" @click="closeGestionModal()"></div>
-            <div class="relative bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
+        <div class="fixed inset-0 z-50 flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="gestion-modal-title" @keydown.escape.window="closeGestionModal()">
+            <div class="absolute inset-0 scrim" @click="closeGestionModal()"></div>
+            <div class="relative bg-surface-raised rounded-panel shadow-modal w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
                 <!-- Header -->
-                <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-700">
-                    <h3 class="text-lg font-bold text-gray-900 dark:text-white">Admin - Gestión de Familias</h3>
-                    <button @click="closeGestionModal()" class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400" aria-label="Cerrar modal">
+                <div class="flex items-center justify-between px-6 py-4 border-b border-line">
+                    <h3 id="gestion-modal-title" class="text-lg font-bold text-ink">Admin - Gestión de Familias</h3>
+                    <button @click="closeGestionModal()" class="p-2 rounded-control hover:bg-surface-sunken text-ink-muted focus-ring" aria-label="Cerrar modal">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                     </button>
                 </div>
 
                 <!-- Tabs -->
-                <div class="border-b border-gray-200 dark:border-gray-700 px-6">
+                <div class="border-b border-line px-6">
                     <nav class="flex gap-6" role="tablist" aria-label="Gestión de familias">
                         <button
                             role="tab"
                             :aria-selected="gestionTab === 'assign'"
-                            :class="['py-3 text-sm font-medium border-b-2 transition-colors', gestionTab === 'assign' ? 'border-blue-500 text-blue-600 dark:text-blue-400' : 'border-transparent text-gray-500 hover:text-gray-700 dark:hover:text-gray-300']"
+                            :class="['py-3 text-sm font-medium border-b-2 transition-colors', gestionTab === 'assign' ? 'border-primary text-primary-ink' : 'border-transparent text-ink-muted hover:text-ink']"
                             @click="gestionTab = 'assign'"
                         >
                             Asignar
@@ -798,7 +786,7 @@
                         <button
                             role="tab"
                             :aria-selected="gestionTab === 'unassign'"
-                            :class="['py-3 text-sm font-medium border-b-2 transition-colors', gestionTab === 'unassign' ? 'border-red-500 text-red-600 dark:text-red-400' : 'border-transparent text-gray-500 hover:text-gray-700 dark:hover:text-gray-300']"
+                            :class="['py-3 text-sm font-medium border-b-2 transition-colors', gestionTab === 'unassign' ? 'border-danger text-danger-ink' : 'border-transparent text-ink-muted hover:text-ink']"
                             @click="gestionTab = 'unassign'"
                         >
                             Ya Asignados
@@ -817,11 +805,11 @@
                                     type="text"
                                     x-model="assignSearch"
                                     placeholder="Buscar familia por nombre..."
-                                    class="flex-1 px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
+                                    class="flex-1 px-3 py-2 text-sm border border-line-strong rounded-control bg-surface text-ink"
                                 >
                                 <select
                                     x-model="assignTypeFilter"
-                                    class="px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
+                                    class="px-3 py-2 text-sm border border-line-strong rounded-control bg-surface text-ink"
                                 >
                                     <option value="">Todos los tipos</option>
                                     <template x-for="tipo in allTypes" :key="tipo.id">
@@ -831,7 +819,7 @@
                             </div>
 
                             <!-- Unassigned families grid -->
-                            <div x-show="filteredUnassigned.length === 0 && !gestionLoading" class="text-center py-12 text-gray-500 dark:text-gray-400">
+                            <div x-show="filteredUnassigned.length === 0 && !gestionLoading" class="text-center py-12 text-ink-muted">
                                 <p>No hay familias sin hábitat que coincidan con la búsqueda</p>
                             </div>
                             <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
@@ -840,23 +828,21 @@
                                         type="button"
                                         :disabled="gestionLoading"
                                         @click="assignFamily(family)"
-                                        class="group {{ $familyCardClass }} hover:border-blue-400 dark:hover:border-blue-500 hover:shadow-md transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                                        class="group card-surface p-3 text-center hover:border-primary hover:shadow-md transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                                         :title="family.base.name"
                                     >
-                                        <div class="w-full aspect-square bg-gray-100 dark:bg-gray-900 rounded-lg flex items-center justify-center overflow-hidden mb-2">
-                                            <img
-                                                :src="'/images/iconos_webp/' + family.base.id + '.webp'"
-                                                loading="lazy"
-                                                decoding="async"
-                                                :alt="family.base.name"
-                                                class="w-full h-full object-contain group-hover:scale-105 transition-transform"
-                                                onerror="this.style.display='none'"
-                                            >
+                                        <div class="w-full aspect-square bg-surface-sunken rounded-control flex items-center justify-center overflow-hidden mb-2">
+                                            <x-sprite
+                                                size="96"
+                                                class="group-hover:scale-105 transition-transform"
+                                                x-bind:src="'/images/iconos_webp/' + family.base.id + '.webp'"
+                                                x-bind:alt="family.base.name"
+                                            />
                                         </div>
-                                        <p class="text-sm font-medium text-gray-900 dark:text-white truncate" x-text="family.base.name"></p>
+                                        <p class="text-sm font-medium text-ink truncate" x-text="family.base.name"></p>
                                         <div class="flex flex-wrap justify-center gap-1 mt-1">
                                             <template x-for="tipo in (family.types || [])" :key="tipo.id">
-                                                <span class="px-1.5 py-0.5 text-[10px] font-medium rounded inline-flex items-center gap-1" :class="tipoBadgePorId(tipo.id).clases">
+                                                <span class="tipo-badge" :style="'--type-color: ' + tipoBadgePorId(tipo.id).color">
                                                     <template x-if="tipoBadgePorId(tipo.id).icono">
                                                         <img :src="tipoBadgePorId(tipo.id).icono" alt="" loading="lazy" decoding="async" class="w-4 h-4 object-contain">
                                                     </template>
@@ -873,50 +859,47 @@
                     <!-- YA ASIGNADOS TAB: agrupado por nivel (1, 2, 3) -->
                     <template x-if="gestionTab === 'unassign'">
                         <div class="space-y-6">
-                            <div x-show="assignedFamilies.length === 0 && !gestionLoading" class="text-center py-12 text-gray-500 dark:text-gray-400">
+                            <div x-show="assignedFamilies.length === 0 && !gestionLoading" class="text-center py-12 text-ink-muted">
                                 <p>No hay familias asignadas a este hábitat</p>
                             </div>
 
                             <template x-for="level in [1, 2, 3]" :key="'level-' + level">
                                 <div>
                                     <div class="flex items-center justify-between mb-3">
-                                        <h4 class="text-sm font-semibold text-gray-900 dark:text-white">Nivel <span x-text="level"></span></h4>
-                                        <span class="text-xs text-gray-500 dark:text-gray-400" x-text="assignedByLevel[level].length + ' pokémon'"></span>
+                                        <h4 class="text-sm font-semibold text-ink">Nivel <span x-text="level"></span></h4>
+                                        <span class="text-xs text-ink-muted" x-text="assignedByLevel[level].length + ' pokémon'"></span>
                                     </div>
 
                                     <div x-show="assignedByLevel[level].length > 0" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
                                         <template x-for="pokemon in assignedByLevel[level]" :key="pokemon.evolution_chain_id + '-' + pokemon.id">
-                                            <div class="relative {{ $familyCardClass }} group">
+                                            <div class="relative card-surface p-3 text-center group">
                                                 <template x-if="pokemon.is_base">
                                                     <button
                                                         type="button"
                                                         :disabled="gestionLoading"
                                                         @click="removeFamily(pokemon.evolution_chain_id)"
-                                                        class="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full text-xs flex items-center justify-center hover:bg-red-600 transition-colors disabled:opacity-30"
+                                                        class="absolute -top-2 -right-2 w-6 h-6 bg-danger text-on-primary rounded-full text-xs flex items-center justify-center hover:bg-danger/90 transition-colors disabled:opacity-30"
                                                         :aria-label="'Quitar la familia completa de ' + pokemon.name"
                                                         title="Quitar familia completa"
                                                     >
                                                         ✕
                                                     </button>
                                                 </template>
-                                                <div class="w-full aspect-square bg-gray-100 dark:bg-gray-900 rounded-lg flex items-center justify-center overflow-hidden mb-2">
-                                                    <img
-                                                        :src="'/images/iconos_webp/' + pokemon.id + '.webp'"
-                                                        loading="lazy"
-                                                        decoding="async"
-                                                        :alt="pokemon.name"
-                                                        class="w-full h-full object-contain"
-                                                        onerror="this.style.display='none'"
-                                                    >
+                                                <div class="w-full aspect-square bg-surface-sunken rounded-control flex items-center justify-center overflow-hidden mb-2">
+                                                    <x-sprite
+                                                        size="96"
+                                                        x-bind:src="'/images/iconos_webp/' + pokemon.id + '.webp'"
+                                                        x-bind:alt="pokemon.name"
+                                                    />
                                                 </div>
-                                                <p class="text-sm font-medium text-gray-900 dark:text-white truncate" x-text="pokemon.name"></p>
-                                                <p class="text-[10px] text-gray-500 dark:text-gray-400 mt-0.5" x-text="pokemon.is_base ? 'Base de la familia' : 'Evolución'"></p>
+                                                <p class="text-sm font-medium text-ink truncate" x-text="pokemon.name"></p>
+                                                <p class="text-2xs text-ink-muted mt-0.5" x-text="pokemon.is_base ? 'Base de la familia' : 'Evolución'"></p>
                                                 <div class="flex justify-center gap-1 mt-2">
                                                     <button
                                                         type="button"
                                                         :disabled="gestionLoading"
                                                         @click="updatePokemonLevel(pokemon.evolution_chain_id, pokemon.id, 1)"
-                                                        :class="pokemon.level === 1 ? 'bg-blue-600 text-white border-blue-600' : 'bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-300 border-gray-200 dark:border-gray-600 hover:border-blue-400'"
+                                                        :class="pokemon.level === 1 ? 'bg-primary text-on-primary border-primary' : 'bg-surface text-ink-muted border-line hover:border-primary'"
                                                         class="w-8 h-7 text-xs font-bold rounded border transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
                                                         :aria-label="'Mover ' + pokemon.name + ' al nivel 1'"
                                                         title="Nivel 1"
@@ -925,7 +908,7 @@
                                                         type="button"
                                                         :disabled="gestionLoading"
                                                         @click="updatePokemonLevel(pokemon.evolution_chain_id, pokemon.id, 2)"
-                                                        :class="pokemon.level === 2 ? 'bg-blue-600 text-white border-blue-600' : 'bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-300 border-gray-200 dark:border-gray-600 hover:border-blue-400'"
+                                                        :class="pokemon.level === 2 ? 'bg-primary text-on-primary border-primary' : 'bg-surface text-ink-muted border-line hover:border-primary'"
                                                         class="w-8 h-7 text-xs font-bold rounded border transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
                                                         :aria-label="'Mover ' + pokemon.name + ' al nivel 2'"
                                                         title="Nivel 2"
@@ -934,7 +917,7 @@
                                                         type="button"
                                                         :disabled="gestionLoading"
                                                         @click="updatePokemonLevel(pokemon.evolution_chain_id, pokemon.id, 3)"
-                                                        :class="pokemon.level === 3 ? 'bg-blue-600 text-white border-blue-600' : 'bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-300 border-gray-200 dark:border-gray-600 hover:border-blue-400'"
+                                                        :class="pokemon.level === 3 ? 'bg-primary text-on-primary border-primary' : 'bg-surface text-ink-muted border-line hover:border-primary'"
                                                         class="w-8 h-7 text-xs font-bold rounded border transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
                                                         :aria-label="'Mover ' + pokemon.name + ' al nivel 3'"
                                                         title="Nivel 3"
@@ -944,7 +927,7 @@
                                         </template>
                                     </div>
 
-                                    <div x-show="assignedByLevel[level].length === 0 && assignedFamilies.length > 0 && !gestionLoading" class="text-center py-6 text-gray-400 dark:text-gray-500 border border-dashed border-gray-200 dark:border-gray-700 rounded-xl">
+                                    <div x-show="assignedByLevel[level].length === 0 && assignedFamilies.length > 0 && !gestionLoading" class="text-center py-6 text-ink-subtle border border-dashed border-line rounded-card">
                                         <p>Sin pokémon en este nivel</p>
                                     </div>
                                 </div>
@@ -958,13 +941,13 @@
 
     <!-- Mazmorra Modal -->
     <template x-if="showMazmorraModal">
-        <div class="fixed inset-0 z-50 flex items-center justify-center p-4" @keydown.escape.window="closeMazmorraModal()">
-            <div class="absolute inset-0 bg-black/60" @click="closeMazmorraModal()"></div>
-            <div class="relative bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-2xl max-h-[85vh] overflow-hidden flex flex-col">
+        <div class="fixed inset-0 z-50 flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="mazmorra-modal-title" @keydown.escape.window="closeMazmorraModal()">
+            <div class="absolute inset-0 scrim" @click="closeMazmorraModal()"></div>
+            <div class="relative bg-surface-raised rounded-panel shadow-modal w-full max-w-2xl max-h-[85vh] overflow-hidden flex flex-col">
                 <!-- Header -->
-                <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-700">
-                    <h3 class="text-lg font-bold text-gray-900 dark:text-white">Mazmorra del Hábitat</h3>
-                    <button @click="closeMazmorraModal()" class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400" aria-label="Cerrar modal de mazmorra">
+                <div class="flex items-center justify-between px-6 py-4 border-b border-line">
+                    <h3 id="mazmorra-modal-title" class="text-lg font-bold text-ink">Mazmorra del Hábitat</h3>
+                    <button @click="closeMazmorraModal()" class="p-2 rounded-control hover:bg-surface-sunken text-ink-muted focus-ring" aria-label="Cerrar modal de mazmorra">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                     </button>
                 </div>
@@ -972,27 +955,27 @@
                 <!-- Content -->
                 <div class="flex-1 overflow-y-auto p-6">
                     <!-- Loading -->
-                    <div x-show="mazmorraLoading" x-cloak role="status" class="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
+                    <div x-show="mazmorraLoading" x-cloak role="status" class="flex items-center gap-2 text-sm text-ink-muted">
                         <svg class="w-4 h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
                         Cargando mazmorra...
                     </div>
 
                     <!-- Error -->
-                    <div x-show="mazmorraError" x-cloak role="alert" class="text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg px-3 py-2">
+                    <div x-show="mazmorraError" x-cloak role="alert" class="text-sm text-danger-ink bg-danger-soft border border-danger rounded-control px-3 py-2">
                         <span x-text="mazmorraError"></span>
                         <button @click="loadMazmorra()" class="ml-2 underline font-medium">Reintentar</button>
                     </div>
 
                     <!-- Empty: sin pisos -->
                     <template x-if="!mazmorraLoading && !mazmorraError && (!pisos || pisos.length === 0)">
-                        <div class="text-center py-10 text-gray-500 dark:text-gray-400">
+                        <div class="text-center py-10 text-ink-muted">
                             <p>Esta mazmorra aún no tiene pisos configurados.</p>
                         </div>
                     </template>
 
                     <template x-if="!mazmorraLoading && !mazmorraError && pisos && pisos.length > 0">
                         <div class="space-y-4">
-                            <p class="text-xs text-gray-500 dark:text-gray-400">
+                            <p class="text-xs text-ink-muted">
                                 En cada piso te enfrentas al pokémon más débil del hábitat. Si pierdes, tendrás
                                 que esperar 1 hora para repetir el piso; los pisos ganados no se pueden repetir.
                             </p>
@@ -1001,7 +984,7 @@
                             <div class="space-y-2">
                                 <template x-for="piso in pisos" :key="'piso-'+piso.piso">
                                     <div
-                                        class="flex items-center justify-between gap-3 p-3 rounded-xl border-2 transition-all"
+                                        class="flex items-center justify-between gap-3 p-3 rounded-card border-2 transition-all"
                                         :class="estadoPisoClass(piso)"
                                     >
                                         <div class="flex items-center gap-3 min-w-0">
@@ -1010,13 +993,13 @@
                                                 <span x-text="piso.piso"></span>
                                             </span>
                                             <div class="min-w-0">
-                                                <p class="text-sm font-semibold text-gray-900 dark:text-white truncate" x-text="piso.nombre || 'Piso ' + piso.piso"></p>
-                                                <p class="text-xs text-gray-500 dark:text-gray-400" x-text="estadoPisoTexto(piso)"></p>
+                                                <p class="text-sm font-semibold text-ink truncate" x-text="piso.nombre || 'Piso ' + piso.piso"></p>
+                                                <p class="text-xs text-ink-muted" x-text="estadoPisoTexto(piso)"></p>
                                             </div>
                                         </div>
                                         <template x-if="piso.estado === 'disponible'">
                                             <button @click="selectPiso(piso)"
-                                                    class="shrink-0 px-3 py-1.5 bg-blue-600 text-white rounded-lg text-xs font-bold hover:bg-blue-700 transition-colors"
+                                                    class="shrink-0 px-3 py-1.5 bg-primary text-on-primary rounded-control text-xs font-bold hover:bg-primary-hover transition-colors"
                                                     :disabled="mazmorraCombatiendo">
                                                 Combatir
                                             </button>
@@ -1027,21 +1010,21 @@
 
                             <!-- Acción: conectar equipo + formación para el piso seleccionado -->
                             <template x-if="pisoSeleccionado">
-                                <div class="border-t border-gray-200 dark:border-gray-700 pt-4">
-                                    <p class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">Equipo y formación</p>
+                                <div class="border-t border-line pt-4">
+                                    <p class="text-xs font-semibold text-ink-muted uppercase tracking-wide mb-2">Equipo y formación</p>
                                     <div class="space-y-2 mb-3">
                                         <template x-if="availableTeams.length === 0">
-                                            <p class="text-sm text-gray-400 dark:text-gray-500 text-center py-2">No tienes equipos disponibles</p>
+                                            <p class="text-sm text-ink-subtle text-center py-2">No tienes equipos disponibles</p>
                                         </template>
                                         <template x-for="team in availableTeams" :key="team.id">
                                             <button type="button" @click="selectMazmorraTeam(team.id, team.name)"
                                                     :class="mazmorraTeamId === team.id
-                                                        ? 'border-blue-500 dark:border-blue-400 bg-blue-50 dark:bg-blue-900/20'
-                                                        : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'"
-                                                    class="w-full p-3 rounded-lg border-2 text-left transition-all flex items-center justify-between">
-                                                <span class="text-sm font-medium text-gray-900 dark:text-white" x-text="team.name"></span>
+                                                        ? 'border-primary bg-primary-soft'
+                                                        : 'border-line hover:border-line-strong'"
+                                                    class="w-full p-3 rounded-control border-2 text-left transition-all flex items-center justify-between">
+                                                <span class="text-sm font-medium text-ink" x-text="team.name"></span>
                                                 <template x-if="mazmorraTeamId === team.id">
-                                                    <svg class="w-5 h-5 text-blue-600 dark:text-blue-400" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+                                                    <svg class="w-5 h-5 text-primary-ink" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
                                                 </template>
                                             </button>
                                         </template>
@@ -1049,39 +1032,39 @@
 
                                     <!-- Formación (hasta 3 miembros) -->
                                     <div x-show="mazmorraTeamId" x-cloak class="space-y-3 mb-4">
-                                        <p class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Formación</p>
+                                        <p class="text-xs font-semibold text-ink-muted uppercase tracking-wide">Formación</p>
                                         <template x-for="miembro in (mazmorraTeamMembers || [])" :key="miembro.id">
-                                            <div class="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700 rounded-lg">
+                                            <div class="flex items-center justify-between p-3 bg-surface-sunken border border-line rounded-control">
                                                 <div class="flex items-center gap-3">
-                                                    <img :src="'/images/iconos_webp/' + miembro.reclutado.pokemon_id + '.webp'" loading="lazy" decoding="async" :alt="miembro.reclutado.nombre" class="w-12 h-12 object-contain" onerror="this.style.display='none'">
+                                                    <x-sprite size="64" x-bind:src="'/images/iconos_webp/' + miembro.reclutado.pokemon_id + '.webp'" x-bind:alt="miembro.reclutado.nombre" />
                                                     <div>
-                                                        <p class="text-sm font-medium text-gray-900 dark:text-white" x-text="miembro.reclutado.nombre || miembro.reclutado?.pokemon?.name"></p>
-                                                        <p class="text-xs text-gray-500 dark:text-gray-400" x-text="'Posición ' + miembro.slot"></p>
+                                                        <p class="text-sm font-medium text-ink" x-text="miembro.reclutado.nombre || miembro.reclutado?.pokemon?.name"></p>
+                                                        <p class="text-xs text-ink-muted" x-text="'Posición ' + miembro.slot"></p>
                                                     </div>
                                                 </div>
                                                 <button
                                                     @click="toggleFormacionSlot(miembro.slot)"
                                                     :class="mazmorraFormacion[miembro.slot] === 'vanguardia'
-                                                        ? 'bg-blue-600 text-white border-blue-600'
-                                                        : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600'"
-                                                    class="px-3 py-1.5 rounded-lg text-xs font-bold border transition-colors shrink-0"
+                                                        ? 'bg-primary text-on-primary border-primary'
+                                                        : 'bg-surface-sunken text-ink border-line-strong'"
+                                                    class="px-3 py-1.5 rounded-control text-xs font-bold border transition-colors shrink-0"
                                                     x-text="(mazmorraFormacion[miembro.slot] === 'vanguardia' ? '🛡️ Vanguardia' : '⚔️ Retaguardia')"
                                                 ></button>
                                             </div>
                                         </template>
                                         <template x-if="!mazmorraTeamMembers || mazmorraTeamMembers.length === 0">
-                                            <p class="text-sm text-gray-400 dark:text-gray-500 text-center py-3">Selecciona un equipo primero</p>
+                                            <p class="text-sm text-ink-subtle text-center py-3">Selecciona un equipo primero</p>
                                         </template>
                                     </div>
 
                                     <!-- Error de combate -->
-                                    <div x-show="mazmorraCombatError" x-cloak role="alert" class="text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg px-3 py-2 mb-3">
+                                    <div x-show="mazmorraCombatError" x-cloak role="alert" class="text-sm text-danger-ink bg-danger-soft border border-danger rounded-control px-3 py-2 mb-3">
                                         <span x-text="mazmorraCombatError"></span>
                                     </div>
 
                                     <button @click="confirmarPiso()"
                                             :disabled="!mazmorraTeamId || mazmorraCombatiendo"
-                                            class="w-full px-4 py-2.5 bg-red-600 text-white rounded-lg text-sm font-bold hover:bg-red-700 transition-colors disabled:bg-gray-300 dark:disabled:bg-gray-700 disabled:text-gray-500 dark:disabled:text-gray-500 disabled:cursor-not-allowed">
+                                            class="w-full px-4 py-2.5 bg-danger text-on-primary rounded-control text-sm font-bold hover:bg-danger/90 transition-colors disabled:bg-surface-sunken disabled:text-ink-muted disabled:cursor-not-allowed">
                                         <span x-show="!mazmorraCombatiendo">¡Combatir en el piso <span x-text="pisoSeleccionado ? pisoSeleccionado.piso : ''"></span>!</span>
                                         <span x-show="mazmorraCombatiendo" x-cloak class="inline-flex items-center gap-2">
                                             <svg class="w-4 h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
@@ -1099,55 +1082,55 @@
 
     <!-- Granjas Modal -->
     <template x-if="showGranjaModal">
-        <div class="fixed inset-0 z-50 flex items-center justify-center p-4" @keydown.escape.window="closeGranjaModal()">
-            <div class="absolute inset-0 bg-black/60" @click="closeGranjaModal()"></div>
-            <div class="relative bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-5xl max-h-[90vh] overflow-hidden flex flex-col">
-                <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+        <div class="fixed inset-0 z-50 flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="granja-modal-title" @keydown.escape.window="closeGranjaModal()">
+            <div class="absolute inset-0 scrim" @click="closeGranjaModal()"></div>
+            <div class="relative bg-surface-raised rounded-panel shadow-modal w-full max-w-5xl max-h-[90vh] overflow-hidden flex flex-col">
+                <div class="flex items-center justify-between px-6 py-4 border-b border-line">
                     <div>
-                        <h3 class="text-lg font-bold text-gray-900 dark:text-white">
+                        <h3 id="granja-modal-title" class="text-lg font-bold text-ink">
                             Granjas — <span x-text="granja?.habitat?.name || '{{ $habitat['name'] }}'"></span>
                         </h3>
-                        <p class="text-xs text-gray-500 dark:text-gray-400">Nidos, refugios y complementos de las familias del hábitat.</p>
+                        <p class="text-xs text-ink-muted">Nidos, refugios y complementos de las familias del hábitat.</p>
                     </div>
-                    <button @click="closeGranjaModal()" class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400" aria-label="Cerrar modal de granjas">
+                    <button @click="closeGranjaModal()" class="p-2 rounded-control hover:bg-surface-sunken text-ink-muted focus-ring" aria-label="Cerrar modal de granjas">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                     </button>
                 </div>
 
                 <div class="flex-1 overflow-y-auto p-6 space-y-4">
-                    <div x-show="granjaLoading" x-cloak role="status" class="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
+                    <div x-show="granjaLoading" x-cloak role="status" class="flex items-center gap-2 text-sm text-ink-muted">
                         <svg class="w-4 h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
                         Cargando granja...
                     </div>
 
-                    <div x-show="granjaError" x-cloak role="alert" class="text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg px-3 py-2">
+                    <div x-show="granjaError" x-cloak role="alert" class="text-sm text-danger-ink bg-danger-soft border border-danger rounded-control px-3 py-2">
                         <span x-text="granjaError"></span>
                         <button @click="loadGranja()" class="ml-2 underline font-medium">Reintentar</button>
                     </div>
 
                     <template x-if="!granjaLoading && !granjaError && granja">
                         <div class="space-y-4">
-                            <div class="rounded-xl bg-gray-50 dark:bg-gray-900/40 border border-gray-200 dark:border-gray-700 p-3 text-xs text-gray-600 dark:text-gray-300 space-y-1">
+                            <div class="rounded-card bg-surface-sunken border border-line p-3 text-xs text-ink-muted space-y-1">
                                 <p><strong>Nido:</strong> cada nivel sube el rango de IV de los huevos y reduce su tiempo de gestación/eclosión.</p>
                                 <p><strong>Refugio:</strong> modifica la aparición y la captura de la familia. Las condiciones insalubres invierten el efecto.</p>
                                 <p><strong>Complementos:</strong> dan EV a toda la familia; al subir un complemento se aplica también a los reclutados existentes.</p>
                             </div>
 
-                            <div x-show="granja.familias.length === 0" class="text-center py-10 text-gray-500 dark:text-gray-400">
+                            <div x-show="granja.familias.length === 0" class="text-center py-10 text-ink-muted">
                                 Este hábitat no tiene familias asignadas todavía.
                             </div>
 
                             <template x-for="familia in (granja.familias || [])" :key="'granja-' + familia.evolution_chain_id">
-                                <div class="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-4 space-y-4">
+                                <div class="rounded-panel border border-line bg-surface p-4 space-y-4">
                                     <div class="flex items-center gap-3">
-                                        <div class="w-96 shrink-0 rounded-xl bg-gray-100 dark:bg-gray-900 flex items-center justify-center overflow-hidden">
-                                            <img :src="familia.base.icon" loading="lazy" decoding="async" :alt="familia.base.name" class="w-full object-contain" onerror="this.style.display='none'">
+                                        <div class="w-32 shrink-0 rounded-card bg-surface-sunken flex items-center justify-center overflow-hidden">
+                                            <x-sprite size="128" x-bind:src="familia.base.icon" x-bind:alt="familia.base.name" />
                                         </div>
                                         <div class="min-w-0 flex-1">
-                                            <p class="text-sm font-bold text-gray-900 dark:text-white truncate" x-text="familia.base.name"></p>
+                                            <p class="text-sm font-bold text-ink truncate" x-text="familia.base.name"></p>
                                             <div class="flex flex-wrap gap-1 mt-1">
                                                 <template x-for="tipo in (familia.types || [])" :key="familia.evolution_chain_id + '-tipo-' + tipo.id">
-                                                    <span class="px-1.5 py-0.5 text-[10px] font-medium rounded inline-flex items-center gap-1" :class="tipoBadgePorId(tipo.id).clases">
+                                                    <span class="tipo-badge" :style="'--type-color: ' + tipoBadgePorId(tipo.id).color">
                                                         <template x-if="tipoBadgePorId(tipo.id).icono">
                                                             <img :src="tipoBadgePorId(tipo.id).icono" alt="" loading="lazy" decoding="async" class="w-4 h-4 object-contain">
                                                         </template>
@@ -1157,58 +1140,58 @@
                                             </div>
                                         </div>
                                         <div class="text-right shrink-0">
-                                            <p class="text-[10px] uppercase tracking-wide text-gray-400 dark:text-gray-500">Caramelos familia</p>
-                                            <p class="text-sm font-bold text-gray-900 dark:text-white">🍬 <span x-text="saldoFamilia(familia.evolution_chain_id)"></span></p>
+                                            <p class="text-2xs uppercase tracking-wide text-ink-subtle">Caramelos familia</p>
+                                            <p class="text-sm font-bold text-ink">🍬 <span x-text="saldoFamilia(familia.evolution_chain_id)"></span></p>
                                         </div>
                                     </div>
 
                                     <div class="grid md:grid-cols-2 gap-3">
                                         <!-- Nido -->
-                                        <div class="rounded-xl border border-amber-200 dark:border-amber-800 bg-amber-50/50 dark:bg-amber-900/10 p-3">
+                                        <div class="rounded-card border border-warning bg-warning-soft p-3">
                                             <div class="flex items-center justify-between gap-2">
-                                                <p class="text-sm font-bold text-gray-900 dark:text-white">🪺 Nido</p>
-                                                <span class="text-xs font-semibold text-amber-700 dark:text-amber-300" x-text="'Nv ' + familia.nido.nivel + '/' + familia.nido.max"></span>
+                                                <p class="text-sm font-bold text-ink">🪺 Nido</p>
+                                                <span class="text-xs font-semibold text-warning-ink" x-text="'Nv ' + familia.nido.nivel + '/' + familia.nido.max"></span>
                                             </div>
-                                            <p class="text-xs text-gray-600 dark:text-gray-300 mt-2">
+                                            <p class="text-xs text-ink-muted mt-2">
                                                 IV por stat: <strong x-text="familia.nido.rango_iv.min + '–' + familia.nido.rango_iv.max"></strong>
                                             </p>
-                                            <p class="text-xs text-gray-600 dark:text-gray-300">
+                                            <p class="text-xs text-ink-muted">
                                                 Tiempo de huevo: <strong x-text="familia.nido.reduccion_tiempo_pct + '% más rápido'"></strong>
                                             </p>
                                             <button
                                                 type="button"
                                                 @click="mejorarNido(familia.evolution_chain_id)"
                                                 :disabled="granjaAccionando || !familia.nido.puede_mejorar"
-                                                class="mt-3 w-full px-3 py-2 rounded-lg text-xs font-bold transition-colors disabled:bg-gray-200 dark:disabled:bg-gray-700 disabled:text-gray-500 dark:disabled:text-gray-400 disabled:cursor-not-allowed bg-amber-600 text-white hover:bg-amber-700"
+                                                class="mt-3 w-full px-3 py-2 rounded-control text-xs font-bold transition-colors disabled:bg-surface-sunken disabled:text-ink-muted disabled:cursor-not-allowed bg-warning text-on-primary hover:bg-warning/90"
                                             >
                                                 <span x-text="familia.nido.coste_siguiente !== null ? (familia.nido.nivel === 0 ? 'Construir nido' : 'Mejorar nido') + ' · ' + familia.nido.coste_siguiente + ' 🍬' : 'Nido al máximo'"></span>
                                             </button>
                                         </div>
 
                                         <!-- Refugio -->
-                                        <div class="rounded-xl border border-emerald-200 dark:border-emerald-800 bg-emerald-50/50 dark:bg-emerald-900/10 p-3">
+                                        <div class="rounded-card border border-success bg-success-soft p-3">
                                             <div class="flex items-center justify-between gap-2">
-                                                <p class="text-sm font-bold text-gray-900 dark:text-white">🏕️ Refugio</p>
-                                                <span class="text-xs font-semibold text-emerald-700 dark:text-emerald-300" x-text="'Nv ' + familia.refugio.nivel + '/' + familia.refugio.max"></span>
+                                                <p class="text-sm font-bold text-ink">🏕️ Refugio</p>
+                                                <span class="text-xs font-semibold text-success-ink" x-text="'Nv ' + familia.refugio.nivel + '/' + familia.refugio.max"></span>
                                             </div>
-                                            <p class="text-xs text-gray-600 dark:text-gray-300 mt-2">
+                                            <p class="text-xs text-ink-muted mt-2">
                                                 Aparición ×<strong x-text="familia.refugio.multiplicador_aparicion"></strong>
                                                 · Captura ×<strong x-text="familia.refugio.multiplicador_captura"></strong>
                                             </p>
-                                            <p x-show="familia.refugio.exclusivo" class="text-xs font-semibold text-emerald-700 dark:text-emerald-300 mt-1">
+                                            <p x-show="familia.refugio.exclusivo" class="text-xs font-semibold text-success-ink mt-1">
                                                 Nivel 5: solo aparece esta familia.
                                             </p>
-                                            <p x-show="familia.refugio.excluido" class="text-xs font-semibold text-orange-600 dark:text-orange-400 mt-1">
+                                            <p x-show="familia.refugio.excluido" class="text-xs font-semibold text-warning-ink mt-1">
                                                 Otra familia tiene un refugio nivel 5: esta familia no aparece.
                                             </p>
-                                            <p x-show="familia.refugio.insalubres" class="text-xs font-semibold text-red-600 dark:text-red-400 mt-1">
+                                            <p x-show="familia.refugio.insalubres" class="text-xs font-semibold text-danger-ink mt-1">
                                                 Condiciones insalubres activas: efecto invertido y complementos bloqueados.
                                             </p>
                                             <button
                                                 type="button"
                                                 @click="mejorarRefugio(familia.evolution_chain_id)"
                                                 :disabled="granjaAccionando || !familia.refugio.puede_mejorar"
-                                                class="mt-3 w-full px-3 py-2 rounded-lg text-xs font-bold transition-colors disabled:bg-gray-200 dark:disabled:bg-gray-700 disabled:text-gray-500 dark:disabled:text-gray-400 disabled:cursor-not-allowed bg-emerald-600 text-white hover:bg-emerald-700"
+                                                class="mt-3 w-full px-3 py-2 rounded-control text-xs font-bold transition-colors disabled:bg-surface-sunken disabled:text-ink-muted disabled:cursor-not-allowed bg-success text-on-primary hover:bg-success/90"
                                             >
                                                 <span x-text="familia.refugio.coste_siguiente !== null ? (familia.refugio.nivel === 0 ? 'Construir refugio' : 'Mejorar refugio') + ' · ' + familia.refugio.coste_siguiente + ' 🍬' : 'Refugio al máximo'"></span>
                                             </button>
@@ -1217,7 +1200,7 @@
                                                 x-show="familia.refugio.nivel > 0"
                                                 @click="alternarInsalubres(familia.evolution_chain_id)"
                                                 :disabled="granjaAccionando"
-                                                class="mt-2 w-full px-3 py-1.5 rounded-lg text-[11px] font-semibold border transition-colors disabled:opacity-50 disabled:cursor-not-allowed border-red-300 dark:border-red-700 text-red-700 dark:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20"
+                                                class="mt-2 w-full px-3 py-1.5 rounded-control text-3xs font-semibold border transition-colors disabled:opacity-50 disabled:cursor-not-allowed border-danger text-danger-ink hover:bg-danger-soft"
                                                 x-text="familia.refugio.insalubres ? 'Activar condiciones salubres' : 'Activar condiciones insalubres'"
                                             ></button>
                                         </div>
@@ -1226,21 +1209,21 @@
                                     <!-- Complementos -->
                                     <div>
                                         <div class="flex items-center justify-between gap-2">
-                                            <p class="text-sm font-bold text-gray-900 dark:text-white">🧪 Complementos EV</p>
-                                            <span class="text-xs font-semibold text-blue-700 dark:text-blue-300" x-text="'Total familia: +' + familia.ev_total + ' EV'"></span>
+                                            <p class="text-sm font-bold text-ink">🧪 Complementos EV</p>
+                                            <span class="text-xs font-semibold text-primary-ink" x-text="'Total familia: +' + familia.ev_total + ' EV'"></span>
                                         </div>
-                                        <p x-show="familia.refugio.insalubres" class="text-xs text-red-600 dark:text-red-400 mt-1">
+                                        <p x-show="familia.refugio.insalubres" class="text-xs text-danger-ink mt-1">
                                             Desactivados mientras las condiciones insalubres estén activas.
                                         </p>
                                         <div class="grid grid-cols-2 md:grid-cols-3 gap-2 mt-2">
                                             <template x-for="comp in (familia.complementos || [])" :key="familia.evolution_chain_id + '-comp-' + comp.stat">
-                                                <div class="rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/30 p-2">
+                                                <div class="rounded-control border border-line bg-surface-sunken p-2">
                                                     <div class="flex items-center justify-between gap-1">
-                                                        <span class="text-xs font-semibold text-gray-800 dark:text-gray-200" x-text="comp.nombre"></span>
-                                                        <span class="text-[10px] font-bold text-gray-500 dark:text-gray-400" x-text="'Nv ' + comp.nivel + '/' + comp.max"></span>
+                                                        <span class="text-xs font-semibold text-ink" x-text="comp.nombre"></span>
+                                                        <span class="text-2xs font-bold text-ink-muted" x-text="'Nv ' + comp.nivel + '/' + comp.max"></span>
                                                     </div>
-                                                    <p class="text-[11px] text-blue-700 dark:text-blue-300 mt-1">+<span x-text="comp.ev"></span> EV</p>
-                                                    <p class="text-[10px] text-gray-500 dark:text-gray-400">
+                                                    <p class="text-3xs text-primary-ink mt-1">+<span x-text="comp.ev"></span> EV</p>
+                                                    <p class="text-2xs text-ink-muted">
                                                         <span x-show="comp.coste_ev !== null" x-text="comp.coste_ev + ' EV 🍬 + ' + comp.coste_familia + ' fam. 🍬'"></span>
                                                         <span x-show="comp.coste_ev === null">Máximo</span>
                                                     </p>
@@ -1248,7 +1231,7 @@
                                                         type="button"
                                                         @click="mejorarComplemento(familia.evolution_chain_id, comp.stat)"
                                                         :disabled="granjaAccionando || !comp.puede_mejorar"
-                                                        class="mt-2 w-full px-2 py-1.5 rounded-md text-[11px] font-bold transition-colors disabled:bg-gray-200 dark:disabled:bg-gray-700 disabled:text-gray-500 dark:disabled:text-gray-400 disabled:cursor-not-allowed bg-blue-600 text-white hover:bg-blue-700"
+                                                        class="mt-2 w-full px-2 py-1.5 rounded-md text-3xs font-bold transition-colors disabled:bg-surface-sunken disabled:text-ink-muted disabled:cursor-not-allowed bg-primary text-on-primary hover:bg-primary-hover"
                                                         x-text="textoBotonComplemento(comp)"
                                                     ></button>
                                                 </div>
@@ -1559,15 +1542,15 @@ function habitatShow() {
         },
 
         estadoPisoClass(piso) {
-            if (piso.estado === 'ganado') return 'border-green-300 dark:border-green-700 bg-green-50 dark:bg-green-900/20';
-            if (piso.estado === 'cooldown') return 'border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-900/20 opacity-70';
-            return 'border-gray-200 dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-600';
+            if (piso.estado === 'ganado') return 'border-success bg-success-soft';
+            if (piso.estado === 'cooldown') return 'border-warning bg-warning-soft opacity-70';
+            return 'border-line hover:border-primary';
         },
 
         estadoPisoIconoClass(piso) {
-            if (piso.estado === 'ganado') return 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400';
-            if (piso.estado === 'cooldown') return 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400';
-            return 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400';
+            if (piso.estado === 'ganado') return 'bg-success-soft text-success-ink';
+            if (piso.estado === 'cooldown') return 'bg-warning-soft text-warning-ink';
+            return 'bg-primary-soft text-primary-ink';
         },
 
         estadoPisoTexto(piso) {
@@ -1988,12 +1971,12 @@ function habitatShow() {
 
         riesgoClass(riesgo) {
             const clases = {
-                'Bajo': 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400',
-                'Medio': 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400',
-                'Alto': 'bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400',
-                'Extremo': 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400',
+                'Bajo': 'bg-success-soft text-success-ink',
+                'Medio': 'bg-warning-soft text-warning-ink',
+                'Alto': 'bg-warning-soft text-warning-ink',
+                'Extremo': 'bg-danger-soft text-danger-ink',
             };
-            return clases[riesgo] || 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400';
+            return clases[riesgo] || 'bg-surface-sunken text-ink-muted';
         },
 
         closeExplorationModal() {
