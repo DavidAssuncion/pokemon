@@ -128,7 +128,9 @@ Despliegue:
 
 ---
 
-## Análisis C — Shiny en la interfaz
+## Análisis C — Shiny en la interfaz (pre-TASK-009, histórico)
+
+> **Nota:** este análisis se realizó antes de que TASK-009 creara `x-sprite` y migrara las vistas. Se conserva como histórico. El estado actual y los fallos restantes están en el **Análisis E**.
 
 ### Causa raíz
 
@@ -258,3 +260,77 @@ El flag `es_shiny` **existe y se persiste correctamente por individuo**. El fall
 - **Medio:** dos bases de datos (`laravel` local en `127.0.0.1:5433`; `pokemon` en Docker). Confirmar la autoritativa antes de backfill.
 - **Bajo:** licencia de `PkmnHomeIcons`/UICONS si se usan sus PNG; revisar `THIRD_PARTY_NOTICES.md`.
 - **Bajo:** `0_s.webp` ausente; solo afecta al placeholder.
+
+---
+
+## Análisis E — Estado actual del shiny tras TASK-009 (2026-11-04)
+
+### `x-sprite` ya existe y centraliza buena parte del problema
+
+`resources/views/components/sprite.blade.php:21-33` declara `id`, `src`, `fallback`, `name`, `shiny`, `suffix`, `size`, `loading`, `priority`, `decorative`, `wrapperClass`.
+
+- URL normal: `sprite.blade.php:41` → `/images/iconos_webp/{id}{suffix}.webp`.
+- URL shiny: `sprite.blade.php:42` → `/images/iconos_webp/shiny/{id}{suffix}_s.webp`.
+- `:src` explícito gana sobre `:shiny` (`sprite.blade.php:44-47`): si se pasa una URL normal junto a `:shiny`, se muestra la normal y el flag solo influye en el fallback (línea 62).
+- Fallback: con `:fallback` → fallback → `0.webp`; con `:shiny` → shiny → normal → `0.webp`; resto → `0.webp` (`sprite.blade.php:54-68`).
+- El `onerror` estático se omite si el consumidor pasa `x-on:error` (`sprite.blade.php:54-57`); en ese caso el fallback lo gestiona el JS de la vista.
+- Tamaños válidos: `128|96|64|inline|combat` (`sprite.blade.php:36`). `size="48"` cae a 96 (`sprite.blade.php:37`).
+
+### Fallos shiny que quedan
+
+#### 1. Exploraciones: capturados (confirmado)
+
+- `resources/views/exploraciones/index.blade.php:308` usa `<x-sprite :src="$capturado['icono']">` sin `:shiny`.
+- La cadena descarta el flag en tres capas:
+  1. `src/Exploraciones/Presentation/TransformadorResultadoExploracion.php:76-88` — `capturados()` no persiste `es_shiny`, aunque `RecompensaCapturaCollection::toArray()` lo expone (`src/Exploraciones/Domain/Collections/RecompensaCapturaCollection.php:43-47`).
+  2. `src/Exploraciones/Presentation/PresentadorExploraciones.php:244-251` — `toTerminada()` vuelve a descartarlo.
+  3. `src/Exploraciones/Presentation/ResultadoExploracionVista.php:168-179` — reconstruye `icono` normal.
+- Consecuencia: el resumen de exploración nunca muestra shiny, aunque el combate de ruta sí (`app/Livewire/Presenters/BatallaVistaPresenter.php:409-421`).
+
+#### 2. Eventos de exploración (limitación de contrato)
+
+- `resources/views/exploraciones/_evento.blade.php:28,37,60,92,186` usan `:src` sin `:shiny`.
+- `src/Exploraciones/Presentation/EventoExploracionVista.php:67-70` construye solo URL normal; el dominio de eventos no transporta `es_shiny`.
+- No es corregible solo en Blade: requiere ampliar el contrato del evento o asumir que el diario no muestra shiny.
+
+#### 3. Ficha de reclutado: siguiente evolución (confirmado)
+
+- `resources/views/reclutado/show.blade.php:28` usa `<x-sprite :id="$siguiente['pokemon_id']">` sin `:shiny`.
+- `app/Support/ReclutadoVistaPresenter.php:72-77` no expone `es_shiny` para `siguiente`; el sprite principal sí es correcto (`:60`).
+
+#### 4. Regresión de TASK-009 en `turn-bar` (no shiny)
+
+- `resources/views/livewire/partials/turn-bar.blade.php:7` usa `size="48"`, que no existe en `$allowedSizes` ni en CSS (`resources/css/components.css:24-41`, `tokens.css:73-77`); cae a 96. Antes era `size="inline"` (comparación con `git show e7837a9~1`). Es una regresión visual, no shiny.
+
+#### 5. Assets shiny
+
+- 1.200 normales y 1.137 shiny; 64 normales sin contrapartida shiny: `0`, formas `10091-10253`, `3_f950`, `6_f951`, `9_f952`, `901_f1`, `905`.
+- De ellos, 59 son especies/formas reales; 4 son legacy sin fila en `pokemon`; `0` es el placeholder.
+- Los 59 reales tienen shiny con otro nombre (`{baseId}_f{formId}_s.webp`) y se pueden remapear a `{id}_s.webp`; `905` incarnate no tiene fuente local.
+- `0_s.webp` no existe, pero `CombatienteVista.php:265` y `BatallaVistaPresenter.php:417` la generan como fallback shiny de especie 0. Impacto bajo (mock).
+
+### Contextos ya correctos
+
+- `exploraciones/_explorador.blade.php:32-35` (`:id` + `:shiny`).
+- `habitats/show.blade.php:233-236` (equipo, `:id` + `:shiny`).
+- `livewire/combate.blade.php:160-164` (capturas, `:id` + `:shiny`; los campos `src`/`onerror` del presenter quedaron muertos).
+- `livewire/_pokemon-card.blade.php:110-117` (`:src` shiny + `:fallback` normal + `:shiny`).
+- `reclutado/show.blade.php:10`.
+- Equipos: `equipos/index.blade.php:112,345,816,856` vía `iconoDe`/`iconoPrincipalDe` shiny-aware y `onSpriteError`; el JS usa `_s` (`:1409-1421`) y el fallback shiny → normal → `0.webp` (`:1448-1470`).
+- Habitats/gimnasios JS: `habitats/show.blade.php:722,1042`, `gimnasios/show.blade.php:194` con `iconoReclutado` + `onSpriteError`.
+
+### Recomendación mínima compatible con `x-sprite`
+
+1. **Exploraciones:** propagar `es_shiny` en `TransformadorResultadoExploracion::capturados` (leer `$captura->esShiny`), conservarlo en `PresentadorExploraciones::toTerminada` y `ResultadoExploracionVista::capturados`, y usar `<x-sprite :id="$capturado['pokemon_id']" :shiny="$capturado['es_shiny'] ?? false" size="64">`.
+2. **Reclutado evolución:** añadir `es_shiny` a `siguiente` en `ReclutadoVistaPresenter` y pasar `:shiny` en `reclutado/show.blade.php:28`.
+3. **Turn-bar:** volver a `size="inline"` (o añadir token `48` si se desea 3rem), sin tocar el componente.
+4. **Eventos:** documentar como limitación de contrato; si se quiere shiny en el diario, ampliar el dominio del evento.
+5. **Assets:** decidir entre generar los 59 reales + `0_s.webp` o aceptar fallback a normal. Para «siempre shiny» hay que generarlos.
+6. **Limpieza opcional:** eliminar `src`/`onerror` muertos de `BatallaVistaPresenter::capturas` y unificar `iconoDe`/`iconoPrincipalDe`.
+
+### Riesgos
+
+- **Medio:** corregir exploraciones toca dominio/persistencia (`TransformadorResultadoExploracion`), no solo Blade; las expediciones ya guardadas sin `es_shiny` mostrarán normal hasta nuevas capturas.
+- **Bajo:** `size="48"` → 96 rompe el layout del turn-bar; cambio trivial.
+- **Bajo:** `0_s.webp` solo afecta a especie 0/mock.
+- **Bajo:** 64 assets shiny faltantes provocan fallback a normal.

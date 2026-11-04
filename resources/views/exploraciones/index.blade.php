@@ -306,7 +306,8 @@
                                                 <div class="text-center" title="{{ $capturado['nombre'] }}">
                                                     <div class="relative inline-block">
                                                         <x-sprite
-                                                            :src="$capturado['icono']"
+                                                            :id="$capturado['pokemon_id']"
+                                                            :shiny="$capturado['es_shiny'] ?? false"
                                                             :name="$capturado['nombre']"
                                                             size="64"
                                                         />

@@ -174,7 +174,7 @@ final class ResultadoExploracionVista
                 'pokemon_id' => $id,
                 'nombre' => $nombre,
                 'cantidad' => (int) ($capturado['cantidad'] ?? 0),
-                'icono' => "/images/iconos_webp/{$id}.webp",
+                'es_shiny' => (bool) ($capturado['es_shiny'] ?? false),
             ]);
         }, $capturados);
     }

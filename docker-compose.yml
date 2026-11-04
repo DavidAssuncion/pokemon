@@ -49,6 +49,7 @@ services:
       DB_USERNAME: pokemon
       DB_PASSWORD: secret
       SESSION_DRIVER: database
+      SESSION_LIFETIME: ${SESSION_LIFETIME:-525600}
       QUEUE_CONNECTION: database
       CACHE_STORE: database
       RUN_MIGRATIONS: ${RUN_MIGRATIONS:-true}
@@ -88,6 +89,7 @@ services:
       DB_USERNAME: pokemon
       DB_PASSWORD: secret
       SESSION_DRIVER: database
+      SESSION_LIFETIME: ${SESSION_LIFETIME:-525600}
       QUEUE_CONNECTION: database
       CACHE_STORE: database
     depends_on:
@@ -117,6 +119,7 @@ services:
       DB_USERNAME: pokemon
       DB_PASSWORD: secret
       SESSION_DRIVER: database
+      SESSION_LIFETIME: ${SESSION_LIFETIME:-525600}
       QUEUE_CONNECTION: database
       CACHE_STORE: database
     depends_on:

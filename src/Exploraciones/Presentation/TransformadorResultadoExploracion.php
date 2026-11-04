@@ -26,7 +26,7 @@ final class TransformadorResultadoExploracion
      *                                              evolution_chain_id (columna).
      * @param  array{encuentros: int, victorias: int, huidas: int, emboscadas: int, contratiempos: int}  $incidentes
      * @return array{
-     *     capturados: list<array{pokemon_id: int, nombre: string, cantidad: int}>,
+     *     capturados: list<array{pokemon_id: int, nombre: string, cantidad: int, es_shiny: bool}>,
      *     caramelos_familia: list<array{evolution_chain_id: int, nombre: string|null, pokemon_id: int|null, cantidad: int}>,
      *     caramelos_ev: list<array{stat: int, cantidad: int}>,
      *     caramelos_tipo: list<array{tipo: string, slug: string, cantidad: int}>,
@@ -64,7 +64,7 @@ final class TransformadorResultadoExploracion
     /**
      * @param  BaseCollection<int, RecompensaCaptura>  $capturas
      * @param  Collection<int, Pokemon>  $pokemons
-     * @return list<array{pokemon_id: int, nombre: string, cantidad: int}>
+     * @return list<array{pokemon_id: int, nombre: string, cantidad: int, es_shiny: bool}>
      */
     private function capturados(BaseCollection $capturas, Collection $pokemons): array
     {
@@ -77,6 +77,7 @@ final class TransformadorResultadoExploracion
                     'pokemon_id' => $captura->pokemonId,
                     'nombre' => $pokemon->name ?? '',
                     'cantidad' => $captura->cantidad,
+                    'es_shiny' => $captura->esShiny,
                 ];
             })
             ->values()

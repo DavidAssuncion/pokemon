@@ -9,6 +9,7 @@ use App\Models\PokemonEvolution;
 use App\Models\PokemonStat;
 use App\Models\PokemonType;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Str;
 
 class PokemonSeeder extends Seeder
 {
@@ -113,7 +114,7 @@ class PokemonSeeder extends Seeder
 
             $pokemonRowsToInsert[] = [
                 'id' => $pokemonId,
-                'name' => $row['name'],
+                'name' => Str::ucfirst($row['name']),
                 // Invariante: en los normales id == species_id (como hoy); en los
                 // regionales el species es PROPIO (= pokemon.id) para que el BFS del
                 // Admin y ServicioEvolucion no mezclen formas con la species normal.

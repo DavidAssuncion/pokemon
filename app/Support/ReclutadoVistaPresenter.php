@@ -57,7 +57,7 @@ final class ReclutadoVistaPresenter
                 'nombre_formateado' => Str::ucfirst($nombre ?? ''),
                 'pokemon_id' => $reclutado->pokemon_id,
                 'pokemon_nombre' => $reclutado->pokemon?->name,
-                'es_shiny' => (bool) $reclutado->es_shiny,
+                'es_shiny' => $reclutado->es_shiny,
                 'nivel' => NivelHelper::nivelDesdeExperiencia($expTotal),
                 'exp_total' => $expTotal,
                 'exp_total_formateado' => number_format($expTotal),
@@ -69,6 +69,7 @@ final class ReclutadoVistaPresenter
                     'pokemon_id' => $siguiente->id,
                     'nombre' => $siguiente->name,
                     'nombre_formateado' => Str::ucfirst($siguiente->name),
+                    'es_shiny' => $reclutado->es_shiny,
                     'imagen' => "/images/iconos/{$siguiente->id}.png",
                 ]
                 : null,

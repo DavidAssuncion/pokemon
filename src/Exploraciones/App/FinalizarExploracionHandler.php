@@ -153,7 +153,7 @@ final class FinalizarExploracionHandler implements CommandHandler
         );
 
         $economia = EconomiaRecompensas::individual();
-        $senda = app(CargarMapaSendaJugador::class)->para((int) $exploracion->user_id);
+        $senda = app(CargarMapaSendaJugador::class)->para($exploracion->user_id);
 
         $recompensas = $this->calculador->calcular(
             $derrotados,
@@ -699,6 +699,7 @@ final class FinalizarExploracionHandler implements CommandHandler
                 ->map(fn (RecompensaCaptura $c) => new RecompensaCaptura(
                     pokemonId: $c->pokemonId,
                     cantidad: $reducir($c->cantidad, $c->pokemonId, 'captura'),
+                    esShiny: $c->esShiny,
                 ))
                 ->filter(fn (RecompensaCaptura $c) => $c->cantidad > 0),
             caramelosFamilia: $recompensas->caramelosFamilia

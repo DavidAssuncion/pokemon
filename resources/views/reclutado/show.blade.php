@@ -25,7 +25,7 @@
         <div class="mt-4 bg-surface rounded-card shadow-sm border border-line p-6">
             <h2 class="text-lg font-semibold text-ink">Próxima evolución</h2>
             <div class="mt-3 flex items-center gap-4">
-                <x-sprite :id="$siguiente['pokemon_id']" :name="$siguiente['nombre']" size="64" />
+                <x-sprite :id="$siguiente['pokemon_id']" :shiny="$siguiente['es_shiny'] ?? false" :name="$siguiente['nombre']" size="64" />
                 <p class="text-ink">{{ $siguiente['nombre_formateado'] }}</p>
             </div>
 

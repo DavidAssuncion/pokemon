@@ -247,6 +247,7 @@ final class PresentadorExploraciones
                 'pokemon_id' => $id,
                 'nombre' => $capturado['nombre'] ?? $nombres[$id] ?? null,
                 'cantidad' => (int) ($capturado['cantidad'] ?? 0),
+                'es_shiny' => (bool) ($capturado['es_shiny'] ?? false),
             ];
         }
 

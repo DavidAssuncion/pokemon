@@ -1,17 +1,15 @@
 # TASK-010 — Tareas
 
-Análisis completado. Plan pendiente de decisión de secuenciación con TASK-009 y aprobación.
+Plan v2 aprobado. Implementación y verificación completadas; quedan dos acciones de entorno/validación.
 
 | ID | Fase | Responsable | Estado |
 |----|------|-------------|--------|
-| A1 | Análisis: seeders y nombres | analyst | completed |
-| A2 | Análisis: sesión/token | analyst | completed |
-| A3 | Análisis: shiny en UI | analyst | completed |
-| D | Diseño (si procede) | architect | pending |
-| P | Plan y aprobación | orchestrator | pending |
-| I1 | Implementación: nombres en seeders | database/backend | pending |
-| I2 | Implementación: duración de sesión | backend | pending |
-| I3 | Implementación: shiny consistente | backend/frontend | pending |
-| R | Revisión independiente | reviewer | pending |
-| S | Auditoría de seguridad | security | pending |
-| F | Informe final | orchestrator | pending |
+| F0 | Base limpia: TASK-009 commiteado; rama `task-010` | orchestrator | completed |
+| F1 | Nombres: `Str::ucfirst` en `PokemonSeeder` (sin backfill) | database | completed |
+| F2 | Sesión: `SESSION_LIFETIME=525600` (config, env, compose) | backend | completed (`.env` local pendiente) |
+| F3 | Shiny backend: exploraciones + evolución | backend | completed |
+| F4 | Shiny vistas: `exploraciones/index`, `reclutado/show` | frontend | completed |
+| F5 | Verificación estática y manual | orchestrator/especialistas | completed (estática; visual pendiente) |
+| F6 | Seguridad | security | completed (`APPROVED_WITH_FINDINGS`) |
+| F7 | Revisión independiente | reviewer | no aplica (plan v2 D7) |
+| F8 | Informe final | orchestrator | completed |
