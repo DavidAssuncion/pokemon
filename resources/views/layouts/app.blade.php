@@ -117,7 +117,7 @@
                             @click="oscuro = !oscuro; localStorage.setItem('theme', oscuro ? 'dark' : 'light'); document.documentElement.classList.toggle('dark', oscuro)"
                             class="p-2 rounded-lg text-ink-muted hover:bg-surface-sunken transition-colors focus-ring"
                             aria-label="Cambiar tema">
-                        <span x-text="oscuro ? 'Claro' : 'Oscuro'"></span>
+                        <span x-text="oscuro ? '☀️' : '🌙'"></span>
                     </button>
                 </div>
             </nav>
