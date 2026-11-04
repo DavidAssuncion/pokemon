@@ -29,13 +29,13 @@
             <h2 class="text-lg font-semibold text-ink mb-4">{{ $province['name'] }}</h2>
             <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-6 gap-3">
                 @foreach($province['habitats'] as $habitat)
-                    <div class="group">
+                    <div>
                         <a
                             href="/habitats/{{ $habitat['id'] }}"
                             class="block bg-surface rounded-card shadow-sm border border-line overflow-hidden hover:shadow-md transition-all hover:border-primary"
                         >
-                            <!-- Marco de imagen 3:2: encaja las imágenes apaisadas sin bandas verticales -->
-                            <div class="w-full aspect-[3/2] bg-surface-sunken flex items-center justify-center overflow-hidden">
+                            <!-- Marco 3:2: la imagen se estira para llenar todo el marco -->
+                            <div class="w-full aspect-[3/2] bg-surface-sunken overflow-hidden">
                                 @php
                                     $habitatImagePath = resource_path('habitats_img/'.$habitat['id'].'.webp');
                                     $habitatImageVersion = is_file($habitatImagePath) ? filemtime($habitatImagePath) : 0;
@@ -43,13 +43,12 @@
                                 <img
                                     src="/habitats-img/{{ $habitat['id'] }}.webp?v={{ $habitatImageVersion }}"
                                     alt="{{ $habitat['name'] }}"
-                                    class="w-full h-full object-contain p-2 group-hover:scale-[1.03] transition-transform duration-300"
+                                    class="block w-full h-full object-fill"
                                     onerror="this.style.display='none'"
                                 >
                             </div>
-                            <!-- Name: white padding area -->
-                            <div class="px-4 py-3 bg-surface border-t border-line">
-                                <p class="text-sm font-medium text-center text-ink">{{ $habitat['name'] }}</p>
+                            <div class="h-11 px-4 bg-surface border-t border-line flex items-center justify-center">
+                                <p class="w-full text-sm font-medium text-center text-ink line-clamp-2">{{ $habitat['name'] }}</p>
                             </div>
                         </a>
                     </div>
