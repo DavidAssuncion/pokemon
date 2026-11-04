@@ -19,7 +19,7 @@ use App\Models\Province;
 use App\Models\Reclutado;
 use App\Models\Team;
 use App\Support\DesbloqueoPokedex;
-use App\Support\PresentadorDetallePokemon;
+use App\Support\PresentadorDetalleEspecie;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Query\JoinClause;
@@ -102,7 +102,7 @@ final class DatagridServiceProvider extends ServiceProvider
                     return null;
                 }
 
-                return PresentadorDetallePokemon::para($pokemon);
+                return PresentadorDetalleEspecie::paraPokedex($pokemon);
             },
         ));
 

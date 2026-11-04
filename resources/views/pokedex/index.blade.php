@@ -176,7 +176,7 @@
         </template>
 
         <!-- Pokemon grid -->
-        <div class="grid grid-cols-3 sm:grid-cols-6 lg:grid-cols-9 gap-3">
+        <div class="grid grid-cols-3 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-8 xl:grid-cols-10 2xl:grid-cols-12 gap-2 sm:gap-3">
             <template x-for="pokemon in items" :key="pokemon.id">
                 <div
                     @click="openDetail(pokemon)"
@@ -189,7 +189,7 @@
                     :aria-label="'Pokemon #' + pokemon.id + ' ' + ((pokemon.visto || unlockAll) ? pokemon.name : 'No visto')"
                 >
                     <!-- Image / placeholder -->
-                    <div class="aspect-square relative bg-surface-sunken p-2">
+                    <div class="aspect-square relative bg-surface-sunken p-2 flex items-center justify-center">
                         <template x-if="!pokemon.visto && !unlockAll">
                             <div
                                 class="w-full h-full rounded-control bg-surface-sunken flex items-center justify-center"
@@ -200,8 +200,7 @@
                         </template>
                         <template x-if="pokemon.visto || unlockAll">
                             <x-sprite
-                                size="96"
-                                wrapper-class="mx-auto"
+                                size="128"
                                 class="transition-transform group-hover:scale-110"
                                 x-bind:src="iconUrl(pokemon)"
                                 x-bind:alt="pokemon.name"
@@ -216,7 +215,7 @@
                         </template>
                     </div>
                     <!-- Info -->
-                    <div class="px-2 pb-2 text-center">
+                    <div class="px-2 pb-2 pt-1 text-center min-h-[3.5rem]">
                         <p class="text-2xs text-ink-subtle" x-text="'#' + pokemon.id"></p>
                         <p
                             class="text-xs font-medium text-ink truncate"
@@ -269,7 +268,7 @@
             <!-- Backdrop -->
             <div class="absolute inset-0 scrim" @click="closeDetail()"></div>
             <!-- Modal content -->
-            <div class="relative bg-surface-raised rounded-panel shadow-modal w-full max-w-lg max-h-[90vh] overflow-y-auto">
+            <div class="relative flex max-h-[90vh] w-full max-w-3xl flex-col overflow-hidden rounded-panel bg-surface-raised shadow-modal lg:max-w-4xl">
                 <!-- Close button -->
                 <button
                     @click="closeDetail()"
@@ -282,36 +281,53 @@
                 </button>
 
                 <!-- Header -->
-                <div class="p-6 pb-4 text-center border-b border-line">
-                    <template x-if="!selectedPokemon.visto && !unlockAll">
-                        <div
-                            class="w-32 h-32 rounded-panel bg-surface-sunken flex items-center justify-center mx-auto mb-3"
-                            aria-hidden="true"
-                        >
-                            <span class="text-3xl font-bold text-ink-subtle select-none">?</span>
+                <div class="shrink-0 border-b border-line p-5 pr-12 sm:p-6 sm:pr-12">
+                    <div class="flex items-start gap-4">
+                        <div class="w-20 h-20 sm:w-32 sm:h-32 shrink-0 rounded-card bg-surface-sunken flex items-center justify-center overflow-hidden">
+                            <template x-if="!selectedPokemon.visto && !unlockAll">
+                                <span class="text-2xl font-bold text-ink-subtle select-none" aria-hidden="true">?</span>
+                            </template>
+                            <template x-if="selectedPokemon.visto || unlockAll">
+                                <x-sprite
+                                    size="128"
+                                    loading="eager"
+                                    x-bind:src="iconUrl(selectedPokemon)"
+                                    x-bind:alt="selectedPokemon.name"
+                                    x-on:error="onIconError($event, selectedPokemon)"
+                                />
+                            </template>
                         </div>
-                    </template>
-                    <template x-if="selectedPokemon.visto || unlockAll">
-                        <x-sprite
-                            size="128"
-                            wrapper-class="mx-auto mb-3"
-                            loading="eager"
-                            x-bind:src="iconUrl(selectedPokemon)"
-                            x-bind:alt="selectedPokemon.name"
-                            x-on:error="onIconError($event, selectedPokemon)"
-                        />
-                    </template>
-                    <p class="text-xs text-ink-subtle" x-text="'#' + selectedPokemon.id"></p>
-                    <h2 id="pokedex-modal-title" class="text-xl font-bold text-ink" x-text="(selectedPokemon.visto || unlockAll) ? selectedPokemon.name : '???'"></h2>
-                    <template x-if="selectedPokemon.atrapado">
-                        <span class="inline-block mt-2 px-3 py-1 bg-success-soft text-success-ink text-xs font-medium rounded-full">
-                            Atrapado
-                        </span>
-                    </template>
+                        <div class="flex-1 min-w-0">
+                            <p class="text-xs text-ink-subtle" x-text="'#' + selectedPokemon.id"></p>
+                            <h2 id="pokedex-modal-title" class="truncate text-xl font-bold text-ink" x-text="(selectedPokemon.visto || unlockAll) ? selectedPokemon.name : '???'"></h2>
+                            <div class="mt-2 flex flex-wrap items-center gap-2">
+                                <template x-for="t in typePills" :key="t.slug + '-' + t.id">
+                                    <span
+                                        class="tipo-badge shrink-0 py-0.5 pl-0 pr-2"
+                                        :style="'--type-color: ' + tipoBadge(t.slug).color"
+                                    >
+                                        <img
+                                            :src="t.icon"
+                                            alt=""
+                                            class="w-6 h-6 object-contain"
+                                            loading="lazy"
+                                            decoding="async"
+                                        >
+                                        <span x-text="t.label"></span>
+                                    </span>
+                                </template>
+                                <template x-if="selectedPokemon.atrapado">
+                                    <span class="inline-block px-3 py-1 bg-success-soft text-success-ink text-xs font-medium rounded-full">
+                                        Atrapado
+                                    </span>
+                                </template>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Detail body -->
-                <div class="p-6 space-y-4" :aria-busy="detailLoading ? 'true' : 'false'">
+                <div class="min-h-0 flex-1 overflow-y-auto p-5 sm:p-6" :aria-busy="detailLoading ? 'true' : 'false'">
                     <!-- Loading skeleton -->
                     <template x-if="detailLoading">
                         <div class="space-y-4">
@@ -346,118 +362,208 @@
 
                     <!-- Detail content -->
                     <template x-if="!detailLoading && !detailError && (selectedPokemon.visto || unlockAll) && detail">
-                        <!-- Types -->
-                        <template x-if="typePills.length > 0">
-                            <div>
-                                <h3 class="text-xs font-semibold text-ink-muted uppercase tracking-wide mb-2">Tipo</h3>
-                                <div class="flex flex-wrap gap-2">
-                                    <template x-for="t in typePills" :key="t.slug + '-' + t.id">
-                                        <span
-                                            class="tipo-badge shrink-0 py-0.5 pl-0 pr-2"
-                                            :style="'--type-color: ' + tipoBadge(t.slug).color"
-                                        >
-                                            <img
-                                                :src="t.icon"
-                                                alt=""
-                                                class="w-7 h-7 object-contain"
-                                                loading="lazy"
-                                                decoding="async"
-                                            >
-                                            <span x-text="t.label"></span>
-                                        </span>
-                                    </template>
-                                </div>
-                            </div>
-                        </template>
-
-                        <!-- Familia evolutiva -->
-                        <template x-if="detail.family?.members?.length">
-                            <div>
-                                <h3 class="text-xs font-semibold text-ink-muted uppercase tracking-wide mb-2">Familia evolutiva</h3>
-                                <div class="space-y-3">
-                                    <template x-for="etapa in familyStages" :key="etapa.stage">
-                                        <div>
-                                            <p class="text-3xs font-medium text-ink-subtle mb-1.5" x-text="'Etapa ' + etapa.stage"></p>
-                                            <div class="flex flex-wrap gap-2">
-                                                <template x-for="member in etapa.members" :key="member.id">
-                                                    <div
-                                                        class="flex items-center gap-2 rounded-control border px-2 py-1.5"
-                                                        :class="member.is_current ? 'border-primary bg-primary-soft' : 'border-line bg-surface'"
-                                                        :aria-current="member.is_current ? 'true' : null"
-                                                    >
-                                                        <x-sprite
-                                                            size="64"
-                                                            x-bind:src="member.icon"
-                                                            x-bind:alt="nombrePokemon(member.name)"
-                                                        />
-                                                        <div class="min-w-0">
-                                                            <p class="text-xs font-medium text-ink truncate" x-text="nombrePokemon(member.name)"></p>
-                                                            <div class="flex items-center gap-1.5">
-                                                                <span x-show="member.minimum_level" class="text-2xs text-ink-muted" x-text="'Nv ' + member.minimum_level"></span>
-                                                                <span x-show="member.is_current" class="text-2xs font-semibold text-primary-ink">Actual</span>
-                                                            </div>
-                                                            <p x-show="familyParentName(member)" class="text-2xs text-ink-subtle" x-text="'Evoluciona de ' + familyParentName(member)"></p>
+                        <div class="space-y-4">
+                            <div class="grid grid-cols-1 gap-4 md:grid-cols-5">
+                                <!-- Columna izquierda: familia y habilidades -->
+                                <div class="space-y-4 md:col-span-3">
+                                    <!-- Familia evolutiva -->
+                                    <template x-if="detail.family?.members?.length">
+                                        <div class="rounded-panel border border-line bg-surface-sunken p-4">
+                                            <h3 class="text-sm font-bold uppercase tracking-wide text-ink-muted mb-2">Familia evolutiva</h3>
+                                            <div class="space-y-3">
+                                                <template x-for="etapa in familyStages" :key="etapa.stage">
+                                                    <div>
+                                                        <p class="text-3xs font-medium text-ink-subtle mb-1.5" x-text="'Etapa ' + etapa.stage"></p>
+                                                        <div class="flex flex-wrap gap-2">
+                                                            <template x-for="member in etapa.members" :key="member.id">
+                                                                <div
+                                                                    class="flex items-center gap-2 rounded-control border px-2 py-1.5"
+                                                                    :class="member.is_current ? 'border-primary bg-primary-soft' : 'border-line bg-surface'"
+                                                                    :aria-current="member.is_current ? 'true' : null"
+                                                                >
+                                                                    <x-sprite
+                                                                        size="64"
+                                                                        x-bind:src="member.icon"
+                                                                        x-bind:alt="nombrePokemon(member.name)"
+                                                                    />
+                                                                    <div class="min-w-0">
+                                                                        <p class="text-xs font-medium text-ink truncate" x-text="nombrePokemon(member.name)"></p>
+                                                                        <div class="flex items-center gap-1.5">
+                                                                            <span x-show="member.minimum_level" class="text-2xs text-ink-muted" x-text="'Nv ' + member.minimum_level"></span>
+                                                                            <span x-show="member.is_current" class="text-2xs font-semibold text-primary-ink">Actual</span>
+                                                                        </div>
+                                                                        <p x-show="familyParentName(member)" class="text-2xs text-ink-subtle" x-text="'Evoluciona de ' + familyParentName(member)"></p>
+                                                                    </div>
+                                                                </div>
+                                                            </template>
                                                         </div>
                                                     </div>
                                                 </template>
                                             </div>
                                         </div>
                                     </template>
-                                </div>
-                            </div>
-                        </template>
 
-                        <!-- Stats bars -->
-                        <template x-if="detail.stats && detail.stats.length > 0">
-                            <div>
-                                <h3 class="text-xs font-semibold text-ink-muted uppercase tracking-wide mb-2">Estadísticas</h3>
-                                <div class="space-y-2">
-                                    <template x-for="stat in detail.stats" :key="stat.name">
-                                        <div class="flex items-center gap-3">
-                                            <span class="text-xs text-ink-muted w-20 text-right" x-text="stat.name"></span>
-                                            <div class="flex-1 h-2 bg-surface-sunken rounded-full overflow-hidden">
-                                                <div
-                                                    class="h-full rounded-full transition-all duration-500"
-                                                    :class="getStatColor(stat.name)"
-                                                    :style="'width: ' + Math.min((stat.value / 255) * 100, 100) + '%'"
-                                                ></div>
+                                    <!-- Habilidades -->
+                                    <template x-if="(detail.abilities || []).length > 0">
+                                        <div class="rounded-panel border border-line bg-surface-sunken p-4">
+                                            <h3 class="text-sm font-bold uppercase tracking-wide text-ink-muted mb-2">Habilidades</h3>
+                                            <div class="space-y-3">
+                                                <template x-for="hab in detail.abilities" :key="'hab-' + hab.id">
+                                                    <div>
+                                                        <p class="text-sm font-semibold text-ink" x-text="hab.name"></p>
+                                                        <template x-if="hab.effect">
+                                                            <p class="text-xs text-ink-muted line-clamp-3" :title="hab.effect" x-text="hab.effect"></p>
+                                                        </template>
+                                                    </div>
+                                                </template>
                                             </div>
-                                            <span class="text-xs font-medium text-ink w-8" x-text="stat.value"></span>
                                         </div>
                                     </template>
                                 </div>
-                            </div>
-                        </template>
 
-                        <!-- Ubicación -->
-                        <div>
-                            <h3 class="text-xs font-semibold text-ink-muted uppercase tracking-wide mb-2">Ubicación</h3>
-                            <template x-if="detail.location">
-                                <div class="rounded-control border border-line overflow-hidden">
-                                    <template x-if="detail.location.province_name">
-                                        <p class="px-3 pt-2 text-3xs uppercase tracking-wide text-ink-subtle" x-text="detail.location.province_name"></p>
+                                <!-- Columna derecha: stats, especie y ubicación -->
+                                <div class="space-y-4 md:col-span-2">
+                                    <!-- Stats base -->
+                                    <template x-if="detail.stats && detail.stats.length > 0">
+                                        <div class="rounded-panel border border-line bg-surface-sunken p-4">
+                                            <h3 class="text-sm font-bold uppercase tracking-wide text-ink-muted mb-2">Estadísticas base</h3>
+                                            <div class="space-y-2">
+                                                <template x-for="stat in detail.stats" :key="stat.name">
+                                                    <div class="flex items-center gap-3">
+                                                        <span class="text-xs text-ink-muted w-20 text-right" x-text="stat.name"></span>
+                                                        <div class="flex-1 h-2 bg-surface-sunken rounded-full overflow-hidden">
+                                                            <div
+                                                                class="h-full rounded-full transition-all duration-500"
+                                                                :class="getStatColor(stat.name)"
+                                                                :style="'width: ' + Math.min((stat.value / 255) * 100, 100) + '%'"
+                                                            ></div>
+                                                        </div>
+                                                        <span class="text-xs font-medium text-ink w-8" x-text="stat.value"></span>
+                                                    </div>
+                                                </template>
+                                            </div>
+                                        </div>
                                     </template>
-                                    <img
-                                        :src="detail.location.habitat_image"
-                                        :alt="'Hábitat ' + detail.location.habitat_name"
-                                        loading="lazy"
-                                        decoding="async"
-                                        class="w-full h-24 object-cover"
-                                    >
-                                    <div class="p-3 flex items-center justify-between gap-3">
-                                        <p class="text-sm font-medium text-ink" x-text="detail.location.habitat_name"></p>
-                                        <a
-                                            :href="detail.location.url"
-                                            class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-control bg-primary text-on-primary text-xs font-medium hover:bg-primary-hover transition-colors focus-ring"
-                                        >
-                                            Ir al hábitat
-                                        </a>
+
+                                    <!-- Datos de especie -->
+                                    <template x-if="detail.species && (detail.species.height_m != null || detail.species.weight_kg != null || detail.species.base_experience != null || detail.species.capture_rate != null)">
+                                        <div class="rounded-panel border border-line bg-surface-sunken p-4">
+                                            <h3 class="text-sm font-bold uppercase tracking-wide text-ink-muted mb-2">Datos de especie</h3>
+                                            <dl class="grid grid-cols-2 gap-x-3 gap-y-2">
+                                                <template x-if="detail.species.height_m != null">
+                                                    <div>
+                                                        <dt class="text-2xs uppercase tracking-wide text-ink-subtle">Altura</dt>
+                                                        <dd class="text-sm font-medium text-ink" x-text="detail.species.height_m + ' m'"></dd>
+                                                    </div>
+                                                </template>
+                                                <template x-if="detail.species.weight_kg != null">
+                                                    <div>
+                                                        <dt class="text-2xs uppercase tracking-wide text-ink-subtle">Peso</dt>
+                                                        <dd class="text-sm font-medium text-ink" x-text="detail.species.weight_kg + ' kg'"></dd>
+                                                    </div>
+                                                </template>
+                                                <template x-if="detail.species.base_experience != null">
+                                                    <div>
+                                                        <dt class="text-2xs uppercase tracking-wide text-ink-subtle">Exp. base</dt>
+                                                        <dd class="text-sm font-medium text-ink" x-text="detail.species.base_experience"></dd>
+                                                    </div>
+                                                </template>
+                                                <template x-if="detail.species.capture_rate != null">
+                                                    <div>
+                                                        <dt class="text-2xs uppercase tracking-wide text-ink-subtle">Ratio de captura</dt>
+                                                        <dd class="text-sm font-medium text-ink" x-text="detail.species.capture_rate"></dd>
+                                                    </div>
+                                                </template>
+                                            </dl>
+                                        </div>
+                                    </template>
+
+                                    <!-- Ubicación -->
+                                    <div class="rounded-panel border border-line bg-surface-sunken p-4">
+                                        <h3 class="text-sm font-bold uppercase tracking-wide text-ink-muted mb-2">Ubicación</h3>
+                                        <template x-if="(detail.locations || (detail.location ? [detail.location] : [])).length > 0">
+                                            <div class="space-y-3">
+                                                <template x-for="loc in (detail.locations || (detail.location ? [detail.location] : []))" :key="loc.habitat_id">
+                                                    <div class="overflow-hidden rounded-card border border-line bg-surface">
+                                                        <template x-if="loc.province_name">
+                                                            <p class="px-3 pt-2 text-3xs uppercase tracking-wide text-ink-subtle" x-text="loc.province_name"></p>
+                                                        </template>
+                                                        <img
+                                                            :src="loc.habitat_image"
+                                                            :alt="'Hábitat ' + loc.habitat_name"
+                                                            loading="lazy"
+                                                            decoding="async"
+                                                            class="w-full aspect-[16/9] object-contain bg-surface-sunken"
+                                                        >
+                                                        <div class="flex items-center justify-between gap-3 p-3">
+                                                            <p class="text-sm font-medium text-ink" x-text="loc.habitat_name"></p>
+                                                            <a
+                                                                :href="loc.url"
+                                                                class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-control bg-primary text-on-primary text-xs font-medium hover:bg-primary-hover transition-colors focus-ring"
+                                                            >
+                                                                Ir al hábitat
+                                                            </a>
+                                                        </div>
+                                                    </div>
+                                                </template>
+                                            </div>
+                                        </template>
+                                        <template x-if="!(detail.locations || (detail.location ? [detail.location] : [])).length">
+                                            <p class="text-sm text-ink-muted italic">Sin hábitat asignado.</p>
+                                        </template>
                                     </div>
                                 </div>
-                            </template>
-                            <template x-if="!detail.location">
-                                <p class="text-sm text-ink-muted italic">Sin hábitat asignado.</p>
-                            </template>
+                            </div>
+
+                            <!-- Movimientos por nivel (ancho completo) -->
+                            <div class="rounded-panel border border-line bg-surface-sunken p-4">
+                                <h3 class="text-sm font-bold uppercase tracking-wide text-ink-muted mb-2">Movimientos por nivel</h3>
+                                <template x-if="(detail.moves || []).length > 0">
+                                    <div class="overflow-x-auto">
+                                        <table class="w-full text-left text-xs">
+                                            <thead>
+                                                <tr class="border-b border-line text-2xs uppercase tracking-wide text-ink-subtle">
+                                                    <th scope="col" class="py-1.5 pr-3 font-semibold">Nv.</th>
+                                                    <th scope="col" class="py-1.5 pr-3 font-semibold">Movimiento</th>
+                                                    <th scope="col" class="py-1.5 pr-3 font-semibold">Tipo</th>
+                                                    <th scope="col" class="hidden py-1.5 pr-3 font-semibold sm:table-cell">Categoría</th>
+                                                    <th scope="col" class="py-1.5 pr-3 text-right font-semibold">Pot.</th>
+                                                    <th scope="col" class="hidden py-1.5 text-right font-semibold sm:table-cell">Prec.</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <template x-for="(mov, index) in detail.moves" :key="mov.slug + '-' + index">
+                                                    <tr class="border-b border-line/60 last:border-0">
+                                                        <td class="py-1.5 pr-3 text-ink-muted" x-text="mov.level"></td>
+                                                        <td class="py-1.5 pr-3 font-medium text-ink" x-text="mov.name"></td>
+                                                        <td class="py-1.5 pr-3">
+                                                            <span
+                                                                class="tipo-badge shrink-0 py-0.5 pl-0 pr-2"
+                                                                :style="'--type-color: ' + tipoBadge(mov.tipo_slug).color"
+                                                            >
+                                                                <img
+                                                                    :src="tipoBadge(mov.tipo_slug).icono"
+                                                                    alt=""
+                                                                    class="w-4 h-4 object-contain"
+                                                                    loading="lazy"
+                                                                    decoding="async"
+                                                                >
+                                                                <span x-text="mov.tipo_nombre"></span>
+                                                            </span>
+                                                        </td>
+                                                        <td class="hidden py-1.5 pr-3 text-ink-muted sm:table-cell" x-text="mov.category_label"></td>
+                                                        <td class="py-1.5 pr-3 text-right text-ink-muted" x-text="mov.base_power ?? '—'"></td>
+                                                        <td class="hidden py-1.5 text-right text-ink-muted sm:table-cell" x-text="mov.accuracy != null ? mov.accuracy + '%' : '—'"></td>
+                                                    </tr>
+                                                </template>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </template>
+                                <template x-if="!(detail.moves || []).length">
+                                    <p class="text-sm text-ink-muted italic">Sin movimientos por nivel.</p>
+                                </template>
+                            </div>
                         </div>
                     </template>
                 </div>

@@ -8,6 +8,7 @@ use App\Models\Habitat;
 use App\Models\Pokemon;
 use App\Models\PokemonStat;
 use App\Models\PokemonType;
+use Illuminate\Support\Collection;
 use Src\Pokemon\Domain\Evolution\MiembroFamiliaEvolutiva;
 use Src\Shared\UI\TipoBadges;
 
@@ -16,8 +17,9 @@ use Src\Shared\UI\TipoBadges;
  *
  * Conserva los campos históricos (`types`, `stats`, hábitat) y añade la
  * información de presentación de tipos, la ubicación navegable y la familia
- * evolutiva completa. La resolución de la familia se delega en
- * `FamiliaPokemon`.
+ * evolutiva completa. Expone además `locations[]` ordenado por `habitat_id`,
+ * con `location` como primer elemento. La resolución de la familia se delega
+ * en `FamiliaPokemon`.
  */
 final class PresentadorDetallePokemon
 {
@@ -41,6 +43,14 @@ final class PresentadorDetallePokemon
      *         province_name: string|null,
      *         url: string
      *     }|null,
+     *     locations: list<array{
+     *         habitat_id: int,
+     *         habitat_name: string,
+     *         habitat_image: string,
+     *         province_id: int|null,
+     *         province_name: string|null,
+     *         url: string
+     *     }>,
      *     family: array{
      *         evolution_chain_id: int|null,
      *         members: list<array{
@@ -56,18 +66,28 @@ final class PresentadorDetallePokemon
      *         }>
      *     }
      * }
+     *
+     * Permite sobreescribir `visto`/`atrapado` cuando el llamador ya los
+     * resolvió para el usuario actual (detalle de especie de familia). Con
+     * `null` se conserva el comportamiento histórico: leer los atributos del
+     * modelo, poblados por el join de la pokédex del datagrid.
      */
-    public static function para(Pokemon $pokemon): array
+    public static function para(Pokemon $pokemon, ?bool $visto = null, ?bool $atrapado = null): array
     {
         $pokemon->loadMissing(['stats', 'types', 'habitats', 'habitats.province']);
 
-        $habitat = $pokemon->habitats->first();
+        $habitats = $pokemon->habitats
+            ->sortBy(fn (Habitat $habitat): int => (int) $habitat->getAttribute('id'))
+            ->values();
+
+        $locations = self::locations($habitats);
+        $location = $locations[0] ?? null;
 
         return [
             'id' => (int) $pokemon->getAttribute('id'),
             'name' => (string) $pokemon->getAttribute('name'),
-            'visto' => (bool) $pokemon->getAttribute('visto'),
-            'atrapado' => (bool) $pokemon->getAttribute('atrapado'),
+            'visto' => $visto ?? (bool) $pokemon->getAttribute('visto'),
+            'atrapado' => $atrapado ?? (bool) $pokemon->getAttribute('atrapado'),
             'types' => $pokemon->types
                 ->map(fn (PokemonType $type): string => $type->tipo_nombre)
                 ->values()
@@ -81,10 +101,11 @@ final class PresentadorDetallePokemon
                 ])
                 ->values()
                 ->all(),
-            'habitat_name' => $habitat?->name,
-            'habitat_id' => $habitat?->id,
-            'habitats' => $pokemon->habitats->pluck('name')->values()->all(),
-            'location' => self::location($habitat),
+            'habitat_name' => $location['habitat_name'] ?? null,
+            'habitat_id' => $location['habitat_id'] ?? null,
+            'habitats' => $habitats->pluck('name')->values()->all(),
+            'location' => $location,
+            'locations' => $locations,
             'family' => self::family($pokemon),
         ];
     }
@@ -139,6 +160,32 @@ final class PresentadorDetallePokemon
             'province_name' => $habitat->province?->name,
             'url' => '/habitats/'.$habitat->getAttribute('id'),
         ];
+    }
+
+    /**
+     * @param  Collection<int, Habitat>  $habitats
+     * @return list<array{
+     *     habitat_id: int,
+     *     habitat_name: string,
+     *     habitat_image: string,
+     *     province_id: int|null,
+     *     province_name: string|null,
+     *     url: string
+     * }>
+     */
+    private static function locations(Collection $habitats): array
+    {
+        $locations = [];
+
+        foreach ($habitats as $habitat) {
+            $location = self::location($habitat);
+
+            if ($location !== null) {
+                $locations[] = $location;
+            }
+        }
+
+        return $locations;
     }
 
     /**

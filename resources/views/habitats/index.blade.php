@@ -44,7 +44,7 @@
                                 <img
                                     src="/habitats-img/{{ $habitat['id'] }}.webp?v={{ $habitatImageVersion }}"
                                     alt="{{ $habitat['name'] }}"
-                                    class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                    class="w-full h-full object-contain p-2 group-hover:scale-[1.03] transition-transform duration-300"
                                     onerror="this.style.display='none'"
                                 >
                             </div>
