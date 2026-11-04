@@ -163,10 +163,15 @@ class HabitatsController extends Controller
     }
 
     /**
-     * Legacy no-op: el frontend actual marca hábitats como favoritos a través de
-     * `POST /api/reclutados/{reclutado}/toggle-favorito` con body `habitat_id`.
-     * Este endpoint queda como compatibilidad sin efecto (los favoritos ahora son
-     * por reclutado dentro de un hábitat, no de hábitat en solitario).
+     * Legacy no-op conservado por compatibilidad de API.
+     *
+     * @deprecated Desde TASK-016. No tiene efecto: responde siempre
+     *             `{"favorito": false, "count": 0}`. Los favoritos ahora son
+     *             por reclutado dentro de un hábitat, no de hábitat en solitario.
+     *             Alternativa: `POST /api/reclutados/{reclutado}/toggle-favorito`
+     *             con body `{"habitat_id": <id>}`.
+     *
+     * @see \App\Http\Controllers\ReclutadoController::toggleFavorito()
      */
     public function toggleFavorito(Habitat $habitat): JsonResponse
     {
