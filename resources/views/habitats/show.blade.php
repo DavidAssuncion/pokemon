@@ -503,6 +503,12 @@
                                 <span class="text-sm text-warning-ink tracking-tight" x-html="starRating(preview.peligro)"
                                       :title="'Peligro ' + preview.peligro + ' de 5 estrellas'" aria-hidden="true"></span>
                             </div>
+                            <template x-if="preview.modo">
+                                <div class="flex items-center justify-between">
+                                    <span class="text-xs font-medium text-ink-muted">Modo</span>
+                                    <span class="px-2 py-0.5 text-2xs font-bold rounded-full uppercase bg-primary-soft text-primary-ink" x-text="modoLabel(preview.modo)"></span>
+                                </div>
+                            </template>
                             <div class="flex items-center justify-between">
                                 <span class="text-xs font-medium text-ink-muted">Nivel del Pokémon</span>
                                 <span class="text-sm font-medium text-ink" x-text="'Nv ' + preview.nivel_pokemon"></span>
@@ -572,6 +578,40 @@
                         </div>
                     </template>
                 </div>
+
+                <!-- Exploration mode (F1: modo de exploracion) -->
+                <fieldset class="mb-6">
+                    <legend class="text-xs font-semibold text-ink-muted uppercase tracking-wide mb-2">Modo de exploraci&oacute;n</legend>
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                        <label class="flex sm:flex-col items-start sm:items-center gap-2 sm:gap-1 p-3 rounded-control border border-line cursor-pointer hover:bg-surface-sunken transition-colors text-center"
+                            :class="{ 'border-primary bg-primary-soft': modoExploracion === 'experiencia' }"
+                        >
+                            <input id="modo-exploracion-experiencia" type="radio" name="modo_exploracion" value="experiencia" x-model="modoExploracion" @change="loadPreview()" class="w-4 h-4 text-primary-ink focus-ring">
+                            <span class="min-w-0">
+                                <span class="block text-sm font-semibold text-ink">Pelear</span>
+                                <span class="block text-2xs text-ink-muted leading-snug">Prioriza experiencia en combate</span>
+                            </span>
+                        </label>
+                        <label class="flex sm:flex-col items-start sm:items-center gap-2 sm:gap-1 p-3 rounded-control border border-line cursor-pointer hover:bg-surface-sunken transition-colors text-center"
+                            :class="{ 'border-primary bg-primary-soft': modoExploracion === 'reclutamiento' }"
+                        >
+                            <input id="modo-exploracion-reclutamiento" type="radio" name="modo_exploracion" value="reclutamiento" x-model="modoExploracion" @change="loadPreview()" class="w-4 h-4 text-primary-ink focus-ring">
+                            <span class="min-w-0">
+                                <span class="block text-sm font-semibold text-ink">Buscar</span>
+                                <span class="block text-2xs text-ink-muted leading-snug">Prioriza capturar y reclutar Pok&eacute;mon</span>
+                            </span>
+                        </label>
+                        <label class="flex sm:flex-col items-start sm:items-center gap-2 sm:gap-1 p-3 rounded-control border border-line cursor-pointer hover:bg-surface-sunken transition-colors text-center"
+                            :class="{ 'border-primary bg-primary-soft': modoExploracion === 'botin' }"
+                        >
+                            <input id="modo-exploracion-botin" type="radio" name="modo_exploracion" value="botin" x-model="modoExploracion" @change="loadPreview()" class="w-4 h-4 text-primary-ink focus-ring">
+                            <span class="min-w-0">
+                                <span class="block text-sm font-semibold text-ink">Explorar</span>
+                                <span class="block text-2xs text-ink-muted leading-snug">Prioriza bayas y bonguris</span>
+                            </span>
+                        </label>
+                    </div>
+                </fieldset>
 
                 <!-- Duration options (copied from existing) -->
                 <div class="space-y-3 mb-6">
@@ -1085,10 +1125,10 @@
 
     <!-- Granjas Modal -->
     <template x-if="showGranjaModal">
-        <div class="fixed inset-0 z-50 flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="granja-modal-title" @keydown.escape.window="closeGranjaModal()">
+        <div class="fixed inset-0 z-50 flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="granja-modal-title" @keydown.escape.window="cerrarCapaSuperior()">
             <div class="absolute inset-0 scrim" @click="closeGranjaModal()"></div>
-            <div class="relative bg-surface-raised rounded-panel shadow-modal w-full max-w-5xl max-h-[90vh] overflow-hidden flex flex-col">
-                <div class="flex items-center justify-between px-6 py-4 border-b border-line">
+            <div class="relative bg-surface-raised rounded-panel shadow-modal w-[90vw] max-w-[90vw] max-h-[94vh] overflow-hidden flex flex-col">
+                <div class="flex shrink-0 items-center justify-between gap-3 px-6 py-4 border-b border-line">
                     <div>
                         <h3 id="granja-modal-title" class="text-lg font-bold text-ink">
                             Granjas — <span x-text="granja?.habitat?.name || '{{ $habitat['name'] }}'"></span>
@@ -1100,7 +1140,7 @@
                     </button>
                 </div>
 
-                <div class="flex-1 overflow-y-auto p-6 space-y-4">
+                <div class="flex-1 min-h-0 overflow-y-auto p-6 space-y-4">
                     <div x-show="granjaLoading" x-cloak role="status" class="flex items-center gap-2 text-sm text-ink-muted">
                         <svg class="w-4 h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
                         Cargando granja...
@@ -1111,7 +1151,7 @@
                         <button @click="loadGranja()" class="ml-2 underline font-medium">Reintentar</button>
                     </div>
 
-                    <template x-if="!granjaLoading && !granjaError && granja">
+                    <template x-if="!granjaLoading && granja">
                         <div class="space-y-4">
                             <div class="rounded-card bg-surface-sunken border border-line p-3 text-xs text-ink-muted space-y-1">
                                 <p><strong>Nido:</strong> cada nivel sube el rango de IV de los huevos y reduce su tiempo de gestación/eclosión.</p>
@@ -1123,23 +1163,57 @@
                                 Este hábitat no tiene familias asignadas todavía.
                             </div>
 
-                            <template x-for="familia in (granja.familias || [])" :key="'granja-' + familia.evolution_chain_id">
-                                <div class="rounded-panel border border-line bg-surface p-4 space-y-4">
-                                    <div class="flex items-center gap-3">
-                                        <div class="w-32 shrink-0 rounded-card bg-surface-sunken flex items-center justify-center overflow-hidden">
-                                            <x-sprite size="128" x-bind:src="familia.base.icon" x-bind:alt="familia.base.name" />
-                                        </div>
-                                        <div class="min-w-0 flex-1">
-                                            <p class="text-sm font-bold text-ink truncate" x-text="familia.base.name"></p>
-                                            <div class="flex flex-wrap gap-1 mt-1">
-                                                <template x-for="tipo in (familia.types || [])" :key="familia.evolution_chain_id + '-tipo-' + tipo.id">
-                                                    <span class="tipo-badge" :style="'--type-color: ' + tipoBadgePorId(tipo.id).color">
-                                                        <template x-if="tipoBadgePorId(tipo.id).icono">
-                                                            <img :src="tipoBadgePorId(tipo.id).icono" alt="" loading="lazy" decoding="async" class="w-4 h-4 object-contain">
-                                                        </template>
-                                                        <span x-text="tipo.name"></span>
-                                                    </span>
-                                                </template>
+                            <div class="flex flex-wrap gap-2" role="tablist" aria-label="Familias del hábitat">
+                                <template x-for="(familia, index) in (granja.familias || [])" :key="'familia-tab-' + familia.evolution_chain_id">
+                                    <button
+                                        type="button"
+                                        role="tab"
+                                        :id="'familia-tab-' + familia.evolution_chain_id"
+                                        :aria-selected="familiaActiva === index ? 'true' : 'false'"
+                                        :aria-controls="'familia-panel-' + familia.evolution_chain_id"
+                                        :tabindex="familiaActiva === index ? 0 : -1"
+                                        @click="familiaActiva = index"
+                                        @keydown.arrow-right.prevent="navegarFamilia(1)"
+                                        @keydown.arrow-left.prevent="navegarFamilia(-1)"
+                                        @keydown.home.prevent="navegarFamilia('inicio')"
+                                        @keydown.end.prevent="navegarFamilia('fin')"
+                                        class="inline-flex items-center gap-2 px-3 py-2 rounded-control text-sm font-medium transition-colors focus-ring"
+                                        :class="familiaActiva === index
+                                            ? 'bg-primary text-on-primary shadow'
+                                            : 'bg-surface text-ink border border-line hover:bg-surface-sunken'"
+                                    >
+                                        <x-sprite size="96" decorative x-bind:src="familia.base?.icon" />
+                                    </button>
+                                </template>
+                            </div>
+
+                            <template x-for="(familia, index) in (granja.familias || [])" :key="'familia-panel-' + familia.evolution_chain_id">
+                                <div
+                                    role="tabpanel"
+                                    :id="'familia-panel-' + familia.evolution_chain_id"
+                                    :aria-labelledby="'familia-tab-' + familia.evolution_chain_id"
+                                    x-show="familiaActiva === index"
+                                    x-cloak
+                                    tabindex="0"
+                                    class="rounded-panel border border-line bg-surface p-4 space-y-4"
+                                >
+                                    <div class="flex flex-wrap items-start justify-between gap-3">
+                                        <div class="flex items-center gap-3 min-w-0">
+                                            <div class="w-16 h-16 shrink-0 rounded-card bg-surface-sunken flex items-center justify-center overflow-hidden">
+                                                <x-sprite size="64" x-bind:src="familia.base?.icon" x-bind:alt="familia.base?.name || ''" />
+                                            </div>
+                                            <div class="min-w-0">
+                                                <p class="text-base font-bold text-ink" x-text="familia.base?.name || 'Familia'"></p>
+                                                <div class="flex flex-wrap gap-1 mt-1">
+                                                    <template x-for="tipo in (familia.types || [])" :key="'familia-tipo-' + familia.evolution_chain_id + '-' + tipo.id">
+                                                        <span class="tipo-badge" :style="'--type-color: ' + tipoBadgePorId(tipo.id).color">
+                                                            <template x-if="tipoBadgePorId(tipo.id).icono">
+                                                                <img :src="tipoBadgePorId(tipo.id).icono" alt="" loading="lazy" decoding="async" class="w-4 h-4 object-contain">
+                                                            </template>
+                                                            <span x-text="tipo.name"></span>
+                                                        </span>
+                                                    </template>
+                                                </div>
                                             </div>
                                         </div>
                                         <div class="text-right shrink-0">
@@ -1209,6 +1283,90 @@
                                         </div>
                                     </div>
 
+                                    <!-- Plantaciones del nido -->
+                                    <div class="rounded-card border border-line bg-surface-sunken p-3">
+                                        <div class="flex items-center justify-between gap-2">
+                                            <p class="text-sm font-bold text-ink">
+                                                Plantaciones · <span class="text-xs font-semibold text-ink-muted" x-text="familia.nido.huecos_libres + '/' + familia.nido.huecos_totales + ' huecos'"></span>
+                                            </p>
+                                            <span class="text-3xs text-ink-subtle">24 h por cosecha · máx. 3</span>
+                                        </div>
+
+                                        <p x-show="familia.nido.huecos_totales === 0" class="text-xs text-ink-muted mt-2">
+                                            Construye el nido para desbloquear huecos de plantación.
+                                        </p>
+
+                                        <div x-show="familia.nido.huecos_totales > 0" class="grid grid-cols-1 lg:grid-cols-2 gap-2 mt-3">
+                                            <template x-for="hueco in huecosDe(familia)" :key="familia.evolution_chain_id + '-hueco-' + hueco.slot">
+                                                <div class="rounded-control border border-line bg-surface p-2">
+                                                    <template x-if="hueco.plantacion">
+                                                        <div class="space-y-1.5">
+                                                            <div class="flex items-start justify-between gap-2">
+                                                                <div class="flex items-center gap-2 min-w-0">
+                                                                    <img :src="hueco.plantacion.berry_icono" alt="" loading="lazy" decoding="async" class="w-7 h-7 object-contain shrink-0">
+                                                                    <div class="min-w-0">
+                                                                        <p class="text-2xs font-semibold text-ink truncate" x-text="hueco.plantacion.berry_nombre"></p>
+                                                                        <p class="text-3xs text-ink-muted">
+                                                                            Stock <span class="font-bold text-ink" x-text="hueco.plantacion.stock + '/' + hueco.plantacion.stock_max"></span>
+                                                                        </p>
+                                                                    </div>
+                                                                </div>
+                                                                <span class="shrink-0 px-1.5 py-0.5 rounded-full text-3xs font-bold uppercase"
+                                                                      :class="hueco.plantacion.puede_cosechar ? 'bg-success-soft text-success-ink' : 'bg-surface-sunken text-ink-muted'"
+                                                                      x-text="hueco.plantacion.estado"></span>
+                                                            </div>
+                                                            <div class="h-1.5 rounded-full bg-line overflow-hidden"
+                                                                 role="progressbar"
+                                                                 aria-valuemin="0"
+                                                                 aria-valuemax="100"
+                                                                 :aria-valuenow="hueco.plantacion.progreso_pct"
+                                                                 :aria-label="'Progreso de ' + hueco.plantacion.berry_nombre">
+                                                                <div class="h-full bg-success transition-all" :style="'width: ' + hueco.plantacion.progreso_pct + '%'"></div>
+                                                            </div>
+                                                            <div class="flex gap-1.5">
+                                                                <button
+                                                                    type="button"
+                                                                    @click="cosecharBaya(familia.evolution_chain_id, hueco.slot)"
+                                                                    :disabled="granjaAccionando || !hueco.plantacion.puede_cosechar"
+                                                                    class="flex-1 px-2 py-1.5 rounded-control text-3xs font-bold uppercase transition-colors disabled:bg-surface-sunken disabled:text-ink-muted disabled:cursor-not-allowed bg-success text-on-primary hover:bg-success/90"
+                                                                >
+                                                                    Cosechar
+                                                                </button>
+                                                                <button
+                                                                    type="button"
+                                                                    @click="replantarBaya(familia.evolution_chain_id, hueco.slot, hueco.plantacion)"
+                                                                    :disabled="granjaAccionando || cantidadBaya(hueco.plantacion.berry_key) < 1"
+                                                                    :title="cantidadBaya(hueco.plantacion.berry_key) < 1 ? 'Sin existencias de esta baya' : 'Replantar y perder el stock pendiente'"
+                                                                    class="flex-1 px-2 py-1.5 rounded-control text-3xs font-bold uppercase border transition-colors disabled:opacity-40 disabled:cursor-not-allowed border-danger text-danger-ink hover:bg-danger-soft"
+                                                                >
+                                                                    Replantar
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                    </template>
+                                                    <template x-if="!hueco.plantacion">
+                                                        <div class="space-y-2">
+                                                            <p class="text-3xs uppercase tracking-wide text-ink-subtle">
+                                                                Hueco <span x-text="hueco.slot"></span> · vacío
+                                                            </p>
+                                                            <p class="text-3xs text-ink-subtle">
+                                                                Elige baya para plantar.
+                                                            </p>
+                                                            <button
+                                                                type="button"
+                                                                @click="abrirSelectorBaya(familia.evolution_chain_id, hueco.slot)"
+                                                                :disabled="granjaAccionando"
+                                                                class="w-full px-2 py-1.5 rounded-control text-3xs font-bold uppercase transition-colors disabled:bg-surface-sunken disabled:text-ink-muted disabled:cursor-not-allowed bg-primary text-on-primary hover:bg-primary-hover focus-ring"
+                                                            >
+                                                                Plantar
+                                                            </button>
+                                                        </div>
+                                                    </template>
+                                                </div>
+                                            </template>
+                                        </div>
+                                    </div>
+
                                     <!-- Complementos -->
                                     <div>
                                         <div class="flex items-center justify-between gap-2">
@@ -1246,6 +1404,111 @@
                         </div>
                     </template>
                 </div>
+
+            </div>
+        </div>
+    </template>
+
+    <!-- Modal de selección de baya -->
+    <template x-if="showBayaModal">
+        <div
+            class="fixed inset-0 z-[60] flex items-center justify-center p-4"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="baya-modal-title"
+        >
+            <div class="absolute inset-0 scrim" @click="cerrarBayaModal()"></div>
+            <div class="relative bg-surface-raised rounded-panel shadow-modal w-[90vw] max-w-3xl max-h-[90vh] overflow-hidden flex flex-col">
+                <div class="flex shrink-0 items-start justify-between gap-3 px-6 py-4 border-b border-line">
+                    <div>
+                        <h3 id="baya-modal-title" class="text-lg font-bold text-ink">
+                            Elegir baya · Hueco <span x-text="slotPlantando?.slot ?? ''"></span>
+                        </h3>
+                        <p class="text-xs text-ink-muted">Las bayas con existencias aparecen primero.</p>
+                    </div>
+                    <button
+                        type="button"
+                        @click="cerrarBayaModal()"
+                        class="p-2 rounded-control hover:bg-surface-sunken text-ink-muted focus-ring"
+                        aria-label="Cerrar selector de baya"
+                    >
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                    </button>
+                </div>
+
+                <div class="shrink-0 border-b border-line px-6 py-3 space-y-3">
+                    <div>
+                        <label for="baya-buscar" class="sr-only">Buscar baya</label>
+                        <input
+                            id="baya-buscar"
+                            x-ref="bayaBuscar"
+                            type="search"
+                            x-model="bayaBusqueda"
+                            placeholder="Buscar por nombre o categoría…"
+                            autocomplete="off"
+                            class="w-full px-3 py-2 rounded-control border border-line bg-surface text-sm text-ink focus-ring"
+                        >
+                    </div>
+                    <div class="flex flex-wrap gap-2" role="group" aria-label="Filtrar bayas por categoría">
+                        <template x-for="grupo in bayaGrupos" :key="'baya-grupo-' + grupo.valor">
+                            <button
+                                type="button"
+                                @click="bayaGrupoActivo = grupo.valor"
+                                :aria-pressed="bayaGrupoActivo === grupo.valor ? 'true' : 'false'"
+                                :class="bayaGrupoActivo === grupo.valor
+                                    ? 'bg-primary text-on-primary border-primary'
+                                    : 'bg-surface text-ink-muted border-line hover:bg-surface-sunken'"
+                                class="px-3 py-1.5 rounded-full border text-3xs font-bold uppercase transition-colors focus-ring"
+                                x-text="grupo.etiqueta"
+                            ></button>
+                        </template>
+                    </div>
+                </div>
+
+                <div class="flex-1 min-h-0 overflow-y-auto px-6 py-4">
+                    <div x-show="bayasCargando" x-cloak role="status" class="flex items-center gap-2 text-sm text-ink-muted">
+                        <svg class="w-4 h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                        Cargando catálogo de bayas…
+                    </div>
+
+                    <div x-show="!bayasCargando && bayaError" x-cloak class="text-sm text-danger-ink bg-danger-soft border border-danger rounded-control px-3 py-2">
+                        <span aria-live="assertive" x-text="bayaError"></span>
+                        <button type="button" @click="cargarCatalogoBayas()" class="ml-2 underline font-medium">Reintentar</button>
+                    </div>
+
+                    <p x-show="!bayasCargando && !bayaError && bayasCatalogo.length === 0" x-cloak class="py-10 text-center text-sm text-ink-muted">
+                        No hay bayas disponibles en el catálogo.
+                    </p>
+
+                    <p x-show="!bayasCargando && !bayaError && bayasCatalogo.length > 0 && bayasFiltradas.length === 0" x-cloak class="py-10 text-center text-sm text-ink-muted">
+                        No hay bayas que coincidan.
+                    </p>
+
+                    <ul x-show="!bayasCargando && !bayaError && bayasFiltradas.length > 0" class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        <template x-for="baya in bayasFiltradas" :key="'baya-' + baya.clave">
+                            <li>
+                                <button
+                                    type="button"
+                                    @click="plantarBayaDesdeModal(baya)"
+                                    :disabled="baya.cantidad < 1 || bayasPlantando"
+                                    :aria-label="baya.nombre + ' · ' + baya.grupo_nombre + ' · ' + (baya.cantidad > 0 ? baya.cantidad + ' disponibles' : 'sin stock')"
+                                    class="w-full flex items-center gap-3 rounded-control border border-line bg-surface px-3 py-2 text-left transition-colors hover:border-primary focus-ring disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:border-line"
+                                >
+                                    <img :src="baya.icono" alt="" loading="lazy" decoding="async" class="w-8 h-8 shrink-0 object-contain" :class="baya.cantidad < 1 ? 'opacity-40' : ''">
+                                    <span class="min-w-0 flex-1">
+                                        <span class="block truncate text-xs font-semibold text-ink" x-text="baya.nombre"></span>
+                                        <span class="block text-3xs text-ink-muted" x-text="baya.grupo_nombre"></span>
+                                    </span>
+                                    <span class="shrink-0 text-right text-2xs font-bold" :class="baya.cantidad > 0 ? 'text-ink' : 'text-ink-muted'" x-text="baya.cantidad > 0 ? baya.cantidad + ' disp.' : 'Sin stock'"></span>
+                                </button>
+                            </li>
+                        </template>
+                    </ul>
+                </div>
+
+                <div x-show="bayasPlantando" x-cloak class="shrink-0 border-t border-line px-6 py-3">
+                    <p role="status" class="text-xs font-semibold text-primary-ink">Plantando baya…</p>
+                </div>
             </div>
         </div>
     </template>
@@ -1260,6 +1523,7 @@ function habitatShow() {
         selectedTeamName: '',
         selectedLevel: null,
         showExplorationModal: false,
+        modoExploracion: 'experiencia',
         durationMode: 'hours',
         durationHours: 4,
         returnTime: '18:00',
@@ -1625,42 +1889,275 @@ function habitatShow() {
         granjaError: '',
         granja: null,
         granjaAccionando: false,
+        // Familia seleccionada en las tabs del modal de granja.
+        familiaActiva: 0,
+        // Tabs de Pokémon por familia y detalle bajo demanda del modal de granja.
+        familiaTabActiva: {},
+        detallePokemonCache: {},
+        detallePokemonLoading: {},
+        detallePokemonError: {},
+        // Selector de baya (modal hermano de la granja)
+        showBayaModal: false,
+        slotPlantando: null,
+        bayasCatalogo: [],
+        bayasCatalogoCargado: false,
+        bayasCargando: false,
+        bayaError: '',
+        bayaBusqueda: '',
+        bayaGrupoActivo: 'todos',
+        bayasPlantando: false,
+        bayaGrupos: [
+            { valor: 'todos', etiqueta: 'Todas' },
+            { valor: 'medicina', etiqueta: 'Medicinas' },
+            { valor: 'mejora', etiqueta: 'Mejoras' },
+            { valor: 'reductor', etiqueta: 'Reductores' },
+            { valor: 'resistencia', etiqueta: 'Resistencias' },
+        ],
 
         openGranjaModal() {
             this.showGranjaModal = true;
             this.granjaError = '';
+            this.familiaActiva = 0;
             this.loadGranja();
         },
 
         closeGranjaModal() {
             this.showGranjaModal = false;
+            this.cerrarBayaModal();
+            this.bayasCatalogoCargado = false;
+        },
+
+        /** Escape: cierra primero el modal de bayas si está abierto. */
+        cerrarCapaSuperior() {
+            if (this.showBayaModal) {
+                this.cerrarBayaModal();
+                return;
+            }
+
+            this.closeGranjaModal();
         },
 
         async loadGranja() {
             this.granjaLoading = true;
             this.granjaError = '';
+            this.familiaActiva = 0;
+            const controller = new AbortController();
+            const timeout = setTimeout(() => controller.abort(), 15000);
             try {
                 const response = await fetch('/api/habitats/{{ $habitat['id'] }}/farm', {
                     headers: { 'Accept': 'application/json' },
+                    signal: controller.signal,
                 });
                 if (!response.ok) {
                     const data = await response.json().catch(() => ({}));
                     throw new Error(data.message || 'No se pudo cargar la granja');
                 }
                 this.granja = await response.json();
+                this.ajustarFamiliaActiva();
             } catch (e) {
                 console.error('Error loading granja:', e);
-                this.granjaError = e.message || 'No se pudo cargar la granja.';
+                this.granjaError = e.name === 'AbortError'
+                    ? 'La operación tardó demasiado. Inténtalo de nuevo.'
+                    : (e.message || 'No se pudo cargar la granja.');
                 this.granja = null;
             } finally {
+                clearTimeout(timeout);
                 this.granjaLoading = false;
             }
         },
 
-        async accionGranja(url) {
+        /** Tabs de la familia ordenadas por etapa, especie e id (defaults a 0). */
+        tabsFamilia(familia) {
+            const base = familia?.base ? [familia.base] : [];
+            const evoluciones = Array.isArray(familia?.evolutions) ? familia.evolutions : [];
+            const vistos = new Set();
+
+            return [...base, ...evoluciones]
+                .filter((pokemon) => {
+                    if (!pokemon || pokemon.id === null || pokemon.id === undefined) {
+                        return false;
+                    }
+
+                    const id = Number(pokemon.id);
+                    if (vistos.has(id)) {
+                        return false;
+                    }
+                    vistos.add(id);
+
+                    return true;
+                })
+                .sort((a, b) => {
+                    const etapa = (Number(a?.stage) || 0) - (Number(b?.stage) || 0);
+                    if (etapa !== 0) {
+                        return etapa;
+                    }
+
+                    const especie = (Number(a?.species_id) || 0) - (Number(b?.species_id) || 0);
+                    if (especie !== 0) {
+                        return especie;
+                    }
+
+                    return (Number(a?.id) || 0) - (Number(b?.id) || 0);
+                });
+        },
+
+        tabActivaFamilia(familia) {
+            const tabs = this.tabsFamilia(familia);
+            if (tabs.length === 0) {
+                return null;
+            }
+
+            const chainId = familia?.evolution_chain_id;
+            const activaId = this.familiaTabActiva?.[chainId];
+
+            return tabs.find((pokemon) => Number(pokemon.id) === Number(activaId)) || tabs[0];
+        },
+
+        esTabActivaFamilia(familia, pokemon) {
+            const activa = this.tabActivaFamilia(familia);
+
+            return Boolean(activa && pokemon && Number(activa.id) === Number(pokemon.id));
+        },
+
+        async seleccionarPokemonFamilia(familia, pokemon) {
+            if (!familia || !pokemon) {
+                return;
+            }
+
+            const chainId = familia.evolution_chain_id;
+            const pokemonId = pokemon.id;
+            this.familiaTabActiva = { ...this.familiaTabActiva, [chainId]: pokemonId };
+
+            if (this.detallePokemonCache?.[pokemonId] || this.detallePokemonLoading?.[pokemonId]) {
+                return;
+            }
+
+            this.detallePokemonLoading = { ...this.detallePokemonLoading, [pokemonId]: true };
+            this.detallePokemonError = { ...this.detallePokemonError, [pokemonId]: '' };
+            const controller = new AbortController();
+            const timeout = setTimeout(() => controller.abort(), 15000);
+
+            try {
+                const response = await fetch(
+                    '/api/habitats/{{ $habitat['id'] }}/families/' + chainId + '/pokemon/' + pokemonId,
+                    {
+                        headers: { 'Accept': 'application/json' },
+                        signal: controller.signal,
+                    }
+                );
+
+                if (!response.ok) {
+                    const data = await response.json().catch(() => ({}));
+                    throw new Error(data.message || 'No se pudo cargar la información del Pokémon');
+                }
+
+                const detalle = await response.json();
+                this.detallePokemonCache = { ...this.detallePokemonCache, [pokemonId]: detalle };
+            } catch (e) {
+                console.error('Error loading detalle de Pokémon:', e);
+                this.detallePokemonError = {
+                    ...this.detallePokemonError,
+                    [pokemonId]: e.name === 'AbortError'
+                        ? 'La operación tardó demasiado. Inténtalo de nuevo.'
+                        : (e.message || 'No se pudo cargar la información del Pokémon.'),
+                };
+            } finally {
+                clearTimeout(timeout);
+                this.detallePokemonLoading = { ...this.detallePokemonLoading, [pokemonId]: false };
+            }
+        },
+
+        /** Navegación por teclado del tablist (flechas, Inicio y Fin). */
+        navegarTabFamilia(familia, direccion) {
+            const tabs = this.tabsFamilia(familia);
+            if (tabs.length === 0) {
+                return;
+            }
+
+            const activa = this.tabActivaFamilia(familia);
+            const posicion = tabs.findIndex((pokemon) => Number(pokemon.id) === Number(activa?.id));
+            let indice = posicion < 0 ? 0 : posicion;
+
+            if (direccion === 'inicio') {
+                indice = 0;
+            } else if (direccion === 'fin') {
+                indice = tabs.length - 1;
+            } else {
+                indice = (indice + Number(direccion) + tabs.length) % tabs.length;
+            }
+
+            const destino = tabs[indice];
+            this.seleccionarPokemonFamilia(familia, destino);
+            this.$nextTick(() => {
+                document.getElementById('familia-tab-' + familia.evolution_chain_id + '-' + destino.id)?.focus();
+            });
+        },
+
+        /** Mantiene el índice de familia dentro del array tras una recarga. */
+        ajustarFamiliaActiva() {
+            const total = Array.isArray(this.granja?.familias) ? this.granja.familias.length : 0;
+
+            if (total === 0) {
+                this.familiaActiva = 0;
+                return;
+            }
+
+            this.familiaActiva = Math.min(Math.max(this.familiaActiva, 0), total - 1);
+        },
+
+        /** Navegación por teclado del tablist de familias (flechas, Inicio y Fin). */
+        navegarFamilia(direccion) {
+            const total = Array.isArray(this.granja?.familias) ? this.granja.familias.length : 0;
+
+            if (total === 0) {
+                return;
+            }
+
+            let indice = this.familiaActiva;
+
+            if (direccion === 'inicio') {
+                indice = 0;
+            } else if (direccion === 'fin') {
+                indice = total - 1;
+            } else {
+                indice = (indice + Number(direccion) + total) % total;
+            }
+
+            this.familiaActiva = indice;
+            this.$nextTick(() => {
+                const familia = this.granja.familias[indice];
+                document.getElementById('familia-tab-' + familia.evolution_chain_id)?.focus();
+            });
+        },
+
+        detalleDe(pokemonId) {
+            if (pokemonId === null || pokemonId === undefined) {
+                return null;
+            }
+
+            return this.detallePokemonCache?.[pokemonId] ?? null;
+        },
+
+        cargandoDetalle(pokemonId) {
+            return Boolean(this.detallePokemonLoading?.[pokemonId]);
+        },
+
+        errorDetalle(pokemonId) {
+            return this.detallePokemonError?.[pokemonId] || '';
+        },
+
+        detalleActivoFamilia(familia) {
+            const activa = this.tabActivaFamilia(familia);
+
+            return activa ? this.detalleDe(activa.id) : null;
+        },
+
+        async accionGranja(url, payload = null) {
             if (this.granjaAccionando) return;
             this.granjaAccionando = true;
             this.granjaError = '';
+            const controller = new AbortController();
+            const timeout = setTimeout(() => controller.abort(), 15000);
             try {
                 const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || '';
                 const response = await fetch(url, {
@@ -1670,18 +2167,193 @@ function habitatShow() {
                         'Content-Type': 'application/json',
                         'X-CSRF-TOKEN': csrfToken,
                     },
+                    body: payload !== null ? JSON.stringify(payload) : undefined,
+                    signal: controller.signal,
                 });
                 if (!response.ok) {
                     const data = await response.json().catch(() => ({}));
                     throw new Error(data.message || 'No se pudo completar la acción.');
                 }
                 this.granja = await response.json();
+                this.sincronizarCatalogoBayas();
             } catch (e) {
                 console.error('Error updating granja:', e);
-                this.granjaError = e.message || 'Error de conexión al actualizar la granja.';
+                this.granjaError = e.name === 'AbortError'
+                    ? 'La operación tardó demasiado. Inténtalo de nuevo.'
+                    : (e.message || 'Error de conexión al actualizar la granja.');
             } finally {
+                clearTimeout(timeout);
                 this.granjaAccionando = false;
             }
+        },
+
+        /** Abre el modal de bayas para el hueco indicado, cargando el catálogo la primera vez. */
+        abrirSelectorBaya(chainId, slot) {
+            this.slotPlantando = { chainId, slot };
+            this.bayaBusqueda = '';
+            this.bayaGrupoActivo = 'todos';
+            this.bayaError = '';
+            this.showBayaModal = true;
+
+            if (!this.bayasCatalogoCargado && !this.bayasCargando) {
+                this.cargarCatalogoBayas();
+            }
+
+            this.$nextTick(() => this.$refs.bayaBuscar?.focus());
+        },
+
+        cerrarBayaModal() {
+            this.showBayaModal = false;
+            this.slotPlantando = null;
+            this.bayaBusqueda = '';
+            this.bayaGrupoActivo = 'todos';
+            this.bayaError = '';
+        },
+
+        async cargarCatalogoBayas() {
+            this.bayasCargando = true;
+            this.bayaError = '';
+            const controller = new AbortController();
+            const timeout = setTimeout(() => controller.abort(), 15000);
+            try {
+                const response = await fetch('/api/habitats/{{ $habitat['id'] }}/farm/berries', {
+                    headers: { 'Accept': 'application/json' },
+                    signal: controller.signal,
+                });
+                if (!response.ok) {
+                    const data = await response.json().catch(() => ({}));
+                    throw new Error(data.message || 'No se pudo cargar el catálogo de bayas.');
+                }
+                const data = await response.json();
+                this.bayasCatalogo = Array.isArray(data.bayas) ? data.bayas : [];
+                this.bayasCatalogoCargado = true;
+            } catch (e) {
+                console.error('Error loading catálogo de bayas:', e);
+                this.bayaError = e.name === 'AbortError'
+                    ? 'La operación tardó demasiado. Inténtalo de nuevo.'
+                    : (e.message || 'No se pudo cargar el catálogo de bayas.');
+            } finally {
+                clearTimeout(timeout);
+                this.bayasCargando = false;
+            }
+        },
+
+        /** Normaliza texto para búsquedas: sin mayúsculas ni diacríticos (fallback: solo minúsculas). */
+        normalizarBusqueda(texto) {
+            const base = String(texto || '');
+
+            if (typeof base.normalize !== 'function') {
+                return base.toLowerCase();
+            }
+
+            return base
+                .normalize('NFD')
+                .replace(/\p{Diacritic}/gu, '')
+                .toLowerCase();
+        },
+
+        /** Bayas filtradas por búsqueda y categoría; las que tienen stock van primero (orden estable). */
+        get bayasFiltradas() {
+            const termino = this.normalizarBusqueda(this.bayaBusqueda.trim());
+
+            return (this.bayasCatalogo || [])
+                .filter((baya) => this.bayaGrupoActivo === 'todos' || baya.grupo === this.bayaGrupoActivo)
+                .filter((baya) => termino === ''
+                    || this.normalizarBusqueda(baya.nombre).includes(termino)
+                    || this.normalizarBusqueda(baya.grupo_nombre).includes(termino))
+                .slice()
+                .sort((a, b) => Number(b.cantidad > 0) - Number(a.cantidad > 0));
+        },
+
+        /** Construye los huecos visibles emparejando cada slot con su plantación. */
+        huecosDe(familia) {
+            const total = Number(familia?.nido?.huecos_totales ?? 0);
+            const plantaciones = familia?.nido?.plantaciones || [];
+            const huecos = [];
+
+            for (let slot = 1; slot <= total; slot += 1) {
+                huecos.push({
+                    slot,
+                    plantacion: plantaciones.find((plantacion) => Number(plantacion.slot) === slot) || null,
+                });
+            }
+
+            return huecos;
+        },
+
+        cantidadBaya(clave) {
+            const baya = (this.granja?.bayas || []).find((item) => item.clave === clave);
+
+            return baya?.cantidad ?? 0;
+        },
+
+        async plantarBayaDesdeModal(baya) {
+            if (this.bayasPlantando || !this.slotPlantando || !baya || baya.cantidad < 1) return;
+
+            const { chainId, slot } = this.slotPlantando;
+            this.bayasPlantando = true;
+            this.bayaError = '';
+            const controller = new AbortController();
+            const timeout = setTimeout(() => controller.abort(), 15000);
+            try {
+                const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || '';
+                const response = await fetch('/api/habitats/{{ $habitat['id'] }}/farm/nests/' + chainId + '/plantings', {
+                    method: 'POST',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': csrfToken,
+                    },
+                    body: JSON.stringify({ slot: Number(slot), berry: baya.clave }),
+                    signal: controller.signal,
+                });
+                if (!response.ok) {
+                    const data = await response.json().catch(() => ({}));
+                    throw new Error(data.message || 'No se pudo plantar la baya.');
+                }
+                this.granja = await response.json();
+                this.sincronizarCatalogoBayas();
+                this.showBayaModal = false;
+                this.slotPlantando = null;
+            } catch (e) {
+                console.error('Error planting baya:', e);
+                this.bayaError = e.name === 'AbortError'
+                    ? 'La operación tardó demasiado. Inténtalo de nuevo.'
+                    : (e.message || 'No se pudo plantar la baya.');
+            } finally {
+                clearTimeout(timeout);
+                this.bayasPlantando = false;
+            }
+        },
+
+        /** Refleja en el catálogo las existencias devueltas por la granja; las ausentes quedan a 0. */
+        sincronizarCatalogoBayas() {
+            const existencias = new Map((this.granja?.bayas || []).map((baya) => [baya.clave, baya.cantidad]));
+            this.bayasCatalogo = (this.bayasCatalogo || []).map((baya) => ({
+                ...baya,
+                cantidad: existencias.has(baya.clave) ? Number(existencias.get(baya.clave)) : 0,
+            }));
+        },
+
+        cosecharBaya(chainId, slot) {
+            return this.accionGranja(
+                '/api/habitats/{{ $habitat['id'] }}/farm/nests/' + chainId + '/plantings/' + slot + '/harvest'
+            );
+        },
+
+        replantarBaya(chainId, slot, plantacion) {
+            if (!plantacion || this.cantidadBaya(plantacion.berry_key) < 1) return;
+
+            const confirmado = window.confirm(
+                '¿Replantar ' + plantacion.berry_nombre + ' en este hueco? Se perderá el stock pendiente (' + plantacion.stock + '/' + plantacion.stock_max + ').'
+            );
+
+            if (!confirmado) return;
+
+            return this.accionGranja(
+                '/api/habitats/{{ $habitat['id'] }}/farm/nests/' + chainId + '/plantings',
+                { slot: Number(slot), berry: plantacion.berry_key }
+            );
         },
 
         saldoFamilia(chainId) {
@@ -1972,6 +2644,7 @@ function habitatShow() {
                     habitat_id: {{ $habitat['id'] }},
                     level: this.selectedLevel,
                 });
+                params.set('modo', this.modoExploracion);
                 if (this.durationMode === 'hours') {
                     params.set('duracion_horas', String(this.durationHours));
                 } else if (this.durationMode === 'return_time') {
@@ -1999,6 +2672,15 @@ function habitatShow() {
         starRating(n) {
             const valor = Math.max(0, Math.min(5, Number(n) || 0));
             return valor + '/5';
+        },
+
+        modoLabel(modo) {
+            const etiquetas = {
+                experiencia: 'Pelear',
+                reclutamiento: 'Buscar',
+                botin: 'Explorar',
+            };
+            return etiquetas[modo] || modo;
         },
 
         riesgoClass(riesgo) {
@@ -2047,6 +2729,8 @@ function habitatShow() {
                 level: this.selectedLevel,
                 habitat_id: {{ $habitat['id'] }},
             };
+
+            data.modo = this.modoExploracion;
 
             if (this.durationMode === 'hours') {
                 data.duracion_horas = this.durationHours;
