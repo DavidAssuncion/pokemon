@@ -91,3 +91,11 @@
 ## Estado
 
 `COMPLETED` (código y configuración). Pendientes: actualizar `.env` local y validación visual del desarrollador.
+
+## Merge a master (2026-11-04)
+
+- `refactor/ui-tokens` fusionada en `master` con fast-forward: `5917dc5..7f0136a`.
+- `task-010` fusionada en `master` con fast-forward: `7f0136a..cb8cece`.
+- `master` queda en `cb8cece`, con TASK-009 y TASK-010 integrados.
+- Sin `git push`; `origin/master` sigue en `5917dc5`.
+- WIP ajeno preservado: `.githooks/pre-commit` (mode change 100644 → 100755) y `MVP.txt`; no se commitearon.

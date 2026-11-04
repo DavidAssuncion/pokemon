@@ -81,3 +81,10 @@ Se implementaron los tres frentes aprobados:
 3. Decidir si se generan los 59 assets shiny (`missing-shiny.md`).
 4. Opcional: lanzar `reviewer` si se quiere revisión independiente.
 5. Opcional: corregir la regresión de `turn-bar` y la deuda de eventos/exploraciones.
+
+## 10. Merge a master
+
+- `refactor/ui-tokens` fusionada en `master` (`5917dc5..7f0136a`).
+- `task-010` fusionada en `master` (`7f0136a..cb8cece`).
+- `master` queda en `cb8cece`; sin `git push`.
+- WIP ajeno preservado y no commiteado: `.githooks/pre-commit` (modo) y `MVP.txt`.
