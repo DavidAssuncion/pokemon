@@ -1,6 +1,6 @@
 # TASK-010 — Informe final
 
-- **Estado:** `COMPLETED` (código y configuración) con dos acciones de entorno/validación pendientes
+- **Estado:** `COMPLETED` (código, configuración y assets) con una acción de entorno pendiente
 - **Fecha:** 2026-11-04
 - **Proyecto:** `/home/david/pokemon`
 - **Rama:** `task-010` (creada desde `refactor/ui-tokens` tras commitear TASK-009)
@@ -12,7 +12,7 @@ Se implementaron los tres frentes aprobados:
 
 1. **Nombres:** `PokemonSeeder` capitaliza la primera letra con `Str::ucfirst`. **No se hizo backfill** ni se modificaron filas existentes, según indicación del desarrollador.
 2. **Sesión:** `SESSION_LIFETIME` pasa a `525600` minutos (1 año de inactividad) en `config/session.php`, `.env.example` y `docker-compose.yml` (app/worker/scheduler). `expire_on_close` sigue en `false`.
-3. **Shiny:** se propaga `es_shiny` en exploraciones (transformador, presentador, resultado y `restarPerdidas`) y en `siguiente` de evolución; las vistas usan `x-sprite` con `:id` + `:shiny`.
+3. **Shiny:** se propaga `es_shiny` en exploraciones (transformador, presentador, resultado y `restarPerdidas`) y en `siguiente` de evolución; las vistas usan `x-sprite` con `:id` + `:shiny`. Además se generaron los **59 assets shiny regionales** copiando `_f_s` a `{id}_s.webp` (verificado por hash).
 
 ## 2. Archivos modificados
 
@@ -29,6 +29,7 @@ Se implementaron los tres frentes aprobados:
 | `app/Support/ReclutadoVistaPresenter.php` | `siguiente` expone `es_shiny`; retira casts redundantes |
 | `resources/views/exploraciones/index.blade.php` | Capturados con `x-sprite :id` + `:shiny` |
 | `resources/views/reclutado/show.blade.php` | Evolución con `:shiny` |
+| `public/images/iconos_webp/shiny/{id}_s.webp` (59) | Assets shiny regionales copiados desde `_f_s` |
 
 ## 3. Verificación ejecutada
 
@@ -41,6 +42,7 @@ Se implementaron los tres frentes aprobados:
 | `git diff --check` acotado a los archivos de TASK-010 | OK |
 | Tests | No se crearon, modificaron ni ejecutaron; `tests/` sin cambios |
 | `php artisan config:show session` | **`lifetime=120`** en local: `.env` sigue sobrescribiendo el fallback |
+| Assets shiny regionales | 59/59 copiados; hash origen = hash destino; 0 incidencias; faltan solo `0` y los 4 legacy |
 
 ## 4. Acciones pendientes (entorno/validación)
 
@@ -50,9 +52,9 @@ Se implementaron los tres frentes aprobados:
 ## 5. Shiny: respuesta sobre `_f`
 
 - El código **no usa `_f`**: `x-sprite` construye `/images/iconos_webp/shiny/{pokemon_id}_s.webp` (por ejemplo, `10091_s.webp`).
-- Los 59 shiny faltantes son **formas alternas** (Alola, Galar, Hisui, Paldea) más `905 enamorus-incarnate`; no son especies base. Cada forma es una fila propia de `pokemon` con su sprite normal (`10091.webp`), y 58 de las 59 tienen hábitat y pueden obtenerse/shiny.
-- Los shiny de esas formas existen en el proyecto con otro nombre: `{baseId}_f{formId}_s.webp` (por ejemplo, `19_f46_s.webp` para `10091`). Para que se vean shiny habría que remapearlos a `{id}_s.webp`; no se generaron en v2.
-- Si no se quieren shiny para formas alternas, no hacen falta. Si se quieren, se pueden generar/remappear en una tarea posterior. La lista completa está en `missing-shiny.md`.
+- Los 59 shiny faltantes eran **formas alternas** (Alola, Galar, Hisui, Paldea) más `905 enamorus-incarnate`; no son especies base. Cada forma es una fila propia de `pokemon` con su sprite normal (`10091.webp`).
+- Los shiny de esas formas ya existían con otro nombre: `{baseId}_f{formId}_s.webp`. Se verificó por hash que el `_f` normal es idéntico al `{id}.webp` y se copiaron los 59 a `{id}_s.webp` (59/59, 0 incidencias).
+- `905_f2802` es la forma **incarnate** (su normal es idéntico a `905.webp`), así que `905_f2802_s.webp` sirve como shiny de `enamorus-incarnate`.
 - Los 4 `_f` legacy (`3_f950`, `6_f951`, `9_f952`, `901_f1`) no son alcanzables y no forman parte del requisito.
 
 ## 6. Seguridad
@@ -69,7 +71,7 @@ Se implementaron los tres frentes aprobados:
 
 - Filas existentes de `pokemon` siguen en minúsculas; no hay backfill por decisión del desarrollador.
 - Re-ejecutar el seeder no capitaliza 38 formas Alola/Galar que el CSV omite; no se re-ejecutó.
-- 59 formas sin asset shiny seguirán mostrando el sprite normal mediante fallback hasta que se generen.
+- 59 formas regionales ya tienen shiny; solo `905` y las especies sin asset shiny propio siguen usando fallback normal cuando corresponda.
 - Exploraciones no generan shiny salvaje; la propagación deja el contrato preparado, pero no aparecerán capturas shiny nuevas.
 - Eventos de exploración no muestran shiny; requiere ampliar el contrato persistido.
 - Regresión de TASK-009 en `turn-bar` (`size="48"` inválido) detectada y no incluida.
@@ -78,9 +80,8 @@ Se implementaron los tres frentes aprobados:
 
 1. Actualizar `.env` local y verificar `config:show session` = `525600`.
 2. Validar visualmente los shiny en navegador.
-3. Decidir si se generan los 59 assets shiny (`missing-shiny.md`).
-4. Opcional: lanzar `reviewer` si se quiere revisión independiente.
-5. Opcional: corregir la regresión de `turn-bar` y la deuda de eventos/exploraciones.
+3. Opcional: lanzar `reviewer` si se quiere revisión independiente.
+4. Opcional: corregir la regresión de `turn-bar` y la deuda de eventos/exploraciones.
 
 ## 10. Merge a master
 

@@ -99,3 +99,10 @@
 - `master` queda en `cb8cece`, con TASK-009 y TASK-010 integrados.
 - Sin `git push`; `origin/master` sigue en `5917dc5`.
 - WIP ajeno preservado: `.githooks/pre-commit` (mode change 100644 → 100755) y `MVP.txt`; no se commitearon.
+
+## Assets shiny regionales (2026-11-04)
+
+- Verificado por hash que cada `{baseId}_f{formId}.webp` normal es idéntico a su `{id}.webp`.
+- Copiados 59/59 `_f_s` a `shiny/{id}_s.webp`; 0 incidencias.
+- Incluye `905 enamorus-incarnate` (`905_f2802` → `905_s.webp`).
+- Sin cambios de código. Quedan sin shiny solo el placeholder `0` y los 4 legacy no alcanzables.
