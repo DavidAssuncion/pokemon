@@ -7,11 +7,15 @@ namespace Src\Granjas\App;
 use App\Enums\StatEnum;
 use App\Models\Habitat;
 use App\Models\Nido;
+use App\Models\PlantacionNido;
 use App\Models\Refugio;
+use Illuminate\Support\Collection;
 use Src\Granjas\Domain\CalculadoraBonosGranja;
 use Src\Granjas\Domain\Collections\ComplementosGranjaCollection;
 use Src\Granjas\Domain\Collections\FamiliasGranjaCollection;
 use Src\Granjas\Domain\Collections\NivelesComplementoCollection;
+use Src\Granjas\Domain\Collections\PlantacionesGranjaCollection;
+use Src\Granjas\Domain\DataTransferObjects\BonguriGranja;
 use Src\Granjas\Domain\DataTransferObjects\ComplementoGranja;
 use Src\Granjas\Domain\DataTransferObjects\ContextoComplementos;
 use Src\Granjas\Domain\DataTransferObjects\ContextoFamiliaGranja;
@@ -25,14 +29,18 @@ use Src\Granjas\Domain\DataTransferObjects\MejoraNido;
 use Src\Granjas\Domain\DataTransferObjects\MejoraRefugio;
 use Src\Granjas\Domain\DataTransferObjects\NidoGranja;
 use Src\Granjas\Domain\DataTransferObjects\NivelComplemento;
+use Src\Granjas\Domain\DataTransferObjects\PlantacionGranja;
 use Src\Granjas\Domain\DataTransferObjects\RefugioGranja;
 use Src\Granjas\Domain\DataTransferObjects\StatGranja;
+use Src\Granjas\Domain\Entities\Plantacion;
+use Src\Granjas\Domain\ReglasPlantacion;
 use Src\Habitats\App\ObtenerFamiliasDisponibles;
 use Src\Habitats\Presentation\DTOFamiliaDisponible;
+use Src\Shared\Domain\Items\ClaveBonguri;
 
 /**
  * Construye el detalle completo de la granja de un hábitat: familias, nidos,
- * refugios, complementos y saldos de caramelos.
+ * refugios, complementos, plantaciones, bayas y saldos de caramelos.
  */
 final class ObtenerGranja
 {
@@ -49,10 +57,19 @@ final class ObtenerGranja
         $granja = $this->asegurarGranja->para($userId, $habitatId);
         $habitat = Habitat::find($habitatId);
         $inventario = $this->inventario->resumen($userId);
+        $ahora = now()->toDateTimeImmutable();
 
         $nidos = $granja->nidos()->get()->keyBy(fn (Nido $nido): int => $nido->evolution_chain_id);
         $refugiosModelo = $granja->refugios()->get()
             ->keyBy(fn (Refugio $refugio): int => $refugio->evolution_chain_id);
+
+        $plantacionesPorNido = PlantacionNido::query()
+            ->getQuery()
+            ->whereIn('nest_id', $nidos->pluck('id')->all())
+            ->orderBy('slot_index')
+            ->get()
+            ->groupBy('nest_id');
+
         $contexto = new ContextoFamiliaGranja(
             refugios: $this->resolverBonos->refugiosDeHabitat($userId, $habitatId),
             inventario: $inventario,
@@ -65,13 +82,19 @@ final class ObtenerGranja
                 continue;
             }
 
+            $nido = $nidos->get($familia->evolutionChainId);
+
             $familias->add($this->familiaGranja(
                 familia: $familia,
-                nido: $nidos->get($familia->evolutionChainId),
+                nido: $nido,
                 refugio: $refugiosModelo->get($familia->evolutionChainId),
                 contexto: $contexto,
+                plantaciones: $this->plantacionesDe($nido, $plantacionesPorNido, $ahora),
             ));
         }
+
+        $bonguri = ClaveBonguri::tryFrom((string) ($habitat !== null ? $habitat->bonguri : ''))
+            ?? ClaveBonguri::porDefecto();
 
         return new GranjaDetalle(
             id: $granja->id,
@@ -81,7 +104,45 @@ final class ObtenerGranja
             ),
             familias: $familias,
             inventario: $inventario,
+            bayas: $this->inventario->resumenBayas($userId),
+            bonguri: BonguriGranja::desde($bonguri),
         );
+    }
+
+    /**
+     * @param  Collection<int|string, Collection<int, \stdClass>>  $plantacionesPorNido
+     */
+    private function plantacionesDe(
+        ?Nido $nido,
+        Collection $plantacionesPorNido,
+        \DateTimeImmutable $ahora,
+    ): PlantacionesGranjaCollection {
+        $plantaciones = new PlantacionesGranjaCollection();
+
+        if ($nido === null) {
+            return $plantaciones;
+        }
+
+        $modelos = $plantacionesPorNido->get($nido->id);
+
+        if (! $modelos instanceof Collection) {
+            return $plantaciones;
+        }
+
+        foreach ($modelos as $modelo) {
+            $plantaciones->add(PlantacionGranja::desde(
+                new Plantacion(
+                    id: (int) $modelo->id,
+                    slotIndex: (int) $modelo->slot_index,
+                    berryKey: (string) $modelo->berry_key,
+                    plantedAt: new \DateTimeImmutable((string) $modelo->planted_at),
+                    harvestCount: (int) $modelo->harvest_count,
+                ),
+                $ahora,
+            ));
+        }
+
+        return $plantaciones;
     }
 
     private function familiaGranja(
@@ -89,6 +150,7 @@ final class ObtenerGranja
         ?Nido $nido,
         ?Refugio $refugio,
         ContextoFamiliaGranja $contexto,
+        PlantacionesGranjaCollection $plantaciones,
     ): FamiliaGranja {
         $chainId = $familia->evolutionChainId;
         $nidoNivel = $nido !== null ? $nido->level : 0;
@@ -131,6 +193,8 @@ final class ObtenerGranja
                     puede: $puedeNido,
                     motivo: $this->motivoMejora($costeNido, $puedeNido),
                 ),
+                huecosTotales: ReglasPlantacion::huecosDe($nidoNivel),
+                plantaciones: $plantaciones,
             ),
             refugio: new RefugioGranja(
                 nivel: $refugioNivel,

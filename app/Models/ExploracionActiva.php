@@ -8,8 +8,6 @@ use App\Models\Concerns\BelongsToUser;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-// TODO(futuro): bayas
-
 class ExploracionActiva extends Model
 {
     use BelongsToUser;
@@ -21,6 +19,7 @@ class ExploracionActiva extends Model
         'reclutado_id',
         'habitat_id',
         'nivel',
+        'modo',
         'duracion_horas',
         'hora_limite',
         'indefinido',

@@ -47,6 +47,8 @@ trait CadenasFamiliaHabitatsTrait
             icon: $this->iconPath($member->id),
             level: $this->resolvedor()->levelForStage($member->stage, $totalStages),
             speciesId: $member->speciesId,
+            stage: $member->stage,
+            parentId: $member->parentId,
         ));
 
         $base = $reparto->base;
@@ -72,6 +74,8 @@ trait CadenasFamiliaHabitatsTrait
             icon: $this->iconPath($member->id),
             level: null,
             speciesId: $member->speciesId,
+            stage: $member->stage,
+            parentId: $member->parentId,
         ));
 
         $base = $reparto->base;

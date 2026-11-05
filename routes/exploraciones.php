@@ -12,5 +12,6 @@ Route::post('/exploraciones/{exploracion}/recoger', [ExploracionActivaController
 Route::post('/exploraciones/{exploracion}/cancelar', [ExploracionActivaController::class, 'cancelar']);
 Route::post('/exploraciones/{exploracion}/cerrar', [ExploracionActivaController::class, 'cerrar']);
 
-// Exploración individual (API JSON) — sin bayas (TODO)
+// Exploración individual (API JSON): el botín de bayas/bonguris se calcula
+// al finalizar la expedición.
 Route::post('/api/exploraciones/store-individual', [ExploracionActivaController::class, 'storeIndividual']);

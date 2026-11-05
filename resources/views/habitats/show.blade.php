@@ -1292,6 +1292,10 @@
                                             <span class="text-3xs text-ink-subtle">24 h por cosecha · máx. 3</span>
                                         </div>
 
+                                        <p class="mt-1 text-2xs text-ink-muted">
+                                            Cada planta +20% de peso, tope ×2.0; solo bayas de esa granja/hábitat.
+                                        </p>
+
                                         <p x-show="familia.nido.huecos_totales === 0" class="text-xs text-ink-muted mt-2">
                                             Construye el nido para desbloquear huecos de plantación.
                                         </p>
@@ -1937,10 +1941,19 @@ function habitatShow() {
             this.closeGranjaModal();
         },
 
-        async loadGranja() {
-            this.granjaLoading = true;
-            this.granjaError = '';
-            this.familiaActiva = 0;
+        async loadGranja(opciones = {}) {
+            const preservarFamilia = opciones.preservarFamilia === true;
+            const silenciosa = opciones.silenciosa === true;
+
+            if (!silenciosa) {
+                this.granjaLoading = true;
+                this.granjaError = '';
+            }
+
+            if (!preservarFamilia) {
+                this.familiaActiva = 0;
+            }
+
             const controller = new AbortController();
             const timeout = setTimeout(() => controller.abort(), 15000);
             try {
@@ -1954,15 +1967,22 @@ function habitatShow() {
                 }
                 this.granja = await response.json();
                 this.ajustarFamiliaActiva();
+                if (typeof this.sincronizarCatalogoBayas === 'function') {
+                    this.sincronizarCatalogoBayas();
+                }
             } catch (e) {
                 console.error('Error loading granja:', e);
-                this.granjaError = e.name === 'AbortError'
-                    ? 'La operación tardó demasiado. Inténtalo de nuevo.'
-                    : (e.message || 'No se pudo cargar la granja.');
-                this.granja = null;
+                if (!silenciosa) {
+                    this.granjaError = e.name === 'AbortError'
+                        ? 'La operación tardó demasiado. Inténtalo de nuevo.'
+                        : (e.message || 'No se pudo cargar la granja.');
+                    this.granja = null;
+                }
             } finally {
                 clearTimeout(timeout);
-                this.granjaLoading = false;
+                if (!silenciosa) {
+                    this.granjaLoading = false;
+                }
             }
         },
 
@@ -2410,6 +2430,12 @@ function habitatShow() {
         },
 
         init() {
+            window.addEventListener('inventario:actualizado', () => {
+                if (this.showGranjaModal && !this.granjaAccionando) {
+                    this.loadGranja({ preservarFamilia: true, silenciosa: true });
+                }
+            });
+
             // Cargar favoritos para la exploración individual. Tolerante: si el
             // endpoint aún no está disponible, se muestra el estado vacío/error.
             this.cargarFavoritos();

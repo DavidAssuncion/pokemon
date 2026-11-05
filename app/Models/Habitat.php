@@ -23,6 +23,7 @@ class Habitat extends Model
         'pokemons',
         'peligro',
         'mazmorra',
+        'bonguri',
     ];
 
     protected $casts = [

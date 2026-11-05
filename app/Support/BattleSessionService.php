@@ -9,6 +9,9 @@ use Src\Battle\Domain\AgregadoBatalla;
 final class BattleSessionService
 {
     /**
+     * 21: Combatiente incorpora resistencias temporales por tipo (objetos de
+     * combate); MultiplicadoresStats añade refresco sin stack. Los payloads
+     * v9-v20 cargan con `resistencias` vacías.
      * 20: Combatiente incorpora estado de objeto (cargas, embargo, reciclaje),
      * supresión/copia de habilidades, sustituto y estado de jefe (fases y
      * puntos débiles). Los payloads v9-v19 cargan con objeto pasivo, sin
@@ -44,18 +47,19 @@ final class BattleSessionService
      * 9: Combatiente cambió de etapas enteras ('etapas') a
      * MultiplicadoresStats ('multiplicadores' con factores float).
      */
-    private const SESSION_VERSION = 20;
+    private const SESSION_VERSION = 21;
 
     /**
-     * Versión mínima de payload aceptada por cargar(). SESSION_VERSION (20)
+     * Versión mínima de payload aceptada por cargar(). SESSION_VERSION (21)
      * y MINIMUM_COMPATIBLE_SESSION_VERSION (9) comparten estructura salvo
      * claves opcionales: objeto/cargas/embargo, habilidad anulada/copiada,
      * sustituto y jefe; 'velocidadAcumulada' (ignorada), BattleStats.$ivs
      * (default null), PerfilMovimiento (default, con migración de 'golpes'),
      * Combatiente.clima (NONE), postura (ATACAR), prioridad declarada (null),
      * cargas/usos (vacíos), retraso (false), extras (0), veneno (0),
-     * MultiplicadoresStats temporales (vacíos), Trick Room (0), combo (0),
-     * invocación (ninguna) y contador de invocaciones (0).
+     * MultiplicadoresStats temporales (vacíos), resistencias temporales
+     * (vacías), Trick Room (0), combo (0), invocación (ninguna) y contador de
+     * invocaciones (0).
      */
     private const MINIMUM_COMPATIBLE_SESSION_VERSION = 9;
 

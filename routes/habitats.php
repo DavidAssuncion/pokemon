@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Http\Controllers\HabitatsController;
 use Illuminate\Support\Facades\Route;
+use Src\Habitats\Infra\Controllers\DetallePokemonFamiliaController;
 
 Route::get('/habitats/{id}', [HabitatsController::class, 'show']);
 
@@ -23,6 +24,8 @@ Route::get('/habitats-img/{id}.webp', function (int $id) {
 Route::get('/api/habitats/{id}/families', [HabitatsController::class, 'families']);
 Route::post('/api/habitats/{id}/families', [HabitatsController::class, 'assignFamily']);
 Route::delete('/api/habitats/{id}/families/{chainId}', [HabitatsController::class, 'removeFamily']);
+Route::get('/api/habitats/{habitat}/families/{chain}/pokemon/{pokemon}', [DetallePokemonFamiliaController::class, 'show'])
+    ->whereNumber('habitat')->whereNumber('chain')->whereNumber('pokemon');
 Route::patch('/api/habitats/{habitat}/pokemon/{pokemon}', [HabitatsController::class, 'movePokemonLevel']);
 
 Route::get('/api/habitats/unassigned-families', [HabitatsController::class, 'unassignedFamilies']);

@@ -50,13 +50,14 @@ Núcleo del sistema. Organizado en 3 subcarpetas (tras el refactor Cleaner de 20
 | Carpeta | Propósito | Archivos clave |
 |---|---|---|
 | `Domain/` | Lógica de dominio pura | `AgregadoBatalla`, `Combatiente`, `EquipoBatalla`, `GestorTurnos`, `ServicioEjecucionBatalla`, `CalculadorDañoClima` (daño por clima fin de ronda), `SelectorAccionIA` (objetivo/movimiento IA), `MovimientoBatalla`, `AccionBatalla`, `DatosPokemonBatalla`, `Posicion`, `FabricaBatallaInterface` |
-| `Domain/Chain/` | Chain of Responsibility para daño | `CadenaDanio` (7 manejadores en orden: base, efectividad tipo, STAB, crítico, posición, clima, objetos equipados — `ManejadorObjetosEquipados` con mapa `['life_orb' => 1.30]`, reemplaza a `ManejadorOrbeVida`) + `ManejadorDanio` (interface) + `ManejadorDanioAbstracto` |
+| `Domain/Chain/` | Chain of Responsibility para daño | `CadenaDanio` (cadena de manejadores: base, protección, inmunidad/efectividad de tipo, STAB, combo, crítico, posición, clima, terreno, habilidades de ataque/defensa, **resistencia temporal de objetos** (`ManejadorResistenciaTemporal`), marcado, equipo, objetos equipados, bonus, aguante, etc.) + `ManejadorDanio` (interface) + `ManejadorDanioAbstracto` |
 | `Domain/Effects/` | Strategy pattern para efectos | `InterfazEfecto`, `ComportamientosPorDefecto` (trait), `ColeccionEfectos`, `FabricaEfectos` (instancia inyectable), `EfectoPerforacionArmadura`, `EfectoRegeneracionDefensa`, `EfectoInvocadorClima` (parametrizado, sustituye a `EfectoInvocadorTormentaArena`), `EfectoRestos`, `EfectoOrbeVida` |
 | `Domain/Enums/` | Enums de dominio | `TipoClima` (7 valores con `label()` en español), `EstadoPokemon` (8 valores, `causaDanoPorRonda()`), `CategoriaMovimiento` |
 | `Domain/Observer/` | Observer pattern para eventos | `SujetoBatalla`, `ObservadorBatalla` |
-| `Domain/ValueObjects/` | Value Objects | `EtapasStats` (clamp -6..+6), `ColeccionMovimientos` (sin dependencia de Illuminate) |
+| `Domain/ValueObjects/` | Value Objects | `EtapasStats` (clamp -6..+6), `ColeccionMovimientos` (sin dependencia de Illuminate), `MultiplicadoresStats` (incluye `refrescarTemporal()`), `ResistenciasTemporales` |
+| `Domain/DataTransferObjects/` | DTOs internos del agregado | `DTOAccionObjeto` (acción de objeto; **no** es `Wireable`), `OpcionObjeto` |
 | `Infrastructure/` | Persistencia/servicios externos | `FabricaBatallaMock` (6 pokémon mock, recibe `FabricaEfectos` inyectable) |
-| `Presentation/` | DTOs para la vista (Livewire Wireable) | `DTOMovimientoBatalla`, `DTOAccionBatalla` (con `move: DTOMovimientoBatalla` tipado), `DTOResultadoDanio`. `DTOEquipoBatalla` NO se usa (deuda: eliminar) |
+| `Presentation/` | DTOs para la vista (Livewire Wireable) | `DTOMovimientoBatalla`, `DTOAccionBatalla` (con `move: DTOMovimientoBatalla` tipado), `DTOResultadoDanio`. `DTOEquipoBatalla` NO se usa (deuda: eliminar). Los DTOs de objeto viven en `Domain/DataTransferObjects` (`DTOAccionObjeto`, `OpcionObjeto`) |
 
 Documentación exhaustiva del módulo (clases, mecánicas, contrato de vista, flujos, deuda): `src/Battle/context.md`.
 
@@ -86,8 +87,12 @@ Documentación exhaustiva del módulo (clases, mecánicas, contrato de vista, fl
   añade combatientes sin tope, con contador 0 en la ronda en curso, sin efectos de entrada ni log y
   sobre la misma colección que consume `GestorTurnos`. Es la única vía por la que un bando puede
   superar los 3 combatientes.
-- **Sesión**: `SESSION_VERSION = 11`, mínimo compatible 9; los payloads v9/v10 con
-  `velocidadAcumulada` se cargan ignorando la clave (best-effort).
+- **Sesión**: `SESSION_VERSION = 21`, mínimo compatible 9; los payloads v9/v10 con
+  `velocidadAcumulada` se cargan ignorando la clave (best-effort). Los payloads v20 siguen
+  cargando con defaults: `resistencias` se restaura vacía y `pendingAction` nunca contiene
+  `DTOAccionObjeto` en v20. Las acciones de objeto usan `AgregadoBatalla::$actorActualId` como
+  fuente de verdad server-side; `resolveActor()` de movimientos sigue leyendo `actingRefId`
+  (deuda preexistente, ver `docs/adr/0001-inventario-compartido-f2-f5.md`).
 
 ### Pokemon (`src/Pokemon/`)
 
@@ -149,6 +154,45 @@ UI: modal Alpine `habitatShow()` en `resources/views/habitats/show.blade.php`. S
 la query inicial solo al abrir el modal; asignar/quitar/mover mutan estado local tras 200 OK.
 Sustituye al componente Livewire `FamilyModal` (eliminado; hábitats ya no usa Livewire).
 
+#### Tabs por familia y detalle de especie (TASK-013)
+
+La UI del modal de granja usa **tabs por familia**: una tab por familia (`familiaActiva`) y, al
+pulsarla, se presenta el panel con **nido, refugio, complementos y plantaciones** de esa familia.
+No hay tablist interno por integrante ni panel de especie visible. Decisión registrada en el
+addendum v1.1 del plan y en [`ADR-0002`](adr/0002-catalogo-bayas-y-detalle-especie.md).
+
+```
+GET /api/habitats/{habitat}/families/{chain}/pokemon/{pokemon}   (bajo auth)
+```
+
+El endpoint de detalle de especie sigue disponible, pero **no está conectado a la UI actual**;
+queda para una fase posterior.
+
+- **Autorización por pertenencia:** `DetallePokemonFamiliaQuery` exige que la cadena esté
+  representada en `pokemon_habitat` para ese hábitat y que el Pokémon cumpla
+  `pokemon.evolution_chain_id = chain`; cualquier combinación inválida → 404
+  (`RecursoNoExiste`) sin revelar si el id existe en otro hábitat.
+- **Orden de miembros (contrato del detalle):** `MiembroCadena` incorpora `parentId` y
+  `DTOPokemonFamilia` añade `stage` y `parentId` (defaults compatibles). `toArray()` expone además
+  `stage`, `parent_id` y `species_id` (claves aditivas). La lista `[base, ...evolutions]` se ordena
+  por `stage`, `species_id`, `id`; `base` sigue siendo el de menor `species_id`. Este orden no se
+  renderiza hoy: la UI solo muestra una tab por familia.
+- **Detalle opt-in:** `PresentadorDetalleEspecie` (`app/Support/`) compone el shape de
+  `PresentadorDetallePokemon::para()` y añade `abilities`, `moves` y `species`. La Pokédex
+  (`GET /datagrid/pokemon/{id}/detalle`) no cambia: `PresentadorDetallePokemon` solo acepta
+  overrides opcionales de `visto`/`atrapado`.
+- **Pokédex informativa:** una especie no vista devuelve el detalle completo con `visto=false`;
+  no se bloquea la respuesta.
+- **Limitación:** `ability_pokemon` no guarda `hidden`; se exponen `slot` y `source` sin inventar
+  la bandera. Las formas regionales con cadena propia requieren que su cadena esté asignada al
+  hábitat.
+
+La vista mantiene una caché JS por `chainId/pokemonId` (`detallePokemonCache`) preparada para ese
+detalle, pero **no se invoca desde la UI actual**; tampoco se incrustan estas claves en
+`GET /api/habitats/{id}/families` ni en `GET /farm`. Diseño y criterios de aceptación:
+[`TASK-013/architecture.md`](../.opencode/work/TASK-013/architecture.md) y addendum v1.1 en
+[`TASK-013/plan.md`](../.opencode/work/TASK-013/plan.md#addendum-v11--ajuste-de-ui-aprobado-2026-11-04).
+
 ### Equipos (`src/Equipos/`)
 
 | Carpeta | Contenido |
@@ -209,6 +253,202 @@ Contrato aditivo de resultados (`TransformadorResultadoExploracion` + `Exploraci
 - `caramelos.evolution_chain_id` conserva columna + unique, ahora SIN FK (entero simple). El
   `down()` de la migración que recrea la FK es best-effort (asume filas válidas; el bug 23503
   dejaba cadenas huérfanas).
+
+### Granjas (`src/Granjas/`)
+
+Sistema de granjas por hábitat: nidos, refugios, complementos y —desde F2— plantaciones de
+bayas. Depende de `Shared` (catálogo e inventario) y su adaptador de plantaciones implementa el
+puerto que consume `Exploraciones`.
+
+| Carpeta | Contenido |
+|---|---|
+| `Domain/` | `CalculadoraBonosGranja`, `ReglasPlantacion`, `Entities/Plantacion`, `Enums/EstadoPlantacion`, DTOs (`GranjaDetalle`, `NidoGranja`, `PlantacionGranja`, `BayaGranja`, `BonguriGranja`) y colecciones tipadas. |
+| `App/` | `AsegurarGranja`, `FamiliaEnHabitat`, `ObtenerGranja`, `MejorarNido`, `ResolverBonosFamilia`, `InventarioGranja`, `ObtenerCatalogoBayas`, `PlantarBaya`, `CosecharPlantacion`, `CosecharTodo`. |
+| `Infra/` | `Controllers/GranjaController`, `Requests/PlantarBayaRequest`, `Plantaciones/ConsultorPlantacionesEloquent` (adaptador de `Exploraciones\Domain\Ports\ConsultorPlantaciones`). |
+
+Reglas de plantación (F2):
+
+- Huecos = `nivel * 2`; un nido de nivel 0 no permite plantar.
+- Plantar consume 1 baya: la clave debe ser `baya:{slug}` y validarse contra `ClaveBaya`; nunca
+  se acepta un `item_key` libre.
+- Crecimiento: 1 cosecha cada 24 h, stock máximo 3 y planta persistente. **No hay cron**: el
+  stock se calcula al leer con `ReglasPlantacion::stockDe()` a partir de `planted_at` y
+  `harvest_count`.
+- Replantar sustituye la baya, reinicia `planted_at`/`harvest_count` y pierde el stock
+  pendiente; la UI lo advierte.
+- `nest_plantings` guarda una fila por hueco ocupado con unique `(nest_id, slot_index)`. Los
+  locks del nido y del hueco, más el recálculo del stock tras el lock, evitan dobles
+  plantaciones y dobles cosechas.
+
+Endpoints (`routes/granjas.php`, bajo `auth`; salvo el catálogo de bayas, cada acción devuelve el
+`GranjaDetalle` completo):
+
+```
+GET  /api/habitats/{habitat}/farm/berries            → catálogo de las 36 bayas con stock (incluye 0)
+POST /api/habitats/{habitat}/farm/nests/{chain}/plantings
+POST /api/habitats/{habitat}/farm/nests/{chain}/plantings/{slot}/harvest
+POST /api/farm/harvest-all                           → cosecha global (TASK-014)
+```
+
+`GranjaDetalle` conserva `id`, `habitat`, `familias`, `inventario` y añade `bayas` y `bonguri`;
+`NidoGranja` añade `huecos_totales`, `huecos_libres` y `plantaciones`.
+
+#### Catálogo de bayas y selector de plantación (TASK-013)
+
+`resumenBayas()` no cambia: sigue devolviendo solo existencias y alimenta `GranjaDetalle.bayas`.
+El catálogo completo se sirve aparte para no inflar el payload de granja
+([`ADR-0002`](adr/0002-catalogo-bayas-y-detalle-especie.md)):
+
+- `InventarioGranja::catalogoBayas(int $userId)` recorre las 36 `ClaveBaya::cases()`, lee los
+  saldos en una sola llamada y devuelve cantidad 0 cuando no hay fila.
+- `ObtenerCatalogoBayas::handle(int $userId, int $habitatId)` valida el hábitat con
+  `AsegurarGranja::para()` antes de leer el inventario.
+- `GranjaController::bayas()` responde `{ "bayas": [...] }` con el shape de `BayaGranja`, que
+  incorpora `GrupoBaya $grupo` y expone `grupo` y `grupo_nombre` (aditivo).
+- `GrupoBaya` (`src/Shared/Domain/Items/GrupoBaya.php`) clasifica las 36 bayas con una única
+  fuente de verdad, `CatalogoItems::grupoDeBaya(ClaveBaya)`: Medicinas = `BAYAS_BASE` (6),
+  Mejoras = `BAYAS_RARAS` (7), Reductores = `BAYAS_ESTADISTICA` (5) y Resistencias = bayas de
+  tipo (18).
+
+En la vista, el selector de baya es un modal hermano del de granja (`z-[60]`): busca por nombre,
+filtra por grupo, muestra primero las disponibles y planta con un clic reutilizando el endpoint
+existente. `cerrarCapaSuperior()` cierra solo la capa superior (bayas o granja), de modo que
+plantar refresca la granja sin cerrarla.
+
+Diseño y criterios de aceptación: [`TASK-013/plan.md`](../.opencode/work/TASK-013/plan.md) y
+[`TASK-013/architecture.md`](../.opencode/work/TASK-013/architecture.md).
+
+#### Cosecha global por nido (TASK-014)
+
+`CosecharTodo::handle(int $userId)` cosecha todas las plantaciones listas del jugador en todos sus
+hábitats y nidos. Se expone en `POST /api/farm/harvest-all` (bajo `auth`, sin body) y
+`GranjaController::cosecharTodo()` devuelve `ResultadoCosechaGlobal::toArray()`.
+
+Flujo:
+
+1. Tres consultas de selección: granjas del usuario, nidos con `level >= 1` y plantaciones
+   candidatas. El stock se calcula con `ReglasPlantacion::stockDe()`.
+2. Por cada nido candidato, `DB::transaction(..., 3)`:
+   - lock del nido (`whereKey` + `where farm_id`);
+   - lock de sus plantaciones por `id` ascendente;
+   - recálculo del stock tras el lock; si es `<= 0`, se omite;
+   - `increment('harvest_count', stock)` y acumulación por `berry_key`;
+   - incremento del inventario agregado por baya, ordenado por `item_key`.
+3. Un fallo en un nido se captura como `ErrorCosecha` y no detiene el resto. Las excepciones de
+   dominio conservan su mensaje; el resto se registra con `report()`.
+4. Se agregan totales y bayas (cantidad descendente, nombre ascendente).
+
+Contrato `200`:
+
+```json
+{
+  "total_bayas": 12,
+  "total_plantaciones": 5,
+  "nidos": 3,
+  "bayas": [
+    {"clave": "baya:liechi", "nombre": "Lichi", "icono": "/images/berry/liechi-berry.webp", "cantidad": 6}
+  ],
+  "errores": [
+    {"farm_id": 4, "habitat_id": 2, "nido_id": 42, "evolution_chain_id": 7, "mensaje": "..."}
+  ]
+}
+```
+
+`nidos` cuenta los nidos que aportaron stock y `total_plantaciones` las filas cosechadas. Sin
+candidatos devuelve ceros y listas vacías. La operación es idempotente: el stock se recalcula bajo
+lock y `harvest_count` se actualiza en la misma transacción, por lo que una segunda petición
+inmediata devuelve 0.
+
+El botón del menú emite `inventario:actualizado` al terminar. `habitats/show.blade.php` recarga la
+granja de forma silenciosa si el modal está abierto y no hay una acción en curso; la forja relee
+recetas con `cargar(false)`. Decisión completa en
+[`ADR-0003`](adr/0003-cosecha-global-e-iconos-items.md).
+
+### Forja (`src/Forja/`)
+
+Módulo de fabricación de objetos de combate a partir de bayas, bonguris y recipientes (F4).
+Sin migración: el catálogo de 46 recetas es código estático.
+
+| Carpeta | Contenido |
+|---|---|
+| `Domain/` | `RecetaFabricacion`, `RecetaFabricacionCollection`, `CatalogoRecetas` (46 recetas / 39 resultados), `Exceptions/RecetaNoExiste`. |
+| `App/` | `ListarRecetas` (saldos en una sola lectura), `Fabricar` (1 unidad por acción), DTOs `RecetaDetalle`, `IngredienteDetalle`, `ResultadoFabricacion` y colecciones. |
+| `Infra/` | `Controllers/ForjaController`, `Requests/FabricarRequest`. |
+
+- Recetas con id `receta:*`. Varias variantes pueden compartir `resultado_clave`
+  (`pocion:pocion` desde Aranja o Zidra; `material:recipiente` desde los 7 bonguris).
+  `CatalogoRecetas::paraResultado()` devuelve las variantes y la UI las agrupa con un selector.
+- `Fabricar` valida la receta, exige `cantidad = 1`, consume todos los ingredientes con lock
+  ordenado (`consumirVarios`) e incrementa el resultado en la misma transacción. Si falta un
+  ingrediente devuelve 422 y no descuenta nada.
+- 39 claves nuevas en `Shared\Domain\Items` (8 pociones, 1 recipiente, 7 mejoras, 5 reductores
+  y 18 resistencias): `CatalogoItems` pasa a 82 definiciones y `objetosDeCombate()` a 44.
+
+Endpoints (`routes/forja.php`, requerido desde `routes/web.php` bajo `auth`):
+
+```
+GET  /api/forja/recetas
+POST /api/forja/fabricar   body: {receta, cantidad?: 1}
+GET  /forja
+```
+
+UI `/forja`: 4 categorías colapsables — **Medicinas** (pociones + recipiente), **Mejoras**,
+**Reductores** y **Resistencias**. Cada receta muestra ingredientes `disponible/requerido`,
+`puede_fabricar` y el botón de fabricar; los cálculos vienen del backend.
+
+#### Recipiente por bonguri y origen (TASK-014)
+
+`ClaveBonguri::origen(): string` es la fuente única del mapa color → provincia (Galicia, Euskadi,
+Barcelona, Extremadura, Nova Alacant, Mutxamel, Andalucía). `IngredienteDetalle` añade
+`?string $origen = null` y lo expone en `toArray()`; `ListarRecetas` lo rellena solo para claves
+`bonguri:*`, de modo que el resto de ingredientes mantiene `origen: null`.
+
+La UI de `/forja` trata `material:recipiente` de forma especial: en lugar del `<select>` de
+variantes muestra una lista con las **7 variantes** (una por bonguri), con icono, nombre,
+`disponible/requerido`, `Origen: …` y botón **Fabricar**. `variantesRecipiente()` ordena primero
+las que tienen existencias y mantiene el orden estable del catálogo; el botón se deshabilita si
+`puede_fabricar` es false o mientras se fabrica otra variante. El resto de grupos conserva el
+selector actual.
+
+### UI global: menú de cosecha y assets de items (TASK-014)
+
+#### Menú y Font Awesome
+
+El botón `?` y su popup de ayuda se eliminaron de `resources/views/layouts/app.blade.php`; el
+`x-data` del `<nav>` ahora gestiona la cosecha global. El botón usa
+`<i class="fa-solid" :class="cosechando ? 'fa-spinner fa-spin' : 'fa-seedling'">`, se deshabilita
+mientras hay una petición y se oculta en `/combate*` para no alterar el inventario en batalla.
+
+- La petición es `fetch POST /api/farm/harvest-all` con `X-CSRF-TOKEN` y `AbortController` de 15 s.
+- El resultado se anuncia con `role="status"` y `aria-live="polite"`: `+N bayas`,
+  `Nada que cosechar` o `Error` (con el número de errores parciales).
+- Al terminar se emite `inventario:actualizado`; los listeners de granja y forja refrescan sus
+  datos (ver [Cosecha global por nido](#cosecha-global-por-nido-task-014)).
+- Font Awesome 6 Free se instala localmente (`@fortawesome/fontawesome-free@^6.7.2`) y se importa
+  en `resources/css/app.css` (`fontawesome.css` + `solid.css`). `npm run build` emite las fuentes
+  `fa-solid-900.woff2`; no hay CDN.
+
+`config/ayuda.php` queda sin referencias tras eliminar el popup (ver deuda en
+[`ADR-0003`](adr/0003-cosecha-global-e-iconos-items.md)).
+
+#### Assets WebP y Recipiente/Éter
+
+Los 16 PNG de `public/images/items` se convirtieron a WebP con
+`cwebp -q 85 -m 6 -alpha_q 100 -metadata none` y se reorganizaron por categoría:
+
+| Grupo | Ruta | Nº | Enum |
+|---|---|---|---|
+| Pociones | `public/images/items/pocion/*.webp` | 8 | `ClavePocion::archivoIcono()` |
+| Mejoras | `public/images/items/mejora/*.webp` | 7 | `ClaveMejora::archivoIcono()` |
+| Material | `public/images/items/material/recipiente.webp` | 1 | `ClaveMaterial::archivoIcono()` |
+
+Los enums construyen la ruta con `{$this->value}.webp`; ya no se devuelve `unknown.webp` para
+pociones ni para el material. Los 16 PNG originales se movieron a
+`storage/app/imports/items-png/` (fuera de `public`) y no quedan PNG en `public/images/items`.
+
+`material:recipiente` conserva el nombre visible **Recipiente** y la descripción “Recipiente para
+fabricar objetos”, pero su icono es el artwork de **Éter** (`material/recipiente.webp`). La
+divergencia con la propuesta “Éter” del plan D7 queda documentada como deuda de producto.
 
 ### CombateEntrenadores (`src/CombateEntrenadores/`)
 
@@ -304,6 +544,120 @@ Deudas conocidas (ver `src/Huevos/context.md`):
 
 - `Domain/Collection.php` — Colección base genérica
 - `Tipos/` — `TipoPokemon` (enum), `TypeChart` (efectividades), `TypeEffectService`, `TiposCollection`, `TipoEntity`
+- `Domain/Items/` — catálogo estático de items: 36 bayas, 7 bonguris, 8 pociones, 1 recipiente, 7 mejoras, 5 reductores y 18 resistencias (82 definiciones). `CatalogoItems` es la única fuente de claves, nombres, categorías, iconos y banderas de uso; `ItemCatalogo` (en `app/Support`) resuelve las claves de inventario y delega en él.
+- `Domain/Ports/InventarioJugador.php` — puerto de inventario compartido; adaptador en `Infra/Inventario/InventarioJugadorEloquent.php`.
+
+## Inventario compartido y fases F2–F5
+
+Las decisiones de diseño, alternativas y deuda están en
+[ADR-0001](adr/0001-inventario-compartido-f2-f5.md). Diseño detallado y criterios de aceptación
+en [`TASK-012/architecture.md`](../.opencode/work/TASK-012/architecture.md) y
+[`TASK-012/plan.md`](../.opencode/work/TASK-012/plan.md).
+
+### Inventario compartido
+
+`InventarioJugador` + `InventarioJugadorEloquent` son la vía común de F2, F4 y F5:
+
+- `saldo`, `saldos`, `consumir`, `consumirVarios`, `incrementar`.
+- Toda clave se valida contra `CatalogoItems`; hay un carve-out estrecho para las claves legacy
+  de caramelos `familia:{id}` y `ev:{stat}`.
+- `consumirVarios` bloquea las filas en orden de `item_key` y valida todos los saldos antes de
+  decrementar: nunca deja cantidades negativas.
+- Binding en `app/Providers/AppServiceProvider.php`.
+- `InventarioGranja` sigue siendo la fachada de caramelos (`resumen()`, `consumirFamilia`,
+  `consumirEv`) y añade `resumenBayas()`.
+
+### Flujo F2 — plantar y cosechar
+
+```
+POST /api/habitats/{h}/farm/nests/{chain}/plantings
+  → PlantarBaya: validar ClaveBaya → asegurar granja/familia
+    → tx: lock nido → validar hueco (nivel*2) → InventarioJugador.consumir(1)
+      → upsert nest_plantings (unique nest_id+slot)
+        · existe → replantar: berry_key, planted_at, harvest_count = 0
+        · no existe → crear fila
+
+GET granja → ObtenerGranja
+  → plantaciones en una consulta → ReglasPlantacion.stockDe/progresoPct/estadoDe (on-read)
+  → GranjaDetalle { bayas, bonguri, familias[].nido { huecos_totales, plantaciones } }
+
+POST .../plantings/{slot}/harvest
+  → CosecharPlantacion: tx → lock nido + hueco → stock = f(ahora - planted_at, harvest_count)
+    → stock <= 0 → 422 · stock > 0 → InventarioJugador.incrementar(stock)
+      → harvest_count += stock
+```
+
+### Flujo F3 — bonus de hábitat y plantaciones
+
+```
+ProcesarExploracion (tick)
+  → EsDelHabitat(especie del explorador, habitat)
+  → eventos['bonos']['del_habitat'] (se calcula y persiste una sola vez)
+
+FinalizarExploracion
+  → ConsultorPlantaciones.factoresPara(user_id, habitat_id)
+  → ContextoBotin { delHabitat, factoresPlantacion }
+    → CalculadorBotinExploracion
+      · pesosBayas *= factor por baya (solo bayas salvajes)
+      · tiradas de baya ×1.25 (tope 4) si delHabitat
+      · bonguri +10 pp (tope 85 %), sin factores de plantación
+  → resultado persistido { bonos: { del_habitat } } → hito “Conoce el terreno”
+```
+
+### Flujo F4 — forjar
+
+```
+GET /api/forja/recetas
+  → ListarRecetas: CatalogoRecetas.todas() (46) + InventarioJugador.saldos() (1 consulta)
+  → RecetaDetalle[] con ingredientes, disponible/requerido, puede_fabricar
+
+POST /api/forja/fabricar { receta }
+  → Fabricar: CatalogoRecetas.receta() (404 si no existe) → cantidad = 1
+    → tx: InventarioJugador.consumirVarios (lock ordenado) → incrementar(resultado)
+    → ResultadoFabricacion { recetaClave, resultadoClave, cantidad, saldos }
+```
+
+### Flujo F5 — objeto en combate
+
+```
+player_target → seleccionarObjeto(clave)
+  → valida catálogo, efecto y saldo → phase = player_item_target
+
+player_item_target → previewTarget(team, idx) → confirmarObjetivoItem()
+  → AccionObjeto { actorId, objetivoId, clave }
+  → setPendingAction(DTOAccionObjeto) → setAnimStateObjeto()
+  → commitAction() → resolverAccionObjeto()
+    → actorJugadorActual() (AgregadoBatalla.actorActualId, server-side)
+    → UsarObjetoEnCombate: validar → tx consumir(1) → aplicar efecto
+    → turnManager.consumeAction()  (NO consumirMovimiento)
+    → log “X usó Item en Y” → syncViewData → saveBattle → nextActor
+```
+
+### Decisiones y dependencias
+
+| Decisión | Implementación | Depende de | Detalle |
+|---|---|---|---|
+| **D1** Inventario compartido | `Shared\Domain\Ports\InventarioJugador` + `Shared\Infra\Inventario\InventarioJugadorEloquent` | F1 (`player_inventory`) | Bloque 0; base de F2/F4/F5 |
+| **D2** Plantaciones | `nest_plantings`, `ReglasPlantacion`, `PlantarBaya`, `CosecharPlantacion` | D1 | F2; stock on-read y unique por hueco |
+| **D3** Bonus de hábitat | `ConsultorPlantaciones` (puerto) + `ConsultorPlantacionesEloquent` + `EsDelHabitat` | D1, D2 | F3; `Exploraciones.Domain` no importa `Granjas` |
+| **D4** Forja | `src/Forja` + 39 claves en `Shared\Domain\Items` | D1 | F4; 46 recetas, sin migración |
+| **D5** Objetos en combate | `AccionObjeto`, `DTOAccionObjeto`, `CatalogoEfectosItem`, `ResistenciasTemporales` | D1, D4 | F5; consume acción, no movimiento |
+| **D6** Sesión | `BattleSessionService` v21 / mínimo 9 | D5 | v20 carga con defaults |
+| **D7** Cosecha global | `CosecharTodo` + `POST /api/farm/harvest-all`; transacción por nido, errores parciales y evento `inventario:actualizado` | D1, D2 | TASK-014; no cambia `ReglasPlantacion` ni el bonus |
+
+```
+Shared.Domain.Items ──────────────► Granjas (F2), Forja (F4), Battle (F5)
+Shared.Domain.Ports.InventarioJugador ─► Granjas, Forja, Battle
+Granjas.Infra ──implementa──► Exploraciones.Domain.Ports.ConsultorPlantaciones
+Exploraciones.Domain ──(no importa Granjas)──► CalculadorBotinExploracion
+Forja.Domain ──(no importa Battle)──► CatalogoRecetas
+Battle.Domain ──(consume claves de Shared, no importa Forja)──► CatalogoEfectosItem
+```
+
+Deuda conocida: `PersistirRecompensas` conserva una segunda vía de escritura directa de
+`player_inventory`; `resolveActor()` de movimientos sigue usando `actingRefId`; las claves
+`tipo:{slug}` no están en el carve-out del puerto; los iconos nuevos usan fallback. Detalle y
+motivos en el [ADR-0001](adr/0001-inventario-compartido-f2-f5.md).
 
 ## Datagrid (`app/Datagrid/`)
 
@@ -365,6 +719,8 @@ Reglas del contrato (ver `tests/Feature/DatagridTest.php`):
 | **Whitelist declarativa** | Campos consultables por modelo (anti inyección) | `DatagridDefinition` |
 | **Composition Root** | Registro de definiciones del datagrid | `DatagridServiceProvider` |
 | **Strategy (constraint)** | whereHas custom por filtro de relación | `RelationFilter::$constraint` |
+| **Ports & Adapters** | Inventario y consulta de plantaciones desacoplados de Eloquent/otros módulos | `Shared\Domain\Ports\InventarioJugador`, `Exploraciones\Domain\Ports\ConsultorPlantaciones` |
+| **Cálculo on-read** | Stock de plantaciones sin cron (derivado de timestamps) | `Granjas\Domain\ReglasPlantacion` |
 | **Estado local con fetch API (Alpine)** | Modal de gestión sin recarga: query inicial al abrir, mutaciones locales tras 200 OK | `habitats/show.blade.php` (`habitatShow()`) |
 
 ## Flujo de datos — Batalla manual (Livewire)
@@ -375,18 +731,27 @@ Usuario click → Combate (Livewire) → mount() → FabricaBatallaMock::createB
 
 nextActor() → getBattle() → turnManager.getNextActor()
   → Si es jugador: phase='player_target', espera selección
-      → previewTarget(team, idx) → calcula daño preview → phase='player_move'
-      → selectMove(index) → setPendingAction(DTOAccionBatalla) → setAnimState()
-        → Alpine.js timeout 700ms → commitAction()
+      → (movimiento) previewTarget(team, idx) → daño preview → phase='player_move'
+        → selectMove(index) → setPendingAction(DTOAccionBatalla) → setAnimState()
+      → (objeto) seleccionarObjeto(clave) → phase='player_item_target'
+        → previewTarget(team, idx) → confirmarObjetivoItem()
+        → setPendingAction(DTOAccionObjeto) → setAnimStateObjeto()
+      → Alpine.js timeout 700ms → commitAction()
   → Si es IA: prepareAiAnimation() → setPendingAction() → setAnimState()
     → Alpine.js timeout 700ms → commitAction()
 
-commitAction() → pendingAction.toDomain() → AccionBatalla
-  → ServicioEjecucionBatalla.calcularYAplicarDaño()
-    → CadenaDanio.calculate() (7 manejadores) → Combatiente.recibirDaño()
-  → aplicarEstado() / aplicarStatChanges()
-  → observer.notifyDamaged() / notifyFainted()
-  → turnManager.consumeAction()
+commitAction()
+  → DTOAccionBatalla → ServicioEjecucionBatalla.calcularYAplicarDaño()
+      → CadenaDanio.calculate() (21 manejadores; incluye ManejadorResistenciaTemporal)
+      → Combatiente.recibirDaño()
+      → aplicarEstado() / aplicarStatChanges()
+      → observer.notifyDamaged() / notifyFainted()
+      → turnManager.consumeAction() + consumirMovimiento()
+  → DTOAccionObjeto → resolverAccionObjeto()
+      → actorJugadorActual() (AgregadoBatalla.actorActualId, server-side)
+      → UsarObjetoEnCombate → ServicioUsoObjetos.validar() → consumir inventario (tx)
+        → ServicioUsoObjetos.aplicar() (efecto + log)
+      → turnManager.consumeAction()  (consume acción, NO movimiento)
   → syncViewData() → saveBattle() → nextActor()
 ```
 
@@ -452,7 +817,7 @@ En el **destino** (ver `docs/ddd.md`), Controllers, Models Eloquent y Livewire v
 ## Base de datos
 
 PostgreSQL en el entorno de ejecución (Docker); los tests usan SQLite en memoria (`:memory:`).
-60 migraciones. Esquema relacional:
+76 migraciones. Esquema relacional:
 
 ```
 provinces ──→ habitats ──→ pokemon_habitat ──→ pokemon ──→ pokemon_stats
@@ -461,10 +826,20 @@ provinces ──→ habitats ──→ pokemon_habitat ──→ pokemon ──�
                                                           ──→ abilities
                                                           ──→ pokedex (1:1)
 
+farms ──→ nests ──→ nest_plantings (slot_index, berry_key, planted_at,
+                                    harvest_count; unique nest_id+slot_index)
+
 pokemon ──→ reclutados ──→ team_members ──→ teams
                        ──→ exploraciones_activas
                        ──→ huevos (snapshot capture_rate/hatch, es_shiny,
                                    ivs, evolution_chain_id índice, eclosionado_en)
+
+player_inventory (unique user_id + item_key)
+  · claves de catálogo: baya:*, bonguri:*, pocion:*, material:*,
+    mejora:*, reductor:*, resistencia:*
+  · claves legacy de caramelos: familia:{id}, ev:{stat}, tipo:{slug}
+  · InventarioJugador valida catálogo + familia:/ev: (carve-out);
+    tipo:{slug} queda fuera del puerto y lo escribe PersistirRecompensas
 
 reclutados: columnas `ivs`/`evs` JSON nullable (cast `StatsReclutado`) desde
 2026-09-15; legacy rows quedan en ceros vía cast.

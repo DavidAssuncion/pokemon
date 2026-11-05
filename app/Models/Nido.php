@@ -6,6 +6,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
  * Nido de una familia evolutiva dentro de una granja. Nivel 0..5: cada nivel
@@ -33,5 +34,13 @@ class Nido extends Model
     public function granja(): BelongsTo
     {
         return $this->belongsTo(Granja::class, 'farm_id');
+    }
+
+    /**
+     * @return HasMany<PlantacionNido, $this>
+     */
+    public function plantaciones(): HasMany
+    {
+        return $this->hasMany(PlantacionNido::class, 'nest_id');
     }
 }

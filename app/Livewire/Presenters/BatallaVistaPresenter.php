@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Livewire\Presenters;
 
+use Src\Battle\Domain\Enums\ObjetivosItem;
 use Src\Battle\Domain\Enums\TipoClima;
 use Src\Shared\Domain\Collections\ItemModalCollection;
 use Src\Shared\Domain\DataTransferObjects\ItemModal;
@@ -50,8 +51,9 @@ final class BatallaVistaPresenter
         array $log,
         array $eventos,
         array $rewards,
+        string $objetivosItem = '',
     ): array {
-        $faseSeleccion = in_array($phase, ['player_target', 'player_move'], true);
+        $faseSeleccion = in_array($phase, ['player_target', 'player_move', 'player_item_target'], true);
         $ventanaActiva = $animAttackerId !== '';
 
         $team1 = self::marcarInteraccion(
@@ -62,6 +64,7 @@ final class BatallaVistaPresenter
             actingRefId: $actingRefId,
             selectedTargetRefId: $selectedTargetRefId,
             animAttackerId: $animAttackerId,
+            objetivosItem: $objetivosItem,
         );
         $team2 = self::marcarInteraccion(
             team: $team2,
@@ -71,6 +74,7 @@ final class BatallaVistaPresenter
             actingRefId: $actingRefId,
             selectedTargetRefId: $selectedTargetRefId,
             animAttackerId: $animAttackerId,
+            objetivosItem: $objetivosItem,
         );
 
         return [
@@ -107,14 +111,28 @@ final class BatallaVistaPresenter
         string $actingRefId,
         string $selectedTargetRefId,
         string $animAttackerId,
+        string $objetivosItem = '',
     ): array {
+        $objetivoItem = $objetivosItem !== '' ? ObjetivosItem::tryFrom($objetivosItem) : null;
+        $faseItem = $objetivoItem !== null;
+
         foreach ($team as &$p) {
-            $p['selectable'] = $faseSeleccion
-                && $teamIdx === 1
-                && (bool) $p['alive']
-                && (bool) ($p['canTarget'] ?? true)
-                && ! $ventanaActiva;
-            $p['blocked'] = $faseSeleccion
+            $seleccionableItem = match ($objetivoItem) {
+                ObjetivosItem::ALIADO_VIVO => $teamIdx === 0 && (bool) $p['alive'],
+                ObjetivosItem::ALIADO_DEBILITADO => $teamIdx === 0 && ! (bool) $p['alive'],
+                ObjetivosItem::RIVAL_VIVO => $teamIdx === 1 && (bool) $p['alive'],
+                default => false,
+            };
+
+            $p['selectable'] = $faseItem
+                ? $seleccionableItem && ! $ventanaActiva
+                : $faseSeleccion
+                    && $teamIdx === 1
+                    && (bool) $p['alive']
+                    && (bool) ($p['canTarget'] ?? true)
+                    && ! $ventanaActiva;
+            $p['blocked'] = ! $faseItem
+                && $faseSeleccion
                 && $teamIdx === 1
                 && ! (bool) ($p['canTarget'] ?? true);
             $p['acting'] = ($p['refId'] ?? '') === $actingRefId;
@@ -176,7 +194,7 @@ final class BatallaVistaPresenter
         string $actingRefId,
         string $animAttackerId,
     ): array {
-        $faseSeleccion = in_array($phase, ['player_target', 'player_move'], true);
+        $faseSeleccion = in_array($phase, ['player_target', 'player_move', 'player_item_target'], true);
         $sinAnimacion = $animAttackerId === '';
         $primerTurno = $turnQueue[0] ?? null;
         $segundoTurno = $turnQueue[1] ?? null;

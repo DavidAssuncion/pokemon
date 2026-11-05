@@ -84,7 +84,16 @@ class ExploracionActivaController extends Controller
             'duracion_horas' => 'nullable|integer|min:1|max:72',
             'duration_hours' => 'nullable|integer|min:1|max:72',
             'return_time' => 'nullable|date_format:H:i',
+            'modo' => 'nullable|in:experiencia,reclutamiento,botin',
         ]);
+
+        if (isset($data['return_time'])) {
+            $finVuelta = CalculadorFinExploracion::calcular((string) $data['return_time'], null, now());
+
+            if ($finVuelta !== null && now()->diffInMinutes($finVuelta, false) < 60) {
+                return response()->json(['message' => 'La hora de vuelta debe ser al menos 1 hora después del inicio.'], 422);
+            }
+        }
 
         $usuario = Auth::user();
         $reclutado = Reclutado::with('pokemon.stats', 'pokemon.types')->findOrFail((int) $data['reclutado_id']);
@@ -126,6 +135,7 @@ class ExploracionActivaController extends Controller
             'min_lvl' => $minLvl,
             'peligro' => $peligro,
             'riesgo' => $riesgo,
+            'modo' => $data['modo'] ?? null,
             'rol' => $reclutado->rol()?->value,
             'rol_sugerido' => RolExploracion::sugeridoPara($capacidades)->value,
             'recompensas_esperadas' => $estimacion,
@@ -251,7 +261,8 @@ class ExploracionActivaController extends Controller
     /**
      * POST /api/exploraciones/store-individual: inicia una exploración
      * individual (API JSON). Mismo flujo que store pero devuelve JSON con el
-     * contrato aditivo {ok, id, inicio, fin, estado}. Sin bayas (TODO).
+     * contrato aditivo {ok, id, inicio, fin, estado}. El botín de
+     * bayas/bonguris se calcula al finalizar.
      */
     public function storeIndividual(Request $request): JsonResponse
     {
@@ -279,6 +290,7 @@ class ExploracionActivaController extends Controller
             'id' => $exploracion->id,
             'inicio' => $inicio->toIso8601String(),
             'fin' => $fin?->toIso8601String(),
+            'modo' => $exploracion->modo,
             'estado' => 'explorando',
         ], 201);
     }
@@ -300,11 +312,20 @@ class ExploracionActivaController extends Controller
             'duration_hours' => 'nullable|integer|min:1|max:72',
             'return_time' => 'nullable|date_format:H:i',
             'indefinido' => 'nullable|boolean',
+            'modo' => 'nullable|in:experiencia,reclutamiento,botin',
         ]);
 
         $tieneDuracion = isset($data['duracion_horas']) || isset($data['duration_hours']);
         if ($tieneDuracion && isset($data['return_time'])) {
             return 'No puedes indicar una duración y una hora de vuelta a la vez.';
+        }
+
+        if (isset($data['return_time'])) {
+            $finVuelta = CalculadorFinExploracion::calcular((string) $data['return_time'], null, now());
+
+            if ($finVuelta !== null && now()->diffInMinutes($finVuelta, false) < 60) {
+                return 'La hora de vuelta debe ser al menos 1 hora después del inicio.';
+            }
         }
 
         if (! $this->validadorExploracion->reclutadoDisponible((int) $data['reclutado_id'])) {
@@ -337,6 +358,7 @@ class ExploracionActivaController extends Controller
             'duracion_horas' => $duracionHoras,
             'hora_limite' => $horaLimite,
             'indefinido' => $indefinido,
+            'modo' => $data['modo'] ?? null,
             'inicio_exploracion' => now(),
             'llegada_destino' => null,
             'regreso' => null,

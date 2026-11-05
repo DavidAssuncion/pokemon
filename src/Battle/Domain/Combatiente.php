@@ -25,6 +25,7 @@ use Src\Battle\Domain\ValueObjects\EstadoRecursos;
 use Src\Battle\Domain\ValueObjects\EstadoTurno;
 use Src\Battle\Domain\ValueObjects\JefeEstado;
 use Src\Battle\Domain\ValueObjects\MultiplicadoresStats;
+use Src\Battle\Domain\ValueObjects\ResistenciasTemporales;
 use Src\Battle\Domain\ValueObjects\ResultadoAccion;
 use Src\Battle\Domain\ValueObjects\ResultadoDanio;
 use Src\Battle\Domain\ValueObjects\ResultadoSustituto;
@@ -53,6 +54,8 @@ class Combatiente
     private CondicionesVolatilesCollection $condiciones;
 
     private MultiplicadoresStats $multiplicadores;
+
+    private ResistenciasTemporales $resistencias;
 
     private string $id = '';
 
@@ -134,6 +137,7 @@ class Combatiente
         $this->estadoManager = new EstadoManager();
         $this->barrerasVidaManager = new BarrerasVidaManager();
         $this->multiplicadores = MultiplicadoresStats::vacia();
+        $this->resistencias = ResistenciasTemporales::vacia();
         $this->objeto = new EstadoObjeto();
         $this->habilidad = new EstadoHabilidad();
         $this->turno = new EstadoTurno();
@@ -181,6 +185,7 @@ class Combatiente
             'cargasVeneno' => $this->cargasVeneno,
             'turnosEstado' => $this->turnosEstado,
             'multiplicadores' => $this->multiplicadores->toArray(),
+            'resistencias' => $this->resistencias->toArray(),
             'id' => $this->id,
             'nombre' => $this->nombre,
             'iconName' => $this->iconName,
@@ -245,6 +250,11 @@ class Combatiente
         } else {
             $this->multiplicadores = MultiplicadoresStats::vacia();
         }
+        // Compatibilidad v20: sin 'resistencias' el combatiente arranca sin
+        // protecciones temporales.
+        $this->resistencias = ResistenciasTemporales::desdeArray(
+            is_array($data['resistencias'] ?? null) ? $data['resistencias'] : [],
+        );
         $this->id = (string) ($data['id'] ?? '');
         $this->nombre = (string) ($data['nombre'] ?? '');
         $this->iconName = (string) ($data['iconName'] ?? '');
@@ -587,6 +597,7 @@ class Combatiente
         $this->turnosEstado = 0;
         $this->condiciones = new CondicionesVolatilesCollection();
         $this->multiplicadores = MultiplicadoresStats::vacia();
+        $this->resistencias = ResistenciasTemporales::vacia();
         $this->recursos = new EstadoRecursos();
         $this->turno->reiniciarParaRevivir();
         $this->debilidadNotificada = false;
@@ -1347,6 +1358,36 @@ class Combatiente
     public function avanzarMultiplicadoresTemporales(): void
     {
         $this->multiplicadores = $this->multiplicadores->avanzarTemporales();
+        $this->resistencias = $this->resistencias->avanzar();
+    }
+
+    /**
+     * Restaura todos los usos de movimiento del combatiente.
+     */
+    public function restaurarUsos(): void
+    {
+        $this->movimientos->reiniciar();
+    }
+
+    /**
+     * Aplica/refresca una resistencia temporal contra un tipo de ataque.
+     */
+    public function aplicarResistenciaTemporal(TipoPokemon $tipo, float $factor): void
+    {
+        $this->resistencias = $this->resistencias->aplicar($tipo, $factor);
+    }
+
+    /**
+     * Factor de daño de la resistencia temporal aplicable al movimiento.
+     */
+    public function multiplicadorResistenciaTemporal(AccionBatalla $accion): float
+    {
+        return $this->resistencias->factorDe($accion->move->tipo);
+    }
+
+    public function resistenciasTemporales(): ResistenciasTemporales
+    {
+        return $this->resistencias;
     }
 
     public function setId(string $id): void

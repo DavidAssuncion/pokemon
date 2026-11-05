@@ -184,6 +184,25 @@ final class MultiplicadoresStats
     }
 
     /**
+     * Fija un temporal a su valor exacto (sin multiplicar) y reinicia la
+     * duración compartida. Lo usan los objetos de combate: reaplicar
+     * refresca el buff/debuff en lugar de acumularlo.
+     */
+    public function refrescarTemporal(StatClave $stat, float $factor): self
+    {
+        $temporales = $this->temporales;
+        $temporales[$stat->value] = $factor;
+
+        return new self(
+            $this->factores,
+            $this->limiteInferior,
+            $this->limiteSuperior,
+            $temporales,
+            self::TURNOS_TEMPORALES,
+        );
+    }
+
+    /**
      * Descuenta un turno. Si llega a 0, elimina todos los temporales.
      */
     public function avanzarTemporales(): self

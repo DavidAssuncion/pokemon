@@ -373,3 +373,50 @@ acción pendiente.
 `php -l` de los PHP tocados, `vendor/bin/pint --dirty --format agent`, `node --check` del script
 inline, `php artisan view:cache`/`view:clear`, `git diff --check` y `npm run build`. No se pudo
 hacer QA en navegador (barreras/sobrepaso, curación, KO/victoria, movimiento reducido, swap).
+
+---
+
+## TASK-014 — Formato compacto del toast de cosecha
+
+### Vistas/componentes afectados
+
+- `resources/views/layouts/app.blade.php`: único archivo. Toast de cosecha (Alpine inline en
+  `<body x-data>` + bloque `fixed right-4 top-20 z-[70]`).
+
+### DTOs/datos consumidos
+
+- `cosechaItems`: colección serializada por el backend (`nombre`, `icono`, `cantidad`) desde
+  `POST /api/farm/harvest-all` (`data.bayas`). `data.total_bayas` ya viene calculado; el
+  frontend solo lo formatea en el título (no recalcula totales).
+
+### Cambios
+
+1. Ancho del toast `w-[min(24rem,…)]` → `w-[min(28rem,…)]` para dos columnas.
+2. Título de éxito con total: `Cosecha completada · N baya(s)` (singular/plural).
+3. Lista a `grid grid-cols-1 sm:grid-cols-2 gap-x-3 gap-y-1 max-h-48 overflow-y-auto`; cada
+   `<li>` a `flex min-w-0 items-center gap-1.5` con icono `shrink-0`, nombre `flex-1 truncate`
+   y cantidad `shrink-0 font-semibold tabular-nums`.
+4. Se conservan colores, spinner, `z-[70]`, `role=status`, `aria-live`, `aria-atomic`, timer de
+   6 s y scroll interno del toast (sin scrollbar de página).
+
+### Estados UI
+
+- Loading: spinner + «Cosechando…» (sin lista).
+- Éxito con bayas: título con total + grid de 1/2 columnas según ancho.
+- Éxito sin bayas: «Nada que cosechar».
+- Error/timeout: título «Error» + `cosechaDetalle`; sin lista.
+- Vacío: toast oculto (`cosechaEstado === 'idle'`).
+
+### Comportamientos para testing futuro (Dusk/unit, NO ejecutados)
+
+- Título singular (1 baya) y plural (N bayas); total coincide con la suma de `cosechaItems`.
+- Grid de una columna en móvil y dos desde `sm` (640 px); sin desbordamiento horizontal.
+- Nombre largo truncado (`truncate`) sin empujar la cantidad.
+- Scroll interno con >N items (`max-h-48`) sin mover la página.
+- Errores parciales: `cosechaDetalle` sigue visible junto al título con total.
+
+### Riesgos accesibilidad/UX
+
+- `role=status` + `aria-live=polite` se mantienen; el cambio de texto no rompe anuncios.
+- Iconos decorativos con `alt=""` + `aria-hidden="true"`.
+- Dos columnas reducen altura del toast; en pantallas estrechas se degrada a una columna.

@@ -15,14 +15,15 @@ aplican a todos los reclutados de la familia.
 | Ruta | Responsabilidad |
 |---|---|
 | `Domain/CalculadoraBonosGranja.php` | Cálculos puros: rango de IVs, factor de tiempo, multiplicadores de refugio, costes y EV de complementos. |
-| `Domain/DataTransferObjects/` | `GranjaDetalle`, `NidoGranja`, `RefugioGranja`, `ComplementoGranja`, `BonosFamilia`, `CosteCaramelos`, etc. |
-| `Domain/Collections/` | `FamiliasGranjaCollection`, `NivelesComplementoCollection`, `RefugiosHabitatCollection`, `CaramelosFamiliaCollection`, `CaramelosEvCollection`. |
+| `Domain/DataTransferObjects/` | `GranjaDetalle`, `NidoGranja`, `RefugioGranja`, `ComplementoGranja`, `BonosFamilia`, `CosteCaramelos`, `ResultadoCosechaGlobal`, `BayaCosechada`, `ErrorCosecha`, `CosechaNido`, etc. |
+| `Domain/Collections/` | `FamiliasGranjaCollection`, `NivelesComplementoCollection`, `RefugiosHabitatCollection`, `CaramelosFamiliaCollection`, `CaramelosEvCollection`, `BayasCosechadasCollection`, `ErroresCosechaCollection`. |
 | `App/AsegurarGranja.php` | Garantiza una granja por `user_id + habitat_id`. |
 | `App/FamiliaEnHabitat.php` | Valida que la familia pertenezca al hábitat. |
 | `App/InventarioGranja.php` | Lee/consume `player_inventory` (`familia:{chain}`, `ev:{stat}`). |
 | `App/MejorarNido.php`, `MejorarRefugio.php`, `MejorarComplemento.php` | Compras/mejoras con transacción, `lockForUpdate` y coste. |
 | `App/AlternarCondicionesInsalubres.php` | Activa/desactiva condiciones insalubres. |
 | `App/ResolverBonosFamilia.php` | Resuelve los bonos vigentes de una familia (nido, refugio, EV). |
+| `App/CosecharTodo.php` | Cosecha global por nido con transacción, locks y errores parciales. |
 | `App/ObtenerGranja.php`, `AccionesGranja.php` | Fachada de lectura y acciones para el controlador. |
 | `Infra/Controllers/GranjaController.php` | HTTP JSON; devuelve `GranjaDetalle::toArray()`. |
 
@@ -72,6 +73,30 @@ aplican a todos los reclutados de la familia.
     estado local tras 200 OK (sin refresco pesado).
 18. `GranjaController` devuelve el detalle completo (`GranjaDetalle`) tras cada acción.
 
+### Cosecha global (TASK-014)
+
+19. `CosecharTodo::handle(int $userId)` cosecha **todas** las plantaciones listas del jugador en
+    todos sus hábitats y nidos. No crea granjas ni nidos; si no hay candidatos devuelve un
+    resultado vacío.
+20. Selección en **3 queries** (granjas, nidos con `level >= 1`, plantaciones candidatas) y
+    **una transacción por nido**:
+    - lock del nido (`whereKey` + `where farm_id`);
+    - lock de las plantaciones del nido por `id` ascendente;
+    - recálculo de stock con `ReglasPlantacion::stockDe()` tras el lock; si es `<= 0`, se omite;
+    - `increment('harvest_count', stock)` y acumulación por `berry_key`;
+    - incremento del inventario agregado por baya, ordenado por `item_key`.
+21. **Errores parciales:** un fallo en un nido se captura como `ErrorCosecha` y el resto continúa.
+    Las excepciones de dominio conservan su mensaje; el resto se registra con `report()` y se
+    devuelve un mensaje genérico.
+22. **Idempotencia:** el stock se recalcula bajo lock y `harvest_count` se actualiza en la misma
+    transacción; dos peticiones inmediatas no duplican bayas. El botón también se deshabilita
+    mientras hay una petición en curso.
+23. El botón del menú (`fa-solid fa-seedling`) emite `inventario:actualizado` al terminar. La
+    granja recarga en silencio si el modal está abierto; la forja relee recetas con `cargar(false)`.
+    El botón se oculta en `/combate*`.
+24. El bonus de plantaciones no cambia: sigue siendo `min(2.0, 1 + 0.20 × plantas)` y solo se
+    añadió una nota estática en la UI.
+
 ## Contratos y puntos de entrada
 
 Rutas (`routes/granjas.php`):
@@ -82,9 +107,14 @@ POST /api/habitats/{habitat}/farm/nests/{chain}/upgrade
 POST /api/habitats/{habitat}/farm/shelters/{chain}/upgrade
 POST /api/habitats/{habitat}/farm/shelters/{chain}/toggle-unhealthy
 POST /api/habitats/{habitat}/farm/shelters/{chain}/complements/{stat}/upgrade
+POST /api/farm/harvest-all
 ```
 
-- `GranjaController` delega en `AccionesGranja` y `ObtenerGranja`.
+- `GranjaController` delega en `AccionesGranja`, `ObtenerGranja` y `CosecharTodo`.
+- `POST /api/farm/harvest-all` no lleva body y responde
+  `{total_bayas, total_plantaciones, nidos, bayas[], errores[]}`; `200` también con errores
+  parciales. `bayas[]` = `{clave, nombre, icono, cantidad}`; `errores[]` =
+  `{farm_id, habitat_id, nido_id, evolution_chain_id, mensaje}`.
 - Tablas: `granjas` (user+habitat), `nidos`, `refugios`, `complementos`, `player_inventory`.
 - `ResolverBonosFamilia` es el punto de lectura para Huevos y modos de combate.
 

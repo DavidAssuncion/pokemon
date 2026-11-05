@@ -46,7 +46,7 @@ final class ColeccionPokemonFamilia extends Collection
     /**
      * Frontera.
      *
-     * @return list<array{id: int, name: string, icon: string, level?: int}>
+     * @return list<array{id: int, name: string, icon: string, level?: int, stage: int, parent_id: int|null, species_id: int}>
      */
     public function toArray(): array
     {

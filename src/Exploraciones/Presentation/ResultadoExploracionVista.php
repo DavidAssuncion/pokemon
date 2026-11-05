@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Src\Exploraciones\Presentation;
 
 use App\Enums\StatEnum;
+use Src\Shared\Domain\Items\CatalogoItems;
 
 /**
  * Presentador puro del resumen de una exploración terminada.
@@ -25,12 +26,15 @@ final class ResultadoExploracionVista
         $caramelosFamilia = self::caramelosFamilia($resultado['caramelos_familia'] ?? []);
         $caramelosEv = self::caramelosEv($resultado['caramelos_ev'] ?? []);
         $caramelosTipo = self::caramelosTipo($resultado['caramelos_tipo'] ?? []);
+        $items = self::items($resultado['items'] ?? []);
         $derrotados = self::derrotados($terminada['derrotados'] ?? []);
         $incidentes = is_array($resultado['incidentes'] ?? null) ? $resultado['incidentes'] : [];
         $durationReal = (int) ($resultado['duration_real'] ?? 0);
         $tiempoPerdido = (int) ($resultado['tiempo_perdido'] ?? 0);
         $expReclutado = (int) ($terminada['exp_reclutado'] ?? $resultado['exp_reclutado'] ?? 0);
         $resultadoCat = $resultado['resultado'] ?? null;
+        $bonos = is_array($resultado['bonos'] ?? null) ? $resultado['bonos'] : [];
+        $bonusHabitat = (bool) ($bonos['del_habitat'] ?? false);
 
         $objetosPerdidos = self::objetosPerdidos(
             $terminada['objetos_perdidos'] ?? $resultado['objetos_perdidos'] ?? [],
@@ -39,8 +43,9 @@ final class ResultadoExploracionVista
         $tieneDerrotados = $derrotados !== [];
         $tieneCapturados = $capturados !== [];
         $tieneRecompensas = $caramelosFamilia !== [] || $caramelosEv !== [] || $caramelosTipo !== [];
+        $tieneItems = $items !== [];
         $tienePerdidas = $objetosPerdidos !== [];
-        $tieneObtenidas = $tieneCapturados || $tieneRecompensas;
+        $tieneObtenidas = $tieneCapturados || $tieneRecompensas || $tieneItems;
         $tieneResumen = self::labelResultado($resultadoCat) !== null
             || $incidentes !== []
             || $durationReal > 0
@@ -59,6 +64,7 @@ final class ResultadoExploracionVista
             'caramelos_familia' => $caramelosFamilia,
             'caramelos_ev' => $caramelosEv,
             'caramelos_tipo' => $caramelosTipo,
+            'items' => $items,
             'objetos_perdidos' => $objetosPerdidos,
             'motivo_perdida' => $terminada['motivo_perdida'] ?? null,
             'incidentes' => $incidentes,
@@ -70,11 +76,14 @@ final class ResultadoExploracionVista
             'hitos' => HitoExploracion::desde($resultado),
             'label' => self::labelResultado($resultadoCat),
             'clase' => self::claseResultado($resultadoCat),
+            'bonus_habitat' => $bonusHabitat,
+            'tiene_bonus_habitat' => $bonusHabitat,
             'tiene_resumen' => $tieneResumen,
             'tiene_resultado' => $resultado !== [],
             'tiene_derrotados' => $tieneDerrotados,
             'tiene_capturados' => $tieneCapturados,
             'tiene_recompensas' => $tieneRecompensas,
+            'tiene_items' => $tieneItems,
             'tiene_perdidas' => $tienePerdidas,
             'tiene_obtenidas' => $tieneObtenidas,
             'span_derrotados' => $spanDerrotados,
@@ -87,11 +96,15 @@ final class ResultadoExploracionVista
         $terminada['vista'] = $vista;
         $terminada['exp_reclutado'] = $vista['exp_reclutado'];
         $terminada['hitos'] = $vista['hitos'];
+        $terminada['bonus_habitat'] = $bonusHabitat;
+        $terminada['tiene_bonus_habitat'] = $bonusHabitat;
         $terminada['capturados'] = $capturados;
+        $terminada['items'] = $items;
         $terminada['derrotadosAgrupados'] = $derrotados;
         $terminada['tieneDerrotados'] = $tieneDerrotados;
         $terminada['tieneCapturados'] = $tieneCapturados;
         $terminada['tieneRecompensas'] = $tieneRecompensas;
+        $terminada['tiene_items'] = $tieneItems;
         $terminada['tiene_perdidas'] = $tienePerdidas;
         $terminada['tiene_obtenidas'] = $tieneObtenidas;
         $terminada['spanDerrotados'] = $spanDerrotados;
@@ -243,6 +256,46 @@ final class ResultadoExploracionVista
     }
 
     /**
+     * Normaliza el botín de items a la forma que consume la vista. Acepta
+     * tanto items ya resueltos por el presentador como el contrato persistido
+     * antiguo (`clave` + `cantidad`) y resuelve lo que falte con el catálogo.
+     *
+     * @param  list<array<string, mixed>>  $items
+     * @return list<array{clave: string, nombre: string, src: string, alt: string, categoria: string, cantidad: int}>
+     */
+    private static function items(array $items): array
+    {
+        return array_map(static function (array $item): array {
+            $clave = (string) ($item['clave'] ?? '');
+            $definicion = $clave !== '' ? CatalogoItems::aPartirDeItemKey($clave) : null;
+
+            $nombre = (string) ($item['nombre'] ?? '');
+            if ($nombre === '') {
+                $nombre = $definicion !== null ? $definicion->nombre : 'Desconocido';
+            }
+
+            $imagen = (string) ($item['imagen'] ?? '');
+            if ($imagen === '') {
+                $imagen = $definicion !== null ? $definicion->icono : '/images/misc/unknown.webp';
+            }
+
+            $categoria = (string) ($item['categoria'] ?? '');
+            if ($categoria === '') {
+                $categoria = $definicion !== null ? $definicion->categoria->value : 'desconocida';
+            }
+
+            return [
+                'clave' => $clave,
+                'nombre' => $nombre,
+                'src' => $imagen,
+                'alt' => $nombre,
+                'categoria' => $categoria,
+                'cantidad' => (int) ($item['cantidad'] ?? 0),
+            ];
+        }, $items);
+    }
+
+    /**
      * @param  list<int>  $ids
      * @return list<array{pokemon_id: int, cantidad: int, icono: string}>
      */
@@ -309,6 +362,8 @@ final class ResultadoExploracionVista
             'ev' => 'EV',
             'tipo' => 'Tipo',
             'captura' => 'Captura',
+            'baya' => 'Baya',
+            'bonguri' => 'Bonguri',
             default => ucfirst($tipo),
         };
     }
@@ -325,6 +380,12 @@ final class ResultadoExploracionVista
             $slug = (string) $id;
 
             return $slug !== '' ? "/images/candy_type/{$slug}.webp" : null;
+        }
+
+        if ($tipo === 'baya' || $tipo === 'bonguri') {
+            $definicion = CatalogoItems::aPartirDeItemKey((string) $id);
+
+            return $definicion !== null ? $definicion->icono : '/images/misc/unknown.webp';
         }
 
         return null;

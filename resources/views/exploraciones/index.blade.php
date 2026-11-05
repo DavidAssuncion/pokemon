@@ -319,6 +319,34 @@
                                                 </div>
                                             @endforeach
                                         </div>
+                                        @if(($terminada['tieneRecompensas'] ?? false) || ($terminada['tiene_items'] ?? false))
+                                            <hr class="my-3 border-line">
+                                        @endif
+                                    @endif
+
+                                    @if(!empty($resultado['items']))
+                                        <p class="text-xs font-semibold text-ink-muted uppercase tracking-wide mb-2">Objetos encontrados</p>
+                                        <div class="flex flex-wrap gap-3">
+                                            @foreach($resultado['items'] as $item)
+                                                <div class="text-center" title="{{ $item['nombre'] }}">
+                                                    <div class="relative inline-block">
+                                                        <img
+                                                            src="{{ $item['src'] }}"
+                                                            loading="lazy"
+                                                            decoding="async"
+                                                            alt="{{ $item['alt'] ?? $item['nombre'] }}"
+                                                            title="{{ $item['alt'] ?? $item['nombre'] }}"
+                                                            class="w-12 h-12 object-contain"
+                                                            onerror="this.style.display='none'"
+                                                        >
+                                                        <span class="absolute -top-1.5 -right-1.5 px-1.5 py-0.5 bg-primary text-on-primary text-2xs font-bold rounded-full">
+                                                            &times;{{ $item['cantidad'] }}
+                                                        </span>
+                                                    </div>
+                                                    <p class="text-2xs text-ink-muted truncate w-16">{{ $item['nombre'] }}</p>
+                                                </div>
+                                            @endforeach
+                                        </div>
                                         @if($terminada['tieneRecompensas'] ?? false)
                                             <hr class="my-3 border-line">
                                         @endif

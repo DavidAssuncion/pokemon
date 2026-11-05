@@ -27,7 +27,7 @@
     @foreach($provincias as $i => $province)
         <div x-show="activeTab === {{ $i }}" x-cloak class="province-panel">
             <h2 class="text-lg font-semibold text-ink mb-4">{{ $province['name'] }}</h2>
-            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-6 gap-3">
+            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-6 gap-6">
                 @foreach($province['habitats'] as $habitat)
                     <div>
                         <a

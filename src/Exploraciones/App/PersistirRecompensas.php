@@ -17,6 +17,7 @@ use Illuminate\Support\Collection;
 use Src\Exploraciones\Domain\Recompensas\RecompensaCaptura;
 use Src\Exploraciones\Domain\Recompensas\RecompensaEv;
 use Src\Exploraciones\Domain\Recompensas\RecompensaFamilia;
+use Src\Exploraciones\Domain\Recompensas\RecompensaItemCollection;
 use Src\Exploraciones\Domain\Recompensas\RecompensaTipo;
 use Src\Exploraciones\Domain\Recompensas\ResultadoRecompensas;
 
@@ -36,6 +37,7 @@ class PersistirRecompensas
         $this->guardarCaramelosFamilia($recompensas->caramelosFamilia, $usuario);
         $this->guardarCaramelosEv($recompensas->caramelosEv, $usuario);
         $this->guardarCaramelosTipo($recompensas->caramelosTipo, $usuario);
+        $this->guardarItems($recompensas->items, $usuario);
         $this->aplicarCapturas($recompensas->capturas, $usuario);
         $this->aplicarExperiencia(
             $recompensas->expTotal,
@@ -77,16 +79,37 @@ class PersistirRecompensas
         }
     }
 
+    /**
+     * Persiste el botín de bayas/bonguris en `player_inventory`. Las claves ya
+     * vienen validadas contra el catálogo por `RecompensaItem`.
+     */
+    private function guardarItems(RecompensaItemCollection $items, ?User $usuario): void
+    {
+        foreach ($items->all() as $item) {
+            $this->incrementarItem($usuario, $item->clave, $item->cantidad);
+        }
+    }
+
     private function incrementarItem(?User $usuario, string $itemKey, int $cantidad): void
     {
         if ($usuario === null || $cantidad <= 0) {
             return;
         }
 
-        PlayerInventory::firstOrCreate(
-            ['user_id' => $usuario->id, 'item_key' => $itemKey],
-            ['cantidad' => 0],
-        )->increment('cantidad', $cantidad);
+        $ahora = now();
+
+        PlayerInventory::withoutUserScope()->getQuery()->insertOrIgnore([
+            'user_id' => $usuario->id,
+            'item_key' => $itemKey,
+            'cantidad' => 0,
+            'created_at' => $ahora,
+            'updated_at' => $ahora,
+        ]);
+
+        PlayerInventory::withoutUserScope()
+            ->where('user_id', $usuario->id)
+            ->where('item_key', $itemKey)
+            ->increment('cantidad', $cantidad);
     }
 
     /**

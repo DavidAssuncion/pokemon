@@ -1,6 +1,6 @@
 <div class="moves-panel">
     <div class="d-flex justify-content-between align-items-center mb-3 gap-2 flex-wrap">
-        <h3 class="h5 mb-0">Ataques</h3>
+        <h3 class="h5 mb-0">{{ in_array($phase, ['player_target', 'player_item_target'], true) ? 'Objetos' : 'Ataques' }}</h3>
         <div class="d-flex align-items-center gap-2">
             @if($movesResumen['comboActual'] > 0)
                 <span class="badge bg-info-soft text-info-ink" title="Racha de combo">
@@ -119,8 +119,10 @@
                 </div>
             @endforeach
         </div>
-    @elseif($phase === 'player_target')
-        {{-- La selección de objetivo se hace directamente en el campo. --}}
+    @elseif(in_array($phase, ['player_target', 'player_item_target'], true))
+        {{-- Objetos disponibles o confirmación del objetivo del objeto elegido;
+             la selección se hace directamente en el campo. --}}
+        @include('livewire.partials.items-panel')
     @elseif($phase === 'battle_over')
         <div class="alert alert-success battle-over {{ !empty($eventos) ? 'd-none' : '' }}" role="status">
             ¡Batalla terminada!

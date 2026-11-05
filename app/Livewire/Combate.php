@@ -8,10 +8,15 @@ use App\Livewire\Presenters\BatallaVistaPresenter;
 use App\Livewire\Presenters\MovesPreviewPresenter;
 use App\Livewire\Presenters\PresentadorResultadoBatalla;
 use App\Support\BattleSessionService;
+use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
+use Src\Battle\App\ObtenerOpcionesObjeto;
+use Src\Battle\App\UsarObjetoEnCombate;
 use Src\Battle\Domain\AccionBatalla;
+use Src\Battle\Domain\AccionObjeto;
 use Src\Battle\Domain\AgregadoBatalla;
 use Src\Battle\Domain\Combatiente;
+use Src\Battle\Domain\DataTransferObjects\DTOAccionObjeto;
 use Src\Battle\Domain\Enums\ClaveCondicion;
 use Src\Battle\Domain\Enums\EstadoPokemon;
 use Src\Battle\Domain\Enums\FaseCombate;
@@ -21,8 +26,11 @@ use Src\Battle\Domain\EquipoBatalla;
 use Src\Battle\Domain\FabricaBatallaInterface;
 use Src\Battle\Domain\MovimientoBatalla;
 use Src\Battle\Domain\ServicioEjecucionBatalla;
+use Src\Battle\Domain\UsoObjetos\CatalogoEfectosItem;
 use Src\Battle\Presentation\DTOAccionBatalla;
 use Src\Battle\Presentation\DTOMovimientoBatalla;
+use Src\Shared\Domain\Items\CatalogoItems;
+use Src\Shared\Domain\Ports\InventarioJugador;
 
 class Combate extends Component
 {
@@ -88,6 +96,15 @@ class Combate extends Component
 
     /** @var array<string, list<array{index: int, nombre: string, prioridad: int}>> */
     public array $prioridadesDisponibles = [];
+
+    /** @var list<array<string, mixed>> Opciones del panel de objetos de combate. */
+    public array $objetosCombate = [];
+
+    /** Clave de inventario del objeto seleccionado para usar. */
+    public string $objetoSeleccionado = '';
+
+    /** Objetivo de item activo (`ObjetivosItem`->value) o cadena vacía. */
+    public string $objetivosItem = '';
 
     private FabricaBatallaInterface $fabricaBatalla;
 
@@ -159,6 +176,7 @@ class Combate extends Component
             log: $this->log,
             eventos: $this->eventos,
             rewards: $this->rewards,
+            objetivosItem: $this->objetivosItem,
         );
 
         $vista['movesResumen'] = MovesPreviewPresenter::resumen($this->currentMoves);
@@ -240,6 +258,9 @@ class Combate extends Component
         }
 
         $this->actingRefId = $actor->id();
+        // El actor autorizado vive en el agregado (server-side), no en la
+        // propiedad pública `actingRefId`.
+        $battle->setActorActualId($actor->id());
 
         // Verificar si el actor puede actuar (sueño, hielo, parálisis, confusión)
         $antesEstado = $this->grabandoEventos ? $this->capturarEstado($battle) : [];
@@ -850,6 +871,12 @@ class Combate extends Component
             return;
         }
 
+        if ($pending instanceof DTOAccionObjeto) {
+            $this->resolverAccionObjeto($battle, $pending);
+
+            return;
+        }
+
         $actor = $battle->team1->findCombatantById($pending->actorId)
             ?? $battle->team2->findCombatantById($pending->actorId);
         $objetivo = $battle->team1->findCombatantById($pending->defenderId)
@@ -1000,6 +1027,12 @@ class Combate extends Component
 
     public function previewTarget(int $teamIdx, int $pokemonIdx): void
     {
+        if ($this->phase === FaseCombate::SELECCION_OBJETIVO_ITEM->value) {
+            $this->confirmarObjetivoItem($teamIdx, $pokemonIdx);
+
+            return;
+        }
+
         $battle = $this->session->cargar($this->battleId);
         if ($battle === null) {
             return;
@@ -1110,7 +1143,260 @@ class Combate extends Component
         $this->selectedTargetTeam = null;
         $this->selectedTargetIdx = null;
         $this->selectedTargetRefId = '';
+        $this->limpiarEstadoObjeto();
         $this->phase = FaseCombate::SELECCION_OBJETIVO->value;
+    }
+
+    /**
+     * Selecciona un objeto del panel. Solo se permite en la fase de objetivo
+     * y sin animación/procesamiento en curso.
+     */
+    public function seleccionarObjeto(string $clave): void
+    {
+        if ($this->phase !== FaseCombate::SELECCION_OBJETIVO->value) {
+            return;
+        }
+
+        if ($this->processing || $this->animAttackerId !== '') {
+            return;
+        }
+
+        if (! CatalogoItems::existe($clave) || ! CatalogoEfectosItem::existe($clave)) {
+            return;
+        }
+
+        $definicion = CatalogoItems::definicion($clave);
+        if (! $definicion->usableEnCombate) {
+            return;
+        }
+
+        $userId = (int) Auth::id();
+        if ($userId <= 0) {
+            return;
+        }
+
+        $battle = $this->session->cargar($this->battleId);
+        if ($battle === null) {
+            return;
+        }
+
+        // El actor se deriva del estado del agregado en servidor:
+        // `actingRefId` es una propiedad pública manipulable por el cliente.
+        $actor = $this->actorJugadorActual($battle);
+        if ($actor === null) {
+            return;
+        }
+
+        $saldo = app(InventarioJugador::class)->saldo($userId, $clave);
+        if ($saldo <= 0) {
+            $this->log[] = "No tienes unidades de {$definicion->nombre}.";
+            $this->syncViewData($battle, $actor);
+            $this->session->guardar($this->battleId, $battle);
+
+            return;
+        }
+
+        $efecto = CatalogoEfectosItem::efecto($clave);
+        $this->objetoSeleccionado = $clave;
+        $this->objetivosItem = $efecto->objetivos()->value;
+        $this->selectedTargetTeam = null;
+        $this->selectedTargetIdx = null;
+        $this->selectedTargetRefId = '';
+        $this->phase = FaseCombate::SELECCION_OBJETIVO_ITEM->value;
+        $this->syncViewData($battle, $actor);
+        $this->session->guardar($this->battleId, $battle);
+    }
+
+    /**
+     * Cancela la selección de objeto y vuelve a la fase de objetivo normal.
+     */
+    public function cancelarObjeto(): void
+    {
+        if ($this->phase !== FaseCombate::SELECCION_OBJETIVO_ITEM->value) {
+            return;
+        }
+
+        $this->limpiarEstadoObjeto();
+        $this->selectedTargetTeam = null;
+        $this->selectedTargetIdx = null;
+        $this->selectedTargetRefId = '';
+        $this->phase = FaseCombate::SELECCION_OBJETIVO->value;
+    }
+
+    /**
+     * Confirma el objetivo del objeto y deja la acción pendiente para que el
+     * cliente reproduzca la animación y llame a commitAction().
+     */
+    public function confirmarObjetivoItem(int $teamIdx, int $pokemonIdx): void
+    {
+        if ($this->phase !== FaseCombate::SELECCION_OBJETIVO_ITEM->value) {
+            return;
+        }
+
+        if ($this->processing || $this->animAttackerId !== '') {
+            return;
+        }
+
+        if ($this->objetoSeleccionado === '') {
+            return;
+        }
+
+        $battle = $this->session->cargar($this->battleId);
+        if ($battle === null) {
+            return;
+        }
+
+        // `actingRefId`, `phase` y `processing` son propiedades públicas: la
+        // autorización real se deriva del estado server-side del agregado.
+        $actor = $this->actorJugadorActual($battle);
+        if ($actor === null) {
+            return;
+        }
+
+        // El objeto puede haber cambiado de estado entre la selección y la
+        // confirmación (stock agotado, catálogo actualizado).
+        if (! CatalogoItems::existe($this->objetoSeleccionado)
+            || ! CatalogoEfectosItem::existe($this->objetoSeleccionado)) {
+            $this->log[] = 'Ese objeto no se puede usar en combate.';
+
+            return;
+        }
+
+        $item = CatalogoItems::definicion($this->objetoSeleccionado);
+        if (! $item->usableEnCombate) {
+            $this->log[] = "{$item->nombre} no se puede usar en combate.";
+
+            return;
+        }
+
+        $userId = (int) Auth::id();
+        $saldo = $userId > 0
+            ? app(InventarioJugador::class)->saldo($userId, $this->objetoSeleccionado)
+            : 0;
+        if ($saldo <= 0) {
+            $this->log[] = "No tienes unidades de {$item->nombre}.";
+            $this->cancelarObjeto();
+
+            return;
+        }
+
+        $objetivo = $this->getTargetFromSelection($battle, $teamIdx, $pokemonIdx);
+        if ($objetivo === null) {
+            return;
+        }
+
+        $accion = new AccionObjeto(
+            actorId: $actor->id(),
+            objetivoId: $objetivo->id(),
+            clave: $this->objetoSeleccionado,
+        );
+
+        $motivo = app(UsarObjetoEnCombate::class)->validar($battle, $accion);
+        if ($motivo !== null) {
+            $this->log[] = $motivo;
+            $this->syncViewData($battle, $actor);
+            $this->session->guardar($this->battleId, $battle);
+
+            return;
+        }
+
+        $battle->setPendingAction(new DTOAccionObjeto(
+            actorId: $actor->id(),
+            objetivoId: $objetivo->id(),
+            clave: $this->objetoSeleccionado,
+        ));
+
+        $this->selectedTargetTeam = $teamIdx;
+        $this->selectedTargetIdx = $pokemonIdx;
+        $this->selectedTargetRefId = $objetivo->id();
+
+        $this->setAnimStateObjeto($actor, $objetivo, $item->nombre);
+        $this->syncViewData($battle, $actor);
+        $this->session->guardar($this->battleId, $battle);
+    }
+
+    /**
+     * Resuelve una acción de objeto pendiente: consume inventario, aplica el
+     * efecto y consume la acción de la ronda sin gastar movimiento.
+     */
+    private function resolverAccionObjeto(AgregadoBatalla $battle, DTOAccionObjeto $pending): void
+    {
+        $actor = $battle->team1->findCombatantById($pending->actorId)
+            ?? $battle->team2->findCombatantById($pending->actorId);
+        $objetivo = $battle->team1->findCombatantById($pending->objetivoId)
+            ?? $battle->team2->findCombatantById($pending->objetivoId);
+
+        if ($actor === null || $objetivo === null) {
+            $battle->setPendingAction(null);
+            $this->resetAnimState();
+            $this->session->guardar($this->battleId, $battle);
+            $this->nextActor();
+
+            return;
+        }
+
+        // La acción pendiente viaja en el agregado: solo se ejecuta si el
+        // actor sigue siendo el actual y está en el equipo del jugador.
+        $actorActual = $this->actorJugadorActual($battle);
+        if ($actorActual === null || $actorActual->id() !== $pending->actorId) {
+            $battle->setPendingAction(null);
+            $this->resetAnimState();
+            $this->syncViewData($battle);
+            $this->session->guardar($this->battleId, $battle);
+            $this->nextActor();
+
+            return;
+        }
+
+        $previo = $this->capturarEstado($battle);
+        $userId = (int) Auth::id();
+        $resultado = app(UsarObjetoEnCombate::class)->handle(
+            $userId,
+            $battle,
+            $pending->toDomain(),
+        );
+
+        if (! $resultado->exito) {
+            $this->log[] = $resultado->motivo ?? 'No se pudo usar el objeto.';
+            $battle->setPendingAction(null);
+            $this->resetAnimState();
+            $this->syncViewData($battle, $actor);
+            $this->session->guardar($this->battleId, $battle);
+            $this->nextActor();
+
+            return;
+        }
+
+        $this->log[] = $resultado->log;
+        $battle->turnManager()->consumeAction($actor);
+        $actor->effects()->dispararFinTurno($actor, $battle);
+
+        if (! $objetivo->estaVivo()) {
+            $this->log[] = "¡{$objetivo->nombre()} se ha debilitado!";
+        }
+
+        $nuevosDebilitados = $battle->procesarDebilitamientos();
+        if ($nuevosDebilitados > 0 && $actor->estaVivo()) {
+            $actor->otorgarAccionExtra();
+        }
+
+        $this->registrarEvento('item', $previo, $this->capturarEstado($battle), [
+            'actorId' => $actor->id(),
+            'objetivoId' => $objetivo->id(),
+            'texto' => $resultado->log,
+        ]);
+
+        $battle->setPendingAction(null);
+        $this->resetAnimState();
+        $this->syncViewData($battle, $actor);
+        $this->session->guardar($this->battleId, $battle);
+        $this->nextActor();
+    }
+
+    private function limpiarEstadoObjeto(): void
+    {
+        $this->objetoSeleccionado = '';
+        $this->objetivosItem = '';
     }
 
     /**
@@ -1123,6 +1409,7 @@ class Combate extends Component
         if (! in_array($this->phase, [
             FaseCombate::SELECCION_OBJETIVO->value,
             FaseCombate::SELECCION_MOVIMIENTO->value,
+            FaseCombate::SELECCION_OBJETIVO_ITEM->value,
         ], true)) {
             return;
         }
@@ -1156,6 +1443,7 @@ class Combate extends Component
         if (! in_array($this->phase, [
             FaseCombate::SELECCION_OBJETIVO->value,
             FaseCombate::SELECCION_MOVIMIENTO->value,
+            FaseCombate::SELECCION_OBJETIVO_ITEM->value,
         ], true)) {
             return;
         }
@@ -1200,6 +1488,7 @@ class Combate extends Component
         if (! in_array($this->phase, [
             FaseCombate::SELECCION_OBJETIVO->value,
             FaseCombate::SELECCION_MOVIMIENTO->value,
+            FaseCombate::SELECCION_OBJETIVO_ITEM->value,
         ], true)) {
             return;
         }
@@ -1242,6 +1531,33 @@ class Combate extends Component
     {
         return $battle->team1->findCombatantById($this->actingRefId)
             ?? $battle->team2->findCombatantById($this->actingRefId);
+    }
+
+    /**
+     * Resuelve el actor del jugador autorizado para acciones de objeto.
+     * Lee del agregado (server-side); `actingRefId` no es fuente de verdad.
+     * El fallback a `getNextActor()` solo cubre sesiones antiguas sin
+     * `actorActualId`, incluido el actor forzado por `swapTurno()`.
+     */
+    private function actorJugadorActual(AgregadoBatalla $battle): ?Combatiente
+    {
+        $actorId = $battle->actorActualId();
+
+        if ($actorId === null) {
+            $actorId = $battle->turnManager()->getNextActor()?->id();
+        }
+
+        if ($actorId === null) {
+            return null;
+        }
+
+        $actor = $battle->team1->findCombatantById($actorId);
+
+        if ($actor === null || ! $actor->estaVivo() || ! $actor->tieneAccionPendienteEstaRonda()) {
+            return null;
+        }
+
+        return $actor;
     }
 
     private function getTargetFromSelection(AgregadoBatalla $battle, ?int $teamIdx, ?int $pokemonIdx): ?Combatiente
@@ -1516,6 +1832,22 @@ class Combate extends Component
         }
     }
 
+    private function setAnimStateObjeto(Combatiente $actor, Combatiente $target, string $itemNombre): void
+    {
+        $this->animTick++;
+        $this->animAttackerId = $actor->id();
+        $this->animAttackerNombre = $actor->nombre();
+        $this->animMoveNombre = $itemNombre;
+
+        if ($target->id() !== $actor->id()) {
+            $this->animDefenderId = $target->id();
+            $this->animDefenderNombre = $target->nombre();
+        } else {
+            $this->animDefenderId = '';
+            $this->animDefenderNombre = '';
+        }
+    }
+
     private function resetAnimState(): void
     {
         $this->animAttackerId = '';
@@ -1526,6 +1858,7 @@ class Combate extends Component
         $this->selectedTargetTeam = null;
         $this->selectedTargetIdx = null;
         $this->selectedTargetRefId = '';
+        $this->limpiarEstadoObjeto();
     }
 
     // ─── Sincronizar vista ───────────────────────────────────
@@ -1546,6 +1879,8 @@ class Combate extends Component
             $battle->team2->combatants()->all()
         );
 
+        $this->refrescarObjetosCombate($battle, $actor);
+
         if ($actor === null || ! $battle->team1->findCombatant($actor)) {
             return;
         }
@@ -1556,5 +1891,29 @@ class Combate extends Component
             $p['canTarget'] = $p['posicion'] !== 'retaguardia' || $canHitRetaguardia;
         }
         unset($p);
+    }
+
+    /**
+     * Refresca las 44 opciones del panel con una sola consulta de inventario.
+     */
+    private function refrescarObjetosCombate(AgregadoBatalla $battle, ?Combatiente $actor = null): void
+    {
+        $userId = (int) Auth::id();
+        if ($userId <= 0) {
+            $this->objetosCombate = [];
+
+            return;
+        }
+
+        $actor ??= $this->resolveActor($battle);
+        if ($actor === null || ! $actor->estaVivo()) {
+            $this->objetosCombate = [];
+
+            return;
+        }
+
+        $this->objetosCombate = app(ObtenerOpcionesObjeto::class)
+            ->handle($userId, $battle, $actor)
+            ->toArray();
     }
 }

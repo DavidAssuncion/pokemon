@@ -26,6 +26,8 @@ namespace Src\Battle\Domain\Enums;
  *    posturas ya vienen configuradas desde Equipo y no se reconfirman.
  *  - SELECCION_OBJETIVO         → el jugador elige objetivo del ataque.
  *  - SELECCION_MOVIMIENTO       → el jugador elige movimiento a usar.
+ *  - SELECCION_OBJETIVO_ITEM    → el jugador elige el objetivo de un
+ *    objeto seleccionado (aliado vivo, aliado debilitado o rival vivo).
  *  - BATALLA_TERMINADA          → resultado final, no hay más acciones.
  */
 enum FaseCombate: string
@@ -34,5 +36,6 @@ enum FaseCombate: string
     case PREPARACION = 'preparacion';
     case SELECCION_OBJETIVO = 'player_target';
     case SELECCION_MOVIMIENTO = 'player_move';
+    case SELECCION_OBJETIVO_ITEM = 'player_item_target';
     case BATALLA_TERMINADA = 'battle_over';
 }

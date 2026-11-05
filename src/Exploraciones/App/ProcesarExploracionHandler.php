@@ -18,6 +18,8 @@ use Src\Exploraciones\Domain\CalculadorFinExploracion;
 use Src\Exploraciones\Domain\CalculadorVueltaExploracion;
 use Src\Exploraciones\Domain\CapacidadesStats;
 use Src\Exploraciones\Domain\EvaluadorExploracion;
+use Src\Exploraciones\Domain\ModoExploracion;
+use Src\Exploraciones\Domain\PerfilExploracion;
 use Src\Exploraciones\Domain\ReglasExploracion;
 use Src\Exploraciones\Domain\SimuladorEncuentros;
 use Src\Exploraciones\Domain\ValueObjects\EstadoExplorador;
@@ -58,6 +60,7 @@ final class ProcesarExploracionHandler implements CommandHandler
         private readonly EscaladorNivelRival $escalador,
         ?callable $aleatorio = null,
         private readonly ?ResolverBonosFamilia $bonosFamilia = null,
+        private readonly ?EsDelHabitat $esDelHabitat = null,
     ) {
         $this->aleatorio = $aleatorio !== null ? Closure::fromCallable($aleatorio) : null;
     }
@@ -84,6 +87,16 @@ final class ProcesarExploracionHandler implements CommandHandler
 
         /** @var Collection<string, mixed> $eventos */
         $eventos = $exploracion->eventos ?? collect();
+
+        // F3: el bonus de hábitat se calcula una sola vez y viaja en el JSON
+        // de la exploración; la finalización lo reutiliza sin repetir consulta.
+        if (! $eventos->has('bonos')) {
+            $eventos->put('bonos', [
+                'del_habitat' => ($this->esDelHabitat ?? app(EsDelHabitat::class))
+                    ->handle($exploracion->reclutado->pokemon_id, $exploracion->habitat_id),
+            ]);
+        }
+
         $desde = $this->ultimoProcesado($eventos) ?? $inicio;
         $hasta = $this->limiteTick(now(), $fin, $inicioVuelta);
 
@@ -151,6 +164,7 @@ final class ProcesarExploracionHandler implements CommandHandler
         }
 
         $pool = $this->poolDeHabitat($exploracion);
+        $perfil = PerfilExploracion::de(ModoExploracion::desde($exploracion->modo));
 
         $nuevos = SimuladorEncuentros::generarEventosDesdePool(
             $pool,
@@ -168,6 +182,7 @@ final class ProcesarExploracionHandler implements CommandHandler
             $this->aleatorio,
             $capacidades->permitirEmboscadas($dificultad),
             $capacidades->permitirExcepcionales($dificultad),
+            perfil: $perfil,
         )->aArrays();
 
         if ($nuevos === []) {
@@ -224,7 +239,7 @@ final class ProcesarExploracionHandler implements CommandHandler
 
             // Emboscada evitada: exactamente UN evento extra (hallazgo/neutral).
             if (($resuelto['evitada'] ?? false) === true) {
-                $nuevos[] = $this->eventoExtra($pool, $desde, $hasta);
+                $nuevos[] = $this->eventoExtra($pool, $desde, $hasta, $perfil);
             }
 
             // Tras cada evento: descanso si el explorador quedó con HP < 50 %.
@@ -478,13 +493,26 @@ final class ProcesarExploracionHandler implements CommandHandler
     /**
      * Genera EXACTAMENTE un evento extra (hallazgo/neutral) para compensar una
      * emboscada evitada. Se genera sin emboscadas permitidas: el extra nunca
-     * puede ser una emboscada y, por tanto, no añade más eventos.
+     * puede ser una emboscada y, por tanto, no añade más eventos. Usa el mismo
+     * perfil de modo que los eventos normales para mantener la mezcla.
      *
      * @return array<string, mixed>
      */
-    private function eventoExtra(PoolHabitat $pool, CarbonInterface $desde, CarbonInterface $hasta): array
-    {
-        $extras = SimuladorEncuentros::generarEventosDesdePool($pool, 1, $desde, $hasta, $this->aleatorio, false)->aArrays();
+    private function eventoExtra(
+        PoolHabitat $pool,
+        CarbonInterface $desde,
+        CarbonInterface $hasta,
+        PerfilExploracion $perfil,
+    ): array {
+        $extras = SimuladorEncuentros::generarEventosDesdePool(
+            $pool,
+            1,
+            $desde,
+            $hasta,
+            $this->aleatorio,
+            false,
+            perfil: $perfil,
+        )->aArrays();
 
         return $extras[0] ?? ['tipo' => 'neutral', 'detalle' => 'evento neutral'];
     }

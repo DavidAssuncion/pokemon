@@ -19,6 +19,7 @@ class CatalogoSeeder extends Seeder
         $this->call([
             ProvinceSeeder::class,
             HabitatSeeder::class,
+            BonguriHabitatSeeder::class,
             PokemonSeeder::class,
             PokemonHabitatSeeder::class,
             MoveSeeder::class,

@@ -125,6 +125,9 @@ final class SimuladorEncuentros
      * fin]: un slot por evento y jitter aleatorio dentro de cada slot.
      * El pool completo permite a los hallazgos restringir caramelos EV y de
      * tipo al pool del hábitat.
+     *
+     * Si se recibe un perfil, sus pesos de evento sustituyen a las constantes
+     * históricas; sin perfil el comportamiento es idéntico al anterior.
      */
     public static function generarEventosDesdePool(
         PoolHabitat $pool,
@@ -134,6 +137,7 @@ final class SimuladorEncuentros
         ?callable $aleatorio = null,
         bool $permitirEmboscadas = true,
         bool $permitirExcepcionales = true,
+        ?PerfilExploracion $perfil = null,
     ): ColeccionEventosExploracion {
         if ($numEncuentros <= 0 || $pool->isEmpty() || ! $fin->greaterThan($inicio)) {
             return new ColeccionEventosExploracion();
@@ -165,6 +169,7 @@ final class SimuladorEncuentros
                 $timestamp,
                 $permitirEmboscadas,
                 $permitirExcepcionales,
+                $perfil?->pesos,
             );
         }
 
@@ -179,19 +184,25 @@ final class SimuladorEncuentros
         CarbonInterface $timestamp,
         bool $permitirEmboscadas,
         bool $permitirExcepcionales,
+        ?PesosEvento $pesos = null,
     ): EventoExploracion {
         $timestampIso = $timestamp->toIso8601String();
         $porcentaje = $tiradaTipo * 100;
 
-        if ($porcentaje < self::PROBABILIDAD_ENCUENTRO) {
+        $pesoEncuentro = $pesos->encuentro ?? self::PROBABILIDAD_ENCUENTRO;
+        $pesoHallazgo = $pesos->hallazgo ?? self::PROBABILIDAD_HALLAZGO;
+        $pesoEspecial = $pesos->especial ?? self::PROBABILIDAD_ENCUENTRO_ESPECIAL;
+        $pesoContratiempo = $pesos->contratiempo ?? self::PROBABILIDAD_CONTRATIEMPO;
+
+        if ($porcentaje < $pesoEncuentro) {
             return self::eventoEncuentro($poolPonderado, $aleatorio, $permitirEmboscadas, $permitirExcepcionales, $timestampIso);
         }
 
-        if ($porcentaje < self::PROBABILIDAD_ENCUENTRO + self::PROBABILIDAD_HALLAZGO) {
+        if ($porcentaje < $pesoEncuentro + $pesoHallazgo) {
             return self::eventoHallazgo($pool, $poolPonderado, $aleatorio, $timestampIso);
         }
 
-        $hastaEspecial = self::PROBABILIDAD_ENCUENTRO + self::PROBABILIDAD_HALLAZGO + self::PROBABILIDAD_ENCUENTRO_ESPECIAL;
+        $hastaEspecial = $pesoEncuentro + $pesoHallazgo + $pesoEspecial;
 
         if ($porcentaje < $hastaEspecial) {
             if (! $permitirEmboscadas) {
@@ -205,7 +216,7 @@ final class SimuladorEncuentros
             return self::eventoEmboscada($poolPonderado, $aleatorio, $timestampIso);
         }
 
-        if ($porcentaje < $hastaEspecial + self::PROBABILIDAD_CONTRATIEMPO) {
+        if ($porcentaje < $hastaEspecial + $pesoContratiempo) {
             return self::eventoContratiempo($aleatorio, $timestampIso);
         }
 

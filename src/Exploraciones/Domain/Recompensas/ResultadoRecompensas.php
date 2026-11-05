@@ -30,6 +30,9 @@ final class ResultadoRecompensas
     /** @var Collection<int, RecompensaTipo> */
     public readonly Collection $caramelosTipo;
 
+    /** Botín de items (bayas/bonguris) de la expedición. */
+    public readonly RecompensaItemCollection $items;
+
     /**
      * @param  Collection<int, RecompensaCaptura>|array<int, RecompensaCaptura>  $capturas
      * @param  Collection<int, RecompensaFamilia>|array<int, RecompensaFamilia>  $caramelosFamilia
@@ -40,6 +43,8 @@ final class ResultadoRecompensas
      * @param  array<string, int>|null  $expTipoCuenta  EXP de tipo que recibe la
      *                                                   cuenta; `null` → fallback a
      *                                                   `expTipoPorMiembro` (legado)
+     * @param  RecompensaItemCollection|null  $items  Botín de items; `null` se
+     *                                                normaliza a una colección vacía
      */
     public function __construct(
         Collection|array $capturas,
@@ -50,11 +55,13 @@ final class ResultadoRecompensas
         public readonly int $expPorMiembro = 0,
         public readonly array $expTipoPorMiembro = [],
         public readonly ?array $expTipoCuenta = null,
+        ?RecompensaItemCollection $items = null,
     ) {
         $this->capturas = self::coleccionTipada($capturas, RecompensaCaptura::class);
         $this->caramelosFamilia = self::coleccionTipada($caramelosFamilia, RecompensaFamilia::class);
         $this->caramelosEv = self::coleccionTipada($caramelosEv, RecompensaEv::class);
         $this->caramelosTipo = self::coleccionTipada($caramelosTipo, RecompensaTipo::class);
+        $this->items = $items ?? new RecompensaItemCollection();
     }
 
     /**
@@ -80,6 +87,42 @@ final class ResultadoRecompensas
             expPorMiembro: $this->expPorMiembro,
             expTipoPorMiembro: $this->expTipoPorMiembro,
             expTipoCuenta: $this->expTipoCuenta,
+            items: $this->items,
+        );
+    }
+
+    /**
+     * Suma el botín de items al resultado, combinando cantidades por clave.
+     * Devuelve una instancia nueva (inmutabilidad).
+     */
+    public function sumarBotin(RecompensaItemCollection $botin): self
+    {
+        /** @var array<string, int> $cantidades */
+        $cantidades = [];
+
+        foreach ($this->items->all() as $item) {
+            $cantidades[$item->clave] = ($cantidades[$item->clave] ?? 0) + $item->cantidad;
+        }
+
+        foreach ($botin->all() as $item) {
+            $cantidades[$item->clave] = ($cantidades[$item->clave] ?? 0) + $item->cantidad;
+        }
+
+        $items = [];
+        foreach ($cantidades as $clave => $cantidad) {
+            $items[] = new RecompensaItem($clave, $cantidad);
+        }
+
+        return new self(
+            capturas: $this->capturas,
+            caramelosFamilia: $this->caramelosFamilia,
+            caramelosEv: $this->caramelosEv,
+            caramelosTipo: $this->caramelosTipo,
+            expTotal: $this->expTotal,
+            expPorMiembro: $this->expPorMiembro,
+            expTipoPorMiembro: $this->expTipoPorMiembro,
+            expTipoCuenta: $this->expTipoCuenta,
+            items: new RecompensaItemCollection($items),
         );
     }
 

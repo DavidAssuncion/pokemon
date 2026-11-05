@@ -14,6 +14,7 @@ use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Collection as BaseCollection;
 use Src\Exploraciones\Domain\CalculadorFinExploracion;
 use Src\Exploraciones\Domain\CalculadorVueltaExploracion;
+use Src\Shared\Domain\Items\CatalogoItems;
 
 /**
  * Métodos de transformación y presentación de exploraciones para la vista index.
@@ -282,6 +283,11 @@ final class PresentadorExploraciones
             ];
         }
 
+        $items = [];
+        foreach (is_array($resultado['items'] ?? null) ? $resultado['items'] : [] as $item) {
+            $items[] = $this->itemVista(is_array($item) ? $item : []);
+        }
+
         $reclutado = $exp->reclutado;
         $habitat = $exp->habitat;
 
@@ -307,6 +313,7 @@ final class PresentadorExploraciones
                 'caramelos_familia' => $caramelosFamilia,
                 'caramelos_ev' => $caramelosEv,
                 'caramelos_tipo' => $caramelosTipo,
+                'items' => $items,
                 'exp' => (int) ($resultado['exp'] ?? 0),
                 'resultado' => (string) ($resultado['resultado'] ?? 'exito'),
                 'duration_real' => (int) ($resultado['duration_real'] ?? 0),
@@ -319,6 +326,7 @@ final class PresentadorExploraciones
                     'emboscadas' => 0,
                     'contratiempos' => 0,
                 ],
+                'bonos' => is_array($resultado['bonos'] ?? null) ? $resultado['bonos'] : [],
             ],
             'objetos_perdidos' => $this->objetosPerdidosVista($perdidas, $nombres),
             'motivo_perdida' => $perdidas === [] ? null : $this->motivoPerdida($this->eventosDe($exp)),
@@ -345,6 +353,38 @@ final class PresentadorExploraciones
             'explorador_debilitado' => 'Tu explorador cayó debilitado en combate y perdió parte del botín.',
             default => 'La expedición terminó en derrota ('.str_replace('_', ' ', $reason).') y se perdió parte del botín.',
         };
+    }
+
+    /**
+     * Item de botín resuelto para la vista. El contrato persistido solo trae
+     * `clave` y `cantidad`; nombre, icono y categoría salen del catálogo
+     * compartido, con fallback seguro para claves desconocidas.
+     *
+     * @param  array<string, mixed>  $item
+     * @return array{clave: string, nombre: string, imagen: string, categoria: string, cantidad: int}
+     */
+    private function itemVista(array $item): array
+    {
+        $clave = (string) ($item['clave'] ?? '');
+        $definicion = $clave !== '' ? CatalogoItems::aPartirDeItemKey($clave) : null;
+
+        if ($definicion === null) {
+            return [
+                'clave' => $clave,
+                'nombre' => 'Desconocido',
+                'imagen' => '/images/misc/unknown.webp',
+                'categoria' => 'desconocida',
+                'cantidad' => (int) ($item['cantidad'] ?? 0),
+            ];
+        }
+
+        return [
+            'clave' => $clave,
+            'nombre' => $definicion->nombre,
+            'imagen' => $definicion->icono,
+            'categoria' => $definicion->categoria->value,
+            'cantidad' => (int) ($item['cantidad'] ?? 0),
+        ];
     }
 
     /**
@@ -400,6 +440,17 @@ final class PresentadorExploraciones
                     $pokemonId = (int) $id;
                     $label = $nombres[$pokemonId] ?? 'Pokémon #'.$pokemonId;
                     $imagen = $pokemonId > 0 ? "/images/iconos_webp/{$pokemonId}.webp" : null;
+                    break;
+                case 'baya':
+                case 'bonguri':
+                    $definicion = CatalogoItems::aPartirDeItemKey((string) $id);
+                    if ($definicion !== null) {
+                        $label = $definicion->nombre;
+                        $imagen = $definicion->icono;
+                    } else {
+                        $label = $label ?? 'Desconocido';
+                        $imagen = '/images/misc/unknown.webp';
+                    }
                     break;
             }
 
@@ -474,6 +525,8 @@ final class PresentadorExploraciones
             'ev' => 'EV',
             'tipo' => 'Tipo',
             'captura' => 'Captura',
+            'baya' => 'Baya',
+            'bonguri' => 'Bonguri',
             default => ucfirst($tipo),
         };
     }

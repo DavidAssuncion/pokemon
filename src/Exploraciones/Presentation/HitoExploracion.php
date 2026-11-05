@@ -25,6 +25,8 @@ final class HitoExploracion
         $victorias = (int) ($incidentes['victorias'] ?? 0);
         $contratiempos = (int) ($incidentes['contratiempos'] ?? 0);
         $durationReal = (int) ($resultado['duration_real'] ?? 0);
+        $bonos = is_array($resultado['bonos'] ?? null) ? $resultado['bonos'] : [];
+        $delHabitat = (bool) ($bonos['del_habitat'] ?? false);
 
         $hitos = [];
 
@@ -57,6 +59,14 @@ final class HitoExploracion
                 'codigo' => 'sin_contratiempos',
                 'etiqueta' => 'Sin contratiempos',
                 'descripcion' => 'La expedición transcurrió sin contratiempos.',
+            ];
+        }
+
+        if ($delHabitat) {
+            $hitos[] = [
+                'codigo' => 'bonus_habitat',
+                'etiqueta' => 'Conoce el terreno',
+                'descripcion' => 'Exploró acompañado de un Pokémon nativo del hábitat.',
             ];
         }
 

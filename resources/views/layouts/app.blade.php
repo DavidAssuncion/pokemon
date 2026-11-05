@@ -16,64 +16,30 @@
         }
     </script>
 </head>
-<body class="bg-canvas text-ink min-h-screen">
+<body class="bg-canvas text-ink min-h-screen"
+      x-data="{ cosechando: false, cosechaEstado: 'idle', cosechaMensaje: '', cosechaDetalle: '', cosechaItems: [], cosechaTimer: null, cosecharTodo() { if (this.cosechando) { return; } this.cosechando = true; this.cosechaEstado = 'idle'; this.cosechaMensaje = ''; this.cosechaDetalle = ''; this.cosechaItems = []; if (this.cosechaTimer) { clearTimeout(this.cosechaTimer); this.cosechaTimer = null; } const controller = new AbortController(); const timeout = setTimeout(() => controller.abort(), 15000); const csrf = document.querySelector('meta[name=csrf-token]')?.content || ''; fetch('/api/farm/harvest-all', { method: 'POST', headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': csrf }, signal: controller.signal }).then(async (response) => { if (!response.ok) { const data = await response.json().catch(() => ({})); throw new Error(data.message || 'No se pudo cosechar'); } return response.json(); }).then((data) => { const bayas = Number(data.total_bayas ?? 0); const errores = Array.isArray(data.errores) ? data.errores.length : 0; if (bayas > 0) { this.cosechaEstado = 'ok'; this.cosechaMensaje = 'Cosecha completada · ' + bayas + (bayas === 1 ? ' baya' : ' bayas'); this.cosechaDetalle = errores > 0 ? errores + ' error(es)' : ''; this.cosechaItems = Array.isArray(data.bayas) ? data.bayas : []; } else if (errores > 0) { this.cosechaEstado = 'error'; this.cosechaMensaje = 'Error'; this.cosechaDetalle = errores + ' error(es)'; this.cosechaItems = []; } else { this.cosechaEstado = 'ok'; this.cosechaMensaje = 'Nada que cosechar'; this.cosechaDetalle = ''; this.cosechaItems = []; } window.dispatchEvent(new CustomEvent('inventario:actualizado', { detail: data })); this.ocultarMensajeCosecha(); }).catch((error) => { this.cosechaEstado = 'error'; this.cosechaMensaje = 'Error'; this.cosechaDetalle = error?.name === 'AbortError' ? 'tiempo de espera' : ''; this.cosechaItems = []; this.ocultarMensajeCosecha(); }).finally(() => { clearTimeout(timeout); this.cosechando = false; }); }, ocultarMensajeCosecha() { this.cosechaTimer = setTimeout(() => { this.cosechaEstado = 'idle'; this.cosechaMensaje = ''; this.cosechaDetalle = ''; this.cosechaItems = []; this.cosechaTimer = null; }, 6000); } }">
     <header class="bg-surface sticky top-0 z-30 relative">
         <div class="px-4 sm:px-6">
             <nav
                 class="relative flex items-center justify-center h-14"
                 aria-label="Navegación principal"
-                x-data="{ ayudaAbierta: false, abrirAyuda() { this.ayudaAbierta = true; this.$nextTick(() => this.posicionarAyuda()); }, cerrarAyuda() { this.ayudaAbierta = false; }, toggleAyuda() { this.ayudaAbierta ? this.cerrarAyuda() : this.abrirAyuda(); }, posicionarAyuda() { const boton = this.$refs.botonAyuda.getBoundingClientRect(); const popup = this.$refs.popupAyuda; const ancho = popup.offsetWidth; let izquierda = boton.left; if (izquierda + ancho > window.innerWidth - 8) { izquierda = Math.max(8, window.innerWidth - ancho - 8); } popup.style.left = izquierda + 'px'; popup.style.top = (boton.bottom + 8) + 'px'; } }"
-                @keydown.escape.window="cerrarAyuda()"
             >
                 <div class="flex items-center gap-1 overflow-x-auto">
-                    <!-- Ayuda -->
-                    <div class="relative shrink-0">
-                        <button
-                            x-ref="botonAyuda"
-                            type="button"
-                            @click.stop="toggleAyuda()"
-                            :aria-expanded="ayudaAbierta"
-                            aria-controls="popup-ayuda"
-                            aria-label="Ayuda"
-                            class="w-8 h-8 rounded-full border border-line text-ink-muted hover:bg-surface-sunken hover:text-ink transition-colors flex items-center justify-center text-sm font-bold focus-ring"
-                        >
-                            ?
-                        </button>
-
-                        <!-- Popup de ayuda -->
-                        <div
-                            id="popup-ayuda"
-                            x-ref="popupAyuda"
-                            x-show="ayudaAbierta"
-                            x-cloak
-                            @click.outside="cerrarAyuda()"
-                            role="dialog"
-                            aria-label="Ayuda"
-                            class="fixed z-50 w-[24rem] max-w-[calc(100vw-1rem)] max-h-[70vh] overflow-y-auto bg-surface border border-line rounded-panel shadow-modal text-ink p-4 sm:p-5"
-                        >
-                            @php
-                                $ayudaSecciones = config('ayuda.secciones', []);
-                            @endphp
-                            @forelse($ayudaSecciones as $seccion)
-                                <section class="mb-4 last:mb-0" aria-labelledby="ayuda-seccion-{{ $loop->index }}">
-                                    <h2 id="ayuda-seccion-{{ $loop->index }}" class="text-xs font-bold uppercase tracking-wide text-ink mb-2">
-                                        {{ $seccion['titulo'] ?? '' }}
-                                    </h2>
-                                    @if(!empty($seccion['items']))
-                                        <ul class="space-y-1.5">
-                                            @foreach($seccion['items'] as $item)
-                                                <li class="text-sm text-ink-muted">{{ $item }}</li>
-                                            @endforeach
-                                        </ul>
-                                    @else
-                                        <p class="text-sm text-ink-subtle italic">Sin contenido por ahora.</p>
-                                    @endif
-                                </section>
-                            @empty
-                                <p class="text-sm text-ink-subtle">La ayuda estará disponible pronto.</p>
-                            @endforelse
+                    @if(!request()->is('combate*'))
+                        <!-- Cosecha global -->
+                        <div class="relative shrink-0">
+                            <button
+                                type="button"
+                                @click="cosecharTodo()"
+                                :disabled="cosechando"
+                                aria-label="Cosechar todas las plantaciones"
+                                title="Cosechar todas las plantaciones"
+                                class="w-8 h-8 rounded-full border border-line text-ink-muted hover:bg-surface-sunken hover:text-ink transition-colors flex items-center justify-center focus-ring disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                <i class="fa-solid" :class="cosechando ? 'fa-spinner fa-spin' : 'fa-seedling'" aria-hidden="true"></i>
+                            </button>
                         </div>
-                    </div>
+                    @endif
 
                     @php
                         $navItems = [
@@ -84,6 +50,7 @@
                             ['route' => '/gimnasios', 'label' => 'Gimnasios'],
                             ['route' => '/reclutamiento', 'label' => 'Reclutamiento'],
                             ['route' => '/exploraciones', 'label' => 'Exploraciones'],
+                            ['route' => '/forja', 'label' => 'Forja'],
                             //['route' => '/misiones', 'label' => 'Misiones'],
                         ];
                     @endphp
@@ -127,6 +94,39 @@
             <div class="h-full bg-primary transition-all duration-500" style="width: {{ $progresoNivel ?? 0 }}%"></div>
         </div>
     </header>
+
+    <!-- Toast de cosecha -->
+    <div
+        x-show="cosechando || cosechaEstado !== 'idle'"
+        x-cloak
+        x-transition.opacity.duration.200ms
+        role="status"
+        aria-live="polite"
+        aria-atomic="true"
+        class="fixed right-4 top-20 z-[70] w-[min(28rem,calc(100vw_-_2rem))] rounded-control border px-3 py-2.5 text-sm font-medium shadow-card"
+        :class="cosechando
+            ? 'border-info bg-info-soft text-info-ink'
+            : (cosechaEstado === 'error'
+                ? 'border-danger bg-danger-soft text-danger-ink'
+                : 'border-success bg-success-soft text-success-ink')"
+    >
+        <div class="flex items-start gap-2">
+            <i class="fa-solid mt-0.5 shrink-0" :class="cosechando ? 'fa-spinner fa-spin' : (cosechaEstado === 'error' ? 'fa-triangle-exclamation' : 'fa-seedling')" aria-hidden="true"></i>
+            <div class="min-w-0 flex-1">
+                <p class="break-words" x-text="cosechando ? 'Cosechando…' : cosechaMensaje"></p>
+                <p x-show="cosechaDetalle" class="mt-0.5 break-words text-xs font-normal opacity-80" x-text="cosechaDetalle"></p>
+                <ul x-show="cosechaEstado === 'ok' && cosechaItems.length > 0" class="mt-1.5 grid grid-cols-1 sm:grid-cols-2 gap-x-3 gap-y-1 max-h-48 overflow-y-auto pr-1 text-xs font-normal">
+                    <template x-for="item in cosechaItems" :key="item.clave ?? item.nombre">
+                        <li class="flex min-w-0 items-center gap-1.5">
+                            <img :src="item.icono" alt="" loading="lazy" decoding="async" class="h-4 w-4 shrink-0 object-contain" aria-hidden="true">
+                            <span class="min-w-0 flex-1 truncate" x-text="item.nombre"></span>
+                            <span class="shrink-0 font-semibold tabular-nums" x-text="'×' + item.cantidad"></span>
+                        </li>
+                    </template>
+                </ul>
+            </div>
+        </div>
+    </div>
 
     <main class="px-4 sm:px-6 py-6">
         @if(session('success'))

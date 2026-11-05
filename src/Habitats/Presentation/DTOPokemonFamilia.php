@@ -11,6 +11,7 @@ namespace Src\Habitats\Presentation;
  * `speciesId` es el id de especie usado por la regla de negocio "primer
  * integrante = menor species_id" (el seeder los mantiene iguales; el DTO los
  * separa para que el orden por species_id no dependa del id de pokémon).
+ * `stage` y `parentId` permiten ordenar las tabs por etapa real.
  */
 final class DTOPokemonFamilia
 {
@@ -20,6 +21,8 @@ final class DTOPokemonFamilia
         public readonly string $icon,
         public readonly ?int $level,
         public readonly int $speciesId,
+        public readonly int $stage = 1,
+        public readonly ?int $parentId = null,
     ) {
     }
 
@@ -27,7 +30,7 @@ final class DTOPokemonFamilia
      * Frontera: retorna el array esperado por la API / blades.
      * El campo `level` se incluye solo cuando no es null (familias asignadas).
      *
-     * @return array{id: int, name: string, icon: string, level?: int}
+     * @return array{id: int, name: string, icon: string, level?: int, stage: int, parent_id: int|null, species_id: int}
      */
     public function toArray(): array
     {
@@ -40,6 +43,10 @@ final class DTOPokemonFamilia
         if ($this->level !== null) {
             $data['level'] = $this->level;
         }
+
+        $data['stage'] = $this->stage;
+        $data['parent_id'] = $this->parentId;
+        $data['species_id'] = $this->speciesId;
 
         return $data;
     }

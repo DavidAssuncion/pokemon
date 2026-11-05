@@ -7,6 +7,7 @@ namespace Src\Battle\Domain;
 use Src\Battle\Domain\AI\NivelDificultad;
 use Src\Battle\Domain\AI\SelectorAccionIA;
 use Src\Battle\Domain\Chain\CadenaDanio;
+use Src\Battle\Domain\DataTransferObjects\DTOAccionObjeto;
 use Src\Battle\Domain\Enums\ClaveCondicion;
 use Src\Battle\Domain\Enums\TipoClima;
 use Src\Battle\Domain\Enums\TipoTerreno;
@@ -26,7 +27,7 @@ class AgregadoBatalla
 
     private BattleLog $log;
 
-    private ?DTOAccionBatalla $pendingAction = null;
+    private DTOAccionBatalla|DTOAccionObjeto|null $pendingAction = null;
 
     private TipoClima $weather = TipoClima::NONE;
 
@@ -46,6 +47,13 @@ class AgregadoBatalla
     private int $rondaPreparada = 0;
 
     private int $trickRoomTurnos = 0;
+
+    /**
+     * Id del combatiente cuyo turno está activo. Se fija en servidor al avanzar
+     * el turno y permite autorizar acciones sin confiar en propiedades
+     * públicas de Livewire. El default cubre payloads de sesión anteriores.
+     */
+    private ?string $actorActualId = null;
 
     /**
      * Secuencia para generar ids únicos de invocaciones. Se serializa con el
@@ -100,14 +108,24 @@ class AgregadoBatalla
         return $this->log;
     }
 
-    public function pendingAction(): ?DTOAccionBatalla
+    public function pendingAction(): DTOAccionBatalla|DTOAccionObjeto|null
     {
         return $this->pendingAction;
     }
 
-    public function setPendingAction(?DTOAccionBatalla $pendingAction): void
+    public function setPendingAction(DTOAccionBatalla|DTOAccionObjeto|null $pendingAction): void
     {
         $this->pendingAction = $pendingAction;
+    }
+
+    public function actorActualId(): ?string
+    {
+        return $this->actorActualId;
+    }
+
+    public function setActorActualId(?string $id): void
+    {
+        $this->actorActualId = $id;
     }
 
     public function weather(): TipoClima

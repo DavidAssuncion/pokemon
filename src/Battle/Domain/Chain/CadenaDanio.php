@@ -25,6 +25,7 @@ class CadenaDanio
             new ManejadorTerreno(),
             new ManejadorHabilidadesAtaque(),
             new ManejadorHabilidadesDefensa(),
+            new ManejadorResistenciaTemporal(),
             new ManejadorMarcado(),
             new ManejadorEquipo(),
             new ManejadorObjetosEquipados(),

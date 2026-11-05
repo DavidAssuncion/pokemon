@@ -11,6 +11,7 @@ use Src\Exploraciones\Domain\Recompensas\ResultadoRecompensas;
 use Src\Shared\Domain\Collections\ItemCarameloCollection;
 use Src\Shared\Domain\DataTransferObjects\ItemCaramelo;
 use Src\Shared\Domain\DataTransferObjects\ItemResuelto;
+use Src\Shared\Domain\Items\CatalogoItems;
 use Src\Shared\Domain\SlugTipo;
 
 /**
@@ -101,6 +102,15 @@ final class ItemCatalogo
 
         if (str_starts_with($itemKey, 'tipo:')) {
             return self::resolverTipo(substr($itemKey, 5));
+        }
+
+        $definicion = CatalogoItems::aPartirDeItemKey($itemKey);
+        if ($definicion !== null) {
+            return new ItemResuelto(
+                nombre: $definicion->nombre,
+                imagen: $definicion->icono,
+                categoria: $definicion->categoria->value,
+            );
         }
 
         return self::desconocido();

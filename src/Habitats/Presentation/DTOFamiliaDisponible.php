@@ -40,7 +40,7 @@ class DTOFamiliaDisponible
     /**
      * Frontera: retorna el array esperado por la API / blades.
      *
-     * @return array{evolution_chain_id: int, base: array{id: int, name: string, icon: string, level: int}, evolutions: array<int, array{id: int, name: string, icon: string, level: int}>, types: array<int, array{id: int, name: string}>}
+     * @return array{evolution_chain_id: int, base: array{id: int, name: string, icon: string, level?: int, stage: int, parent_id: int|null, species_id: int}, evolutions: list<array{id: int, name: string, icon: string, level?: int, stage: int, parent_id: int|null, species_id: int}>, types: array<int, array{id: int, name: string}>}
      */
     public function toArray(): array
     {

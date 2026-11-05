@@ -96,6 +96,7 @@ final class ResolvedorCadenasEvolutivas
                 icono: ($this->iconPath)($p->id),
                 stage: $familia->stageDe($p->id) ?? 3,
                 speciesId: $p->speciesId,
+                parentId: $familia->porId($p->id)?->parentId,
             ));
         }
 

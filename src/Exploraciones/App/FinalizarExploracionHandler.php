@@ -13,14 +13,22 @@ use Closure;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Collection as BaseCollection;
 use LogicException;
+use Src\Exploraciones\Domain\CalculadorBotinExploracion;
 use Src\Exploraciones\Domain\CalculadorFinExploracion;
 use Src\Exploraciones\Domain\CalculadorRecompensas;
+use Src\Exploraciones\Domain\CalculadorVueltaExploracion;
+use Src\Exploraciones\Domain\ContextoBotin;
 use Src\Exploraciones\Domain\EconomiaRecompensas;
 use Src\Exploraciones\Domain\EvaluadorExploracion;
+use Src\Exploraciones\Domain\ModoExploracion;
+use Src\Exploraciones\Domain\PerfilExploracion;
+use Src\Exploraciones\Domain\Ports\ConsultorPlantaciones;
 use Src\Exploraciones\Domain\Recompensas\PokemonDerrotado;
 use Src\Exploraciones\Domain\Recompensas\RecompensaCaptura;
 use Src\Exploraciones\Domain\Recompensas\RecompensaEv;
 use Src\Exploraciones\Domain\Recompensas\RecompensaFamilia;
+use Src\Exploraciones\Domain\Recompensas\RecompensaItem;
+use Src\Exploraciones\Domain\Recompensas\RecompensaItemCollection;
 use Src\Exploraciones\Domain\Recompensas\RecompensaTipo;
 use Src\Exploraciones\Domain\Recompensas\ResultadoRecompensas;
 use Src\Exploraciones\Domain\ValueObjects\ColeccionEventosExploracion;
@@ -33,6 +41,9 @@ use Src\Granjas\Domain\Collections\RefugiosHabitatCollection;
 use Src\Shared\Bus\Command;
 use Src\Shared\Bus\CommandHandler;
 use Src\Shared\Bus\UnitOfWork;
+use Src\Shared\Domain\Items\CatalogoItems;
+use Src\Shared\Domain\Items\CategoriaItem;
+use Src\Shared\Domain\Items\ClaveBonguri;
 use Src\Shared\Domain\ProbabilidadCaptura;
 use Src\Shared\Domain\Sendas\MapaSendaJugador;
 use Src\Shared\Domain\Sendas\PoliticaSenda;
@@ -65,6 +76,8 @@ final class FinalizarExploracionHandler implements CommandHandler
         private readonly TransformadorResultadoExploracion $transformador,
         ?callable $aleatorio = null,
         private readonly ?ResolverBonosFamilia $bonosFamilia = null,
+        private readonly ?ConsultorPlantaciones $consultorPlantaciones = null,
+        private readonly ?EsDelHabitat $esDelHabitat = null,
     ) {
         $this->aleatorio = $aleatorio !== null ? Closure::fromCallable($aleatorio) : null;
     }
@@ -102,6 +115,7 @@ final class FinalizarExploracionHandler implements CommandHandler
 
         $categoria = EvaluadorExploracion::categoriaFinalDeEventos($bitacoraEventos);
         $multiplicador = EvaluadorExploracion::multiplicador($categoria);
+        $perfil = PerfilExploracion::de(ModoExploracion::desde($exploracion->modo));
 
         $this->repartirRecompensas(
             $exploracion,
@@ -113,6 +127,7 @@ final class FinalizarExploracionHandler implements CommandHandler
             $eventos,
             $categoria,
             $multiplicador,
+            $perfil,
             $this->aleatorio,
         );
 
@@ -143,6 +158,7 @@ final class FinalizarExploracionHandler implements CommandHandler
         BaseCollection $eventos,
         string $categoria,
         float $multiplicador,
+        PerfilExploracion $perfil,
         ?callable $aleatorio = null,
     ): void {
         $usuario = $exploracion->user;
@@ -154,13 +170,23 @@ final class FinalizarExploracionHandler implements CommandHandler
 
         $economia = EconomiaRecompensas::individual();
         $senda = app(CargarMapaSendaJugador::class)->para($exploracion->user_id);
+        $multiplicadorCaramelos = $multiplicador * $perfil->multiplicadorCaramelos;
+        $multiplicadorExp = $multiplicador * $perfil->multiplicadorExp;
 
         $recompensas = $this->calculador->calcular(
             $derrotados,
-            $this->rollAleatorio($aleatorio, $bonos, $refugios, $senda, nivelHabitat: $exploracion->nivel),
+            $this->rollAleatorio(
+                $aleatorio,
+                $bonos,
+                $refugios,
+                $senda,
+                nivelHabitat: $exploracion->nivel,
+                factorModo: $perfil->factorCaptura,
+            ),
             $usuario !== null ? $usuario->nivel() : 1,
-            $multiplicador,
+            $multiplicadorCaramelos,
             $economia,
+            multiplicadorExp: $multiplicadorExp,
             senda: $senda,
         );
 
@@ -175,7 +201,7 @@ final class FinalizarExploracionHandler implements CommandHandler
         $caramelosHallazgos = $this->calculador->calcularHallazgosDeEventos(
             $hallazgos,
             $this->chainPorPokemonDeEventos($hallazgos, $pokemons),
-            $this->multiplicadorCaramelosEquipo($exploracion, $multiplicador, $economia->factor),
+            $this->multiplicadorCaramelosEquipo($exploracion, $multiplicadorCaramelos, $economia->factor),
             $this->bonusCaramelosRecoleccion($exploracion),
         );
         $recompensas = $recompensas->sumarHallazgos(
@@ -183,6 +209,12 @@ final class FinalizarExploracionHandler implements CommandHandler
             $caramelosHallazgos->caramelosEv,
             $caramelosHallazgos->caramelosTipo,
         );
+
+        // Botín (bayas + bonguri del hábitat): se suma antes de calcular las
+        // pérdidas para que la derrota también reduzca lo encontrado. El flag
+        // de hábitat se resuelve una vez y se reutiliza al persistir.
+        $delHabitat = $this->delHabitat($exploracion, $eventos);
+        $recompensas = $recompensas->sumarBotin($this->botin($exploracion, $perfil, $bitacora, $eventos, $delHabitat));
 
         // Derrota → pérdida de objetos: intdiv(cantidad, 2) de cada recompensa
         // (familia/EV/tipo/capturas), restado de las recompensas finales. Una
@@ -211,6 +243,7 @@ final class FinalizarExploracionHandler implements CommandHandler
             $tiempoPerdido,
             $this->incidentes($bitacora),
             $eventos,
+            $delHabitat,
         );
 
         $exploracion->update(['regreso' => now(), 'eventos' => $eventos]);
@@ -483,8 +516,10 @@ final class FinalizarExploracionHandler implements CommandHandler
      * La probabilidad base (cap 25 %) recibe el factor de hábitat 1,0 / 0,5 /
      * 0,3, el de refugio y el de Senda; todos se aplican a la probabilidad
      * final (no al capture_rate) y el resultado se topa en 30 %. Sin tipos el
-     * factor de Senda vale 1,0. La captura NO recibe el factor 0.5 de la
-     * economía individual: ese factor solo reduce EXP y caramelos.
+     * factor de Senda vale 1,0. `$factorModo` (factor de captura del modo de
+     * exploración) se multiplica con el factor de Senda antes del cap; el cap
+     * de 30 % se mantiene. La captura NO recibe el factor 0.5 de la economía
+     * individual: ese factor solo reduce EXP y caramelos.
      *
      * @param  callable():float|null  $aleatorio
      */
@@ -494,6 +529,7 @@ final class FinalizarExploracionHandler implements CommandHandler
         ?RefugiosHabitatCollection $refugios = null,
         ?MapaSendaJugador $senda = null,
         ?int $nivelHabitat = null,
+        float $factorModo = 1.0,
     ): callable {
         $aleatorio ??= fn (): float => mt_rand(1, 100) / 100;
 
@@ -504,7 +540,7 @@ final class FinalizarExploracionHandler implements CommandHandler
             default => 1.0,
         };
 
-        return function (PokemonDerrotado $pokemon) use ($aleatorio, $bonos, $refugios, $senda, $factorHabitat): bool {
+        return function (PokemonDerrotado $pokemon) use ($aleatorio, $bonos, $refugios, $senda, $factorHabitat, $factorModo): bool {
             $factorRefugio = 1.0;
             if ($bonos !== null && $refugios !== null && $pokemon->evolutionChainId !== null) {
                 $factorRefugio = $bonos->factorCaptura($refugios, $pokemon->evolutionChainId);
@@ -519,7 +555,7 @@ final class FinalizarExploracionHandler implements CommandHandler
                 $factorHabitat,
                 $factorRefugio,
                 $aleatorio,
-                $factorSenda,
+                $factorSenda * $factorModo,
             );
         };
     }
@@ -566,6 +602,7 @@ final class FinalizarExploracionHandler implements CommandHandler
         int $tiempoPerdido,
         DTOIncidentesExploracion $incidentes,
         BaseCollection $eventos,
+        bool $delHabitat,
     ): void {
         $eventos->put('derrotados', $idsDerrotados);
         $eventos->put('resultado', $this->transformador->desde(
@@ -576,6 +613,7 @@ final class FinalizarExploracionHandler implements CommandHandler
             durationReal: $durationReal,
             tiempoPerdido: $tiempoPerdido,
             incidentes: $incidentes->toArray(),
+            bonos: ['del_habitat' => $delHabitat],
         ));
 
         $exploracion->eventos = $eventos;
@@ -604,9 +642,98 @@ final class FinalizarExploracionHandler implements CommandHandler
     }
 
     /**
+     * Calcula el botín de items de la expedición según el modo. El bonguri
+     * entregable es el del hábitat (con fallback al blanco si el hábitat no
+     * tiene color asignado). El botín se escala por el `multiplicadorBotin`
+     * del modo y por el factor de tiempo efectivo de la expedición (evita el
+     * farmeo instantáneo).
+     *
+     * F3: los factores de plantación de `(user_id, habitat_id)` solo afectan
+     * al peso de las bayas salvajes; `delHabitat` aplica el bonus de Pokémon
+     * nativo a tiradas de baya y bonguri.
+     *
+     * @param  list<array<string, mixed>>  $bitacora
+     * @param  BaseCollection<string, mixed>  $eventos
+     */
+    private function botin(
+        ExploracionActiva $exploracion,
+        PerfilExploracion $perfil,
+        array $bitacora,
+        BaseCollection $eventos,
+        bool $delHabitat,
+    ): RecompensaItemCollection {
+        $consultor = $this->consultorPlantaciones ?? app(ConsultorPlantaciones::class);
+
+        return (new CalculadorBotinExploracion())->calcular(new ContextoBotin(
+            modo: $perfil->modo,
+            bonguriHabitat: ClaveBonguri::tryFrom($exploracion->habitat->bonguri ?? '')
+                ?? ClaveBonguri::porDefecto(),
+            nivelHabitat: $exploracion->nivel,
+            duracionHoras: $exploracion->duracion_horas ?? 0,
+            delHabitat: $delHabitat,
+            huboDerrota: $this->terminoPorDerrota($bitacora, $eventos),
+            multiplicadorBotin: $perfil->multiplicadorBotin,
+            factorTiempo: $this->factorTiempo($exploracion),
+            factoresPlantacion: $consultor->factoresPara(
+                $exploracion->user_id,
+                $exploracion->habitat_id,
+            ),
+        ));
+    }
+
+    /**
+     * Flag “Pokémon nativo del hábitat”. Se reutiliza el valor persistido por
+     * el tick (`eventos['bonos']['del_habitat']`); si falta (finalización sin
+     * tick previo), se calcula una única vez con `EsDelHabitat`.
+     *
+     * @param  BaseCollection<string, mixed>  $eventos
+     */
+    private function delHabitat(ExploracionActiva $exploracion, BaseCollection $eventos): bool
+    {
+        $bonos = $eventos->get('bonos');
+
+        if (is_array($bonos) && array_key_exists('del_habitat', $bonos)) {
+            return (bool) $bonos['del_habitat'];
+        }
+
+        $reclutado = $exploracion->reclutado;
+
+        if ($reclutado === null) {
+            return false;
+        }
+
+        return ($this->esDelHabitat ?? app(EsDelHabitat::class))
+            ->handle($reclutado->pokemon_id, $exploracion->habitat_id);
+    }
+
+    /**
+     * Fracción del botín nominal que corresponde al tiempo efectivo de la
+     * expedición. La base es el inicio de la vuelta (75 % de la duración); una
+     * expedición indefinida usa 60 minutos. Una recogida forzada antes de
+     * tiempo recibe botín proporcional a los minutos transcurridos. El
+     * resultado se acota a [0, 1].
+     */
+    private function factorTiempo(ExploracionActiva $exploracion): float
+    {
+        $inicio = $exploracion->inicio_exploracion ?? $exploracion->created_at ?? now();
+        $fin = CalculadorFinExploracion::calcular(
+            $exploracion->hora_limite,
+            $exploracion->duracion_horas,
+            $inicio,
+        );
+        $inicioVuelta = CalculadorVueltaExploracion::inicioVuelta($inicio, $fin);
+        $base = $inicioVuelta !== null
+            ? max(1, (int) abs($inicioVuelta->diffInMinutes($inicio)))
+            : 60;
+        $minutos = max(0, (int) abs($inicio->diffInMinutes(now())));
+
+        return min(1.0, $minutos / $base);
+    }
+
+    /**
      * Calcula la pérdida de objetos por derrota: intdiv(cantidad, 2) de cada
-     * recompensa (familia/EV/tipo/capturas). Una cantidad 1 pierde 0. Si no hay
-     * derrota, devuelve [].
+     * recompensa (familia/EV/tipo/capturas/items). Una cantidad 1 pierde 0. Si
+     * no hay derrota, devuelve [].
      *
      * @param  list<array<string, mixed>>  $bitacora
      * @param  BaseCollection<string, mixed>  $eventos
@@ -672,7 +799,31 @@ final class FinalizarExploracionHandler implements CommandHandler
             );
         }
 
+        foreach ($recompensas->items->all() as $item) {
+            $perdida = intdiv($item->cantidad, 2);
+            if ($perdida <= 0) {
+                continue;
+            }
+            $perdidas[] = new DTOObjetoPerdido(
+                tipo: $this->tipoDeItem($item->clave),
+                id: $item->clave,
+                label: CatalogoItems::definicion($item->clave)->nombre,
+                cantidad_perdida: $perdida,
+            );
+        }
+
         return $perdidas;
+    }
+
+    /**
+     * Categoría de pérdida de un item de inventario según el prefijo de su
+     * clave (`baya:` / `bonguri:`).
+     */
+    private function tipoDeItem(string $clave): string
+    {
+        return str_starts_with($clave, CategoriaItem::BAYA->prefijo())
+            ? CategoriaItem::BAYA->value
+            : CategoriaItem::BONGURI->value;
     }
 
     /**
@@ -693,6 +844,15 @@ final class FinalizarExploracionHandler implements CommandHandler
 
             return max(0, $cantidad - $perdida);
         };
+
+        $items = [];
+        foreach ($recompensas->items->all() as $item) {
+            $cantidad = $reducir($item->cantidad, $item->clave, $this->tipoDeItem($item->clave));
+
+            if ($cantidad > 0) {
+                $items[] = new RecompensaItem($item->clave, $cantidad);
+            }
+        }
 
         return new ResultadoRecompensas(
             capturas: $recompensas->capturas
@@ -724,6 +884,7 @@ final class FinalizarExploracionHandler implements CommandHandler
             expPorMiembro: $recompensas->expPorMiembro,
             expTipoPorMiembro: $recompensas->expTipoPorMiembro,
             expTipoCuenta: $recompensas->expTipoCuenta,
+            items: new RecompensaItemCollection($items),
         );
     }
 }
