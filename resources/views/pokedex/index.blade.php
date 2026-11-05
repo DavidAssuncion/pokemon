@@ -268,7 +268,7 @@
             <!-- Backdrop -->
             <div class="absolute inset-0 scrim" @click="closeDetail()"></div>
             <!-- Modal content -->
-            <div class="relative flex max-h-[90vh] w-full max-w-3xl flex-col overflow-hidden rounded-panel bg-surface-raised shadow-modal lg:max-w-4xl">
+            <div class="relative flex max-h-[94vh] w-[90vw] max-w-[90vw] flex-col overflow-hidden rounded-panel bg-surface-raised shadow-modal">
                 <!-- Close button -->
                 <button
                     @click="closeDetail()"
@@ -282,50 +282,108 @@
 
                 <!-- Header -->
                 <div class="shrink-0 border-b border-line p-5 pr-12 sm:p-6 sm:pr-12">
-                    <div class="flex items-start gap-4">
-                        <div class="w-20 h-20 sm:w-32 sm:h-32 shrink-0 rounded-card bg-surface-sunken flex items-center justify-center overflow-hidden">
-                            <template x-if="!selectedPokemon.visto && !unlockAll">
-                                <span class="text-2xl font-bold text-ink-subtle select-none" aria-hidden="true">?</span>
-                            </template>
-                            <template x-if="selectedPokemon.visto || unlockAll">
-                                <x-sprite
-                                    size="128"
-                                    loading="eager"
-                                    x-bind:src="iconUrl(selectedPokemon)"
-                                    x-bind:alt="selectedPokemon.name"
-                                    x-on:error="onIconError($event, selectedPokemon)"
-                                />
-                            </template>
-                        </div>
-                        <div class="flex-1 min-w-0">
-                            <p class="text-xs text-ink-subtle" x-text="'#' + selectedPokemon.id"></p>
-                            <h2 id="pokedex-modal-title" class="truncate text-xl font-bold text-ink" x-text="(selectedPokemon.visto || unlockAll) ? selectedPokemon.name : '???'"></h2>
-                            <div class="mt-2 flex flex-wrap items-center gap-2">
-                                <template x-for="t in typePills" :key="t.slug + '-' + t.id">
-                                    <span
-                                        class="tipo-badge shrink-0 py-0.5 pl-0 pr-2"
-                                        :style="'--type-color: ' + tipoBadge(t.slug).color"
-                                    >
-                                        <img
-                                            :src="t.icon"
-                                            alt=""
-                                            class="w-6 h-6 object-contain"
-                                            loading="lazy"
-                                            decoding="async"
-                                        >
-                                        <span x-text="t.label"></span>
-                                    </span>
+                    <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:gap-6">
+                        <!-- Identidad -->
+                        <div class="flex min-w-0 flex-1 items-start gap-4">
+                            <div class="w-20 h-20 sm:w-32 sm:h-32 shrink-0 rounded-card bg-surface-sunken flex items-center justify-center overflow-hidden">
+                                <template x-if="!selectedPokemon.visto && !unlockAll">
+                                    <span class="text-2xl font-bold text-ink-subtle select-none" aria-hidden="true">?</span>
                                 </template>
-                                <template x-if="selectedPokemon.atrapado">
-                                    <span class="inline-block px-3 py-1 bg-success-soft text-success-ink text-xs font-medium rounded-full">
-                                        Atrapado
-                                    </span>
+                                <template x-if="selectedPokemon.visto || unlockAll">
+                                    <x-sprite
+                                        size="128"
+                                        loading="eager"
+                                        x-bind:src="iconUrl(selectedPokemon)"
+                                        x-bind:alt="selectedPokemon.name"
+                                        x-on:error="onIconError($event, selectedPokemon)"
+                                    />
                                 </template>
                             </div>
+                            <div class="flex-1 min-w-0">
+                                <p class="text-xs text-ink-subtle" x-text="'#' + selectedPokemon.id"></p>
+                                <h2 id="pokedex-modal-title" class="truncate text-xl font-bold text-ink" x-text="(selectedPokemon.visto || unlockAll) ? selectedPokemon.name : '???'"></h2>
+                                <div class="mt-2 flex flex-wrap items-center gap-2">
+                                    <template x-for="t in typePills" :key="t.slug + '-' + t.id">
+                                        <span
+                                            class="tipo-badge shrink-0 py-0.5 pl-0 pr-2"
+                                            :style="'--type-color: ' + tipoBadge(t.slug).color"
+                                        >
+                                            <img
+                                                :src="t.icon"
+                                                alt=""
+                                                class="w-6 h-6 object-contain"
+                                                loading="lazy"
+                                                decoding="async"
+                                            >
+                                            <span x-text="t.label"></span>
+                                        </span>
+                                    </template>
+                                    <template x-if="selectedPokemon.atrapado">
+                                        <span class="inline-block px-3 py-1 bg-success-soft text-success-ink text-xs font-medium rounded-full">
+                                            Atrapado
+                                        </span>
+                                    </template>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Ubicación -->
+                        <div
+                            x-show="detail && !detailLoading && (selectedPokemon.visto || unlockAll)"
+                            :class="ubicacionesDetalle.length ? 'lg:w-72' : ''"
+                            class="flex flex-col gap-3 lg:ml-auto lg:mr-1 lg:shrink-0"
+                        >
+                            <template x-for="(loc, index) in ubicacionesDetalle" :key="'ubicacion-' + loc.habitat_id">
+                                <div class="flex min-w-0 items-start gap-3">
+                                    <div class="flex min-w-0 flex-1 flex-col gap-1.5">
+                                        <p
+                                            class="truncate text-3xs uppercase tracking-wide text-ink-subtle"
+                                            x-show="loc.province_name"
+                                            x-text="loc.province_name"
+                                        ></p>
+                                        <p class="truncate text-sm font-semibold text-ink" x-text="loc.habitat_name"></p>
+                                        <template x-if="index === 0">
+                                            <a
+                                                :href="loc.url"
+                                                :aria-label="'Ir al hábitat ' + loc.habitat_name"
+                                                :title="'Ir al hábitat ' + loc.habitat_name"
+                                                class="inline-flex items-center gap-1 self-start rounded-control bg-primary px-2.5 py-1.5 text-xs font-medium text-on-primary transition-colors hover:bg-primary-hover focus-ring"
+                                            >
+                                                Ir al hábitat
+                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                                                </svg>
+                                            </a>
+                                        </template>
+                                        <template x-if="index > 0">
+                                            <a
+                                                :href="loc.url"
+                                                :aria-label="'Ir al hábitat ' + loc.habitat_name"
+                                                :title="'Ir al hábitat ' + loc.habitat_name"
+                                                class="inline-flex items-center gap-1 self-start text-2xs font-medium text-primary-ink hover:underline focus-ring"
+                                            >
+                                                Ir al hábitat
+                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                                                </svg>
+                                            </a>
+                                        </template>
+                                    </div>
+                                    <template x-if="index === 0">
+                                        <img
+                                            :src="loc.habitat_image"
+                                            alt=""
+                                            loading="lazy"
+                                            decoding="async"
+                                            class="w-24 max-w-32 sm:w-28 lg:w-32 shrink-0 aspect-[4/3] rounded-card border border-line bg-surface-sunken object-cover"
+                                        >
+                                    </template>
+                                </div>
+                            </template>
+                            <p x-show="ubicacionesDetalle.length === 0" class="text-xs italic text-ink-muted">Sin hábitat asignado.</p>
                         </div>
                     </div>
                 </div>
-
                 <!-- Detail body -->
                 <div class="min-h-0 flex-1 overflow-y-auto p-5 sm:p-6" :aria-busy="detailLoading ? 'true' : 'false'">
                     <!-- Loading skeleton -->
@@ -421,7 +479,7 @@
                                     </template>
                                 </div>
 
-                                <!-- Columna derecha: stats, especie y ubicación -->
+                                <!-- Columna derecha: stats y especie -->
                                 <div class="space-y-4 md:col-span-2">
                                     <!-- Stats base -->
                                     <template x-if="detail.stats && detail.stats.length > 0">
@@ -477,41 +535,6 @@
                                             </dl>
                                         </div>
                                     </template>
-
-                                    <!-- Ubicación -->
-                                    <div class="rounded-panel border border-line bg-surface-sunken p-4">
-                                        <h3 class="text-sm font-bold uppercase tracking-wide text-ink-muted mb-2">Ubicación</h3>
-                                        <template x-if="(detail.locations || (detail.location ? [detail.location] : [])).length > 0">
-                                            <div class="space-y-3">
-                                                <template x-for="loc in (detail.locations || (detail.location ? [detail.location] : []))" :key="loc.habitat_id">
-                                                    <div class="overflow-hidden rounded-card border border-line bg-surface">
-                                                        <template x-if="loc.province_name">
-                                                            <p class="px-3 pt-2 text-3xs uppercase tracking-wide text-ink-subtle" x-text="loc.province_name"></p>
-                                                        </template>
-                                                        <img
-                                                            :src="loc.habitat_image"
-                                                            :alt="'Hábitat ' + loc.habitat_name"
-                                                            loading="lazy"
-                                                            decoding="async"
-                                                            class="w-full aspect-[16/9] object-contain bg-surface-sunken"
-                                                        >
-                                                        <div class="flex items-center justify-between gap-3 p-3">
-                                                            <p class="text-sm font-medium text-ink" x-text="loc.habitat_name"></p>
-                                                            <a
-                                                                :href="loc.url"
-                                                                class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-control bg-primary text-on-primary text-xs font-medium hover:bg-primary-hover transition-colors focus-ring"
-                                                            >
-                                                                Ir al hábitat
-                                                            </a>
-                                                        </div>
-                                                    </div>
-                                                </template>
-                                            </div>
-                                        </template>
-                                        <template x-if="!(detail.locations || (detail.location ? [detail.location] : [])).length">
-                                            <p class="text-sm text-ink-muted italic">Sin hábitat asignado.</p>
-                                        </template>
-                                    </div>
                                 </div>
                             </div>
 
@@ -640,6 +663,16 @@ function pokedexApp() {
                 const badge = window.tipoBadge(tipo);
                 return { id: badge.slug, label: badge.label, slug: badge.slug, icon: badge.icono };
             });
+        },
+
+        get ubicacionesDetalle() {
+            if (!this.detail) {
+                return [];
+            }
+            if (Array.isArray(this.detail.locations) && this.detail.locations.length > 0) {
+                return this.detail.locations;
+            }
+            return this.detail.location ? [this.detail.location] : [];
         },
 
         get familyStages() {
