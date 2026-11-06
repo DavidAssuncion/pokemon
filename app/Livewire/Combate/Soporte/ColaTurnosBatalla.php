@@ -13,6 +13,11 @@ use Src\Battle\Domain\Combatiente;
  */
 final class ColaTurnosBatalla
 {
+    public function __construct(
+        private readonly ResolutorPosicionCombatiente $posiciones,
+    ) {
+    }
+
     /**
      * @param  list<array<string, mixed>>  $team1
      * @param  list<array<string, mixed>>  $team2
@@ -50,29 +55,10 @@ final class ColaTurnosBatalla
         });
 
         return array_map(
-            fn (Combatiente $c) => $this->posicion($c, $team1, $team2) ?? ['team' => 0, 'index' => 0],
+            fn (Combatiente $c) => $this->posiciones->localizar($c, $team1, $team2)?->aArray()
+                ?? ['team' => 0, 'index' => 0],
             $pendientes,
         );
     }
 
-    /**
-     * @param  list<array<string, mixed>>  $team1
-     * @param  list<array<string, mixed>>  $team2
-     * @return array{team: int, index: int}|null
-     */
-    private function posicion(Combatiente $target, array $team1, array $team2): ?array
-    {
-        foreach ($team1 as $i => $p) {
-            if ($p['refId'] === $target->id()) {
-                return ['team' => 0, 'index' => $i];
-            }
-        }
-        foreach ($team2 as $i => $p) {
-            if ($p['refId'] === $target->id()) {
-                return ['team' => 1, 'index' => $i];
-            }
-        }
-
-        return null;
-    }
 }

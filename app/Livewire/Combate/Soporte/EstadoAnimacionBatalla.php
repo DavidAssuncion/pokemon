@@ -15,27 +15,24 @@ use Src\Battle\Domain\MovimientoBatalla;
 final class EstadoAnimacionBatalla
 {
     public function paraMovimiento(
-        int $tickActual,
         Combatiente $actor,
         Combatiente $objetivo,
         MovimientoBatalla $movimiento,
     ): AnimacionBatalla {
-        return $this->crear($tickActual, $actor, $objetivo, $movimiento->nombre);
+        return $this->crear($actor, $objetivo, $movimiento->nombre);
     }
 
     public function paraObjeto(
-        int $tickActual,
         Combatiente $actor,
         Combatiente $objetivo,
         string $itemNombre,
     ): AnimacionBatalla {
-        return $this->crear($tickActual, $actor, $objetivo, $itemNombre);
+        return $this->crear($actor, $objetivo, $itemNombre);
     }
 
-    public function reiniciada(int $tickActual): AnimacionBatalla
+    public function reiniciada(): AnimacionBatalla
     {
         return new AnimacionBatalla(
-            tick: $tickActual,
             attackerId: '',
             attackerNombre: '',
             defenderId: '',
@@ -45,7 +42,6 @@ final class EstadoAnimacionBatalla
     }
 
     private function crear(
-        int $tickActual,
         Combatiente $actor,
         Combatiente $objetivo,
         string $moveNombre,
@@ -54,7 +50,6 @@ final class EstadoAnimacionBatalla
         $autodirigido = $objetivo->id() === $actor->id();
 
         return new AnimacionBatalla(
-            tick: $tickActual,
             attackerId: $actor->id(),
             attackerNombre: $actor->nombre(),
             defenderId: $autodirigido ? '' : $objetivo->id(),

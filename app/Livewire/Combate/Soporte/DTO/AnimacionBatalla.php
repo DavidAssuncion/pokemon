@@ -10,7 +10,6 @@ namespace App\Livewire\Combate\Soporte\DTO;
 final readonly class AnimacionBatalla
 {
     public function __construct(
-        public int $tick,
         public string $attackerId,
         public string $attackerNombre,
         public string $defenderId,

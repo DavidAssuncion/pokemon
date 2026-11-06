@@ -321,12 +321,6 @@ $ignoreErrors[] = [
 	'path' => __DIR__ . '/app/Livewire/Combate.php',
 ];
 $ignoreErrors[] = [
-	'message' => '#^Method App\\\\Livewire\\\\Combate\\:\\:findPokemonViewData\\(\\) return type has no value type specified in iterable type array\\.$#',
-	'identifier' => 'missingType.iterableValue',
-	'count' => 1,
-	'path' => __DIR__ . '/app/Livewire/Combate.php',
-];
-$ignoreErrors[] = [
 	'message' => '#^Only booleans are allowed in a negated boolean, Src\\\\Battle\\\\Domain\\\\Combatiente\\|null given\\.$#',
 	'identifier' => 'booleanNot.exprNotBoolean',
 	'count' => 1,

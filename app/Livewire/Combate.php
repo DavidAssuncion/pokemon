@@ -8,6 +8,8 @@ use App\Livewire\Combate\Soporte\ColaTurnosBatalla;
 use App\Livewire\Combate\Soporte\DTO\SnapshotBatalla;
 use App\Livewire\Combate\Soporte\EstadoAnimacionBatalla;
 use App\Livewire\Combate\Soporte\GrabadorEventosBatalla;
+use App\Livewire\Combate\Soporte\ResolutorAccionBatalla;
+use App\Livewire\Combate\Soporte\ResolutorPosicionCombatiente;
 use App\Livewire\Combate\Soporte\SincronizadorVistaBatalla;
 use App\Livewire\Presenters\BatallaVistaPresenter;
 use App\Livewire\Presenters\MovesPreviewPresenter;
@@ -16,7 +18,6 @@ use App\Support\BattleSessionService;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
 use Src\Battle\App\UsarObjetoEnCombate;
-use Src\Battle\Domain\AccionBatalla;
 use Src\Battle\Domain\AccionObjeto;
 use Src\Battle\Domain\AgregadoBatalla;
 use Src\Battle\Domain\Combatiente;
@@ -25,7 +26,6 @@ use Src\Battle\Domain\Enums\ClaveCondicion;
 use Src\Battle\Domain\Enums\FaseCombate;
 use Src\Battle\Domain\Enums\ObjetivoMovimiento;
 use Src\Battle\Domain\Enums\PosturaCombate;
-use Src\Battle\Domain\EquipoBatalla;
 use Src\Battle\Domain\FabricaBatallaInterface;
 use Src\Battle\Domain\MovimientoBatalla;
 use Src\Battle\Domain\ServicioEjecucionBatalla;
@@ -123,6 +123,10 @@ class Combate extends Component
 
     private EstadoAnimacionBatalla $estadoAnimacion;
 
+    private ResolutorAccionBatalla $resolutorAccion;
+
+    private ResolutorPosicionCombatiente $resolutorPosicion;
+
     private bool $grabandoEventos = false;
 
     private ?string $forzarSiguienteActorId = null;
@@ -149,7 +153,9 @@ class Combate extends Component
         $this->session ??= app(BattleSessionService::class);
         $this->grabadorEventos ??= new GrabadorEventosBatalla();
         $this->sincronizadorVista ??= app(SincronizadorVistaBatalla::class);
-        $this->colaTurnos ??= new ColaTurnosBatalla();
+        $this->resolutorAccion ??= new ResolutorAccionBatalla($this->grabadorEventos);
+        $this->resolutorPosicion ??= new ResolutorPosicionCombatiente();
+        $this->colaTurnos ??= new ColaTurnosBatalla($this->resolutorPosicion);
         $this->estadoAnimacion ??= new EstadoAnimacionBatalla();
     }
 
@@ -319,16 +325,16 @@ class Combate extends Component
         }
 
         $this->syncViewData($battle, $actor);
-        $actorView = $this->findPokemonViewData($actor);
+        $posicion = $this->resolutorPosicion->localizar($actor, $this->team1, $this->team2);
 
-        if ($actorView === null) {
+        if ($posicion === null) {
             $this->session->guardar($this->battleId, $battle);
             $this->processing = false;
 
             return;
         }
 
-        $isPlayer = $actorView['team'] === 0;
+        $isPlayer = $posicion->team === 0;
 
         if ($isPlayer) {
             $this->currentMoves = array_map(
@@ -664,72 +670,21 @@ class Combate extends Component
                 continue;
             }
 
-            $defenderTeam = $this->defenderTeam($battle, $objetivo);
-            $accion = new AccionBatalla(
-                attacker: $actor,
-                defender: $objetivo,
-                move: $movimiento,
-                defenderTeamHasVanguard: $defenderTeam->tieneVanguardiaViva(),
-                weather: $battle->weather(),
-                terreno: $battle->terreno(),
-            );
-
-            $actor->effects()->dispararInicioTurno($actor, $battle);
-            $resultado = $servicio->calcularYAplicarDano($accion, $battle);
-            $fallo = $resultado->golpes === 0 && $movimiento->perfil->turnosDanoDiferido <= 0;
             $isAi = $battle->team2->findCombatantById($actor->id()) !== null;
-            $this->log[] = ($isAi ? 'RIVAL PRIORIDAD: ' : 'PRIORIDAD: ').$servicio->generarLogMovimiento(
+            $resultadoAccion = $this->resolutorAccion->aplicarMovimiento(
+                $battle,
                 $actor,
                 $objetivo,
                 $movimiento,
-                $resultado->dano,
-                $resultado->directPct,
-                $defenderTeam->tieneVanguardiaViva(),
-            );
-            if ($fallo) {
-                $this->log[] = ($isAi ? 'RIVAL: ' : '')."¡{$movimiento->nombre} falla!";
-            }
-
-            $objetivos = $resultado->objetivos;
-            $antesEstado = $this->capturarEstado($battle);
-            foreach ($objetivos as $target) {
-                $servicio->aplicarEstado($target, $movimiento, $battle, $actor);
-            }
-            $cambiosEstado = $this->registrarCambiosDeEstadoEnLog(
-                $battle,
-                $antesEstado,
+                $servicio,
+                $isAi ? 'RIVAL PRIORIDAD: ' : 'PRIORIDAD: ',
                 $isAi ? 'RIVAL: ' : '',
+                false,
+                $this->eventoTick,
+                count($this->eventos) + 1,
             );
-            if ($cambiosEstado !== null) {
-                $this->log[] = $cambiosEstado;
-            }
-
-            if ($resultado->golpes > 0) {
-                $this->applyMoveStatChanges($actor, $movimiento, true);
-                foreach ($objetivos as $target) {
-                    $this->applyMoveStatChanges($target, $movimiento, false);
-                }
-            }
-
-            $battle->subject()->notifyDamaged($objetivo, $resultado->dano);
-            $objetivo->dispararDanioRecibido($resultado->dano, $battle);
-            $actor->dispararDanioInfligido($objetivo, $resultado->dano, $battle);
-            $turnos->consumeAction($actor);
-            $actor->consumirMovimiento($movimiento);
-            $actor->effects()->dispararFinTurno($actor, $battle);
-
-            if (! $objetivo->estaVivo()) {
-                $this->log[] = "¡{$objetivo->nombre()} se ha debilitado!";
-            }
-
-            $nuevosDebilitados = $battle->procesarDebilitamientos();
-            if ($nuevosDebilitados > 0 && $actor->estaVivo()) {
-                $actor->otorgarAccionExtra();
-            }
-
-            if (! $actor->estaVivo()) {
-                $this->log[] = "¡{$actor->nombre()} se ha debilitado!";
-            }
+            $this->log = array_merge($this->log, $resultadoAccion->log);
+            $this->eventos = array_merge($this->eventos, $resultadoAccion->eventos);
         }
 
         $this->syncViewData($battle);
@@ -888,109 +843,24 @@ class Combate extends Component
             $objetivo = $actor;
         }
 
-        $defenderTeam = $this->defenderTeam($battle, $objetivo);
-
-        // 1. Calcular y aplicar daño (servicio compartido)
+        // 1. Calcular y aplicar el movimiento (servicio compartido)
         $servicio = $this->servicioEjecucion ?? new ServicioEjecucionBatalla($battle->damageChain());
-
-        $accion = new AccionBatalla(
-            attacker: $actor,
-            defender: $objetivo,
-            move: $movimiento,
-            defenderTeamHasVanguard: $defenderTeam->tieneVanguardiaViva(),
-            weather: $battle->weather(),
-            terreno: $battle->terreno(),
-        );
-
-        $previo = $this->capturarEstado($battle);
-        $actor->effects()->dispararInicioTurno($actor, $battle);
-        $resultado = $servicio->calcularYAplicarDano($accion, $battle);
-        $fallo = $resultado->golpes === 0 && $movimiento->perfil->turnosDanoDiferido <= 0;
-        $actual = $this->capturarEstado($battle);
-
-        $this->registrarEvento('damage', $previo, $actual, [
-            'actorId' => $actor->id(),
-            'objetivoId' => $objetivo->id(),
-            'movimiento' => $movimiento->nombre,
-            'texto' => $fallo ? '¡Falló!' : '',
-            'forzar' => $fallo,
-        ]);
-        $previo = $actual;
-
-        $daño = $resultado->dano;
-        $directPct = $resultado->directPct;
-
-        // 2. Log de daño
         $isAi = $battle->team2->findCombatantById($pending->actorId) !== null;
         $prefix = $isAi ? 'RIVAL: ' : '';
-        $this->log[] = $prefix.$servicio->generarLogMovimiento(
+        $resultadoAccion = $this->resolutorAccion->aplicarMovimiento(
+            $battle,
             $actor,
             $objetivo,
             $movimiento,
-            $daño,
-            $directPct,
-            $defenderTeam->tieneVanguardiaViva(),
+            $servicio,
+            $prefix,
+            $prefix,
+            $this->grabandoEventos,
+            $this->eventoTick,
+            count($this->eventos) + 1,
         );
-        if ($fallo) {
-            $this->log[] = $prefix."¡{$movimiento->nombre} falla!";
-        }
-
-        // 3. Aplicar estado y cambios de estadísticas a todos los objetivos.
-        // El log y el evento se derivan del delta real de `status`, no del
-        // movimiento: el estado puede fallar la tirada o redirigirse.
-        $objetivos = $resultado->objetivos;
-        $antesEstado = $previo;
-        foreach ($objetivos as $target) {
-            $servicio->aplicarEstado($target, $movimiento, $battle, $actor);
-        }
-
-        $actual = $this->capturarEstado($battle);
-        $cambiosEstado = $this->registrarCambiosDeEstadoEnLog($battle, $antesEstado, $prefix);
-        if ($cambiosEstado !== null) {
-            $this->log[] = $cambiosEstado;
-        }
-
-        $this->registrarEvento('status', $antesEstado, $actual, [
-            'actorId' => $actor->id(),
-            'objetivoId' => $objetivo->id(),
-            'texto' => $cambiosEstado ?? '',
-        ]);
-        $previo = $actual;
-
-        if ($resultado->golpes > 0) {
-            $this->applyMoveStatChanges($actor, $movimiento, true);
-            foreach ($objetivos as $target) {
-                $this->applyMoveStatChanges($target, $movimiento, false);
-            }
-        }
-
-        // 4. Disparar eventos de efectos (items, habilidades, etc.)
-        $battle->subject()->notifyDamaged($objetivo, $daño);
-        $objetivo->dispararDanioRecibido($daño, $battle);
-        $actor->dispararDanioInfligido($objetivo, $daño, $battle);
-        $this->registrarEvento('effect', $previo, $this->capturarEstado($battle), [
-            'actorId' => $actor->id(),
-            'objetivoId' => $objetivo->id(),
-            'texto' => 'Efecto de combate',
-        ]);
-        $battle->turnManager()->consumeAction($actor);
-        $actor->consumirMovimiento($movimiento);
-        $actor->effects()->dispararFinTurno($actor, $battle);
-
-        // 5. Debilitamiento (incluye objetivos secundarios, cubridores y vínculos)
-        if (! $objetivo->estaVivo()) {
-            $this->log[] = "¡{$objetivo->nombre()} se ha debilitado!";
-        }
-
-        $nuevosDebilitados = $battle->procesarDebilitamientos();
-        if ($nuevosDebilitados > 0 && $actor->estaVivo()) {
-            $actor->otorgarAccionExtra();
-        }
-
-        if (! $actor->estaVivo()) {
-            $this->log[] = "¡{$actor->nombre()} se ha debilitado!";
-        }
-
+        $this->log = array_merge($this->log, $resultadoAccion->log);
+        $this->eventos = array_merge($this->eventos, $resultadoAccion->eventos);
         // 6. Limpiar estado pendiente y seguir
         $battle->setPendingAction(null);
         $this->resetAnimState();
@@ -1308,45 +1178,19 @@ class Combate extends Component
 
             return;
         }
-
-        $previo = $this->capturarEstado($battle);
-        $userId = (int) Auth::id();
-        $resultado = app(UsarObjetoEnCombate::class)->handle(
-            $userId,
+        $resultadoAccion = $this->resolutorAccion->resolverObjeto(
             $battle,
+            $actor,
+            $objetivo,
             $pending->toDomain(),
+            app(UsarObjetoEnCombate::class),
+            (int) Auth::id(),
+            $this->grabandoEventos,
+            $this->eventoTick,
+            count($this->eventos) + 1,
         );
-
-        if (! $resultado->exito) {
-            $this->log[] = $resultado->motivo ?? 'No se pudo usar el objeto.';
-            $battle->setPendingAction(null);
-            $this->resetAnimState();
-            $this->syncViewData($battle, $actor);
-            $this->session->guardar($this->battleId, $battle);
-            $this->nextActor();
-
-            return;
-        }
-
-        $this->log[] = $resultado->log;
-        $battle->turnManager()->consumeAction($actor);
-        $actor->effects()->dispararFinTurno($actor, $battle);
-
-        if (! $objetivo->estaVivo()) {
-            $this->log[] = "¡{$objetivo->nombre()} se ha debilitado!";
-        }
-
-        $nuevosDebilitados = $battle->procesarDebilitamientos();
-        if ($nuevosDebilitados > 0 && $actor->estaVivo()) {
-            $actor->otorgarAccionExtra();
-        }
-
-        $this->registrarEvento('item', $previo, $this->capturarEstado($battle), [
-            'actorId' => $actor->id(),
-            'objetivoId' => $objetivo->id(),
-            'texto' => $resultado->log,
-        ]);
-
+        $this->log = array_merge($this->log, $resultadoAccion->log);
+        $this->eventos = array_merge($this->eventos, $resultadoAccion->eventos);
         $battle->setPendingAction(null);
         $this->resetAnimState();
         $this->syncViewData($battle, $actor);
@@ -1516,59 +1360,11 @@ class Combate extends Component
         return $team->combatants()->en($pokemonIdx);
     }
 
-    private function defenderTeam(AgregadoBatalla $battle, Combatiente $defender): EquipoBatalla
-    {
-        return $battle->team1->findCombatant($defender) !== null
-            ? $battle->team1
-            : $battle->team2;
-    }
-
-    private function applyMoveStatChanges(Combatiente $combatant, MovimientoBatalla $move, bool $isActor): void
-    {
-        $changes = $isActor ? $move->selfStatChanges : $move->targetStatChanges;
-        if ($changes->isEmpty()) {
-            return;
-        }
-
-        foreach ($changes as $cambio) {
-            $label = $cambio->stat->label();
-            $factor = $cambio->factorTemporal();
-            $combatant->setMultiplicadores($cambio->aplicadoTemporalEn($combatant->multiplicadores()));
-            $verb = $factor > 1.0 ? 'subió' : 'bajó';
-            $porcentaje = (int) round(abs(($factor - 1.0) * 100));
-            $this->log[] = "{$combatant->nombre()} {$verb} {$label} en {$porcentaje}%!";
-        }
-    }
-
-    private function findPokemonViewData(Combatiente $target): ?array
-    {
-        foreach ($this->team1 as $i => $p) {
-            if ($p['refId'] === $target->id()) {
-                return ['team' => 0, 'index' => $i];
-            }
-        }
-        foreach ($this->team2 as $i => $p) {
-            if ($p['refId'] === $target->id()) {
-                return ['team' => 1, 'index' => $i];
-            }
-        }
-
-        return null;
-    }
-
     // ─── Eventos de animación ────────────────────────────────
 
     private function capturarEstado(AgregadoBatalla $battle): SnapshotBatalla
     {
         return $this->grabadorEventos->capturar($battle);
-    }
-
-    private function registrarCambiosDeEstadoEnLog(
-        AgregadoBatalla $battle,
-        SnapshotBatalla $antes,
-        string $prefijo = '',
-    ): ?string {
-        return $this->grabadorEventos->cambiosDeEstadoEnLog($battle, $antes, $prefijo);
     }
 
     private function iniciarEventos(): void
@@ -1635,7 +1431,7 @@ class Combate extends Component
     private function setAnimState(Combatiente $actor, Combatiente $target, MovimientoBatalla $move): void
     {
         $this->animTick++;
-        $animacion = $this->estadoAnimacion->paraMovimiento($this->animTick, $actor, $target, $move);
+        $animacion = $this->estadoAnimacion->paraMovimiento($actor, $target, $move);
 
         $this->animAttackerId = $animacion->attackerId;
         $this->animAttackerNombre = $animacion->attackerNombre;
@@ -1647,7 +1443,7 @@ class Combate extends Component
     private function setAnimStateObjeto(Combatiente $actor, Combatiente $target, string $itemNombre): void
     {
         $this->animTick++;
-        $animacion = $this->estadoAnimacion->paraObjeto($this->animTick, $actor, $target, $itemNombre);
+        $animacion = $this->estadoAnimacion->paraObjeto($actor, $target, $itemNombre);
 
         $this->animAttackerId = $animacion->attackerId;
         $this->animAttackerNombre = $animacion->attackerNombre;
@@ -1658,7 +1454,7 @@ class Combate extends Component
 
     private function resetAnimState(): void
     {
-        $animacion = $this->estadoAnimacion->reiniciada($this->animTick);
+        $animacion = $this->estadoAnimacion->reiniciada();
         $this->animAttackerId = $animacion->attackerId;
         $this->animDefenderId = $animacion->defenderId;
         $this->animAttackerNombre = $animacion->attackerNombre;
