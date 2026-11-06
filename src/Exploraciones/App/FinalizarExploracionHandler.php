@@ -9,6 +9,7 @@ use App\Models\ExploracionActiva;
 use App\Models\Pokemon;
 use App\Support\CadenasEvolutivas;
 use App\Support\CargarMapaSendaJugador;
+use Carbon\Carbon;
 use Closure;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Collection as BaseCollection;
@@ -16,37 +17,36 @@ use LogicException;
 use Src\Exploraciones\Domain\CalculadorBotinExploracion;
 use Src\Exploraciones\Domain\CalculadorFinExploracion;
 use Src\Exploraciones\Domain\CalculadorRecompensas;
-use Src\Exploraciones\Domain\CalculadorVueltaExploracion;
 use Src\Exploraciones\Domain\ContextoBotin;
 use Src\Exploraciones\Domain\EconomiaRecompensas;
 use Src\Exploraciones\Domain\EvaluadorExploracion;
+use Src\Exploraciones\Domain\Incidentes\CalculadoraIncidentes;
 use Src\Exploraciones\Domain\ModoExploracion;
+use Src\Exploraciones\Domain\Perdidas\CalculadoraPerdidas;
+use Src\Exploraciones\Domain\Perdidas\ColeccionObjetosPerdidos;
+use Src\Exploraciones\Domain\Perdidas\ObjetoPerdido;
 use Src\Exploraciones\Domain\PerfilExploracion;
 use Src\Exploraciones\Domain\Ports\ConsultorPlantaciones;
 use Src\Exploraciones\Domain\Recompensas\PokemonDerrotado;
-use Src\Exploraciones\Domain\Recompensas\RecompensaCaptura;
-use Src\Exploraciones\Domain\Recompensas\RecompensaEv;
-use Src\Exploraciones\Domain\Recompensas\RecompensaFamilia;
-use Src\Exploraciones\Domain\Recompensas\RecompensaItem;
 use Src\Exploraciones\Domain\Recompensas\RecompensaItemCollection;
-use Src\Exploraciones\Domain\Recompensas\RecompensaTipo;
 use Src\Exploraciones\Domain\Recompensas\ResultadoRecompensas;
+use Src\Exploraciones\Domain\Tiempos\CalculadoraDuracionExploracion;
+use Src\Exploraciones\Domain\Tiempos\VentanaExploracion;
 use Src\Exploraciones\Domain\ValueObjects\ColeccionEventosExploracion;
 use Src\Exploraciones\Domain\ValueObjects\EventoExploracion;
 use Src\Exploraciones\Presentation\DTOIncidentesExploracion;
-use Src\Exploraciones\Presentation\DTOObjetoPerdido;
 use Src\Exploraciones\Presentation\TransformadorResultadoExploracion;
 use Src\Granjas\App\ResolverBonosFamilia;
 use Src\Granjas\Domain\Collections\RefugiosHabitatCollection;
 use Src\Shared\Bus\Command;
 use Src\Shared\Bus\CommandHandler;
 use Src\Shared\Bus\UnitOfWork;
-use Src\Shared\Domain\Items\CatalogoItems;
-use Src\Shared\Domain\Items\CategoriaItem;
 use Src\Shared\Domain\Items\ClaveBonguri;
+use Src\Shared\Domain\Ports\Reloj;
 use Src\Shared\Domain\ProbabilidadCaptura;
 use Src\Shared\Domain\Sendas\MapaSendaJugador;
 use Src\Shared\Domain\Sendas\PoliticaSenda;
+use Src\Shared\Domain\Time\RelojPredeterminado;
 use Src\Shared\Tipos\TipoPokemon;
 
 /**
@@ -64,6 +64,8 @@ final class FinalizarExploracionHandler implements CommandHandler
 {
     private readonly ?Closure $aleatorio;
 
+    private readonly Reloj $reloj;
+
     /**
      * @param  callable():float|null  $aleatorio  Proveedor determinista de la
      *                                            tirada [0,1) para TEST (seam).
@@ -78,8 +80,10 @@ final class FinalizarExploracionHandler implements CommandHandler
         private readonly ?ResolverBonosFamilia $bonosFamilia = null,
         private readonly ?ConsultorPlantaciones $consultorPlantaciones = null,
         private readonly ?EsDelHabitat $esDelHabitat = null,
+        ?Reloj $reloj = null,
     ) {
         $this->aleatorio = $aleatorio !== null ? Closure::fromCallable($aleatorio) : null;
+        $this->reloj = $reloj ?? new RelojPredeterminado();
     }
 
     public function handle(Command $command): mixed
@@ -223,7 +227,7 @@ final class FinalizarExploracionHandler implements CommandHandler
         if ($objetosPerdidos !== []) {
             $recompensas = $this->restarPerdidas($recompensas, $objetosPerdidos);
             $eventos->put('objetos_perdidos', array_map(
-                fn (DTOObjetoPerdido $objeto): array => $objeto->toArray(),
+                fn (ObjetoPerdido $objeto): array => $objeto->aArray(),
                 $objetosPerdidos,
             ));
         }
@@ -444,16 +448,10 @@ final class FinalizarExploracionHandler implements CommandHandler
      */
     private function duracionReal(ExploracionActiva $exploracion, int $tiempoPerdido): int
     {
-        $inicio = $exploracion->inicio_exploracion?->copy() ?? $exploracion->created_at?->copy() ?? now();
-        $fin = CalculadorFinExploracion::calcular($exploracion->hora_limite, $exploracion->duracion_horas, $inicio);
-
-        if ($fin === null) {
-            return 0;
-        }
-
-        $nominal = max(0, (int) abs($fin->diffInMinutes($inicio)));
-
-        return max(0, $nominal - $tiempoPerdido);
+        return (new CalculadoraDuracionExploracion())->duracionReal(
+            $this->ventanaExploracion($exploracion),
+            $tiempoPerdido,
+        );
     }
 
     /**
@@ -461,36 +459,14 @@ final class FinalizarExploracionHandler implements CommandHandler
      */
     private function incidentes(array $bitacora): DTOIncidentesExploracion
     {
-        $encuentros = 0;
-        $victorias = 0;
-        $huidas = 0;
-        $emboscadas = 0;
-        $contratiempos = 0;
-
-        foreach ($bitacora as $evento) {
-            $tipo = $evento['tipo'] ?? '';
-            $resolucion = $evento['resolucion'] ?? null;
-
-            if ($tipo === 'emboscada') {
-                $emboscadas++;
-            } elseif ($tipo === 'contratiempo') {
-                $contratiempos++;
-            } elseif ($tipo === 'encuentro' || $tipo === 'pokemon') {
-                $encuentros++;
-                if ($resolucion === null || $resolucion === 'victoria') {
-                    $victorias++;
-                }
-            } elseif ($resolucion === 'huida') {
-                $huidas++;
-            }
-        }
+        $incidentes = (new CalculadoraIncidentes())->calcular($bitacora);
 
         return new DTOIncidentesExploracion(
-            encuentros: $encuentros,
-            victorias: $victorias,
-            huidas: $huidas,
-            emboscadas: $emboscadas,
-            contratiempos: $contratiempos,
+            encuentros: $incidentes->encuentros,
+            victorias: $incidentes->victorias,
+            huidas: $incidentes->huidas,
+            emboscadas: $incidentes->emboscadas,
+            contratiempos: $incidentes->contratiempos,
         );
     }
 
@@ -715,19 +691,31 @@ final class FinalizarExploracionHandler implements CommandHandler
      */
     private function factorTiempo(ExploracionActiva $exploracion): float
     {
-        $inicio = $exploracion->inicio_exploracion ?? $exploracion->created_at ?? now();
+        return (new CalculadoraDuracionExploracion())->factorTiempo(
+            $this->ventanaExploracion($exploracion),
+        );
+    }
+
+    /**
+     * Construye la ventana temporal de la expedición con el reloj del dominio.
+     */
+    private function ventanaExploracion(ExploracionActiva $exploracion): VentanaExploracion
+    {
+        $ahora = Carbon::instance($this->reloj->ahora());
+        $inicio = $exploracion->inicio_exploracion?->copy()
+            ?? $exploracion->created_at?->copy()
+            ?? $ahora;
         $fin = CalculadorFinExploracion::calcular(
             $exploracion->hora_limite,
             $exploracion->duracion_horas,
             $inicio,
         );
-        $inicioVuelta = CalculadorVueltaExploracion::inicioVuelta($inicio, $fin);
-        $base = $inicioVuelta !== null
-            ? max(1, (int) abs($inicioVuelta->diffInMinutes($inicio)))
-            : 60;
-        $minutos = max(0, (int) abs($inicio->diffInMinutes(now())));
 
-        return min(1.0, $minutos / $base);
+        return new VentanaExploracion(
+            inicio: $inicio,
+            fin: $fin,
+            ahora: $ahora,
+        );
     }
 
     /**
@@ -737,154 +725,26 @@ final class FinalizarExploracionHandler implements CommandHandler
      *
      * @param  list<array<string, mixed>>  $bitacora
      * @param  BaseCollection<string, mixed>  $eventos
-     * @return list<DTOObjetoPerdido>
+     * @return list<ObjetoPerdido>
      */
     private function objetosPerdidos(array $bitacora, BaseCollection $eventos, ResultadoRecompensas $recompensas): array
     {
-        if (! $this->terminoPorDerrota($bitacora, $eventos)) {
-            return [];
-        }
-
-        $perdidas = [];
-
-        foreach ($recompensas->caramelosFamilia as $recompensa) {
-            $perdida = intdiv($recompensa->cantidad, 2);
-            if ($perdida <= 0) {
-                continue;
-            }
-            $perdidas[] = new DTOObjetoPerdido(
-                tipo: 'familia',
-                id: $recompensa->evolutionChainId,
-                label: null,
-                cantidad_perdida: $perdida,
-            );
-        }
-
-        foreach ($recompensas->caramelosEv as $recompensa) {
-            $perdida = intdiv($recompensa->cantidad, 2);
-            if ($perdida <= 0) {
-                continue;
-            }
-            $perdidas[] = new DTOObjetoPerdido(
-                tipo: 'ev',
-                id: $recompensa->stat,
-                label: null,
-                cantidad_perdida: $perdida,
-            );
-        }
-
-        foreach ($recompensas->caramelosTipo as $recompensa) {
-            $perdida = intdiv($recompensa->cantidad, 2);
-            if ($perdida <= 0) {
-                continue;
-            }
-            $perdidas[] = new DTOObjetoPerdido(
-                tipo: 'tipo',
-                id: $recompensa->slug(),
-                label: $recompensa->tipo,
-                cantidad_perdida: $perdida,
-            );
-        }
-
-        foreach ($recompensas->capturas as $recompensa) {
-            $perdida = intdiv($recompensa->cantidad, 2);
-            if ($perdida <= 0) {
-                continue;
-            }
-            $perdidas[] = new DTOObjetoPerdido(
-                tipo: 'captura',
-                id: $recompensa->pokemonId,
-                label: null,
-                cantidad_perdida: $perdida,
-            );
-        }
-
-        foreach ($recompensas->items->all() as $item) {
-            $perdida = intdiv($item->cantidad, 2);
-            if ($perdida <= 0) {
-                continue;
-            }
-            $perdidas[] = new DTOObjetoPerdido(
-                tipo: $this->tipoDeItem($item->clave),
-                id: $item->clave,
-                label: CatalogoItems::definicion($item->clave)->nombre,
-                cantidad_perdida: $perdida,
-            );
-        }
-
-        return $perdidas;
-    }
-
-    /**
-     * Categoría de pérdida de un item de inventario según el prefijo de su
-     * clave (`baya:` / `bonguri:`).
-     */
-    private function tipoDeItem(string $clave): string
-    {
-        return str_starts_with($clave, CategoriaItem::BAYA->prefijo())
-            ? CategoriaItem::BAYA->value
-            : CategoriaItem::BONGURI->value;
+        return (new CalculadoraPerdidas())
+            ->calcular($recompensas, $this->terminoPorDerrota($bitacora, $eventos))
+            ->all();
     }
 
     /**
      * Resta las pérdidas de las recompensas finales, devolviendo una nueva
      * instancia de ResultadoRecompensas con cantidades reducidas.
      *
-     * @param  list<DTOObjetoPerdido>  $perdidas
+     * @param  list<ObjetoPerdido>  $perdidas
      */
     private function restarPerdidas(ResultadoRecompensas $recompensas, array $perdidas): ResultadoRecompensas
     {
-        $mapaPerdidas = [];
-        foreach ($perdidas as $p) {
-            $mapaPerdidas[$p->tipo][(string) $p->id] = $p->cantidad_perdida;
-        }
-
-        $reducir = function (int $cantidad, int|string $clave, string $tipo) use ($mapaPerdidas): int {
-            $perdida = $mapaPerdidas[$tipo][(string) $clave] ?? 0;
-
-            return max(0, $cantidad - $perdida);
-        };
-
-        $items = [];
-        foreach ($recompensas->items->all() as $item) {
-            $cantidad = $reducir($item->cantidad, $item->clave, $this->tipoDeItem($item->clave));
-
-            if ($cantidad > 0) {
-                $items[] = new RecompensaItem($item->clave, $cantidad);
-            }
-        }
-
-        return new ResultadoRecompensas(
-            capturas: $recompensas->capturas
-                ->map(fn (RecompensaCaptura $c) => new RecompensaCaptura(
-                    pokemonId: $c->pokemonId,
-                    cantidad: $reducir($c->cantidad, $c->pokemonId, 'captura'),
-                    esShiny: $c->esShiny,
-                ))
-                ->filter(fn (RecompensaCaptura $c) => $c->cantidad > 0),
-            caramelosFamilia: $recompensas->caramelosFamilia
-                ->map(fn (RecompensaFamilia $c) => new RecompensaFamilia(
-                    evolutionChainId: $c->evolutionChainId,
-                    cantidad: $reducir($c->cantidad, $c->evolutionChainId, 'familia'),
-                ))
-                ->filter(fn (RecompensaFamilia $c) => $c->cantidad > 0),
-            caramelosEv: $recompensas->caramelosEv
-                ->map(fn (RecompensaEv $c) => new RecompensaEv(
-                    stat: $c->stat,
-                    cantidad: $reducir($c->cantidad, $c->stat, 'ev'),
-                ))
-                ->filter(fn (RecompensaEv $c) => $c->cantidad > 0),
-            caramelosTipo: $recompensas->caramelosTipo
-                ->map(fn (RecompensaTipo $c) => new RecompensaTipo(
-                    tipo: $c->tipo,
-                    cantidad: $reducir($c->cantidad, $c->slug(), 'tipo'),
-                ))
-                ->filter(fn (RecompensaTipo $c) => $c->cantidad > 0),
-            expTotal: $recompensas->expTotal,
-            expPorMiembro: $recompensas->expPorMiembro,
-            expTipoPorMiembro: $recompensas->expTipoPorMiembro,
-            expTipoCuenta: $recompensas->expTipoCuenta,
-            items: new RecompensaItemCollection($items),
+        return (new CalculadoraPerdidas())->restar(
+            $recompensas,
+            new ColeccionObjetosPerdidos($perdidas),
         );
     }
 }

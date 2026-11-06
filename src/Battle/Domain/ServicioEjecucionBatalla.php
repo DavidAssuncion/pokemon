@@ -11,10 +11,18 @@ use Src\Battle\Domain\Danio\GestorEfectosMovimiento;
 use Src\Battle\Domain\Danio\ResolutorObjetivosDanio;
 use Src\Battle\Domain\Effects\Equipo\EfectoEquipoEspejoMagico;
 use Src\Battle\Domain\Effects\Movimiento\ColeccionEjecutoresMovimiento;
+use Src\Battle\Domain\Ejecucion\AplicadorCosteVelocidad;
+use Src\Battle\Domain\Ejecucion\AplicadorCuracion;
+use Src\Battle\Domain\Ejecucion\AplicadorDrenaje;
+use Src\Battle\Domain\Ejecucion\AplicadorRecoil;
+use Src\Battle\Domain\Ejecucion\CalculadorGolpes;
+use Src\Battle\Domain\Ejecucion\GeneradorLogMovimiento;
 use Src\Battle\Domain\Enums\StatClave;
 use Src\Battle\Domain\ValueObjects\PerfilMovimiento;
 use Src\Battle\Domain\ValueObjects\ResultadoDanio;
 use Src\Battle\Presentation\DTOResultadoDanio;
+use Src\Shared\Domain\Ports\GeneradorAleatorio;
+use Src\Shared\Domain\Random\GeneradorAleatorioPredeterminado;
 
 /**
  * Servicio compartido que ejecuta el cálculo y aplicación de un movimiento.
@@ -27,20 +35,38 @@ class ServicioEjecucionBatalla
         ?ColeccionEjecutoresMovimiento $ejecutores = null,
         private readonly AplicadorPosturaDanio $aplicadorPostura = new AplicadorPosturaDanio(),
         private readonly GestorEfectosMovimiento $gestorEfectos = new GestorEfectosMovimiento(),
+        ?GeneradorAleatorio $aleatorio = null,
     ) {
         $this->ejecutores = $ejecutores ?? ColeccionEjecutoresMovimiento::conEjecutoresPorDefecto();
+        $this->aleatorio = $aleatorio ?? new GeneradorAleatorioPredeterminado();
+        $this->calculadorGolpes = new CalculadorGolpes($this->aleatorio);
+        $this->aplicadorDrenaje = new AplicadorDrenaje();
+        $this->aplicadorRecoil = new AplicadorRecoil();
+        $this->aplicadorCosteVelocidad = new AplicadorCosteVelocidad();
+        $this->aplicadorCuracion = new AplicadorCuracion();
+        $this->generadorLogMovimiento = new GeneradorLogMovimiento();
     }
 
     private readonly ColeccionEjecutoresMovimiento $ejecutores;
+
+    private readonly GeneradorAleatorio $aleatorio;
+
+    private readonly CalculadorGolpes $calculadorGolpes;
+
+    private readonly AplicadorDrenaje $aplicadorDrenaje;
+
+    private readonly AplicadorRecoil $aplicadorRecoil;
+
+    private readonly AplicadorCosteVelocidad $aplicadorCosteVelocidad;
+
+    private readonly AplicadorCuracion $aplicadorCuracion;
+
+    private readonly GeneradorLogMovimiento $generadorLogMovimiento;
 
     /**
      * Calcula y aplica el daño de un movimiento siguiendo su PerfilMovimiento:
      * multi-golpe, precisión/esquiva, multiplicadores de escudo/salud, drenaje
      * y recoil. No maneja logging, animaciones ni el resto de efectos.
-     */
-    /**
-     * Calcula y aplica el daño. Si el movimiento es de fila, golpea a todos
-     * los vivos de la vanguardia o retaguardia rival con daño completo.
      */
     public function calcularYAplicarDano(AccionBatalla $accion, ?AgregadoBatalla $battle = null): DTOResultadoDanio
     {
@@ -237,15 +263,9 @@ class ServicioEjecucionBatalla
             }
         }
 
-        $golpes = $accion->attacker->tieneEfecto('encadenamiento')
-            ? $perfil->golpesMax
-            : mt_rand($perfil->golpesMin, $perfil->golpesMax);
-        $fraccionPotencia = $perfil->fraccionPotenciaPorGolpe;
-        $ajusteGolpes = $accion->attacker->ajustarGolpes($accion);
-        if ($ajusteGolpes !== null) {
-            $golpes = $ajusteGolpes->golpes;
-            $fraccionPotencia = $ajusteGolpes->fraccionPotencia;
-        }
+        $ajusteGolpes = $this->calculadorGolpes->calcular($accion, $perfil);
+        $golpes = $ajusteGolpes->golpes;
+        $fraccionPotencia = $ajusteGolpes->fraccionPotencia;
 
         $potenciaGolpe = $golpes > 1
             ? max(1, (int) round($movimiento->potencia * $fraccionPotencia))
@@ -464,20 +484,14 @@ class ServicioEjecucionBatalla
         float $directPct,
         bool $defenderTeamHasVanguard,
     ): string {
-        $dmgPart = $daño > 0 ? " → {$daño} de daño a {$objetivo->nombre()}" : '';
-        $logMsg = "{$actor->nombre()} usa {$movimiento->nombre}{$dmgPart}";
-
-        // El label del log está derivado de ReglasBatalla::MULTIPLICADOR_RETAGUARDIA
-        // (reducción del 50% cuando el defensor está en retaguardia).
-        if ($daño > 0 && $objetivo->estaEnRetaguardia() && $defenderTeamHasVanguard) {
-            $logMsg .= ' (-'.(int) ((1 - ReglasBatalla::MULTIPLICADOR_RETAGUARDIA) * 100).'% retaguardia)';
-        }
-
-        if ($daño > 0 && $directPct > 0) {
-            $logMsg .= ' ['.($directPct * 100).'% directo]';
-        }
-
-        return $logMsg;
+        return $this->generadorLogMovimiento->generar(
+            $actor,
+            $objetivo,
+            $movimiento,
+            $daño,
+            $directPct,
+            $defenderTeamHasVanguard,
+        );
     }
 
     /**
@@ -494,11 +508,11 @@ class ServicioEjecucionBatalla
         if ($accion->move->esEstado()) {
             $precision *= $accion->defender->multiplicadorPrecisionEstado();
 
-            return $precision < 1.0 && mt_rand() / mt_getrandmax() >= $precision;
+            return $precision < 1.0 && $this->aleatorio->flotante() >= $precision;
         }
 
         $precision *= $accion->attacker->multiplicadorPrecisionAtaque();
-        if ($precision < 1.0 && mt_rand() / mt_getrandmax() >= $precision) {
+        if ($precision < 1.0 && $this->aleatorio->flotante() >= $precision) {
             return true;
         }
 
@@ -508,7 +522,7 @@ class ServicioEjecucionBatalla
 
         $esquiva = $accion->defender->probabilidadEsquiva();
 
-        return $esquiva > 0.0 && mt_rand() / mt_getrandmax() < $esquiva;
+        return $esquiva > 0.0 && $this->aleatorio->flotante() < $esquiva;
     }
 
     private function dispararReacciones(
@@ -546,72 +560,21 @@ class ServicioEjecucionBatalla
 
     private function aplicarDrenaje(AccionBatalla $accion, float $danoHpTotal): float
     {
-        $perfil = $accion->move->perfil;
-
-        if (! $accion->attacker->estaVivo()
-            || $perfil->drenajeFraccion <= 0.0
-            || $danoHpTotal <= 0.0) {
-            return 0.0;
-        }
-
-        if ($accion->defender->tieneEfecto('lodo_liquido')) {
-            $cantidad = $danoHpTotal * $perfil->drenajeFraccion;
-            $accion->attacker->recibirDaño($cantidad, false, 1.0);
-
-            return 0.0;
-        }
-
-        return $accion->attacker->curarConExcedente($danoHpTotal * $perfil->drenajeFraccion);
+        return $this->aplicadorDrenaje->aplicar($accion, $danoHpTotal);
     }
 
     private function aplicarCuracion(AccionBatalla $accion, AgregadoBatalla $battle): void
     {
-        $perfil = $accion->move->perfil;
-        if ($perfil->curacionFraccion <= 0.0
-            || $accion->attacker !== $accion->defender
-            || ! $accion->attacker->estaVivo()) {
-            return;
-        }
-
-        $maxHp = max(1.0, $accion->attacker->pokemon()->battleStats()->hp);
-        $curado = $accion->attacker->curarHpCantidad($maxHp * $perfil->curacionFraccion);
-        if ($curado > 0.0) {
-            $battle->agregarLog("{$accion->attacker->nombre()} recupera ".round($curado).' PS');
-        }
+        $this->aplicadorCuracion->aplicar($accion, $battle);
     }
 
     private function aplicarCosteVelocidad(AccionBatalla $accion): void
     {
-        $perfil = $accion->move->perfil;
-
-        if (! $accion->attacker->estaVivo() || $perfil->costeVelocidadFraccion <= 0.0) {
-            return;
-        }
-
-        $accion->attacker->aplicarCosteVelocidad($perfil->costeVelocidadFraccion);
+        $this->aplicadorCosteVelocidad->aplicar($accion);
     }
 
     private function aplicarRecoil(AccionBatalla $accion, float $danoTotal, ?AgregadoBatalla $battle): float
     {
-        $perfil = $accion->move->perfil;
-
-        if (($perfil->recoilFraccion <= 0.0 && $perfil->recoilHpMaximoFraccion <= 0.0)
-            || ! $accion->attacker->estaVivo()
-            || $accion->attacker->esInmuneARecoil()) {
-            return 0.0;
-        }
-
-        $recoil = $perfil->recoilHpMaximoFraccion > 0.0
-            ? $accion->attacker->pokemon()->battleStats()->hp * $perfil->recoilHpMaximoFraccion
-            : $danoTotal * $perfil->recoilFraccion;
-
-        if ($recoil <= 0.0) {
-            return 0.0;
-        }
-
-        $accion->attacker->recibirDaño($recoil, false, 1.0);
-        $battle?->agregarLog("{$accion->attacker->nombre()} recibe ".round($recoil).' de recoil');
-
-        return $recoil;
+        return $this->aplicadorRecoil->aplicar($accion, $danoTotal, $battle);
     }
 }
