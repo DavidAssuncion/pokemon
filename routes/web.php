@@ -3,7 +3,6 @@
 declare(strict_types=1);
 
 use App\Http\Controllers\AuthController;
-use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\GimnasiosViewController;
 use App\Http\Controllers\HabitatsController;
 use App\Http\Controllers\IconoController;
@@ -22,8 +21,6 @@ Route::middleware('auth')->group(function (): void {
 
     Route::get('/iconos/{filename}', [IconoController::class, 'show']);
     Route::get('/iconos/shiny/{filename}', [IconoController::class, 'shiny']);
-
-    Route::get('/cruds', [DashboardController::class, 'cruds'])->name('cruds');
 
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
@@ -49,5 +46,4 @@ Route::middleware('auth')->group(function (): void {
     require __DIR__.'/granjas.php';
     require __DIR__.'/forja.php';
     require __DIR__.'/ruta.php';
-    // require __DIR__ . '/../src/Crud/routes.php';
 });

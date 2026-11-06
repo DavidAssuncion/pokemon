@@ -2,18 +2,6 @@
 
 $ignoreErrors = [];
 $ignoreErrors[] = [
-	'message' => '#^Argument of an invalid type list\\<string\\>\\|false supplied for foreach, only iterables are supported\\.$#',
-	'identifier' => 'foreach.nonIterable',
-	'count' => 1,
-	'path' => __DIR__ . '/app/Crud/Base/CrudGenerator.php',
-];
-$ignoreErrors[] = [
-	'message' => '#^Argument of an invalid type list\\<string\\>\\|false supplied for foreach, only iterables are supported\\.$#',
-	'identifier' => 'foreach.nonIterable',
-	'count' => 1,
-	'path' => __DIR__ . '/app/Http/Controllers/DashboardController.php',
-];
-$ignoreErrors[] = [
 	'message' => '#^Cannot access property \\$id on App\\\\Models\\\\ExploracionActiva\\|null\\.$#',
 	'identifier' => 'property.nonObject',
 	'count' => 1,

@@ -20,7 +20,7 @@ mapa de navegación y las reglas transversales.
 | Pokemon | `src/Pokemon` | [Pokemon](../../src/Pokemon/README.md) | Entidad de pokémon y cálculo de stats |
 | Reclutamiento | `src/Reclutamiento` | [Reclutamiento](../../src/Reclutamiento/README.md) | Captura y evolución por caramelos |
 | Shared | `src/Shared` | [Shared](../../src/Shared/README.md) | Colecciones, bus, tipos, excepciones y utilidades |
-| app/ | `app/` | [Infraestructura Laravel](../../app/README.md) | Modelos, controladores, Livewire, Datagrid, Support, Crud |
+| app/ | `app/` | [Infraestructura Laravel](../../app/README.md) | Modelos, controladores, Livewire, Datagrid, Support |
 
 ## Dependencias entre módulos
 
@@ -54,7 +54,7 @@ Deuda conocida (pendiente, no bloquea):
   `CalculadorRecompensas`, `EvaluadorExploracion::resolverContratiempo()` y los wrappers
   `@deprecated` de `SimuladorEncuentros` mantienen shapes de preview/BC.
 - `src/Exploraciones/Presentation` y `app/Livewire/Presenters`: payloads de vista.
-- `app/Datagrid`, `app/Crud/Base`, `app/Enums::options()`: contratos de Laravel/Blade.
+- `app/Datagrid`, `app/Enums::options()`: contratos de Laravel/Blade.
 
 ## Documentación relacionada
 

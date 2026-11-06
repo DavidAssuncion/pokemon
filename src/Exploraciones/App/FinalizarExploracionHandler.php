@@ -4,86 +4,87 @@ declare(strict_types=1);
 
 namespace Src\Exploraciones\App;
 
-use App\Jobs\ActualizarPokedexJob;
 use App\Models\ExploracionActiva;
-use App\Models\Pokemon;
-use App\Support\CadenasEvolutivas;
 use App\Support\CargarMapaSendaJugador;
-use Carbon\Carbon;
+use App\Support\ConsultorPlantacionesFactory;
 use Closure;
-use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Collection as BaseCollection;
 use LogicException;
-use Src\Exploraciones\Domain\CalculadorBotinExploracion;
-use Src\Exploraciones\Domain\CalculadorFinExploracion;
+use Src\Exploraciones\App\Finalizacion\CalculadoraTiemposExpedicion;
+use Src\Exploraciones\App\Finalizacion\EscritorEventosResultado;
+use Src\Exploraciones\App\Finalizacion\GeneradorTiradaCapturaExpedicion;
+use Src\Exploraciones\App\Finalizacion\MapeadorPokemonsDerrotados;
+use Src\Exploraciones\App\Finalizacion\MetodosCompatibilidadFinalizacion;
+use Src\Exploraciones\App\Finalizacion\RepartidorRecompensasExploracion;
+use Src\Exploraciones\App\Finalizacion\ResolutorBotinExploracion;
 use Src\Exploraciones\Domain\CalculadorRecompensas;
-use Src\Exploraciones\Domain\ContextoBotin;
-use Src\Exploraciones\Domain\EconomiaRecompensas;
 use Src\Exploraciones\Domain\EvaluadorExploracion;
 use Src\Exploraciones\Domain\Incidentes\CalculadoraIncidentes;
 use Src\Exploraciones\Domain\ModoExploracion;
-use Src\Exploraciones\Domain\Perdidas\CalculadoraPerdidas;
-use Src\Exploraciones\Domain\Perdidas\ColeccionObjetosPerdidos;
-use Src\Exploraciones\Domain\Perdidas\ObjetoPerdido;
 use Src\Exploraciones\Domain\PerfilExploracion;
 use Src\Exploraciones\Domain\Ports\ConsultorPlantaciones;
-use Src\Exploraciones\Domain\Recompensas\PokemonDerrotado;
-use Src\Exploraciones\Domain\Recompensas\RecompensaItemCollection;
-use Src\Exploraciones\Domain\Recompensas\ResultadoRecompensas;
-use Src\Exploraciones\Domain\Tiempos\CalculadoraDuracionExploracion;
-use Src\Exploraciones\Domain\Tiempos\VentanaExploracion;
+use Src\Exploraciones\Domain\Recompensas\CalculadoraRecompensasExpedicion;
+use Src\Exploraciones\Domain\Recompensas\ClasificadorEventosExploracion;
 use Src\Exploraciones\Domain\ValueObjects\ColeccionEventosExploracion;
-use Src\Exploraciones\Domain\ValueObjects\EventoExploracion;
 use Src\Exploraciones\Presentation\DTOIncidentesExploracion;
 use Src\Exploraciones\Presentation\TransformadorResultadoExploracion;
 use Src\Granjas\App\ResolverBonosFamilia;
-use Src\Granjas\Domain\Collections\RefugiosHabitatCollection;
 use Src\Shared\Bus\Command;
 use Src\Shared\Bus\CommandHandler;
 use Src\Shared\Bus\UnitOfWork;
-use Src\Shared\Domain\Items\ClaveBonguri;
+use Src\Shared\Domain\Ports\GeneradorAleatorio;
 use Src\Shared\Domain\Ports\Reloj;
-use Src\Shared\Domain\ProbabilidadCaptura;
-use Src\Shared\Domain\Sendas\MapaSendaJugador;
-use Src\Shared\Domain\Sendas\PoliticaSenda;
+use Src\Shared\Domain\Random\GeneradorAleatorioPredeterminado;
 use Src\Shared\Domain\Time\RelojPredeterminado;
-use Src\Shared\Tipos\TipoPokemon;
 
 /**
- * Reparte todas las recompensas de una expedición (pokedex, capturas, caramelos
- * familia/EV/tipo, EXP) y marca el regreso. Idempotente.
- *
- * RF-07: derrotados = solo resolucion 'victoria' (retrocompat: evento sin
- * resolucion = victoria); avistados = todo evento con pokemon_id(s).
- * RF-08/RF-09: categoría final + multiplicador; retirada conserva lo obtenido.
- *
- * La capa App/ usa Eloquent (App\Models) e Illuminate directamente por
- * convención del proyecto (la regla DDD solo exige Domain puro).
+ * Cierra una expedición: calcula y persiste recompensas, escribe el resultado
+ * y marca el regreso. Idempotente. El cálculo puro vive en Domain/Recompensas.
  */
 final class FinalizarExploracionHandler implements CommandHandler
 {
+    use MetodosCompatibilidadFinalizacion;
+
     private readonly ?Closure $aleatorio;
+    private readonly MapeadorPokemonsDerrotados $mapeador;
+    private readonly RepartidorRecompensasExploracion $repartidor;
 
-    private readonly Reloj $reloj;
-
-    /**
-     * @param  callable():float|null  $aleatorio  Proveedor determinista de la
-     *                                            tirada [0,1) para TEST (seam).
-     *                                            null → mt_rand(1,100)/100.
-     */
     public function __construct(
-        private readonly UnitOfWork $unitOfWork,
-        private readonly CalculadorRecompensas $calculador,
-        private readonly PersistirRecompensas $persistir,
-        private readonly TransformadorResultadoExploracion $transformador,
+        UnitOfWork $unitOfWork,
+        CalculadorRecompensas $calculador,
+        PersistirRecompensas $persistir,
+        TransformadorResultadoExploracion $transformador,
         ?callable $aleatorio = null,
-        private readonly ?ResolverBonosFamilia $bonosFamilia = null,
-        private readonly ?ConsultorPlantaciones $consultorPlantaciones = null,
-        private readonly ?EsDelHabitat $esDelHabitat = null,
+        ?ResolverBonosFamilia $bonosFamilia = null,
+        ?ConsultorPlantaciones $consultorPlantaciones = null,
+        ?EsDelHabitat $esDelHabitat = null,
         ?Reloj $reloj = null,
+        ?CargarMapaSendaJugador $cargarSenda = null,
+        ?GeneradorAleatorio $generador = null,
     ) {
         $this->aleatorio = $aleatorio !== null ? Closure::fromCallable($aleatorio) : null;
-        $this->reloj = $reloj ?? new RelojPredeterminado();
+        $this->tiempos = new CalculadoraTiemposExpedicion($reloj ?? new RelojPredeterminado());
+        $this->clasificador = new ClasificadorEventosExploracion();
+        $this->calculadora = new CalculadoraRecompensasExpedicion($calculador);
+        $this->mapeador = new MapeadorPokemonsDerrotados($this->clasificador);
+        $this->botin = new ResolutorBotinExploracion(
+            $this->tiempos,
+            $consultorPlantaciones ?? ConsultorPlantacionesFactory::crear(),
+            $esDelHabitat,
+        );
+        $this->repartidor = new RepartidorRecompensasExploracion(
+            $this->calculadora,
+            $this->mapeador,
+            $this->clasificador,
+            new GeneradorTiradaCapturaExpedicion($generador ?? new GeneradorAleatorioPredeterminado()),
+            $this->botin,
+            new EscritorEventosResultado($transformador),
+            $persistir,
+            $unitOfWork,
+            $bonosFamilia ?? new ResolverBonosFamilia(),
+            $cargarSenda ?? new CargarMapaSendaJugador(),
+            $this->tiempos,
+        );
     }
 
     public function handle(Command $command): mixed
@@ -94,7 +95,6 @@ final class FinalizarExploracionHandler implements CommandHandler
 
         $exploracion = $command->exploracion->refresh();
 
-        // Idempotencia: si ya regresó (modelo refrescado de DB), no repartir otra vez.
         if ($exploracion->regreso !== null) {
             return null;
         }
@@ -104,34 +104,20 @@ final class FinalizarExploracionHandler implements CommandHandler
         /** @var list<array<string, mixed>> $bitacora */
         $bitacora = $eventos->get('bitacora', []);
         $bitacoraEventos = ColeccionEventosExploracion::desdeArray($bitacora);
-
-        $idsDerrotados = $this->idsDerrotados($bitacoraEventos);
-        $pokemons = $this->cargarPokemonsDerrotados($idsDerrotados);
-        $miembrosPorCadena = CadenasEvolutivas::miembrosDe(
-            $pokemons->pluck('evolution_chain_id')
-        );
-        $etapasPorCadena = CadenasEvolutivas::etapasDe($pokemons->pluck('evolution_chain_id'));
-        $derrotados = NormalizadorPokemonDerrotado::normalizar(
-            $this->expandirDerrotados($pokemons, $idsDerrotados),
-            $miembrosPorCadena,
-            $etapasPorCadena,
-        );
-
+        $datos = $this->mapeador->mapear($bitacoraEventos);
         $categoria = EvaluadorExploracion::categoriaFinalDeEventos($bitacoraEventos);
-        $multiplicador = EvaluadorExploracion::multiplicador($categoria);
         $perfil = PerfilExploracion::de(ModoExploracion::desde($exploracion->modo));
 
-        $this->repartirRecompensas(
+        $this->repartidor->repartir(
             $exploracion,
-            $derrotados,
-            $pokemons,
-            $miembrosPorCadena,
-            $idsDerrotados,
+            $datos,
             $bitacora,
             $eventos,
             $categoria,
-            $multiplicador,
+            EvaluadorExploracion::multiplicador($categoria),
             $perfil,
+            fn (array $bitacora): array => $this->incidentes($bitacora)->toArray(),
+            fn (): int => $this->bonusCaramelosRecoleccion($exploracion),
             $this->aleatorio,
         );
 
@@ -139,288 +125,19 @@ final class FinalizarExploracionHandler implements CommandHandler
     }
 
     /**
-     * Calcula, persiste y registra todas las recompensas y marca el regreso.
-     * Multiplayer: el dueño de la exploración (belongsToUser). Con FK cascade el
-     * dueño siempre existe; si no se resuelve (caso artificial), nivel salvaje 1
-     * y sin recompensas al jugador.
-     *
-     * @param  BaseCollection<int, PokemonDerrotado>  $derrotados
-     * @param  Collection<int, Pokemon>  $pokemons
-     * @param  array<int, Collection<int, Pokemon>>  $miembrosPorCadena
-     * @param  list<int>  $idsDerrotados
      * @param  list<array<string, mixed>>  $bitacora
-     * @param  BaseCollection<string, mixed>  $eventos
-     * @param  callable():float|null  $aleatorio
      */
-    private function repartirRecompensas(
-        ExploracionActiva $exploracion,
-        BaseCollection $derrotados,
-        Collection $pokemons,
-        array $miembrosPorCadena,
-        array $idsDerrotados,
-        array $bitacora,
-        BaseCollection $eventos,
-        string $categoria,
-        float $multiplicador,
-        PerfilExploracion $perfil,
-        ?callable $aleatorio = null,
-    ): void {
-        $usuario = $exploracion->user;
-        $bonos = $this->bonosFamilia ?? app(ResolverBonosFamilia::class);
-        $refugios = $bonos->refugiosDeHabitat(
-            $exploracion->user_id,
-            $exploracion->habitat_id,
+    private function incidentes(array $bitacora): DTOIncidentesExploracion
+    {
+        $incidentes = (new CalculadoraIncidentes())->calcular($bitacora);
+
+        return new DTOIncidentesExploracion(
+            encuentros: $incidentes->encuentros,
+            victorias: $incidentes->victorias,
+            huidas: $incidentes->huidas,
+            emboscadas: $incidentes->emboscadas,
+            contratiempos: $incidentes->contratiempos,
         );
-
-        $economia = EconomiaRecompensas::individual();
-        $senda = app(CargarMapaSendaJugador::class)->para($exploracion->user_id);
-        $multiplicadorCaramelos = $multiplicador * $perfil->multiplicadorCaramelos;
-        $multiplicadorExp = $multiplicador * $perfil->multiplicadorExp;
-
-        $recompensas = $this->calculador->calcular(
-            $derrotados,
-            $this->rollAleatorio(
-                $aleatorio,
-                $bonos,
-                $refugios,
-                $senda,
-                nivelHabitat: $exploracion->nivel,
-                factorModo: $perfil->factorCaptura,
-            ),
-            $usuario !== null ? $usuario->nivel() : 1,
-            $multiplicadorCaramelos,
-            $economia,
-            multiplicadorExp: $multiplicadorExp,
-            senda: $senda,
-        );
-
-        // Hallazgos (D8): caramelos de familia/EV/tipo de los eventos hallazgo,
-        // más el hallazgo equivalente de cada emboscada evitada. Rango
-        // Recolector: cada hallazgo rinde ×(1 + bonus) caramelos.
-        $bitacoraEventos = ColeccionEventosExploracion::desdeArray($bitacora);
-        $hallazgos = new ColeccionEventosExploracion([
-            ...$bitacoraEventos->filter(fn (EventoExploracion $evento): bool => $evento->esHallazgo())->toList(),
-            ...$this->hallazgosEmboscadasEvitadasDe($bitacoraEventos),
-        ]);
-        $caramelosHallazgos = $this->calculador->calcularHallazgosDeEventos(
-            $hallazgos,
-            $this->chainPorPokemonDeEventos($hallazgos, $pokemons),
-            $this->multiplicadorCaramelosEquipo($exploracion, $multiplicadorCaramelos, $economia->factor),
-            $this->bonusCaramelosRecoleccion($exploracion),
-        );
-        $recompensas = $recompensas->sumarHallazgos(
-            $caramelosHallazgos->caramelosFamilia,
-            $caramelosHallazgos->caramelosEv,
-            $caramelosHallazgos->caramelosTipo,
-        );
-
-        // Botín (bayas + bonguri del hábitat): se suma antes de calcular las
-        // pérdidas para que la derrota también reduzca lo encontrado. El flag
-        // de hábitat se resuelve una vez y se reutiliza al persistir.
-        $delHabitat = $this->delHabitat($exploracion, $eventos);
-        $recompensas = $recompensas->sumarBotin($this->botin($exploracion, $perfil, $bitacora, $eventos, $delHabitat));
-
-        // Derrota → pérdida de objetos: intdiv(cantidad, 2) de cada recompensa
-        // (familia/EV/tipo/capturas), restado de las recompensas finales. Una
-        // cantidad 1 no pierde nada.
-        $objetosPerdidos = $this->objetosPerdidos($bitacora, $eventos, $recompensas);
-        if ($objetosPerdidos !== []) {
-            $recompensas = $this->restarPerdidas($recompensas, $objetosPerdidos);
-            $eventos->put('objetos_perdidos', array_map(
-                fn (ObjetoPerdido $objeto): array => $objeto->aArray(),
-                $objetosPerdidos,
-            ));
-        }
-
-        $this->persistir->persistir($recompensas, $exploracion->reclutado, $usuario);
-        $this->despacharAvistados($this->idsAvistadosDeEventos($bitacoraEventos), $exploracion->user_id);
-
-        $tiempoPerdido = (int) $eventos->get('tiempo_perdido', 0);
-        $this->registrarResultado(
-            $exploracion,
-            $recompensas,
-            $pokemons,
-            $miembrosPorCadena,
-            $idsDerrotados,
-            $categoria,
-            $this->duracionReal($exploracion, $tiempoPerdido),
-            $tiempoPerdido,
-            $this->incidentes($bitacora),
-            $eventos,
-            $delHabitat,
-        );
-
-        $exploracion->update(['regreso' => now(), 'eventos' => $eventos]);
-    }
-
-    /**
-     * IDs de pokémon derrotados: solo eventos con resolución victoria (o sin
-     * resolución, retrocompat RF-07), expandidos por pokemon_id/pokemon_ids.
-     * Las emboscadas evitadas quedan fuera: ya aportan su hallazgo de familia
-     * y su evento extra, pero no recompensa de combate.
-     *
-     * @return list<int>
-     */
-    private function idsDerrotados(ColeccionEventosExploracion $bitacora): array
-    {
-        $ids = [];
-        foreach ($bitacora as $evento) {
-            if (! $evento->esVictoria() || $evento->esEmboscadaEvitada()) {
-                continue;
-            }
-
-            foreach ($evento->pokemonIds()->all() as $id) {
-                $ids[] = $id;
-            }
-        }
-
-        return $ids;
-    }
-
-    /**
-     * IDs de pokémon avistados: todo evento con pokemon_id(s) (encuentro,
-     * emboscada, huida y legacy 'pokemon') → ActualizarPokedexJob AVISTADO.
-     *
-     * @return list<int>
-     */
-    private function idsAvistadosDeEventos(ColeccionEventosExploracion $bitacora): array
-    {
-        $ids = [];
-        foreach ($bitacora as $evento) {
-            if (! $evento->esAvistamiento()) {
-                continue;
-            }
-
-            foreach ($evento->pokemonIds()->all() as $id) {
-                $ids[] = $id;
-            }
-        }
-
-        return $ids;
-    }
-
-    /**
-     * @param  list<int>  $idsDerrotados
-     * @return Collection<int, Pokemon> keyBy id, con stats y types.
-     */
-    private function cargarPokemonsDerrotados(array $idsDerrotados): Collection
-    {
-        $ids = collect($idsDerrotados)->unique()->values();
-
-        if ($ids->isEmpty()) {
-            return new Collection();
-        }
-
-        $query = Pokemon::query()->with('stats', 'types');
-        $query->getQuery()->whereIn('id', $ids);
-
-        return $query->get()->keyBy('id');
-    }
-
-    /**
-     * Expande los ids de la bitácora a una entrada por derrota, descartando
-     * ids sin pokémon cargado (no deberían ocurrir: la bitácora viene del pool).
-     *
-     * @param  Collection<int, Pokemon>  $pokemons  keyBy id
-     * @param  list<int>  $idsDerrotados
-     * @return BaseCollection<int, Pokemon>
-     */
-    private function expandirDerrotados(Collection $pokemons, array $idsDerrotados): BaseCollection
-    {
-        return collect($idsDerrotados)
-            ->map(fn (int $id): ?Pokemon => $pokemons->get($id))
-            ->filter()
-            ->values();
-    }
-
-    /**
-     * Mapa pokemon_id → evolution_chain_id para resolver los caramelos de
-     * familia de los hallazgos (pueden referenciar pokémon NO derrotados).
-     *
-     * @param  Collection<int, Pokemon>  $pokemons  keyBy id
-     * @return array<int, int>
-     */
-    private function chainPorPokemonDeEventos(ColeccionEventosExploracion $hallazgos, Collection $pokemons): array
-    {
-        $resultado = [];
-        foreach ($pokemons as $pokemon) {
-            $resultado[$pokemon->id] = $pokemon->evolution_chain_id;
-        }
-
-        $faltan = collect($hallazgos->pluck(fn (EventoExploracion $evento): ?int => $evento->pokemonId))
-            ->filter(fn (?int $id): bool => $id !== null && $id > 0 && ! array_key_exists($id, $resultado))
-            ->unique()
-            ->values();
-
-        if ($faltan->isNotEmpty()) {
-            $query = Pokemon::query();
-            $query->getQuery()->whereIn('id', $faltan);
-
-            foreach ($query->get(['id', 'evolution_chain_id']) as $pokemon) {
-                $resultado[$pokemon->id] = $pokemon->evolution_chain_id;
-            }
-        }
-
-        return $resultado;
-    }
-
-    /**
-     * Cada emboscada evitada produce un hallazgo equivalente de 1 caramelo de
-     * familia del primer pokémon implicado. No genera recompensa de combate:
-     * idsDerrotados() la excluye expresamente.
-     *
-     * @return list<EventoExploracion>
-     */
-    private function hallazgosEmboscadasEvitadasDe(ColeccionEventosExploracion $bitacora): array
-    {
-        $hallazgos = [];
-        foreach ($bitacora as $evento) {
-            if ($evento->esEmboscadaEvitada()) {
-                $ids = $evento->pokemonIds()->all();
-                if ($ids !== []) {
-                    $hallazgos[] = $this->hallazgoDeEmboscadaEvitada($ids[0]);
-                }
-            }
-        }
-
-        return $hallazgos;
-    }
-
-    /**
-     * Hallazgo equivalente de una emboscada evitada: 1 caramelo de familia del
-     * primer pokémon implicado (origen 'emboscada_evitada').
-     */
-    private function hallazgoDeEmboscadaEvitada(int $pokemonId): EventoExploracion
-    {
-        return EventoExploracion::desdeArray([
-            'tipo' => 'hallazgo',
-            'subtype' => 'caramelo_familia',
-            'pokemon_id' => $pokemonId,
-            'cantidad' => 1,
-            'origen' => 'emboscada_evitada',
-        ]);
-    }
-
-    /**
-     * Multiplicador de caramelos de hallazgo: categoría × rol Recolector (+50 %)
-     * × sinergia (prospección/recolección segura, etc.) × factor global de la
-     * economía individual (0.5). RFC: el rol se lee del reclutado individual
-     * ($reclutado->rol(), columna behavior propia), ya no de
-     * team_members.behavior, por lo que aplica también sin equipo.
-     */
-    private function multiplicadorCaramelosEquipo(
-        ExploracionActiva $exploracion,
-        float $multiplicadorCategoria,
-        float $factorEconomia,
-    ): float {
-        $reclutado = $exploracion->reclutado;
-        if ($reclutado === null) {
-            return $multiplicadorCategoria * $factorEconomia;
-        }
-
-        return $multiplicadorCategoria
-            * $reclutado->rol()->multiplicadorCaramelosHallazgo()
-            * $factorEconomia;
     }
 
     /**
@@ -442,309 +159,4 @@ final class FinalizarExploracionHandler implements CommandHandler
         return FabricaCapacidadesStats::desdeReclutado($reclutado, $usuario)->bonusCaramelosRecoleccion($dificultad);
     }
 
-    /**
-     * Duración real de la expedición: nominal (minutos entre inicio y fin) menos
-     * el tiempo perdido acumulado, mínimo 0 (RF-05).
-     */
-    private function duracionReal(ExploracionActiva $exploracion, int $tiempoPerdido): int
-    {
-        return (new CalculadoraDuracionExploracion())->duracionReal(
-            $this->ventanaExploracion($exploracion),
-            $tiempoPerdido,
-        );
-    }
-
-    /**
-     * @param  list<array<string, mixed>>  $bitacora
-     */
-    private function incidentes(array $bitacora): DTOIncidentesExploracion
-    {
-        $incidentes = (new CalculadoraIncidentes())->calcular($bitacora);
-
-        return new DTOIncidentesExploracion(
-            encuentros: $incidentes->encuentros,
-            victorias: $incidentes->victorias,
-            huidas: $incidentes->huidas,
-            emboscadas: $incidentes->emboscadas,
-            contratiempos: $incidentes->contratiempos,
-        );
-    }
-
-    /**
-     * @param  list<int>  $pokemonIds
-     */
-    private function despacharAvistados(array $pokemonIds, int $userId): void
-    {
-        if ($pokemonIds === []) {
-            return;
-        }
-
-        $this->unitOfWork->afterCommit(function () use ($pokemonIds, $userId): void {
-            foreach (array_unique($pokemonIds) as $pokemonId) {
-                ActualizarPokedexJob::dispatch($userId, $pokemonId, 'AVISTADO');
-            }
-        });
-    }
-
-    /**
-     * Tirada de captura (plan v5 §4.3, dominio ProbabilidadCaptura): seam de
-     * test con aleatorio [0,1) determinista; por defecto mt_rand(1, 100) / 100.
-     * La probabilidad base (cap 25 %) recibe el factor de hábitat 1,0 / 0,5 /
-     * 0,3, el de refugio y el de Senda; todos se aplican a la probabilidad
-     * final (no al capture_rate) y el resultado se topa en 30 %. Sin tipos el
-     * factor de Senda vale 1,0. `$factorModo` (factor de captura del modo de
-     * exploración) se multiplica con el factor de Senda antes del cap; el cap
-     * de 30 % se mantiene. La captura NO recibe el factor 0.5 de la economía
-     * individual: ese factor solo reduce EXP y caramelos.
-     *
-     * @param  callable():float|null  $aleatorio
-     */
-    private function rollAleatorio(
-        ?callable $aleatorio = null,
-        ?ResolverBonosFamilia $bonos = null,
-        ?RefugiosHabitatCollection $refugios = null,
-        ?MapaSendaJugador $senda = null,
-        ?int $nivelHabitat = null,
-        float $factorModo = 1.0,
-    ): callable {
-        $aleatorio ??= fn (): float => mt_rand(1, 100) / 100;
-
-        $factorHabitat = match ($nivelHabitat) {
-            1 => 1.0,
-            2 => 0.5,
-            3 => 0.3,
-            default => 1.0,
-        };
-
-        return function (PokemonDerrotado $pokemon) use ($aleatorio, $bonos, $refugios, $senda, $factorHabitat, $factorModo): bool {
-            $factorRefugio = 1.0;
-            if ($bonos !== null && $refugios !== null && $pokemon->evolutionChainId !== null) {
-                $factorRefugio = $bonos->factorCaptura($refugios, $pokemon->evolutionChainId);
-            }
-
-            $factorSenda = $senda !== null
-                ? PoliticaSenda::factorCaptura($senda, self::tiposPokemon($pokemon))
-                : 1.0;
-
-            return ProbabilidadCaptura::intentarConFactores(
-                $pokemon->captureRate,
-                $factorHabitat,
-                $factorRefugio,
-                $aleatorio,
-                $factorSenda * $factorModo,
-            );
-        };
-    }
-
-    /**
-     * Convierte los labels de tipo del derrotado (español) al enum de dominio.
-     *
-     * @return list<TipoPokemon>
-     */
-    private static function tiposPokemon(PokemonDerrotado $pokemon): array
-    {
-        $tipoPorLabel = [];
-        foreach (TipoPokemon::cases() as $tipo) {
-            $tipoPorLabel[$tipo->label()] = $tipo;
-        }
-
-        $tipos = [];
-        foreach ($pokemon->tipos as $label) {
-            if (isset($tipoPorLabel[$label])) {
-                $tipos[] = $tipoPorLabel[$label];
-            }
-        }
-
-        return $tipos;
-    }
-
-    /**
-     * Escribe eventos['derrotados'] y eventos['resultado'] (contrato aditivo
-     * RF-10) en el modelo para persistirlos junto con el regreso.
-     *
-     * @param  Collection<int, Pokemon>  $pokemons
-     * @param  array<int, Collection<int, Pokemon>>  $miembrosPorCadena
-     * @param  list<int>  $idsDerrotados
-     * @param  BaseCollection<string, mixed>  $eventos
-     */
-    private function registrarResultado(
-        ExploracionActiva $exploracion,
-        ResultadoRecompensas $recompensas,
-        Collection $pokemons,
-        array $miembrosPorCadena,
-        array $idsDerrotados,
-        string $categoria,
-        int $durationReal,
-        int $tiempoPerdido,
-        DTOIncidentesExploracion $incidentes,
-        BaseCollection $eventos,
-        bool $delHabitat,
-    ): void {
-        $eventos->put('derrotados', $idsDerrotados);
-        $eventos->put('resultado', $this->transformador->desde(
-            $recompensas,
-            $pokemons,
-            $miembrosPorCadena,
-            categoria: $categoria,
-            durationReal: $durationReal,
-            tiempoPerdido: $tiempoPerdido,
-            incidentes: $incidentes->toArray(),
-            bonos: ['del_habitat' => $delHabitat],
-        ));
-
-        $exploracion->eventos = $eventos;
-    }
-
-    /**
-     * Detecta si la exploración terminó por derrota (bitácora contiene un evento
-     * con resolución 'derrota' o el flag eventos['derrota'] está presente).
-     *
-     * @param  list<array<string, mixed>>  $bitacora
-     * @param  BaseCollection<string, mixed>  $eventos
-     */
-    private function terminoPorDerrota(array $bitacora, BaseCollection $eventos): bool
-    {
-        if ($eventos->get('derrota') !== null) {
-            return true;
-        }
-
-        foreach ($bitacora as $evento) {
-            if (($evento['resolucion'] ?? '') === 'derrota') {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    /**
-     * Calcula el botín de items de la expedición según el modo. El bonguri
-     * entregable es el del hábitat (con fallback al blanco si el hábitat no
-     * tiene color asignado). El botín se escala por el `multiplicadorBotin`
-     * del modo y por el factor de tiempo efectivo de la expedición (evita el
-     * farmeo instantáneo).
-     *
-     * F3: los factores de plantación de `(user_id, habitat_id)` solo afectan
-     * al peso de las bayas salvajes; `delHabitat` aplica el bonus de Pokémon
-     * nativo a tiradas de baya y bonguri.
-     *
-     * @param  list<array<string, mixed>>  $bitacora
-     * @param  BaseCollection<string, mixed>  $eventos
-     */
-    private function botin(
-        ExploracionActiva $exploracion,
-        PerfilExploracion $perfil,
-        array $bitacora,
-        BaseCollection $eventos,
-        bool $delHabitat,
-    ): RecompensaItemCollection {
-        $consultor = $this->consultorPlantaciones ?? app(ConsultorPlantaciones::class);
-
-        return (new CalculadorBotinExploracion())->calcular(new ContextoBotin(
-            modo: $perfil->modo,
-            bonguriHabitat: ClaveBonguri::tryFrom($exploracion->habitat->bonguri ?? '')
-                ?? ClaveBonguri::porDefecto(),
-            nivelHabitat: $exploracion->nivel,
-            duracionHoras: $exploracion->duracion_horas ?? 0,
-            delHabitat: $delHabitat,
-            huboDerrota: $this->terminoPorDerrota($bitacora, $eventos),
-            multiplicadorBotin: $perfil->multiplicadorBotin,
-            factorTiempo: $this->factorTiempo($exploracion),
-            factoresPlantacion: $consultor->factoresPara(
-                $exploracion->user_id,
-                $exploracion->habitat_id,
-            ),
-        ));
-    }
-
-    /**
-     * Flag “Pokémon nativo del hábitat”. Se reutiliza el valor persistido por
-     * el tick (`eventos['bonos']['del_habitat']`); si falta (finalización sin
-     * tick previo), se calcula una única vez con `EsDelHabitat`.
-     *
-     * @param  BaseCollection<string, mixed>  $eventos
-     */
-    private function delHabitat(ExploracionActiva $exploracion, BaseCollection $eventos): bool
-    {
-        $bonos = $eventos->get('bonos');
-
-        if (is_array($bonos) && array_key_exists('del_habitat', $bonos)) {
-            return (bool) $bonos['del_habitat'];
-        }
-
-        $reclutado = $exploracion->reclutado;
-
-        if ($reclutado === null) {
-            return false;
-        }
-
-        return ($this->esDelHabitat ?? app(EsDelHabitat::class))
-            ->handle($reclutado->pokemon_id, $exploracion->habitat_id);
-    }
-
-    /**
-     * Fracción del botín nominal que corresponde al tiempo efectivo de la
-     * expedición. La base es el inicio de la vuelta (75 % de la duración); una
-     * expedición indefinida usa 60 minutos. Una recogida forzada antes de
-     * tiempo recibe botín proporcional a los minutos transcurridos. El
-     * resultado se acota a [0, 1].
-     */
-    private function factorTiempo(ExploracionActiva $exploracion): float
-    {
-        return (new CalculadoraDuracionExploracion())->factorTiempo(
-            $this->ventanaExploracion($exploracion),
-        );
-    }
-
-    /**
-     * Construye la ventana temporal de la expedición con el reloj del dominio.
-     */
-    private function ventanaExploracion(ExploracionActiva $exploracion): VentanaExploracion
-    {
-        $ahora = Carbon::instance($this->reloj->ahora());
-        $inicio = $exploracion->inicio_exploracion?->copy()
-            ?? $exploracion->created_at?->copy()
-            ?? $ahora;
-        $fin = CalculadorFinExploracion::calcular(
-            $exploracion->hora_limite,
-            $exploracion->duracion_horas,
-            $inicio,
-        );
-
-        return new VentanaExploracion(
-            inicio: $inicio,
-            fin: $fin,
-            ahora: $ahora,
-        );
-    }
-
-    /**
-     * Calcula la pérdida de objetos por derrota: intdiv(cantidad, 2) de cada
-     * recompensa (familia/EV/tipo/capturas/items). Una cantidad 1 pierde 0. Si
-     * no hay derrota, devuelve [].
-     *
-     * @param  list<array<string, mixed>>  $bitacora
-     * @param  BaseCollection<string, mixed>  $eventos
-     * @return list<ObjetoPerdido>
-     */
-    private function objetosPerdidos(array $bitacora, BaseCollection $eventos, ResultadoRecompensas $recompensas): array
-    {
-        return (new CalculadoraPerdidas())
-            ->calcular($recompensas, $this->terminoPorDerrota($bitacora, $eventos))
-            ->all();
-    }
-
-    /**
-     * Resta las pérdidas de las recompensas finales, devolviendo una nueva
-     * instancia de ResultadoRecompensas con cantidades reducidas.
-     *
-     * @param  list<ObjetoPerdido>  $perdidas
-     */
-    private function restarPerdidas(ResultadoRecompensas $recompensas, array $perdidas): ResultadoRecompensas
-    {
-        return (new CalculadoraPerdidas())->restar(
-            $recompensas,
-            new ColeccionObjetosPerdidos($perdidas),
-        );
-    }
 }

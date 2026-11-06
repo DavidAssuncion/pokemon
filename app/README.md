@@ -13,11 +13,10 @@ jobs, providers y utilidades transversales. La lógica de dominio vive en `src/`
 | `Support/` | `ItemCatalogo`, `ReclutadoSerializer`, `BattleSessionService`, `CreadorBatallaSesion`, `CadenasEvolutivas`, `WebpConverter` |
 | `Bus/` | `DatabaseUnitOfWork` (transacciones para el bus de `Shared`) |
 | `Datagrid/` | Consultas JSON de solo lectura con whitelist (`DatagridService`, `DatagridDefinition`, filtros) |
-| `Crud/Base/` | Generadores del CRUD admin (`PostgreSqlSchemaReader`, `ViewGenerator`, `RequestGenerator`) |
 | `Enums/` | `TipoEnum`, `StatEnum` (incluyen `options()` para Blade) |
 | `Jobs/` | `ActualizarPokedexJob`, `RecompilarHabitatJsonJob`, etc. |
 | `Providers/` | `AppServiceProvider`, `BattleEffectServiceProvider`, `DatagridServiceProvider` |
-| `Console/Commands/` | Comandos artisan (`iconos:optimize-webp`, generación CRUD) |
+| `Console/Commands/` | Comandos artisan (`iconos:optimize-webp`) |
 
 ## Límites arquitectónicos
 

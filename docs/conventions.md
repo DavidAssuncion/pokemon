@@ -95,8 +95,6 @@ src/<Modulo>/
 La antigua capa `Presentation/` deja de ser canónica: sus DTOs migran a
 `Domain/DataTransferObjects` (los módulos actuales la conservan hasta migrar).
 
-Excepción: `Crud/` contiene submódulos planos sin esta estructura completa (algunos tienen `Domain/` e `Infra/` vacíos).
-
 ### Infraestructura transversal compartida (en `app/`)
 
 Solo la infraestructura Laravel **transversal** que no pertenece a un módulo concreto permanece
@@ -110,7 +108,6 @@ app/
   Providers/         → Service providers
   Enums/             → Enums PHP compartidos (TipoEnum, StatEnum)
   Http/Controllers/Controller.php → Base Controller (infra global; los controladores de módulo lo extienden)
-  Crud/Base/         → Clases base para CRUD
 ```
 
 > **En destino**, Controllers, Models Eloquent y Livewire **NO viven en `app/`**: pertenecen a
@@ -166,7 +163,7 @@ app/
 - **Alpine.js** para animaciones y transiciones, y para estados de UI complejos (Pokédex asíncrona, dropdowns).
 - **Tailwind CSS 4** con Vite. Sin CSS personalizado (todo utility-first).
 - **Blade**: layouts via `@extends('layouts.app')`, partials via `@include()`.
-- Vistas organizadas por módulo: `resources/views/habitats/`, `resources/views/crud/<modulo>/`, etc.
+- Vistas organizadas por módulo: `resources/views/habitats/`, `resources/views/exploraciones/`, etc.
 
 ### Iconos de pokémon (WebP)
 

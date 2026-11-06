@@ -5,32 +5,31 @@ declare(strict_types=1);
 namespace Src\Exploraciones\App;
 
 use App\Models\ExploracionActiva;
-use App\Models\Pokemon;
-use App\Models\PokemonStat;
-use App\Models\PokemonType;
-use Carbon\Carbon;
-use Carbon\CarbonInterface;
 use Closure;
 use Illuminate\Support\Collection;
 use LogicException;
-use Src\Exploraciones\Domain\CadenciaEventos;
-use Src\Exploraciones\Domain\CalculadorFinExploracion;
-use Src\Exploraciones\Domain\CalculadorVueltaExploracion;
-use Src\Exploraciones\Domain\CapacidadesStats;
+use Src\Exploraciones\App\Procesamiento\AplicadorDescansoExplorador;
+use Src\Exploraciones\App\Procesamiento\CargadorPoolHabitat;
+use Src\Exploraciones\App\Procesamiento\EjecutorCombateExplorador;
+use Src\Exploraciones\App\Procesamiento\GestorBonosHabitat;
+use Src\Exploraciones\App\Procesamiento\GestorTickExploracion;
+use Src\Exploraciones\App\Procesamiento\MapeadorResolucionCombate;
+use Src\Exploraciones\App\Procesamiento\MapeadorVentanaExploracion;
+use Src\Exploraciones\App\Procesamiento\ResolutorEmboscada;
+use Src\Exploraciones\App\Procesamiento\ResolutorEncuentro;
+use Src\Exploraciones\App\Procesamiento\ResolutorEventoExploracion;
+use Src\Exploraciones\App\Procesamiento\ResultadoTick;
 use Src\Exploraciones\Domain\EvaluadorExploracion;
-use Src\Exploraciones\Domain\ModoExploracion;
-use Src\Exploraciones\Domain\PerfilExploracion;
-use Src\Exploraciones\Domain\ReglasExploracion;
-use Src\Exploraciones\Domain\SimuladorEncuentros;
-use Src\Exploraciones\Domain\ValueObjects\EstadoExplorador;
-use Src\Exploraciones\Domain\ValueObjects\PoolHabitat;
-use Src\Exploraciones\Domain\ValueObjects\ResultadoBatallaExploracion;
+use Src\Exploraciones\Domain\Tick\CalculadoraEvasionEmboscada;
+use Src\Exploraciones\Domain\Tick\VentanaTick;
 use Src\Granjas\App\ResolverBonosFamilia;
 use Src\Shared\Bus\Command;
 use Src\Shared\Bus\CommandBus;
 use Src\Shared\Bus\CommandHandler;
 use Src\Shared\Domain\EscaladorNivelRival;
-use Src\Shared\Domain\NivelHelper;
+use Src\Shared\Domain\Ports\Reloj;
+use Src\Shared\Domain\Random\GeneradorAleatorioPredeterminado;
+use Src\Shared\Domain\Time\RelojPredeterminado;
 use Src\Shared\Tipos\TipoPokemon;
 
 /**
@@ -43,26 +42,42 @@ use Src\Shared\Tipos\TipoPokemon;
  * hasta 100 % a 1 %/min real (acumulado en tiempo_perdido + evento bitácora).
  * Si el explorador pierde un combate → la exploración termina (derrota).
  *
- * La capa App/ usa Eloquent (App\Models) e Illuminate directamente por
- * convención del proyecto (la regla DDD solo exige Domain puro).
+ * La orquestación del tick vive en GestorTickExploracion; este handler
+ * conserva guardado, cierre y despacho con el mismo timing que antes.
  */
 final class ProcesarExploracionHandler implements CommandHandler
 {
-    private readonly ?Closure $aleatorio;
+    private readonly Closure $aleatorio;
+
+    private readonly Reloj $reloj;
+
+    private readonly MapeadorVentanaExploracion $mapeador;
+
+    private readonly GestorBonosHabitat $bonos;
+
+    private readonly CargadorPoolHabitat $pool;
+
+    private readonly GestorTickExploracion $gestor;
 
     /**
      * @param  callable():float|null  $aleatorio  Proveedor determinista [0,1)
-     *                                            para TEST (seam). null → mt_rand.
+     *                                            para TEST (seam). null → puerto de azar.
      */
     public function __construct(
         private readonly CommandBus $bus,
-        private readonly CombateExploracion $combate,
-        private readonly EscaladorNivelRival $escalador,
+        CombateExploracion $combate,
+        EscaladorNivelRival $escalador,
         ?callable $aleatorio = null,
-        private readonly ?ResolverBonosFamilia $bonosFamilia = null,
-        private readonly ?EsDelHabitat $esDelHabitat = null,
+        ?ResolverBonosFamilia $bonosFamilia = null,
+        ?EsDelHabitat $esDelHabitat = null,
+        ?Reloj $reloj = null,
     ) {
-        $this->aleatorio = $aleatorio !== null ? Closure::fromCallable($aleatorio) : null;
+        $this->aleatorio = $aleatorio !== null ? Closure::fromCallable($aleatorio) : self::aleatorioPredeterminado();
+        $this->reloj = $reloj ?? new RelojPredeterminado();
+        $this->mapeador = new MapeadorVentanaExploracion($this->reloj);
+        $this->bonos = new GestorBonosHabitat($esDelHabitat);
+        $this->pool = new CargadorPoolHabitat($bonosFamilia);
+        $this->gestor = $this->crearGestor($combate, $escalador);
     }
 
     public function handle(Command $command): mixed
@@ -81,653 +96,91 @@ final class ProcesarExploracionHandler implements CommandHandler
             return null;
         }
 
-        $inicio = $this->inicioExploracion($exploracion);
-        $fin = CalculadorFinExploracion::calcular($exploracion->hora_limite, $exploracion->duracion_horas, $inicio);
-        $inicioVuelta = CalculadorVueltaExploracion::inicioVuelta($inicio, $fin);
-
         /** @var Collection<string, mixed> $eventos */
         $eventos = $exploracion->eventos ?? collect();
 
         // F3: el bonus de hábitat se calcula una sola vez y viaja en el JSON
         // de la exploración; la finalización lo reutiliza sin repetir consulta.
-        if (! $eventos->has('bonos')) {
-            $eventos->put('bonos', [
-                'del_habitat' => ($this->esDelHabitat ?? app(EsDelHabitat::class))
-                    ->handle($exploracion->reclutado->pokemon_id, $exploracion->habitat_id),
-            ]);
-        }
+        $this->bonos->asegurar($exploracion, $eventos);
 
-        $desde = $this->ultimoProcesado($eventos) ?? $inicio;
-        $hasta = $this->limiteTick(now(), $fin, $inicioVuelta);
-
+        $ventana = $this->mapeador->mapear($exploracion, $eventos);
         $capacidades = FabricaCapacidadesStats::desdeReclutado($exploracion->reclutado, $exploracion->user);
         $dificultad = $exploracion->habitat?->minLvlParaNivel($exploracion->nivel)
             ?? EvaluadorExploracion::dificultad('normal', (int) ($exploracion->habitat?->peligro ?? 1));
 
-        [$terminada, $motivo] = $this->procesarTick($exploracion, $eventos, $inicio, $desde, $hasta, $capacidades, $dificultad);
+        $resultado = $this->gestor->procesar($exploracion, $eventos, $ventana, $capacidades, $dificultad);
 
-        $completada = $command->forzarRegreso
-            || ($inicioVuelta !== null && now()->greaterThanOrEqualTo($inicioVuelta))
-            || $terminada;
-
-        if ($completada) {
-            $eventos->put($motivo === 'derrota' ? 'derrota' : 'retirada', [
-                'reason' => $motivo === 'derrota' ? 'explorador_debilitado' : 'grupo_enemigo',
-                'timestamp' => now()->toIso8601String(),
-            ]);
-            $exploracion->eventos = $eventos;
-            $exploracion->save();
-
-            $this->bus->dispatch(new FinalizarExploracionCommand($exploracion));
-        }
+        $this->persistir($exploracion, $eventos, $resultado);
+        $this->cerrarSiProcede($exploracion, $eventos, $ventana, $resultado, $command->forzarRegreso);
 
         return null;
     }
 
     /**
-     * Genera y resuelve los eventos del tick con combate real. Devuelve
-     * [terminada, motivo] donde motivo es 'derrota'|'retirada'.
-     *
      * @param  Collection<string, mixed>  $eventos
-     * @return array{0: bool, 1: string}
      */
-    private function procesarTick(
-        ExploracionActiva $exploracion,
-        Collection $eventos,
-        CarbonInterface $inicio,
-        CarbonInterface $desde,
-        CarbonInterface $hasta,
-        CapacidadesStats $capacidades,
-        int $dificultad,
-    ): array {
-        $tiempoPerdido = (int) $eventos->get('tiempo_perdido', 0);
-        $intervaloBase = ReglasExploracion::MINUTOS_POR_ENCUENTRO;
-        $reduccionIntervalo = $capacidades->reduccionIntervaloMovilidad($dificultad);
-        $bonusEventos = $capacidades->bonusEventosExploracion($dificultad);
-
-        $eventosGenerados = $this->eventosGeneradosConBackfill(
-            $eventos,
-            $inicio,
-            $hasta,
-            $tiempoPerdido,
-            $intervaloBase,
-            $reduccionIntervalo,
-            $bonusEventos,
-        );
-
-        if (! $hasta->greaterThan($desde)) {
-            $eventos->put('ultimo_procesado', $hasta->toIso8601String());
-            $exploracion->eventos = $eventos;
-            $exploracion->save();
-
-            return [false, ''];
+    private function persistir(ExploracionActiva $exploracion, Collection $eventos, ResultadoTick $resultado): void
+    {
+        if (! $resultado->debePersistir) {
+            return;
         }
-
-        $pool = $this->poolDeHabitat($exploracion);
-        $perfil = PerfilExploracion::de(ModoExploracion::desde($exploracion->modo));
-
-        $nuevos = SimuladorEncuentros::generarEventosDesdePool(
-            $pool,
-            CadenciaEventos::eventosPendientes(
-                $inicio,
-                $hasta,
-                $eventosGenerados,
-                $tiempoPerdido,
-                $intervaloBase,
-                $reduccionIntervalo,
-                $bonusEventos,
-            ),
-            $desde,
-            $hasta,
-            $this->aleatorio,
-            $capacidades->permitirEmboscadas($dificultad),
-            $capacidades->permitirExcepcionales($dificultad),
-            perfil: $perfil,
-        )->aArrays();
-
-        if ($nuevos === []) {
-            $eventos->put('ultimo_procesado', $hasta->toIso8601String());
-            $exploracion->eventos = $eventos;
-            $exploracion->save();
-
-            return [false, ''];
-        }
-
-        // Eventos base de la cadencia: los extras por emboscada evitada no
-        // consumen tiempo y no deben contarse como programados por reloj.
-        $programados = count($nuevos);
-
-        // Estado del explorador persistido entre ticks (hp/barreras).
-        $estadoExplorador = $this->estadoExplorador($eventos);
-
-        $multiplicadorRecuperacion = $capacidades->multiplicadorRecuperacion($dificultad);
-
-        // Al inicio de tick: descanso si HP < 50 %.
-        $perdidoTick = $this->aplicarDescansoSiNecesario($exploracion, $eventos, $estadoExplorador, $multiplicadorRecuperacion);
-
-        $resueltos = [];
-        $derrota = false;
-        $retirada = false;
-
-        // Bucle con índice y cota: las emboscadas evitadas añaden un evento
-        // extra que también debe procesarse (y ese extra nunca es emboscada,
-        // por lo que no puede volver a añadir ninguno).
-        $limiteIteraciones = 2 * count($nuevos);
-        $indice = 0;
-
-        while ($indice < count($nuevos) && $indice < $limiteIteraciones) {
-            $resuelto = $this->resolverEvento(
-                $nuevos[$indice],
-                $exploracion,
-                $estadoExplorador,
-                $eventos,
-                $capacidades,
-                $dificultad,
-            );
-            $resueltos[] = $resuelto;
-            $perdidoTick += $resuelto['duration_loss'] ?? 0;
-
-            if (($resuelto['resolucion'] ?? '') === 'derrota') {
-                $derrota = true;
-                break; // Emboscada/encuentro perdido → la exploración termina.
-            }
-
-            if (($resuelto['retirada_probable'] ?? false) === true && $this->tirarAleatorio() < 0.5) {
-                $retirada = true;
-                break;
-            }
-
-            // Emboscada evitada: exactamente UN evento extra (hallazgo/neutral).
-            if (($resuelto['evitada'] ?? false) === true) {
-                $nuevos[] = $this->eventoExtra($pool, $desde, $hasta, $perfil);
-            }
-
-            // Tras cada evento: descanso si el explorador quedó con HP < 50 %.
-            $perdidoTick += $this->aplicarDescansoSiNecesario($exploracion, $eventos, $estadoExplorador, $multiplicadorRecuperacion);
-
-            $indice++;
-        }
-
-        $bitacora = $eventos->get('bitacora', []);
-        $eventos->put('bitacora', [...$bitacora, ...$resueltos]);
-        $eventos->put('tiempo_perdido', (int) $eventos->get('tiempo_perdido', 0) + $perdidoTick);
-        $eventos->put('eventos_generados', $eventosGenerados + $programados);
-        $eventos->put('explorador', $estadoExplorador->aArray());
-
-        if ($retirada) {
-            $eventos->put('retirada', [
-                'reason' => 'grupo_enemigo',
-                'timestamp' => now()->toIso8601String(),
-            ]);
-        }
-
-        // D2: adelantar ultimo_procesado hasta la próxima ejecución.
-        $eventos->put('ultimo_procesado', $hasta->copy()->addMinutes($perdidoTick)->toIso8601String());
 
         $exploracion->eventos = $eventos;
         $exploracion->save();
-
-        return [$derrota || $retirada, $derrota ? 'derrota' : ($retirada ? 'retirada' : '')];
     }
 
     /**
-     * Contador de eventos ya programados. Para exploraciones iniciadas antes
-     * de que existiera `eventos_generados` hace un backfill determinista: cada
-     * evento ya registrado en la bitácora se asume consumido, acotado por los
-     * `esperados` del reloj. El criterio es conservador (cuenta también
-     * hallazgos y descansos): puede quedarse corto en el tick de recuperación,
-     * pero nunca reprograma slots ya registrados ni supera `esperados`.
-     *
      * @param  Collection<string, mixed>  $eventos
      */
-    private function eventosGeneradosConBackfill(
+    private function cerrarSiProcede(
+        ExploracionActiva $exploracion,
         Collection $eventos,
-        CarbonInterface $inicio,
-        CarbonInterface $hasta,
-        int $tiempoPerdido,
-        int $intervaloBase,
-        float $reduccionIntervalo,
-        int $bonusEventos,
-    ): int {
-        if ($eventos->has('eventos_generados')) {
-            return (int) $eventos->get('eventos_generados');
+        VentanaTick $ventana,
+        ResultadoTick $resultado,
+        bool $forzarRegreso,
+    ): void {
+        $completada = $forzarRegreso
+            || ($ventana->inicioVuelta !== null && $this->mapeador->ahora()->greaterThanOrEqualTo($ventana->inicioVuelta))
+            || $resultado->terminada;
+
+        if (! $completada) {
+            return;
         }
 
-        $bitacora = $eventos->get('bitacora', []);
-        $backfill = min(
-            CadenciaEventos::esperados(
-                $inicio,
-                $hasta,
-                $tiempoPerdido,
-                $intervaloBase,
-                $reduccionIntervalo,
-                $bonusEventos,
+        $eventos->put($resultado->motivo === 'derrota' ? 'derrota' : 'retirada', [
+            'reason' => $resultado->motivo === 'derrota' ? 'explorador_debilitado' : 'grupo_enemigo',
+            'timestamp' => $this->mapeador->ahora()->toIso8601String(),
+        ]);
+        $exploracion->eventos = $eventos;
+        $exploracion->save();
+
+        $this->bus->dispatch(new FinalizarExploracionCommand($exploracion));
+    }
+
+    private function crearGestor(
+        CombateExploracion $combate,
+        EscaladorNivelRival $escalador,
+    ): GestorTickExploracion {
+        $mapeadorCombate = new MapeadorResolucionCombate();
+        $ejecutor = new EjecutorCombateExplorador($combate, $escalador);
+        $descanso = new AplicadorDescansoExplorador($this->reloj);
+
+        return new GestorTickExploracion(
+            $this->pool,
+            $descanso,
+            new ResolutorEventoExploracion(
+                new ResolutorEncuentro($mapeadorCombate, $ejecutor, $descanso),
+                new ResolutorEmboscada(
+                    $mapeadorCombate,
+                    $ejecutor,
+                    $descanso,
+                    new CalculadoraEvasionEmboscada(),
+                    $this->aleatorio,
+                ),
             ),
-            is_array($bitacora) ? count($bitacora) : 0,
-        );
-
-        $eventos->put('eventos_generados', $backfill);
-
-        return $backfill;
-    }
-
-    /**
-     * Resuelve un evento con combate real (encuentro/emboscada) o el evaluador
-     * para contratiempos. Mantiene el contrato de resolución existente
-     * (resolucion, duration_loss) para FinalizarExploracionHandler.
-     *
-     * @param  array<string, mixed>  $evento
-     * @param  Collection<string, mixed>  $eventos
-     * @return array<string, mixed>
-     */
-    private function resolverEvento(
-        array $evento,
-        ExploracionActiva $exploracion,
-        EstadoExplorador &$estadoExplorador,
-        Collection $eventos,
-        CapacidadesStats $capacidades,
-        int $dificultad,
-    ): array {
-        $tipo = $evento['tipo'] ?? '';
-
-        if ($tipo === 'emboscada') {
-            return $this->resolverEmboscada($evento, $exploracion, $estadoExplorador, $eventos, $capacidades, $dificultad);
-        }
-
-        if ($tipo === 'encuentro') {
-            return $this->resolverEncuentro($evento, $exploracion, $estadoExplorador, $eventos, $capacidades, $dificultad);
-        }
-
-        if ($tipo === 'contratiempo') {
-            // RFC: rol individual del reclutado (mitiga según el subtipo).
-            $roles = $exploracion->reclutado !== null
-                ? [$exploracion->reclutado->rol()]
-                : [];
-
-            $resolucion = EvaluadorExploracion::resolverContratiempo(
-                subtipo: (string) ($evento['subtype'] ?? 'terreno'),
-                roles: $roles,
-            );
-
-            return array_merge($evento, $resolucion->toArray());
-        }
-
-        return $evento;
-    }
-
-    /**
-     * Combate 1v1 real contra un salvaje del evento (pokemon_id).
-     * Victoria → 'victoria'; derrota → 'derrota' (la exploración termina).
-     *
-     * @param  array<string, mixed>  $evento
-     * @param  Collection<string, mixed>  $eventos
-     * @return array<string, mixed>
-     */
-    private function resolverEncuentro(
-        array $evento,
-        ExploracionActiva $exploracion,
-        EstadoExplorador &$estadoExplorador,
-        Collection $eventos,
-        CapacidadesStats $capacidades,
-        int $dificultad,
-    ): array {
-        $pokemonId = (int) ($evento['pokemon_id'] ?? 0);
-        $salvaje = Pokemon::find($pokemonId);
-
-        if ($salvaje === null) {
-            return array_merge($evento, ['resolucion' => 'derrota', 'duration_loss' => 0, 'derrota' => true]);
-        }
-
-        // Encuentro con HP < 50 % → descanso a 100 % antes de combatir.
-        $perdidoAntes = $this->aplicarDescansoSiNecesario(
-            $exploracion,
-            $eventos,
-            $estadoExplorador,
-            $capacidades->multiplicadorRecuperacion($dificultad),
-        );
-
-        $resultado = $this->combatirEvento($exploracion, $salvaje, $estadoExplorador, false, $capacidades, $dificultad);
-
-        return array_merge($evento, $this->resolucionCombate($resultado, 'victoria', $estadoExplorador) + ['duration_loss' => $perdidoAntes]);
-    }
-
-    /**
-     * Emboscada: los pokemon_ids se combaten de uno en uno SIN regenerar
-     * barreras entre sub-combates. Si el explorador pierde uno → 'derrota'
-     * (no combate el resto). Victoria total → 'superada' (contrato existente:
-     * las emboscadas solo reportan avistados, no derrotados).
-     *
-     * La detección puede evitar la emboscada sin combatir: MAESTRO → siempre
-     * 'evitada'; COMPETENTE/EXPERTO → 50 % 'evitada'. La emboscada evitada
-     * genera UN evento extra (hallazgo/neutral) en procesarTick.
-     *
-     * @param  array<string, mixed>  $evento
-     * @param  Collection<string, mixed>  $eventos
-     * @return array<string, mixed>
-     */
-    private function resolverEmboscada(
-        array $evento,
-        ExploracionActiva $exploracion,
-        EstadoExplorador &$estadoExplorador,
-        Collection $eventos,
-        CapacidadesStats $capacidades,
-        int $dificultad,
-    ): array {
-        $ids = array_values(array_map('intval', (array) ($evento['pokemon_ids'] ?? [])));
-
-        if ($ids === []) {
-            return array_merge($evento, ['resolucion' => 'derrota', 'duration_loss' => 0, 'derrota' => true]);
-        }
-
-        if ($capacidades->deteccionAutoEvasion($dificultad)) {
-            return $this->emboscadaEvitada($evento);
-        }
-
-        if ($capacidades->permitirEmboscadas($dificultad) && $this->tirarAleatorio() < 0.5) {
-            return $this->emboscadaEvitada($evento);
-        }
-
-        $subCombates = [];
-        $perdidoTotal = 0;
-
-        foreach ($ids as $pokemonId) {
-            $salvaje = Pokemon::find($pokemonId);
-            if ($salvaje === null) {
-                continue;
-            }
-
-            // En emboscada con HP < 50 % → primero descanso a 100 %.
-            $perdidoTotal += $this->aplicarDescansoSiNecesario(
-                $exploracion,
-                $eventos,
-                $estadoExplorador,
-                $capacidades->multiplicadorRecuperacion($dificultad),
-            );
-
-            $resultado = $this->combatirEvento($exploracion, $salvaje, $estadoExplorador, true, $capacidades, $dificultad);
-            $subCombates[] = [
-                'pokemon_id' => $pokemonId,
-                'victoria' => $resultado->victoria,
-            ];
-
-            if (! $resultado->victoria) {
-                return array_merge($evento, $this->resolucionCombate($resultado, 'derrota', $estadoExplorador) + [
-                    'sub_combates' => $subCombates,
-                    'duration_loss' => $perdidoTotal,
-                    'derrota' => true,
-                ]);
-            }
-        }
-
-        // Ningún id del evento resolvió un salvaje existente (caso artificial):
-        // la emboscada termina en derrota sin sub-combates.
-        if (! isset($resultado)) {
-            return array_merge($evento, [
-                'resolucion' => 'derrota',
-                'duration_loss' => $perdidoTotal,
-                'derrota' => true,
-            ]);
-        }
-
-        return array_merge($evento, $this->resolucionCombate($resultado, 'superada', $estadoExplorador) + [
-            'sub_combates' => $subCombates,
-            'duration_loss' => $perdidoTotal,
-        ]);
-    }
-
-    /**
-     * Resolución 'evitada' de una emboscada: sin coste ni combate.
-     *
-     * @param  array<string, mixed>  $evento
-     * @return array<string, mixed>
-     */
-    private function emboscadaEvitada(array $evento): array
-    {
-        return array_merge($evento, [
-            'resolucion' => 'evitada',
-            'duration_loss' => 0,
-            'evitada' => true,
-        ]);
-    }
-
-    /**
-     * Genera EXACTAMENTE un evento extra (hallazgo/neutral) para compensar una
-     * emboscada evitada. Se genera sin emboscadas permitidas: el extra nunca
-     * puede ser una emboscada y, por tanto, no añade más eventos. Usa el mismo
-     * perfil de modo que los eventos normales para mantener la mezcla.
-     *
-     * @return array<string, mixed>
-     */
-    private function eventoExtra(
-        PoolHabitat $pool,
-        CarbonInterface $desde,
-        CarbonInterface $hasta,
-        PerfilExploracion $perfil,
-    ): array {
-        $extras = SimuladorEncuentros::generarEventosDesdePool(
-            $pool,
-            1,
-            $desde,
-            $hasta,
             $this->aleatorio,
-            false,
-            perfil: $perfil,
-        )->aArrays();
-
-        return $extras[0] ?? ['tipo' => 'neutral', 'detalle' => 'evento neutral'];
-    }
-
-    /**
-     * Proveedor aleatorio seguro: usa el seam inyectado o mt_rand si no hay.
-     */
-    private function tirarAleatorio(): float
-    {
-        if ($this->aleatorio !== null) {
-            return ($this->aleatorio)();
-        }
-
-        return mt_rand(0, 999) / 1000;
-    }
-
-    /**
-     * Ejecuta el combate y actualiza el estado del explorador. Tras victoria
-     * NO-emboscada regenera las barreras al 100 %; en emboscada secuencial no
-     * regenera entre sub-combates. El HP nunca se cura por combate.
-     */
-    private function combatirEvento(
-        ExploracionActiva $exploracion,
-        Pokemon $salvaje,
-        EstadoExplorador &$estadoExplorador,
-        bool $emboscadaSecuencial,
-        CapacidadesStats $capacidades,
-        int $dificultad,
-    ): ResultadoBatallaExploracion {
-        $reclutado = $exploracion->reclutado;
-        $nivelRival = $this->nivelRival($exploracion);
-
-        $resultado = $this->combate->combatir(
-            reclutado: $reclutado,
-            salvaje: $salvaje,
-            nivelRival: $nivelRival,
-            estadoInicial: $this->estadoInicialCombate($estadoExplorador),
-            modificadorDanio: $capacidades->bonusDanoCombate($dificultad),
+            $this->reloj,
         );
-
-        // Actualizar estado persistido (HP final, máximos y barreras; en
-        // victoria NO-emboscada las barreras se regeneran al 100 %).
-        $estadoExplorador = $estadoExplorador->actualizarTrasCombate($resultado, $emboscadaSecuencial);
-
-        return $resultado;
-    }
-
-    /**
-     * Traduce el resultado del combate al contrato de resolución de eventos.
-     * Documenta el estado del explorador DESPUÉS del combate (ya con barreras
-     * regeneradas al 100 % en victoria no-emboscada).
-     *
-     * Frontera — el contrato de resolución es el shape persistido en
-     * exploracion->eventos y leído por la vista (_evento.blade.php).
-     *
-*     @return array<string, mixed>
-     */
-    private function resolucionCombate(ResultadoBatallaExploracion $resultado, string $resolucionVictoria, EstadoExplorador $estadoExplorador): array
-    {
-        $resolucion = [
-            'resolucion' => $resultado->victoria ? $resolucionVictoria : 'derrota',
-            'victoria' => $resultado->victoria,
-            'hp_final' => $estadoExplorador->hp,
-            'barrera_fisica_final' => $estadoExplorador->barreraFisica,
-            'barrera_especial_final' => $estadoExplorador->barreraEspecial,
-            'barrera_fisica_max' => $estadoExplorador->barreraFisicaMax,
-            'barrera_especial_max' => $estadoExplorador->barreraEspecialMax,
-            'log' => $resultado->log->entries()->toList(),
-            'duration_loss' => 0,
-        ];
-
-        $pv = [
-            'hp_inicial' => $resultado->hpInicial,
-            'hp_max' => $resultado->hpMax,
-            'rival_hp_inicial' => $resultado->rivalHpInicial,
-            'rival_hp_final' => $resultado->rivalHpFinal,
-            'rival_hp_max' => $resultado->rivalHpMax,
-        ];
-
-        foreach ($pv as $clave => $valor) {
-            if ($valor !== null) {
-                $resolucion[$clave] = $valor;
-            }
-        }
-
-        return $resolucion;
-    }
-
-    /**
-     * Nivel del rival escalado: EscaladorNivelRival::escalar(min_lvl del
-     * hábitat para el nivel de exploración, nivel del Pokémon explorador). Si
-     * el hábitat no tiene mínimo → nivel del Pokémon.
-     */
-    private function nivelRival(ExploracionActiva $exploracion): int
-    {
-        $nivelPokemon = NivelHelper::nivelDesdeExperiencia(
-            $exploracion->reclutado?->exp->total() ?? 0
-        );
-        $minLvl = $exploracion->habitat?->minLvlParaNivel($exploracion->nivel);
-
-        if ($minLvl === null) {
-            return $nivelPokemon;
-        }
-
-        return $this->escalador->escalar($minLvl, $nivelPokemon);
-    }
-
-    /**
-     * Estado inicial para el combate desde el estado persistido (o null si el
-     * explorador no ha combatido aún → comienza al 100 %).
-     *
-     * @return array{hp: float, barrera_fisica: float, barrera_especial: float}|null
-     */
-    private function estadoInicialCombate(EstadoExplorador $estadoExplorador): ?array
-    {
-        if ($estadoExplorador->sinCombate()) {
-            return null;
-        }
-
-        return [
-            'hp' => $estadoExplorador->hp,
-            'barrera_fisica' => $estadoExplorador->barreraFisica,
-            'barrera_especial' => $estadoExplorador->barreraEspecial,
-        ];
-    }
-
-    /**
-     * Lee el estado persistido del explorador (eventos['explorador']) o
-     * devuelve un estado vacío (primer tick → combate al 100 %).
-     *
-     * @param  Collection<string, mixed>  $eventos
-     */
-    private function estadoExplorador(Collection $eventos): EstadoExplorador
-    {
-        /** @var array<string, mixed>|null $estado */
-        $estado = $eventos->get('explorador');
-
-        return is_array($estado) ? EstadoExplorador::desdeArray($estado) : EstadoExplorador::vacio();
-    }
-
-    /**
-     * Aplica descanso hasta el 100 % del HP si el explorador está por debajo
-     * del 50 %: recupera 1 % por minuto real (modulado por el multiplicador de
-     * recuperación según supervivencia), acumula el tiempo en tiempo_perdido y
-     * registra un evento de bitácora. Devuelve los minutos de descanso
-     * aplicados (0 si no procede).
-     *
-     * @param  Collection<string, mixed>  $eventos
-     */
-    private function aplicarDescansoSiNecesario(
-        ExploracionActiva $exploracion,
-        Collection $eventos,
-        EstadoExplorador &$estadoExplorador,
-        float $multiplicadorRecuperacion,
-    ): int {
-        if (! $estadoExplorador->requiereDescanso()) {
-            return 0;
-        }
-
-        $pctFaltante = 100 - $estadoExplorador->pctHp();
-        $duracionMinutos = (int) ceil($pctFaltante / (ReglasExploracion::HP_POR_MINUTO_DESCANSO * $multiplicadorRecuperacion));
-        $hpRecuperado = $estadoExplorador->hpMax - $estadoExplorador->hp;
-
-        $estadoExplorador = $estadoExplorador->conHp($estadoExplorador->hpMax);
-
-        $bitacora = $eventos->get('bitacora', []);
-        $eventos->put('bitacora', [...$bitacora, [
-            'tipo' => 'descanso',
-            'timestamp' => now()->toIso8601String(),
-            'duracion_minutos' => $duracionMinutos,
-            'hp_recuperado' => $hpRecuperado,
-        ]]);
-
-        return $duracionMinutos;
-    }
-
-    private function inicioExploracion(ExploracionActiva $exploracion): CarbonInterface
-    {
-        if ($exploracion->inicio_exploracion !== null) {
-            return $exploracion->inicio_exploracion->copy();
-        }
-
-        if ($exploracion->created_at !== null) {
-            return $exploracion->created_at->copy();
-        }
-
-        return now();
-    }
-
-    private function limiteTick(
-        CarbonInterface $ahora,
-        ?CarbonInterface $fin,
-        ?CarbonInterface $inicioVuelta,
-    ): CarbonInterface {
-        $limite = $ahora;
-
-        if ($fin !== null && $fin->lessThan($limite)) {
-            $limite = $fin;
-        }
-
-        if ($inicioVuelta !== null && $inicioVuelta->lessThan($limite)) {
-            $limite = $inicioVuelta;
-        }
-
-        return $limite;
-    }
-
-    /**
-     * @param  Collection<string, mixed>  $eventos
-     */
-    private function ultimoProcesado(Collection $eventos): ?CarbonInterface
-    {
-        $ultimo = $eventos->get('ultimo_procesado');
-
-        return is_string($ultimo) ? Carbon::parse($ultimo) : null;
     }
 
     /**
@@ -745,58 +198,17 @@ final class ProcesarExploracionHandler implements CommandHandler
      */
     private function poolHabitat(ExploracionActiva $exploracion): array
     {
-        return $this->poolDeHabitat($exploracion)->aArrays();
+        return $this->pool->cargar($exploracion)->aArrays();
     }
 
     /**
-     * Pool de encuentros como colección tipada: pokémon del hábitat asignados
-     * al nivel de la exploración, con sus tipos y stats con effort>0.
+     * Seam por defecto: conserva la distribución mt_rand(0, 999) / 1000 a
+     * través del puerto de azar, sin invocar mt_rand() directamente.
      */
-    private function poolDeHabitat(ExploracionActiva $exploracion): PoolHabitat
+    private static function aleatorioPredeterminado(): Closure
     {
-        $habitat = $exploracion->habitat;
-        if ($habitat === null) {
-            return new PoolHabitat();
-        }
+        $generador = new GeneradorAleatorioPredeterminado();
 
-        $bonos = $this->bonosFamilia ?? app(ResolverBonosFamilia::class);
-        $refugios = $bonos->refugiosDeHabitat(
-            $exploracion->user_id,
-            $exploracion->habitat_id,
-        );
-
-        return PoolHabitat::desdeArray(
-            $habitat->pokemon()
-                ->wherePivot('level', $exploracion->nivel)
-                ->get()
-                ->loadMissing('types', 'stats')
-                ->map(fn (Pokemon $pokemon) => [
-                    'id' => $pokemon->id,
-                    'capture_rate' => $pokemon->capture_rate,
-                    'hatch' => $pokemon->hatch,
-                    'tipos' => $this->tiposDe($pokemon),
-                    'stats' => $pokemon->stats
-                        ->filter(fn (PokemonStat $stat) => $stat->effort > 0)
-                        ->map(fn (PokemonStat $stat) => [
-                            'stat' => $stat->stat->value,
-                            'effort' => $stat->effort,
-                        ])
-                        ->values()
-                        ->all(),
-                    'evolution_chain_id' => $pokemon->evolution_chain_id,
-                    'peso' => $bonos->factorAparicion($refugios, (int) $pokemon->evolution_chain_id),
-                ])
-                ->values()
-                ->all(),
-        );
-    }
-
-    /** @return list<TipoPokemon> */
-    private function tiposDe(Pokemon $pokemon): array
-    {
-        return $pokemon->types
-            ->map(fn (PokemonType $tipo): TipoPokemon => TipoPokemon::from($tipo->type->value))
-            ->values()
-            ->all();
+        return static fn (): float => $generador->entero(0, 999) / 1000;
     }
 }
