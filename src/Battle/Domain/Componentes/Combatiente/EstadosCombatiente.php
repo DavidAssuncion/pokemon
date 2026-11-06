@@ -151,6 +151,30 @@ final class EstadosCombatiente
             return ResultadoAccion::permitida();
         }
 
+        $bloqueo = $this->veredictoCondicionBloqueante($condiciones, $movimientos, $recursos);
+        if ($bloqueo !== null) {
+            return $bloqueo;
+        }
+
+        $confusion = $condiciones->buscar(ClaveCondicion::CONFUSION);
+        if ($confusion !== null) {
+            return $this->resolverConfusion(
+                $confusion,
+                $condiciones,
+                $vitalidad,
+                $recursos,
+                $obtenerStatEfectivo,
+            );
+        }
+
+        return $this->resolverEstadoMayor($vitalidad, $recursos, $obtenerStatEfectivo);
+    }
+
+    private function veredictoCondicionBloqueante(
+        CondicionesCombatiente $condiciones,
+        MovimientosCombatiente $movimientos,
+        RecursosCombatiente $recursos,
+    ): ?ResultadoAccion {
         if ($condiciones->tiene(ClaveCondicion::INTERRUPCION)) {
             $condiciones->quitar(ClaveCondicion::INTERRUPCION);
             $movimientos->cancelarCargas();
@@ -180,29 +204,42 @@ final class EstadosCombatiente
             return ResultadoAccion::denegada('retrocede');
         }
 
-        $confusion = $condiciones->buscar(ClaveCondicion::CONFUSION);
-        if ($confusion !== null) {
-            $resultado = $this->estadoManager->puedeActuar(
-                EstadoPokemon::CONFUSION,
-                $confusion->turnos,
-                $vitalidad->hpActual(),
-                $obtenerStatEfectivo,
-            );
+        return null;
+    }
 
-            $confusion->turnos = $resultado['turnosResultado'];
-            $vitalidad->setHpActual($resultado['hpResultado']);
+    private function resolverConfusion(
+        CondicionVolatil $confusion,
+        CondicionesCombatiente $condiciones,
+        VitalidadCombatiente $vitalidad,
+        RecursosCombatiente $recursos,
+        callable $obtenerStatEfectivo,
+    ): ResultadoAccion {
+        $resultado = $this->estadoManager->puedeActuar(
+            EstadoPokemon::CONFUSION,
+            $confusion->turnos,
+            $vitalidad->hpActual(),
+            $obtenerStatEfectivo,
+        );
 
-            if ($resultado['estadoResultado'] === EstadoPokemon::NONE) {
-                $condiciones->quitar(ClaveCondicion::CONFUSION);
-            }
+        $confusion->turnos = $resultado['turnosResultado'];
+        $vitalidad->setHpActual($resultado['hpResultado']);
 
-            if (! $resultado['canAct']) {
-                $recursos->romperCombo();
-            }
-
-            return self::resultadoAccionDesde($resultado);
+        if ($resultado['estadoResultado'] === EstadoPokemon::NONE) {
+            $condiciones->quitar(ClaveCondicion::CONFUSION);
         }
 
+        if (! $resultado['canAct']) {
+            $recursos->romperCombo();
+        }
+
+        return self::resultadoAccionDesde($resultado);
+    }
+
+    private function resolverEstadoMayor(
+        VitalidadCombatiente $vitalidad,
+        RecursosCombatiente $recursos,
+        callable $obtenerStatEfectivo,
+    ): ResultadoAccion {
         if ($this->estado === EstadoPokemon::NONE) {
             return ResultadoAccion::permitida();
         }

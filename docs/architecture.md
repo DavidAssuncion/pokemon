@@ -32,9 +32,9 @@ desaparece como destino y migra a DTOs en Domain.
 │  Repos · Factories · Requests · routes.php  │
 │  (destino: NADA de esto vive en app/)       │
 │  Battle · Pokemon · Habitats · Equipos      │
-│  Reclutamiento · Exploraciones · Crud       │
+│  Reclutamiento · Exploraciones · Granjas    │
 │  Shared · CombateEntrenadores · CombateRuta │
-│  Huevos                                     │
+│  Huevos · Forja · Gimnasios · Mazmorras     │
 ├─────────────────────────────────────────────┤
 │  Estado actual: Controllers/Models/Livewire │
 │  aún en app/; migran por módulo (strangler)│
@@ -535,10 +535,6 @@ Deudas conocidas (ver `src/Huevos/context.md`):
 - `habilidades=[]` en `ReclutadoSerializer` pendiente de Ability model (pendiente 15 de `docs/context.md`).
 - Dedupe por familia sin FK estricta: `huevos.evolution_chain_id` es índice plano (misma estrategia
   que `pokemon.evolution_chain_id`); filas legacy sin `hatch`/cadena se toleran con `?? 1` / whereNotNull.
-
-### Crud (`src/Crud/`)
-
-12 submódulos: `Abilities`, `ExploracionesActivas`, `Habitats`, `Pokemon`, `PokemonEvolution`, `PokemonHabitat`, `PokemonStats`, `PokemonTypes`, `Provinces`, `Reclutados`, `TeamMembers`, `Teams`.
 
 ### Shared (`src/Shared/`)
 

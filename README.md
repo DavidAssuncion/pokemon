@@ -21,14 +21,21 @@ app/                    → Laravel estándar (MVC)
   Livewire/Combate.php  → Componente de batalla manual
   Models/               → Eloquent models
   Http/Controllers/     → Controladores HTTP
-  Providers/            → Service providers (efectos, crud)
+  Providers/            → Service providers (App, BattleEffect, Datagrid)
 src/                    → DDD / Hexagonal
   Battle/               → Sistema de combate (núcleo)
+  CombateEntrenadores/  → Combate contra entrenadores de hábitat
+  CombateRuta/          → Combate contra salvajes de ruta
   Pokemon/              → Entidades de pokémon
   Habitats/             → Hábitats y provincias
   Equipos/              → Gestión de equipos
   Reclutamiento/        → Reclutamiento de pokémon
-  Crud/                 → CRUD administrativo (13 sub-módulos)
+  Exploraciones/        → Expediciones, riesgo y recompensas
+  Forja/                → Fabricación de objetos de combate
+  Gimnasios/            → Gimnasios, etapas y medallas
+  Granjas/              → Nidos, refugios, complementos y plantaciones
+  Huevos/               → Gestación, incubación y eclosión
+  Mazmorras/            → Pisos, jefes y progreso
   Shared/               → Tipos, colecciones, utilidades compartidas
 docs/                   → Documentación del proyecto
 ```
@@ -38,11 +45,18 @@ docs/                   → Documentación del proyecto
 | Módulo | Descripción |
 |---|---|
 | **Battle** | Sistema de combate por turnos 3v3. Chain of Responsibility para daño, Observer para eventos, sistema de efectos (habilidades/objetos), clima, posiciones (vanguardia/retaguardia), máquina de estados de turno |
+| **CombateEntrenadores** | Combate PvE contra entrenadores de hábitat (3 niveles × 3 entrenadores) con recompensas dobles y límite diario |
+| **CombateRuta** | Combate 3v3 contra pokémon salvajes del pool del hábitat, con capturas al ganar |
 | **Pokemon** | Entidades de dominio de pokémon (estadísticas, tipos, movimientos) |
 | **Habitats** | Catálogo de provincias y hábitats con sus pokémon asociados |
 | **Equipos** | Formación y gestión de equipos de 3 pokémon |
 | **Reclutamiento** | Captura y reclutamiento de pokémon |
-| **Crud** | Panel administrativo CRUD con 13 módulos (habilidades, evoluciones, tipos, stats, etc.) |
+| **Exploraciones** | Expediciones individuales con riesgo, eventos y recompensas |
+| **Forja** | Fabricación de objetos de combate a partir de bayas, bonguris y recipientes |
+| **Gimnasios** | Progresión secuencial de gimnasios y medallas |
+| **Granjas** | Nidos, refugios, complementos EV y plantaciones por hábitat |
+| **Huevos** | Gestación, incubación y eclosión de huevos |
+| **Mazmorras** | Pisos, jefes, progreso y cooldown |
 | **Shared** | Tipos de pokémon (enum), chart de efectividad, colecciones base |
 
 ## Requisitos previos
@@ -88,25 +102,32 @@ Ver `docs/workflow.md` para el flujo completo de desarrollo.
 │   ├── Http/Controllers/   → Habitats, Reclutados, Teams
 │   ├── Livewire/           → Combate (batalla manual)
 │   ├── Models/             → 13 modelos Eloquent
-│   └── Providers/          → App, BattleEffect, Crud
+│   └── Providers/          → App, BattleEffect, Datagrid
 ├── src/
 │   ├── Battle/
 │   │   ├── Domain/         → Agregado, Combatiente, Turnos, CadenaDaño, Efectos
 │   │   ├── App/            → IniciarBatalla
 │   │   ├── Infrastructure/ → FabricaBatallaMock
 │   │   └── Presentation/   → DTOMovimientoBatalla
+│   ├── CombateEntrenadores/ → Combate contra entrenadores de hábitat
+│   ├── CombateRuta/        → Combate contra salvajes de ruta
 │   ├── Pokemon/Domain/     → PokemonEntity, Stats, Movement
 │   ├── Habitats/           → App (3 casos de uso), Domain, Infra
 │   ├── Equipos/            → TeamAggregate, TeamSrv
 │   ├── Reclutamiento/      → ReclutamientoSrv
-│   ├── Crud/               → 13 submódulos CRUD
+│   ├── Exploraciones/      → Expediciones, riesgo y recompensas
+│   ├── Forja/              → Fabricación de objetos de combate
+│   ├── Gimnasios/          → Gimnasios, etapas y medallas
+│   ├── Granjas/            → Nidos, refugios, complementos y plantaciones
+│   ├── Huevos/             → Gestación, incubación y eclosión
+│   ├── Mazmorras/          → Pisos, jefes y progreso
 │   └── Shared/             → Tipos, Collection
 ├── database/
 │   ├── migrations/         → 18 migraciones
 │   └── seeders/            → Database, Habitat, Pokemon, Province, Reclutados
 ├── docs/                   → workflow, context, architecture, conventions
 ├── resources/
-│   ├── views/              → Blade (combate, habitats, crud, reclutados)
+│   ├── views/              → Blade (combate, habitats, equipos, exploraciones, forja, gimnasios, pokedex, reclutados, sendas)
 │   └── iconos/             → sprites pokémon
 ├── routes/
 │   ├── web.php             → Rutas principales

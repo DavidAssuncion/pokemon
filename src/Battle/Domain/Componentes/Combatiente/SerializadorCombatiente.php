@@ -101,11 +101,6 @@ final class SerializadorCombatiente
         return serialize($condiciones);
     }
 
-    public static function serializarEfectos(ColeccionEfectos $effects): string
-    {
-        return serialize($effects);
-    }
-
     public static function serializarPokemon(PokemonEntity $pokemon): string
     {
         return serialize($pokemon);

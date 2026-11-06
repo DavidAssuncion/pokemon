@@ -10,7 +10,6 @@ El proyecto tiene funcionalidad base estable:
 
 - **Batalla 3v3 funcional (modelo estándar desde 2026-10-15)** — con datos mock. Los equipos tienen exactamente 3 miembros con formación vanguardia/retaguardia por slot; aplica a los modos con equipos del jugador (ruta, entrenadores, gimnasios, mazmorra 3v1) y el motor no fija tamaños (las invocaciones pueden añadir combatientes). Incluye **una acción por pokémon vivo y ronda** en orden de **velocidad efectiva** (etapas y parálisis incluidas) con empates estables por orden de inserción, posiciones, daño con cadena de responsabilidad (7 manejadores), clima (sequía, diluvio, niebla, granizo, tormenta arena, turbulencias), efectos de habilidad y objetos (Strategy), estados (quemadura, veneno, parálisis, sueño, congelación, confusión), estadísticas con etapas (-6 a +6), STAB, efectividad de tipos (TypeChart 18×18), golpes críticos 6.25%, barreras duales (defensa física/especial), animaciones vía Alpine.js. Ruta `/combate` activa dentro de `auth`. ~176+ tests de Battle.
 - **Catálogo de provincias y hábitats** — con seeders, vistas y API.
-- **CRUD administrativo** — 13 módulos con vistas Blade (habilidades, evoluciones, tipos, stats, pokémon, provincias, hábitats, reclutados, equipos, exploraciones activas).
 - **Reclutamiento y equipos** — captura de pokémon, formación de equipos de exactamente 3 miembros con posición por slot (slots 1-3; la migración `2026_10_15_000001` recorta los `team_members` con `slot > 3`). El equipo se forma con la columna `teams.formacion` (JSON nullable, prioridad: popup > persistida > clasificación automática por stats).
 - **Datagrid JSON API** — subsistema de consulta de solo lectura (`app/Datagrid/`) con whitelist por modelo: `GET /datagrid/{model}` y `GET /datagrid/{model}/{id}/detalle`. Usado por la Pokédex y disponible para cualquier modelo registrado (pokemon, pokedex, reclutado, team, habitat, province).
 - **Pokédex asíncrona** — pestañas server-side (Vistos/No vistos/Atrapados), filtros de tipo y esfuerzo (EV), búsqueda con debounce, scroll infinito y modal de detalle bajo demanda.
@@ -119,7 +118,7 @@ Seeders: provincias (8), hábitats, pokémon (151+), reclutados.
 - **Livewire 3** para componentes interactivos (Combate).
 - **Alpine.js** para animaciones de batalla (delay de 700ms entre acciones) y para la Pokédex asíncrona (`pokedexApp()` inline en `pokedex/index.blade.php`: pestañas, filtros, scroll infinito, modal).
 - **Tailwind CSS 4** con Vite.
-- **Vistas**: `habitats/index`, `habitats/show`, `combate` (con partials: turn-bar, battle-field, moves-panel, battle-log), `crud/dashboard` + 13 submódulos, `reclutados/index`, `pokedex/index` (asíncrona con datagrid).
+- **Vistas**: `habitats/index`, `habitats/show`, `combate` (con partials: turn-bar, battle-field, moves-panel, battle-log), `reclutados/index`, `pokedex/index` (asíncrona con datagrid).
 
 ## Decisiones y convenciones
 
@@ -145,7 +144,6 @@ Seeders: provincias (8), hábitats, pokémon (151+), reclutados.
 7. Manejar migración de sesiones de batalla cuando cambia la estructura serializada.
 8. El módulo Pokemon (`src/Pokemon/Domain`) tiene entidades pero los App/ use cases están vacíos.
 9. `MovimientoBatalla` vive en `src/Battle/Domain/` (no hay carpeta `src/Battle/Movement/`; los movimientos se definen inline en mock). El Cleaner eliminó `src/Battle/App/` (casos de uso deprecados `IniciarBatalla`/`BattleSrv`) y `BattleAggregate`; el módulo queda con `Domain/` (incl. Chain/Effects/Enums/Observer/ValueObjects), `Infrastructure/` y `Presentation/`. Deuda relacionada: mover `MovimientoBatalla` a `src/Pokemon/Domain/Movement/` (ver pendiente 12).
-10. El módulo Crud tiene ServiceProviders pero los submódulos `src/Crud/Pokemon/Domain/` e `Infra/` están vacíos.
 11. `OptimizeIconsToWebpTest` eliminado (decisión de cierre): los PNG fuente de 188 MB no están versionados en el entorno de desarrollo, por lo que el test no podía ejecutarse (fallaba siempre por fuente inexistente). `php artisan iconos:optimize-webp` y `app/Support/WebpConverter.php` se mantienen y siguen siendo la herramienta de generación; la cobertura del conversor queda en `tests/Unit/WebpConverterTest.php`.
 12. **Deuda de arquitectura del módulo Battle (Arquitecto APROBADO, 2026-08-30)** — ver detalle en `src/Battle/context.md`:
     - Ciclo de dependencia Pokemon↔Battle: `MovimientoBatalla` (en `src/Battle/Domain`) debería moverse a `src/Pokemon/Domain/Movement/`, y `PokemonEntity` importa `MovimientoBatalla`/`ColeccionMovimientos` de Battle.
@@ -157,7 +155,7 @@ Seeders: provincias (8), hábitats, pokémon (151+), reclutados.
     - `Combate.php` es god-component (653 líneas); `Combatiente`/`AgregadoBatalla` son god-classes (606 y ~255 líneas tras extraer `CalculadorDañoClima`/`SelectorAccionIA`).
     - Cobertura Infection de `src/Battle`: Covered Code MSI ~80% (mutantes escapados de `SelectorAccionIA` son equivalentes/neutros); pendiente cerrar el 20% restante.
 13. **Refactor gradual de módulos a la convención DDD (`docs/ddd.md`)** — los módulos actuales
-    (Battle, Pokemon, Habitats, Equipos, Reclutamiento, Exploraciones, Crud) usan aún
+    (Battle, Pokemon, Habitats, Equipos, Reclutamiento, Exploraciones) usan aún
     `Presentation/`, métodos en inglés en alguna interfaz, entidades sin `toArray` uniforme,
     controllers en `app/Http/Controllers`, modelos Eloquent en `app/Models`, Livewire en
     `app/Livewire` y rutas en `routes/`. Se migran **por módulo** cuando se toque (estrategia
