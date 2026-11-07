@@ -6,6 +6,7 @@ namespace Src\Battle\Domain\Componentes\Agregado;
 
 use Src\Battle\Domain\AgregadoBatalla;
 use Src\Battle\Domain\Combatiente;
+use Src\Battle\Domain\Ejecucion\CalculadoraCuracionAliada;
 use Src\Battle\Domain\Enums\ClaveCondicion;
 use Src\Battle\Domain\ValueObjects\CondicionVolatil;
 
@@ -15,6 +16,11 @@ use Src\Battle\Domain\ValueObjects\CondicionVolatil;
  */
 final class ProcesadorCondicionesRonda
 {
+    public function __construct(
+        private readonly CalculadoraCuracionAliada $calculadora = new CalculadoraCuracionAliada(),
+    ) {
+    }
+
     public function procesar(AgregadoBatalla $batalla, Combatiente $portador): void
     {
         foreach ($portador->condiciones()->all() as $condicion) {
@@ -136,6 +142,17 @@ final class ProcesadorCondicionesRonda
                 break;
 
             case ClaveCondicion::AQUA_RING:
+                if ($condicion->curacionFija > 0.0) {
+                    $curacion = $this->calculadora->curacionConAporteFijo(
+                        $portador->pokemon()->battleStats()->hp,
+                        $condicion->curacionFija,
+                    );
+                    $recuperado = (int) round($portador->curarHpCantidad($curacion));
+                    $batalla->agregarLog("{$portador->nombre()} recupera {$recuperado} PS por Acua Aro");
+
+                    break;
+                }
+
                 $portador->curarConExcedente($portador->pokemon()->battleStats()->hp * 0.0625);
                 $batalla->agregarLog("{$portador->nombre()} recupera PS por Acua Aro");
 
@@ -164,6 +181,13 @@ final class ProcesadorCondicionesRonda
             case ClaveCondicion::MOFA:
             case ClaveCondicion::CRITICO_MEJORADO:
                 $this->reducirYQuitar($portador, $condicion);
+
+                break;
+
+            case ClaveCondicion::AQUA_RING:
+                if ($condicion->turnos > 0) {
+                    $this->reducirYQuitar($portador, $condicion);
+                }
 
                 break;
         }

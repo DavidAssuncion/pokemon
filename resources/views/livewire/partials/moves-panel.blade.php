@@ -1,11 +1,20 @@
 <div class="moves-panel">
     <div class="d-flex justify-content-between align-items-center mb-3 gap-2 flex-wrap">
         <h3 class="h5 mb-0">{{ in_array($phase, ['player_target', 'player_item_target'], true) ? 'Objetos' : 'Ataques' }}</h3>
-        <div class="d-flex align-items-center gap-2">
+        <div class="d-flex align-items-center gap-2 flex-wrap">
             @if($movesResumen['comboActual'] > 0)
                 <span class="badge bg-info-soft text-info-ink" title="Racha de combo">
                     COMBO {{ $movesResumen['comboActual'] }} · ×{{ number_format($movesResumen['comboMultiplicador'], 2) }}
                 </span>
+            @endif
+            @if($selectedTargetTeam !== null)
+                {{-- Vuelve a la selección de objetivo sin perder la ronda ni el turno. --}}
+                <button type="button"
+                        class="btn btn-sm btn-outline-secondary focus-ring"
+                        wire:click="cancelTarget"
+                        title="Volver a elegir a quién dirigir el movimiento">
+                    Cambiar objetivo
+                </button>
             @endif
             <span class="badge bg-primary round-info">Ronda {{ $round }}</span>
         </div>
@@ -45,32 +54,42 @@
                                 </div>
                             </div>
 
+                            {{-- Movimiento de apoyo sobre un aliado: se muestra el efecto y nunca la fila de daño. --}}
+                            @if($move['modoAliado'])
+                                <div class="d-flex flex-wrap align-items-center gap-1">
+                                    <span class="badge bg-info-soft text-info-ink ally-badge">SOBRE ALIADO</span>
+                                    <span class="small lh-sm">{{ $move['efectoAliado']['texto'] ?? '' }}</span>
+                                </div>
+                            @endif
+
                             {{-- Fila 2: daño + desglose | efectividad + directo a la misma altura --}}
-                            @if($move['potencia'] > 0)
-                                <div class="d-flex align-items-center justify-content-between gap-2">
-                                    <div class="d-flex align-items-baseline gap-1 lh-1">
-                                        <span class="fs-5 fw-bold move-dmg">{{ ceil($move['daño']) }}</span>
-                                        <span class="small text-on-primary/70">daño</span>
-                                    </div>
-                                    @if(! $move['esEstado'])
-                                        <div class="d-flex align-items-center gap-1 flex-shrink-0">
-                                            <span class="badge text-bg-{{ $move['efectividadColor'] }} efectividad">×{{ $move['efectividadTexto'] }}</span>
-                                            @if($move['directo'])
-                                                <span class="badge text-bg-danger directo-badge">DIRECTO</span>
-                                            @endif
+                            @if(! $move['modoAliado'])
+                                @if($move['potencia'] > 0)
+                                    <div class="d-flex align-items-center justify-content-between gap-2">
+                                        <div class="d-flex align-items-baseline gap-1 lh-1">
+                                            <span class="fs-5 fw-bold move-dmg">{{ ceil($move['daño']) }}</span>
+                                            <span class="small text-on-primary/70">daño</span>
                                         </div>
+                                        @if(! $move['esEstado'])
+                                            <div class="d-flex align-items-center gap-1 flex-shrink-0">
+                                                <span class="badge text-bg-{{ $move['efectividadColor'] }} efectividad">×{{ $move['efectividadTexto'] }}</span>
+                                                @if($move['directo'])
+                                                    <span class="badge text-bg-danger directo-badge">DIRECTO</span>
+                                                @endif
+                                            </div>
+                                        @endif
+                                    </div>
+                                    @if($move['letal'])
+                                        <span class="badge bg-danger-soft text-danger-ink move-lethal">LETAL</span>
                                     @endif
-                                </div>
-                                @if($move['letal'])
-                                    <span class="badge bg-danger-soft text-danger-ink move-lethal">LETAL</span>
+                                @elseif(! $move['esEstado'])
+                                    <div class="d-flex align-items-center gap-1">
+                                        <span class="badge text-bg-{{ $move['efectividadColor'] }} efectividad">×{{ $move['efectividadTexto'] }}</span>
+                                        @if($move['directo'])
+                                            <span class="badge text-bg-danger directo-badge">DIRECTO</span>
+                                        @endif
+                                    </div>
                                 @endif
-                            @elseif(! $move['esEstado'])
-                                <div class="d-flex align-items-center gap-1">
-                                    <span class="badge text-bg-{{ $move['efectividadColor'] }} efectividad">×{{ $move['efectividadTexto'] }}</span>
-                                    @if($move['directo'])
-                                        <span class="badge text-bg-danger directo-badge">DIRECTO</span>
-                                    @endif
-                                </div>
                             @endif
 
                             @if($move['statusLabel'] !== '')

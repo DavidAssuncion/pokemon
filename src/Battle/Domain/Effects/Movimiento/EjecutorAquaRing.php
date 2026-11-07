@@ -20,7 +20,11 @@ class EjecutorAquaRing extends EjecutorMovimientoAbstracto
 
     public function ejecutar(AccionBatalla $accion, float $danoAplicado, AgregadoBatalla $battle): void
     {
-        $accion->attacker->reemplazarCondicion(new CondicionVolatil(ClaveCondicion::AQUA_RING, 0));
-        $battle->agregarLog("{$accion->attacker->nombre()} queda rodeado por Acua Aro");
+        $accion->defender->reemplazarCondicion(new CondicionVolatil(
+            clave: ClaveCondicion::AQUA_RING,
+            turnos: 5,
+            curacionFija: 0.0,
+        ));
+        $battle->agregarLog("{$accion->defender->nombre()} queda rodeado por Acua Aro");
     }
 }

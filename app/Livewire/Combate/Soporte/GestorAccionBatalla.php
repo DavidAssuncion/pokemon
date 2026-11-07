@@ -10,6 +10,7 @@ use App\Support\BattleSessionService;
 use Illuminate\Contracts\Auth\Guard;
 use Src\Battle\App\UsarObjetoEnCombate;
 use Src\Battle\Domain\AgregadoBatalla;
+use Src\Battle\Domain\Catalog\CatalogoEfectosAliado;
 use Src\Battle\Domain\Combatiente;
 use Src\Battle\Domain\DataTransferObjects\DTOAccionObjeto;
 use Src\Battle\Domain\Enums\FaseCombate;
@@ -166,27 +167,59 @@ final class GestorAccionBatalla
             return;
         }
 
-        // Movimientos autodirigidos (ej: Danza Espada) siempre apuntan al actor
-        if ($movimiento->esAutodirigido()) {
-            $objetivo = $actor;
+        $esAliado = $objetivo->id() !== $actor->id()
+            && $battle->equipoDe($objetivo) === $battle->equipoDe($actor);
+        $efectoAliado = $esAliado ? CatalogoEfectosAliado::para($movimiento->slug) : null;
+
+        // Defensa en profundidad: un aliado solo puede recibir efectos del
+        // catálogo. Nunca se le aplica daño ni un movimiento no aliado.
+        if ($esAliado && $efectoAliado === null) {
+            $actor->romperCombo();
+            $componente->log[] = "{$movimiento->nombre} no puede usarse sobre un aliado.";
+            $battle->setPendingAction(null);
+            $battle->turnManager()->consumeAction($actor);
+            $this->gestorAnimacion->reiniciar($componente);
+            $this->gestorVista->sincronizar($componente, $battle, $actor);
+            $this->session->guardar($componente->battleId, $battle);
+            $componente->nextActor();
+
+            return;
         }
 
-        // 1. Calcular y aplicar el movimiento (servicio compartido)
-        $servicio = $contexto->servicio() ?? new ServicioEjecucionBatalla($battle->damageChain());
-        $isAi = $battle->team2->findCombatantById($pending->actorId) !== null;
-        $prefix = $isAi ? 'RIVAL: ' : '';
-        $resultadoAccion = $this->resolutorAccion->aplicarMovimiento(
-            $battle,
-            $actor,
-            $objetivo,
-            $movimiento,
-            $servicio,
-            $prefix,
-            $prefix,
-            $grabando,
-            $componente->eventoTick,
-            count($componente->eventos) + 1,
-        );
+        if ($efectoAliado !== null) {
+            $resultadoAccion = $this->resolutorAccion->aplicarMovimientoAliado(
+                $battle,
+                $actor,
+                $objetivo,
+                $movimiento,
+                $efectoAliado,
+                $grabando,
+                $componente->eventoTick,
+                count($componente->eventos) + 1,
+            );
+        } else {
+            // Movimientos autodirigidos (ej: Danza Espada) siempre apuntan al actor
+            if ($movimiento->esAutodirigido()) {
+                $objetivo = $actor;
+            }
+
+            // 1. Calcular y aplicar el movimiento (servicio compartido)
+            $servicio = $contexto->servicio() ?? new ServicioEjecucionBatalla($battle->damageChain());
+            $isAi = $battle->team2->findCombatantById($pending->actorId) !== null;
+            $prefix = $isAi ? 'RIVAL: ' : '';
+            $resultadoAccion = $this->resolutorAccion->aplicarMovimiento(
+                $battle,
+                $actor,
+                $objetivo,
+                $movimiento,
+                $servicio,
+                $prefix,
+                $prefix,
+                $grabando,
+                $componente->eventoTick,
+                count($componente->eventos) + 1,
+            );
+        }
         $componente->log = array_merge($componente->log, $resultadoAccion->log);
         $componente->eventos = array_merge($componente->eventos, $resultadoAccion->eventos);
         // 6. Limpiar estado pendiente y seguir

@@ -87,6 +87,7 @@ final class DepuradorMovimientos
             $datos['flags'],
             $datos['secundarios'],
             $datos['autoEfectos'],
+            $datos['slug'],
         );
         unset($datos['perfil']['probabilidadEstado']);
 

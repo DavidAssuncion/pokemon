@@ -32,7 +32,10 @@ final class BatallaVistaPresenter
      *     turnBar: array<string, mixed>,
      *     battleField: array<string, mixed>,
      *     logVista: list<array{html: string}>,
-     *     rewardsVista: array<string, mixed>|null
+     *     rewardsVista: array<string, mixed>|null,
+     *     refsAliado: list<string>,
+     *     aliadosSeleccionables: bool,
+     *     actorAdmiteAliado: bool
      * }
      */
     public static function toView(
@@ -52,9 +55,11 @@ final class BatallaVistaPresenter
         array $eventos,
         array $rewards,
         string $objetivosItem = '',
+        bool $actorAdmiteAliado = false,
     ): array {
         $faseSeleccion = in_array($phase, ['player_target', 'player_move', 'player_item_target'], true);
         $ventanaActiva = $animAttackerId !== '';
+        $refsAliado = self::refsAliado($team1, $phase, $actingRefId, $ventanaActiva, $actorAdmiteAliado);
 
         $team1 = self::marcarInteraccion(
             team: $team1,
@@ -65,6 +70,7 @@ final class BatallaVistaPresenter
             selectedTargetRefId: $selectedTargetRefId,
             animAttackerId: $animAttackerId,
             objetivosItem: $objetivosItem,
+            refsAliado: $refsAliado,
         );
         $team2 = self::marcarInteraccion(
             team: $team2,
@@ -75,6 +81,7 @@ final class BatallaVistaPresenter
             selectedTargetRefId: $selectedTargetRefId,
             animAttackerId: $animAttackerId,
             objetivosItem: $objetivosItem,
+            refsAliado: $refsAliado,
         );
 
         return [
@@ -93,7 +100,64 @@ final class BatallaVistaPresenter
             ),
             'logVista' => self::logVista($log, $team1, $team2),
             'rewardsVista' => self::rewardsVista($rewards),
+            'refsAliado' => $refsAliado,
+            'aliadosSeleccionables' => $refsAliado !== [],
+            'actorAdmiteAliado' => $actorAdmiteAliado,
         ];
+    }
+
+    /**
+     * RefIds de aliados vivos seleccionables para movimientos de apoyo.
+     *
+     * @param  list<array<string, mixed>>  $team1
+     * @return list<string>
+     */
+    private static function refsAliado(
+        array $team1,
+        string $phase,
+        string $actingRefId,
+        bool $ventanaActiva,
+        bool $actorAdmiteAliado,
+    ): array {
+        if (! $actorAdmiteAliado
+            || $ventanaActiva
+            || ! in_array($phase, ['player_target', 'player_move'], true)) {
+            return [];
+        }
+
+        $vanguardiaViva = self::tieneVanguardiaViva($team1);
+        $refs = [];
+
+        foreach ($team1 as $p) {
+            $refId = (string) ($p['refId'] ?? '');
+            if ($refId === ''
+                || ($p['alive'] ?? false) !== true
+                || $refId === $actingRefId) {
+                continue;
+            }
+
+            if (($p['posicion'] ?? '') === 'retaguardia' && $vanguardiaViva) {
+                continue;
+            }
+
+            $refs[] = $refId;
+        }
+
+        return $refs;
+    }
+
+    /**
+     * @param  list<array<string, mixed>>  $team
+     */
+    private static function tieneVanguardiaViva(array $team): bool
+    {
+        foreach ($team as $p) {
+            if (($p['alive'] ?? false) === true && ($p['posicion'] ?? '') === 'vanguardia') {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
@@ -101,6 +165,7 @@ final class BatallaVistaPresenter
      * de la carta. Evita que la vista componga condicionales de estado.
      *
      * @param  list<array<string, mixed>>  $team
+     * @param  list<string>  $refsAliado
      * @return list<array<string, mixed>>
      */
     private static function marcarInteraccion(
@@ -112,6 +177,7 @@ final class BatallaVistaPresenter
         string $selectedTargetRefId,
         string $animAttackerId,
         string $objetivosItem = '',
+        array $refsAliado = [],
     ): array {
         $objetivoItem = $objetivosItem !== '' ? ObjetivosItem::tryFrom($objetivosItem) : null;
         $faseItem = $objetivoItem !== null;
@@ -127,10 +193,14 @@ final class BatallaVistaPresenter
             $p['selectable'] = $faseItem
                 ? $seleccionableItem && ! $ventanaActiva
                 : $faseSeleccion
-                    && $teamIdx === 1
-                    && (bool) $p['alive']
-                    && (bool) ($p['canTarget'] ?? true)
-                    && ! $ventanaActiva;
+                    && ! $ventanaActiva
+                    && (
+                        ($teamIdx === 1
+                            && (bool) $p['alive']
+                            && (bool) ($p['canTarget'] ?? true))
+                        || ($teamIdx === 0
+                            && in_array((string) ($p['refId'] ?? ''), $refsAliado, true))
+                    );
             $p['blocked'] = ! $faseItem
                 && $faseSeleccion
                 && $teamIdx === 1

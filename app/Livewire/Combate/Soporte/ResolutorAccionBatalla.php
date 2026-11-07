@@ -11,9 +11,11 @@ use Src\Battle\Domain\AccionBatalla;
 use Src\Battle\Domain\AccionObjeto;
 use Src\Battle\Domain\AgregadoBatalla;
 use Src\Battle\Domain\Combatiente;
+use Src\Battle\Domain\Ejecucion\EjecutorEfectoAliado;
 use Src\Battle\Domain\EquipoBatalla;
 use Src\Battle\Domain\MovimientoBatalla;
 use Src\Battle\Domain\ServicioEjecucionBatalla;
+use Src\Battle\Domain\ValueObjects\EfectoAliado;
 
 /**
  * Aplica una acción de batalla ya resuelta y devuelve el log y los eventos
@@ -24,6 +26,7 @@ final class ResolutorAccionBatalla
 {
     public function __construct(
         private readonly GrabadorEventosBatalla $grabador,
+        private readonly EjecutorEfectoAliado $ejecutorAliado,
     ) {
     }
 
@@ -140,6 +143,61 @@ final class ResolutorAccionBatalla
         if (! $actor->estaVivo()) {
             $log[] = "¡{$actor->nombre()} se ha debilitado!";
         }
+
+        return new ResultadoAccionBatalla($log, $eventos);
+    }
+
+    /**
+     * Aplica un movimiento de apoyo sobre un aliado vivo. No pasa por daño,
+     * precisión, crítico, inmunidades ni reacciones: solo ejecuta el efecto,
+     * consume turno/PP y emite un único evento `effect`.
+     */
+    public function aplicarMovimientoAliado(
+        AgregadoBatalla $battle,
+        Combatiente $actor,
+        Combatiente $aliado,
+        MovimientoBatalla $movimiento,
+        EfectoAliado $efecto,
+        bool $grabando,
+        int $tickEvento,
+        int $secuenciaEvento,
+    ): ResultadoAccionBatalla {
+        /** @var list<string> $log */
+        $log = [];
+        /** @var list<array<string, mixed>> $eventos */
+        $eventos = [];
+        $secuencia = $secuenciaEvento;
+
+        $defenderTeam = $this->defenderTeam($battle, $aliado);
+        $accion = new AccionBatalla(
+            attacker: $actor,
+            defender: $aliado,
+            move: $movimiento,
+            defenderTeamHasVanguard: $defenderTeam->tieneVanguardiaViva(),
+            weather: $battle->weather(),
+            equipoDefensor: $defenderTeam,
+            terreno: $battle->terreno(),
+        );
+
+        $previo = $grabando ? $this->grabador->capturar($battle) : SnapshotBatalla::vacia();
+        $actor->effects()->dispararInicioTurno($actor, $battle);
+        $actor->romperCombo();
+
+        $log[] = "{$actor->nombre()} usa {$movimiento->nombre} sobre {$aliado->nombre()}";
+        $texto = $this->ejecutorAliado->ejecutar($accion, $efecto, $battle);
+
+        $actual = $grabando ? $this->grabador->capturar($battle) : SnapshotBatalla::vacia();
+        $this->acumularEvento($eventos, 'effect', $previo, $actual, [
+            'actorId' => $actor->id(),
+            'objetivoId' => $aliado->id(),
+            'texto' => $texto,
+            'forzar' => true,
+        ], $grabando, $tickEvento, $secuencia);
+
+        $battle->turnManager()->consumeAction($actor);
+        $actor->consumirMovimiento($movimiento);
+        $actor->effects()->dispararFinTurno($actor, $battle);
+        $battle->procesarDebilitamientos();
 
         return new ResultadoAccionBatalla($log, $eventos);
     }

@@ -57,6 +57,11 @@
                     COMBO {{ $p['combo'] }} · ×{{ number_format($p['comboMultiplicador'], 2) }}
                 </span>
             @endif
+            @if(($p['buffTurns'] ?? 0) > 0)
+                <span class="badge bg-success-soft text-success-ink" title="Rondas restantes de mejoras de estadísticas">
+                    BUFF {{ $p['buffTurns'] }}
+                </span>
+            @endif
             @foreach($p['condicionesBadge'] as $condicion)
                 <span class="badge bg-surface-sunken text-ink-muted" title="{{ $condicion['turnos'] }} turnos">
                     {{ $condicion['label'] }}

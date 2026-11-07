@@ -7,13 +7,18 @@ namespace App\Livewire\Presenters;
 use Src\Battle\Domain\AccionBatalla;
 use Src\Battle\Domain\AgregadoBatalla;
 use Src\Battle\Domain\BarrerasVidaManager;
+use Src\Battle\Domain\Catalog\CatalogoEfectosAliado;
 use Src\Battle\Domain\Chain\ManejadorSTAB;
 use Src\Battle\Domain\Collections\CambiosStatsCollection;
 use Src\Battle\Domain\Combatiente;
+use Src\Battle\Domain\Ejecucion\CalculadoraCuracionAliada;
 use Src\Battle\Domain\Enums\CategoriaMovimiento;
 use Src\Battle\Domain\Enums\EstadoPokemon;
+use Src\Battle\Domain\Enums\StatClave;
+use Src\Battle\Domain\Enums\TipoEfectoAliado;
 use Src\Battle\Domain\EquipoBatalla;
 use Src\Battle\Domain\MovimientoBatalla;
+use Src\Battle\Domain\ValueObjects\EfectoAliado;
 
 /**
  * Presentador de presentación: arma los datos de vista de los movimientos
@@ -26,6 +31,10 @@ use Src\Battle\Domain\MovimientoBatalla;
  */
 final class MovesPreviewPresenter
 {
+    private const FRACCION_RECUPERACION_ALIADA = 0.5;
+
+    private const FRACCION_APORTE_AQUA_RING = 0.05;
+
     /** @var array<string, string> */
     private const STAT_LABELS = [
         'attack' => 'Ataque',
@@ -115,6 +124,17 @@ final class MovesPreviewPresenter
         Combatiente $target,
         MovimientoBatalla $move
     ): array {
+        $esAliado = $target->id() !== $actor->id()
+            && $battle->equipoDe($target) === $battle->equipoDe($actor);
+
+        if ($esAliado) {
+            $efecto = CatalogoEfectosAliado::para($move->slug);
+
+            return $efecto === null
+                ? self::previewAliadoNoUsable($actor, $move)
+                : self::previewAliado($actor, $target, $move, $efecto);
+        }
+
         $defenderTeam = self::defenderTeam($battle, $target);
         $categoria = $move->esEstado() ? CategoriaMovimiento::ESTADO : $move->categoria;
 
@@ -196,7 +216,152 @@ final class MovesPreviewPresenter
             'usosMaximos' => $move->perfil->usosMaximos,
             'comboActual' => $actor->comboMovimiento() === $move->nombre ? $actor->combo() : 0,
             'comboMultiplicador' => $actor->comboMultiplicadorPara($move),
+            'slug' => $move->slug,
+            'modoAliado' => false,
+            'efectoAliado' => null,
         ];
+    }
+
+    /**
+     * Preview de un movimiento del catálogo usado sobre un aliado vivo.
+     *
+     * @return array<string, mixed>
+     */
+    private static function previewAliado(
+        Combatiente $actor,
+        Combatiente $target,
+        MovimientoBatalla $move,
+        EfectoAliado $efecto,
+    ): array {
+        $preview = self::previewAliadoBase($actor, $move);
+        $preview['efectoAliado'] = [
+            'tipo' => $efecto->tipo->value,
+            'texto' => self::textoEfectoAliado($actor, $target, $move, $efecto),
+        ];
+
+        return $preview;
+    }
+
+    /**
+     * Preview de un movimiento no usable sobre un aliado: deshabilitado y sin daño.
+     *
+     * @return array<string, mixed>
+     */
+    private static function previewAliadoNoUsable(Combatiente $actor, MovimientoBatalla $move): array
+    {
+        $preview = self::previewAliadoBase($actor, $move);
+        $preview['modoAliado'] = false;
+        $preview['disponible'] = false;
+        $preview['motivoTexto'] = 'No usable sobre un aliado';
+
+        return $preview;
+    }
+
+    /**
+     * Estructura común de un preview neutral (sin daño) para modo aliado.
+     *
+     * @return array<string, mixed>
+     */
+    private static function previewAliadoBase(Combatiente $actor, MovimientoBatalla $move): array
+    {
+        $tipo = $move->tipo;
+        $categoria = CategoriaMovimiento::ESTADO;
+        $motivo = $actor->motivoMovimientoNoDisponible($move);
+        $precision = max(0, min(100, (int) round($move->perfil->precision * 100)));
+
+        return [
+            'nombre' => $move->nombre,
+            'slug' => $move->slug,
+            'tipo' => $tipo->value,
+            'tipoLabel' => $tipo->label(),
+            'tipoSlug' => $tipo->slug(),
+            'tipoColor' => $tipo->color(),
+            'potencia' => 0,
+            'precision' => $precision,
+            'precisionTexto' => $precision.'%',
+            'categoria' => $categoria->value,
+            'categoriaLabel' => self::categoriaLabel($categoria),
+            'categoriaColor' => self::categoriaColor($categoria),
+            'esEstado' => true,
+            'daño' => 0,
+            'danoHp' => 0,
+            'danoBarrera' => 0,
+            'barreraLabel' => 'DEF',
+            'letal' => false,
+            'efectividad' => 1.0,
+            'efectividadTexto' => '1',
+            'efectividadColor' => self::colorEfectividad(1.0),
+            'stab' => false,
+            'directo' => false,
+            'statusEffect' => '',
+            'statusLabel' => '',
+            'statusEmoji' => '',
+            'selfStatChanges' => [],
+            'targetStatChanges' => [],
+            'golpes' => 1,
+            'golpesMin' => 1,
+            'golpesMax' => 1,
+            'disponible' => $actor->movimientoDisponible($move),
+            'motivoNoDisponible' => $motivo,
+            'motivoTexto' => self::motivoTexto($motivo, $actor->cargaMovimiento($move), $move->perfil->cargaMaxima),
+            'cargaActual' => $actor->cargaMovimiento($move),
+            'cargaMaxima' => $move->perfil->cargaMaxima,
+            'usosRestantes' => $actor->usosRestantes($move),
+            'usosMaximos' => $move->perfil->usosMaximos,
+            'comboActual' => $actor->comboMovimiento() === $move->nombre ? $actor->combo() : 0,
+            'comboMultiplicador' => $actor->comboMultiplicadorPara($move),
+            'modoAliado' => true,
+            'efectoAliado' => null,
+        ];
+    }
+
+    private static function textoEfectoAliado(
+        Combatiente $actor,
+        Combatiente $target,
+        MovimientoBatalla $move,
+        EfectoAliado $efecto,
+    ): string {
+        $calculadora = new CalculadoraCuracionAliada();
+        $statsAliado = $target->pokemon()->battleStats();
+        $maxPs = (int) round($statsAliado->hp);
+
+        return match ($efecto->tipo) {
+            TipoEfectoAliado::ESCUDO_FISICO => 'Restaura '
+                .$calculadora->incrementoEscudo(
+                    $statsAliado->defenseHp,
+                    $actor->obtenerStatEfectivo(StatClave::DEFENSA),
+                )
+                .' de DEF (máx. '.((int) round($statsAliado->defenseHp)).')',
+            TipoEfectoAliado::ESCUDO_ESPECIAL => 'Restaura '
+                .$calculadora->incrementoEscudo(
+                    $statsAliado->spDefenseHp,
+                    $actor->obtenerStatEfectivo(StatClave::DEFENSA_ESPECIAL),
+                )
+                .' de DEF.ESP (máx. '.((int) round($statsAliado->spDefenseHp)).')',
+            TipoEfectoAliado::CURAR_PS => 'Cura '
+                .((int) round($maxPs * self::FRACCION_RECUPERACION_ALIADA))
+                .' PS (máx. '.$maxPs.')',
+            TipoEfectoAliado::AQUA_RING => 'Acua Aro: '
+                .$calculadora->curacionConAporteFijo(
+                    $statsAliado->hp,
+                    $actor->pokemon()->battleStats()->hp * self::FRACCION_APORTE_AQUA_RING,
+                )
+                .' PS por ronda ('.$efecto->turnos.' rondas)',
+            TipoEfectoAliado::BUFF_STATS => self::textoBuffsAliado($move),
+        };
+    }
+
+    private static function textoBuffsAliado(MovimientoBatalla $move): string
+    {
+        $cambios = self::cambiosParaVista($move->selfStatChanges);
+        if ($cambios === []) {
+            return 'Mejora las estadísticas del aliado';
+        }
+
+        return implode(' · ', array_map(
+            static fn (array $cambio): string => $cambio['texto'],
+            $cambios,
+        ));
     }
 
     private static function categoriaLabel(CategoriaMovimiento $categoria): string

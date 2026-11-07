@@ -77,6 +77,7 @@ class Movimiento
             secundarios: $this->secundarios,
             autoEfectos: $this->autoEfectos,
             nivelRequerido: $this->nivelRequerido,
+            slug: $this->slug,
         );
     }
 

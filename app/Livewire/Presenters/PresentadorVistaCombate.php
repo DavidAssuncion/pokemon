@@ -5,10 +5,11 @@ declare(strict_types=1);
 namespace App\Livewire\Presenters;
 
 use App\Livewire\Combate;
+use Src\Battle\Domain\Catalog\CatalogoEfectosAliado;
 
 /**
  * Compone el contrato de vista de `livewire.combate` a partir del estado
- * público del componente. Sin estado ni acceso a dominio.
+ * público del componente. Sin estado: solo transforma datos de vista.
  */
 final class PresentadorVistaCombate
 {
@@ -17,6 +18,8 @@ final class PresentadorVistaCombate
      */
     public function datos(Combate $componente): array
     {
+        $actorAdmiteAliado = self::actorAdmiteAliado($componente->currentMoves);
+
         $vista = BatallaVistaPresenter::toView(
             team1: $componente->team1,
             team2: $componente->team2,
@@ -34,10 +37,27 @@ final class PresentadorVistaCombate
             eventos: $componente->eventos,
             rewards: $componente->rewards,
             objetivosItem: $componente->objetivosItem,
+            actorAdmiteAliado: $actorAdmiteAliado,
         );
 
         $vista['movesResumen'] = MovesPreviewPresenter::resumen($componente->currentMoves);
 
         return $vista;
+    }
+
+    /**
+     * Indica si el actor tiene al menos un movimiento del catálogo aliado.
+     *
+     * @param  array<int, array<string, mixed>>  $currentMoves
+     */
+    private static function actorAdmiteAliado(array $currentMoves): bool
+    {
+        foreach ($currentMoves as $move) {
+            if (CatalogoEfectosAliado::admite((string) ($move['slug'] ?? ''))) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

@@ -32,6 +32,7 @@ class MovimientoBatalla
         public readonly EfectosSecundariosCollection $secundarios = new EfectosSecundariosCollection(),
         public readonly EfectosSecundariosCollection $autoEfectos = new EfectosSecundariosCollection(),
         public readonly int $nivelRequerido = 1,
+        public readonly string $slug = '',
     ) {
     }
 
@@ -56,6 +57,7 @@ class MovimientoBatalla
             secundarios: $this->secundarios,
             autoEfectos: $this->autoEfectos,
             nivelRequerido: $this->nivelRequerido,
+            slug: $this->slug,
         );
     }
 
@@ -84,6 +86,7 @@ class MovimientoBatalla
             secundarios: $this->secundarios,
             autoEfectos: $this->autoEfectos,
             nivelRequerido: $this->nivelRequerido,
+            slug: $this->slug,
         );
     }
 
@@ -121,6 +124,7 @@ class MovimientoBatalla
                 $this->autoEfectos->all(),
             ),
             'nivelRequerido' => $this->nivelRequerido,
+            'slug' => $this->slug,
         ];
     }
 
@@ -156,6 +160,7 @@ class MovimientoBatalla
             true,
         );
         $this->nivelRequerido = max(1, (int) ($data['nivelRequerido'] ?? 1));
+        $this->slug = (string) ($data['slug'] ?? '');
     }
 
     public function esEspecial(): bool

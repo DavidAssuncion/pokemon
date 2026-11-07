@@ -43,6 +43,7 @@ class DTOMovimientoBatalla implements Wireable
         public readonly array $secundarios = [],
         /** @var list<array<string, mixed>> */
         public readonly array $autoEfectos = [],
+        public readonly string $slug = '',
     ) {
     }
 
@@ -68,6 +69,7 @@ class DTOMovimientoBatalla implements Wireable
                 static fn ($efecto): array => $efecto->toArray(),
                 $move->autoEfectos->all(),
             ),
+            slug: $move->slug,
         );
     }
 
@@ -86,6 +88,7 @@ class DTOMovimientoBatalla implements Wireable
      *     flags: list<string>,
      *     secundarios: list<array<string, mixed>>,
      *     autoEfectos: list<array<string, mixed>>,
+     *     slug: string,
      * }
      */
     public function toLivewire(): array
@@ -104,6 +107,7 @@ class DTOMovimientoBatalla implements Wireable
             'flags' => $this->flags,
             'secundarios' => $this->secundarios,
             'autoEfectos' => $this->autoEfectos,
+            'slug' => $this->slug,
         ];
     }
 
@@ -126,6 +130,7 @@ class DTOMovimientoBatalla implements Wireable
             flags: is_array($value['flags'] ?? null) ? $value['flags'] : [],
             secundarios: is_array($value['secundarios'] ?? null) ? $value['secundarios'] : [],
             autoEfectos: is_array($value['autoEfectos'] ?? null) ? $value['autoEfectos'] : [],
+            slug: (string) ($value['slug'] ?? ''),
         );
     }
 
@@ -145,6 +150,7 @@ class DTOMovimientoBatalla implements Wireable
             flags: FlagsMovimientoCollection::desdeArray($this->flags),
             secundarios: EfectosSecundariosCollection::desdeArray($this->secundarios),
             autoEfectos: EfectosSecundariosCollection::desdeArray($this->autoEfectos, true),
+            slug: $this->slug,
         );
     }
 

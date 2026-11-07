@@ -34,6 +34,12 @@
      role="group"
      aria-label="{{ $phase === 'player_item_target' ? 'Objeto seleccionado' : 'Objetos de combate' }}">
 
+    @if(($aliadosSeleccionables ?? false) && in_array($phase, ['player_target', 'player_move'], true))
+        <div class="alert alert-info py-2 px-3 small mb-3" role="status">
+            Puedes seleccionar un aliado para movimientos de apoyo.
+        </div>
+    @endif
+
     @if($phase === 'player_item_target')
         {{-- Objeto elegido: se confirma el objetivo directamente en el campo. --}}
         @if($objetoActual !== null)

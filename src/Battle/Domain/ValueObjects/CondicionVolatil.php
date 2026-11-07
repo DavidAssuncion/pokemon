@@ -33,6 +33,8 @@ class CondicionVolatil
         public float $hpMaxSustituto = 0.0,
         // TIPO_ALTERADO: tipo defensivo temporal del portador.
         public ?TipoPokemon $tipoOverride = null,
+        // AQUA_RING: aporte fijo en PS por ronda (5% del lanzador al aplicar).
+        public float $curacionFija = 0.0,
     ) {
     }
 
@@ -55,6 +57,7 @@ class CondicionVolatil
             'hpSustituto' => $this->hpSustituto,
             'hpMaxSustituto' => $this->hpMaxSustituto,
             'tipoOverride' => $this->tipoOverride?->value,
+            'curacionFija' => $this->curacionFija,
         ];
     }
 
@@ -79,6 +82,7 @@ class CondicionVolatil
             tipoOverride: isset($datos['tipoOverride'])
                 ? TipoPokemon::tryFrom((int) $datos['tipoOverride'])
                 : null,
+            curacionFija: (float) ($datos['curacionFija'] ?? 0.0),
         );
     }
 }

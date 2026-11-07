@@ -7,6 +7,9 @@ namespace App\Livewire\Combate\Soporte;
 use App\Livewire\Combate;
 use App\Livewire\Presenters\MovesPreviewPresenter;
 use App\Support\BattleSessionService;
+use Src\Battle\Domain\AgregadoBatalla;
+use Src\Battle\Domain\Catalog\CatalogoEfectosAliado;
+use Src\Battle\Domain\Combatiente;
 use Src\Battle\Domain\Enums\ClaveCondicion;
 use Src\Battle\Domain\Enums\FaseCombate;
 use Src\Battle\Domain\Enums\PosturaCombate;
@@ -43,7 +46,7 @@ final class GestorSeleccionBatalla
             return;
         }
 
-        $actor = $this->resolutorActor->porRefId($componente->actingRefId, $battle);
+        $actor = $this->resolutorActor->jugadorAutorizado($battle);
         if ($actor === null) {
             return;
         }
@@ -51,6 +54,17 @@ final class GestorSeleccionBatalla
         $target = $this->resolutorActor->objetivoPorSeleccion($battle, $teamIdx, $pokemonIdx);
         if ($target === null || ! $target->estaVivo()) {
             return;
+        }
+
+        if ($this->esAliado($battle, $actor, $target)) {
+            if (! $this->actorAdmiteAliado($actor)) {
+                return;
+            }
+
+            $equipo = $battle->equipoDe($target);
+            if ($target->estaEnRetaguardia() && $equipo !== null && $equipo->tieneVanguardiaViva()) {
+                return;
+            }
         }
 
         $componente->selectedTargetTeam = $teamIdx;
@@ -76,8 +90,8 @@ final class GestorSeleccionBatalla
             $this->gestorPreparacion->autoSaltar($componente, $battle, $contexto);
         }
 
-        $actor = $this->resolutorActor->porRefId($componente->actingRefId, $battle);
-        if ($actor === null || ! $actor->estaVivo() || ! $actor->tieneAccionPendienteEstaRonda()) {
+        $actor = $this->resolutorActor->jugadorAutorizado($battle);
+        if ($actor === null) {
             $componente->nextActor();
 
             return;
@@ -111,18 +125,58 @@ final class GestorSeleccionBatalla
             return;
         }
 
-        // Movimientos autodirigidos (ej: Danza Espada) apuntan al actor y no requieren objetivo enemigo
         $selfTargeting = $move->esAutodirigido();
-        $defender = $selfTargeting
-            ? $actor
-            : $this->resolutorActor->objetivoPorSeleccion(
-                $battle,
-                $componente->selectedTargetTeam,
-                $componente->selectedTargetIdx,
-            );
+        $seleccionado = $this->resolutorActor->objetivoPorSeleccion(
+            $battle,
+            $componente->selectedTargetTeam,
+            $componente->selectedTargetIdx,
+        );
+
+        // El propio actor solo es objetivo válido para movimientos autodirigidos.
+        if ($seleccionado !== null && $seleccionado->id() === $actor->id() && ! $selfTargeting) {
+            $componente->log[] = 'Objetivo no válido.';
+
+            return;
+        }
+
+        $esAliado = false;
+
+        if ($seleccionado !== null && $this->esAliado($battle, $actor, $seleccionado)) {
+            $esAliado = true;
+            $efectoAliado = CatalogoEfectosAliado::para($move->slug);
+
+            if (! $seleccionado->estaVivo()) {
+                $this->cancelTarget($componente);
+                $this->gestorVista->sincronizar($componente, $battle, $actor);
+                $this->session->guardar($componente->battleId, $battle);
+
+                return;
+            }
+
+            if ($efectoAliado === null) {
+                $componente->log[] = "{$move->nombre} no puede usarse sobre un aliado.";
+
+                return;
+            }
+
+            $equipoAliado = $battle->equipoDe($seleccionado);
+            if ($seleccionado->estaEnRetaguardia()
+                && $equipoAliado !== null
+                && $equipoAliado->tieneVanguardiaViva()) {
+                $componente->log[] = "{$seleccionado->nombre()} no está en la vanguardia.";
+
+                return;
+            }
+
+            $defender = $seleccionado;
+        } elseif ($selfTargeting) {
+            $defender = $actor;
+        } else {
+            $defender = $seleccionado;
+        }
 
         $desafio = $actor->condicion(ClaveCondicion::DESAFIO);
-        if (! $selfTargeting && $desafio !== null && $desafio->objetivoForzadoId !== '') {
+        if (! $esAliado && ! $selfTargeting && $desafio !== null && $desafio->objetivoForzadoId !== '') {
             $defender = $battle->team1->findCombatantById($desafio->objetivoForzadoId)
                 ?? $battle->team2->findCombatantById($desafio->objetivoForzadoId)
                 ?? $defender;
@@ -228,6 +282,24 @@ final class GestorSeleccionBatalla
         $componente->selectedMoveIdx = null;
         $this->session->guardar($componente->battleId, $battle);
         $componente->nextActor();
+    }
+
+    private function esAliado(AgregadoBatalla $battle, Combatiente $actor, Combatiente $objetivo): bool
+    {
+        return $objetivo->id() !== $actor->id()
+            && $battle->equipoDe($objetivo) === $battle->equipoDe($actor);
+    }
+
+    private function actorAdmiteAliado(Combatiente $actor): bool
+    {
+        foreach ($actor->pokemon()->moves() as $movimiento) {
+            if ($movimiento instanceof MovimientoBatalla
+                && CatalogoEfectosAliado::admite($movimiento->slug)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     public function pasarTurno(Combate $componente, ContextoEjecucionBatalla $contexto): void
