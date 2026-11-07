@@ -51,6 +51,14 @@ La lista no se considera cerrada: hay que identificar todos los movimientos con 
 - No cambiar dependencias, migraciones, rutas ni esquema sin autorización.
 - No tocar `SESSION_VERSION` ni `BattleSessionService` sin decisión explícita.
 
+## Requisito adicional (2026-11-07)
+
+- **Texto literal:** «Deben tener duracion de 5 turnos».
+- **Precisión del desarrollador:** 5 **rondas** completas.
+- **Alcance:** aplica también al modo propio actual, no solo al modo aliado.
+- **Efectos afectados:** a decidir por el análisis (persistentes vs instantáneos).
+- **Torbellino:** `AQUA_RING` persistente.
+
 ## Estado
 
-`RECEIVED` — pendiente de análisis y diseño.
+`RECEIVED` — análisis completado; en curso el addendum de duración de 5 rondas.

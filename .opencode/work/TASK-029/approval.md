@@ -1,10 +1,6 @@
 # TASK-029 — Aprobación
 
-- **Estado:** PENDIENTE
+- **Estado:** NO APLICA
 - **ID de tarea:** TASK-029
-- **Versión del plan:** —
-- **Texto literal:** — (no solicitada)
-- **Fecha:** —
-- **Alcance autorizado:** —
-
-> Sin aprobación explícita que mencione la versión del plan, no se implementa.
+- **Motivo:** tarea de solo análisis; no se solicita aprobación de implementación.
+- **Decisión registrada:** «Solo análisis» (2026-11-07).
