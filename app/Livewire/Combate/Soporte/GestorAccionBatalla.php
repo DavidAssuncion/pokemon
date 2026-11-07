@@ -80,28 +80,44 @@ final class GestorAccionBatalla
 
     public function prepararAnimacionIa(Combate $componente, AgregadoBatalla $battle, Combatiente $actor): void
     {
-        $objetivo = $battle->elegirObjetivoPara($actor);
-        if ($objetivo === null) {
-            return;
-        }
+        // Con aliados y movimientos del catálogo, la IA decide objetivo y
+        // movimiento en una sola evaluación: el `defender` puede ser un
+        // aliado y no debe forzarse al actor.
+        if ($battle->actorAdmiteSoporte($actor)) {
+            $accion = $battle->elegirAccionPara($actor);
+            if ($accion === null) {
+                return;
+            }
 
-        $movimiento = $battle->elegirMejorMovimiento($actor, $objetivo);
-        if ($movimiento === null || ! $actor->movimientoDisponible($movimiento)) {
-            $componente->log[] = "{$actor->nombre()} no tiene movimientos disponibles.";
-            $battle->turnManager()->consumeAction($actor);
-            $this->gestorVista->sincronizar($componente, $battle, $actor);
-            $this->session->guardar($componente->battleId, $battle);
-            $componente->nextActor();
+            $targetForAnim = $accion->defender;
+            $defenderId = $accion->defender->id();
+            $movimiento = $accion->move;
+        } else {
+            $objetivo = $battle->elegirObjetivoPara($actor);
+            if ($objetivo === null) {
+                return;
+            }
 
-            return;
-        }
+            $movimiento = $battle->elegirMejorMovimiento($actor, $objetivo);
+            if ($movimiento === null || ! $actor->movimientoDisponible($movimiento)) {
+                $componente->log[] = "{$actor->nombre()} no tiene movimientos disponibles.";
+                $battle->turnManager()->consumeAction($actor);
+                $this->gestorVista->sincronizar($componente, $battle, $actor);
+                $this->session->guardar($componente->battleId, $battle);
+                $componente->nextActor();
 
-        // Movimientos autodirigidos (ej: Danza Espada) apuntan al actor
-        $targetForAnim = $objetivo;
-        $defenderId = $objetivo->id();
-        if ($movimiento->esAutodirigido()) {
-            $defenderId = $actor->id();
-            $targetForAnim = $actor;
+                return;
+            }
+
+            // Movimientos autodirigidos (ej: Danza Espada) apuntan al actor.
+            // Solo se conserva en el camino legacy: la ruta de soporte usa el
+            // `defender` real de la acción elegida.
+            $targetForAnim = $objetivo;
+            $defenderId = $objetivo->id();
+            if ($movimiento->esAutodirigido()) {
+                $defenderId = $actor->id();
+                $targetForAnim = $actor;
+            }
         }
 
         $battle->setPendingAction(new DTOAccionBatalla(

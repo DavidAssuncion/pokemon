@@ -19,6 +19,7 @@ final readonly class EvaluacionAccion
         public float $threatReduction,
         public float $survivalValue,
         public float $risk,
+        public float $supportValue = 0.0,
     ) {
     }
 }

@@ -49,6 +49,17 @@ final class PesosAmenaza
         // ─── Pesos por componente (items / efectos) ───
         array $pesosItems = [ClaveItem::ORBE_VIDA->value => 30.0],
         array $pesosEfectos = [ClaveEfecto::PERFORACION_ARMADURA->value => 20.0],
+        // ─── Soporte sobre aliados ───
+        public readonly float $puntosCuracion = 60.0,
+        public readonly float $puntosCuracionCritica = 100.0,
+        public readonly float $puntosCuracionEstado = 45.0,
+        public readonly float $puntosEscudo = 40.0,
+        public readonly float $puntosBuffPorMultiplicador = 40.0,
+        public readonly float $puntosCriticoMejorado = 25.0,
+        public readonly float $puntosAquaRing = 30.0,
+        public readonly float $puntosMinimosSoporte = 5.0,
+        public readonly float $umbralHpSoporte = 0.5,
+        public readonly float $umbralDeficitEscudo = 0.25,
     ) {
         $this->items = $pesosItems;
         $this->efectos = $pesosEfectos;

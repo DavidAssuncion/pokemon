@@ -6,6 +6,7 @@ namespace Src\Battle\Domain;
 
 use Src\Battle\Domain\AI\NivelDificultad;
 use Src\Battle\Domain\AI\SelectorAccionIA;
+use Src\Battle\Domain\Catalog\CatalogoEfectosAliado;
 use Src\Battle\Domain\Chain\CadenaDanio;
 use Src\Battle\Domain\Componentes\Agregado\EjecutorAccion;
 use Src\Battle\Domain\Componentes\Agregado\GestorClimaTerreno;
@@ -390,15 +391,73 @@ class AgregadoBatalla
     }
 
     /**
+     * Indica si el actor tiene al menos un aliado vivo alcanzable y un
+     * movimiento disponible que el catálogo de apoyo admita.
+     *
+     * Es la guarda que decide si la presentación puede usar una única
+     * decisión de IA (objetivo + movimiento coherentes) o conservar el
+     * camino legacy de objetivo/movimiento separados.
+     */
+    public function actorAdmiteSoporte(Combatiente $actor): bool
+    {
+        $equipo = $this->equipoDe($actor);
+        if ($equipo === null) {
+            return false;
+        }
+
+        $aliados = $equipo->combatientesCollection()->vivos()->filter(
+            fn (Combatiente $combatiente) => $combatiente->id() !== $actor->id()
+        );
+
+        if ($aliados->isEmpty()) {
+            return false;
+        }
+
+        if ($equipo->tieneVanguardiaViva()) {
+            $aliados = $aliados->filter(
+                fn (Combatiente $combatiente) => ! $combatiente->estaEnRetaguardia()
+            );
+
+            if ($aliados->isEmpty()) {
+                return false;
+            }
+        }
+
+        foreach ($actor->pokemon()->moves() as $movimiento) {
+            if ($movimiento instanceof MovimientoBatalla
+                && $actor->movimientoDisponible($movimiento)
+                && CatalogoEfectosAliado::admite($movimiento->slug)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Decisión completa de la IA (atacante + movimiento + objetivo).
+     */
+    public function elegirAccionPara(Combatiente $actor): ?AccionBatalla
+    {
+        return $this->getSelectorAccion()
+            ->elegirAccion($this, $actor, $this->dificultad)
+            ->accion;
+    }
+
+    /**
      * Elige un objetivo enemigo para el actor dado (público para IA/Livewire).
      */
     public function elegirObjetivoPara(Combatiente $actor): ?Combatiente
     {
-        return $this->getSelectorAccion()->elegirAccion($this, $actor, $this->dificultad)->accion->defender;
+        return $this->getSelectorAccion()
+            ->elegirAccion($this, $actor, $this->dificultad, incluirSoporte: false)
+            ->accion->defender;
     }
 
     public function elegirMejorMovimiento(Combatiente $attacker, Combatiente $defender): ?MovimientoBatalla
     {
-        return $this->getSelectorAccion()->elegirAccion($this, $attacker, $this->dificultad)->accion->move;
+        return $this->getSelectorAccion()
+            ->elegirAccion($this, $attacker, $this->dificultad, incluirSoporte: false)
+            ->accion->move;
     }
 }

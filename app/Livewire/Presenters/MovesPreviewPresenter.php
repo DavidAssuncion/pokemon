@@ -325,6 +325,11 @@ final class MovesPreviewPresenter
         $statsAliado = $target->pokemon()->battleStats();
         $maxPs = (int) round($statsAliado->hp);
 
+        $fraccionCuracion = $move->perfil->curacionFraccion;
+        if ($fraccionCuracion <= 0.0) {
+            $fraccionCuracion = self::FRACCION_RECUPERACION_ALIADA;
+        }
+
         return match ($efecto->tipo) {
             TipoEfectoAliado::ESCUDO_FISICO => 'Restaura '
                 .$calculadora->incrementoEscudo(
@@ -339,7 +344,7 @@ final class MovesPreviewPresenter
                 )
                 .' de DEF.ESP (máx. '.((int) round($statsAliado->spDefenseHp)).')',
             TipoEfectoAliado::CURAR_PS => 'Cura '
-                .((int) round($maxPs * self::FRACCION_RECUPERACION_ALIADA))
+                .((int) round($maxPs * $fraccionCuracion))
                 .' PS (máx. '.$maxPs.')',
             TipoEfectoAliado::AQUA_RING => 'Acua Aro: '
                 .$calculadora->curacionConAporteFijo(
@@ -348,6 +353,9 @@ final class MovesPreviewPresenter
                 )
                 .' PS por ronda ('.$efecto->turnos.' rondas)',
             TipoEfectoAliado::BUFF_STATS => self::textoBuffsAliado($move),
+            TipoEfectoAliado::CURAR_ESTADO => 'Cura el estado alterado del aliado',
+            TipoEfectoAliado::CRITICO_MEJORADO => 'Mejora la probabilidad de crítico del aliado durante '
+                .$efecto->turnos.' rondas',
         };
     }
 

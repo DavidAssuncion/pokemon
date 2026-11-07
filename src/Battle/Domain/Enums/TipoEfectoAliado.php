@@ -14,4 +14,6 @@ enum TipoEfectoAliado: string
     case AQUA_RING = 'aqua_ring';
     case CURAR_PS = 'curar_ps';
     case BUFF_STATS = 'buff_stats';
+    case CURAR_ESTADO = 'curar_estado';
+    case CRITICO_MEJORADO = 'critico_mejorado';
 }

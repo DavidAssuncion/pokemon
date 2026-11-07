@@ -604,6 +604,13 @@ class Combatiente
         $this->estados->setTurnosEstado($turnosEstado, $this->condiciones);
     }
 
+    public function curarEstadoMayor(): void
+    {
+        $this->setEstado(EstadoPokemon::NONE);
+        $this->setTurnosEstado(0);
+        $this->setContadorVenenoGrave(0);
+    }
+
     public function setMultiplicadores(MultiplicadoresStats $multiplicadores): void
     {
         $this->stats->setMultiplicadores($multiplicadores);

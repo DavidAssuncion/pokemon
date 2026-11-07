@@ -8,6 +8,7 @@ use Src\Battle\Domain\AccionBatalla;
 use Src\Battle\Domain\AgregadoBatalla;
 use Src\Battle\Domain\AI\ValueObjects\EvaluacionAccion;
 use Src\Battle\Domain\AI\ValueObjects\ResultadoDecision;
+use Src\Battle\Domain\Catalog\CatalogoEfectosAliado;
 use Src\Battle\Domain\Chain\CadenaDanio;
 use Src\Battle\Domain\Collections\AccionesPosiblesCollection;
 use Src\Battle\Domain\Collections\CombatientesCollection;
@@ -61,16 +62,36 @@ class SelectorAccionIA
         AgregadoBatalla $battle,
         Combatiente $actor,
         NivelDificultad $dificultad = NivelDificultad::PERFECTA,
+        bool $incluirSoporte = true,
     ): ResultadoDecision {
         $contexto = $this->construirContexto($battle, $actor, $dificultad);
 
         $amenazas = $this->analizadorAmenazas->analizar($contexto);
 
-        $acciones = $this->generarAccionesCandidatas($contexto);
+        $acciones = $this->generarAccionesCandidatas($contexto, $incluirSoporte);
 
         $evaluaciones = $acciones->map(
             fn (AccionBatalla $accion) => $this->evaluadorAccion->evaluar($contexto, $amenazas, $accion),
         );
+
+        // El apoyo sin efecto real no compite, y nunca lo hace contra un KO.
+        $evaluaciones = array_values(array_filter(
+            $evaluaciones,
+            fn (EvaluacionAccion $evaluacion): bool => ! ClasificadorAccionIA::esApoyo(
+                $contexto->battle,
+                $evaluacion->accion,
+            ) || $evaluacion->supportValue > 0.0,
+        ));
+
+        if ($this->hayKOEn($evaluaciones, $contexto->battle)) {
+            $evaluaciones = array_values(array_filter(
+                $evaluaciones,
+                fn (EvaluacionAccion $evaluacion): bool => ! ClasificadorAccionIA::esApoyo(
+                    $contexto->battle,
+                    $evaluacion->accion,
+                ),
+            ));
+        }
 
         $mejor = $this->seleccionarSegunDificultad($evaluaciones, $dificultad);
 
@@ -98,7 +119,7 @@ class SelectorAccionIA
             return null;
         }
 
-        $resultado = $this->elegirAccion($battle, $actor);
+        $resultado = $this->elegirAccion($battle, $actor, incluirSoporte: false);
 
         return $resultado->accion->defender;
     }
@@ -179,8 +200,10 @@ class SelectorAccionIA
      * - Vanguardia solo puede atacar vanguardia enemiga.
      * - Retaguardia puede atacar a cualquier enemigo vivo.
      */
-    private function generarAccionesCandidatas(ContextoDecisionIA $contexto): AccionesPosiblesCollection
-    {
+    private function generarAccionesCandidatas(
+        ContextoDecisionIA $contexto,
+        bool $incluirSoporte = true,
+    ): AccionesPosiblesCollection {
         $acciones = new AccionesPosiblesCollection();
         $actor = $contexto->actor;
         $battle = $contexto->battle;
@@ -242,7 +265,78 @@ class SelectorAccionIA
             }
         }
 
+        if ($incluirSoporte) {
+            $this->agregarAccionesSoporte($contexto, $acciones);
+        }
+
         return $acciones;
+    }
+
+    /**
+     * Añade las variantes de apoyo sobre aliados vivos alcanzables.
+     *
+     * El bloque enemigo ya generó las variantes autodirigidas apuntando al
+     * actor; aquí se añaden las que apuntan a un aliado para que compitan por
+     * la misma evaluación.
+     */
+    private function agregarAccionesSoporte(
+        ContextoDecisionIA $contexto,
+        AccionesPosiblesCollection $acciones,
+    ): void {
+        if ($contexto->aliados->isEmpty()) {
+            return;
+        }
+
+        $actor = $contexto->actor;
+        $battle = $contexto->battle;
+
+        $movimientos = [];
+        foreach ($actor->pokemon()->moves() as $movimiento) {
+            if (! $movimiento instanceof MovimientoBatalla) {
+                continue;
+            }
+
+            if (! $actor->movimientoDisponible($movimiento)) {
+                continue;
+            }
+
+            if (! CatalogoEfectosAliado::admite($movimiento->slug)) {
+                continue;
+            }
+
+            $movimientos[] = $movimiento;
+        }
+
+        if ($movimientos === []) {
+            return;
+        }
+
+        $equipoActor = $contexto->equipoActor === Bando::UNO
+            ? $battle->team1
+            : $battle->team2;
+        $vanguardiaViva = $equipoActor->tieneVanguardiaViva();
+
+        foreach ($contexto->aliados as $aliado) {
+            if ($aliado->id() === $actor->id() || ! $aliado->estaVivo()) {
+                continue;
+            }
+
+            if ($vanguardiaViva && $aliado->estaEnRetaguardia()) {
+                continue;
+            }
+
+            foreach ($movimientos as $movimiento) {
+                $acciones->add(new AccionBatalla(
+                    attacker: $actor,
+                    defender: $aliado,
+                    move: $movimiento,
+                    defenderTeamHasVanguard: $vanguardiaViva,
+                    weather: $battle->weather(),
+                    terreno: $battle->terreno(),
+                    equipoDefensor: $equipoActor,
+                ));
+            }
+        }
     }
 
     /**
@@ -262,6 +356,23 @@ class SelectorAccionIA
         );
 
         return $vanguardiaEnemiga->isEmpty() ? $enemigos : $vanguardiaEnemiga;
+    }
+
+    /**
+     * Indica si alguna evaluación no-apoyo consigue un KO.
+     *
+     * @param  EvaluacionAccion[]  $evaluaciones
+     */
+    private function hayKOEn(array $evaluaciones, AgregadoBatalla $battle): bool
+    {
+        foreach ($evaluaciones as $evaluacion) {
+            if ($evaluacion->koValue > 0.0
+                && ! ClasificadorAccionIA::esApoyo($battle, $evaluacion->accion)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     // ─── Selección por dificultad ──────────────────────────

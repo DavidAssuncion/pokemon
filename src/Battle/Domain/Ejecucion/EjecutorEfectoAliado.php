@@ -8,6 +8,7 @@ use Src\Battle\Domain\AccionBatalla;
 use Src\Battle\Domain\AgregadoBatalla;
 use Src\Battle\Domain\Danio\GestorEfectosMovimiento;
 use Src\Battle\Domain\Enums\ClaveCondicion;
+use Src\Battle\Domain\Enums\EstadoPokemon;
 use Src\Battle\Domain\Enums\StatClave;
 use Src\Battle\Domain\Enums\TipoEfectoAliado;
 use Src\Battle\Domain\ValueObjects\CondicionVolatil;
@@ -44,6 +45,8 @@ final class EjecutorEfectoAliado
             TipoEfectoAliado::AQUA_RING => $this->aplicarAquaRing($accion, $efecto, $battle),
             TipoEfectoAliado::CURAR_PS => $this->aplicarCuracionPs($accion, $battle),
             TipoEfectoAliado::BUFF_STATS => $this->aplicarBuffs($accion, $battle),
+            TipoEfectoAliado::CURAR_ESTADO => $this->aplicarCuracionEstado($accion, $battle),
+            TipoEfectoAliado::CRITICO_MEJORADO => $this->aplicarCriticoMejorado($accion, $efecto, $battle),
         };
     }
 
@@ -86,7 +89,12 @@ final class EjecutorEfectoAliado
     {
         $aliado = $accion->defender;
 
-        $curacion = $aliado->pokemon()->battleStats()->hp * self::FRACCION_RECUPERACION;
+        $fraccion = $accion->move->perfil->curacionFraccion;
+        if ($fraccion <= 0.0) {
+            $fraccion = self::FRACCION_RECUPERACION;
+        }
+
+        $curacion = $aliado->pokemon()->battleStats()->hp * $fraccion;
         $recuperado = (int) round($aliado->curarHpCantidad($curacion));
 
         $texto = $recuperado > 0
@@ -154,5 +162,43 @@ final class EjecutorEfectoAliado
         }
 
         return implode(' ', $lineas);
+    }
+
+    private function aplicarCuracionEstado(AccionBatalla $accion, AgregadoBatalla $battle): string
+    {
+        $aliado = $accion->defender;
+        $teniaEstado = $aliado->estadoMayor() !== EstadoPokemon::NONE;
+
+        $aliado->curarEstadoMayor();
+
+        $texto = $teniaEstado
+            ? "{$aliado->nombre()} se recupera de su estado alterado"
+            : "{$aliado->nombre()} no tiene ningún estado alterado";
+
+        $battle->agregarLog($texto);
+
+        return $texto;
+    }
+
+    private function aplicarCriticoMejorado(
+        AccionBatalla $accion,
+        EfectoAliado $efecto,
+        AgregadoBatalla $battle,
+    ): string {
+        $aliado = $accion->defender;
+        $turnos = max(1, $efecto->turnos);
+
+        $aliado->reemplazarCondicion(new CondicionVolatil(
+            clave: ClaveCondicion::CRITICO_MEJORADO,
+            turnos: $turnos,
+            origenId: $accion->attacker->id(),
+        ));
+
+        $texto = "{$aliado->nombre()} concentra su energía "
+            ."(crítico mejorado durante {$turnos} rondas)";
+
+        $battle->agregarLog($texto);
+
+        return $texto;
     }
 }

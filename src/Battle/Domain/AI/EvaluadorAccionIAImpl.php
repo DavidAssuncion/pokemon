@@ -9,6 +9,7 @@ use Src\Battle\Domain\AI\Collections\EvaluacionAmenazaCollection;
 use Src\Battle\Domain\AI\ValueObjects\EvaluacionAccion;
 use Src\Battle\Domain\AI\ValueObjects\EvaluacionAmenaza;
 use Src\Battle\Domain\Combatiente;
+use Src\Battle\Domain\Ejecucion\CalculadoraCuracionAliada;
 
 /**
  * Evalúa cada acción candidata según KO, daño, reducción de amenaza, supervivencia, riesgo y lookahead.
@@ -22,13 +23,18 @@ class EvaluadorAccionIAImpl implements EvaluadorAccionIA
 
     private EvaluadorPosicionIA $evaluadorPosicion;
 
+    private readonly EvaluadorSoporteIA $evaluadorSoporte;
+
     public function __construct(
         private readonly CalculadoraDanioIA $calculadoraDanio,
         private readonly PesosAmenaza $pesos,
+        ?EvaluadorSoporteIA $evaluadorSoporte = null,
     ) {
         $this->simulador = new SimuladorAccionIA($calculadoraDanio->cadenaDanio());
         $this->respuestaRival = new RespuestaRival($calculadoraDanio);
         $this->evaluadorPosicion = new EvaluadorPosicionIA($pesos);
+        $this->evaluadorSoporte = $evaluadorSoporte
+            ?? new EvaluadorSoporteIA($calculadoraDanio, new CalculadoraCuracionAliada(), $pesos);
     }
 
     public function evaluar(
@@ -36,6 +42,10 @@ class EvaluadorAccionIAImpl implements EvaluadorAccionIA
         EvaluacionAmenazaCollection $amenazas,
         AccionBatalla $accion,
     ): EvaluacionAccion {
+        if (ClasificadorAccionIA::esApoyo($contexto->battle, $accion)) {
+            return $this->evaluarApoyo($contexto, $accion);
+        }
+
         $movimiento = $accion->move;
         $objetivo = $accion->defender;
 
@@ -78,7 +88,7 @@ class EvaluadorAccionIAImpl implements EvaluadorAccionIA
 
         // --- Lookahead Score ---
         $lookaheadScore = 0.0;
-        if ($this->debeAplicarLookahead($contexto)) {
+        if ($this->debeAplicarLookahead($contexto, $accion)) {
             $lookaheadScore = $this->calcularLookahead($contexto, $accion, $koValue);
         }
 
@@ -96,8 +106,34 @@ class EvaluadorAccionIAImpl implements EvaluadorAccionIA
         );
     }
 
-    private function debeAplicarLookahead(ContextoDecisionIA $contexto): bool
+    /**
+     * Evalúa una acción de apoyo: solo aporta su valor y la supervivencia del
+     * actor. Nunca produce daño ni reducción de amenaza.
+     */
+    private function evaluarApoyo(ContextoDecisionIA $contexto, AccionBatalla $accion): EvaluacionAccion
     {
+        $supportValue = $this->evaluadorSoporte->valor($contexto, $accion);
+        $survivalValue = $this->calcularSupervivencia($contexto, $accion->defender, 0.0);
+        $risk = $this->calcularRiesgo($contexto);
+
+        return new EvaluacionAccion(
+            accion: $accion,
+            score: $supportValue + $survivalValue - $risk,
+            koValue: 0.0,
+            damageValue: 0.0,
+            threatReduction: 0.0,
+            survivalValue: $survivalValue,
+            risk: $risk,
+            supportValue: $supportValue,
+        );
+    }
+
+    private function debeAplicarLookahead(ContextoDecisionIA $contexto, AccionBatalla $accion): bool
+    {
+        if (ClasificadorAccionIA::esApoyo($contexto->battle, $accion)) {
+            return false;
+        }
+
         return match ($contexto->dificultad) {
             NivelDificultad::PERFECTA => true,
             NivelDificultad::DIFICIL => true,

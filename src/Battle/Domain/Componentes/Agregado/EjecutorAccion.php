@@ -62,7 +62,7 @@ final class EjecutorAccion
         Combatiente $actor,
         NivelDificultad $dificultad,
     ): MovimientoBatalla {
-        return $selector->elegirAccion($batalla, $actor, $dificultad)->accion->move;
+        return $selector->elegirAccion($batalla, $actor, $dificultad, incluirSoporte: false)->accion->move;
     }
 
     private function construirAccion(
