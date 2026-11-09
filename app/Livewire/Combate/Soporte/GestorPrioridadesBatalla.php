@@ -6,6 +6,7 @@ namespace App\Livewire\Combate\Soporte;
 
 use App\Livewire\Combate;
 use Src\Battle\Domain\AgregadoBatalla;
+use Src\Battle\Domain\AI\ClasificadorAccionIA;
 use Src\Battle\Domain\Combatiente;
 use Src\Battle\Domain\Enums\ClaveCondicion;
 use Src\Battle\Domain\Enums\ObjetivoMovimiento;
@@ -27,34 +28,60 @@ final class GestorPrioridadesBatalla
 
     public function declararIa(AgregadoBatalla $battle): void
     {
+        if ($battle->team1->combatientesCollection()->vivos()->isEmpty()) {
+            return;
+        }
+
         $ronda = $battle->turnManager()->round();
 
         foreach ($battle->team2->combatientesCollection()->vivos() as $rival) {
-            $mejor = null;
-            $puedeProteger = $rival->puedeUsarProteccion($ronda);
+            $rival->limpiarPrioridad();
+            $rival->setPostura(PosturaCombate::ATACAR);
+            $rival->setObjetivoCubiertoId('');
 
-            foreach ($rival->pokemon()->moves()->all() as $movimiento) {
-                if ($movimiento->priority <= 0 || ! $rival->movimientoDisponible($movimiento)) {
-                    continue;
-                }
-
-                if ($movimiento->esProteccion() && ! $puedeProteger) {
-                    continue;
-                }
-
-                if ($mejor === null
-                    || $movimiento->priority > $mejor->priority
-                    || ($movimiento->priority === $mejor->priority && $movimiento->potencia > $mejor->potencia)) {
-                    $mejor = $movimiento;
-                }
+            if (! $this->tienePrioridadDisponible($rival, $ronda)) {
+                continue;
             }
 
-            if ($mejor !== null) {
-                $rival->setPostura(PosturaCombate::ATACAR);
-                $rival->setObjetivoCubiertoId('');
-                $rival->declararPrioridad($mejor);
+            $accion = $battle->elegirAccionPara($rival);
+
+            if ($accion === null) {
+                continue;
             }
+
+            $movimiento = $accion->move;
+
+            if ($movimiento->priority <= 0) {
+                continue;
+            }
+
+            if (ClasificadorAccionIA::esApoyo($battle, $accion)) {
+                continue;
+            }
+
+            $rival->declararPrioridad($movimiento);
         }
+    }
+
+    private function tienePrioridadDisponible(Combatiente $rival, int $ronda): bool
+    {
+        foreach ($rival->pokemon()->moves() as $movimiento) {
+            if (! $movimiento instanceof MovimientoBatalla) {
+                continue;
+            }
+
+            if ($movimiento->priority <= 0 || ! $rival->movimientoDisponible($movimiento)) {
+                continue;
+            }
+
+            if ($movimiento->esProteccion() && ! $rival->puedeUsarProteccion($ronda)) {
+                continue;
+            }
+
+            return true;
+        }
+
+        return false;
     }
 
     public function resolver(

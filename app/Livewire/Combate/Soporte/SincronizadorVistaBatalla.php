@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Livewire\Combate\Soporte;
 
 use App\Livewire\Combate\Soporte\DTO\VistaBatalla;
+use App\Livewire\Presenters\DebugCombatientePresenter;
 use Src\Battle\App\ObtenerOpcionesObjeto;
 use Src\Battle\Domain\AgregadoBatalla;
 use Src\Battle\Domain\Combatiente;
@@ -30,13 +31,23 @@ final class SincronizadorVistaBatalla
         $logNuevo = $battle->log()->entries()->toList();
         $battle->limpiarLog();
 
+        $debug = (bool) config('app.debug');
+
         $team1 = array_map(
             fn (Combatiente $c) => $c->aArrayVista(0),
             $battle->team1->combatants()->all(),
         );
 
         $team2 = array_map(
-            fn (Combatiente $c) => $c->aArrayVista(1),
+            function (Combatiente $c) use ($debug): array {
+                $vista = $c->aArrayVista(1);
+
+                if ($debug) {
+                    $vista['debug'] = DebugCombatientePresenter::para($c);
+                }
+
+                return $vista;
+            },
             $battle->team2->combatants()->all(),
         );
 

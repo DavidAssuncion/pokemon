@@ -1,7 +1,75 @@
-<div class="{{ $p['claseCarta'] }}"
+@php($esDebugRival = ($p['team'] ?? 0) === 1 && ! empty($p['debug']))
+<div class="{{ $p['claseCarta'] }}{{ $esDebugRival ? ' pokemon-card--debug-rival' : '' }}"
      data-ref-id="{{ $p['refId'] }}"
      data-team="{{ $p['team'] }}"
      @if($p['selectable']) wire:click="previewTarget({{ $p['team'] }}, {{ $idx }})" role="button" tabindex="0" @endif>
+    @if($esDebugRival)
+        @php($debugRival = $p['debug'])
+        <div class="debug-tooltip" role="tooltip" aria-hidden="true">
+            <div class="debug-tooltip__head">DEBUG</div>
+
+            <div class="debug-tooltip__row">
+                <span class="debug-tooltip__key">Tipos</span>
+                <span>{{ ! empty($debugRival['tipos']) ? implode(', ', $debugRival['tipos']) : '—' }}</span>
+            </div>
+
+            <div class="debug-tooltip__row">
+                <span class="debug-tooltip__key">Habilidad</span>
+                <span>
+                    {{ $debugRival['habilidad']['base'] ?? '—' }}
+                    @if(! empty($debugRival['habilidad']['activas']))
+                        · {{ implode(', ', $debugRival['habilidad']['activas']) }}
+                    @endif
+                </span>
+            </div>
+
+            <div class="debug-tooltip__row">
+                <span class="debug-tooltip__key">Objeto</span>
+                <span>
+                    @if(! empty($debugRival['objeto']))
+                        {{ $debugRival['objeto']['nombre'] ?? ($debugRival['objeto']['clave'] ?? '—') }}
+                        @isset($debugRival['objeto']['cargas'])
+                            · {{ $debugRival['objeto']['cargas'] }} cargas
+                        @endisset
+                        · {{ ! empty($debugRival['objeto']['activo']) ? 'activo' : 'inactivo' }}
+                        @if(! empty($debugRival['objeto']['bloqueado']))
+                            · bloqueado
+                        @endif
+                    @else
+                        Sin objeto
+                    @endif
+                </span>
+            </div>
+
+            <div class="debug-tooltip__stats">
+                @foreach($debugRival['stats'] ?? [] as $stat)
+                    <span class="debug-tooltip__stat">
+                        <span class="debug-tooltip__stat-label">{{ $stat['label'] ?? '' }}</span>
+                        <span>{{ $stat['actual'] ?? '—' }}/{{ $stat['max'] ?? '—' }}</span>
+                    </span>
+                @endforeach
+            </div>
+
+            <ul class="debug-tooltip__moves">
+                @foreach($debugRival['movimientos'] ?? [] as $movimiento)
+                    <li class="debug-tooltip__move{{ empty($movimiento['disponible']) ? ' is-unavailable' : '' }}">
+                        <span class="debug-tooltip__move-name">{{ $movimiento['nombre'] ?? '—' }}</span>
+                        <span class="debug-tooltip__move-meta">
+                            {{ $movimiento['tipo'] ?? '—' }} · {{ $movimiento['categoria'] ?? '—' }}
+                            · Pot {{ $movimiento['potencia'] ?? '—' }}
+                            · Pre {{ $movimiento['precision'] ?? '—' }}
+                            · Pri {{ $movimiento['prioridad'] ?? 0 }}
+                            · {{ isset($movimiento['usosMax']) ? (($movimiento['usos'] ?? 0) . '/' . $movimiento['usosMax']) : '∞' }}
+                        </span>
+                        @if(empty($movimiento['disponible']) && ! empty($movimiento['motivo']))
+                            <span class="debug-tooltip__move-reason">{{ $movimiento['motivo'] }}</span>
+                        @endif
+                    </li>
+                @endforeach
+            </ul>
+        </div>
+    @endif
+
     <div class="card-body p-2 d-flex flex-column gap-1">
         {{-- Sin nombre: el sprite y las insignias identifican al pokémon --}}
         <div class="d-flex flex-wrap align-items-center gap-1">
