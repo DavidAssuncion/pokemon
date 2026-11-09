@@ -145,9 +145,4 @@ class Combate extends Component
     {
         $this->orquestador->retrasarTurno($this);
     }
-
-    public function pasarTurno(): void
-    {
-        $this->orquestador->pasarTurno($this);
-    }
 }

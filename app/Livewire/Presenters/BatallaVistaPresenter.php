@@ -300,7 +300,6 @@ final class BatallaVistaPresenter
 
         return [
             'items' => $items,
-            'mostrarEsperar' => $faseSeleccion && $sinAnimacion,
             'puedeRetrasar' => $faseSeleccion
                 && $sinAnimacion
                 && ($actorActual['puedeRetrasar'] ?? false) === true,

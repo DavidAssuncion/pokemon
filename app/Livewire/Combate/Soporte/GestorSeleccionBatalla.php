@@ -18,8 +18,8 @@ use Src\Battle\Presentation\DTOAccionBatalla;
 use Src\Battle\Presentation\DTOMovimientoBatalla;
 
 /**
- * Interacciones del jugador sobre el turno: objetivo, movimiento, cambio de
- * turno y espera. Sin estado: cada acción recarga el agregado de sesión.
+ * Interacciones del jugador sobre el turno: objetivo, movimiento y cambio de
+ * turno. Sin estado: cada acción recarga el agregado de sesión.
  */
 final class GestorSeleccionBatalla
 {
@@ -316,44 +316,5 @@ final class GestorSeleccionBatalla
         }
 
         return false;
-    }
-
-    public function pasarTurno(Combate $componente, ContextoEjecucionBatalla $contexto): void
-    {
-        if (! in_array($componente->phase, [
-            FaseCombate::SELECCION_OBJETIVO->value,
-            FaseCombate::SELECCION_MOVIMIENTO->value,
-            FaseCombate::SELECCION_OBJETIVO_ITEM->value,
-        ], true)) {
-            return;
-        }
-
-        if ($componente->processing || $componente->animAttackerId !== '') {
-            return;
-        }
-
-        $battle = $this->session->cargar($componente->battleId);
-        if ($battle === null) {
-            return;
-        }
-
-        if ($componente->preparacionPendiente) {
-            $this->gestorPreparacion->autoSaltar($componente, $battle, $contexto);
-        }
-
-        $actor = $this->resolutorActor->porRefId($componente->actingRefId, $battle);
-        if ($actor === null || ! $actor->estaVivo()) {
-            $componente->nextActor();
-
-            return;
-        }
-
-        $componente->log[] = "{$actor->nombre()} espera.";
-        $battle->turnManager()->consumeAction($actor);
-        $this->gestorAnimacion->reiniciar($componente);
-        $componente->selectedMoveIdx = null;
-        $this->gestorVista->sincronizar($componente, $battle, $actor);
-        $this->session->guardar($componente->battleId, $battle);
-        $componente->nextActor();
     }
 }

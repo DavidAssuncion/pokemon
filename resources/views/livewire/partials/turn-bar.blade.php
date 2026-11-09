@@ -30,15 +30,6 @@
                         Preparación
                     </button>
                 @endif
-                @if($turnBar['mostrarEsperar'])
-                    <button type="button"
-                            class="btn btn-sm btn-outline-secondary"
-                            wire:click="pasarTurno"
-                            wire:loading.attr="disabled"
-                            title="Consume tu acción sin atacar">
-                        Esperar
-                    </button>
-                @endif
                 @if($turnBar['puedeRetrasar'])
                     <button type="button"
                             class="btn btn-sm btn-outline-warning"

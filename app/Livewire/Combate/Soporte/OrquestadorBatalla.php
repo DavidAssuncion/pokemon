@@ -109,9 +109,4 @@ final class OrquestadorBatalla
     {
         $this->seleccion->retrasarTurno($componente, $this->contexto);
     }
-
-    public function pasarTurno(Combate $componente): void
-    {
-        $this->seleccion->pasarTurno($componente, $this->contexto);
-    }
 }

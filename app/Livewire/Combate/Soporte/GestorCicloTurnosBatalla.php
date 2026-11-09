@@ -8,6 +8,7 @@ use App\Livewire\Combate;
 use App\Livewire\Combate\Soporte\DTO\SnapshotBatalla;
 use App\Support\BattleSessionService;
 use Src\Battle\Domain\AgregadoBatalla;
+use Src\Battle\Domain\Combatiente;
 use Src\Battle\Domain\Enums\FaseCombate;
 use Src\Battle\Domain\Enums\PosturaCombate;
 use Src\Battle\Domain\MovimientoBatalla;
@@ -149,6 +150,18 @@ final class GestorCicloTurnosBatalla
         $isPlayer = $posicion->team === 0;
 
         if ($isPlayer) {
+            if (! $componente->preparacionPendiente
+                && $this->sinAccionLegal($actor, $componente->objetosCombate)) {
+                $componente->log[] = "{$actor->nombre()} no tiene ninguna acción disponible y pierde el turno.";
+                $turnos->consumeAction($actor);
+                $componente->selectedMoveIdx = null;
+                $componente->processing = false;
+                $this->session->guardar($componente->battleId, $battle);
+                $componente->nextActor();
+
+                return;
+            }
+
             $componente->currentMoves = array_map(
                 fn (MovimientoBatalla $m) => DTOMovimientoBatalla::desdeDominio($m)->toLivewire(),
                 $actor->pokemon()->moves()->all()
@@ -175,6 +188,29 @@ final class GestorCicloTurnosBatalla
             $componente->team2,
         );
         $this->session->guardar($componente->battleId, $battle);
+    }
+
+    /**
+     * ¿El actor del jugador carece de toda acción legal en esta ronda?
+     * La postura defensiva ya se consumió antes de llegar aquí.
+     *
+     * @param  list<array<string, mixed>>  $objetosCombate
+     */
+    private function sinAccionLegal(Combatiente $actor, array $objetosCombate): bool
+    {
+        foreach ($actor->pokemon()->moves() as $movimiento) {
+            if ($movimiento instanceof MovimientoBatalla && $actor->movimientoDisponible($movimiento)) {
+                return false;
+            }
+        }
+
+        foreach ($objetosCombate as $objeto) {
+            if (($objeto['aplicable'] ?? false) === true) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     private function avanzarRonda(Combate $componente, AgregadoBatalla $battle, bool $grabando): void
