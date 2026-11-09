@@ -8,6 +8,7 @@ use Src\Battle\Domain\AI\NivelDificultad;
 use Src\Battle\Domain\AI\SelectorAccionIA;
 use Src\Battle\Domain\Catalog\CatalogoEfectosAliado;
 use Src\Battle\Domain\Chain\CadenaDanio;
+use Src\Battle\Domain\Collections\CombatientesCollection;
 use Src\Battle\Domain\Componentes\Agregado\EjecutorAccion;
 use Src\Battle\Domain\Componentes\Agregado\GestorClimaTerreno;
 use Src\Battle\Domain\Componentes\Agregado\GestorGasReactivo;
@@ -305,6 +306,31 @@ class AgregadoBatalla
         return $equipo === null
             ? null
             : ($equipo === $this->team1 ? $this->team2 : $this->team1);
+    }
+
+    /**
+     * Rivales vivos a los que el actor puede dirigir un ataque según la regla
+     * de fila: vanguardia → vanguardia rival mientras quede viva; retaguardia
+     * o vanguardia rival caída → cualquier rival vivo.
+     */
+    public function objetivosRivalesLegalesPara(Combatiente $actor): CombatientesCollection
+    {
+        $equipoRival = $this->equipoRivalDe($actor);
+        if ($equipoRival === null) {
+            return new CombatientesCollection();
+        }
+
+        $rivales = $equipoRival->combatientesCollection()->vivos();
+
+        if (! $actor->estaEnVanguardia() || ! $equipoRival->tieneVanguardiaViva()) {
+            return $rivales;
+        }
+
+        $vanguardiaRival = $rivales->filter(
+            fn (Combatiente $rival): bool => $rival->estaEnVanguardia()
+        );
+
+        return $vanguardiaRival->isEmpty() ? $rivales : $vanguardiaRival;
     }
 
     // ─── Log ──────────────────────────────────────────────────

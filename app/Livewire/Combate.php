@@ -38,11 +38,15 @@ class Combate extends Component
     public string $selectedTargetRefId = '';
     /** @var array<string, string> refId => índice del movimiento prioritario elegido */
     public array $prioridades = [];
+    /** @var array<string, string> refId actor => refId del rival objetivo de su prioridad ('' = Automático) */
+    public array $prioridadesObjetivo = [];
+    /** @var array<string, string> refId cubridor => refId del aliado cubierto ('' = Automático) */
+    public array $coberturas = [];
     /** @var array<string, string> refId => postura elegida para la ronda ('atacar'|'guardia'|'cubrir') */
     public array $posturas = [];
     /** Panel de preparación de ronda visible (no bloquea el turno: jugar lo omite). */
     public bool $preparacionPendiente = false;
-    /** @var array<string, list<array{index: int, nombre: string, prioridad: int}>> */
+    /** @var array<string, list<array{index: int, nombre: string, prioridad: int, autodirigido: bool, objetivoForzadoRefId: string, objetivoForzadoNombre: string, objetivos: list<array{refId: string, nombre: string, posicion: string}>}>> */
     public array $prioridadesDisponibles = [];
     /** @var list<array<string, mixed>> Opciones del panel de objetos de combate. */
     public array $objetosCombate = [];

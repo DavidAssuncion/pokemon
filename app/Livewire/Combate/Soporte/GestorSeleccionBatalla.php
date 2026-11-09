@@ -60,11 +60,6 @@ final class GestorSeleccionBatalla
             if (! $this->actorAdmiteAliado($actor)) {
                 return;
             }
-
-            $equipo = $battle->equipoDe($target);
-            if ($target->estaEnRetaguardia() && $equipo !== null && $equipo->tieneVanguardiaViva()) {
-                return;
-            }
         }
 
         $componente->selectedTargetTeam = $teamIdx;
@@ -155,15 +150,6 @@ final class GestorSeleccionBatalla
 
             if ($efectoAliado === null) {
                 $componente->log[] = "{$move->nombre} no puede usarse sobre un aliado.";
-
-                return;
-            }
-
-            $equipoAliado = $battle->equipoDe($seleccionado);
-            if ($seleccionado->estaEnRetaguardia()
-                && $equipoAliado !== null
-                && $equipoAliado->tieneVanguardiaViva()) {
-                $componente->log[] = "{$seleccionado->nombre()} no está en la vanguardia.";
 
                 return;
             }

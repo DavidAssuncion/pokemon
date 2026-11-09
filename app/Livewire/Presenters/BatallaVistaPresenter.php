@@ -125,7 +125,6 @@ final class BatallaVistaPresenter
             return [];
         }
 
-        $vanguardiaViva = self::tieneVanguardiaViva($team1);
         $refs = [];
 
         foreach ($team1 as $p) {
@@ -136,28 +135,10 @@ final class BatallaVistaPresenter
                 continue;
             }
 
-            if (($p['posicion'] ?? '') === 'retaguardia' && $vanguardiaViva) {
-                continue;
-            }
-
             $refs[] = $refId;
         }
 
         return $refs;
-    }
-
-    /**
-     * @param  list<array<string, mixed>>  $team
-     */
-    private static function tieneVanguardiaViva(array $team): bool
-    {
-        foreach ($team as $p) {
-            if (($p['alive'] ?? false) === true && ($p['posicion'] ?? '') === 'vanguardia') {
-                return true;
-            }
-        }
-
-        return false;
     }
 
     /**

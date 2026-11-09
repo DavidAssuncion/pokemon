@@ -7,6 +7,7 @@ namespace App\Livewire\Combate\Soporte;
 use App\Livewire\Combate;
 use Src\Battle\Domain\AgregadoBatalla;
 use Src\Battle\Domain\Combatiente;
+use Src\Battle\Domain\Enums\ClaveCondicion;
 use Src\Battle\Domain\Enums\ObjetivoMovimiento;
 use Src\Battle\Domain\Enums\PosturaCombate;
 use Src\Battle\Domain\MovimientoBatalla;
@@ -117,8 +118,9 @@ final class GestorPrioridadesBatalla
                 continue;
             }
 
-            $objetivo = $this->objetivoPara($battle, $actor, $movimiento);
-            if ($objetivo === null) {
+            $objetivoDeclarado = $this->textoMapa($componente->prioridadesObjetivo[$actor->id()] ?? null);
+            $objetivo = $this->objetivoPara($battle, $actor, $movimiento, $objetivoDeclarado);
+            if ($objetivo === null || ! $objetivo->estaVivo()) {
                 $actor->romperCombo();
                 $componente->log[] = "{$actor->nombre()} no encuentra objetivo para {$movimiento->nombre}.";
                 $turnos->consumeAction($actor);
@@ -150,14 +152,58 @@ final class GestorPrioridadesBatalla
         AgregadoBatalla $battle,
         Combatiente $actor,
         MovimientoBatalla $movimiento,
+        string $objetivoDeclaradoId = '',
     ): ?Combatiente {
-        $autodirigido = $movimiento->esAutodirigido()
-            || $movimiento->objetivo === ObjetivoMovimiento::ALL;
-
-        if ($autodirigido) {
+        if ($this->esAutodirigido($movimiento)) {
             return $actor;
         }
 
+        // El objetivo forzado y el declarado solo aplican al camino del
+        // jugador: la IA conserva el fallback actual sin cambios.
+        if ($battle->team1->findCombatantById($actor->id()) !== null) {
+            $forzado = $this->objetivoForzadoDesafio($battle, $actor);
+            if ($forzado !== null) {
+                return $forzado;
+            }
+
+            if ($objetivoDeclaradoId !== '') {
+                $objetivo = $battle->equipoRivalDe($actor)?->findCombatantById($objetivoDeclaradoId);
+                if ($objetivo !== null
+                    && $objetivo->estaVivo()
+                    && $battle->objetivosRivalesLegalesPara($actor)
+                        ->contains(fn (Combatiente $rival): bool => $rival->id() === $objetivo->id())) {
+                    return $objetivo;
+                }
+            }
+        }
+
         return $battle->elegirObjetivoPara($actor);
+    }
+
+    private function esAutodirigido(MovimientoBatalla $movimiento): bool
+    {
+        return $movimiento->esAutodirigido()
+            || $movimiento->objetivo === ObjetivoMovimiento::ALL;
+    }
+
+    private function objetivoForzadoDesafio(AgregadoBatalla $battle, Combatiente $actor): ?Combatiente
+    {
+        $desafio = $actor->condicion(ClaveCondicion::DESAFIO);
+        if ($desafio === null || $desafio->objetivoForzadoId === '') {
+            return null;
+        }
+
+        $objetivo = $battle->equipoRivalDe($actor)?->findCombatantById($desafio->objetivoForzadoId);
+
+        return $objetivo !== null && $objetivo->estaVivo() ? $objetivo : null;
+    }
+
+    /**
+     * Normaliza el valor de un mapa público de Livewire: cualquier valor que
+     * no sea una cadena se considera vacío.
+     */
+    private function textoMapa(mixed $valor): string
+    {
+        return is_string($valor) ? $valor : '';
     }
 }
