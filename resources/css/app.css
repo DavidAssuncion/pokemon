@@ -148,6 +148,29 @@
         0 0 30px rgba(var(--quality-rgb), 0.12);
 }
 
+/* Scrollbar del cuerpo del modal de detalle: fina y tintada con la calidad. */
+.pokemon-modal-scroll {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(var(--quality-rgb), 0.45) transparent;
+}
+
+.pokemon-modal-scroll::-webkit-scrollbar {
+    width: 8px;
+}
+
+.pokemon-modal-scroll::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.pokemon-modal-scroll::-webkit-scrollbar-thumb {
+    border-radius: 9999px;
+    background: rgba(var(--quality-rgb), 0.45);
+}
+
+.pokemon-modal-scroll::-webkit-scrollbar-thumb:hover {
+    background: rgba(var(--quality-rgb), 0.7);
+}
+
 /* Tarjetas del inventario: marco de calidad en todo el conjunto, sin iluminar la cuadrícula */
 .pokemon-card-quality {
     border: 2px solid var(--quality-color) !important;

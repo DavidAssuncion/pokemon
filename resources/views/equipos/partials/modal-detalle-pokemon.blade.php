@@ -2,9 +2,9 @@
     <template x-if="showDetailModal">
         <div class="fixed inset-0 z-50 flex items-center justify-center p-4" @keydown.escape.window="closeDetail()" role="dialog" aria-modal="true" aria-labelledby="detail-modal-title">
             <div class="absolute inset-0 bg-scrim" @click="closeDetail()"></div>
-                <div class="relative bg-surface rounded-panel shadow-modal w-[90vw] max-w-[90vw] max-h-[94vh] overflow-y-auto pokemon-modal-quality" :class="calidadClase(detailPokemon)">
+                <div class="relative bg-surface rounded-panel shadow-modal w-[90vw] max-w-[90vw] max-h-[94vh] overflow-hidden flex flex-col pokemon-modal-quality" :class="calidadClase(detailPokemon)">
 
-                <div class="flex items-start gap-4 p-6 border-b border-line">
+                <div class="flex shrink-0 items-start gap-4 p-6 border-b border-line">
                     <div class="w-32 h-32 shrink-0 rounded-card pokemon-quality flex items-center justify-center overflow-hidden" :class="calidadClase(detailPokemon)">
                         <x-sprite
                             size="128"
@@ -55,7 +55,7 @@
                     </div>
                 </div>
 
-                <div class="p-6">
+                <div class="flex-1 min-h-0 overflow-y-auto p-6 pokemon-modal-scroll">
                     <div class="grid grid-cols-1 xl:grid-cols-3 gap-4">
                         <!-- Columna 2/3: evolución, habilidades y movimientos -->
                         <div class="xl:col-span-2 space-y-4">
