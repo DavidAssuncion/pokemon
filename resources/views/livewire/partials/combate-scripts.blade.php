@@ -538,6 +538,10 @@
             document.querySelectorAll('.reward-modal.modal-pendiente').forEach((modal) => {
                 modal.classList.remove('modal-pendiente');
             });
+
+            if (document.querySelector('.reward-modal')) {
+                window.dispatchEvent(new CustomEvent('reward-modal-visible'));
+            }
         }
 
         async function golpeStop() {
@@ -589,6 +593,166 @@
 
         function esperar(ms) {
             return new Promise((resolve) => window.setTimeout(resolve, ms));
+        }
+
+        /**
+         * Anima las barras de EXP del modal de recompensas.
+         *
+         * No calcula niveles, porcentajes ni fórmulas: solo interpola entre
+         * los segmentos y porcentajes ya resueltos por el backend.
+         */
+        function rewardProgreso(datos) {
+            return {
+                datos,
+                iniciado: false,
+                reducido: false,
+
+                init() {
+                    this.reducido = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+                    const modal = this.$el.closest('.reward-modal');
+                    if (modal && modal.classList.contains('modal-pendiente')) {
+                        return; // espera al evento de visibilidad
+                    }
+
+                    this.$nextTick(() => this.iniciar());
+                },
+
+                iniciar() {
+                    if (this.iniciado) {
+                        return; // anti-repetición en morphs
+                    }
+
+                    const modal = this.$el.closest('.reward-modal');
+                    if (modal && modal.classList.contains('modal-pendiente')) {
+                        return; // aún oculto por la cola de eventos
+                    }
+
+                    this.iniciado = true;
+                    this.reducido = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+                    const barras = Array.from(this.$el.querySelectorAll('[data-reward-barra]'));
+
+                    barras.forEach((barra, indice) => {
+                        if (this.reducido) {
+                            this.aplicarFinal(barra);
+                            return;
+                        }
+
+                        this.animarBarra(barra, indice);
+                    });
+                },
+
+                async animarBarra(barra, indice) {
+                    const relleno = barra.querySelector('[data-reward-fill]');
+                    const etiquetaNivel = barra.querySelector('[data-reward-nivel]');
+
+                    if (!relleno) {
+                        return;
+                    }
+
+                    const segmentos = JSON.parse(relleno.dataset.segmentos || '[]');
+                    const nivelFinal = Number(barra.dataset.nivelDespues);
+
+                    if (segmentos.length === 0) {
+                        // Tope ya alcanzado: el HTML ya muestra el 100 %.
+                        this.aplicarFinal(barra);
+                        return;
+                    }
+
+                    // Estado inicial síncrono para evitar un flash del ancho final.
+                    this.sinTransicion(relleno, () => {
+                        relleno.style.width = segmentos[0].desde + '%';
+                    });
+                    this.fijarNivel(etiquetaNivel, segmentos[0].nivel, false);
+
+                    await this.esperar(Math.min(indice, 6) * 70); // escalonado acotado
+
+                    for (let i = 0; i < segmentos.length; i++) {
+                        const segmento = segmentos[i];
+                        const duracion = this.duracionSegmento(segmento);
+
+                        this.fijarNivel(etiquetaNivel, segmento.nivel, false);
+                        relleno.style.transitionDuration = duracion + 'ms';
+                        relleno.style.width = segmento.hasta + '%';
+
+                        await this.esperar(duracion + 60);
+
+                        if (i < segmentos.length - 1) {
+                            this.fijarNivel(etiquetaNivel, segmento.nivel, true); // aviso de subida
+                            await this.esperar(70);
+
+                            // Vaciado instantáneo y reajuste al inicio del siguiente nivel.
+                            this.sinTransicion(relleno, () => {
+                                relleno.style.width = segmentos[i + 1].desde + '%';
+                            });
+                            void relleno.offsetWidth; // fuerza reflow
+                        }
+                    }
+
+                    // Cierre exacto en el valor final servido por el backend.
+                    this.sinTransicion(relleno, () => {
+                        const final = barra.dataset.porcentajeFinal;
+                        if (final !== undefined) {
+                            relleno.style.width = final + '%';
+                        }
+                    });
+                    this.fijarNivel(etiquetaNivel, nivelFinal, false);
+                },
+
+                aplicarFinal(barra) {
+                    const relleno = barra.querySelector('[data-reward-fill]');
+                    const etiquetaNivel = barra.querySelector('[data-reward-nivel]');
+
+                    if (!relleno) {
+                        return;
+                    }
+
+                    const final = barra.dataset.porcentajeFinal;
+
+                    relleno.style.transition = 'none';
+
+                    // Si el atributo no existiera, se conserva el ancho ya renderizado.
+                    if (final !== undefined) {
+                        relleno.style.width = final + '%';
+                    }
+
+                    this.fijarNivel(etiquetaNivel, Number(barra.dataset.nivelDespues), false);
+                },
+
+                sinTransicion(relleno, aplicar) {
+                    relleno.style.transition = 'none';
+                    aplicar();
+                    void relleno.offsetWidth;
+                    relleno.style.transition = '';
+                },
+
+                fijarNivel(etiqueta, nivel, sube) {
+                    if (!etiqueta) {
+                        return;
+                    }
+
+                    etiqueta.textContent = 'Nv ' + nivel;
+
+                    if (!sube) {
+                        etiqueta.classList.remove('reward-progreso__nivel--sube');
+                        return;
+                    }
+
+                    etiqueta.classList.remove('reward-progreso__nivel--sube');
+                    void etiqueta.offsetWidth;
+                    etiqueta.classList.add('reward-progreso__nivel--sube');
+                },
+
+                duracionSegmento(segmento) {
+                    // Presentación: interpola entre los valores dados, no aplica fórmulas de juego.
+                    return Math.min(400, Math.max(140, 140 + Math.abs(segmento.hasta - segmento.desde) * 3));
+                },
+
+                esperar(ms) {
+                    return new Promise((resolve) => window.setTimeout(resolve, ms));
+                },
+            };
         }
 
         // Al abrir el registro, mostrar siempre los eventos más recientes.

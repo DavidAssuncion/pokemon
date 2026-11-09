@@ -6,6 +6,8 @@ namespace App\Livewire\Presenters;
 
 use App\Support\BattleSessionService;
 use App\Support\CargarMapaSendaJugador;
+use App\Support\ProgresoRecompensas;
+use App\Support\ProgresoRecompensasVista;
 use Illuminate\Support\Facades\Auth;
 use Src\Battle\Domain\AgregadoBatalla;
 use Src\Battle\Domain\Combatiente;
@@ -89,17 +91,17 @@ final class PresentadorResultadoBatalla
         if ($won) {
             $senda = app(CargarMapaSendaJugador::class)->para($userId);
 
-            $datosModal = self::otorgarRecompensas(
+            [$datosModal, $progreso] = self::medirProgreso($userId, fn () => self::otorgarRecompensas(
                 userId: $userId,
                 teamId: (int) ($meta['team_id'] ?? 0),
                 battle: $battle,
                 nivel: (int) ($meta['nivel'] ?? 0),
                 dificultad: MultiplicadoresDificultad::para(PoliticaIvsEvs::perfilEntrenador((int) ($meta['nivel'] ?? 1))),
                 senda: $senda,
-            );
+            ));
 
             if ($datosModal !== null) {
-                $rewards = $datosModal->toArray();
+                $rewards = self::adjuntarProgreso($datosModal->toArray(), $progreso);
             }
         }
 
@@ -147,7 +149,7 @@ final class PresentadorResultadoBatalla
         if ($won && $resultado->avance) {
             $senda = app(CargarMapaSendaJugador::class)->para($userId);
 
-            $datosModal = self::otorgarRecompensas(
+            [$datosModal, $progreso] = self::medirProgreso($userId, fn () => self::otorgarRecompensas(
                 userId: $userId,
                 teamId: $teamId,
                 battle: $battle,
@@ -155,13 +157,14 @@ final class PresentadorResultadoBatalla
                 multiplicador: OtorgarRecompensasEntrenador::MULTIPLICADOR_GIMNASIO,
                 dificultad: $dificultad,
                 senda: $senda,
-            );
+            ));
 
             if ($datosModal !== null) {
                 if ($resultado->medalla !== null) {
                     $datosModal = $datosModal->conMedalla($resultado->medalla);
                 }
-                $rewards = $datosModal->toArray();
+                // Se adjunta después de conMedalla(): el DTO no puede perder el progreso.
+                $rewards = self::adjuntarProgreso($datosModal->toArray(), $progreso);
             }
         }
 
@@ -196,12 +199,12 @@ final class PresentadorResultadoBatalla
         );
 
         if ($won) {
-            $datosModal = app(OtorgarRecompensasMazmorra::class)->otorgar(
+            [$datosModal, $progreso] = self::medirProgreso($userId, fn () => app(OtorgarRecompensasMazmorra::class)->otorgar(
                 userId: $userId,
                 teamId: (int) ($meta['team_id'] ?? 0),
                 battle: $battle,
                 nivel: (int) ($meta['nivel_rival'] ?? 0),
-            );
+            ));
 
             if ($datosModal !== null) {
                 $caramelos = [];
@@ -215,11 +218,11 @@ final class PresentadorResultadoBatalla
                     }
                 }
 
-                $rewards = [
+                $rewards = self::adjuntarProgreso([
                     'exp_total' => $datosModal->expTotal,
                     'exp_miembro' => $datosModal->expMiembro,
                     'caramelos' => $caramelos,
-                ];
+                ], $progreso);
             }
         }
 
@@ -255,7 +258,7 @@ final class PresentadorResultadoBatalla
             fn (Combatiente $c): bool => $c->shiny(),
         );
 
-        $resultado = app(RegistrarResultadoRuta::class)->registrar(
+        $operacion = fn () => app(RegistrarResultadoRuta::class)->registrar(
             userId: $userId,
             teamId: $teamId,
             speciesIdsRival: $speciesRival,
@@ -265,11 +268,58 @@ final class PresentadorResultadoBatalla
             nivelHabitat: (int) ($meta['nivel'] ?? 1),
         );
 
+        if ($won) {
+            [$resultado, $progreso] = self::medirProgreso($userId, $operacion);
+        } else {
+            // Derrota: no se persisten recompensas, así que no hay snapshots.
+            $resultado = $operacion();
+            $progreso = null;
+        }
+
+        $rewards = $resultado !== null ? $resultado->aArray() : [];
+
         return [
             'log' => [],
-            'rewards' => $resultado !== null ? $resultado->aArray() : [],
+            'rewards' => self::adjuntarProgreso($rewards, $progreso),
             'habitatId' => $habitatId,
         ];
+    }
+
+    /**
+     * Captura el estado de EXP antes y después de la operación que persiste
+     * las recompensas. No duplica la concesión: solo mide.
+     *
+     * @template T
+     * @param  callable(): T  $operacion
+     * @return array{0: T, 1: ?ProgresoRecompensasVista}
+     */
+    private static function medirProgreso(int $userId, callable $operacion): array
+    {
+        $builder = app(ProgresoRecompensas::class);
+
+        $antes = $builder->capturar($userId);
+        $resultado = $operacion();
+        $despues = $builder->capturar($userId);
+
+        return [$resultado, $builder->comparar($antes, $despues)];
+    }
+
+    /**
+     * Adjunta `progreso` solo si hay ganancia real y hay recompensas que
+     * mostrar. Si no, devuelve el array intacto (compatibilidad legacy).
+     *
+     * @param  array<string, mixed>  $rewards
+     * @return array<string, mixed>
+     */
+    private static function adjuntarProgreso(array $rewards, ?ProgresoRecompensasVista $progreso): array
+    {
+        if ($progreso === null || $rewards === []) {
+            return $rewards;
+        }
+
+        $rewards['progreso'] = $progreso->aArray();
+
+        return $rewards;
     }
 
     /**

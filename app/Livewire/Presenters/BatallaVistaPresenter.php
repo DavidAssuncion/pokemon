@@ -428,6 +428,7 @@ final class BatallaVistaPresenter
             'exp_miembro' => (int) ($rewards['exp_miembro'] ?? 0),
             'medalla' => $rewards['medalla'] ?? null,
             'caramelos' => self::caramelosLegacy($rewards['caramelos'] ?? []),
+            'progreso' => is_array($rewards['progreso'] ?? null) ? $rewards['progreso'] : null,
         ];
     }
 

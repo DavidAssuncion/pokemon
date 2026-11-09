@@ -145,6 +145,8 @@
                                 <strong class="text-success-ink">+{{ number_format($rewardsVista['exp_miembro']) }}</strong>
                             </div>
 
+                            @include('livewire.partials.reward-progreso', ['progreso' => $rewardsVista['progreso'] ?? null])
+
                             @php
                                 $tieneCapturas = $rewardsVista['capturas'] !== [];
                             @endphp
@@ -240,6 +242,8 @@
                                     </li>
                                 @endforeach
                             </ul>
+
+                            @include('livewire.partials.reward-progreso', ['progreso' => $rewardsVista['progreso'] ?? null])
                         @endif
                     </div>
                     <div class="modal-footer">

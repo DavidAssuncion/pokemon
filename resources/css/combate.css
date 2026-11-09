@@ -715,6 +715,113 @@
     display: none !important;
 }
 
+/* Progreso de EXP del modal de recompensas */
+.reward-progreso {
+    display: flex;
+    flex-direction: column;
+    gap: .75rem;
+    margin-bottom: 1rem;
+}
+
+.reward-progreso__fila {
+    display: flex;
+    flex-direction: column;
+    gap: .35rem;
+}
+
+.reward-progreso__cabecera {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    font-size: .875rem;
+}
+
+.reward-progreso__icono {
+    width: 24px;
+    height: 24px;
+    object-fit: contain;
+    flex: 0 0 auto;
+}
+
+.reward-progreso__nombre {
+    font-weight: 600;
+    color: var(--color-ink);
+}
+
+.reward-progreso__nivel {
+    margin-left: auto;
+    font-weight: 700;
+    color: var(--color-ink);
+    display: inline-block;
+}
+
+.reward-progreso__delta {
+    font-weight: 700;
+    color: var(--color-success-ink);
+    white-space: nowrap;
+}
+
+.reward-progreso__barra {
+    height: 10px;
+    overflow: hidden;
+    border-radius: 9999px;
+    background-color: var(--color-surface-sunken);
+}
+
+.reward-progreso__relleno {
+    height: 100%;
+    width: 0;
+    border-radius: inherit;
+    background-color: var(--color-primary);
+    transition: width 300ms ease-out;
+    will-change: width;
+}
+
+.reward-progreso__detalle {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .5rem;
+    font-size: .75rem;
+    color: var(--color-ink-muted);
+}
+
+.reward-progreso__omitidos,
+.reward-progreso__tope {
+    padding: .1rem .4rem;
+    border-radius: 9999px;
+    font-weight: 700;
+    font-size: .6875rem;
+}
+
+.reward-progreso__omitidos {
+    background: var(--color-info-soft);
+    color: var(--color-info-ink);
+}
+
+.reward-progreso__tope {
+    background: var(--color-warning-soft);
+    color: var(--color-warning-ink);
+}
+
+.reward-progreso__nivel--sube {
+    animation: reward-nivel-pop 380ms ease-out 1;
+}
+
+@keyframes reward-nivel-pop {
+    0% {
+        transform: scale(1);
+    }
+
+    45% {
+        transform: scale(1.22);
+        color: var(--color-success-ink);
+    }
+
+    100% {
+        transform: scale(1);
+    }
+}
+
 .turn-swap {
     white-space: nowrap;
 }
@@ -754,5 +861,13 @@
 
     .move-card:hover {
         transform: none;
+    }
+
+    .reward-progreso__relleno {
+        transition: none;
+    }
+
+    .reward-progreso__nivel--sube {
+        animation: none;
     }
 }
