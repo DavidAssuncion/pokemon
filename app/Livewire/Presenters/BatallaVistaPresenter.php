@@ -56,10 +56,13 @@ final class BatallaVistaPresenter
         array $rewards,
         string $objetivosItem = '',
         bool $actorAdmiteAliado = false,
+        bool $actorAutoobjetivoSeleccionable = false,
     ): array {
         $faseSeleccion = in_array($phase, ['player_target', 'player_move', 'player_item_target'], true);
         $ventanaActiva = $animAttackerId !== '';
         $refsAliado = self::refsAliado($team1, $phase, $actingRefId, $ventanaActiva, $actorAdmiteAliado);
+        $actorAutoobjetivoSeleccionable = $actorAutoobjetivoSeleccionable
+            && in_array($phase, ['player_target', 'player_move'], true);
 
         $team1 = self::marcarInteraccion(
             team: $team1,
@@ -71,6 +74,7 @@ final class BatallaVistaPresenter
             animAttackerId: $animAttackerId,
             objetivosItem: $objetivosItem,
             refsAliado: $refsAliado,
+            actorAutoobjetivoSeleccionable: $actorAutoobjetivoSeleccionable,
         );
         $team2 = self::marcarInteraccion(
             team: $team2,
@@ -82,6 +86,7 @@ final class BatallaVistaPresenter
             animAttackerId: $animAttackerId,
             objetivosItem: $objetivosItem,
             refsAliado: $refsAliado,
+            actorAutoobjetivoSeleccionable: $actorAutoobjetivoSeleccionable,
         );
 
         return [
@@ -159,6 +164,7 @@ final class BatallaVistaPresenter
         string $animAttackerId,
         string $objetivosItem = '',
         array $refsAliado = [],
+        bool $actorAutoobjetivoSeleccionable = false,
     ): array {
         $objetivoItem = $objetivosItem !== '' ? ObjetivosItem::tryFrom($objetivosItem) : null;
         $faseItem = $objetivoItem !== null;
@@ -181,6 +187,10 @@ final class BatallaVistaPresenter
                             && (bool) ($p['canTarget'] ?? true))
                         || ($teamIdx === 0
                             && in_array((string) ($p['refId'] ?? ''), $refsAliado, true))
+                        || ($teamIdx === 0
+                            && $actorAutoobjetivoSeleccionable
+                            && (string) ($p['refId'] ?? '') === $actingRefId
+                            && (bool) $p['alive'])
                     );
             $p['blocked'] = ! $faseItem
                 && $faseSeleccion

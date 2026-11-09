@@ -16,6 +16,18 @@ use Src\Battle\Domain\ValueObjects\EfectoAliado;
  */
 final class CatalogoEfectosAliado
 {
+    /**
+     * Movimientos del catálogo que pueden usarse sobre el propio actor.
+     *
+     * Son los del catálogo cuyo `target` declarado no es `self`. Sin esta lista,
+     * `selectMove()` y `resolver()` los enrutarían como ataque normal contra el
+     * propio actor. Si se añade al catálogo otro movimiento con `target` distinto
+     * de `self`, debe incorporarse aquí de forma explícita.
+     *
+     * @var list<string>
+     */
+    private const AUTOOBJETIVO = ['sand-tomb', 'fire-spin', 'whirlpool'];
+
     public static function para(string $slug): ?EfectoAliado
     {
         return match ($slug) {
@@ -72,5 +84,10 @@ final class CatalogoEfectosAliado
     public static function admite(string $slug): bool
     {
         return self::para($slug) !== null;
+    }
+
+    public static function permiteAutoobjetivo(string $slug): bool
+    {
+        return in_array($slug, self::AUTOOBJETIVO, true);
     }
 }

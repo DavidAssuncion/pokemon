@@ -124,7 +124,8 @@ final class MovesPreviewPresenter
         Combatiente $target,
         MovimientoBatalla $move
     ): array {
-        $esAliado = $target->id() !== $actor->id()
+        $sobreSiMismo = $target->id() === $actor->id();
+        $esAliado = ! $sobreSiMismo
             && $battle->equipoDe($target) === $battle->equipoDe($actor);
 
         if ($esAliado) {
@@ -132,6 +133,18 @@ final class MovesPreviewPresenter
 
             return $efecto === null
                 ? self::previewAliadoNoUsable($actor, $move)
+                : self::previewAliado($actor, $target, $move, $efecto);
+        }
+
+        if ($sobreSiMismo && ! $move->esAutodirigido()) {
+            if (! CatalogoEfectosAliado::permiteAutoobjetivo($move->slug)) {
+                return self::previewAliadoNoUsable($actor, $move, 'No usable sobre sí mismo');
+            }
+
+            $efecto = CatalogoEfectosAliado::para($move->slug);
+
+            return $efecto === null
+                ? self::previewAliadoNoUsable($actor, $move, 'No usable sobre sí mismo')
                 : self::previewAliado($actor, $target, $move, $efecto);
         }
 
@@ -219,6 +232,7 @@ final class MovesPreviewPresenter
             'slug' => $move->slug,
             'modoAliado' => false,
             'efectoAliado' => null,
+            'apoyoEtiqueta' => '',
         ];
     }
 
@@ -234,6 +248,9 @@ final class MovesPreviewPresenter
         EfectoAliado $efecto,
     ): array {
         $preview = self::previewAliadoBase($actor, $move);
+        $preview['apoyoEtiqueta'] = $target->id() === $actor->id()
+            ? 'SOBRE SÍ MISMO'
+            : 'SOBRE ALIADO';
         $preview['efectoAliado'] = [
             'tipo' => $efecto->tipo->value,
             'texto' => self::textoEfectoAliado($actor, $target, $move, $efecto),
@@ -247,12 +264,15 @@ final class MovesPreviewPresenter
      *
      * @return array<string, mixed>
      */
-    private static function previewAliadoNoUsable(Combatiente $actor, MovimientoBatalla $move): array
-    {
+    private static function previewAliadoNoUsable(
+        Combatiente $actor,
+        MovimientoBatalla $move,
+        string $motivo = 'No usable sobre un aliado',
+    ): array {
         $preview = self::previewAliadoBase($actor, $move);
         $preview['modoAliado'] = false;
         $preview['disponible'] = false;
-        $preview['motivoTexto'] = 'No usable sobre un aliado';
+        $preview['motivoTexto'] = $motivo;
 
         return $preview;
     }
@@ -312,6 +332,7 @@ final class MovesPreviewPresenter
             'comboMultiplicador' => $actor->comboMultiplicadorPara($move),
             'modoAliado' => true,
             'efectoAliado' => null,
+            'apoyoEtiqueta' => '',
         ];
     }
 

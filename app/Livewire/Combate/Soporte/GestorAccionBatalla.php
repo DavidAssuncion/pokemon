@@ -185,13 +185,37 @@ final class GestorAccionBatalla
 
         $esAliado = $objetivo->id() !== $actor->id()
             && $battle->equipoDe($objetivo) === $battle->equipoDe($actor);
-        $efectoAliado = $esAliado ? CatalogoEfectosAliado::para($movimiento->slug) : null;
+
+        $autoobjetivo = $objetivo->id() === $actor->id()
+            && ! $movimiento->esAutodirigido()
+            && CatalogoEfectosAliado::permiteAutoobjetivo($movimiento->slug);
+
+        $efectoAliado = ($esAliado || $autoobjetivo)
+            ? CatalogoEfectosAliado::para($movimiento->slug)
+            : null;
 
         // Defensa en profundidad: un aliado solo puede recibir efectos del
         // catálogo. Nunca se le aplica daño ni un movimiento no aliado.
         if ($esAliado && $efectoAliado === null) {
             $actor->romperCombo();
             $componente->log[] = "{$movimiento->nombre} no puede usarse sobre un aliado.";
+            $battle->setPendingAction(null);
+            $battle->turnManager()->consumeAction($actor);
+            $this->gestorAnimacion->reiniciar($componente);
+            $this->gestorVista->sincronizar($componente, $battle, $actor);
+            $this->session->guardar($componente->battleId, $battle);
+            $componente->nextActor();
+
+            return;
+        }
+
+        // Defensa en profundidad: un autoataque no autodirigido y fuera del
+        // catálogo de autoobjetivo nunca llega a `aplicarMovimiento()`.
+        if ($objetivo->id() === $actor->id()
+            && ! $movimiento->esAutodirigido()
+            && $efectoAliado === null) {
+            $actor->romperCombo();
+            $componente->log[] = 'Objetivo no válido.';
             $battle->setPendingAction(null);
             $battle->turnManager()->consumeAction($actor);
             $this->gestorAnimacion->reiniciar($componente);

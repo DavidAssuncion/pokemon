@@ -56,7 +56,11 @@ final class GestorSeleccionBatalla
             return;
         }
 
-        if ($this->esAliado($battle, $actor, $target)) {
+        if ($target->id() === $actor->id()) {
+            if (! $this->actorAdmiteAutoobjetivo($actor)) {
+                return;
+            }
+        } elseif ($this->esAliado($battle, $actor, $target)) {
             if (! $this->actorAdmiteAliado($actor)) {
                 return;
             }
@@ -121,14 +125,25 @@ final class GestorSeleccionBatalla
         }
 
         $selfTargeting = $move->esAutodirigido();
+        $movimientoAutoobjetivable = ! $selfTargeting
+            && CatalogoEfectosAliado::permiteAutoobjetivo($move->slug);
+
         $seleccionado = $this->resolutorActor->objetivoPorSeleccion(
             $battle,
             $componente->selectedTargetTeam,
             $componente->selectedTargetIdx,
         );
 
-        // El propio actor solo es objetivo válido para movimientos autodirigidos.
-        if ($seleccionado !== null && $seleccionado->id() === $actor->id() && ! $selfTargeting) {
+        $esAutoobjetivo = $seleccionado !== null
+            && $seleccionado->id() === $actor->id()
+            && $movimientoAutoobjetivable;
+
+        // El propio actor solo es objetivo válido para movimientos
+        // autodirigidos o autoobjetivables del catálogo.
+        if ($seleccionado !== null
+            && $seleccionado->id() === $actor->id()
+            && ! $selfTargeting
+            && ! $esAutoobjetivo) {
             $componente->log[] = 'Objetivo no válido.';
 
             return;
@@ -157,12 +172,15 @@ final class GestorSeleccionBatalla
             $defender = $seleccionado;
         } elseif ($selfTargeting) {
             $defender = $actor;
+        } elseif ($esAutoobjetivo) {
+            $defender = $actor;
         } else {
             $defender = $seleccionado;
         }
 
         $desafio = $actor->condicion(ClaveCondicion::DESAFIO);
-        if (! $esAliado && ! $selfTargeting && $desafio !== null && $desafio->objetivoForzadoId !== '') {
+        if (! $esAliado && ! $selfTargeting && ! $esAutoobjetivo
+            && $desafio !== null && $desafio->objetivoForzadoId !== '') {
             $defender = $battle->team1->findCombatantById($desafio->objetivoForzadoId)
                 ?? $battle->team2->findCombatantById($desafio->objetivoForzadoId)
                 ?? $defender;
@@ -281,6 +299,18 @@ final class GestorSeleccionBatalla
         foreach ($actor->pokemon()->moves() as $movimiento) {
             if ($movimiento instanceof MovimientoBatalla
                 && CatalogoEfectosAliado::admite($movimiento->slug)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private function actorAdmiteAutoobjetivo(Combatiente $actor): bool
+    {
+        foreach ($actor->pokemon()->moves() as $movimiento) {
+            if ($movimiento instanceof MovimientoBatalla
+                && CatalogoEfectosAliado::permiteAutoobjetivo($movimiento->slug)) {
                 return true;
             }
         }

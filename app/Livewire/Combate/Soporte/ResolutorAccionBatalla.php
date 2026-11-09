@@ -183,7 +183,8 @@ final class ResolutorAccionBatalla
         $actor->effects()->dispararInicioTurno($actor, $battle);
         $actor->romperCombo();
 
-        $log[] = "{$actor->nombre()} usa {$movimiento->nombre} sobre {$aliado->nombre()}";
+        $objetivoLog = $aliado->id() === $actor->id() ? 'sí mismo' : $aliado->nombre();
+        $log[] = "{$actor->nombre()} usa {$movimiento->nombre} sobre {$objetivoLog}";
         $texto = $this->ejecutorAliado->ejecutar($accion, $efecto, $battle);
 
         $actual = $grabando ? $this->grabador->capturar($battle) : SnapshotBatalla::vacia();

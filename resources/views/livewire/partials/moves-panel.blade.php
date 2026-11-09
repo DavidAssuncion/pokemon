@@ -57,7 +57,7 @@
                             {{-- Movimiento de apoyo sobre un aliado: se muestra el efecto y nunca la fila de daño. --}}
                             @if($move['modoAliado'])
                                 <div class="d-flex flex-wrap align-items-center gap-1">
-                                    <span class="badge bg-info-soft text-info-ink ally-badge">SOBRE ALIADO</span>
+                                    <span class="badge bg-info-soft text-info-ink ally-badge">{{ $move['apoyoEtiqueta'] ?? 'SOBRE ALIADO' }}</span>
                                     <span class="small lh-sm">{{ $move['efectoAliado']['texto'] ?? '' }}</span>
                                 </div>
                             @endif

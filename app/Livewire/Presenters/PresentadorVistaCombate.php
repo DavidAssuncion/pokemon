@@ -19,6 +19,7 @@ final class PresentadorVistaCombate
     public function datos(Combate $componente): array
     {
         $actorAdmiteAliado = self::actorAdmiteAliado($componente->currentMoves);
+        $actorAutoobjetivoSeleccionable = self::actorAdmiteAutoobjetivo($componente->currentMoves);
 
         $vista = BatallaVistaPresenter::toView(
             team1: $componente->team1,
@@ -38,6 +39,7 @@ final class PresentadorVistaCombate
             rewards: $componente->rewards,
             objetivosItem: $componente->objetivosItem,
             actorAdmiteAliado: $actorAdmiteAliado,
+            actorAutoobjetivoSeleccionable: $actorAutoobjetivoSeleccionable,
         );
 
         $vista['movesResumen'] = MovesPreviewPresenter::resumen($componente->currentMoves);
@@ -54,6 +56,22 @@ final class PresentadorVistaCombate
     {
         foreach ($currentMoves as $move) {
             if (CatalogoEfectosAliado::admite((string) ($move['slug'] ?? ''))) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Indica si el actor tiene al menos un movimiento autoobjetivable del catálogo.
+     *
+     * @param  array<int, array<string, mixed>>  $currentMoves
+     */
+    private static function actorAdmiteAutoobjetivo(array $currentMoves): bool
+    {
+        foreach ($currentMoves as $move) {
+            if (CatalogoEfectosAliado::permiteAutoobjetivo((string) ($move['slug'] ?? ''))) {
                 return true;
             }
         }
