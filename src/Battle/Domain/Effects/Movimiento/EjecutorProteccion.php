@@ -22,10 +22,8 @@ class EjecutorProteccion extends EjecutorMovimientoAbstracto
     {
         $atacante = $accion->attacker;
         $ronda = $battle->turnManager()->round();
-        $ultimaRonda = $atacante->ultimaRondaProteccion();
 
-        if ($ultimaRonda > 0 && $ultimaRonda === $ronda - 1) {
-            $atacante->setUltimaRondaProteccion($ronda);
+        if (! $atacante->puedeUsarProteccion($ronda)) {
             $battle->agregarLog("{$atacante->nombre()} no puede volver a protegerse en rondas consecutivas");
 
             return;

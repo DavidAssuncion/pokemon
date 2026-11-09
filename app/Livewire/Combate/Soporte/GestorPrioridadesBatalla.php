@@ -27,11 +27,18 @@ final class GestorPrioridadesBatalla
 
     public function declararIa(AgregadoBatalla $battle): void
     {
+        $ronda = $battle->turnManager()->round();
+
         foreach ($battle->team2->combatientesCollection()->vivos() as $rival) {
             $mejor = null;
+            $puedeProteger = $rival->puedeUsarProteccion($ronda);
 
             foreach ($rival->pokemon()->moves()->all() as $movimiento) {
                 if ($movimiento->priority <= 0 || ! $rival->movimientoDisponible($movimiento)) {
+                    continue;
+                }
+
+                if ($movimiento->esProteccion() && ! $puedeProteger) {
                     continue;
                 }
 

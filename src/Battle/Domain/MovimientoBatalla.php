@@ -8,6 +8,7 @@ use Src\Battle\Domain\Collections\CambiosStatsCollection;
 use Src\Battle\Domain\Collections\EfectosSecundariosCollection;
 use Src\Battle\Domain\Collections\FlagsMovimientoCollection;
 use Src\Battle\Domain\Enums\CategoriaMovimiento;
+use Src\Battle\Domain\Enums\ClaveEfectoMovimiento;
 use Src\Battle\Domain\Enums\EstadoPokemon;
 use Src\Battle\Domain\Enums\ObjetivoMovimiento;
 use Src\Battle\Domain\Enums\StatClave;
@@ -93,6 +94,14 @@ class MovimientoBatalla
     public function esContacto(): bool
     {
         return $this->perfil->esContacto;
+    }
+
+    public function esProteccion(): bool
+    {
+        return in_array($this->perfil->claveEfecto, [
+            ClaveEfectoMovimiento::PROTECCION,
+            ClaveEfectoMovimiento::AGUANTE,
+        ], true);
     }
 
     /**

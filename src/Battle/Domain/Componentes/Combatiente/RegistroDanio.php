@@ -74,6 +74,12 @@ final class RegistroDanio
         return $this->ultimaRondaProteccion;
     }
 
+    public function puedeUsarProteccion(int $ronda): bool
+    {
+        return ! ($this->ultimaRondaProteccion > 0
+            && $this->ultimaRondaProteccion >= $ronda - 1);
+    }
+
     public function setUltimaRondaProteccion(int $ronda): void
     {
         $this->ultimaRondaProteccion = max(0, $ronda);

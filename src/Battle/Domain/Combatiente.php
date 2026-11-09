@@ -503,6 +503,11 @@ class Combatiente
         return $this->registro->ultimaRondaProteccion();
     }
 
+    public function puedeUsarProteccion(int $ronda): bool
+    {
+        return $this->registro->puedeUsarProteccion($ronda);
+    }
+
     public function setUltimaRondaProteccion(int $ronda): void
     {
         $this->registro->setUltimaRondaProteccion($ronda);

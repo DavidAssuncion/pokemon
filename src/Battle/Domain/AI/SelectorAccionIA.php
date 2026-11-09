@@ -217,12 +217,19 @@ class SelectorAccionIA
         // ─── FIX: Filtrar enemigos según posición del actor ───
         $enemigosLegales = $this->filtrarEnemigosPorPosicion($contexto->enemigos, $actor);
 
+        $ronda = $battle->turnManager()->round();
+        $puedeProteger = $actor->puedeUsarProteccion($ronda);
+
         foreach ($actor->pokemon()->moves() as $movimiento) {
             if (! $movimiento instanceof MovimientoBatalla) {
                 continue;
             }
 
             if (! $actor->movimientoDisponible($movimiento)) {
+                continue;
+            }
+
+            if ($movimiento->esProteccion() && ! $puedeProteger) {
                 continue;
             }
 
