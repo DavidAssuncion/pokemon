@@ -34,6 +34,7 @@ class CondicionVolatil
         // TIPO_ALTERADO: tipo defensivo temporal del portador.
         public ?TipoPokemon $tipoOverride = null,
         // AQUA_RING: aporte fijo en PS por ronda (5% del lanzador al aplicar).
+        // BUCLE_ARENA / GIRO_FUEGO: incremento de escudo por ronda.
         public float $curacionFija = 0.0,
     ) {
     }

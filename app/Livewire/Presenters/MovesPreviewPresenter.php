@@ -352,18 +352,24 @@ final class MovesPreviewPresenter
         }
 
         return match ($efecto->tipo) {
-            TipoEfectoAliado::ESCUDO_FISICO => 'Restaura '
-                .$calculadora->incrementoEscudo(
+            TipoEfectoAliado::ESCUDO_FISICO => self::textoEscudo(
+                $calculadora->incrementoEscudo(
                     $statsAliado->defenseHp,
                     $actor->obtenerStatEfectivo(StatClave::DEFENSA),
-                )
-                .' de DEF (máx. '.((int) round($statsAliado->defenseHp)).')',
-            TipoEfectoAliado::ESCUDO_ESPECIAL => 'Restaura '
-                .$calculadora->incrementoEscudo(
+                ),
+                'DEF',
+                $statsAliado->defenseHp,
+                $efecto->turnos,
+            ),
+            TipoEfectoAliado::ESCUDO_ESPECIAL => self::textoEscudo(
+                $calculadora->incrementoEscudo(
                     $statsAliado->spDefenseHp,
                     $actor->obtenerStatEfectivo(StatClave::DEFENSA_ESPECIAL),
-                )
-                .' de DEF.ESP (máx. '.((int) round($statsAliado->spDefenseHp)).')',
+                ),
+                'DEF.ESP',
+                $statsAliado->spDefenseHp,
+                $efecto->turnos,
+            ),
             TipoEfectoAliado::CURAR_PS => 'Cura '
                 .((int) round($maxPs * $fraccionCuracion))
                 .' PS (máx. '.$maxPs.')',
@@ -378,6 +384,20 @@ final class MovesPreviewPresenter
             TipoEfectoAliado::CRITICO_MEJORADO => 'Mejora la probabilidad de crítico del aliado durante '
                 .$efecto->turnos.' rondas',
         };
+    }
+
+    private static function textoEscudo(
+        int $incremento,
+        string $etiqueta,
+        float $maxEscudo,
+        int $turnos,
+    ): string {
+        $texto = 'Restaura '.$incremento.' de '.$etiqueta
+            .' (máx. '.((int) round($maxEscudo)).')';
+
+        return $turnos > 0
+            ? "{$texto} y {$incremento} al final de cada ronda durante {$turnos} rondas"
+            : $texto;
     }
 
     private static function textoBuffsAliado(MovimientoBatalla $move): string

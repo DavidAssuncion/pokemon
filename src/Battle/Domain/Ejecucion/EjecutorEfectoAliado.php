@@ -40,8 +40,8 @@ final class EjecutorEfectoAliado
         }
 
         return match ($efecto->tipo) {
-            TipoEfectoAliado::ESCUDO_FISICO => $this->aplicarEscudo($accion, $battle, false),
-            TipoEfectoAliado::ESCUDO_ESPECIAL => $this->aplicarEscudo($accion, $battle, true),
+            TipoEfectoAliado::ESCUDO_FISICO,
+            TipoEfectoAliado::ESCUDO_ESPECIAL => $this->aplicarEscudo($accion, $efecto, $battle),
             TipoEfectoAliado::AQUA_RING => $this->aplicarAquaRing($accion, $efecto, $battle),
             TipoEfectoAliado::CURAR_PS => $this->aplicarCuracionPs($accion, $battle),
             TipoEfectoAliado::BUFF_STATS => $this->aplicarBuffs($accion, $battle),
@@ -50,10 +50,15 @@ final class EjecutorEfectoAliado
         };
     }
 
-    private function aplicarEscudo(AccionBatalla $accion, AgregadoBatalla $battle, bool $especial): string
-    {
+    private function aplicarEscudo(
+        AccionBatalla $accion,
+        EfectoAliado $efecto,
+        AgregadoBatalla $battle,
+    ): string {
         $aliado = $accion->defender;
         $lanzador = $accion->attacker;
+
+        $especial = $efecto->tipo === TipoEfectoAliado::ESCUDO_ESPECIAL;
 
         $maxEscudo = $especial
             ? $aliado->pokemon()->battleStats()->spDefenseHp
@@ -75,10 +80,26 @@ final class EjecutorEfectoAliado
             $aliado->setDefensaHpActual($nuevo);
         }
 
+        if ($efecto->turnos > 0) {
+            $aliado->reemplazarCondicion(new CondicionVolatil(
+                clave: $especial ? ClaveCondicion::GIRO_FUEGO : ClaveCondicion::BUCLE_ARENA,
+                turnos: $efecto->turnos,
+                origenId: $lanzador->id(),
+                curacionFija: $incremento,
+            ));
+        }
+
         $etiqueta = $especial ? 'DEF.ESP' : 'DEF';
-        $texto = $recuperado > 0
-            ? "{$aliado->nombre()} recupera {$recuperado} de {$etiqueta}"
-            : "{$aliado->nombre()} ya tiene la {$etiqueta} al máximo";
+
+        if ($efecto->turnos > 0) {
+            $texto = $recuperado > 0
+                ? "{$aliado->nombre()} recupera {$recuperado} de {$etiqueta} y recuperará {$incremento} de {$etiqueta} al final de cada ronda durante {$efecto->turnos} rondas"
+                : "{$aliado->nombre()} ya tiene la {$etiqueta} al máximo, pero recuperará {$incremento} de {$etiqueta} al final de cada ronda durante {$efecto->turnos} rondas";
+        } else {
+            $texto = $recuperado > 0
+                ? "{$aliado->nombre()} recupera {$recuperado} de {$etiqueta}"
+                : "{$aliado->nombre()} ya tiene la {$etiqueta} al máximo";
+        }
 
         $battle->agregarLog($texto);
 

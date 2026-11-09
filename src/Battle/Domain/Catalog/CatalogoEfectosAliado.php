@@ -31,8 +31,8 @@ final class CatalogoEfectosAliado
     public static function para(string $slug): ?EfectoAliado
     {
         return match ($slug) {
-            'sand-tomb' => new EfectoAliado(TipoEfectoAliado::ESCUDO_FISICO),
-            'fire-spin' => new EfectoAliado(TipoEfectoAliado::ESCUDO_ESPECIAL),
+            'sand-tomb' => new EfectoAliado(TipoEfectoAliado::ESCUDO_FISICO, turnos: 5),
+            'fire-spin' => new EfectoAliado(TipoEfectoAliado::ESCUDO_ESPECIAL, turnos: 5),
             'whirlpool' => new EfectoAliado(TipoEfectoAliado::AQUA_RING, turnos: 5),
             'recover' => new EfectoAliado(TipoEfectoAliado::CURAR_PS),
             'nasty-plot',

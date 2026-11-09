@@ -66,6 +66,11 @@ enum ClaveCondicion: string
     case PROTEGIDO = 'protegido';
     case AGUANTE = 'aguante';
     case AQUA_RING = 'aqua_ring';
+
+    // Bucle Arena / Giro Fuego: regeneran escudo al final de cada ronda.
+    case BUCLE_ARENA = 'bucle_arena';
+    case GIRO_FUEGO = 'giro_fuego';
+
     case LEVITACION = 'levitacion';
     case SIN_RETIRADA = 'sin_retirada';
 
@@ -97,6 +102,8 @@ enum ClaveCondicion: string
             self::PROTEGIDO => 'protegido',
             self::AGUANTE => 'aguantando',
             self::AQUA_RING => 'acua aro',
+            self::BUCLE_ARENA => 'bucle arena',
+            self::GIRO_FUEGO => 'giro fuego',
             self::LEVITACION => 'levitando',
             self::SIN_RETIRADA => 'sin retirada',
         };

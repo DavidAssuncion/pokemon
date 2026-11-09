@@ -158,6 +158,12 @@ final class ProcesadorCondicionesRonda
 
                 break;
 
+            case ClaveCondicion::BUCLE_ARENA:
+            case ClaveCondicion::GIRO_FUEGO:
+                $this->regenerarEscudo($batalla, $portador, $condicion);
+
+                break;
+
             case ClaveCondicion::INTERRUPCION:
             case ClaveCondicion::ATURDIDO:
             case ClaveCondicion::RECARGA:
@@ -185,6 +191,8 @@ final class ProcesadorCondicionesRonda
                 break;
 
             case ClaveCondicion::AQUA_RING:
+            case ClaveCondicion::BUCLE_ARENA:
+            case ClaveCondicion::GIRO_FUEGO:
                 if ($condicion->turnos > 0) {
                     $this->reducirYQuitar($portador, $condicion);
                 }
@@ -218,6 +226,44 @@ final class ProcesadorCondicionesRonda
 
                 break;
         }
+    }
+
+    private function regenerarEscudo(
+        AgregadoBatalla $batalla,
+        Combatiente $portador,
+        CondicionVolatil $condicion,
+    ): void {
+        if ($condicion->turnos <= 0
+            || ! is_finite($condicion->curacionFija)
+            || $condicion->curacionFija <= 0.0) {
+            return;
+        }
+
+        $esFisico = $condicion->clave === ClaveCondicion::BUCLE_ARENA;
+
+        $maxEscudo = $esFisico
+            ? $portador->pokemon()->battleStats()->defenseHp
+            : $portador->pokemon()->battleStats()->spDefenseHp;
+
+        $actual = $esFisico
+            ? $portador->defensaHpActual()
+            : $portador->defensaEspHpActual();
+
+        $nuevo = max($actual, min($maxEscudo, $actual + $condicion->curacionFija));
+        $recuperado = (int) round($nuevo - $actual);
+
+        if ($esFisico) {
+            $portador->setDefensaHpActual($nuevo);
+        } else {
+            $portador->setDefensaEspHpActual($nuevo);
+        }
+
+        $etiqueta = $esFisico ? 'DEF' : 'DEF.ESP';
+        $nombre = $esFisico ? 'Bucle Arena' : 'Giro Fuego';
+
+        $batalla->agregarLog($recuperado > 0
+            ? "{$portador->nombre()} recupera {$recuperado} de {$etiqueta} por {$nombre}"
+            : "{$portador->nombre()} ya tiene la {$etiqueta} al máximo ({$nombre})");
     }
 
     private function reducirYQuitar(Combatiente $portador, CondicionVolatil $condicion): void
