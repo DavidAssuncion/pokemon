@@ -16,9 +16,7 @@
             ×{{ $caramelo['cantidad'] }}
         </span>
     </div>
-    @if(!empty($caramelo['nombre_js']))
-        <p class="text-2xs text-ink-muted truncate w-12" x-text="{{ $caramelo['nombre_js'] }}"></p>
-    @elseif(!empty($caramelo['nombre']))
+    @if(!empty($caramelo['nombre']))
         <p class="text-2xs text-ink-muted truncate w-12">{{ $caramelo['nombre'] }}</p>
     @else
         <p class="text-2xs text-ink-subtle truncate w-12">—</p>

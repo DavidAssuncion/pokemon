@@ -22,6 +22,25 @@
     $candyFallback = $candySrc !== null && $candySrc !== $candyImagen
         ? "this.onerror=null; this.src='{$candySrc}'; this.onerror=function(){this.onerror=null; this.src='{$candyPlaceholder}';};"
         : "this.onerror=null; this.src='{$candyPlaceholder}';";
+
+    // Nombre del caramelo EV ya resuelto por el presentador; sin él se
+    // mantiene el texto genérico para no dejar el hueco vacío.
+    $candyNombreEv = $evento['candy_nombre'] ?? null;
+    if (! is_string($candyNombreEv) || trim($candyNombreEv) === '') {
+        $candyNombreEv = 'EV';
+    }
+
+    // Hora ya formateada en servidor: los fragmentos se inyectan como HTML
+    // JS-free y no pueden depender de fmtTime() en la página.
+    $hora = '—';
+    $timestamp = $evento['timestamp'] ?? null;
+    if (is_string($timestamp) && trim($timestamp) !== '') {
+        try {
+            $hora = \Illuminate\Support\Carbon::parse($timestamp)->format('H:i');
+        } catch (\Throwable) {
+            $hora = '—';
+        }
+    }
 @endphp
 <li class="flex items-center gap-3 py-1.5">
     @if($tipo === 'pokemon')
@@ -125,11 +144,7 @@
             @endif
             <span class="text-sm text-ink">
                 Caramelo EV
-                @if($evento['candy_nombre_js'] !== null)
-                    <strong x-text="{{ $evento['candy_nombre_js'] }}"></strong>
-                @else
-                    <strong>{{ $evento['candy_nombre'] }}</strong>
-                @endif
+                <strong>{{ $candyNombreEv }}</strong>
                 <span class="font-semibold text-ink">×{{ $evento['cantidad'] }}</span>
             </span>
         @elseif($evento['subtype'] === 'caramelo_tipo')
@@ -175,11 +190,7 @@
         @endif
         <span class="text-sm text-ink">
             Caramelo EV
-            @if($evento['candy_nombre_js'] !== null)
-                <strong x-text="{{ $evento['candy_nombre_js'] }}"></strong>
-            @else
-                <strong>{{ $evento['candy_nombre'] }}</strong>
-            @endif
+            <strong>{{ $candyNombreEv }}</strong>
             <span class="font-semibold text-ink">×{{ $evento['cantidad'] }}</span>
         </span>
     @elseif($tipo === 'encuentro')
@@ -263,6 +274,5 @@
             {{ $evento['texto'] }}
         </span>
     @endif
-    <span class="ml-auto text-xs text-ink-subtle shrink-0"
-          x-text="fmtTime('{{ $evento['timestamp'] ?? '' }}')"></span>
+    <span class="ml-auto text-xs text-ink-subtle shrink-0">{{ $hora }}</span>
 </li>
