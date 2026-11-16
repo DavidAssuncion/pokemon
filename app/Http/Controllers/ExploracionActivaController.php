@@ -20,6 +20,8 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
+use Src\Exploraciones\App\ConstructorExpedicionesResumen;
+use Src\Exploraciones\App\ConsultarExpedicionesUsuario;
 use Src\Exploraciones\App\FabricaCapacidadesStats;
 use Src\Exploraciones\App\ProcesarExploracionesPendientes;
 use Src\Exploraciones\Domain\CalculadorFinExploracion;
@@ -40,29 +42,29 @@ class ExploracionActivaController extends Controller
         private readonly ProcesarExploracionesPendientes $pendientes,
         private readonly EstimadorRecompensasExploracion $estimador,
         private readonly PresentadorExploraciones $presentador,
+        private readonly ConsultarExpedicionesUsuario $consultarExpediciones,
+        private readonly ConstructorExpedicionesResumen $constructorResumen,
     ) {
     }
 
     public function index(): View
     {
+        $userId = (int) Auth::id();
+
         // Procesa bajo demanda solo las expediciones del usuario antes de
         // renderizar. Los fallos y el lock ocupado se aíslan en el servicio.
-        $resultado = $this->pendientes->paraUsuario((int) Auth::id());
+        $resultado = $this->pendientes->paraUsuario($userId);
 
-        // Una única consulta y partición en PHP: una expedición finalizada
-        // durante el procesamiento no puede aparecer en activas y terminadas.
-        $exploraciones = ExploracionActiva::with('reclutado.pokemon.types', 'habitat')->get();
+        // Partición y orden canónicos ya resueltos por la aplicación; la página
+        // no muestra archivadas (solo el historial lo hace).
+        $grupos = $this->consultarExpediciones->para($userId, false);
 
-        $activas = $exploraciones
-            ->filter(fn (ExploracionActiva $exp): bool => $exp->regreso === null)
-            ->values();
-
-        // RF-A: excluye canceladas de "Resultados por revisar".
-        $terminadas = $exploraciones
-            ->filter(fn (ExploracionActiva $exp): bool => $exp->regreso !== null && ! $this->estaCancelada($exp))
-            ->values();
-
-        $datosVista = $this->presentador->toView($activas, $terminadas, Auth::user()?->nivel());
+        $datosVista = $this->presentador->toView(
+            $grupos->activas,
+            $grupos->terminadas,
+            Auth::user()?->nivel(),
+            null,
+        );
         $datosVista['avisoProcesamiento'] = $resultado->fallidas > 0 || $resultado->agotadoPorTiempo;
         $datosVista['agotadoPorTiempo'] = $resultado->agotadoPorTiempo;
 
@@ -271,6 +273,7 @@ class ExploracionActivaController extends Controller
             return response()->json(['message' => $errores], 422);
         }
 
+        /** @var ExploracionActiva $exploracion */
         /** @var Carbon $inicio */
         $inicio = $exploracion->inicio_exploracion ?? now();
 
@@ -292,6 +295,8 @@ class ExploracionActivaController extends Controller
             'fin' => $fin?->toIso8601String(),
             'modo' => $exploracion->modo,
             'estado' => 'explorando',
+            'expedicion' => $this->constructorResumen->resumen($exploracion)->toArray(),
+            'expediciones' => $this->constructorResumen->panel((int) Auth::id())->toArray(),
         ], 201);
     }
 
@@ -375,6 +380,10 @@ class ExploracionActivaController extends Controller
      */
     public function cancelar(Request $request, ExploracionActiva $exploracion): RedirectResponse|JsonResponse
     {
+        $userId = (int) Auth::id();
+
+        abort_unless($exploracion->user_id === $userId, 404);
+
         if ($exploracion->regreso !== null && ! $this->estaCancelada($exploracion)) {
             if ($request->wantsJson()) {
                 return response()->json(['message' => 'La exploración ya no está activa.'], 422);
@@ -394,7 +403,10 @@ class ExploracionActivaController extends Controller
         }
 
         if ($request->wantsJson()) {
-            return response()->json(['ok' => true]);
+            return response()->json([
+                'ok' => true,
+                'expediciones' => $this->constructorResumen->panel($userId)->toArray(),
+            ]);
         }
 
         return redirect()->back()->with('success', 'Exploración cancelada correctamente.');
@@ -413,6 +425,10 @@ class ExploracionActivaController extends Controller
      */
     public function recoger(Request $request, ExploracionActiva $exploracion): RedirectResponse|JsonResponse
     {
+        $userId = (int) Auth::id();
+
+        abort_unless($exploracion->user_id === $userId, 404);
+
         if (! $this->pendientes->una($exploracion, forzarRegreso: true)) {
             $mensaje = 'La exploración se está procesando; recarga en unos segundos.';
 
@@ -424,7 +440,10 @@ class ExploracionActivaController extends Controller
         }
 
         if ($request->wantsJson()) {
-            return response()->json(['ok' => true]);
+            return response()->json([
+                'ok' => true,
+                'expediciones' => $this->constructorResumen->panel($userId)->toArray(),
+            ]);
         }
 
         return redirect()->back()->with('success', 'Exploración recogida correctamente.');
@@ -435,12 +454,18 @@ class ExploracionActivaController extends Controller
      */
     public function cerrar(Request $request, ExploracionActiva $exploracion): RedirectResponse|JsonResponse
     {
+        $userId = (int) Auth::id();
+
+        abort_unless($exploracion->user_id === $userId, 404);
         abort_unless($exploracion->regreso !== null, 404);
 
         $exploracion->delete();
 
         if ($request->wantsJson()) {
-            return response()->json(['success' => true]);
+            return response()->json([
+                'success' => true,
+                'expediciones' => $this->constructorResumen->panel($userId)->toArray(),
+            ]);
         }
 
         return redirect()->back()->with('success', 'Resultados cerrados correctamente.');

@@ -9,7 +9,6 @@ use App\Enums\StatEnum;
 use App\Enums\TipoEnum;
 use App\Models\ExploracionActiva;
 use App\Models\PlayerInventory;
-use App\Models\Reclutable;
 use App\Models\Reclutado;
 use App\Models\Team;
 use App\Models\TeamMember;
@@ -23,12 +22,14 @@ use Src\Equipos\App\ObtenerEquipos;
 use Src\Exploraciones\Domain\Collections\RolesExploracionCollection;
 use Src\Exploraciones\Domain\RolExploracion;
 use Src\Exploraciones\Domain\SinergiaEquipo;
+use Src\Reclutamiento\App\ConstructorReclutablesResumen;
 
 class PlayerController extends Controller
 {
     public function __construct(
         public readonly ObtenerEquipos $obtenerEquipos,
         private readonly DatagridService $datagrid,
+        private readonly ConstructorReclutablesResumen $constructorReclutables,
     ) {
     }
 
@@ -60,21 +61,11 @@ class PlayerController extends Controller
         ]);
     }
 
-    public function reclutamiento(): View
+    public function reclutamiento(Request $request): View
     {
-        $reclutables = Reclutable::with('pokemon')
-            ->orderBy('updated_at', 'desc')
-            ->get()
-            ->map(fn (Reclutable $r) => [
-                'id' => $r->id,
-                'pokemon_id' => $r->pokemon_id,
-                'nombre' => $r->pokemon?->name ?? 'Desconocido',
-                'cantidad' => $r->cantidad,
-            ])
-            ->values()
-            ->toArray();
-
-        return view('reclutamiento.index', ['reclutables' => $reclutables]);
+        return view('reclutamiento.index', [
+            'reclutables' => $this->constructorReclutables->todos((int) $request->user()?->getAuthIdentifier())->toArray(),
+        ]);
     }
 
     public function equipos(): View

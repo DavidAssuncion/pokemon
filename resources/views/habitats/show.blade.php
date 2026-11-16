@@ -28,9 +28,12 @@
 
 @push('scripts')
 @include('partials.tipos-badge-script')
+@include('partials.comparacion-pc-script')
 <script>
 function habitatShow() {
     return {
+        ...comparadorPcState(),
+        habitatId: {{ (int) ($habitat['id'] ?? 0) }},
         selectedTeamId: null,
         selectedTeamName: '',
         selectedLevel: null,
@@ -124,6 +127,43 @@ function habitatShow() {
         selectRutaNivel(nivel) {
             this.rutaNivel = nivel;
             this.rutaCombatError = '';
+            if (this.showFormacionPopup && this.formacionContexto === 'ruta') {
+                this.limpiarPreviewRuta('/api/habitats/' + this.habitatId + '/ruta/preview');
+                this.cargarComparacionPc(this.urlComparacionPcRuta());
+            }
+        },
+
+        /** URL de la comparación de PC del combate de ruta 3v3. */
+        urlComparacionPcRuta() {
+            let url = '/api/habitats/' + this.habitatId + '/ruta/pc?team_id=' + this.selectedTeamId + '&nivel=' + this.rutaNivel;
+            if (this.pcPreviewId) {
+                url += '&preview_id=' + encodeURIComponent(this.pcPreviewId);
+            }
+            return url;
+        },
+
+        /** URL de la comparación de PC de un entrenador del hábitat. */
+        urlComparacionPcEntrenador(level, trainerIndex) {
+            return '/api/habitats/' + this.habitatId + '/entrenadores/' + level + '/' + trainerIndex + '/pc?team_id=' + this.selectedTeamId;
+        },
+
+        /** Recarga la comparación según el contexto abierto en el modal. */
+        recargarComparacionPc() {
+            if (!this.selectedTeamId) {
+                this.limpiarComparacionPc();
+                return;
+            }
+
+            if (this.formacionContexto === 'ruta') {
+                this.cargarComparacionPc(this.urlComparacionPcRuta());
+                return;
+            }
+
+            if (this.selectedLevel && this.selectedTrainer) {
+                this.cargarComparacionPc(
+                    this.urlComparacionPcEntrenador(this.selectedLevel, this.selectedTrainer.indice)
+                );
+            }
         },
 
         openRutaFormacionPopup() {
@@ -137,6 +177,7 @@ function habitatShow() {
             this.formacion = this.formacionInicialDe(this.selectedTeamId);
             this.rutaCombatError = '';
             this.showFormacionPopup = true;
+            this.cargarComparacionPc(this.urlComparacionPcRuta());
         },
 
         async loadTrainers() {
@@ -167,6 +208,7 @@ function habitatShow() {
             // Formación completa (3 slots) desde la persistida del equipo.
             this.formacion = this.formacionInicialDe(this.selectedTeamId);
             this.showFormacionPopup = true;
+            this.cargarComparacionPc(this.urlComparacionPcEntrenador(level, trainerIndex));
         },
 
         openFormacionPopup() {
@@ -176,6 +218,7 @@ function habitatShow() {
             this.formacionContexto = 'entrenadores';
             this.formacion = this.formacionInicialDe(this.selectedTeamId);
             this.showFormacionPopup = true;
+            this.recargarComparacionPc();
         },
 
         /** Formación inicial para un equipo: formación persistida o 'vanguardia'. */
@@ -197,6 +240,8 @@ function habitatShow() {
             this.showFormacionPopup = false;
             this.selectedTrainer = null;
             this.rutaCombatError = '';
+            this.limpiarPreviewRuta('/api/habitats/' + this.habitatId + '/ruta/preview');
+            this.limpiarComparacionPc();
         },
 
         async confirmarCombate() {
@@ -249,6 +294,7 @@ function habitatShow() {
                         team_id: this.selectedTeamId,
                         nivel: this.rutaNivel,
                         formacion: this.formacion,
+                        ...(this.pcPreviewId ? { preview_id: this.pcPreviewId } : {}),
                     }),
                 });
                 if (!response.ok) {
@@ -1131,6 +1177,9 @@ function habitatShow() {
             if (this.modo === 'pokemon') {
                 this.checkAndOpenModal();
             }
+            if (this.showFormacionPopup) {
+                this.recargarComparacionPc();
+            }
         },
 
         selectLevel(level) {
@@ -1286,7 +1335,19 @@ function habitatShow() {
             })
                 .then(async (response) => {
                     if (response.ok) {
-                        location.reload();
+                        const data = await response.json().catch(() => ({}));
+
+                        this.reclutadosEnExploracion.push(Number(this.selectedFavoritoId));
+                        this.closeExplorationModal();
+                        this.selectedFavoritoId = null;
+                        this.selectedLevel = null;
+                        this.previewLoaded = false;
+                        this.preview = null;
+
+                        window.dispatchEvent(new CustomEvent('expediciones:actualizada', {
+                            detail: { expediciones: data.expediciones ?? [] },
+                        }));
+
                         return;
                     }
                     const body = await response.json().catch(() => ({}));

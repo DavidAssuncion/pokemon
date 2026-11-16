@@ -71,4 +71,41 @@ class DatosPokemonBatalla
             }
         }
     }
+
+    /**
+     * Copia los datos conservando composición, movimientos e IV/EV y solo
+     * sustituye el nivel con el que se calcularán los stats de combate.
+     */
+    public function conNivel(int $nivel): self
+    {
+        return new self(
+            id: $this->id,
+            nombre: $this->nombre,
+            hp: $this->hp,
+            atk: $this->atk,
+            def: $this->def,
+            spAtk: $this->spAtk,
+            spDef: $this->spDef,
+            speed: $this->speed,
+            tipos: $this->tipos,
+            posicion: $this->posicion,
+            moves: $this->moves,
+            shiny: $this->shiny,
+            iconName: $this->iconName,
+            effectKeys: $this->effectKeys,
+            item: $this->item,
+            speciesId: $this->speciesId,
+            formSuffix: $this->formSuffix,
+            nivel: $nivel,
+            evs: $this->evs,
+            ivs: $this->ivs,
+            postura: $this->postura,
+            esJefe: $this->esJefe,
+            fasesJefe: $this->fasesJefe,
+            puntosDebiles: $this->puntosDebiles,
+            bonusInicialStats: $this->bonusInicialStats,
+            peso: $this->peso,
+            senda: $this->senda,
+        );
+    }
 }

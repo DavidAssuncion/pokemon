@@ -14,6 +14,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Src\Granjas\App\ResolverBonosFamilia;
 use Src\Pokemon\Domain\Stats\GeneradorIvs;
+use Src\Reclutamiento\App\ConstructorReclutablesResumen;
 use Src\Reclutamiento\Domain\DataTransferObjects\DatosNuevoReclutado;
 
 class ReclutamientoController extends Controller
@@ -21,6 +22,7 @@ class ReclutamientoController extends Controller
     public function __construct(
         private readonly CrearReclutado $crearReclutado,
         private readonly ResolverBonosFamilia $bonosFamilia,
+        private readonly ConstructorReclutablesResumen $constructorReclutables,
     ) {
     }
 
@@ -29,13 +31,15 @@ class ReclutamientoController extends Controller
         $data = $request->validate([
             'reclutable_id' => 'required|exists:reclutables,id',
         ]);
+        $userId = (int) auth()->id();
 
-        return DB::transaction(function () use ($data): JsonResponse {
-            // Propiedad: el global scope BelongsToUser + findOrFail → 404 si el
-            // reclutable es de otro jugador (la regla exists no filtra por usuario).
-            $reclutable = Reclutable::with('pokemon')->findOrFail($data['reclutable_id']);
+        return DB::transaction(function () use ($data, $userId): JsonResponse {
+            // Propiedad: además del global scope BelongsToUser, el findOrFail se
+            // acota por user_id → 404 si el reclutable es de otro jugador.
+            $reclutable = Reclutable::with('pokemon')
+                ->where('user_id', $userId)
+                ->findOrFail((int) $data['reclutable_id']);
 
-            $userId = (int) auth()->id();
             $evolutionChainId = $reclutable->pokemon->evolution_chain_id ?? 0;
 
             $bonos = $evolutionChainId > 0
@@ -62,7 +66,10 @@ class ReclutamientoController extends Controller
                 $reclutable->delete();
             }
 
-            return response()->json(['success' => true]);
+            return response()->json([
+                'success' => true,
+                'reclutables' => $this->constructorReclutables->todos($userId)->toArray(),
+            ]);
         });
     }
 
@@ -72,17 +79,20 @@ class ReclutamientoController extends Controller
             'reclutable_id' => 'required|exists:reclutables,id',
             'cantidad' => 'required|integer|min:1',
         ]);
+        $userId = (int) auth()->id();
 
-        return DB::transaction(function () use ($data): JsonResponse {
+        return DB::transaction(function () use ($data, $userId): JsonResponse {
             // Lock de la fila antes de leer `cantidad`: dos descartes
-            // concurrentes no pueden premiar la misma unidad.
+            // concurrentes no pueden premiar la misma unidad. Acotado por
+            // user_id además del global scope.
             $reclutable = Reclutable::with('pokemon')
+                ->where('user_id', $userId)
                 ->lockForUpdate()
-                ->findOrFail($data['reclutable_id']);
+                ->findOrFail((int) $data['reclutable_id']);
 
             $cantidad = min((int) $data['cantidad'], $reclutable->cantidad);
 
-            $this->otorgarCaramelos([$reclutable], auth()->id(), $cantidad);
+            $this->otorgarCaramelos([$reclutable], $userId, $cantidad);
 
             if ($cantidad >= $reclutable->cantidad) {
                 $reclutable->delete();
@@ -90,7 +100,10 @@ class ReclutamientoController extends Controller
                 $reclutable->decrement('cantidad', $cantidad);
             }
 
-            return response()->json(['success' => true]);
+            return response()->json([
+                'success' => true,
+                'reclutables' => $this->constructorReclutables->todos($userId)->toArray(),
+            ]);
         });
     }
 
@@ -106,7 +119,11 @@ class ReclutamientoController extends Controller
 
             Reclutable::query()->delete();
 
-            return response()->json(['success' => true, 'candies' => $candyRewards]);
+            return response()->json([
+                'success' => true,
+                'candies' => $candyRewards,
+                'reclutables' => [],
+            ]);
         });
     }
 

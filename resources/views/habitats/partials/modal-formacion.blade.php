@@ -8,38 +8,43 @@
                     Ajusta la posición de cada pokémon antes del combate.
                 </p>
 
-                <!-- Error 422 inline (ruta: sin redirigir) -->
-                <div x-show="rutaCombatError" x-cloak role="alert" class="mb-4 text-sm text-danger-ink bg-danger-soft border border-danger rounded-control px-3 py-2">
-                    <span x-text="rutaCombatError"></span>
-                </div>
+                <div class="max-h-[70vh] overflow-y-auto overscroll-contain pr-1">
+                    <!-- Error 422 inline (ruta: sin redirigir) -->
+                    <div x-show="rutaCombatError" x-cloak role="alert" class="mb-4 text-sm text-danger-ink bg-danger-soft border border-danger rounded-control px-3 py-2">
+                        <span x-text="rutaCombatError"></span>
+                    </div>
 
-                <!-- Miembros del equipo con toggle -->
-                <div class="space-y-3 mb-6">
-                    <template x-for="miembro in (selectedTeamMembers || [])" :key="miembro.id">
-                        <div class="flex items-center justify-between p-3 bg-surface-sunken border border-line rounded-control">
-                            <div class="flex items-center gap-3">
-                                <x-sprite size="64" x-bind:src="iconoReclutado(miembro.reclutado)" x-on:error="onSpriteError($event, miembro.reclutado.pokemon_id, miembro.reclutado.es_shiny)" x-bind:alt="miembro.reclutado.nombre" />
-                                <div>
-                                    <p class="text-sm font-medium text-ink" x-text="miembro.reclutado.nombre || miembro.reclutado?.pokemon?.name"></p>
+                    <!-- Miembros del equipo con toggle -->
+                    <div class="space-y-3 mb-6">
+                        <template x-for="miembro in (selectedTeamMembers || [])" :key="miembro.id">
+                            <div class="flex items-center justify-between p-3 bg-surface-sunken border border-line rounded-control">
+                                <div class="flex items-center gap-3">
+                                    <x-sprite size="64" x-bind:src="iconoReclutado(miembro.reclutado)" x-on:error="onSpriteError($event, miembro.reclutado.pokemon_id, miembro.reclutado.es_shiny)" x-bind:alt="miembro.reclutado.nombre" />
+                                    <div>
+                                        <p class="text-sm font-medium text-ink" x-text="miembro.reclutado.nombre || miembro.reclutado?.pokemon?.name"></p>
+                                    </div>
                                 </div>
+                                <button
+                                    @click="toggleFormacionSlot(miembro.slot)"
+                                    :class="formacion[miembro.slot] === 'vanguardia'
+                                        ? 'bg-primary text-on-primary border-primary'
+                                        : 'bg-surface-sunken text-ink border-line-strong'"
+                                    class="px-3 py-1.5 rounded-control text-xs font-bold border transition-colors"
+                                    x-text="formacion[miembro.slot] === 'vanguardia' ? 'Vanguardia' : 'Retaguardia'"
+                                ></button>
                             </div>
-                            <button
-                                @click="toggleFormacionSlot(miembro.slot)"
-                                :class="formacion[miembro.slot] === 'vanguardia'
-                                    ? 'bg-primary text-on-primary border-primary'
-                                    : 'bg-surface-sunken text-ink border-line-strong'"
-                                class="px-3 py-1.5 rounded-control text-xs font-bold border transition-colors"
-                                x-text="formacion[miembro.slot] === 'vanguardia' ? 'Vanguardia' : 'Retaguardia'"
-                            ></button>
-                        </div>
-                    </template>
-                    <template x-if="!selectedTeamMembers || selectedTeamMembers.length === 0">
-                        <p class="text-sm text-ink-subtle text-center py-4">Selecciona un equipo primero</p>
-                    </template>
+                        </template>
+                        <template x-if="!selectedTeamMembers || selectedTeamMembers.length === 0">
+                            <p class="text-sm text-ink-subtle text-center py-4">Selecciona un equipo primero</p>
+                        </template>
+                    </div>
+
+                    @include('partials.comparacion-pc')
+                    @include('partials.leyenda-ivs-evs')
                 </div>
 
                 <!-- Buttons -->
-                <div class="flex gap-3">
+                <div class="mt-4 flex gap-3">
                     <button
                         @click="closeFormacionPopup()"
                         class="flex-1 px-4 py-2.5 bg-surface-sunken text-ink rounded-control text-sm font-medium hover:bg-line transition-colors"

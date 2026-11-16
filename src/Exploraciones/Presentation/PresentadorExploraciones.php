@@ -12,8 +12,11 @@ use App\Support\CadenasEvolutivas;
 use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Collection as BaseCollection;
+use Src\Exploraciones\App\ConsultorEstadoExpedicion;
+use Src\Exploraciones\App\FormateadorTiempoRestante;
 use Src\Exploraciones\Domain\CalculadorFinExploracion;
 use Src\Exploraciones\Domain\CalculadorVueltaExploracion;
+use Src\Exploraciones\Domain\EstadoExpedicion;
 use Src\Shared\Domain\Items\CatalogoItems;
 
 /**
@@ -27,6 +30,32 @@ final class PresentadorExploraciones
 
     /** @var array<int, true> */
     private array $cadenasConsultadas = [];
+
+    private ?ConsultorEstadoExpedicion $consultor;
+
+    private ?FormateadorTiempoRestante $formateador;
+
+    /**
+     * Las dependencias son opcionales para no romper `new PresentadorExploraciones()`
+     * (llamadores legacy y pruebas) y permitir el autowiring del contenedor.
+     */
+    public function __construct(
+        ?ConsultorEstadoExpedicion $consultor = null,
+        ?FormateadorTiempoRestante $formateador = null,
+    ) {
+        $this->consultor = $consultor;
+        $this->formateador = $formateador;
+    }
+
+    private function consultor(): ConsultorEstadoExpedicion
+    {
+        return $this->consultor ??= new ConsultorEstadoExpedicion();
+    }
+
+    private function formateador(): FormateadorTiempoRestante
+    {
+        return $this->formateador ??= new FormateadorTiempoRestante();
+    }
 
     /**
      * Datos de stat por id (índice = stat id): nombre en español alineado con
@@ -133,13 +162,23 @@ final class PresentadorExploraciones
     /**
      * Contrato completo de la página de exploraciones.
      *
+     * `$archivadas` es aditivo: los llamadores existentes siguen invocando el
+     * método con tres argumentos y reciben una lista vacía.
+     *
      * @param  Collection<int, ExploracionActiva>  $activas
      * @param  Collection<int, ExploracionActiva>  $terminadas
-     * @return array{activas: list<array<string, mixed>>, terminadas: list<array<string, mixed>>, nivelJugador: int|null}
+     * @param  Collection<int, ExploracionActiva>|null  $archivadas
+     * @return array{activas: list<array<string, mixed>>, terminadas: list<array<string, mixed>>, archivadas: list<array<string, mixed>>, nivelJugador: int|null}
      */
-    public function toView(Collection $activas, Collection $terminadas, ?int $nivelJugador = null): array
-    {
-        $nombres = $this->nombresPokemon($activas, $terminadas);
+    public function toView(
+        Collection $activas,
+        Collection $terminadas,
+        ?int $nivelJugador = null,
+        ?Collection $archivadas = null,
+    ): array {
+        $archivadas ??= new Collection();
+
+        $nombres = $this->nombresPokemon($activas, $terminadas->concat($archivadas));
 
         $activasVista = $activas
             ->map(fn (ExploracionActiva $exp): array => $this->toActiva($exp, $nombres))
@@ -151,44 +190,48 @@ final class PresentadorExploraciones
             ->values()
             ->all();
 
+        $archivadasVista = $archivadas
+            ->map(fn (ExploracionActiva $exp): array => $this->toTerminada($exp, $nombres))
+            ->values()
+            ->all();
+
         $nivel = $nivelJugador ?? 1;
-        foreach ($activasVista as &$activa) {
-            $activa['requiere_nivel'] = $activa['min_lvl'] !== null && $nivel < $activa['min_lvl'];
-        }
-        unset($activa);
-        foreach ($terminadasVista as &$terminada) {
-            $terminada['requiere_nivel'] = $terminada['min_lvl'] !== null && $nivel < $terminada['min_lvl'];
-        }
-        unset($terminada);
 
         return [
-            'activas' => $activasVista,
-            'terminadas' => $terminadasVista,
+            'activas' => $this->conRequiereNivel($activasVista, $nivel),
+            'terminadas' => $this->conRequiereNivel($terminadasVista, $nivel),
+            'archivadas' => $this->conRequiereNivel($archivadasVista, $nivel),
             'nivelJugador' => $nivelJugador,
         ];
     }
 
     /**
+     * Añade el flag `requiere_nivel` a cada tarjeta ya construida.
+     *
+     * @param  list<array<string, mixed>>  $items
+     * @return list<array<string, mixed>>
+     */
+    private function conRequiereNivel(array $items, int $nivel): array
+    {
+        return array_map(static function (array $item) use ($nivel): array {
+            $minLvl = $item['min_lvl'] ?? null;
+            $item['requiere_nivel'] = $minLvl !== null && $nivel < (int) $minLvl;
+
+            return $item;
+        }, $items);
+    }
+
+    /**
+     * Tarjeta de una expedición en curso.
+     *
      * @param  array<array-key, string>  $nombres
      * @return array<string, mixed>
      */
     public function toActiva(ExploracionActiva $exp, array $nombres): array
     {
-        $inicio = $exp->inicio_exploracion?->copy() ?? $exp->created_at?->copy() ?? now();
-        $fin = $this->finExploracion($exp, $inicio);
-        $inicioVuelta = $this->inicioVuelta($inicio, $fin);
         $ahora = now();
-
-        $estado = $inicioVuelta !== null && ! $ahora->lessThan($inicioVuelta)
-            ? 'volviendo'
-            : 'explorando';
-
-        $progreso = 0;
-        if ($fin !== null && $fin->greaterThan($inicio)) {
-            $total = (int) abs($fin->diffInSeconds($inicio));
-            $transcurrido = (int) abs($ahora->diffInSeconds($inicio));
-            $progreso = max(0, min(100, (int) round(($transcurrido / $total) * 100)));
-        }
+        $estado = $this->consultor()->estado($exp, $ahora);
+        [$restanteMin, $restanteLabel] = $this->restanteResumen($exp, $estado, $ahora);
 
         $reclutado = $exp->reclutado;
         $habitat = $exp->habitat;
@@ -197,11 +240,7 @@ final class PresentadorExploraciones
         $explorador = ExploradorVista::toView($reclutado, $eventos);
         $diario = DiarioExploracion::toView($eventos, $nombres, $explorador['nombre'], completarStats: true);
 
-        $restanteMin = $fin !== null
-            ? max(0, (int) ceil($ahora->diffInMinutes($fin, false)))
-            : null;
-
-        return [
+        return array_merge([
             '_vista' => true,
             'id' => $exp->id,
             'equipo' => $reclutado !== null ? $reclutado->nombre : 'Sin reclutado',
@@ -212,24 +251,94 @@ final class PresentadorExploraciones
             'min_lvl' => $this->minLvlDelHabitat($habitat, $exp->nivel),
             'indefinido' => $exp->indefinido,
             'duracion_horas' => $exp->duracion_horas,
-            'inicio' => $inicio->toIso8601String(),
-            'inicio_vuelta' => $inicioVuelta?->toIso8601String(),
-            'fin' => $fin?->toIso8601String(),
-            'estado' => $estado,
-            'volviendo' => $estado === 'volviendo',
-            'estado_label' => $estado === 'volviendo' ? 'Volviendo' : 'Explorando',
-            'estado_clase' => $estado === 'volviendo'
-                ? 'bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400'
-                : 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400',
-            'progreso' => $progreso,
-            'fase' => $estado === 'volviendo' ? 'vuelta' : 'ida',
             'restante_min' => $restanteMin,
-            'restante_label' => $restanteMin !== null ? $this->restanteLabel($restanteMin) : null,
+            'restante_label' => $restanteLabel,
             'explorador' => $explorador,
             'diario' => $diario,
             'tiempo_perdido' => (int) $this->eventosDe($exp)->get('tiempo_perdido', 0),
             'bitacora' => $diario['eventos'],
+        ], $this->camposEstado($exp, $ahora));
+    }
+
+    /**
+     * Contrato compacto del panel y de la colección cacheable del cliente.
+     *
+     * Solo incluye los campos que necesita la fila del panel: nada de diario,
+     * resultado ni eventos. Los valores derivados llegan calculados.
+     *
+     * @return array<string, mixed>
+     */
+    public function toResumen(ExploracionActiva $exp): array
+    {
+        $ahora = now();
+        $estado = $this->consultor()->estado($exp, $ahora);
+        $campos = $this->camposEstado($exp, $ahora);
+        [$restanteMin, $restanteLabel] = $this->restanteResumen($exp, $estado, $ahora);
+
+        $reclutado = $exp->reclutado;
+        $pokemon = $reclutado?->pokemon;
+        $nombrePokemon = $pokemon?->name;
+        if ($nombrePokemon === null) {
+            $nombrePokemon = 'Desconocido';
+        }
+        $alias = $reclutado?->nombre;
+        $pokemonId = $reclutado?->pokemon_id;
+        $habitat = $exp->habitat?->name;
+        if ($habitat === null) {
+            $habitat = 'Sin hábitat';
+        }
+
+        return [
+            'id' => $exp->id,
+            'reclutado_id' => $exp->reclutado_id,
+            'pokemon_id' => $pokemonId ?? 0,
+            'explorador' => is_string($alias) && trim($alias) !== '' ? $alias : $nombrePokemon,
+            'pokemon' => $nombrePokemon,
+            'icono' => '/images/iconos_webp/'.($pokemonId ?? 0).'.webp',
+            'habitat' => $habitat,
+            'nivel' => $exp->nivel,
+            'estado' => $campos['estado'],
+            'estado_label' => $campos['estado_label'],
+            'estado_clase' => $campos['estado_clase'],
+            'progreso' => $campos['progreso'],
+            'restante_min' => $restanteMin,
+            'restante_label' => $restanteLabel,
+            'inicio' => $campos['inicio'],
+            'inicio_vuelta' => $campos['inicio_vuelta'],
+            'fin' => $campos['fin'],
+            'indefinido' => $exp->indefinido,
+            'archivada' => $campos['archivada'],
+            'puede_cancelar' => $campos['puede_cancelar'],
+            'puede_recoger' => $campos['puede_recoger'],
+            'puede_cerrar' => $campos['puede_cerrar'],
+            'puede_archivar' => $campos['puede_archivar'],
         ];
+    }
+
+    /**
+     * Minutos y etiqueta del panel. Una expedición terminada, archivada o
+     * pendiente de procesar no tiene tiempo restante útil: se etiqueta
+     * «Pendiente». Una indefinida se etiqueta «Indefinida».
+     *
+     * @return array{int|null, string|null}
+     */
+    private function restanteResumen(ExploracionActiva $exp, EstadoExpedicion $estado, CarbonInterface $ahora): array
+    {
+        if ($estado === EstadoExpedicion::PENDIENTE_RESOLUCION
+            || $estado === EstadoExpedicion::TERMINADA
+            || $estado === EstadoExpedicion::ARCHIVADA
+        ) {
+            return [0, 'Pendiente'];
+        }
+
+        $fin = $this->consultor()->fin($exp);
+        if ($exp->indefinido || $fin === null) {
+            return [null, 'Indefinida'];
+        }
+
+        $minutos = $this->formateador()->minutos($fin, $ahora);
+
+        return [$minutos, $minutos === null ? null : $this->formateador()->etiqueta($minutos)];
     }
 
     /**
@@ -298,7 +407,7 @@ final class PresentadorExploraciones
         $explorador = ExploradorVista::toView($reclutado, $eventos);
         $diario = DiarioExploracion::toView($eventos, $nombres, $explorador['nombre'], completarStats: true);
 
-        return ResultadoExploracionVista::toView([
+        $vista = ResultadoExploracionVista::toView([
             'id' => $exp->id,
             'explorador' => $explorador,
             'diario' => $diario,
@@ -332,6 +441,8 @@ final class PresentadorExploraciones
             'motivo_perdida' => $perdidas === [] ? null : $this->motivoPerdida($this->eventosDe($exp)),
             'derrotados' => $this->eventosDe($exp)->get('derrotados', []),
         ]);
+
+        return array_merge($vista, $this->camposEstado($exp, now()));
     }
 
     /**
@@ -544,7 +655,7 @@ final class PresentadorExploraciones
             return $exp;
         }
 
-        $estado = (string) ($exp['estado'] ?? 'explorando');
+        $estado = EstadoExpedicion::tryFrom((string) ($exp['estado'] ?? '')) ?? EstadoExpedicion::EXPLORANDO;
         $progreso = max(0, min(100, (int) ($exp['progreso'] ?? 0)));
         $bitacora = array_values(array_filter(
             array_map(
@@ -557,12 +668,10 @@ final class PresentadorExploraciones
 
         return array_merge($exp, [
             '_vista' => true,
-            'estado' => $estado,
-            'volviendo' => $estado === 'volviendo',
-            'estado_label' => $estado === 'volviendo' ? 'Volviendo' : 'Explorando',
-            'estado_clase' => $estado === 'volviendo'
-                ? 'bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400'
-                : 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400',
+            'estado' => $estado->value,
+            'volviendo' => $estado === EstadoExpedicion::VOLVIENDO,
+            'estado_label' => $this->etiquetaEstado($estado),
+            'estado_clase' => $this->claseEstado($estado),
             'progreso' => $progreso,
             'bitacora' => $bitacora,
             'requiere_nivel' => $minLvl !== null && ($nivelJugador ?? 1) < $minLvl,
@@ -616,21 +725,89 @@ final class PresentadorExploraciones
     }
 
     /**
-     * Etiqueta legible del tiempo restante hasta el fin de la expedición.
+     * Bloque compartido por tarjetas y resumen: estado, progreso, fechas (ISO
+     * y etiquetadas), archivado y flags de acción. Único punto que decide
+     * etiquetas y clases de estado.
+     *
+     * @return array{
+     *     estado: string,
+     *     estado_label: string,
+     *     estado_clase: string,
+     *     volviendo: bool,
+     *     fase: string,
+     *     progreso: int,
+     *     archivada: bool,
+     *     puede_cancelar: bool,
+     *     puede_recoger: bool,
+     *     puede_cerrar: bool,
+     *     puede_archivar: bool,
+     *     inicio: string,
+     *     inicio_vuelta: string|null,
+     *     fin: string|null,
+     *     inicio_label: string,
+     *     inicio_vuelta_label: string,
+     *     fin_label: string
+     * }
      */
-    private function restanteLabel(int $minutos): string
+    private function camposEstado(ExploracionActiva $exp, CarbonInterface $ahora): array
     {
-        if ($minutos <= 0) {
-            return 'Menos de 1 min';
-        }
+        $inicio = $this->consultor()->inicio($exp);
+        $fin = $this->consultor()->fin($exp);
+        $inicioVuelta = $this->consultor()->inicioVuelta($exp);
+        $estado = $this->consultor()->estado($exp, $ahora);
+        $cerrada = $estado->esTerminada() || $estado === EstadoExpedicion::ARCHIVADA;
 
-        if ($minutos < 60) {
-            return "{$minutos} min";
-        }
+        return [
+            'estado' => $estado->value,
+            'estado_label' => $this->etiquetaEstado($estado),
+            'estado_clase' => $this->claseEstado($estado),
+            'volviendo' => $estado === EstadoExpedicion::VOLVIENDO,
+            'fase' => $estado === EstadoExpedicion::VOLVIENDO ? 'vuelta' : 'ida',
+            'progreso' => $cerrada ? 100 : $this->consultor()->progreso($exp, $ahora),
+            'archivada' => $exp->archived_at !== null,
+            'puede_cancelar' => $exp->regreso === null,
+            'puede_recoger' => $exp->regreso === null && $exp->indefinido,
+            'puede_cerrar' => $exp->regreso !== null,
+            'puede_archivar' => $estado->esTerminada(),
+            'inicio' => $inicio->toIso8601String(),
+            'inicio_vuelta' => $inicioVuelta?->toIso8601String(),
+            'fin' => $fin?->toIso8601String(),
+            'inicio_label' => $this->etiquetaFecha($inicio),
+            'inicio_vuelta_label' => $this->etiquetaFecha($inicioVuelta),
+            'fin_label' => $this->etiquetaFecha($fin),
+        ];
+    }
 
-        $horas = intdiv($minutos, 60);
-        $resto = $minutos % 60;
+    private function etiquetaEstado(EstadoExpedicion $estado): string
+    {
+        return match ($estado) {
+            EstadoExpedicion::EXPLORANDO => 'Explorando',
+            EstadoExpedicion::VOLVIENDO => 'Volviendo',
+            EstadoExpedicion::PENDIENTE_RESOLUCION => 'Pendiente de procesar',
+            EstadoExpedicion::TERMINADA => 'Terminada',
+            EstadoExpedicion::ARCHIVADA => 'Archivada',
+            EstadoExpedicion::CANCELADA => 'Cancelada',
+        };
+    }
 
-        return $resto === 0 ? "{$horas} h" : "{$horas} h {$resto} min";
+    private function claseEstado(EstadoExpedicion $estado): string
+    {
+        return match ($estado) {
+            EstadoExpedicion::EXPLORANDO => 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400',
+            EstadoExpedicion::VOLVIENDO => 'bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400',
+            EstadoExpedicion::PENDIENTE_RESOLUCION => 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400',
+            EstadoExpedicion::TERMINADA => 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400',
+            EstadoExpedicion::ARCHIVADA => 'bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300',
+            EstadoExpedicion::CANCELADA => 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400',
+        };
+    }
+
+    /**
+     * Fecha legible para los parciales sin JavaScript (`d/m/Y H:i`, zona del
+     * servidor). Sin fecha devuelve un guion largo.
+     */
+    public function etiquetaFecha(?CarbonInterface $fecha): string
+    {
+        return $fecha?->format('d/m/Y H:i') ?? '—';
     }
 }

@@ -27,6 +27,7 @@ class ExploracionActiva extends Model
         'inicio_exploracion',
         'llegada_destino',
         'regreso',
+        'archived_at',
     ];
 
     protected $casts = [
@@ -34,6 +35,7 @@ class ExploracionActiva extends Model
         'inicio_exploracion' => 'datetime',
         'llegada_destino' => 'datetime',
         'regreso' => 'datetime',
+        'archived_at' => 'datetime',
         'indefinido' => 'boolean',
     ];
 

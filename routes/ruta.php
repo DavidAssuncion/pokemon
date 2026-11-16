@@ -10,3 +10,8 @@ Route::get('/api/habitats/{habitat}/ruta/rivales', [CombateRutaController::class
     ->whereNumber('habitat');
 Route::post('/api/habitats/{habitat}/ruta/iniciar', [CombateRutaController::class, 'iniciar'])
     ->whereNumber('habitat');
+Route::get('/api/habitats/{habitat}/ruta/pc', [CombateRutaController::class, 'pc'])
+    ->whereNumber('habitat');
+Route::delete('/api/habitats/{habitat}/ruta/preview/{previewId}', [CombateRutaController::class, 'limpiarPreview'])
+    ->whereNumber('habitat')
+    ->where('previewId', '[a-f0-9]{32}');

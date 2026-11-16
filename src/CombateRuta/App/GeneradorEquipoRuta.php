@@ -12,7 +12,9 @@ use Src\Battle\Domain\Collections\DatosPokemonBatallaCollection;
 use Src\Battle\Domain\Posicion;
 use Src\CombateEntrenadores\App\MapeadorPokemonBatalla;
 use Src\CombateEntrenadores\App\SelectorMovimientosRival;
+use Src\CombateRuta\Domain\DataTransferObjects\EspeciePonderadaRuta;
 use Src\Exploraciones\Domain\ValueObjects\ColeccionPoolPonderado;
+use Src\Exploraciones\Domain\ValueObjects\PokemonPoolPonderado;
 use Src\Exploraciones\Domain\ValueObjects\PoolHabitat;
 use Src\Pokemon\Domain\Stats\DatosStats;
 use Src\Pokemon\Domain\Stats\DatosStatsCollection;
@@ -125,6 +127,41 @@ final class GeneradorEquipoRuta
         }
 
         return new DatosPokemonBatallaCollection($equipo);
+    }
+
+    /**
+     * Especies del pool con su peso, reutilizando la misma carga y ponderación
+     * que `generar()`. Método aditivo: no altera la generación del rival.
+     *
+     * @return list<EspeciePonderadaRuta>
+     */
+    public function especiesPonderadas(int $habitatId, int $nivel): array
+    {
+        $pool = $this->poolDelHabitat($habitatId, $nivel);
+        if ($pool === []) {
+            return [];
+        }
+
+        $ponderado = $this->ponderar($pool);
+        $especies = [];
+
+        foreach ($ponderado as $entrada) {
+            if (! $entrada instanceof PokemonPoolPonderado) {
+                continue;
+            }
+
+            $pokemon = $pool[$entrada->id] ?? null;
+            if (! $pokemon instanceof Pokemon) {
+                continue;
+            }
+
+            $especies[] = new EspeciePonderadaRuta(
+                stats: $this->mapeador->statsDe($pokemon),
+                peso: $entrada->peso,
+            );
+        }
+
+        return $especies;
     }
 
     /**

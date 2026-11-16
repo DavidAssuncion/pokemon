@@ -22,6 +22,7 @@ class CatalogoSeeder extends Seeder
             BonguriHabitatSeeder::class,
             PokemonSeeder::class,
             PokemonHabitatSeeder::class,
+            MazmorraSeeder::class,
             MoveSeeder::class,
             PokemonMoveSeeder::class,
             TypePathNodeSeeder::class,

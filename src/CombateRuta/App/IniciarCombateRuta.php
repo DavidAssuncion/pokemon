@@ -6,7 +6,9 @@ namespace Src\CombateRuta\App;
 
 use App\Models\Team;
 use App\Support\CargarMovimientosDesbloqueados;
+use App\Support\CombateRuta\AlmacenRivalRutaFijado;
 use App\Support\CreadorBatallaSesion;
+use Src\Battle\Domain\Collections\DatosPokemonBatallaCollection;
 use Src\CombateEntrenadores\App\ConstruirEquipoJugador;
 use Src\CombateEntrenadores\Domain\ValueObjects\FormacionEquipo;
 use Src\Shared\Domain\Exceptions\ViolacionReglaNegocio;
@@ -19,6 +21,8 @@ use Src\Shared\Domain\Exceptions\ViolacionReglaNegocio;
  *   (guard centralizado en ConstruirEquipoJugador::desdeEquipo).
  * - Sin límite diario ni log: la ruta se puede repetir siempre que se quiera.
  * - El jugador es team1; "Pokémon salvajes" generados del pool es team2.
+ * - Si llega un `preview_id` válido, reutiliza el rival fijado en la preview y
+ *   limpia el snapshot tras crear la batalla. Si no, genera uno nuevo.
  */
 final class IniciarCombateRuta
 {
@@ -27,6 +31,7 @@ final class IniciarCombateRuta
         private readonly ConstruirEquipoJugador $construirEquipoJugador,
         private readonly CreadorBatallaSesion $creadorBatalla,
         private readonly CargarMovimientosDesbloqueados $cargarMovimientos,
+        private readonly AlmacenRivalRutaFijado $almacen,
     ) {
     }
 
@@ -40,25 +45,20 @@ final class IniciarCombateRuta
         int $userId,
         int $nivelJugador,
         array $formacion = [],
+        ?string $previewId = null,
     ): string {
         $equipo = Team::with('members.reclutado.pokemon.stats', 'members.reclutado.pokemon.types')
             ->findOrFail($teamId);
 
         $datosJugador = $this->construirEquipoJugador->desdeEquipo($equipo, FormacionEquipo::desde($formacion), $nivelJugador);
 
-        $movimientosDesbloqueados = $this->cargarMovimientos->para($userId);
+        $datosRival = $this->resolverRival($habitatId, $nivel, $userId, $nivelJugador, $previewId);
 
-        $datosRival = $this->generadorEquipo->generar(
-            $habitatId,
-            $nivel,
-            $nivelJugador,
-            movimientosDesbloqueados: $movimientosDesbloqueados,
-        );
         if ($datosRival->isEmpty()) {
             throw new ViolacionReglaNegocio('No hay Pokémon salvajes disponibles en esta ruta para tu nivel.');
         }
 
-        return $this->creadorBatalla->crearYGuardar(
+        $battleId = $this->creadorBatalla->crearYGuardar(
             datosJugador: $datosJugador,
             nombreJugador: $equipo->name,
             datosRival: $datosRival,
@@ -71,6 +71,37 @@ final class IniciarCombateRuta
                 'user_id' => $userId,
                 'team_id' => $teamId,
             ],
+        );
+
+        if ($previewId !== null) {
+            $this->almacen->limpiar($userId, $previewId);
+        }
+
+        return $battleId;
+    }
+
+    private function resolverRival(
+        int $habitatId,
+        int $nivel,
+        int $userId,
+        int $nivelJugador,
+        ?string $previewId,
+    ): DatosPokemonBatallaCollection {
+        if ($previewId !== null) {
+            $fijado = $this->almacen->obtener($userId, $previewId, $habitatId, $nivel);
+
+            if ($fijado !== null) {
+                return $fijado->nivelJugador === $nivelJugador
+                    ? $fijado->equipo
+                    : $fijado->equipo->conNivel($nivelJugador);
+            }
+        }
+
+        return $this->generadorEquipo->generar(
+            $habitatId,
+            $nivel,
+            $nivelJugador,
+            movimientosDesbloqueados: $this->cargarMovimientos->para($userId),
         );
     }
 }

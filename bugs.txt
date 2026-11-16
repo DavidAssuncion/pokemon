@@ -1,32 +1,32 @@
 Antes de hacer un combate, en la pantalla de confirmar formacion nos dara una estimacion de los suma de los PC que vamos a encontrarnos (a+b+c vs d+e+f) para hacernos a la idea de que tan desequilibrado es
 Parece que todos al matar ganan un turno extra, esto no debe ser asi.
-Puedo tener ataques de refuerzo, deberia poder clickear a mis compañeros 
+Puedo tener ataques de refuerzo, deberia poder clickear a mis compañeros
 -
 en /equipos ver el detalle del pokemon el scroll bar mata la experiencia del dorado,
 -
 -
-Task
--
 Combate, Preparación de la ronda debe mostrarse como un boton al inicio y si se pulsa, mostrar la config, los ataques de prioridad deben seleccionar al objetivo receptor
 -
-Cada nivel de senda aportara beneficios, los ataques se desbloquean entre los niveles 1 y 3, y apartir de ahi, se dan mejores recompensas, mas % de captura a ese tipo, mas daño, o recibir menos daño de ese tipo +10-10%. Los pokemon rivales tendran disponible todos los movimientos de nuestra senda, pero no recibiran nuestras mejoras. Si soy nivel 2 y no tengo aprenddio lanzallamas, los rivales si pueden llevarlo equipado. Hay que plantear tambien su selector de movimientos, stab + cobertura/utilidad,  tenemos en pokemon showdowsn recomendaiciones o movesets?
+ Hay que plantear tambien su selector de movimientos, stab + cobertura/utilidad,  tenemos en pokemon showdowsn recomendaiciones o movesets?
 -
 Movimientos y estrategias para los comabtres contra entrenadores
 -
 Economia, requisito y uso de objetos. Por ejemplo, los caramelos necesarios para aprender ataques en sendas, los caramelos para subir de nivel los nidos y granjas, EV, recompensas obtenidas... Debemos analizar costes y cuantas recompensas podemos recibir para balancear los costes, ahora es todo muy orientativo y debe ser mas justo y razonable
 
--
-Rutas nivel 
-1 0 IV/EV
-2 Maximo IV/EV en el stat mas altos, 0 en el resto
-3 Maximo IV/EV los 2 stats mas altos, la mitad en el resto
 
-Entrenadores
-1 Maximo IV/EV en el stat mas altos, 0 en el resto
-2 Maximo IV/EV los 2 stats mas altos, la mitad en el resto
-3 Maximo IV/EV en todo
+Mas movimientos o habilidades caracteristicas, que sea divertido
 
-Gimnasios
-1-6 Maximo IV/EV en el stat mas altos, 0 en el resto
-7-12 Maximo IV/EV los 2 stats mas altos, la mitad en el resto
-13-18 Maximo IV/EV en todo
+
+quitar Composición: fuerza_bruta de equipos
+Reformular nav bar. Exploraciones y reclutamiento pasan a ser fa icons, luego ajustamos el correcto
+
+La llamada a reclutamiento y exploraciones las cacheamos,
+cuando se añada un posible recluta o exploracion, se añade a la coleccion y reindexamos
+
+Esta informacion no suele actualizarse, y no es necesario que ocupe tanto espacio en el menu
+
+Pulsar en expediciones muestra un tool tipo a 3 columnas
+Pokemon | progreso (barra horizontal) | tiempo restante  - fa icon de flecha para ver detalle
+Despues se mostrara en la derecha, abajo, ver historial para cargar todas, aqui se cargara un modal con la misma informacion que la pagina
+
+Para reclutamiento, se abrira el modal al pulsar

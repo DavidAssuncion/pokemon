@@ -110,20 +110,8 @@ $ignoreErrors[] = [
 	'path' => __DIR__ . '/app/Http/Controllers/PlayerController.php',
 ];
 $ignoreErrors[] = [
-	'message' => '#^Dynamic call to static method Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<App\\\\Models\\\\Reclutable\\>\\:\\:orderBy\\(\\)\\.$#',
-	'identifier' => 'staticMethod.dynamicCall',
-	'count' => 1,
-	'path' => __DIR__ . '/app/Http/Controllers/PlayerController.php',
-];
-$ignoreErrors[] = [
 	'message' => '#^Dynamic call to static method Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<App\\\\Models\\\\Team\\>\\:\\:orderBy\\(\\)\\.$#',
 	'identifier' => 'staticMethod.dynamicCall',
-	'count' => 1,
-	'path' => __DIR__ . '/app/Http/Controllers/PlayerController.php',
-];
-$ignoreErrors[] = [
-	'message' => '#^Using nullsafe property access "\\?\\-\\>name" on left side of \\?\\? is unnecessary\\. Use \\-\\> instead\\.$#',
-	'identifier' => 'nullsafe.neverNull',
 	'count' => 1,
 	'path' => __DIR__ . '/app/Http/Controllers/PlayerController.php',
 ];

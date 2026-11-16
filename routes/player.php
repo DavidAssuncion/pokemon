@@ -9,6 +9,7 @@ use App\Http\Controllers\ReclutamientoController;
 use App\Http\Controllers\SendasController;
 use App\Http\Controllers\TeamController;
 use Illuminate\Support\Facades\Route;
+use Src\Reclutamiento\Infra\Controllers\ReclutamientoApiController;
 
 // Player section routes
 Route::get('/pokedex', [PlayerController::class, 'pokedex']);
@@ -23,6 +24,9 @@ Route::post('/onboarding/equipo-inicial', [OnboardingController::class, 'store']
 Route::post('/reclutamiento/recruit', [ReclutamientoController::class, 'recruit']);
 Route::post('/reclutamiento/discard', [ReclutamientoController::class, 'discard']);
 Route::post('/reclutamiento/discard-all', [ReclutamientoController::class, 'discardAll']);
+
+// Colección compacta de reclutables (API JSON de solo lectura)
+Route::get('/api/reclutamiento', [ReclutamientoApiController::class, 'index']);
 
 // Redirect old /reclutados to /equipos
 Route::get('/reclutados', fn () => redirect('/equipos'));

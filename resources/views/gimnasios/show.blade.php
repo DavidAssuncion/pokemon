@@ -157,68 +157,73 @@
                     <strong class="text-ink" x-text="gym ? gym.tipo_medalla : ''"></strong>.
                 </p>
 
-                {{-- Error del popup --}}
-                <div x-show="popupError" x-cloak role="alert" class="text-sm text-danger-ink bg-danger-soft border border-danger rounded-control px-3 py-2 mb-4">
-                    <span x-text="popupError"></span>
-                </div>
+                <div class="max-h-[70vh] overflow-y-auto overscroll-contain pr-1">
+                    {{-- Error del popup --}}
+                    <div x-show="popupError" x-cloak role="alert" class="text-sm text-danger-ink bg-danger-soft border border-danger rounded-control px-3 py-2 mb-4">
+                        <span x-text="popupError"></span>
+                    </div>
 
-                {{-- Selección de equipo --}}
-                <div class="space-y-2 mb-5">
-                    <p class="text-xs font-semibold uppercase tracking-wide text-ink-muted">Equipo</p>
-                    <template x-if="teams.length === 0">
-                        <p class="py-2 text-center text-sm text-ink-subtle">No tienes equipos creados</p>
-                    </template>
-                    <template x-for="team in teams" :key="team.id">
-                        <button type="button" @click="selectTeam(team.id, team.name)"
-                                :class="selectedTeamId === team.id
-                                    ? 'border-primary bg-primary-soft'
-                                    : 'border-line hover:border-line-strong'"
-                                class="flex w-full items-center justify-between rounded-control border-2 p-3 text-left transition-all focus-ring"
-                                :aria-label="'Seleccionar equipo ' + team.name">
-                            <span class="text-sm font-medium text-ink" x-text="team.name"></span>
-                            <template x-if="selectedTeamId === team.id">
-                                <svg class="h-5 w-5 text-primary-ink" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
-                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
-                                </svg>
-                            </template>
-                        </button>
-                    </template>
-                </div>
-
-                {{-- Formación --}}
-                <div x-show="selectedTeamId" x-cloak class="space-y-3 mb-6">
-                    <p class="text-xs font-semibold uppercase tracking-wide text-ink-muted">Formación</p>
-                    <template x-for="miembro in (selectedTeamMembers || [])" :key="miembro.id">
-                        <div class="flex items-center justify-between rounded-control border border-line bg-surface-sunken p-3">
-                            <div class="flex items-center gap-3 min-w-0">
-                                <x-sprite
-                                    size="64"
-                                    x-bind:src="iconoReclutado(miembro.reclutado)"
-                                    x-on:error="onSpriteError($event, miembro.reclutado.pokemon_id, miembro.reclutado.es_shiny)"
-                                    x-bind:alt="miembro.reclutado.nombre"
-                                />
-                                <div class="min-w-0">
-                                    <p class="truncate text-sm font-medium text-ink" x-text="miembro.reclutado.nombre"></p>
-                                    <p class="text-xs text-ink-muted" x-text="'Posición ' + miembro.slot"></p>
-                                </div>
-                            </div>
-                            <button type="button"
-                                    @click="toggleFormacionSlot(miembro.slot)"
-                                    :class="formacion[miembro.slot] === 'vanguardia'
-                                        ? 'border-primary bg-primary text-on-primary'
-                                        : 'border-line bg-surface-sunken text-ink'"
-                                    class="shrink-0 rounded-control border px-3 py-1.5 text-xs font-bold transition-colors focus-ring"
-                                    x-text="(formacion[miembro.slot] === 'vanguardia' ? 'Vanguardia' : 'Retaguardia')">
+                    {{-- Selección de equipo --}}
+                    <div class="space-y-2 mb-5">
+                        <p class="text-xs font-semibold uppercase tracking-wide text-ink-muted">Equipo</p>
+                        <template x-if="teams.length === 0">
+                            <p class="py-2 text-center text-sm text-ink-subtle">No tienes equipos creados</p>
+                        </template>
+                        <template x-for="team in teams" :key="team.id">
+                            <button type="button" @click="selectTeam(team.id, team.name)"
+                                    :class="selectedTeamId === team.id
+                                        ? 'border-primary bg-primary-soft'
+                                        : 'border-line hover:border-line-strong'"
+                                    class="flex w-full items-center justify-between rounded-control border-2 p-3 text-left transition-all focus-ring"
+                                    :aria-label="'Seleccionar equipo ' + team.name">
+                                <span class="text-sm font-medium text-ink" x-text="team.name"></span>
+                                <template x-if="selectedTeamId === team.id">
+                                    <svg class="h-5 w-5 text-primary-ink" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                                    </svg>
+                                </template>
                             </button>
-                        </div>
-                    </template>
-                    <template x-if="!selectedTeamMembers || selectedTeamMembers.length === 0">
-                        <p class="py-4 text-center text-sm text-ink-subtle">Selecciona un equipo primero</p>
-                    </template>
+                        </template>
+                    </div>
+
+                    {{-- Formación --}}
+                    <div x-show="selectedTeamId" x-cloak class="space-y-3 mb-6">
+                        <p class="text-xs font-semibold uppercase tracking-wide text-ink-muted">Formación</p>
+                        <template x-for="miembro in (selectedTeamMembers || [])" :key="miembro.id">
+                            <div class="flex items-center justify-between rounded-control border border-line bg-surface-sunken p-3">
+                                <div class="flex items-center gap-3 min-w-0">
+                                    <x-sprite
+                                        size="64"
+                                        x-bind:src="iconoReclutado(miembro.reclutado)"
+                                        x-on:error="onSpriteError($event, miembro.reclutado.pokemon_id, miembro.reclutado.es_shiny)"
+                                        x-bind:alt="miembro.reclutado.nombre"
+                                    />
+                                    <div class="min-w-0">
+                                        <p class="truncate text-sm font-medium text-ink" x-text="miembro.reclutado.nombre"></p>
+                                        <p class="text-xs text-ink-muted" x-text="'Posición ' + miembro.slot"></p>
+                                    </div>
+                                </div>
+                                <button type="button"
+                                        @click="toggleFormacionSlot(miembro.slot)"
+                                        :class="formacion[miembro.slot] === 'vanguardia'
+                                            ? 'border-primary bg-primary text-on-primary'
+                                            : 'border-line bg-surface-sunken text-ink'"
+                                        class="shrink-0 rounded-control border px-3 py-1.5 text-xs font-bold transition-colors focus-ring"
+                                        x-text="(formacion[miembro.slot] === 'vanguardia' ? 'Vanguardia' : 'Retaguardia')">
+                                </button>
+                            </div>
+                        </template>
+                        <template x-if="!selectedTeamMembers || selectedTeamMembers.length === 0">
+                            <p class="py-4 text-center text-sm text-ink-subtle">Selecciona un equipo primero</p>
+                        </template>
+                    </div>
+
+                    @include('partials.comparacion-pc')
+                    @include('partials.leyenda-ivs-evs')
                 </div>
 
                 {{-- Botones --}}
-                <div class="flex gap-3">
+                <div class="mt-4 flex gap-3">
                     <button @click="closeFormacionPopup()"
                             class="flex-1 rounded-control bg-surface-sunken px-4 py-2.5 text-sm font-medium text-ink transition-colors hover:bg-line focus-ring">
                         Cancelar
@@ -241,9 +246,11 @@
 </div>
 
 @push('scripts')
+@include('partials.comparacion-pc-script')
 <script>
 function gimnasioShow(slug) {
     return {
+        ...comparadorPcState(),
         slug: slug,
         gym: null,
         loading: false,
@@ -351,12 +358,17 @@ function gimnasioShow(slug) {
             this.formacion = {};
             this.popupError = '';
             this.showFormacionPopup = true;
+            this.limpiarComparacionPc();
+            this.cargarComparacionPc('/api/gimnasios/' + encodeURIComponent(this.slug) + '/pc');
         },
 
         selectTeam(id, name) {
             this.selectedTeamId = id;
             this.selectedTeamName = name;
             this.formacion = this.formacionInicialDe(id);
+            this.cargarComparacionPc(
+                '/api/gimnasios/' + encodeURIComponent(this.slug) + '/pc?team_id=' + this.selectedTeamId
+            );
         },
 
         formacionInicialDe(teamId) {
@@ -376,6 +388,7 @@ function gimnasioShow(slug) {
         closeFormacionPopup() {
             this.showFormacionPopup = false;
             this.popupError = '';
+            this.limpiarComparacionPc();
         },
 
         async confirmarCombate() {

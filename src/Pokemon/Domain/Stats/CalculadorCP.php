@@ -39,4 +39,21 @@ final class CalculadorCP
 
         return max(0, (int) floor($base + $extra));
     }
+
+    /**
+     * CP a partir de stats base, EVs, IVs y nivel, reutilizando la fórmula
+     * canónica de `calcular()`. Evita duplicar la construcción de BattleStats
+     * y la suma de EVs en cada consumidor.
+     */
+    public static function desdeStats(
+        StatsValue $base,
+        StatsValue $evs,
+        ?StatsValue $ivs,
+        int $nivel,
+    ): int {
+        $stats = new BattleStats($base, $evs, $nivel, $ivs);
+        $evTotal = (int) floor(array_sum($evs->toArray()));
+
+        return self::calcular($stats, $evTotal);
+    }
 }

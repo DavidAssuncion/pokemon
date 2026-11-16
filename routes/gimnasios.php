@@ -16,3 +16,4 @@ Route::get('/api/admin/gyms/{slug}', [AdminGymController::class, 'show']);
 Route::post('/api/admin/gyms', [AdminGymController::class, 'store']);
 Route::put('/api/admin/gyms/{slug}', [AdminGymController::class, 'update']);
 Route::put('/api/admin/gyms/{slug}/stages/{etapa}', [AdminGymController::class, 'updateStage']);
+Route::get('/api/gimnasios/{gym}/pc', [GimnasioController::class, 'pc']);

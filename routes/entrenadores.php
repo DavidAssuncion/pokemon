@@ -7,3 +7,7 @@ use Src\CombateEntrenadores\Infra\Controllers\EntrenadorController;
 
 Route::get('/api/habitats/{habitat}/entrenadores', [EntrenadorController::class, 'index']);
 Route::post('/api/habitats/{habitat}/entrenadores/{nivel}/{trainer}/combatir', [EntrenadorController::class, 'combatir']);
+Route::get('/api/habitats/{habitat}/entrenadores/{nivel}/{trainer}/pc', [EntrenadorController::class, 'pc'])
+    ->whereNumber('habitat')
+    ->whereNumber('nivel')
+    ->whereNumber('trainer');

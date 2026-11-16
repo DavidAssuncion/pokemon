@@ -17,14 +17,16 @@
     </script>
 </head>
 <body class="bg-canvas text-ink min-h-screen"
-      x-data="{ cosechando: false, cosechaEstado: 'idle', cosechaMensaje: '', cosechaDetalle: '', cosechaItems: [], cosechaTimer: null, cosecharTodo() { if (this.cosechando) { return; } this.cosechando = true; this.cosechaEstado = 'idle'; this.cosechaMensaje = ''; this.cosechaDetalle = ''; this.cosechaItems = []; if (this.cosechaTimer) { clearTimeout(this.cosechaTimer); this.cosechaTimer = null; } const controller = new AbortController(); const timeout = setTimeout(() => controller.abort(), 15000); const csrf = document.querySelector('meta[name=csrf-token]')?.content || ''; fetch('/api/farm/harvest-all', { method: 'POST', headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': csrf }, signal: controller.signal }).then(async (response) => { if (!response.ok) { const data = await response.json().catch(() => ({})); throw new Error(data.message || 'No se pudo cosechar'); } return response.json(); }).then((data) => { const bayas = Number(data.total_bayas ?? 0); const errores = Array.isArray(data.errores) ? data.errores.length : 0; if (bayas > 0) { this.cosechaEstado = 'ok'; this.cosechaMensaje = 'Cosecha completada · ' + bayas + (bayas === 1 ? ' baya' : ' bayas'); this.cosechaDetalle = errores > 0 ? errores + ' error(es)' : ''; this.cosechaItems = Array.isArray(data.bayas) ? data.bayas : []; } else if (errores > 0) { this.cosechaEstado = 'error'; this.cosechaMensaje = 'Error'; this.cosechaDetalle = errores + ' error(es)'; this.cosechaItems = []; } else { this.cosechaEstado = 'ok'; this.cosechaMensaje = 'Nada que cosechar'; this.cosechaDetalle = ''; this.cosechaItems = []; } window.dispatchEvent(new CustomEvent('inventario:actualizado', { detail: data })); this.ocultarMensajeCosecha(); }).catch((error) => { this.cosechaEstado = 'error'; this.cosechaMensaje = 'Error'; this.cosechaDetalle = error?.name === 'AbortError' ? 'tiempo de espera' : ''; this.cosechaItems = []; this.ocultarMensajeCosecha(); }).finally(() => { clearTimeout(timeout); this.cosechando = false; }); }, ocultarMensajeCosecha() { this.cosechaTimer = setTimeout(() => { this.cosechaEstado = 'idle'; this.cosechaMensaje = ''; this.cosechaDetalle = ''; this.cosechaItems = []; this.cosechaTimer = null; }, 6000); } }">
+      :class="{ 'overflow-hidden': $store.modales.pila.length > 0 }"
+      x-data="{ cosechando: false, cosechaEstado: 'idle', cosechaMensaje: '', cosechaDetalle: '', cosechaItems: [], cosechaTimer: null, cosecharTodo() { if (this.cosechando) { return; } this.cosechando = true; this.cosechaEstado = 'idle'; this.cosechaMensaje = ''; this.cosechaDetalle = ''; this.cosechaItems = []; if (this.cosechaTimer) { clearTimeout(this.cosechaTimer); this.cosechaTimer = null; } const controller = new AbortController(); const timeout = setTimeout(() => controller.abort(), 15000); const csrf = document.querySelector('meta[name=csrf-token]')?.content || ''; fetch('/api/farm/harvest-all', { method: 'POST', headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': csrf }, signal: controller.signal }).then(async (response) => { if (!response.ok) { const data = await response.json().catch(() => ({})); throw new Error(data.message || 'No se pudo cosechar'); } return response.json(); }).then((data) => { const bayas = Number(data.total_bayas ?? 0); const errores = Array.isArray(data.errores) ? data.errores.length : 0; if (bayas > 0) { this.cosechaEstado = 'ok'; this.cosechaMensaje = 'Cosecha completada · ' + bayas + (bayas === 1 ? ' baya' : ' bayas'); this.cosechaDetalle = errores > 0 ? errores + ' error(es)' : ''; this.cosechaItems = Array.isArray(data.bayas) ? data.bayas : []; } else if (errores > 0) { this.cosechaEstado = 'error'; this.cosechaMensaje = 'Error'; this.cosechaDetalle = errores + ' error(es)'; this.cosechaItems = []; } else { this.cosechaEstado = 'ok'; this.cosechaMensaje = 'Nada que cosechar'; this.cosechaDetalle = ''; this.cosechaItems = []; } window.dispatchEvent(new CustomEvent('inventario:actualizado', { detail: data })); this.ocultarMensajeCosecha(); }).catch((error) => { this.cosechaEstado = 'error'; this.cosechaMensaje = 'Error'; this.cosechaDetalle = error?.name === 'AbortError' ? 'tiempo de espera' : ''; this.cosechaItems = []; this.ocultarMensajeCosecha(); }).finally(() => { clearTimeout(timeout); this.cosechando = false; }); }, ocultarMensajeCosecha() { this.cosechaTimer = setTimeout(() => { this.cosechaEstado = 'idle'; this.cosechaMensaje = ''; this.cosechaDetalle = ''; this.cosechaItems = []; this.cosechaTimer = null; }, 6000); } }"
+      x-init="$store.expedicionesNavbar.iniciar(); $store.reclutamientoNavbar.iniciar()">
     <header class="bg-surface sticky top-0 z-30 relative">
         <div class="px-4 sm:px-6">
             <nav
-                class="relative flex items-center justify-center h-14"
+                class="relative flex items-center gap-2 h-14"
                 aria-label="Navegación principal"
             >
-                <div class="flex items-center gap-1 overflow-x-auto">
+                <div class="flex items-center gap-1 min-w-0 flex-1 overflow-x-auto">
                     @if(!request()->is('combate*'))
                         <!-- Cosecha global -->
                         <div class="relative shrink-0">
@@ -48,8 +50,6 @@
                             ['route' => '/equipos', 'label' => 'Equipos'],
                             ['route' => '/sendas', 'label' => 'Sendas'],
                             ['route' => '/gimnasios', 'label' => 'Gimnasios'],
-                            ['route' => '/reclutamiento', 'label' => 'Reclutamiento'],
-                            ['route' => '/exploraciones', 'label' => 'Exploraciones'],
                             ['route' => '/forja', 'label' => 'Forja'],
                             //['route' => '/misiones', 'label' => 'Misiones'],
                         ];
@@ -64,8 +64,11 @@
                         </a>
                     @endforeach
                 </div>
+
+                @include('layouts.partials.navbar-acciones')
+
                 <!-- Usuario autenticado + Nivel jugador + Dark mode toggle -->
-                <div class="absolute right-0 top-1/2 -translate-y-1/2 flex items-center gap-2">
+                <div class="flex items-center gap-2 shrink-0">
                     @auth
                         <span class="hidden sm:inline-flex text-sm font-medium text-ink max-w-[10rem] truncate" title="{{ auth()->user()->name }}">
                             {{ auth()->user()->name }}
@@ -94,6 +97,12 @@
             <div class="h-full bg-primary transition-all duration-500" style="width: {{ $progresoNivel ?? 0 }}%"></div>
         </div>
     </header>
+
+    @include('layouts.partials.modal-historial-expediciones')
+    @include('layouts.partials.modal-detalle-expedicion')
+    @include('layouts.partials.modal-reclutamiento')
+    @include('reclutamiento.partials._modal-descartar')
+    @include('reclutamiento.partials._modal-descartar-todos')
 
     <!-- Toast de cosecha -->
     <div

@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Support;
 
-use App\Enums\StatEnum;
 use App\Enums\TipoEnum;
 use App\Models\Ability;
 use App\Models\Move;
@@ -14,8 +13,9 @@ use App\Models\PokemonStat;
 use App\Models\PokemonType;
 use App\Models\Reclutado;
 use App\Models\TypePathNode;
+use App\Support\Pc\CalculadoraPcReclutado;
+use App\Support\Pc\EstadisticasBasePokemon;
 use Src\Pokemon\Domain\Stats\BattleStats;
-use Src\Pokemon\Domain\Stats\CalculadorCP;
 use Src\Pokemon\Domain\Stats\StatsValue;
 use Src\Shared\Domain\NivelHelper;
 use Src\Shared\Tipos\TipoPokemon;
@@ -350,60 +350,22 @@ final class ReclutadoSerializer
     }
 
     /**
-     * Combat Power del reclutado (B2): BattleStats al NIVEL DEL USUARIO con los
-     * EVs reales del reclutado como 2º argumento de CalculadorCP::calcular.
+     * Combat Power del reclutado (B2): CP canónico al NIVEL DEL USUARIO con
+     * los EVs/IVs reales del reclutado, delegado en `CalculadoraPcReclutado`.
      * Si no se recibe nivelUsuario, se cae al nivel del reclutado (fallback que
      * mantiene el contrato de ReclutadoSerializerCPTest). Si el reclutado no
      * tiene pokémon o stats, devuelve 0.
      */
     private static function cpDe(Reclutado $reclutado, ?int $nivelUsuario = null): int
     {
-        $base = self::statsBaseValue($reclutado->pokemon);
-        if ($base === null) {
-            return 0;
-        }
-
         $nivel = $nivelUsuario ?? NivelHelper::nivelDesdeExperiencia($reclutado->exp->total());
-        $stats = new BattleStats(
-            stats: $base,
-            evs: $reclutado->evs,
-            nivel: $nivel,
-            ivs: $reclutado->ivs,
-        );
 
-        $evTotal = (int) floor(array_sum($reclutado->evs->toArray()));
-
-        return CalculadorCP::calcular($stats, $evTotal);
+        return CalculadoraPcReclutado::calcular($reclutado, $nivel) ?? 0;
     }
 
     private static function statsBaseValue(?Pokemon $pokemon): ?StatsValue
     {
-        if ($pokemon === null || $pokemon->stats->isEmpty()) {
-            return null;
-        }
-
-        $base = ['hp' => 0.0, 'atk' => 0.0, 'def' => 0.0, 'spAtk' => 0.0, 'spDef' => 0.0, 'speed' => 0.0];
-
-        foreach ($pokemon->stats as $stat) {
-            $clave = match ($stat->stat) {
-                StatEnum::HP => 'hp',
-                StatEnum::ATTACK => 'atk',
-                StatEnum::DEFENSE => 'def',
-                StatEnum::SPECIAL_ATTACK => 'spAtk',
-                StatEnum::SPECIAL_DEFENSE => 'spDef',
-                StatEnum::SPEED => 'speed',
-            };
-            $base[$clave] = (float) $stat->base_stat;
-        }
-
-        return new StatsValue(
-            hp: $base['hp'],
-            attack: $base['atk'],
-            defense: $base['def'],
-            spAtk: $base['spAtk'],
-            spDef: $base['spDef'],
-            speed: $base['speed'],
-        );
+        return EstadisticasBasePokemon::desdePokemon($pokemon);
     }
 
     /**

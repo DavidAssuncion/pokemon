@@ -34,4 +34,16 @@ final class DatosPokemonBatallaCollection extends Collection
 
         return $item instanceof DatosPokemonBatalla ? $item : null;
     }
+
+    /**
+     * Devuelve una nueva colección con cada pokémon ajustado al nivel indicado,
+     * conservando el orden original.
+     */
+    public function conNivel(int $nivel): self
+    {
+        return new self(array_map(
+            static fn (DatosPokemonBatalla $datos): DatosPokemonBatalla => $datos->conNivel($nivel),
+            $this->all(),
+        ));
+    }
 }
