@@ -28,7 +28,11 @@
 - 2026-11-16: dominio y puerto `FactorAparicion` creados; `php -l` y PHPStan limpios.
 - 2026-11-16: Infra (`AvistamientoEvento` + `EloquentAvistamientoRepositorio`) creada; PHPStan limpio tras corregir 4 avisos.
 - 2026-11-16: **autorización adicional del desarrollador:** «Commitea todo y mergealo contra master, tambien lo que no es tuyo». Se interpreta como autorización explícita para commit local de todo el árbol de trabajo y merge local fast-forward a `master`, sin `push`.
-- 2026-11-16: commit y merge en curso.
+- 2026-11-16: commit `b255a18` — `feat(avistamientos): dominio e infra del evento de 3 dias (TASK-048)` (36 archivos, 1.924 inserciones).
+- 2026-11-16: commit `5c44b36` — `chore: checkpoint del trabajo pendiente (TASK-032..TASK-047, UI y expediciones)` (253 archivos, 26.739 inserciones, 1.032 eliminaciones).
+- 2026-11-16: el hook `pre-commit` rechazó el segundo commit por espacios finales en `.opencode/work/TASK-042/architecture.md` y `bugs.txt`. Se eliminaron solo los espacios finales de esas líneas para pasar el hook; no se cambió el contenido.
+- 2026-11-16: `git checkout master` + `git merge --ff-only task-011` completado. `master` apunta a `5c44b36`; el árbol queda limpio y `master..task-011` está vacío.
+- 2026-11-16: **no se ejecutó `git push`**. `origin/master` sigue 31 commits por detrás de `master` local.
 
 ## Estado de la implementación
 
