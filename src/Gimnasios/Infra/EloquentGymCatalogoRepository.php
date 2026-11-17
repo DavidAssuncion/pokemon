@@ -6,6 +6,7 @@ namespace Src\Gimnasios\Infra;
 
 use App\Models\Gym;
 use App\Models\GymStage;
+use Src\Gimnasios\Domain\CatalogoLideres;
 use Src\Gimnasios\Domain\Collections\EquipoEtapaGimnasioCollection;
 use Src\Gimnasios\Domain\Collections\GimnasioCollection;
 use Src\Gimnasios\Domain\DataTransferObjects\EquipoEtapaGimnasio;
@@ -148,6 +149,7 @@ final class EloquentGymCatalogoRepository implements GymCatalogoRepositoryInterf
             medalla: $model->medalla,
             tipo: TipoPokemon::from((int) $model->tipo),
             nivelMinimo: (int) $model->nivel_minimo,
+            nombreLider: CatalogoLideres::nombreDe($model->slug),
             equipos: new EquipoEtapaGimnasioCollection($equipos),
         );
     }

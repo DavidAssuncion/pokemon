@@ -29,6 +29,7 @@ final class CatalogoGimnasios
                 medalla: 'Medalla Bicho',
                 tipo: TipoPokemon::BICHO,
                 nivelMinimo: 10,
+                nombreLider: CatalogoLideres::nombreDe('bug'),
                 equipos: new EquipoEtapaGimnasioCollection([
                     1 => new EquipoEtapaGimnasio(new IntCollection([268, 266]), new IntCollection([900])),
                     2 => new EquipoEtapaGimnasio(new IntCollection([11]), new IntCollection([15, 269])),
@@ -41,6 +42,7 @@ final class CatalogoGimnasios
                 medalla: 'Medalla Veneno',
                 tipo: TipoPokemon::VENENO,
                 nivelMinimo: 15,
+                nombreLider: CatalogoLideres::nombreDe('poison'),
                 equipos: new EquipoEtapaGimnasioCollection([
                     1 => new EquipoEtapaGimnasio(new IntCollection([72]), new IntCollection([33, 92])),
                     2 => new EquipoEtapaGimnasio(new IntCollection([30]), new IntCollection([42, 10112])),
@@ -53,6 +55,7 @@ final class CatalogoGimnasios
                 medalla: 'Medalla Normal',
                 tipo: TipoPokemon::NORMAL,
                 nivelMinimo: 20,
+                nombreLider: CatalogoLideres::nombreDe('normal'),
                 equipos: new EquipoEtapaGimnasioCollection([
                     1 => new EquipoEtapaGimnasio(new IntCollection([288]), new IntCollection([432, 18])),
                     2 => new EquipoEtapaGimnasio(new IntCollection([108]), new IntCollection([128, 398])),
@@ -65,6 +68,7 @@ final class CatalogoGimnasios
                 medalla: 'Medalla Planta',
                 tipo: TipoPokemon::PLANTA,
                 nivelMinimo: 25,
+                nombreLider: CatalogoLideres::nombreDe('grass'),
                 equipos: new EquipoEtapaGimnasioCollection([
                     1 => new EquipoEtapaGimnasio(new IntCollection([470]), new IntCollection([455, 407])),
                     2 => new EquipoEtapaGimnasio(new IntCollection([388]), new IntCollection([286, 465])),
@@ -77,6 +81,7 @@ final class CatalogoGimnasios
                 medalla: 'Medalla Volador',
                 tipo: TipoPokemon::VOLADOR,
                 nivelMinimo: 31,
+                nombreLider: CatalogoLideres::nombreDe('flying'),
                 equipos: new EquipoEtapaGimnasioCollection([
                     1 => new EquipoEtapaGimnasio(new IntCollection([426]), new IntCollection([398, 123])),
                     2 => new EquipoEtapaGimnasio(new IntCollection([472]), new IntCollection([22, 468])),
@@ -89,6 +94,7 @@ final class CatalogoGimnasios
                 medalla: 'Medalla Roca',
                 tipo: TipoPokemon::ROCA,
                 nivelMinimo: 36,
+                nombreLider: CatalogoLideres::nombreDe('rock'),
                 equipos: new EquipoEtapaGimnasioCollection([
                     1 => new EquipoEtapaGimnasio(new IntCollection([411]), new IntCollection([139, 409])),
                     2 => new EquipoEtapaGimnasio(new IntCollection([346]), new IntCollection([141, 112])),
@@ -101,6 +107,7 @@ final class CatalogoGimnasios
                 medalla: 'Medalla Eléctrico',
                 tipo: TipoPokemon::ELECTRICO,
                 nivelMinimo: 41,
+                nombreLider: CatalogoLideres::nombreDe('electric'),
                 equipos: new EquipoEtapaGimnasioCollection([
                     1 => new EquipoEtapaGimnasio(new IntCollection([171]), new IntCollection([26, 10100])),
                     2 => new EquipoEtapaGimnasio(new IntCollection([125]), new IntCollection([181, 405])),
@@ -113,6 +120,7 @@ final class CatalogoGimnasios
                 medalla: 'Medalla Hielo',
                 tipo: TipoPokemon::HIELO,
                 nivelMinimo: 46,
+                nombreLider: CatalogoLideres::nombreDe('ice'),
                 equipos: new EquipoEtapaGimnasioCollection([
                     1 => new EquipoEtapaGimnasio(new IntCollection([87]), new IntCollection([362, 461])),
                     2 => new EquipoEtapaGimnasio(new IntCollection([365, 10102]), new IntCollection([10104])),
@@ -125,6 +133,7 @@ final class CatalogoGimnasios
                 medalla: 'Medalla Fuego',
                 tipo: TipoPokemon::FUEGO,
                 nivelMinimo: 52,
+                nombreLider: CatalogoLideres::nombreDe('fire'),
                 equipos: new EquipoEtapaGimnasioCollection([
                     1 => new EquipoEtapaGimnasio(new IntCollection([59]), new IntCollection([78, 38])),
                     2 => new EquipoEtapaGimnasio(new IntCollection([219]), new IntCollection([609, 937])),
@@ -137,6 +146,7 @@ final class CatalogoGimnasios
                 medalla: 'Medalla Agua',
                 tipo: TipoPokemon::AGUA,
                 nivelMinimo: 57,
+                nombreLider: CatalogoLideres::nombreDe('water'),
                 equipos: new EquipoEtapaGimnasioCollection([
                     1 => new EquipoEtapaGimnasio(new IntCollection([279]), new IntCollection([319, 121])),
                     2 => new EquipoEtapaGimnasio(new IntCollection([131]), new IntCollection([342, 160])),
@@ -149,6 +159,7 @@ final class CatalogoGimnasios
                 medalla: 'Medalla Tierra',
                 tipo: TipoPokemon::TIERRA,
                 nivelMinimo: 62,
+                nombreLider: CatalogoLideres::nombreDe('ground'),
                 equipos: new EquipoEtapaGimnasioCollection([
                     1 => new EquipoEtapaGimnasio(new IntCollection([472, 980]), new IntCollection([389])),
                     2 => new EquipoEtapaGimnasio(new IntCollection([450]), new IntCollection([464, 901])),
@@ -161,6 +172,7 @@ final class CatalogoGimnasios
                 medalla: 'Medalla Psíquico',
                 tipo: TipoPokemon::PSIQUICO,
                 nivelMinimo: 67,
+                nombreLider: CatalogoLideres::nombreDe('psychic'),
                 equipos: new EquipoEtapaGimnasioCollection([
                     1 => new EquipoEtapaGimnasio(new IntCollection([376, 437]), new IntCollection([121])),
                     2 => new EquipoEtapaGimnasio(new IntCollection([480]), new IntCollection([481, 482])),
@@ -173,6 +185,7 @@ final class CatalogoGimnasios
                 medalla: 'Medalla Siniestro',
                 tipo: TipoPokemon::SINIESTRO,
                 nivelMinimo: 73,
+                nombreLider: CatalogoLideres::nombreDe('dark'),
                 equipos: new EquipoEtapaGimnasioCollection([
                     1 => new EquipoEtapaGimnasio(new IntCollection([197]), new IntCollection([319, 229])),
                     2 => new EquipoEtapaGimnasio(new IntCollection([248]), new IntCollection([302, 635])),
@@ -185,6 +198,7 @@ final class CatalogoGimnasios
                 medalla: 'Medalla Fantasma',
                 tipo: TipoPokemon::FANTASMA,
                 nivelMinimo: 78,
+                nombreLider: CatalogoLideres::nombreDe('ghost'),
                 equipos: new EquipoEtapaGimnasioCollection([
                     1 => new EquipoEtapaGimnasio(new IntCollection([979, 711]), new IntCollection([10233])),
                     2 => new EquipoEtapaGimnasio(new IntCollection([477]), new IntCollection([302, 302])),
@@ -197,6 +211,7 @@ final class CatalogoGimnasios
                 medalla: 'Medalla Lucha',
                 tipo: TipoPokemon::LUCHA,
                 nivelMinimo: 83,
+                nombreLider: CatalogoLideres::nombreDe('fighting'),
                 equipos: new EquipoEtapaGimnasioCollection([
                     1 => new EquipoEtapaGimnasio(new IntCollection([107]), new IntCollection([237, 106])),
                     2 => new EquipoEtapaGimnasio(new IntCollection([214]), new IntCollection([62, 475])),
@@ -209,6 +224,7 @@ final class CatalogoGimnasios
                 medalla: 'Medalla Hada',
                 tipo: TipoPokemon::HADA,
                 nivelMinimo: 88,
+                nombreLider: CatalogoLideres::nombreDe('fairy'),
                 equipos: new EquipoEtapaGimnasioCollection([
                     1 => new EquipoEtapaGimnasio(new IntCollection([959]), new IntCollection([184, 468])),
                     2 => new EquipoEtapaGimnasio(new IntCollection([210]), new IntCollection([10104, 282])),
@@ -221,6 +237,7 @@ final class CatalogoGimnasios
                 medalla: 'Medalla Acero',
                 tipo: TipoPokemon::ACERO,
                 nivelMinimo: 94,
+                nombreLider: CatalogoLideres::nombreDe('steel'),
                 equipos: new EquipoEtapaGimnasioCollection([
                     1 => new EquipoEtapaGimnasio(new IntCollection([208, 411]), new IntCollection([227])),
                     2 => new EquipoEtapaGimnasio(new IntCollection([376]), new IntCollection([448, 10102])),
@@ -233,6 +250,7 @@ final class CatalogoGimnasios
                 medalla: 'Medalla Dragón',
                 tipo: TipoPokemon::DRAGON,
                 nivelMinimo: 100,
+                nombreLider: CatalogoLideres::nombreDe('dragon'),
                 equipos: new EquipoEtapaGimnasioCollection([
                     1 => new EquipoEtapaGimnasio(new IntCollection([334, 330]), new IntCollection([784])),
                     2 => new EquipoEtapaGimnasio(new IntCollection([706]), new IntCollection([635, 691])),

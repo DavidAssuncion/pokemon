@@ -10,16 +10,18 @@ use Src\Shared\Tipos\TipoPokemon;
 
 /**
  * Representa un gimnasio del juego: sus datos fijos (slug, medalla, tipo, nivel
- * mínimo) y los equipos de cada etapa (EquipoEtapaGimnasio con vanguardia y
- * retaguardia para etapas 1-4).
+ * mínimo, nombre del líder) y los equipos de cada etapa (EquipoEtapaGimnasio
+ * con vanguardia y retaguardia para etapas 1-4).
  */
 final class Gimnasio
 {
+    /** @param non-empty-string $nombreLider */
     public function __construct(
         public readonly string $slug,
         public readonly string $medalla,
         public readonly TipoPokemon $tipo,
         public readonly int $nivelMinimo,
+        public readonly string $nombreLider,
         public readonly EquipoEtapaGimnasioCollection $equipos,
     ) {
     }
@@ -35,7 +37,7 @@ final class Gimnasio
             1 => 'Entrenador 1',
             2 => 'Entrenador 2',
             3 => 'Entrenador 3',
-            4 => 'Líder',
+            4 => $this->nombreLider,
             default => 'Desconocido',
         };
     }
