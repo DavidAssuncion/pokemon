@@ -76,8 +76,11 @@ RUN apt-get update \
         pcntl \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# OPCache para producción
+# OPcache para producción
 COPY docker/php/opcache.ini $PHP_INI_DIR/conf.d/opcache.ini
+
+# Límite de memoria PHP
+RUN echo "memory_limit = 512M" > $PHP_INI_DIR/conf.d/memory-limit.ini
 
 # --- Configuración Apache: docroot en public/, AllowOverride y mods ---
 RUN a2enmod rewrite headers \
