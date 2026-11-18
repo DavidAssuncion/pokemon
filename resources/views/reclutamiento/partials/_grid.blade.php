@@ -32,7 +32,7 @@
                     <button
                         type="button"
                         @click="$store.reclutamientoNavbar.reclutar(item.id)"
-                        :disabled="$store.reclutamientoNavbar.accionEnCurso"
+                        :disabled="$store.reclutamientoNavbar.accionEnCurso !== ''"
                         :aria-label="'Reclutar a ' + item.nombre"
                         class="mt-1 w-full px-2 py-1 bg-primary text-on-primary rounded-control text-2xs font-medium hover:bg-primary-hover focus-ring transition-colors disabled:cursor-not-allowed disabled:opacity-50"
                     >

@@ -91,4 +91,11 @@ final class ReglasBatalla
      * Fracción máxima de daño que puede repartirse mediante Vínculo de Daño.
      */
     public const VINCULO_DANO_MAXIMO = 0.5;
+
+    /**
+     * Tope de etapas que no cuenta para los movimientos que escalan con boosts
+     * cuando el combatiente tiene multiplicador permanente (jefe de mazmorra).
+     * Solo el exceso sobre este límite incrementa la potencia del movimiento.
+     */
+    public const LIMITE_ETAPAS_BOOST_EXTRA = 4;
 }

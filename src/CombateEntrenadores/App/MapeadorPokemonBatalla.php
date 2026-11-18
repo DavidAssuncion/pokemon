@@ -17,6 +17,7 @@ use Src\Battle\Domain\MovimientoBatalla;
 use Src\Battle\Domain\Posicion;
 use Src\Battle\Domain\Repositories\MovimientoRepository;
 use Src\CombateEntrenadores\Domain\GeneradorMovimientosTipo;
+use Src\Pokemon\Domain\Stats\AplicadorBonusPiezas;
 use Src\Pokemon\Domain\Stats\DatosStats;
 use Src\Pokemon\Domain\Stats\StatsValue;
 use Src\Shared\Collections\StringCollection;
@@ -46,6 +47,8 @@ class MapeadorPokemonBatalla
      * @param  list<string>|null  $movimientosSeleccionados
      * @param  MovimientoBatallaCollection|null  $movimientos  set ya calculado
      *         (selector rival); si es null se resuelven por nivel/fallback
+     * @param  StatsValue|null  $bonosPiezas  bonos de las piezas forjadas equipadas (ya agregados)
+     * @param  StringCollection|null  $effectKeysPiezas  claves de efecto de las pasivas de pieza
      */
     public function desdePokemon(
         Pokemon $pokemon,
@@ -63,8 +66,10 @@ class MapeadorPokemonBatalla
         ?int $nivelDesbloqueo = null,
         ?MapaSendaJugador $senda = null,
         ?MovimientoBatallaCollection $movimientos = null,
+        ?StatsValue $bonosPiezas = null,
+        ?StringCollection $effectKeysPiezas = null,
     ): DatosPokemonBatalla {
-        $stats = $this->statsDe($pokemon);
+        $stats = AplicadorBonusPiezas::aplicarADatos($this->statsDe($pokemon), $bonosPiezas);
 
         $tipos = $this->tiposDe($pokemon);
 
@@ -91,7 +96,7 @@ class MapeadorPokemonBatalla
             moves: $movimientos->all(),
             shiny: $shiny,
             iconName: '',
-            effectKeys: $this->efectosDe($pokemon, $habilidadActivaId)->toList(),
+            effectKeys: $this->efectosConPiezas($pokemon, $habilidadActivaId, $effectKeysPiezas)->toList(),
             item: $item,
             speciesId: (int) $pokemon->id,
             formSuffix: '',
@@ -331,6 +336,24 @@ class MapeadorPokemonBatalla
         }
 
         return new StringCollection(array_values($claves));
+    }
+
+    /**
+     * Claves de efecto de especie más las pasivas de las piezas equipadas,
+     * sin duplicados (una pieza puede repetir una clave de especie).
+     */
+    private function efectosConPiezas(
+        Pokemon $pokemon,
+        ?int $habilidadActivaId,
+        ?StringCollection $effectKeysPiezas,
+    ): StringCollection {
+        $claves = $this->efectosDe($pokemon, $habilidadActivaId);
+
+        foreach ($effectKeysPiezas ?? new StringCollection() as $clave) {
+            $claves->add($clave);
+        }
+
+        return $claves->unique();
     }
 
     public function statsDe(Pokemon $pokemon): DatosStats

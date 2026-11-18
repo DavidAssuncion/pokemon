@@ -56,4 +56,14 @@ interface InventarioJugador
      * @throws ItemDesconocido
      */
     public function incrementar(int $userId, string $clave, int $cantidad): void;
+
+    /**
+     * Garantiza que la fila `(user_id, item_key)` existe y la deja bloqueada
+     * hasta el commit. Crear la fila es un no-op de valor (cantidad 0).
+     *
+     * Exige una transacción activa: el bloqueo se libera al commit o rollback.
+     *
+     * @throws ItemDesconocido
+     */
+    public function bloquearClave(int $userId, string $clave): void;
 }

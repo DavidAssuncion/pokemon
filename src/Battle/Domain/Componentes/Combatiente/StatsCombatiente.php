@@ -110,6 +110,18 @@ final class StatsCombatiente
         return $total;
     }
 
+    public function bonificacionesPositivasSobreLimite(int $limite): int
+    {
+        $total = 0;
+        foreach ($this->multiplicadores->obtenerEtapas()->toArray() as $etapas) {
+            if ($etapas > $limite) {
+                $total += $etapas - $limite;
+            }
+        }
+
+        return $total;
+    }
+
     public function aplicarBonusInicialStats(float $porcentaje): void
     {
         if ($porcentaje <= 0.0) {

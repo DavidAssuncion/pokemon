@@ -18,13 +18,20 @@ use Src\Battle\Infra\Repositories\EloquentMovimientoRepository;
 use Src\Battle\Infrastructure\FabricaBatallaMock;
 use Src\CombateEntrenadores\Domain\Repositories\EntrenadorLogRepositoryInterface;
 use Src\CombateEntrenadores\Infra\EloquentEntrenadorLogRepository;
+use Src\Equipos\Domain\Ports\PiezasEquipadas;
 use Src\Equipos\Domain\TeamRepositoryInterface;
 use Src\Equipos\Infra\EloquentTeamRepository;
+use Src\Equipos\Infra\Repositorios\PiezasEquipadasEloquent;
 use Src\Exploraciones\Domain\Ports\ConsultorPlantaciones;
+use Src\Forja\Domain\Ports\DefinicionesPieza;
+use Src\Forja\Domain\Ports\NidosConstruidos;
+use Src\Forja\Domain\Ports\PiezasPorEspecie;
+use Src\Forja\Infra\Repositorios\LectorFamiliasPiezas;
 use Src\Gimnasios\Domain\Repositories\GymCatalogoRepositoryInterface;
 use Src\Gimnasios\Domain\Repositories\GymProgressRepositoryInterface;
 use Src\Gimnasios\Infra\EloquentGymCatalogoRepository;
 use Src\Gimnasios\Infra\EloquentGymProgressRepository;
+use Src\Granjas\Infra\Nidos\NidosConstruidosEloquent;
 use Src\Granjas\Infra\Plantaciones\ConsultorPlantacionesEloquent;
 use Src\Habitats\Domain\Repositories\HabitatGestionRepositoryInterface;
 use Src\Habitats\Domain\Repositories\HabitatLecturaRepositoryInterface;
@@ -59,6 +66,10 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(MovimientoRepository::class, EloquentMovimientoRepository::class);
         $this->app->bind(InventarioJugador::class, InventarioJugadorEloquent::class);
         $this->app->bind(ConsultorPlantaciones::class, ConsultorPlantacionesEloquent::class);
+        $this->app->bind(NidosConstruidos::class, NidosConstruidosEloquent::class);
+        $this->app->bind(DefinicionesPieza::class, LectorFamiliasPiezas::class);
+        $this->app->bind(PiezasPorEspecie::class, LectorFamiliasPiezas::class);
+        $this->app->bind(PiezasEquipadas::class, PiezasEquipadasEloquent::class);
     }
 
     /**

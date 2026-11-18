@@ -6,6 +6,7 @@ namespace App\Support\Pc;
 
 use App\Models\Reclutado;
 use App\Models\Team;
+use App\Support\Piezas\FabricaPiezasReclutado;
 use Src\Shared\Domain\ReglasEquipo;
 
 /**
@@ -16,6 +17,11 @@ use Src\Shared\Domain\ReglasEquipo;
  */
 final class ObtenerPcEquipoJugador
 {
+    public function __construct(
+        private readonly FabricaPiezasReclutado $fabricaPiezas,
+    ) {
+    }
+
     public function obtener(?int $teamId, int $userId, int $nivelJugador): PcEquipoJugador
     {
         if ($teamId === null) {
@@ -31,16 +37,26 @@ final class ObtenerPcEquipoJugador
             return new PcEquipoJugador(miembros: 0, pc: null, completo: false);
         }
 
+        $reclutados = [];
+
+        foreach ($team->members->sortBy('slot') as $member) {
+            if ($member->reclutado instanceof Reclutado) {
+                $reclutados[] = $member->reclutado;
+            }
+        }
+
+        $piezas = $this->fabricaPiezas->paraListado($userId, $reclutados);
+
         $miembros = 0;
         $total = 0;
 
-        foreach ($team->members->sortBy('slot') as $member) {
-            $reclutado = $member->reclutado;
-            if (! $reclutado instanceof Reclutado) {
-                continue;
-            }
+        foreach ($reclutados as $reclutado) {
+            $cp = CalculadoraPcReclutado::calcular(
+                $reclutado,
+                $nivelJugador,
+                $piezas->bonosDe($reclutado->id),
+            );
 
-            $cp = CalculadoraPcReclutado::calcular($reclutado, $nivelJugador);
             if ($cp === null) {
                 continue;
             }

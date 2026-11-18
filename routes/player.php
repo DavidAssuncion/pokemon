@@ -9,6 +9,7 @@ use App\Http\Controllers\ReclutamientoController;
 use App\Http\Controllers\SendasController;
 use App\Http\Controllers\TeamController;
 use Illuminate\Support\Facades\Route;
+use Src\Equipos\Infra\Controllers\PiezasReclutadoController;
 use Src\Reclutamiento\Infra\Controllers\ReclutamientoApiController;
 
 // Player section routes
@@ -77,3 +78,14 @@ Route::post('/api/reclutados/{reclutado}/toggle-favorito', [ReclutadoController:
 Route::get('/api/reclutados/favoritos', [ReclutadoController::class, 'listarFavoritos']);
 Route::get('/api/reclutado/{reclutado}/capacidades', [ReclutadoController::class, 'capacidades']);
 Route::post('/api/reclutado/{reclutado}/rol', [ReclutadoController::class, 'actualizarRol']);
+
+// Piezas forjadas equipadas por reclutado (3 slots) — ver src/Equipos/App/Piezas
+Route::get('/api/reclutados/{reclutado}/piezas', [PiezasReclutadoController::class, 'index'])
+    ->whereNumber('reclutado')
+    ->name('piezas.index');
+Route::put('/api/reclutados/{reclutado}/piezas/{slot}', [PiezasReclutadoController::class, 'update'])
+    ->whereNumber('reclutado')
+    ->name('piezas.update');
+Route::delete('/api/reclutados/{reclutado}/piezas/{slot}', [PiezasReclutadoController::class, 'destroy'])
+    ->whereNumber('reclutado')
+    ->name('piezas.destroy');

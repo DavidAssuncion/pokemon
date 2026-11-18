@@ -14,7 +14,14 @@ use Src\Battle\Domain\Effects\FabricaEfectos;
 use Src\Battle\Domain\EquipoBatalla;
 use Src\Battle\Domain\Posicion;
 use Src\CombateEntrenadores\App\MapeadorPokemonBatalla;
+use Src\Equipos\App\Piezas\ObtenerPiezas;
 use Src\Exploraciones\Domain\ValueObjects\ResultadoBatallaExploracion;
+use Src\Forja\Domain\Piezas\AgregadorBonosPiezas;
+use Src\Forja\Domain\Piezas\DataTransferObjects\BonosEquipamiento;
+use Src\Forja\Domain\Ports\PiezasPorEspecie;
+use Src\Pokemon\Domain\Stats\StatsValue;
+use Src\Shared\Collections\IntCollection;
+use Src\Shared\Collections\StringCollection;
 use Src\Shared\Domain\NivelHelper;
 
 /**
@@ -27,6 +34,9 @@ class CombateExploracion
     public function __construct(
         private readonly MapeadorPokemonBatalla $mapeador,
         private readonly ?FabricaEfectos $fabricaEfectos = null,
+        private readonly ?ObtenerPiezas $obtenerPiezas = null,
+        private readonly ?PiezasPorEspecie $piezasPorEspecie = null,
+        private readonly AgregadorBonosPiezas $agregadorBonos = new AgregadorBonosPiezas(),
     ) {
     }
 
@@ -54,7 +64,8 @@ class CombateExploracion
         $item = array_values($items)[0] ?? null;
         $item = is_string($item) ? $item : null;
 
-        $senda = app(CargarMapaSendaJugador::class)->para((int) $reclutado->user_id);
+        $senda = app(CargarMapaSendaJugador::class)->para($reclutado->user_id);
+        $bonos = $this->bonosDe($reclutado);
 
         $explorador = $this->mapeador->desdePokemon(
             pokemon: $reclutado->pokemon,
@@ -70,6 +81,8 @@ class CombateExploracion
             habilidadActivaId: $reclutado->habilidad_activa_id,
             nivelDesbloqueo: $nivelDesbloqueo,
             senda: $senda,
+            bonosPiezas: $bonos->bonos,
+            effectKeysPiezas: $bonos->habilidades,
         );
 
         $salvaje->loadMissing('stats', 'types', 'abilities');
@@ -82,6 +95,34 @@ class CombateExploracion
         );
 
         return $this->combatirDatos($explorador, $salvajeDatos, $estadoInicial, $modificadorDanio);
+    }
+
+    /**
+     * Bonos y pasivas de las piezas equipadas por el explorador.
+     *
+     * Sin servicios de piezas o sin piezas equipadas devuelve bonos neutros,
+     * de modo que el salvaje (que nunca lleva piezas) y los equipos sin
+     * forja mantienen el comportamiento previo.
+     */
+    private function bonosDe(Reclutado $reclutado): BonosEquipamiento
+    {
+        if ($this->obtenerPiezas === null || $this->piezasPorEspecie === null) {
+            return new BonosEquipamiento(StatsValue::ceros(), new StringCollection());
+        }
+
+        $reclutadoId = $reclutado->id;
+        $claves = $this->obtenerPiezas
+            ->paraReclutados($reclutado->user_id, new IntCollection([$reclutadoId]))
+            ->obtener($reclutadoId)
+            ->todas();
+
+        if ($claves->isEmpty()) {
+            return new BonosEquipamiento(StatsValue::ceros(), new StringCollection());
+        }
+
+        $definiciones = $this->agregadorBonos->definicionesDe($this->piezasPorEspecie, $claves);
+
+        return $this->agregadorBonos->paraClaves($definiciones, $claves);
     }
 
     /**

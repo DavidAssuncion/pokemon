@@ -16,12 +16,17 @@ class DatosPokemonBatalla
 
     public readonly StatsValue $ivs;
 
+    /** Multiplicador permanente de combate; no es una etapa; no afecta HP. */
+    private float $multiplicadorStatsJefe = 1.0;
+
     /**
      * @param  MovimientoBatalla[]  $moves
      * @param  TipoPokemon[]  $tipos
      * @param  string[]  $effectKeys  Claves de efectos/habilidades (ej: 'armor_pierce')
      * @param  StatsValue|null  $evs  Si no se especifican, se inicializan a 0.
      * @param  StatsValue|null  $ivs  Si no se especifican, se generan aleatorios (0-15).
+     * @param  float  $multiplicadorStatsJefe  Efecto permanente sobre las estadísticas de combate
+     *                                         (no es una etapa); la vida queda excluida.
      */
     public function __construct(
         public readonly string $id,
@@ -56,9 +61,11 @@ class DatosPokemonBatalla
         public readonly float $bonusInicialStats = 0.0,
         public readonly float $peso = 0.0,
         public readonly ?MapaSendaJugador $senda = null,
+        float $multiplicadorStatsJefe = 1.0,
     ) {
         $this->evs = $evs ?? StatsValue::ceros();
         $this->ivs = $ivs ?? GeneradorIvs::aleatorios();
+        $this->multiplicadorStatsJefe = $multiplicadorStatsJefe;
 
         foreach ($moves as $m) {
             if (! $m instanceof MovimientoBatalla) {
@@ -70,6 +77,15 @@ class DatosPokemonBatalla
                 throw new \InvalidArgumentException('Types must be TipoPokemon instances');
             }
         }
+    }
+
+    /**
+     * Multiplicador permanente de las estadísticas de combate del jefe. No es
+     * una etapa y no afecta a la vida.
+     */
+    public function multiplicadorStatsJefe(): float
+    {
+        return $this->multiplicadorStatsJefe;
     }
 
     /**
@@ -106,6 +122,7 @@ class DatosPokemonBatalla
             bonusInicialStats: $this->bonusInicialStats,
             peso: $this->peso,
             senda: $this->senda,
+            multiplicadorStatsJefe: $this->multiplicadorStatsJefe,
         );
     }
 }

@@ -31,6 +31,20 @@ class PokemonSeeder extends Seeder
     ];
 
     /**
+     * Rangos de pokemon.id que corresponden a formas regionales. Se usa el ID
+     * porque pokemon.csv perdió el sufijo de región en 38 formas de Alola y
+     * Galar, así que el nombre ya no permite detectarlas.
+     *
+     * @var array<string, list<array{0: int, 1: int}>>
+     */
+    private const REGION_RANGES = [
+        'alola' => [[10091, 10092], [10100, 10115]],
+        'galar' => [[10161, 10180]],
+        'hisui' => [[10229, 10244]],
+        'paldea' => [[10250, 10253]],
+    ];
+
+    /**
      * Run the database seeds.
      */
     public function run(): void
@@ -63,23 +77,39 @@ class PokemonSeeder extends Seeder
             $typesByPokemon[$pokemonId][] = $type;
         }
 
-        $evolutionByPokemon = [];
+        /**
+         * Filas de pokemon_evolution agrupadas por especie evolucionada: una
+         * misma evolución puede tener varias filas (formas regionales) y hay
+         * que conservarlas todas para elegir bien el padre y el nivel.
+         *
+         * @var array<int, list<array<string, string>>> $evolutionRowsByEvolved
+         */
+        $evolutionRowsByEvolved = [];
         foreach ($evolutionRows as $evolution) {
-            $pokemonId = (int) $evolution['evolved_species_id'];
-            $evolutionByPokemon[$pokemonId] = $evolution;
+            $evolvedId = (int) $evolution['evolved_species_id'];
+            $evolutionRowsByEvolved[$evolvedId][] = $evolution;
         }
 
-        $pokemonRowsToInsert = [];
         $statsToInsert = [];
         $typesToInsert = [];
 
         /**
-         * Filas sembradas para la segunda pasada (evoluciones): pokemonId y
-         * región (null = forma normal). El species original queda en el mapa.
+         * Filas sembradas para la segunda pasada (evoluciones), indexadas por
+         * pokemonId: región (null = forma normal), species original y fila de
+         * pokemon.csv.
          *
-         * @var list<array{pokemon_id: int, region: null|string, species: array<string, string>}> $seeded
+         * @var array<int, array{region: null|string, species: array<string, string>, row: array<string, string>}> $seeded
          */
         $seeded = [];
+
+        /**
+         * Cadena evolutiva definitiva por pokemonId. Se calcula en la pasada de
+         * clasificación y se reasigna en la de evoluciones cuando el pokémon se
+         * cuelga de su pre-evolución regional.
+         *
+         * @var array<int, null|int> $chainById
+         */
+        $chainById = [];
 
         /**
          * Mapa de re-parenting evolutivo: región => species NORMAL original =>
@@ -101,31 +131,15 @@ class PokemonSeeder extends Seeder
 
             $pokemonId = (int) $row['id'];
 
-            $region = null;
-            if ($row['is_default'] !== '1') {
-                $region = $this->regionOf($row['name']);
-                if ($region === null) {
-                    // Forma NO regional (rotom-heat, zygarde-10, terapagos-terastal,
-                    // koraidon-limited-build, castform-sunny, megas/gmax...): se omite
-                    // por completo (ni pokemon, ni stats, ni types, ni evolution).
-                    continue;
-                }
+            $region = $row['is_default'] === '1' ? null : $this->regionById($pokemonId);
+            if ($row['is_default'] !== '1' && $region === null) {
+                // Forma NO regional (rotom-heat, zygarde-10, terapagos-terastal,
+                // koraidon-limited-build, castform-sunny, megas/gmax...): se omite
+                // por completo (ni pokemon, ni stats, ni types, ni evolution).
+                continue;
             }
 
-            $pokemonRowsToInsert[] = [
-                'id' => $pokemonId,
-                'name' => Str::ucfirst($row['name']),
-                // Invariante: en los normales id == species_id (como hoy); en los
-                // regionales el species es PROPIO (= pokemon.id) para que el BFS del
-                // Admin y ServicioEvolucion no mezclen formas con la species normal.
-                'species_id' => $region === null ? $speciesId : $pokemonId,
-                'height' => (int) $row['height'],
-                'weight' => (int) $row['weight'],
-                'base_experience' => (int) $row['base_experience'],
-                'capture_rate' => (int) $species['capture_rate'],
-                'hatch' => ! empty($species['hatch_counter']) ? (int) $species['hatch_counter'] : null,
-                'evolution_chain_id' => $this->chainIdToStore($region, $species),
-            ];
+            $chainById[$pokemonId] = $this->chainIdToStore($region, $species);
 
             foreach ($statsByPokemon[$pokemonId] ?? [] as $stat) {
                 $statsToInsert[] = [
@@ -144,10 +158,13 @@ class PokemonSeeder extends Seeder
                 ];
             }
 
-            $seeded[] = [
-                'pokemon_id' => $pokemonId,
+            // Invariante: en los normales id == species_id; en los regionales el
+            // species es PROPIO (= pokemon.id) para que el BFS del Admin y
+            // ServicioEvolucion no mezclen formas con la species normal.
+            $seeded[$pokemonId] = [
                 'region' => $region,
                 'species' => $species,
+                'row' => $row,
             ];
 
             if ($region !== null) {
@@ -157,16 +174,43 @@ class PokemonSeeder extends Seeder
 
         // === Segunda pasada: evoluciones (necesita el mapa regional completo) ===
         $evolutionsToInsert = [];
-        foreach ($seeded as $entry) {
-            $pokemonId = $entry['pokemon_id'];
-            $species = $entry['species'];
-            $evolvesFromSpeciesId = ! empty($species['evolves_from_species_id']) ? (int) $species['evolves_from_species_id'] : null;
+        foreach ($seeded as $pokemonId => $entry) {
+            $speciesParent = ! empty($entry['species']['evolves_from_species_id'])
+                ? (int) $entry['species']['evolves_from_species_id']
+                : null;
 
-            if ($evolvesFromSpeciesId === null) {
-                // Sin pre-evolución → sin fila (igual que hoy). Cubre casos límite
-                // aceptados: wooper-paldea no muestra evolución a clodsire (clodsire
-                // no es regional) y tauros-paldea tiene 3 sabores sin evolución.
+            if ($speciesParent === null) {
+                // Sin pre-evolución → sin fila. Cubre casos límite aceptados:
+                // wooper-paldea no muestra evolución a clodsire y tauros-paldea
+                // tiene 3 sabores sin evolución.
                 continue;
+            }
+
+            $rows = $evolutionRowsByEvolved[$pokemonId] ?? [];
+            $level = $this->minimumLevelOf($rows) ?? 40;
+
+            $hasOwnRow = false;
+            foreach ($rows as $row) {
+                if (($row['base_form_id'] ?? '') === '') {
+                    $hasOwnRow = true;
+
+                    break;
+                }
+            }
+
+            $parent = $speciesParent;
+
+            if ($entry['region'] === null && ! $hasOwnRow && $rows !== []) {
+                // Evolución cuya única fuente es una forma regional (perrserker,
+                // obstagoon, cursola, sirfetchd, mr-rime, runerigus, sneasler,
+                // overqwil, clodsire): se cuelga de la pre-evolución regional y
+                // comparte su cadena. Si esa forma no se siembra (basculegion 902
+                // ← basculin-white-striped 10247), se conserva el padre normal.
+                $baseFormId = (int) $rows[0]['base_form_id'];
+                if (isset($seeded[$baseFormId])) {
+                    $parent = $baseFormId;
+                    $chainById[$pokemonId] = $chainById[$baseFormId];
+                }
             }
 
             if ($entry['region'] !== null) {
@@ -175,14 +219,30 @@ class PokemonSeeder extends Seeder
                 // pre (raichu-alola ← pikachu, exeggutor-alola ← exeggcute,
                 // marowak-alola ← cubone), se conserva el species normal original →
                 // quedan como familias de 1 miembro en el BFS (aceptado).
-                $evolvesFromSpeciesId = $regionalPokemonBySpecies[$entry['region']][$evolvesFromSpeciesId] ?? $evolvesFromSpeciesId;
+                $parent = $regionalPokemonBySpecies[$entry['region']][$parent] ?? $parent;
             }
 
-            $evolution = $evolutionByPokemon[$pokemonId] ?? null;
             $evolutionsToInsert[] = [
                 'evolved_species_id' => $pokemonId,
-                'evolves_from_species_id' => $evolvesFromSpeciesId,
-                'minimum_level' => ! empty($evolution['minimum_level']) ? (int) $evolution['minimum_level'] : 40,
+                'evolves_from_species_id' => $parent,
+                'minimum_level' => $level,
+            ];
+        }
+
+        // === Filas de pokemon (después del plan: la cadena puede cambiar) ===
+        $pokemonRowsToInsert = [];
+        foreach ($seeded as $pokemonId => $entry) {
+            $row = $entry['row'];
+            $pokemonRowsToInsert[] = [
+                'id' => $pokemonId,
+                'name' => Str::ucfirst($row['name']),
+                'species_id' => $entry['region'] === null ? (int) $row['species_id'] : $pokemonId,
+                'height' => (int) $row['height'],
+                'weight' => (int) $row['weight'],
+                'base_experience' => (int) $row['base_experience'],
+                'capture_rate' => (int) $entry['species']['capture_rate'],
+                'hatch' => ! empty($entry['species']['hatch_counter']) ? (int) $entry['species']['hatch_counter'] : null,
+                'evolution_chain_id' => $chainById[$pokemonId],
             ];
         }
 
@@ -232,19 +292,39 @@ class PokemonSeeder extends Seeder
     }
 
     /**
-     * Región de una forma regional, o null si el nombre no es regional. Usa
-     * str_contains para cubrir sufijos compuestos: darmanitan-galar-standard,
-     * darmanitan-galar-zen, tauros-paldea-combat-breed...
+     * Región de una forma regional por pokemon.id, o null si el ID no cae en
+     * ningún bloque regional. No se usa el nombre porque pokemon.csv perdió el
+     * sufijo en 38 formas de Alola y Galar.
      */
-    private function regionOf(string $name): ?string
+    private function regionById(int $pokemonId): ?string
     {
-        foreach (array_keys(self::REGION_CODES) as $region) {
-            if (str_contains($name, '-'.$region)) {
-                return $region;
+        foreach (self::REGION_RANGES as $region => $ranges) {
+            foreach ($ranges as [$from, $to]) {
+                if ($pokemonId >= $from && $pokemonId <= $to) {
+                    return $region;
+                }
             }
         }
 
         return null;
+    }
+
+    /**
+     * Nivel mínimo de evolución de las filas del CSV, o null si ninguna lo
+     * informa.
+     *
+     * @param  list<array<string, string>>  $rows
+     */
+    private function minimumLevelOf(array $rows): ?int
+    {
+        $levels = [];
+        foreach ($rows as $row) {
+            if (! empty($row['minimum_level'])) {
+                $levels[] = (int) $row['minimum_level'];
+            }
+        }
+
+        return $levels === [] ? null : min($levels);
     }
 
     private function loadCsv(string $path): array

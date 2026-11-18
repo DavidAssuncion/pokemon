@@ -89,6 +89,9 @@ class JefeEstado
     }
 
     /**
+     * Lista vacía = jefe sin puntos débiles; no se crea ninguna parte
+     * implícita.
+     *
      * @param  list<array<string, mixed>>  $partes
      * @return list<ParteJefe>
      */
@@ -107,10 +110,6 @@ class JefeEstado
                 hpMax: max(1.0, $hpMax * $fraccion),
             );
             $indice++;
-        }
-
-        if ($resultado === []) {
-            $resultado[] = new ParteJefe('nucleo', 'Núcleo', max(1.0, $hpMax * 0.2), max(1.0, $hpMax * 0.2));
         }
 
         return $resultado;

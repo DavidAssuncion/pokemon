@@ -15,20 +15,24 @@ use Src\Exploraciones\App\ArchivarExpedicion;
 use Src\Exploraciones\App\ConstructorExpedicionesResumen;
 use Src\Exploraciones\App\ConsultarExpedicionesUsuario;
 use Src\Exploraciones\App\ConsultorEstadoExpedicion;
+use Src\Exploraciones\App\ProcesarExploracionesPendientes;
 use Src\Exploraciones\Presentation\PresentadorExploraciones;
 
 /**
- * Endpoints de solo lectura y archivado del panel de expediciones.
+ * Endpoints del panel de expediciones y archivado.
  *
- * Los GET no ejecutan el procesamiento pendiente ni mutan estado: el
- * procesamiento sigue ocurriendo en `GET /exploraciones`, en `recoger` y en el
- * comando programado. Todas las rutas cuelgan del grupo `auth` y las consultas
- * acotan por `user_id`, además del global scope del modelo.
+ * Los GET del panel disparan el mismo procesamiento bajo demanda que
+ * `GET /exploraciones`, con el throttle de 30 s y el lock por expedición ya
+ * implementados en `ProcesarExploracionesPendientes`; por tanto, ya no son
+ * operaciones de solo lectura. `recoger` y el comando programado siguen
+ * procesando por su cuenta. Todas las rutas cuelgan del grupo `auth` y las
+ * consultas acotan por `user_id`, además del global scope del modelo.
  */
 final class ExpedicionesPanelController extends Controller
 {
     public function __construct(
         private readonly ConsultarExpedicionesUsuario $expediciones,
+        private readonly ProcesarExploracionesPendientes $pendientes,
         private readonly ConstructorExpedicionesResumen $resumenes,
         private readonly ArchivarExpedicion $archivar,
         private readonly ConsultorEstadoExpedicion $consultor,
@@ -42,7 +46,11 @@ final class ExpedicionesPanelController extends Controller
      */
     public function index(): JsonResponse
     {
-        $panel = $this->resumenes->panel((int) Auth::id());
+        $userId = (int) Auth::id();
+
+        $this->pendientes->paraUsuario($userId);
+
+        $panel = $this->resumenes->panel($userId);
 
         return response()->json([
             'expediciones' => $panel->toArray(),
@@ -85,6 +93,9 @@ final class ExpedicionesPanelController extends Controller
 
         abort_unless($exploracion->user_id === $userId, 404);
         abort_if($this->consultor->estaCancelada($exploracion), 404);
+
+        $this->pendientes->una($exploracion);
+        $exploracion->refresh();
 
         $exploracion->loadMissing('reclutado.pokemon.types', 'habitat');
 

@@ -11,8 +11,8 @@ use Src\Shared\Domain\Exceptions\RecursoNoExiste;
  */
 final class RecetaNoExiste extends RecursoNoExiste
 {
-    public static function paraClave(string $clave): self
+    public static function paraClave(): self
     {
-        return new self("Receta desconocida: {$clave}");
+        return new self('La receta no existe.');
     }
 }

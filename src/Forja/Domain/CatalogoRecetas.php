@@ -45,7 +45,7 @@ final class CatalogoRecetas
         $recetas = self::indice();
 
         if (! isset($recetas[$clave])) {
-            throw RecetaNoExiste::paraClave($clave);
+            throw RecetaNoExiste::paraClave();
         }
 
         return $recetas[$clave];

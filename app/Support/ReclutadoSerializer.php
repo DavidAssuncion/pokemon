@@ -15,6 +15,8 @@ use App\Models\Reclutado;
 use App\Models\TypePathNode;
 use App\Support\Pc\CalculadoraPcReclutado;
 use App\Support\Pc\EstadisticasBasePokemon;
+use App\Support\Piezas\PiezasReclutado;
+use App\Support\Piezas\SlotsPiezas;
 use Src\Pokemon\Domain\Stats\BattleStats;
 use Src\Pokemon\Domain\Stats\StatsValue;
 use Src\Shared\Domain\NivelHelper;
@@ -38,12 +40,16 @@ final class ReclutadoSerializer
      * @param  bool  $incluirMovimientosDisponibles  El listado de /equipos carga
      *                                               esta clave bajo demanda en el modal;
      *                                               el resto de endpoints la incluye.
+     * @param  PiezasReclutado|null  $piezas  Presentador del listado (una lectura
+     *                                        para todos los reclutados); sin él,
+     *                                        `piezas` viaja con sus 3 slots vacíos.
      * @return array<string, mixed>
      */
     public static function serializar(
         Reclutado $reclutado,
         ?int $nivelUsuario = null,
         bool $incluirMovimientosDisponibles = true,
+        ?PiezasReclutado $piezas = null,
     ): array {
         $pokemon = $reclutado->pokemon;
         $expTotal = $reclutado->exp->total();
@@ -74,7 +80,8 @@ final class ReclutadoSerializer
             'rol' => $reclutado->rol()->value,
             'stats' => self::statsDe($pokemon),
             'stats_calculados' => self::statsCalculados($reclutado, $nivelUsuario),
-            'cp' => self::cpDe($reclutado, $nivelUsuario),
+            'cp' => self::cpDe($reclutado, $nivelUsuario, $piezas),
+            'piezas' => $piezas?->slotsDe($reclutado->id) ?? SlotsPiezas::vacios(),
             'habilidades' => self::nombresDeHabilidades($pokemon),
             'movimientos_pokemon' => self::nombresDeMovimientos($pokemon),
             'movimientos_seleccionados' => $movimientosSeleccionados,
@@ -104,12 +111,14 @@ final class ReclutadoSerializer
         iterable $reclutados,
         ?int $nivelUsuario = null,
         bool $incluirMovimientosDisponibles = true,
+        ?PiezasReclutado $piezas = null,
     ): array {
         return collect($reclutados)
             ->map(fn (Reclutado $reclutado): array => self::serializar(
                 $reclutado,
                 $nivelUsuario,
                 $incluirMovimientosDisponibles,
+                $piezas,
             ))
             ->sortByDesc(static fn (array $reclutado): int => (int) ($reclutado['cp'] ?? 0))
             ->values()
@@ -351,16 +360,20 @@ final class ReclutadoSerializer
 
     /**
      * Combat Power del reclutado (B2): CP canónico al NIVEL DEL USUARIO con
-     * los EVs/IVs reales del reclutado, delegado en `CalculadoraPcReclutado`.
+     * los EVs/IVs reales del reclutado y los bonos de sus piezas, delegado en
+     * `CalculadoraPcReclutado`.
      * Si no se recibe nivelUsuario, se cae al nivel del reclutado (fallback que
      * mantiene el contrato de ReclutadoSerializerCPTest). Si el reclutado no
      * tiene pokémon o stats, devuelve 0.
      */
-    private static function cpDe(Reclutado $reclutado, ?int $nivelUsuario = null): int
-    {
+    private static function cpDe(
+        Reclutado $reclutado,
+        ?int $nivelUsuario = null,
+        ?PiezasReclutado $piezas = null,
+    ): int {
         $nivel = $nivelUsuario ?? NivelHelper::nivelDesdeExperiencia($reclutado->exp->total());
 
-        return CalculadoraPcReclutado::calcular($reclutado, $nivel) ?? 0;
+        return CalculadoraPcReclutado::calcular($reclutado, $nivel, $piezas?->bonosDe($reclutado->id)) ?? 0;
     }
 
     private static function statsBaseValue(?Pokemon $pokemon): ?StatsValue

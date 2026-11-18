@@ -187,7 +187,9 @@ Inmunes declarados como constantes privadas (`INMUNES_GRANIZO`, `INMUNES_TORMENT
 - `obtenerStatEfectivo(string $stat): float` — Stat base × multiplicador de etapas. Parálisis reduce velocidad a la mitad.
 - `aplicarCambioEtapa(string $stat, int $change)` — Modifica etapa (clamp -6..+6).
 - `velocidadEfectiva(): float` — `obtenerStatEfectivo(StatClave::VELOCIDAD)`: velocidad base × multiplicadores de etapas × 0.5 si parálisis. Es la métrica del orden de turnos y de `effectiveSpeed`.
-- `aArrayVista(int $teamIdx): array` — Serializa a array para la vista: `refId`, `nombre`, `icon` (URL generada por `urlIcono()` desde `speciesId`/`shiny`/`formSuffix`, con fallback al placeholder 0), `es_shiny`, `hp`, `maxHp`, `defHp`, `maxDefHp`, `spDefHp`, `maxSpDefHp`, `posicion`, `alive`, `speed` (base), **`effectiveSpeed`** (float con etapas y parálisis), `status`, `statusTurns`, `stages`, `team`, `item`.
+- `bonificacionesPositivas(): int` — suma de etapas positivas de todos los stats (delega en `StatsCombatiente`). Sin cambios: la usa `EjecutorCantoEncantador` (`bonificacionesPositivas() > 0`).
+- `bonificacionesPositivasParaDanio(): int` — si `pokemon()->battleStats()->multiplicadorStats() > 1.0` delega en `StatsCombatiente::bonificacionesPositivasSobreLimite(ReglasBatalla::LIMITE_ETAPAS_BOOST_EXTRA)`; si no, devuelve `bonificacionesPositivas()`. Solo la usa `ManejadorDanioBase` en las fórmulas `objetivo_con_boost`, `objetivo_boost` y `atacante_boost`.
+- `aArrayVista(int $teamIdx): array` — Serializa a array para la vista: `refId`, `nombre`, `icon` (URL generada por `urlIcono()` desde `speciesId`/`shiny`/`formSuffix`, con fallback al placeholder 0), `es_shiny`, `hp`, `maxHp`, `defHp`, `maxDefHp`, `spDefHp`, `maxSpDefHp`, `posicion`, `alive`, `speed` (base), **`effectiveSpeed`** (float con etapas y parálisis), `status`, `statusTurns`, `stages`, `team`, `item`, **`statsJefe`** (lista de cinco entradas `{clave,label,porcentaje}`; vacía si no es jefe o su multiplicador permanente es ≤ 1.0).
 - `curarHp(float $porcentaje)` — Cura porcentaje del HP máximo.
 - `curarBarreras(float $porcentaje)` — Cura porcentaje de ambas barreras.
 - `__serialize()` / `__unserialize()` — Serialización a sesión con prefijo de versión. Incluye `effects` y `pokemon` serializados anidados.
@@ -273,7 +275,9 @@ Inmunes declarados como constantes privadas (`INMUNES_GRANIZO`, `INMUNES_TORMENT
 
 **Responsabilidad:** DTO de entrada para construir combatientes desde datos mock. Contiene stats, tipos, movimientos, efectos, objeto, shiny, iconName. Valida que `moves` sean `MovimientoBatalla` y `tipos` sean `TipoPokemon`.
 
-**Propiedades:** `id`, `nombre`, `hp`, `atk`, `def`, `spAtk`, `spDef`, `speed`, `tipos` (TipoPokemon[]), `posicion` (Posicion), `moves` (MovimientoBatalla[]), `shiny`, `iconName`, `effectKeys` (string[]), `item` (?string).
+**Propiedades:** `id`, `nombre`, `hp`, `atk`, `def`, `spAtk`, `spDef`, `speed`, `tipos` (TipoPokemon[]), `posicion` (Posicion), `moves` (MovimientoBatalla[]), `shiny`, `iconName`, `effectKeys` (string[]), `item` (?string), `esJefe` (bool), `fasesJefe` (array), `puntosDebiles` (array), `bonusInicialStats` (float, porcentaje), `multiplicadorStatsJefe` (float, default `1.0`, expuesto con `multiplicadorStatsJefe()`).
+
+**Multiplicador del jefe:** `multiplicadorStatsJefe` es un efecto permanente (no es una etapa) que `EquipoBatalla::fromData()` pasa a `BattleStats::multiplicadorStats`. Se aplica tras la fórmula de nivel a ataque, defensa, ataque/defensa especial, velocidad y a las barreras `defenseHp`/`spDefenseHp`; la vida queda excluida y `MultiplicadoresStats` no se modifica. Mazmorra envía ×3 y no envía `puntosDebiles` ni `bonusInicialStats`. `bonusInicialStats` sigue disponible para otros modos.
 
 ---
 
@@ -658,6 +662,27 @@ Inmunes declarados como constantes privadas (`INMUNES_GRANIZO`, `INMUNES_TORMENT
 | **Etapas** | -6..+6 | Fórmula `(2+stage)/2` si ≥0, `2/(2-stage)` si <0 |
 | **Orden de turnos** | 1 acción por vivo y ronda | `getNextActor()` = vivo pendiente con mayor velocidad efectiva; empates por orden de inserción; `consumeAction()` solo marca |
 
+### Boosts con multiplicador permanente (2026-11-18)
+
+Los movimientos que escalan con etapas (`objetivo_con_boost`, `objetivo_boost` y
+`atacante_boost` de `ManejadorDanioBase`) usan `Combatiente::bonificacionesPositivasParaDanio()`.
+Si el combatiente tiene `BattleStats::multiplicadorStats() > 1.0` (jefe de mazmorra), ese método
+delega en `StatsCombatiente::bonificacionesPositivasSobreLimite(int $limite)`, que suma
+`max(0, etapas − $limite)` por stat; el límite es
+`ReglasBatalla::LIMITE_ETAPAS_BOOST_EXTRA = 4`. Así el multiplicador permanente ×3 no aporta
+potencia por sí mismo: solo cuenta el exceso real sobre +4 etapas.
+
+| Etapas de un stat | Aporta |
+|---|---|
+| +1 … +4 | 0 |
+| +5 | 1 |
+| +6 | 2 |
+
+Sin multiplicador permanente (`multiplicadorStats <= 1.0`) el método devuelve
+`bonificacionesPositivas()` (suma de todas las etapas positivas), como antes.
+`EjecutorCantoEncantador` y `bonificacionesPositivas()` no cambian; la regla no altera otros
+modos ni la serialización.
+
 ---
 
 ## Contrato de datos de vista
@@ -687,8 +712,20 @@ Inmunes declarados como constantes privadas (`INMUNES_GRANIZO`, `INMUNES_TORMENT
     'stages' => array<string, int>,  // ['attack' => 0, 'defense' => 0, ...]
     'team' => 0|1,
     'item' => string,
+    'statsJefe' => list<array{clave: string, label: string, porcentaje: int}>,
+                               // cinco entradas (ATK/DEF/SpA/SpD/SPE); vacía si no es jefe
+                               // o su multiplicador permanente es ≤ 1.0
 ]
 ```
+
+`statsJefe` sustituye al antiguo `bonusStatsJefe` (un único porcentaje), **retirado del contrato
+el 2026-11-18**. Las claves son los valores de `StatClave` (`attack`, `defense`, `spAtk`, `spDef`,
+`speed`), los labels `ATK`/`DEF`/`SpA`/`SpD`/`SPE` y `porcentaje = round((multiplicador − 1) × 100)`
+(200 con el ×3 de mazmorra).
+
+La tarjeta `_pokemon-card.blade.php` pinta `JEFE`, los cinco chips de `statsJefe`, partes, estado,
+K.O., INV, COMBO, condiciones y etapas. Ya no pinta el chip de fase/ENRAGE (`jefe.nombreFase`) ni el
+chip `BUFF`; `buffTurns` sigue en el contrato pero sin representación visual.
 
 ### Por movimiento en preview (`currentMoves`)
 
@@ -1003,11 +1040,22 @@ app/Providers/BattleEffectServiceProvider.php → src/Battle/Domain/Effects/ (Fa
   `MultiplicadoresStats::DEFAULT_MIN/MAX`, `TURNOS_TEMPORALES`.
 - Términos: `battleId._meta`, `SESSION_VERSION`, `velocidadEfectiva`, `CadenaDanio`, `life_orb`,
   `esJefe`, `fasesJefe`, `puntosDebiles`, `bonusInicialStats`, `aplicarBonusInicialStats`,
+  `multiplicadorStatsJefe`, `multiplicadorStats`, `statsJefe`, `bonificacionesPositivasParaDanio`,
+  `bonificacionesPositivasSobreLimite`, `LIMITE_ETAPAS_BOOST_EXTRA`,
   `battle_over`, `damage`, `status`, `effect`.
-- **Bonus inicial de jefe**: `DatosPokemonBatalla::$bonusInicialStats` (porcentaje) se aplica en
-  `EquipoBatalla::fromData()` con `Combatiente::aplicarBonusInicialStats()` sobre la capa base de
-  `MultiplicadoresStats`; persiste en la serialización de sesión sin cambiar `SESSION_VERSION`.
-  Mazmorra usa +30 % (`ReglasMazmorra::BONUS_INICIAL_STATS_JEFE`).
+- **Multiplicador permanente del jefe**: `DatosPokemonBatalla::$multiplicadorStatsJefe` (default `1.0`)
+  se pasa a `BattleStats::multiplicadorStats` en `EquipoBatalla::fromData()`; no es una etapa y excluye
+  la vida. Mazmorra envía ×3 (`ReglasMazmorra::MULTIPLICADOR_STATS_EFECTIVO_JEFE`) y no envía
+  `bonusInicialStats` ni `puntosDebiles`; la vista lo expone como `statsJefe` (cinco entradas
+  ATK/DEF/SpA/SpD/SPE con +200 %).
+- **Boosts limitados por multiplicador permanente**: `Combatiente::bonificacionesPositivasParaDanio()`
+  cuenta solo `StatsCombatiente::bonificacionesPositivasSobreLimite(LIMITE_ETAPAS_BOOST_EXTRA)` cuando
+  `multiplicadorStats > 1.0`; lo usan `objetivo_con_boost`, `objetivo_boost` y `atacante_boost` de
+  `ManejadorDanioBase`. `EjecutorCantoEncantador` sigue con `bonificacionesPositivas()`.
+- **Bonus inicial (disponible para otros modos)**: `DatosPokemonBatalla::$bonusInicialStats` (porcentaje)
+  se aplica en `EquipoBatalla::fromData()` con `Combatiente::aplicarBonusInicialStats()` sobre la capa
+  base de `MultiplicadoresStats`; persiste en la serialización de sesión sin cambiar `SESSION_VERSION`.
+  Mazmorra dejó de usarlo el 2026-11-18 y hoy ningún modo lo envía.
 - Tablas/sesión: batallas serializadas en sesión con prefijo `v{version}|`; no hay tabla de
   batallas.
 - Tests: `tests/Unit/Battle/`, `tests/Feature/PokemonBattleTest.php`,

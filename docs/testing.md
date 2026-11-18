@@ -226,11 +226,17 @@ Propiedades a verificar al cierre del módulo (complementan las de la sección 7
   `BattleStats.$ivs` es opcional).
 - Combate de ruta manual: 3v3; cada pokémon vivo actúa exactamente una vez por ronda en orden de
   velocidad efectiva; la barra de turnos consume `effectiveSpeed`.
-- Mazmorra: jefe 1×10 contra equipo de 3 (3v1); las recompensas de exploración reparten el 80 % de la
-  EXP entre 3 miembros.
+- Mazmorra: jefe 3v1 con vida ×10 sobre la vida base de especie, stats base ×1 y efecto permanente
+  ×3 (+200 %) no-etapa en ataque, defensa, ataque/defensa especial, velocidad y barreras
+  (`MultiplicadoresStats` neutro); sin partes Núcleo/Coraza. Las recompensas de exploración reparten
+  el 80 % de la EXP entre 3 miembros.
 - Un combate de ruta/entrenador/gimnasio sin rival generable responde 422 y no crea batalla.
 - El cierre del módulo no elimina tests existentes (p. ej. `ReclutadoSerializerCPTest`, tests de
   Gimnasios/Mazmorras que serializan v9).
+
+> **Obsoleto (balance de jefe 2026-11-18)**: `tests/Feature/Mazmorras/MazmorraApiTest.php` conserva las
+> aserciones del balance anterior (vida ×7, resto de stats ×10, +30 % inicial y partes del jefe). Si se
+> ejecuta, fallará; queda fuera de alcance y no se modifica. En este cambio no se ejecutó la suite.
 
 ---
 

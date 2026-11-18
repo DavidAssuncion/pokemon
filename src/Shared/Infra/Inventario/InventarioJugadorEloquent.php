@@ -11,6 +11,7 @@ use Src\Shared\Collections\StringCollection;
 use Src\Shared\Domain\Exceptions\ItemDesconocido;
 use Src\Shared\Domain\Exceptions\StockInsuficiente;
 use Src\Shared\Domain\Items\CatalogoItems;
+use Src\Shared\Domain\Items\ClavePieza;
 use Src\Shared\Domain\Ports\InventarioJugador;
 use Src\Shared\Domain\ValueObjects\MapaConteo;
 
@@ -175,12 +176,36 @@ final class InventarioJugadorEloquent implements InventarioJugador
             ->increment('cantidad', $cantidad);
     }
 
+    public function bloquearClave(int $userId, string $clave): void
+    {
+        $this->asegurarClaveValida($clave);
+
+        $ahora = now();
+
+        // La fila debe existir para poder bloquearla; `insertOrIgnore` mantiene
+        // la semántica de no-op de valor (cantidad 0) si aún no existe.
+        PlayerInventory::withoutUserScope()->getQuery()->insertOrIgnore([
+            'user_id' => $userId,
+            'item_key' => $clave,
+            'cantidad' => 0,
+            'created_at' => $ahora,
+            'updated_at' => $ahora,
+        ]);
+
+        PlayerInventory::withoutUserScope()
+            ->getQuery()
+            ->where('user_id', $userId)
+            ->where('item_key', $clave)
+            ->lockForUpdate()
+            ->first();
+    }
+
     /**
      * @throws ItemDesconocido
      */
     private function asegurarClaveValida(string $clave): void
     {
-        if (CatalogoItems::existe($clave) || $this->esClaveCaramelo($clave)) {
+        if (CatalogoItems::existe($clave) || ClavePieza::esClaveValida($clave) || $this->esClaveCaramelo($clave)) {
             return;
         }
 

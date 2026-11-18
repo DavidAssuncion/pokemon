@@ -32,7 +32,7 @@
         <button
             type="button"
             @click="$store.reclutamientoNavbar.descartarTodos()"
-            :disabled="$store.reclutamientoNavbar.accionEnCurso"
+            :disabled="$store.reclutamientoNavbar.accionEnCurso !== ''"
             class="flex-1 rounded-control bg-danger px-4 py-2.5 text-sm font-bold text-on-primary transition-colors hover:bg-danger/90 focus-ring disabled:cursor-not-allowed disabled:opacity-50"
         >
             Descartar

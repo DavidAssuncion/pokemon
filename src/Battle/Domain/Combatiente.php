@@ -538,6 +538,17 @@ class Combatiente
         return $this->stats->bonificacionesPositivas();
     }
 
+    public function bonificacionesPositivasParaDanio(): int
+    {
+        if ($this->pokemon->battleStats()->multiplicadorStats() > 1.0) {
+            return $this->stats->bonificacionesPositivasSobreLimite(
+                ReglasBatalla::LIMITE_ETAPAS_BOOST_EXTRA
+            );
+        }
+
+        return $this->bonificacionesPositivas();
+    }
+
     public function peso(): float
     {
         $factor = $this->tieneEfecto('metal_pesado') ? 2.0 : ($this->tieneEfecto('metal_liviano') ? 0.5 : 1.0);

@@ -15,6 +15,7 @@ use App\Models\TeamMember;
 use App\Support\DesbloqueoPokedex;
 use App\Support\EquiposVistaPresenter;
 use App\Support\ItemCatalogo;
+use App\Support\Piezas\FabricaPiezasReclutado;
 use App\Support\ReclutadoSerializer;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -30,6 +31,7 @@ class PlayerController extends Controller
         public readonly ObtenerEquipos $obtenerEquipos,
         private readonly DatagridService $datagrid,
         private readonly ConstructorReclutablesResumen $constructorReclutables,
+        private readonly FabricaPiezasReclutado $fabricaPiezas,
     ) {
     }
 
@@ -128,6 +130,7 @@ class PlayerController extends Controller
             $reclutadosQuery,
             auth()->user()?->nivel(),
             incluirMovimientosDisponibles: false,
+            piezas: $this->fabricaPiezas->paraListado((int) auth()->id(), $reclutadosQuery),
         );
 
         $reclutadosEnExploracion = ExploracionActiva::whereNull('regreso')

@@ -128,13 +128,13 @@ class ManejadorDanioBase extends ManejadorDanioAbstracto
                 ? $potencia * 2 : $potencia,
             'objetivo_no_actuo' => $defensor->vecesActuadoEstaRonda() === 0
                 ? $potencia * 2 : $potencia,
-            'objetivo_con_boost' => $defensor->bonificacionesPositivas() > 0
+            'objetivo_con_boost' => $defensor->bonificacionesPositivasParaDanio() > 0
                 ? $potencia * 2 : $potencia,
             'atacante_danado_ronda' => $atacante->danoRecibidoEstaRonda() > 0.0
                 ? $potencia * 2 : $potencia,
             'sin_objeto' => ! $atacante->itemActivo() ? $potencia * 2 : $potencia,
-            'objetivo_boost' => $potencia + 20 * $defensor->bonificacionesPositivas(),
-            'atacante_boost' => $potencia + 20 * $atacante->bonificacionesPositivas(),
+            'objetivo_boost' => $potencia + 20 * $defensor->bonificacionesPositivasParaDanio(),
+            'atacante_boost' => $potencia + 20 * $atacante->bonificacionesPositivasParaDanio(),
             'golpes_recibidos' => min(350, $potencia + 50 * $atacante->golpesRecibidos()),
             'hp_inverso' => $this->potenciaPorHpInverso($atacante),
             'combo_doble' => (int) min(

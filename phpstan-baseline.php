@@ -712,12 +712,6 @@ $ignoreErrors[] = [
 	'path' => __DIR__ . '/src/CombateEntrenadores/App/ConstruirEquipoJugador.php',
 ];
 $ignoreErrors[] = [
-	'message' => '#^Casting to int something that\'s already int\\<0, max\\>\\.$#',
-	'identifier' => 'cast.useless',
-	'count' => 1,
-	'path' => __DIR__ . '/src/CombateEntrenadores/App/ConstruirEquipoJugador.php',
-];
-$ignoreErrors[] = [
 	'message' => '#^Short ternary operator is not allowed\\. Use null coalesce operator if applicable or consider using long ternary\\.$#',
 	'identifier' => 'ternary.shortNotAllowed',
 	'count' => 1,

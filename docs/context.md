@@ -32,7 +32,7 @@ El proyecto tiene funcionalidad base estable:
   `SESSION_VERSION` 9 → 10 (mínimo compatible 9): `BattleStats::$ivs` es opcional, los payloads v9 siguen cargando sin migración. 3 migraciones nuevas (ivs/evs, huevos, hatch+evolution_chain_id) → 59 totales.
 - **Granjas por hábitat (2026-10-26)** — módulo `src/Granjas/` (DDD): una granja por `user_id + habitat_id` con nidos, refugios y complementos por familia (`evolution_chain_id`). Nidos 0–5 (25/75/225/450/900 caramelos de familia) reducen 10% el tiempo de huevo por nivel hasta 50% y suben el rango de IVs (0–4, 5–8, 9–10, 11–12, 13–14, 15). Refugios 1–5 (25/75/225/450/2700) multiplican aparición/captura (×1.25/×1.5/×2/×2.5; nivel 5 exclusivo y captura ×3); condiciones insalubres invierten el efecto y bloquean complementos. Complementos EV 1–5 (64/128/256/384/512 EV) cuestan 3× EV + 1× familia y se aplican retroactivamente a todos los reclutados de la familia (cap 512/stat); los nuevos reclutados reciben los EV vigentes. API en `routes/granjas.php`; UI en el modal Granjas de `/habitats/{id}`.
 - **Combate 3v3: equipos de 3, una acción por ronda e invocaciones (2026-10-15 → 2026-10-17)** — modelo estándar de combate:
-  1. **Equipos estándar de exactamente 3** — `TeamController` valida el slot con `max:3`; la migración `2026_10_15_000001` borra los `team_members` con `slot > 3` (`down()` no-op: no son reconstruibles); `ConstruirEquipoJugador::desdeEquipo` (punto único de construcción de los 4 iniciadores) lanza `ViolacionReglaNegocio` 422 «El equipo debe tener exactamente 3 miembros» y retira el pre-check de `IniciarCombateRuta`. Las **exploraciones no añaden validación** (ratificado). El jefe de mazmorra sigue siendo 3v1 (1 jefe: vida ×7, resto de stats ×10 y +30 % inicial).
+  1. **Equipos estándar de exactamente 3** — `TeamController` valida el slot con `max:3`; la migración `2026_10_15_000001` borra los `team_members` con `slot > 3` (`down()` no-op: no son reconstruibles); `ConstruirEquipoJugador::desdeEquipo` (punto único de construcción de los 4 iniciadores) lanza `ViolacionReglaNegocio` 422 «El equipo debe tener exactamente 3 miembros» y retira el pre-check de `IniciarCombateRuta`. Las **exploraciones no añaden validación** (ratificado). El jefe de mazmorra sigue siendo 3v1 (1 jefe: vida ×10 sobre la vida base de especie, stats base ×1 y un efecto permanente ×3 (+200 %) no-etapa en ataque, defensa, ataque especial, defensa especial y velocidad; balance 2026-11-18).
   2. **Motor de turnos de una acción por pokémon vivo y ronda** — `GestorTurnos::getNextActor()` elige al vivo con `vecesActuadoEstaRonda === 0` de **mayor velocidad efectiva** (`Combatiente::velocidadEfectiva()` = stat con etapas y parálisis); empates estables por orden de inserción (team1 antes que team2); `consumeAction()` solo marca; `startNewRound()` resetea contadores. Invariante: si `hayAlgunoConAccionPendiente()` es true, `getNextActor()` no es null. Un actor bloqueado (sueño/hielo/parálisis/confusión) consume su acción sin atacar (`Combate::nextActor`). Se elimina la **velocidad acumulada** (`velocidadAcumulada`, `agregarVelocidad`, `menorVelocidadEntreVivos`).
   3. **Invocaciones (solo motor)** — `AgregadoBatalla::incorporarCombatiente(EquipoBatalla, Combatiente, Posicion)` añade el combatiente sin tope, con contador de acciones 0 en la ronda en curso, sin efectos de entrada ni log, compartiendo la colección de `GestorTurnos`.
   4. **Contrato de vista y sesión** — `Combatiente::aArrayVista()` expone `effectiveSpeed` (sustituye a `accumulatedSpeed`); `Combate::buildTurnQueue()` ordena por velocidad efectiva descendente con orden estable (coherente con `getNextActor`); `SESSION_VERSION` 10 → 11 (mínimo compatible 9, los payloads v9/v10 con `velocidadAcumulada` se ignoran best-effort).
@@ -203,7 +203,7 @@ Seeders: provincias (8), hábitats, pokémon (151+), reclutados.
     (Equipos, Exploraciones, Granjas, Habitats, Mazmorras, Pokemon, Reclutamiento, Shared) y se
     ampliaron los existentes con guía de búsqueda y deuda priorizada. Correcciones aplicadas:
     `CalculadorCP` (factor 6 + término EV; 3 unitarios + 1 feature en verde), `ReglasEquipo`
-    (tamaño/slots), `ReglasMazmorra` (vida jefe ×7, resto ×10, +30 % inicial y IVs 0 deterministas; recompensa 7× gimnasio),
+    (tamaño/slots), `ReglasMazmorra` (vida jefe ×10, stats base ×1, multiplicador permanente ×3 (+200 %) no-etapa e IVs 0 deterministas; recompensa 7× gimnasio),
     `ReglasExploracion` (30 min/1 %/0.8; Fase 1: `FACTOR_RECOMPENSAS` 0.5 y `FRACCION_EXP_INDIVIDUAL` 0.5), `ReglasHuevo` (límites/mínimos), totales de Sendas al
     controlador, cálculo de nivel/exp duplicado eliminado de `equipos/index.blade.php`, y la
     **segunda pasada (mismo día)**: IV ×5 confirmado como decisión de producto (docs + test
@@ -216,9 +216,14 @@ Seeders: provincias (8), hábitats, pokémon (151+), reclutados.
     `Combate.php` god-component, `RangoIvs` duplicado, contrato
     `nivel` de `ReclutadoSerializer` y **resuelto** el divisor 3 de EXP en exploración individual
     (ahora `EconomiaRecompensas::individual()`: 0.5 y reparto 50/50; el 80 %/3 queda como `legado()`;
-    ver `src/Exploraciones/context.md`). **Mazmorra (2026-10-31)**: jefe con vida ×7, resto de stats ×10, +30 %
-    inicial (capa base de multiplicadores) y recompensa 7× la de un gimnasio (multiplicador 70.0)
-    vía `OtorgarRecompensasMazmorra`; cubierto por `PresentadorMazmorraTest`.
+    ver `src/Exploraciones/context.md`). **Mazmorra (balance 2026-11-18)**: jefe con vida ×10 sobre la
+    vida base de especie, stats base ×1 y un efecto permanente ×3 (+200 %) no-etapa en ataque, defensa,
+    ataque/defensa especial, velocidad y barreras (`DatosPokemonBatalla::$multiplicadorStatsJefe` →
+    `BattleStats::multiplicadorStats`; `MultiplicadoresStats` queda neutro), sin partes Núcleo/Coraza
+    (se eliminó también el fallback de `JefeEstado` que creaba un Núcleo implícito) y recompensa 7× la
+    de un gimnasio (multiplicador 70.0) vía `OtorgarRecompensasMazmorra`. `bonusInicialStats` sigue
+    disponible para otros modos. `tests/Feature/Mazmorras/MazmorraApiTest.php` conserva el balance
+    anterior (×7/×10/+30 %) y queda obsoleto (ver `docs/testing.md`).
 
 ## Referencias
 

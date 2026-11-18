@@ -12,9 +12,10 @@ use Src\Mazmorras\Domain\ReglasMazmorra;
 use Src\Pokemon\Domain\Stats\StatsValue;
 
 /**
- * Construye el jefe de un piso de mazmorra: UN solo combatiente (3v1) cuyo
- * pokémon tiene los stats base multiplicados por 10 (jefe ×10) al nivel del
- * piso (por defecto el del jugador).
+ * Construye el jefe de un piso de mazmorra: UN solo combatiente (3v1) con
+ * vida ×10 sobre la vida base de especie, estadísticas base ×1 y un efecto
+ * permanente ×3 (+200 %) no-etapa sobre ataque, defensa, ataque especial,
+ * defensa especial y velocidad al nivel del piso (por defecto el del jugador).
  */
 final class GeneradorJefeMazmorra
 {
@@ -50,11 +51,11 @@ final class GeneradorJefeMazmorra
             id: $datos->id,
             nombre: $datos->nombre,
             hp: $stats->hp * ReglasMazmorra::MULTIPLICADOR_HP_JEFE,
-            atk: $stats->atk * ReglasMazmorra::MULTIPLICADOR_STATS_JEFE,
-            def: $stats->def * ReglasMazmorra::MULTIPLICADOR_STATS_JEFE,
-            spAtk: $stats->spAtk * ReglasMazmorra::MULTIPLICADOR_STATS_JEFE,
-            spDef: $stats->spDef * ReglasMazmorra::MULTIPLICADOR_STATS_JEFE,
-            speed: $stats->speed * ReglasMazmorra::MULTIPLICADOR_STATS_JEFE,
+            atk: $stats->atk,
+            def: $stats->def,
+            spAtk: $stats->spAtk,
+            spDef: $stats->spDef,
+            speed: $stats->speed,
             tipos: $datos->tipos,
             posicion: $datos->posicion,
             moves: $datos->moves,
@@ -69,15 +70,11 @@ final class GeneradorJefeMazmorra
             ivs: $datos->ivs,
             peso: $datos->peso,
             esJefe: true,
-            bonusInicialStats: ReglasMazmorra::BONUS_INICIAL_STATS_JEFE,
+            multiplicadorStatsJefe: ReglasMazmorra::MULTIPLICADOR_STATS_EFECTIVO_JEFE,
             fasesJefe: [
                 ['umbral' => 0.75, 'nombre' => 'Fase 2', 'bonificador_dano' => 1.15, 'bonificador_velocidad' => 1.10],
                 ['umbral' => 0.50, 'nombre' => 'Fase 3', 'bonificador_dano' => 1.30, 'bonificador_velocidad' => 1.20],
                 ['umbral' => 0.25, 'nombre' => 'Enrage', 'bonificador_dano' => 1.50, 'bonificador_velocidad' => 1.30, 'enrage' => true],
-            ],
-            puntosDebiles: [
-                ['id' => 'nucleo', 'nombre' => 'Núcleo', 'fraccion_hp' => 0.18],
-                ['id' => 'coraza', 'nombre' => 'Coraza', 'fraccion_hp' => 0.22],
             ],
         );
     }

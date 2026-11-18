@@ -12,6 +12,7 @@ use App\Models\PlayerMoveUnlock;
 use App\Models\Pokemon;
 use App\Models\Reclutado;
 use App\Support\ItemCatalogo;
+use App\Support\Piezas\FabricaPiezasReclutado;
 use App\Support\ReclutadoSerializer;
 use App\Support\ReclutadoVistaPresenter;
 use Illuminate\Http\JsonResponse;
@@ -26,6 +27,11 @@ use Src\Shared\Domain\ReglasEv;
 
 class ReclutadoController extends Controller
 {
+    public function __construct(
+        private readonly FabricaPiezasReclutado $fabricaPiezas,
+    ) {
+    }
+
     public function show(Reclutado $reclutado): View
     {
         return view('reclutado.show', ReclutadoVistaPresenter::toView(
@@ -212,7 +218,7 @@ class ReclutadoController extends Controller
             'evolved_species_id' => 'sometimes|integer|nullable',
         ]);
 
-        $userId = auth()->id();
+        $userId = (int) auth()->id();
         $opciones = ServicioEvolucion::opcionesEvolucion($reclutado->pokemon);
 
         if ($opciones->isEmpty()) {
@@ -248,7 +254,11 @@ class ReclutadoController extends Controller
         return response()->json([
             'success' => true,
             'pokemon_id' => $destino->id,
-            'reclutado' => ReclutadoSerializer::serializar($reclutado, auth()->user()?->nivel()),
+            'reclutado' => ReclutadoSerializer::serializar(
+                $reclutado,
+                auth()->user()?->nivel(),
+                piezas: $this->fabricaPiezas->paraListado($userId, [$reclutado]),
+            ),
         ]);
     }
 
@@ -427,7 +437,11 @@ class ReclutadoController extends Controller
 
         return response()->json([
             'success' => true,
-            'reclutado' => ReclutadoSerializer::serializar($reclutado, auth()->user()?->nivel()),
+            'reclutado' => ReclutadoSerializer::serializar(
+                $reclutado,
+                auth()->user()?->nivel(),
+                piezas: $this->fabricaPiezas->paraListado($userId, [$reclutado]),
+            ),
         ]);
     }
 
@@ -521,14 +535,17 @@ class ReclutadoController extends Controller
             $query->globales();
         }
 
+        $reclutadosFavoritos = $query
+            ->withoutGlobalScope('belongsToUser')
+            ->where('user_id', $userId)
+            ->get()
+            ->map(fn (Favorito $favorito): Reclutado => $favorito->reclutado);
+
         $reclutados = ReclutadoSerializer::serializarColeccion(
-            $query
-                ->withoutGlobalScope('belongsToUser')
-                ->where('user_id', $userId)
-                ->get()
-                ->map(fn (Favorito $favorito): Reclutado => $favorito->reclutado),
+            $reclutadosFavoritos,
             auth()->user()?->nivel(),
             incluirMovimientosDisponibles: false,
+            piezas: $this->fabricaPiezas->paraListado($userId, $reclutadosFavoritos),
         );
 
         return response()->json($reclutados);
@@ -541,17 +558,20 @@ class ReclutadoController extends Controller
      *
      * Anti-IDOR: el global scope BelongsToUser filtra por el usuario autenticado.
      */
-    public function listarTodos(): JsonResponse
+    public function listarTodos(Request $request): JsonResponse
     {
+        $reclutadosQuery = Reclutado::with([
+            'pokemon.types',
+            'pokemon.stats',
+            'pokemon.abilities',
+            'pokemon.moves',
+        ])->get();
+
         $reclutados = ReclutadoSerializer::serializarColeccion(
-            Reclutado::with([
-                'pokemon.types',
-                'pokemon.stats',
-                'pokemon.abilities',
-                'pokemon.moves',
-            ])->get(),
+            $reclutadosQuery,
             auth()->user()?->nivel(),
             incluirMovimientosDisponibles: false,
+            piezas: $this->fabricaPiezas->paraListado((int) $request->user()?->getKey(), $reclutadosQuery),
         );
 
         return response()->json($reclutados);
