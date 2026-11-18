@@ -11,6 +11,7 @@ use Src\Battle\Domain\Enums\PosturaCombate;
 use Src\Battle\Domain\Enums\StatClave;
 use Src\Battle\Domain\ValueObjects\CondicionVolatil;
 use Src\Battle\Domain\ValueObjects\MultiplicadoresStats;
+use Src\Pokemon\Domain\Stats\BattleStats;
 use Src\Shared\Tipos\TipoPokemon;
 
 /**
@@ -25,6 +26,14 @@ use Src\Shared\Tipos\TipoPokemon;
  */
 final class CombatienteVista
 {
+    private const LABELS_STATS_JEFE = [
+        StatClave::ATAQUE->value => 'ATK',
+        StatClave::DEFENSA->value => 'DEF',
+        StatClave::ATAQUE_ESPECIAL->value => 'SpA',
+        StatClave::DEFENSA_ESPECIAL->value => 'SpD',
+        StatClave::VELOCIDAD->value => 'SPE',
+    ];
+
     /**
      * @return array<string, mixed>
      */
@@ -127,6 +136,7 @@ final class CombatienteVista
             'esJefe' => $combatiente->esJefe(),
             'jefe' => $combatiente->jefe()?->toArray(),
             'jefePartes' => self::jefePartes($combatiente->jefe()?->toArray()),
+            'statsJefe' => $combatiente->esJefe() ? self::statsJefe($battleStats) : [],
             'postura' => $postura->value,
             'posturaLabel' => $postura->label(),
             'posturaCorta' => match ($postura) {
@@ -135,9 +145,9 @@ final class CombatienteVista
                 PosturaCombate::CUBRIR => 'CUBRE',
             },
             'posturaClase' => match ($postura) {
-                PosturaCombate::GUARDIA => 'bg-primary text-white',
-                PosturaCombate::CUBRIR => 'bg-success text-white',
-                default => 'bg-light border text-secondary',
+                PosturaCombate::GUARDIA => 'bg-primary-soft text-primary-ink',
+                PosturaCombate::CUBRIR => 'bg-success text-on-success',
+                default => 'bg-surface border border-line text-ink-muted',
             },
             'objetivoCubierto' => $combatiente->objetivoCubiertoId(),
             'accionesExtra' => $combatiente->accionesExtra(),
@@ -213,7 +223,9 @@ final class CombatienteVista
 
             $partes[] = array_merge($parte, [
                 'roto' => $roto,
-                'clase' => $roto ? 'bg-secondary text-decoration-line-through' : 'bg-dark',
+                'clase' => $roto
+                    ? 'bg-secondary-soft text-secondary-ink line-through'
+                    : 'bg-ink text-ink-inverse',
                 'hpTexto' => (string) ceil($hp),
                 'hpMaxTexto' => (string) ceil($hpMax),
                 'texto' => $roto ? '0' : (string) ceil($hp),
@@ -221,6 +233,23 @@ final class CombatienteVista
         }
 
         return $partes;
+    }
+
+    /** @return list<array{clave: string, label: string, porcentaje: int}> */
+    private static function statsJefe(BattleStats $battleStats): array
+    {
+        $multiplicador = $battleStats->multiplicadorStats();
+        if ($multiplicador <= 1.0) {
+            return [];
+        }
+
+        $porcentaje = (int) round(($multiplicador - 1.0) * 100);
+        $stats = [];
+        foreach (self::LABELS_STATS_JEFE as $clave => $label) {
+            $stats[] = ['clave' => $clave, 'label' => $label, 'porcentaje' => $porcentaje];
+        }
+
+        return $stats;
     }
 
     private static function porcentaje(float $actual, float $maximo): float

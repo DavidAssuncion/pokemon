@@ -17,6 +17,9 @@ enum CategoriaItem: string
     case MEJORA = 'mejora';
     case REDUCTOR = 'reductor';
     case RESISTENCIA = 'resistencia';
+    case ARMA = 'arma';
+    case ARMADURA = 'armadura';
+    case AMULETO = 'amuleto';
 
     /**
      * Prefijo canónico de las claves de inventario de esta categoría.

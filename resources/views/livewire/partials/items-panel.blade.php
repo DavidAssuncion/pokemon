@@ -117,7 +117,7 @@
                                 @endif
                             </span>
 
-                            <span class="badge {{ $objeto['aplicable'] ? 'text-bg-primary' : 'bg-surface-sunken border text-ink-muted' }} flex-shrink-0">
+                            <span class="badge {{ $objeto['aplicable'] ? 'bg-primary text-on-primary' : 'bg-surface-sunken border text-ink-muted' }} flex-shrink-0">
                                 {{ $objeto['aplicable'] ? 'Usar' : '—' }}
                             </span>
                         </button>

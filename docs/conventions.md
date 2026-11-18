@@ -161,7 +161,23 @@ app/
 
 - **Livewire 3** para componentes interactivos.
 - **Alpine.js** para animaciones y transiciones, y para estados de UI complejos (Pokédex asíncrona, dropdowns).
-- **Tailwind CSS 4** con Vite. Sin CSS personalizado (todo utility-first).
+- **Tailwind CSS 4** con Vite. La fuente de verdad visual son los tokens y componentes CSS
+  compartidos, no las utilidades de color:
+  - `resources/css/tokens.css` define los valores del tema (claro en `@theme static`, oscuro en
+    `.dark`). Los nombres de token son contrato: no se renombran sin un ADR.
+  - `resources/css/components.css` concentra los componentes reutilizables (`.tipo-badge`,
+    `.type-plate`, `.focus-ring`, tarjetas). Un patrón repetido se añade aquí, no en la vista.
+  - Las utilidades Tailwind se usan para **composición** (layout, espaciado, tipografía). El color
+    sale siempre de un token semántico; no se añaden colores de paleta fijos (`bg-emerald-*`,
+    `text-white`) ni variantes `dark:`.
+  - **Sin CSS ad hoc en vistas**: nada de `style` con hex ni reglas sueltas en Blade. Si falta un
+    valor de tema, se añade a `tokens.css`; si falta un patrón visual, a `components.css`.
+  - `/combate` es la excepción controlada: Bootstrap vive aislado en `resources/css/combate.css`,
+    sus variables `--bs-*` se puentean a tokens y los overrides van en `@layer components`.
+  - El puente `.bg-<estado>.text-on-primary` de `resources/css/components.css` es **temporal** y solo
+    para markup heredado; excluye estados deshabilitados. El markup nuevo debe usar `text-on-*`; la
+    retirada del puente está registrada en [`ADR-0004`](adr/0004-tema-stone-ink-lavender-grey.md).
+  - Decisión y paletas: [`ADR-0004`](adr/0004-tema-stone-ink-lavender-grey.md).
 - **Blade**: layouts via `@extends('layouts.app')`, partials via `@include()`.
 - Vistas organizadas por módulo: `resources/views/habitats/`, `resources/views/exploraciones/`, etc.
 

@@ -36,7 +36,7 @@
                         @endif
                     </p>
                 </div>
-                <span class="text-xs font-bold" style="color: var(--type-{{ $tipo['slug'] }})">{{ $tipo['porcentaje'] }}%</span>
+                <span class="text-xs font-bold" style="color: var(--color-ink)">{{ $tipo['porcentaje'] }}%</span>
             </div>
 
             <div class="mt-3 h-2 overflow-hidden rounded-full bg-surface-sunken" role="progressbar" aria-valuenow="{{ $tipo['porcentaje'] }}" aria-valuemin="0" aria-valuemax="100" aria-label="Progreso de {{ $tipo['nombre'] }}">

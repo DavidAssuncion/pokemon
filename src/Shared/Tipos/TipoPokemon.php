@@ -88,6 +88,30 @@ enum TipoPokemon: int
         };
     }
 
+    /**
+     * Color de texto legible sobre el color del tipo: tinta oscura o blanco
+     * según la luminancia relativa WCAG con umbral 0.179.
+     */
+    public function textoSobreColor(): string
+    {
+        $hex = ltrim($this->color(), '#');
+        $luminancia = 0.2126 * self::canalLineal(hexdec(substr($hex, 0, 2)))
+            + 0.7152 * self::canalLineal(hexdec(substr($hex, 2, 2)))
+            + 0.0722 * self::canalLineal(hexdec(substr($hex, 4, 2)));
+
+        return $luminancia > 0.179 ? '#17120C' : '#FFFFFF';
+    }
+
+    /** Canal sRGB normalizado a luminancia lineal (WCAG 2.x). */
+    private static function canalLineal(int|float $valor): float
+    {
+        $canal = $valor / 255;
+
+        return $canal <= 0.03928
+            ? $canal / 12.92
+            : (($canal + 0.055) / 1.055) ** 2.4;
+    }
+
     /** Nombre específico de la medalla del gimnasio de este tipo. */
     public function medalla(): string
     {

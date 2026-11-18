@@ -8,6 +8,7 @@ use App\Models\ExploracionActiva;
 use App\Models\Habitat;
 use App\Models\Pokedex;
 use App\Support\DesbloqueoPokedex;
+use App\Support\UI\SpritesEntrenador;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
@@ -88,6 +89,7 @@ class HabitatsController extends Controller
             'reclutadosEnExploracion' => $reclutadosEnExploracion,
             'sightedPokemonIds' => $sightedPokemonIds,
             'unlockAll' => $unlockAll,
+            'sprites' => SpritesEntrenador::manifiesto(),
         ]);
     }
 

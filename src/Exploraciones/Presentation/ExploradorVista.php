@@ -159,10 +159,10 @@ final class ExploradorVista
     private static function hpClase(string $estado): string
     {
         return match ($estado) {
-            'critico' => 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400',
-            'tocado' => 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400',
-            'sano' => 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400',
-            default => 'bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300',
+            'critico' => 'bg-danger-soft text-danger-ink',
+            'tocado' => 'bg-warning-soft text-warning-ink',
+            'sano' => 'bg-success-soft text-success-ink',
+            default => 'bg-secondary-soft text-secondary-ink',
         };
     }
 

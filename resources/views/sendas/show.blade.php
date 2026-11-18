@@ -98,7 +98,7 @@
                     <span x-text="arbol.exp.toLocaleString('es-ES')"></span> / <span x-text="arbol.exp_siguiente.toLocaleString('es-ES')"></span> exp
                 </p>
             </div>
-            <p class="text-xs font-bold" :style="'color: var(--type-' + arbol.tipo.slug + ')'" x-text="arbol.porcentaje + '%'"></p>
+            <p class="text-xs font-bold text-ink" x-text="arbol.porcentaje + '%'"></p>
         </div>
         <div class="mt-3 h-2 overflow-hidden rounded-full bg-surface-sunken" role="progressbar" :aria-valuenow="arbol.porcentaje" aria-valuemin="0" aria-valuemax="100" aria-label="Progreso de la Senda">
             <div class="h-full rounded-full transition-all duration-500" :style="'width: ' + arbol.porcentaje + '%; background-color: var(--type-' + arbol.tipo.slug + ')'"></div>

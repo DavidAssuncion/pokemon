@@ -110,7 +110,8 @@ src/Gimnasios/
 ## 4. Reglas de negocio
 
 ### 4.1 Progresión secuencial
-- Etapas: `1`=Entrenador 1, `2`=Entrenador 2, `3`=Entrenador 3, `4`=Líder, `5`=Completado.
+- Etapas: `1`=Entrenador 1, `2`=Entrenador 2, `3`=Entrenador 3, `4`=nombre canónico del
+  líder, `5`=Completado.
 - Solo se puede combatir la etapa ACTUAL (`current_stage`).
 - Si pierdes → la etapa no avanza → repetible.
 - Si ganas → `current_stage + 1`.
@@ -142,6 +143,43 @@ src/Gimnasios/
   `OtorgarRecompensasEntrenador` (los combates contra entrenadores de hábitat siguen en ×2.0).
 - Se dispara `ActualizarPokedexJob` con estado `AVISTADO` por cada especie rival derrotada.
 - Sin capturas: el combate de gimnasio no recluta rivales.
+
+### 4.6 Líderes canónicos
+
+`Gimnasio::nombreEtapa(4)` devuelve el nombre canónico del líder, no la etiqueta genérica
+`Líder`. La fuente es `src/Gimnasios/Domain/CatalogoLideres.php` (`slug => nombre`), consultada
+tanto por `CatalogoGimnasios` como por `EloquentGymCatalogoRepository::desdeModelo()`; la tabla
+`gyms` sigue siendo la fuente en runtime y solo aporta el `slug`. Si el slug no está en el
+catálogo, se usa `CatalogoLideres::POR_DEFECTO` (`Líder`) como valor de reserva.
+
+El catálogo vigente tiene 18 gimnasios; esta tabla documenta sus líderes canónicos. La
+composición regional es deliberada: Kanto y Johto cubren 16 tipos, y Piers (Galar) y Valerie
+(Kalos) cubren Siniestro y Hada.
+
+| Gimnasio | Tipo | Nv mín | Líder | Sprite |
+|---|---|---:|---|---|
+| `bug` | Bicho | 10 | Bugsy | `bugsy` |
+| `poison` | Veneno | 15 | Koga | `koga` |
+| `normal` | Normal | 20 | Whitney | `whitney` |
+| `grass` | Planta | 25 | Erika | `erika` |
+| `flying` | Volador | 31 | Falkner | `falkner` |
+| `rock` | Roca | 36 | Brock | `brock` |
+| `electric` | Eléctrico | 41 | Teniente Surge | `ltsurge` |
+| `ice` | Hielo | 46 | Pryce | `pryce` |
+| `fire` | Fuego | 52 | Blaine | `blaine` |
+| `water` | Agua | 57 | Misty | `misty` |
+| `ground` | Tierra | 62 | Giovanni | `giovanni` |
+| `psychic` | Psíquico | 67 | Sabrina | `sabrina` |
+| `dark` | Siniestro | 73 | Piers | `piers` |
+| `ghost` | Fantasma | 78 | Morty | `morty` |
+| `fighting` | Lucha | 83 | Chuck | `chuck` |
+| `fairy` | Hada | 88 | Valerie | `valerie` |
+| `steel` | Acero | 94 | Jasmine | `jasmine` |
+| `dragon` | Dragón | 100 | Clair | `clair` |
+
+El sprite se resuelve en presentación con `App\Support\UI\SpritesEntrenador` y el manifiesto
+`resources/data/entrenadores_sprites.json` (`gimnasios[slug].etapas[4]`); el dominio no conoce
+rutas de assets. La procedencia y la atribución del arte están en `THIRD_PARTY_NOTICES.md`.
 
 ---
 
@@ -201,8 +239,10 @@ CREATE TABLE gym_progress (
 ### 6.2 GET `/api/gimnasios/{gym}`
 
 **Descripción**: Detalle de un gimnasio con información general, estado, etapa actual y el nombre
-de cada etapa (entrenador/líder). **NO revela el equipo rival ni el nivel rival** (sin `pokemon[]`
-ni `nivel_rival`) para no ofrecer pistas de los pokémon ni de la dificultad.
+de cada etapa (entrenadores genéricos y líder canónico). **NO revela el equipo rival ni el nivel
+rival** (sin `pokemon[]` ni `nivel_rival`) para no ofrecer pistas de los pokémon ni de la
+dificultad. El shape no cambia: cada etapa sigue siendo `{etapa, nombre}`; en la etapa 4 `nombre`
+es el nombre propio del líder (por ejemplo, `Brock` en `bug`).
 
 **Respuesta** (200):
 ```json
@@ -220,7 +260,7 @@ ni `nivel_rival`) para no ofrecer pistas de los pokémon ni de la dificultad.
     { "etapa": 1, "nombre": "Entrenador 1" },
     { "etapa": 2, "nombre": "Entrenador 2" },
     { "etapa": 3, "nombre": "Entrenador 3" },
-    { "etapa": 4, "nombre": "Líder" }
+    { "etapa": 4, "nombre": "Brock" }
   ]
 }
 ```
@@ -334,7 +374,10 @@ El archivo `src/Gimnasios/Infra/routes.php` existe como placeholder para la migr
 
 ## 10. Catálogo de gimnasios
 
-| slug | Medalla | Tipo | Nv mín | E1 | E2 | E3 | Líder |
+> La tabla conserva los 5 gimnasios originales del módulo. El catálogo vigente tiene 18
+> gimnasios; sus líderes canónicos están en §4.6.
+
+| slug | Medalla | Tipo | Nv mín | E1 | E2 | E3 | Equipo del líder |
 |---|---|---|---|---|---|---|---|
 | `bug` | Medalla Bicho | Bicho | 10 | [268,266,900] | [11,15,269] | [14,12,267] | [213,212,127] |
 | `poison` | Medalla Veneno | Veneno | 15 | [72,33,92] | [30,42,316] | [14,169,93] | [31,34,407] |

@@ -25,7 +25,7 @@
                         <span class="text-xs text-ink-muted">Sin imagen</span>
                     </div>
                     @endif
-                    <h1 class="absolute bottom-0 inset-x-0 px-3 py-2 text-on-primary text-sm font-bold truncate rounded-b-lg"
+                    <h1 class="absolute bottom-0 inset-x-0 px-3 py-2 text-on-scrim text-sm font-bold truncate rounded-b-lg"
                         style="background: linear-gradient(to top, var(--color-scrim), transparent)"
                         title="{{ $habitat['name'] }}">{{ $habitat['name'] }}</h1>
                 </div>
@@ -68,8 +68,19 @@
                         class="w-full px-4 py-3 bg-surface border border-line rounded-card text-sm font-medium text-ink transition-colors flex items-center gap-3 {{ $bloqueadoConstruccion ? 'opacity-50 cursor-not-allowed' : '' }}"
                         :class="modo === 'entrenadores' ? 'ring-2 ring-primary border-primary bg-primary-soft' : 'hover:bg-surface-sunken'"
                     >
-                        <span class="w-8 shrink-0 flex justify-center">
-                            <img src="/images/misc/trainer.webp" loading="lazy" decoding="async" class="w-8 h-8 object-contain" alt="Entrenadores">
+                        <span class="w-10 shrink-0 flex justify-center">
+                            <img
+                                :src="spriteUrl(sprites.habitats?.[habitatId]?.clase)"
+                                alt=""
+                                aria-hidden="true"
+                                width="40"
+                                height="40"
+                                loading="lazy"
+                                decoding="async"
+                                style="image-rendering: pixelated"
+                                class="w-10 h-10 object-contain"
+                                onerror="this.onerror=null;if(this.src.indexOf('/images/misc/trainer.webp')===-1){this.src='/images/misc/trainer.webp';}"
+                            >
                         </span>
                         <span class="flex-1 text-sm text-left font-medium text-ink">Entrenadores</span>
                     </button>

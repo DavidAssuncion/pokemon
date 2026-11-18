@@ -9,7 +9,7 @@
 @endphp
 
 <div x-data="gimnasioShow('{{ $slug }}')" x-init="init()">
-    <div class="max-w-4xl mx-auto space-y-6">
+    <div class="max-w-6xl mx-auto space-y-6">
         {{-- Volver --}}
         <a href="{{ route('gimnasios.index') }}" aria-label="Volver a gimnasios" title="Volver a gimnasios"
            class="inline-flex items-center gap-2 rounded-control text-sm font-medium text-ink-muted transition-colors hover:text-primary-ink focus-ring">
@@ -42,8 +42,8 @@
                                 <span class="text-4xl shrink-0" aria-hidden="true"><img :src="'images/medallas/' + gym.tipo_slug + '.webp'" :alt="gym.tipo_medalla" onerror="this.style.display='none'"></span>
                                 <div class="min-w-0">
                                     <h1 class="text-xl font-bold text-ink truncate" x-text="gym.tipo_medalla"></h1>
-                                    <span class="inline-block rounded-full px-2 py-0.5 text-2xs font-bold uppercase text-on-primary"
-                                          :style="'background-color: var(--type-' + gym.tipo_slug + ')'"
+                                    <span class="inline-block rounded-full px-2 py-0.5 text-2xs font-bold uppercase"
+                                          :style="'background-color: var(--type-' + gym.tipo_slug + '); color: var(--type-' + gym.tipo_slug + '-on)'"
                                           x-text="gym.tipo_nombre"></span>
                                     <div class="flex flex-wrap items-center gap-2 mt-4">
                                         <span class="text-xs text-ink-muted">
@@ -83,59 +83,60 @@
                     <p class="font-medium" x-text="'Requiere Nv ' + gym.nivel_minimo + ' de jugador para acceder a este gimnasio.'"></p>
                 </div>
 
-                {{-- Etapas --}}
-                <div class="space-y-3">
+                {{-- Etapas: orden natural 1→4; en lg el líder ocupa la última columna --}}
+                <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
                     <template x-for="(etapa, idx) in gym.etapas" :key="etapa.etapa">
-                        <div class="card-surface"
+                        <div class="card-surface flex h-full flex-col gap-3 p-4"
                              :class="etapaEstado(etapa.etapa) === 'actual' && gym.estado === 'disponible'
                                  ? 'border-primary ring-1 ring-primary'
                                  : ''">
-                            <div class="px-4 py-3 flex items-center justify-between gap-3">
-                                <div class="flex items-center gap-3 min-w-0">
-                                    {{-- Icono de estado --}}
-                                    <template x-if="etapaEstado(etapa.etapa) === 'superada'">
-                                        <span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-success-soft">
-                                            <svg class="h-4 w-4 text-success-ink" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
-                                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
-                                            </svg>
-                                        </span>
-                                    </template>
-                                    <template x-if="etapaEstado(etapa.etapa) === 'actual'">
-                                        <span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary-soft">
-                                            <span class="h-3 w-3 animate-pulse rounded-full bg-primary"></span>
-                                        </span>
-                                    </template>
-                                    <template x-if="etapaEstado(etapa.etapa) === 'bloqueada'">
-                                        <span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-surface-sunken">
-                                            <svg class="h-4 w-4 text-ink-muted" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
-                                                <path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd"/>
-                                            </svg>
-                                        </span>
-                                    </template>
-                                    <div class="min-w-0">
-                                        <p class="text-sm font-semibold text-ink" x-text="etapa.nombre"></p>
-                                        <p class="text-xs text-ink-muted" x-text="etapaDescripcion(etapa.etapa)"></p>
-                                    </div>
-                                </div>
-                                <div class="flex items-center gap-3 shrink-0">
-                                    {{-- Avatar/placeholder genérico de entrenador (sin revelar su equipo) --}}
-                                    <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-surface-sunken"
-                                          :class="etapaEstado(etapa.etapa) === 'actual' ? 'bg-primary-soft' : ''"
-                                          :title="'Entrenador: ' + etapa.nombre"
-                                          aria-hidden="true">
-                                        <svg class="h-5 w-5 text-ink-muted" fill="currentColor" viewBox="0 0 20 20">
-                                            <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"/>
+                            <div class="flex min-w-0 items-start gap-3">
+                                {{-- Icono de estado --}}
+                                <template x-if="etapaEstado(etapa.etapa) === 'superada'">
+                                    <span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-success-soft">
+                                        <svg class="h-4 w-4 text-success-ink" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                                            <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
                                         </svg>
                                     </span>
-                                    {{-- Botón combatir (solo etapa actual y gimnasio disponible) --}}
-                                    <template x-if="etapaEstado(etapa.etapa) === 'actual' && gym.estado === 'disponible'">
-                                        <button @click="openCombatPopup()"
-                                                class="shrink-0 rounded-control bg-danger px-4 py-2 text-sm font-bold uppercase tracking-wide text-on-primary transition-colors hover:bg-danger/90 focus-ring disabled:cursor-not-allowed disabled:opacity-50"
-                                                :disabled="combating">
-                                            ¡Combatir!
-                                        </button>
-                                    </template>
+                                </template>
+                                <template x-if="etapaEstado(etapa.etapa) === 'actual'">
+                                    <span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary-soft">
+                                        <span class="h-3 w-3 animate-pulse rounded-full bg-primary"></span>
+                                    </span>
+                                </template>
+                                <template x-if="etapaEstado(etapa.etapa) === 'bloqueada'">
+                                    <span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-surface-sunken">
+                                        <svg class="h-4 w-4 text-ink-muted" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                                            <path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd"/>
+                                        </svg>
+                                    </span>
+                                </template>
+                                <div class="min-w-0">
+                                    <p class="text-sm font-semibold text-ink" x-text="etapa.nombre"></p>
+                                    <p class="mt-0.5 min-h-[2.5rem] text-xs text-ink-muted" x-text="etapaDescripcion(etapa.etapa)"></p>
                                 </div>
+                            </div>
+                            <div class="mt-auto flex items-center justify-between gap-2">
+                                {{-- Sprite del entrenador de la etapa (etapa 4 = líder con nombre canónico) --}}
+                                <div class="flex h-20 w-20 shrink-0 items-center justify-center rounded-card bg-surface-sunken"
+                                     :class="etapaEstado(etapa.etapa) === 'actual' ? 'bg-primary-soft' : ''"
+                                     :title="Number(etapa.etapa) === 4 ? 'Líder: ' + etapa.nombre : 'Rival: ' + etapa.nombre">
+                                    <img :src="spriteUrl(spriteEntrenador(etapa.etapa))"
+                                         :alt="Number(etapa.etapa) === 4 ? etapa.nombre : ''"
+                                         :aria-hidden="Number(etapa.etapa) === 4 ? 'false' : 'true'"
+                                         width="80" height="80" loading="lazy" decoding="async"
+                                         style="image-rendering: pixelated"
+                                         class="h-20 w-20 object-contain"
+                                         onerror="this.onerror=null;this.src='/images/misc/trainer.webp'">
+                                </div>
+                                {{-- Botón combatir (solo etapa actual y gimnasio disponible) --}}
+                                <template x-if="etapaEstado(etapa.etapa) === 'actual' && gym.estado === 'disponible'">
+                                    <button @click="openCombatPopup()"
+                                            class="shrink-0 rounded-control bg-danger px-4 py-2 text-sm font-bold uppercase tracking-wide text-on-primary transition-colors hover:bg-danger/90 focus-ring disabled:cursor-not-allowed disabled:opacity-50"
+                                            :disabled="combating">
+                                        ¡Combatir!
+                                    </button>
+                                </template>
                             </div>
                         </div>
                     </template>
@@ -150,14 +151,16 @@
              role="dialog" aria-modal="true" aria-labelledby="formacion-modal-title"
              @keydown.escape.window="closeFormacionPopup()">
             <div class="absolute inset-0 scrim" @click="closeFormacionPopup()"></div>
-            <div class="relative w-full max-w-md rounded-panel bg-surface-raised p-6 shadow-modal">
-                <h3 id="formacion-modal-title" class="mb-4 text-lg font-bold text-ink">Configurar Formación</h3>
-                <p class="mb-4 text-sm text-ink-muted">
-                    Selecciona un equipo y ajusta la posición de cada pokémon antes del combate contra
-                    <strong class="text-ink" x-text="gym ? gym.tipo_medalla : ''"></strong>.
-                </p>
+            <div class="relative flex max-h-[90vh] w-full max-w-6xl flex-col rounded-panel bg-surface-raised shadow-modal">
+                <div class="shrink-0 px-6 pt-6">
+                    <h3 id="formacion-modal-title" class="mb-2 text-lg font-bold text-ink">Configurar Formación</h3>
+                    <p class="text-sm text-ink-muted">
+                        Selecciona un equipo y ajusta la posición de cada pokémon antes del combate contra
+                        <strong class="text-ink" x-text="gym ? gym.tipo_medalla : ''"></strong>.
+                    </p>
+                </div>
 
-                <div class="max-h-[70vh] overflow-y-auto overscroll-contain pr-1">
+                <div class="min-h-0 flex-1 overflow-y-auto overscroll-contain px-6 py-4">
                     {{-- Error del popup --}}
                     <div x-show="popupError" x-cloak role="alert" class="text-sm text-danger-ink bg-danger-soft border border-danger rounded-control px-3 py-2 mb-4">
                         <span x-text="popupError"></span>
@@ -219,18 +222,18 @@
                     </div>
 
                     @include('partials.comparacion-pc')
-                    @include('partials.leyenda-ivs-evs')
+                    @include('partials.leyenda-ivs-evs', ['columnas' => 3, 'colapsable' => true])
                 </div>
 
                 {{-- Botones --}}
-                <div class="mt-4 flex gap-3">
+                <div class="flex shrink-0 flex-col gap-3 border-t border-line px-6 py-4 sm:flex-row sm:justify-end">
                     <button @click="closeFormacionPopup()"
-                            class="flex-1 rounded-control bg-surface-sunken px-4 py-2.5 text-sm font-medium text-ink transition-colors hover:bg-line focus-ring">
+                            class="w-full rounded-control bg-surface-sunken px-4 py-2.5 text-sm font-medium text-ink transition-colors hover:bg-line focus-ring sm:w-auto sm:px-6">
                         Cancelar
                     </button>
                     <button @click="confirmarCombate()"
                             :disabled="!selectedTeamId || combating"
-                            class="flex-1 rounded-control bg-danger px-4 py-2.5 text-sm font-bold text-on-primary transition-colors hover:bg-danger/90 disabled:cursor-not-allowed disabled:opacity-50 focus-ring">
+                            class="w-full rounded-control bg-danger px-4 py-2.5 text-sm font-bold text-on-primary transition-colors hover:bg-danger/90 disabled:cursor-not-allowed disabled:opacity-50 focus-ring sm:w-auto sm:px-6">
                         <span x-show="!combating">¡Combatir!</span>
                         <span x-show="combating" x-cloak class="inline-flex items-center gap-2">
                             <svg class="w-4 h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -252,6 +255,8 @@ function gimnasioShow(slug) {
     return {
         ...comparadorPcState(),
         slug: slug,
+        // Manifiesto de sprites de entrenador (clases, gimnasios y hábitats).
+        sprites: @json($sprites ?? []),
         gym: null,
         loading: false,
         error: '',
@@ -299,6 +304,24 @@ function gimnasioShow(slug) {
                 ? this.gym.etapas.find(e => e.etapa === etapa - 1)?.nombre
                 : null;
             return anterior ? 'Derrota antes a ' + anterior : 'Etapa bloqueada';
+        },
+
+        /** Slug del sprite de la etapa: manifiesto del gimnasio o fallback global. */
+        spriteEntrenador(etapa) {
+            const slugGimnasio = (this.gym && this.gym.slug) ? this.gym.slug : this.slug;
+            const gimnasios = (this.sprites && this.sprites.gimnasios) ? this.sprites.gimnasios : {};
+            const gym = gimnasios[slugGimnasio] || null;
+            const etapas = (gym && gym.etapas) ? gym.etapas : {};
+            const slug = etapas[String(etapa)];
+            if (slug) return slug;
+            return (this.sprites && this.sprites.fallback && this.sprites.fallback.slug)
+                ? this.sprites.fallback.slug
+                : 'acetrainer';
+        },
+
+        /** URL del sprite de entrenador; silueta genérica si falta el slug. */
+        spriteUrl(slug) {
+            return slug ? '/images/trainers/' + slug + '.png' : '/images/misc/trainer.webp';
         },
 
         /** URL del sprite de un reclutado; shiny usa el sufijo _s. */

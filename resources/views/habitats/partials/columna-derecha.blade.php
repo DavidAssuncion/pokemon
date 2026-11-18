@@ -292,7 +292,7 @@
                             <template x-for="(levelData, levelIdx) in (trainers || [])" :key="'level-' + levelIdx">
                                 <div class="mb-4">
                                     <h4 class="text-sm font-semibold text-ink mb-2" x-text="'Nivel ' + levelIdx"></h4>
-                                    <div class="grid grid-cols-3 gap-2">
+                                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
                                         <template x-for="(entrenador, eIdx) in levelData" :key="eIdx">
                                             <button
                                                 @click="selectTrainer(levelIdx, entrenador.indice)"
@@ -303,11 +303,27 @@
                                                     'hover:border-success': entrenador.desbloqueado && selectedTeamId
                                                 }"
                                                 class="w-full p-2 rounded-card border-2 text-left transition-all"
+                                                :aria-label="'Entrenador ' + entrenador.indice + (spriteAlt(spriteEntrenador(entrenador.indice)) ? ' · ' + spriteAlt(spriteEntrenador(entrenador.indice)) : '')"
                                             >
-                                                <div class="flex items-center gap-2 mb-1">
-                                                    <span class="text-xs font-semibold text-ink" x-text="'Entrenador ' + entrenador.indice"></span>
-                                                    <span x-show="!entrenador.desbloqueado" class="px-1.5 py-0.5 bg-danger-soft text-danger-ink text-2xs font-bold rounded-full">Derrotado</span>
+                                                <div class="flex items-center gap-2">
+                                                    <img
+                                                        :src="spriteUrl(spriteEntrenador(entrenador.indice))"
+                                                        alt=""
+                                                        aria-hidden="true"
+                                                        width="80"
+                                                        height="80"
+                                                        loading="lazy"
+                                                        decoding="async"
+                                                        style="image-rendering: pixelated"
+                                                        class="w-20 h-20 shrink-0 object-contain"
+                                                        onerror="this.onerror=null;if(this.src.indexOf('/images/misc/trainer.webp')===-1){this.src='/images/misc/trainer.webp';}"
+                                                    >
+                                                    <div class="min-w-0 flex-1">
+                                                        <span class="block truncate text-xs font-semibold text-ink" x-text="'Entrenador ' + entrenador.indice"></span>
+                                                        <span class="block text-2xs text-ink-muted truncate" x-text="spriteAlt(spriteEntrenador(entrenador.indice))"></span>
+                                                    </div>
                                                 </div>
+                                                <span x-show="!entrenador.desbloqueado" class="mt-1 inline-block px-1.5 py-0.5 bg-danger-soft text-danger-ink text-2xs font-bold rounded-full">Derrotado</span>
                                             </button>
                                         </template>
                                     </div>

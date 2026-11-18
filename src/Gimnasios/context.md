@@ -51,7 +51,8 @@ y las recompensas dobles de `CombateEntrenadores`.
 3. Gimnasio completado (`current_stage = 5` + `completed_at`) → cerrado para siempre.
 4. Si se pierde, la etapa no avanza → repetible.
 5. El nivel rival se congela al iniciar el combate (metadatos de sesión).
-6. Las etapas son: 1=Entrenador 1, 2=Entrenador 2, 3=Entrenador 3, 4=Líder, 5=Completado.
+6. Las etapas son: 1=Entrenador 1, 2=Entrenador 2, 3=Entrenador 3, 4=nombre canónico del
+   líder (p. ej. Brock), 5=Completado.
 
 ## Casos especiales
 
@@ -77,7 +78,7 @@ y las recompensas dobles de `CombateEntrenadores`.
 
 ## Guía de búsqueda (grep)
 
-- Clases: `CatalogoGimnasios`, `GeneradorPokemonGimnasio`, `GeneradorMovimientosTipo`,
+- Clases: `CatalogoGimnasios`, `CatalogoLideres`, `GeneradorPokemonGimnasio`, `GeneradorMovimientosTipo`,
   `IniciarCombateGimnasio`, `RegistrarResultadoGimnasio`, `OtorgarRecompensasEntrenador`,
   `EvsRangoEntrenador`, `IvsRangoEntrenador`, `GymProgress`.
 - Constantes: `EvsRangoEntrenador::*`, `IvsRangoEntrenador::rangoPorNivelEntrenador`,

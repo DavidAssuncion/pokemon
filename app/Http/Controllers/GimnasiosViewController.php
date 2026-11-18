@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Support\UI\SpritesEntrenador;
 use Illuminate\View\View;
 use Src\Equipos\App\ObtenerEquipos;
 
@@ -26,6 +27,7 @@ class GimnasiosViewController extends Controller
         return view('gimnasios.show', [
             'slug' => $slug,
             'teams' => $teams,
+            'sprites' => SpritesEntrenador::manifiesto(),
         ]);
     }
 

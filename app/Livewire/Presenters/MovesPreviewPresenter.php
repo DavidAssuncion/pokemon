@@ -425,9 +425,9 @@ final class MovesPreviewPresenter
     private static function categoriaColor(CategoriaMovimiento $categoria): string
     {
         return match ($categoria) {
-            CategoriaMovimiento::FISICO => 'danger',
-            CategoriaMovimiento::ESPECIAL => 'primary',
-            CategoriaMovimiento::ESTADO => 'secondary',
+            CategoriaMovimiento::FISICO => 'bg-danger text-on-danger',
+            CategoriaMovimiento::ESPECIAL => 'bg-primary text-on-primary',
+            CategoriaMovimiento::ESTADO => 'bg-secondary text-on-secondary',
         };
     }
 
@@ -441,14 +441,16 @@ final class MovesPreviewPresenter
     private static function colorEfectividad(float $efectividad): string
     {
         if ($efectividad <= 0) {
-            return 'dark';
+            return 'bg-ink text-ink-inverse';
         }
 
         if ($efectividad < 1) {
-            return 'warning';
+            return 'bg-warning text-on-warning';
         }
 
-        return $efectividad <= 1 ? 'light border' : 'success';
+        return $efectividad <= 1
+            ? 'bg-surface text-ink border border-line'
+            : 'bg-success text-on-success';
     }
 
     private static function estadoLabel(EstadoPokemon $estado): string

@@ -51,6 +51,8 @@ function habitatShow() {
         // TEMPORAL: modo QA, muestra todos los Pokémon del hábitat aunque no estén avistados.
         unlockAll: @json($unlockAll ?? false),
         teams: @json($teams),
+        // Manifiesto de sprites de entrenador (clases, gimnasios y hábitats).
+        sprites: @json($sprites ?? []),
         // Favoritos (exploración individual): se cargan desde /api/reclutados/favoritos?habitat_id={id}.
         favoritos: [],
         favoritosLoading: false,
@@ -90,6 +92,27 @@ function habitatShow() {
             const team = this.teams.find(t => t.id === this.selectedTeamId);
             if (!team || !team.members) return [];
             return team.members.sort((a, b) => a.slot - b.slot).filter(m => m.reclutado && m.reclutado.pokemon);
+        },
+
+        /** Slug de la tarjeta de entrenador: 1 = clase base, 2-3 = variantes fijas. */
+        spriteEntrenador(indice) {
+            const habitats = (this.sprites && this.sprites.habitats) ? this.sprites.habitats : {};
+            const habitat = habitats[this.habitatId] || null;
+            if (!habitat) return '';
+            if (indice === 1) return habitat.clase || '';
+            const variantes = habitat.variantes || [];
+            return variantes[indice - 2] || habitat.clase || '';
+        },
+
+        /** URL del sprite de entrenador; silueta genérica si falta el slug. */
+        spriteUrl(slug) {
+            return slug ? '/images/trainers/' + slug + '.png' : '/images/misc/trainer.webp';
+        },
+
+        /** Nombre visible de la clase según el manifiesto; vacío si no existe. */
+        spriteAlt(slug) {
+            const clases = (this.sprites && this.sprites.clases) ? this.sprites.clases : {};
+            return (slug && clases[slug]) ? clases[slug] : '';
         },
 
         async toggleEntrenadores() {

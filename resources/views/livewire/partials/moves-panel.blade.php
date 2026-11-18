@@ -16,7 +16,7 @@
                     Cambiar objetivo
                 </button>
             @endif
-            <span class="badge bg-primary round-info">Ronda {{ $round }}</span>
+            <span class="badge bg-primary text-on-primary round-info">Ronda {{ $round }}</span>
         </div>
     </div>
 
@@ -32,10 +32,10 @@
         {{-- Ataques en cards: 2 por fila en móvil, 3 en tablet y 1 en el panel lateral de escritorio. --}}
         <div class="row g-2">
             @foreach($currentMoves as $idx => $move)
-                <div class="col-6 col-md-4 col-lg-12">
+                <div class="col-6 col-md-4 col-lg-12" wire:key="move-{{ $move['slug'] }}">
                     <button type="button"
                             class="card move-card h-100 w-100 text-start position-relative {{ $move['esMejor'] ? 'move-best' : '' }} {{ $move['disponible'] ? '' : 'opacity-50' }}"
-                            style="background-color: var(--type-{{ $move['tipoSlug'] }}); color: var(--color-on-primary)"
+                            style="background-color: var(--type-{{ $move['tipoSlug'] }}); color: var(--type-{{ $move['tipoSlug'] }}-on)"
                             @disabled(! $move['disponible'])
                             title="{{ $move['disponible'] ? '' : $move['motivoTexto'] }}"
                             wire:click="selectMove({{ $idx }})">
@@ -43,11 +43,13 @@
                             {{-- Fila 1: icono + nombre | categoría + precisión a la derecha --}}
                             <div class="d-flex align-items-center justify-content-between gap-2">
                                 <div class="d-flex align-items-center gap-1 min-w-0">
-                                    <img src="/images/type/{{ $move['tipoSlug'] }}.webp" alt="{{ $move['tipoLabel'] }}" style="width:40px;height:40px" class="flex-shrink-0">
+                                    <span class="type-plate shrink-0">
+                                        <img src="/images/type/{{ $move['tipoSlug'] }}.webp" alt="{{ $move['tipoLabel'] }}" style="width:40px;height:40px" class="flex-shrink-0">
+                                    </span>
                                     <span class="fw-bold small lh-sm move-name text-truncate min-w-0" title="{{ $move['nombre'] }}">{{ $move['nombre'] }}</span>
                                 </div>
                                 <div class="d-flex align-items-center gap-1 flex-shrink-0">
-                                    <span class="badge text-bg-{{ $move['categoriaColor'] }} move-cat">{{ $move['categoriaLabel'] }}</span>
+                                    <span class="badge {{ $move['categoriaColor'] }} move-cat">{{ $move['categoriaLabel'] }}</span>
                                     <span class="badge bg-surface-sunken border text-ink-muted move-accuracy" title="Precisión del ataque">
                                         Prec. {{ $move['precisionTexto'] }}
                                     </span>
@@ -68,13 +70,13 @@
                                     <div class="d-flex align-items-center justify-content-between gap-2">
                                         <div class="d-flex align-items-baseline gap-1 lh-1">
                                             <span class="fs-5 fw-bold move-dmg">{{ ceil($move['daño']) }}</span>
-                                            <span class="small text-on-primary/70">daño</span>
+                                            <span class="small opacity-70">daño</span>
                                         </div>
                                         @if(! $move['esEstado'])
                                             <div class="d-flex align-items-center gap-1 flex-shrink-0">
-                                                <span class="badge text-bg-{{ $move['efectividadColor'] }} efectividad">×{{ $move['efectividadTexto'] }}</span>
+                                                <span class="badge {{ $move['efectividadColor'] }} efectividad">×{{ $move['efectividadTexto'] }}</span>
                                                 @if($move['directo'])
-                                                    <span class="badge text-bg-danger directo-badge">DIRECTO</span>
+                                                    <span class="badge bg-danger text-on-danger directo-badge">DIRECTO</span>
                                                 @endif
                                             </div>
                                         @endif
@@ -84,9 +86,9 @@
                                     @endif
                                 @elseif(! $move['esEstado'])
                                     <div class="d-flex align-items-center gap-1">
-                                        <span class="badge text-bg-{{ $move['efectividadColor'] }} efectividad">×{{ $move['efectividadTexto'] }}</span>
+                                        <span class="badge {{ $move['efectividadColor'] }} efectividad">×{{ $move['efectividadTexto'] }}</span>
                                         @if($move['directo'])
-                                            <span class="badge text-bg-danger directo-badge">DIRECTO</span>
+                                            <span class="badge bg-danger text-on-danger directo-badge">DIRECTO</span>
                                         @endif
                                     </div>
                                 @endif

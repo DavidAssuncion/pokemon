@@ -2,13 +2,15 @@
     <template x-if="showFormacionPopup">
         <div class="fixed inset-0 z-50 flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="formacion-modal-title" @keydown.escape.window="closeFormacionPopup()">
             <div class="absolute inset-0 scrim" @click="closeFormacionPopup()"></div>
-            <div class="relative bg-surface-raised rounded-panel shadow-modal w-full max-w-md p-6">
-                <h3 id="formacion-modal-title" class="text-lg font-bold text-ink mb-4" x-text="formacionContexto === 'ruta' ? 'Combate de Ruta · Configurar Formación' : 'Configurar Formación'"></h3>
-                <p class="text-sm text-ink-muted mb-4">
-                    Ajusta la posición de cada pokémon antes del combate.
-                </p>
+            <div class="relative flex max-h-[90vh] w-full max-w-6xl flex-col rounded-panel bg-surface-raised shadow-modal">
+                <div class="shrink-0 px-6 pt-6">
+                    <h3 id="formacion-modal-title" class="text-lg font-bold text-ink mb-2" x-text="formacionContexto === 'ruta' ? 'Combate de Ruta · Configurar Formación' : 'Configurar Formación'"></h3>
+                    <p class="text-sm text-ink-muted">
+                        Ajusta la posición de cada pokémon antes del combate.
+                    </p>
+                </div>
 
-                <div class="max-h-[70vh] overflow-y-auto overscroll-contain pr-1">
+                <div class="min-h-0 flex-1 overflow-y-auto overscroll-contain px-6 py-4">
                     <!-- Error 422 inline (ruta: sin redirigir) -->
                     <div x-show="rutaCombatError" x-cloak role="alert" class="mb-4 text-sm text-danger-ink bg-danger-soft border border-danger rounded-control px-3 py-2">
                         <span x-text="rutaCombatError"></span>
@@ -40,14 +42,14 @@
                     </div>
 
                     @include('partials.comparacion-pc')
-                    @include('partials.leyenda-ivs-evs')
+                    @include('partials.leyenda-ivs-evs', ['columnas' => 3, 'colapsable' => true])
                 </div>
 
                 <!-- Buttons -->
-                <div class="mt-4 flex gap-3">
+                <div class="flex shrink-0 flex-col gap-3 border-t border-line px-6 py-4 sm:flex-row sm:justify-end">
                     <button
                         @click="closeFormacionPopup()"
-                        class="flex-1 px-4 py-2.5 bg-surface-sunken text-ink rounded-control text-sm font-medium hover:bg-line transition-colors"
+                        class="w-full px-4 py-2.5 bg-surface-sunken text-ink rounded-control text-sm font-medium hover:bg-line transition-colors sm:w-auto sm:px-6"
                     >
                         Cancelar
                     </button>
@@ -56,7 +58,7 @@
                         :disabled="formacionContexto === 'ruta'
                             ? (!selectedTeamId || rutaCombatiendo)
                             : (!selectedTeamId || !selectedTrainer)"
-                        class="flex-1 px-4 py-2.5 bg-danger text-on-primary rounded-control text-sm font-bold hover:bg-danger/90 transition-colors disabled:bg-surface-sunken disabled:text-ink-muted disabled:cursor-not-allowed"
+                        class="w-full px-4 py-2.5 bg-danger text-on-primary rounded-control text-sm font-bold hover:bg-danger/90 transition-colors disabled:bg-surface-sunken disabled:text-ink-muted disabled:cursor-not-allowed sm:w-auto sm:px-6"
                         x-text="formacionContexto === 'ruta'
                             ? (rutaCombatiendo ? 'Iniciando combate...' : '¡Combatir! (Ruta 3v3)')
                             : '¡Combatir!'"

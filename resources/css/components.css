@@ -80,20 +80,57 @@
         background-color: color-mix(in oklab, var(--color-ink) 50%, transparent);
     }
 
-    /* Badge de tipo; el consumidor define --type-color */
+    /* Badge de tipo; el consumidor define --type-color.
+       La identidad la aportan el tinte y el borde; el texto es `ink`. */
     .tipo-badge {
         display: inline-flex;
         align-items: center;
         gap: 0.25rem;
         padding: 0.125rem 0.5rem;
+        padding-left: 0;
         border-radius: var(--radius-full);
         font-size: var(--text-3xs);
         line-height: var(--text-3xs--line-height);
         background-color: color-mix(in oklab, var(--type-color, var(--color-line)) 14%, var(--color-surface));
-        border: 1px solid color-mix(in oklab, var(--type-color, var(--color-line)) 40%, var(--color-line));
-        color: color-mix(in oklab, var(--type-color, var(--color-ink)) 60%, var(--color-ink));
-        padding: 0;
-        border-left: none;
-        padding-right: 10px;
+        border: 1px solid color-mix(in oklab, var(--type-color, var(--color-line)) 45%, var(--color-line));
+        color: var(--color-ink);
+    }
+
+    /* Placa de superficie alrededor del icono de tipo: separa el disco del WebP
+       del fondo sólido del mismo color. */
+    .type-plate {
+        display: inline-flex;
+        padding: 2px;
+        border-radius: var(--radius-full);
+        background: color-mix(in oklab, var(--color-surface-raised) 88%, transparent);
+        box-shadow: 0 0 0 1px var(--color-line);
     }
 }
+
+/* Compatibilidad temporal: markup heredado que combina fills semánticos con
+   text-on-primary. El color correcto depende del fill; se migrará el markup
+   a text-on-* en una tarea posterior.
+   Se excluyen los estados deshabilitados (`:disabled`, `.disabled` y
+   `[aria-disabled="true"]`): Bootstrap los pinta con `disabled:text-ink-muted`
+   y forzar aquí el color `on-*` rompería la señal visual de no interactivo. */
+.bg-success.text-on-primary:not(:disabled):not(.disabled):not([aria-disabled="true"]) { color: var(--color-on-success); }
+.bg-warning.text-on-primary:not(:disabled):not(.disabled):not([aria-disabled="true"]) { color: var(--color-on-warning); }
+.bg-danger.text-on-primary:not(:disabled):not(.disabled):not([aria-disabled="true"]) { color: var(--color-on-danger); }
+.bg-info.text-on-primary:not(:disabled):not(.disabled):not([aria-disabled="true"]) { color: var(--color-on-info); }
+.bg-secondary.text-on-primary:not(:disabled):not(.disabled):not([aria-disabled="true"]) { color: var(--color-on-secondary); }
+
+/* Mismo problema en estado deshabilitado, resuelto por casos:
+   1. Conserva el fill semántico (solo `disabled:opacity-*`) → color `on-*`.
+   2. Cambia a superficie (`disabled:bg-*`) sin `disabled:text-*` → `ink-muted`.
+   3. Declara `disabled:text-*` → no se toca; manda la utilidad del markup. */
+.bg-success.text-on-primary:is(:disabled, .disabled, [aria-disabled="true"]):not([class*="disabled:bg-"]):not([class*="disabled:text-"]) { color: var(--color-on-success); }
+.bg-warning.text-on-primary:is(:disabled, .disabled, [aria-disabled="true"]):not([class*="disabled:bg-"]):not([class*="disabled:text-"]) { color: var(--color-on-warning); }
+.bg-danger.text-on-primary:is(:disabled, .disabled, [aria-disabled="true"]):not([class*="disabled:bg-"]):not([class*="disabled:text-"]) { color: var(--color-on-danger); }
+.bg-info.text-on-primary:is(:disabled, .disabled, [aria-disabled="true"]):not([class*="disabled:bg-"]):not([class*="disabled:text-"]) { color: var(--color-on-info); }
+.bg-secondary.text-on-primary:is(:disabled, .disabled, [aria-disabled="true"]):not([class*="disabled:bg-"]):not([class*="disabled:text-"]) { color: var(--color-on-secondary); }
+
+.bg-success.text-on-primary:is(:disabled, .disabled, [aria-disabled="true"])[class*="disabled:bg-"]:not([class*="disabled:text-"]) { color: var(--color-ink-muted); }
+.bg-warning.text-on-primary:is(:disabled, .disabled, [aria-disabled="true"])[class*="disabled:bg-"]:not([class*="disabled:text-"]) { color: var(--color-ink-muted); }
+.bg-danger.text-on-primary:is(:disabled, .disabled, [aria-disabled="true"])[class*="disabled:bg-"]:not([class*="disabled:text-"]) { color: var(--color-ink-muted); }
+.bg-info.text-on-primary:is(:disabled, .disabled, [aria-disabled="true"])[class*="disabled:bg-"]:not([class*="disabled:text-"]) { color: var(--color-ink-muted); }
+.bg-secondary.text-on-primary:is(:disabled, .disabled, [aria-disabled="true"])[class*="disabled:bg-"]:not([class*="disabled:text-"]) { color: var(--color-ink-muted); }

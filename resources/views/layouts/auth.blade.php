@@ -4,14 +4,25 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
+    <meta name="theme-color" content="#F2EFE9">
     <title>@yield('title', 'Aplicación')</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     @include('partials.tipos-tokens')
     <style>[x-cloak] { display: none !important; }</style>
     <script>
-        if (localStorage.getItem('theme') === 'dark' || (!localStorage.getItem('theme') && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-            document.documentElement.classList.add('dark');
-        }
+        (() => {
+            const oscuro = localStorage.getItem('theme') === 'dark'
+                || (!localStorage.getItem('theme') && window.matchMedia('(prefers-color-scheme: dark)').matches);
+
+            if (oscuro) {
+                document.documentElement.classList.add('dark');
+            }
+
+            const meta = document.querySelector('meta[name="theme-color"]');
+            if (meta) {
+                meta.setAttribute('content', oscuro ? '#1E1B24' : '#F2EFE9');
+            }
+        })();
     </script>
 </head>
 <body class="bg-canvas text-ink min-h-screen flex items-center justify-center px-4 py-10">

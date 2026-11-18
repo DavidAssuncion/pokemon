@@ -9,7 +9,6 @@ export default defineConfig({
                 'resources/css/app.css',
                 'resources/js/app.js',
                 'resources/css/combate.css',
-                'resources/js/combate.js',
             ],
             refresh: true,
         }),

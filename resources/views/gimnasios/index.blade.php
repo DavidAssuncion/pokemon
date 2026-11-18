@@ -52,8 +52,8 @@
                 <div class="px-4 py-3 border-b border-line flex items-center gap-2">
                     <span class="text-2xl shrink-0" aria-hidden="true"><img :src="'images/medallas/' + gym.tipo_slug + '.webp'" :alt="gym.tipo_medalla" onerror="this.style.display='none'" class="medalla-icon"></span>
                     <div class="min-w-0">
-                        <span class="px-2 py-0.5 text-2xs font-bold rounded-full uppercase shrink-0 text-on-primary inline-block mb-4"
-                              :style="'background-color: var(--type-' + gym.tipo_slug + ')'"
+                        <span class="px-2 py-0.5 text-2xs font-bold rounded-full uppercase shrink-0 inline-block mb-4"
+                              :style="'background-color: var(--type-' + gym.tipo_slug + '); color: var(--type-' + gym.tipo_slug + '-on)'"
                               x-text="gym.tipo_nombre"></span>
                         <p class="text-sm font-semibold text-ink truncate" x-text="gym.tipo_medalla"></p>
                         <div class="flex items-center gap-2">

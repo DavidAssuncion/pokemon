@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
+    <meta name="theme-color" content="#F2EFE9">
     <title>@yield('title', 'Aplicación')</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     @include('partials.tipos-tokens')
@@ -11,15 +12,25 @@
     @livewireStyles
     <style>[x-cloak] { display: none !important; }</style>
     <script>
-        if (localStorage.getItem('theme') === 'dark' || (!localStorage.getItem('theme') && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-            document.documentElement.classList.add('dark');
-        }
+        (() => {
+            const oscuro = localStorage.getItem('theme') === 'dark'
+                || (!localStorage.getItem('theme') && window.matchMedia('(prefers-color-scheme: dark)').matches);
+
+            if (oscuro) {
+                document.documentElement.classList.add('dark');
+            }
+
+            const meta = document.querySelector('meta[name="theme-color"]');
+            if (meta) {
+                meta.setAttribute('content', oscuro ? '#1E1B24' : '#F2EFE9');
+            }
+        })();
     </script>
 </head>
 <body class="bg-canvas text-ink min-h-screen"
       :class="{ 'overflow-hidden': $store.modales.pila.length > 0 }"
-      x-data="{ cosechando: false, cosechaEstado: 'idle', cosechaMensaje: '', cosechaDetalle: '', cosechaItems: [], cosechaTimer: null, cosecharTodo() { if (this.cosechando) { return; } this.cosechando = true; this.cosechaEstado = 'idle'; this.cosechaMensaje = ''; this.cosechaDetalle = ''; this.cosechaItems = []; if (this.cosechaTimer) { clearTimeout(this.cosechaTimer); this.cosechaTimer = null; } const controller = new AbortController(); const timeout = setTimeout(() => controller.abort(), 15000); const csrf = document.querySelector('meta[name=csrf-token]')?.content || ''; fetch('/api/farm/harvest-all', { method: 'POST', headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': csrf }, signal: controller.signal }).then(async (response) => { if (!response.ok) { const data = await response.json().catch(() => ({})); throw new Error(data.message || 'No se pudo cosechar'); } return response.json(); }).then((data) => { const bayas = Number(data.total_bayas ?? 0); const errores = Array.isArray(data.errores) ? data.errores.length : 0; if (bayas > 0) { this.cosechaEstado = 'ok'; this.cosechaMensaje = 'Cosecha completada · ' + bayas + (bayas === 1 ? ' baya' : ' bayas'); this.cosechaDetalle = errores > 0 ? errores + ' error(es)' : ''; this.cosechaItems = Array.isArray(data.bayas) ? data.bayas : []; } else if (errores > 0) { this.cosechaEstado = 'error'; this.cosechaMensaje = 'Error'; this.cosechaDetalle = errores + ' error(es)'; this.cosechaItems = []; } else { this.cosechaEstado = 'ok'; this.cosechaMensaje = 'Nada que cosechar'; this.cosechaDetalle = ''; this.cosechaItems = []; } window.dispatchEvent(new CustomEvent('inventario:actualizado', { detail: data })); this.ocultarMensajeCosecha(); }).catch((error) => { this.cosechaEstado = 'error'; this.cosechaMensaje = 'Error'; this.cosechaDetalle = error?.name === 'AbortError' ? 'tiempo de espera' : ''; this.cosechaItems = []; this.ocultarMensajeCosecha(); }).finally(() => { clearTimeout(timeout); this.cosechando = false; }); }, ocultarMensajeCosecha() { this.cosechaTimer = setTimeout(() => { this.cosechaEstado = 'idle'; this.cosechaMensaje = ''; this.cosechaDetalle = ''; this.cosechaItems = []; this.cosechaTimer = null; }, 6000); } }"
-      x-init="$store.expedicionesNavbar.iniciar(); $store.reclutamientoNavbar.iniciar()">
+      x-data="{ cosechando: false, combateAnimando: false, cosechaEstado: 'idle', cosechaMensaje: '', cosechaDetalle: '', cosechaItems: [], cosechaTimer: null, cosecharTodo() { if (this.cosechando) { return; } this.cosechando = true; this.cosechaEstado = 'idle'; this.cosechaMensaje = ''; this.cosechaDetalle = ''; this.cosechaItems = []; if (this.cosechaTimer) { clearTimeout(this.cosechaTimer); this.cosechaTimer = null; } const controller = new AbortController(); const timeout = setTimeout(() => controller.abort(), 15000); const csrf = document.querySelector('meta[name=csrf-token]')?.content || ''; fetch('/api/farm/harvest-all', { method: 'POST', headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': csrf }, signal: controller.signal }).then(async (response) => { if (!response.ok) { const data = await response.json().catch(() => ({})); throw new Error(data.message || 'No se pudo cosechar'); } return response.json(); }).then((data) => { const bayas = Number(data.total_bayas ?? 0); const errores = Array.isArray(data.errores) ? data.errores.length : 0; if (bayas > 0) { this.cosechaEstado = 'ok'; this.cosechaMensaje = 'Cosecha completada · ' + bayas + (bayas === 1 ? ' baya' : ' bayas'); this.cosechaDetalle = errores > 0 ? errores + ' error(es)' : ''; this.cosechaItems = Array.isArray(data.bayas) ? data.bayas : []; } else if (errores > 0) { this.cosechaEstado = 'error'; this.cosechaMensaje = 'Error'; this.cosechaDetalle = errores + ' error(es)'; this.cosechaItems = []; } else { this.cosechaEstado = 'ok'; this.cosechaMensaje = 'Nada que cosechar'; this.cosechaDetalle = ''; this.cosechaItems = []; } window.dispatchEvent(new CustomEvent('inventario:actualizado', { detail: data })); this.ocultarMensajeCosecha(); }).catch((error) => { this.cosechaEstado = 'error'; this.cosechaMensaje = 'Error'; this.cosechaDetalle = error?.name === 'AbortError' ? 'tiempo de espera' : ''; this.cosechaItems = []; this.ocultarMensajeCosecha(); }).finally(() => { clearTimeout(timeout); this.cosechando = false; }); }, ocultarMensajeCosecha() { this.cosechaTimer = setTimeout(() => { this.cosechaEstado = 'idle'; this.cosechaMensaje = ''; this.cosechaDetalle = ''; this.cosechaItems = []; this.cosechaTimer = null; }, 6000); } }"
+      x-init="$store.expedicionesNavbar.iniciar(); $store.reclutamientoNavbar.iniciar(); window.addEventListener('combate:animando', (evento) => { $data.combateAnimando = evento.detail?.animando === true; })">
     <header class="bg-surface sticky top-0 z-30 relative">
         <div class="px-4 sm:px-6">
             <nav
@@ -27,21 +38,19 @@
                 aria-label="Navegación principal"
             >
                 <div class="flex items-center gap-1 min-w-0 flex-1 overflow-x-auto">
-                    @if(!request()->is('combate*'))
-                        <!-- Cosecha global -->
-                        <div class="relative shrink-0">
-                            <button
-                                type="button"
-                                @click="cosecharTodo()"
-                                :disabled="cosechando"
-                                aria-label="Cosechar todas las plantaciones"
-                                title="Cosechar todas las plantaciones"
-                                class="w-8 h-8 rounded-full border border-line text-ink-muted hover:bg-surface-sunken hover:text-ink transition-colors flex items-center justify-center focus-ring disabled:opacity-50 disabled:cursor-not-allowed"
-                            >
-                                <i class="fa-solid" :class="cosechando ? 'fa-spinner fa-spin' : 'fa-seedling'" aria-hidden="true"></i>
-                            </button>
-                        </div>
-                    @endif
+                    <!-- Cosecha global -->
+                    <div class="relative shrink-0">
+                        <button
+                            type="button"
+                            @click="cosecharTodo()"
+                            :disabled="cosechando || combateAnimando"
+                            aria-label="Cosechar todas las plantaciones"
+                            title="Cosechar todas las plantaciones"
+                            class="w-8 h-8 rounded-full border border-line text-ink-muted hover:bg-surface-sunken hover:text-ink transition-colors flex items-center justify-center focus-ring disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            <i class="fa-solid" :class="cosechando ? 'fa-spinner fa-spin' : 'fa-seedling'" aria-hidden="true"></i>
+                        </button>
+                    </div>
 
                     @php
                         $navItems = [
@@ -83,8 +92,17 @@
                     <span class="px-2.5 py-1 bg-primary text-on-primary text-xs font-bold rounded-full" title="Nivel {{ $nivelJugador ?? 1 }}">
                         Nv {{ $nivelJugador ?? 1 }}
                     </span>
-                    <button x-data="{ oscuro: localStorage.getItem('theme') === 'dark' }"
-                            @click="oscuro = !oscuro; localStorage.setItem('theme', oscuro ? 'dark' : 'light'); document.documentElement.classList.toggle('dark', oscuro)"
+                    <button x-data="{
+                                oscuro: document.documentElement.classList.contains('dark'),
+                                alternar() {
+                                    this.oscuro = !this.oscuro;
+                                    document.documentElement.classList.toggle('dark', this.oscuro);
+                                    localStorage.setItem('theme', this.oscuro ? 'dark' : 'light');
+                                    document.querySelector('meta[name=theme-color]')?.setAttribute('content', this.oscuro ? '#1E1B24' : '#F2EFE9');
+                                    window.dispatchEvent(new CustomEvent('theme:cambiado', { detail: { tema: this.oscuro ? 'dark' : 'light' } }));
+                                },
+                            }"
+                            @click="alternar()"
                             class="p-2 rounded-lg text-ink-muted hover:bg-surface-sunken transition-colors focus-ring"
                             aria-label="Cambiar tema">
                         <span x-text="oscuro ? '☀️' : '🌙'"></span>

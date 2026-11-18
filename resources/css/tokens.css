@@ -9,45 +9,71 @@
 
 @theme static {
     /* Superficies y líneas */
-    --color-canvas: #f9fafb;
-    --color-surface: #ffffff;
-    --color-surface-raised: #ffffff;
-    --color-surface-sunken: #f3f4f6;
-    --color-line: #e5e7eb;
-    --color-line-strong: #d1d5db;
+    --color-canvas: #F2EFE9;
+    --color-surface: #E9E4DA;
+    --color-surface-raised: #FAF7F2;
+    --color-surface-sunken: #DFD8CB;
+    --color-line: #D8D0C3;
+    --color-line-strong: #C2B7A5;
 
     /* Texto */
-    --color-ink: #111827;
-    --color-ink-muted: #6b7280;
-    --color-ink-subtle: #9ca3af;
-    --color-ink-inverse: #ffffff;
+    --color-ink: #302E2A;
+    --color-ink-muted: #665E52;
+    --color-ink-subtle: #6B6357;
+    --color-ink-inverse: #F5F1E8;
 
     /* Acción primaria */
-    --color-primary: #2563eb;
-    --color-primary-hover: #1d4ed8;
-    --color-primary-soft: color-mix(in oklab, var(--color-primary) 12%, var(--color-surface));
-    --color-primary-ink: #1d4ed8;
-    --color-on-primary: #ffffff;
+    --color-primary: #A47750;
+    --color-primary-hover: #B0855F;
+    --color-primary-soft: color-mix(in oklab, var(--color-primary) 14%, var(--color-surface));
+    --color-primary-ink: #6E4A2A;
+    --color-on-primary: #1A140E;
+
+    /* Acción secundaria (neutra) */
+    --color-secondary: #6E665A;
+    --color-secondary-soft: color-mix(in oklab, var(--color-secondary) 12%, var(--color-surface));
+    --color-secondary-ink: #4F4940;
+    --color-on-secondary: #FFFFFF;
 
     /* Estados */
-    --color-success: #16a34a;
+    --color-success: #3F6B4B;
     --color-success-soft: color-mix(in oklab, var(--color-success) 12%, var(--color-surface));
-    --color-success-ink: #15803d;
-    --color-warning: #d97706;
+    --color-success-ink: #2E5638;
+    --color-warning: #7C5410;
     --color-warning-soft: color-mix(in oklab, var(--color-warning) 12%, var(--color-surface));
-    --color-warning-ink: #b45309;
-    --color-danger: #dc2626;
+    --color-warning-ink: #6B4A0F;
+    --color-danger: #9E3B31;
     --color-danger-soft: color-mix(in oklab, var(--color-danger) 12%, var(--color-surface));
-    --color-danger-ink: #b91c1c;
-    --color-info: #0284c7;
+    --color-danger-ink: #7C2E26;
+    --color-info: #36617E;
     --color-info-soft: color-mix(in oklab, var(--color-info) 12%, var(--color-surface));
-    --color-info-ink: #0369a1;
+    --color-info-ink: #274F6A;
+
+    /* Texto sobre fills de estado */
+    --color-on-success: #FFFFFF;
+    --color-on-warning: #FFFFFF;
+    --color-on-danger: #FFFFFF;
+    --color-on-info: #FFFFFF;
+
+    /* Controles de formulario */
+    --color-control-bg: var(--color-surface);
+    --color-control-border: #8A7F6F;
 
     /* Foco */
-    --color-focus: var(--color-primary);
+    --color-focus: #A47750;
+
+    /* Decorativo: nunca texto (contraste insuficiente) */
+    --color-muted: #A69B8C;
 
     /* Scrim: fondo de modales y overlays */
-    --color-scrim: rgb(0 0 0 / 0.6);
+    --color-scrim: rgb(48 46 42 / 0.55);
+    --color-on-scrim: #FFFFFF;
+
+    /* Gráficos (resuelven el token en tiempo de uso) */
+    --color-chart-grid: var(--color-line);
+    --color-chart-label: var(--color-ink-muted);
+    --color-chart-primary: var(--color-primary);
+    --color-chart-success: var(--color-success);
 
     /* Tipografía */
     --text-2xs: 0.625rem;
@@ -62,8 +88,8 @@
     --radius-full: 9999px;
 
     /* Sombras */
-    --shadow-card: 0 1px 2px rgb(0 0 0 / 0.05);
-    --shadow-modal: 0 10px 30px rgb(0 0 0 / 0.12);
+    --shadow-card: 0 1px 2px rgb(48 46 42 / 0.08);
+    --shadow-modal: 0 12px 32px rgb(48 46 42 / 0.18);
 
     /* Espaciado semántico (aditivo, no altera la escala numérica) */
     --spacing-gutter: 0.75rem;
@@ -115,40 +141,56 @@
 .dark {
     color-scheme: dark;
 
-    --color-canvas: #111827;
-    --color-surface: #1f2937;
-    --color-surface-raised: #1f2937;
-    --color-surface-sunken: #111827;
-    --color-line: #374151;
-    --color-line-strong: #4b5563;
+    --color-canvas: #1E1B24;
+    --color-surface: #2A2733;
+    --color-surface-raised: #2A2733;
+    --color-surface-sunken: #17141E;
+    --color-line: #4A4458;
+    --color-line-strong: #5E5670;
 
-    --color-ink: #f9fafb;
-    --color-ink-muted: #9ca3af;
-    --color-ink-subtle: #6b7280;
-    --color-ink-inverse: #111827;
+    --color-ink: #EAE6F8;
+    --color-ink-muted: #9A97B0;
+    --color-ink-subtle: #9491AC;
+    --color-ink-inverse: #1E1B24;
 
-    --color-primary: #2563eb;
-    --color-primary-hover: #3b82f6;
-    --color-primary-soft: color-mix(in oklab, var(--color-primary) 12%, var(--color-surface));
-    --color-primary-ink: #93c5fd;
-    --color-on-primary: #ffffff;
+    --color-primary: #A855F7;
+    --color-primary-hover: #C084FC;
+    --color-primary-soft: color-mix(in oklab, var(--color-primary) 16%, var(--color-surface));
+    --color-primary-ink: #C9A0FF;
+    --color-on-primary: #17121F;
 
-    --color-success: #22c55e;
-    --color-success-soft: color-mix(in oklab, var(--color-success) 12%, var(--color-surface));
-    --color-success-ink: #86efac;
-    --color-warning: #f59e0b;
-    --color-warning-soft: color-mix(in oklab, var(--color-warning) 12%, var(--color-surface));
-    --color-warning-ink: #fcd34d;
-    --color-danger: #ef4444;
-    --color-danger-soft: color-mix(in oklab, var(--color-danger) 12%, var(--color-surface));
-    --color-danger-ink: #fca5a5;
-    --color-info: #38bdf8;
-    --color-info-soft: color-mix(in oklab, var(--color-info) 12%, var(--color-surface));
-    --color-info-ink: #7dd3fc;
+    --color-secondary: #8B88A3;
+    --color-secondary-soft: color-mix(in oklab, var(--color-secondary) 18%, var(--color-surface));
+    --color-secondary-ink: #B4B0C8;
+    --color-on-secondary: #14111A;
 
-    --color-focus: var(--color-primary);
+    --color-success: #7CA982;
+    --color-success-soft: color-mix(in oklab, var(--color-success) 18%, var(--color-surface));
+    --color-success-ink: #A6CCA9;
+    --color-warning: #FBBF24;
+    --color-warning-soft: color-mix(in oklab, var(--color-warning) 18%, var(--color-surface));
+    --color-warning-ink: #FCD34D;
+    --color-danger: #F87171;
+    --color-danger-soft: color-mix(in oklab, var(--color-danger) 18%, var(--color-surface));
+    --color-danger-ink: #FCA5A5;
+    --color-info: #60A5FA;
+    --color-info-soft: color-mix(in oklab, var(--color-info) 18%, var(--color-surface));
+    --color-info-ink: #93C5FD;
+
+    --color-on-success: #17121F;
+    --color-on-warning: #17121F;
+    --color-on-danger: #17121F;
+    --color-on-info: #17121F;
+
+    --color-control-bg: var(--color-surface);
+    --color-control-border: #7D7595;
+
+    --color-focus: #A855F7;
+
+    --color-muted: #8B88A3;
 
     --color-scrim: rgb(0 0 0 / 0.7);
+    --color-on-scrim: #FFFFFF;
 
-    --shadow-modal: 0 10px 30px rgb(0 0 0 / 0.5);
+    --shadow-modal: 0 12px 32px rgb(0 0 0 / 0.55);
 }

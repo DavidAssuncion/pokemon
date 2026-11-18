@@ -59,6 +59,8 @@
 
     @include('equipos.partials.modal-eliminar-equipo')
 
+    @include('equipos.partials.modal-editar-equipo')
+
     @include('equipos.partials.modal-reemplazo')
 
     @include('equipos.partials.modal-detalle-pokemon')
@@ -80,32 +82,29 @@ function favoritosApp() {
 
         // ─── Formación persistente (combate 3v3) ───────────────────────────
         // Draft local por equipo: {teamId: {slot: 'vanguardia'|'retaguardia'}}.
-        // La formación persistida del backend (team.formacion) recién se conoce
-        // tras el primer PATCH; el draft tiene prioridad sobre ella.
+        // El draft tiene prioridad sobre la formación persistida mientras se edita.
         formacionDraft: {},
-        formacionSavingTeamId: null,
-        formacionSaveError: '',
-        formacionSaveSuccess: '',
 
         // ─── Posturas persistentes por miembro ─────────────────────────────
         // Draft local: {teamId: {slot: 'atacar'|'guardia'|'cubrir'}}.
         posturasDraft: {},
-        posturaSavingTeamId: null,
-        posturaSaveError: '',
-        posturaSaveSuccess: '',
 
         // ─── Objetos equipados por miembro ──────────────────────────────────
         itemsDraft: {},
-        itemSavingTeamId: null,
-        itemSaveError: '',
-        itemSaveSuccess: '',
+        objetos: @json($objetos ?? []),
 
         // ─── UI: Equipos ───────────────────────────────────────────────────
+        equiposAbiertos: {},
+        showTeamEditModal: false,
+        equipoEnEdicion: null,
+        edicionGuardando: false,
+        edicionError: '',
+        equipoGuardadoId: null,
+
         // ─── UI: Buscar/filtro ─────────────────────────────────────────────
         searchQuery: '',
         typeFilters: [],
 
-        selectedTeamId: null,
         showNewTeamForm: false,
         newTeamName: '',
         showDeleteModal: false,
@@ -183,6 +182,22 @@ function favoritosApp() {
         previewLoaded: false,
         previewError: '',
         sendingExploracion: false,
+
+        // ─── Ciclo de vida ──────────────────────────────────────────────────
+        init() {
+            this._onThemeCambiado = () => {
+                setTimeout(() => this.renderDetailCharts(), 50);
+            };
+            window.addEventListener('theme:cambiado', this._onThemeCambiado);
+        },
+
+        destroy() {
+            if (this._onThemeCambiado) {
+                window.removeEventListener('theme:cambiado', this._onThemeCambiado);
+                this._onThemeCambiado = null;
+            }
+            this.destroyDetailCharts();
+        },
 
         // ═══════════════════════════════════════════════════════════════════════
         // COMPUTED GETTERS
@@ -523,9 +538,10 @@ function favoritosApp() {
             const canvas = document.getElementById(canvasId);
             if (!canvas || typeof window.Chart === 'undefined') return null;
 
-            const labelColor = this.tokenCss('--color-ink-muted');
-            const lineRgb = this.colorARgb(this.tokenCss('--color-line'));
-            const gridColor = lineRgb ? 'rgba(' + lineRgb + ', 0.35)' : this.tokenCss('--color-line');
+            const labelColor = this.tokenCss('--color-chart-label') || this.tokenCss('--color-ink-muted');
+            const gridToken = this.tokenCss('--color-chart-grid') || this.tokenCss('--color-line');
+            const gridRgb = this.colorARgb(gridToken);
+            const gridColor = gridRgb ? 'rgba(' + gridRgb + ', 0.35)' : gridToken;
 
             return new window.Chart(canvas.getContext('2d'), {
                 type: 'radar',
@@ -581,16 +597,16 @@ function favoritosApp() {
                     base.map(stat => stat.label),
                     base.map(stat => stat.value),
                     this.escalaStats(this.detailPokemon),
-                    this.tokenCss('--color-primary'),
-                    this.colorARgb(this.tokenCss('--color-primary'))
+                    this.tokenCss('--color-chart-primary') || this.tokenCss('--color-primary'),
+                    this.colorARgb(this.tokenCss('--color-chart-primary') || this.tokenCss('--color-primary'))
                 ),
                 this.crearRadarChart(
                     'detail-calculated-chart',
                     calculados.map(stat => stat.label),
                     calculados.map(stat => stat.value),
                     this.escalaCalculada(this.detailPokemon),
-                    this.tokenCss('--color-success'),
-                    this.colorARgb(this.tokenCss('--color-success'))
+                    this.tokenCss('--color-chart-success') || this.tokenCss('--color-success'),
+                    this.colorARgb(this.tokenCss('--color-chart-success') || this.tokenCss('--color-success'))
                 ),
                 this.crearRadarChart(
                     'detail-iv-chart',
@@ -1370,6 +1386,27 @@ function favoritosApp() {
             return member ? member.reclutado : null;
         },
 
+        /** Las tarjetas arrancan colapsadas; cada una mantiene su propio estado. */
+        equipoAbierto(team) {
+            return this.equiposAbiertos[team.id] === true;
+        },
+
+        toggleEquipo(team) {
+            this.equiposAbiertos[team.id] = !this.equipoAbierto(team);
+        },
+
+        /** Miembros del equipo agrupados por la formación persistida (solo presentación). */
+        miembrosDeFormacion(team, formacion) {
+            return [1, 2, 3]
+                .map(slot => ({ slot: slot, reclutado: this.getMember(team, slot) }))
+                .filter(miembro => miembro.reclutado && this.formacionDe(team, miembro.slot) === formacion);
+        },
+
+        nombreObjeto(clave) {
+            if (!clave) return 'Sin objeto';
+            return this.objetos[clave] || 'Sin objeto';
+        },
+
         /** Reclutado enriquecido del serializador principal para un slot concreto. */
         reclutadoDeSlot(team, slot) {
             const member = team?.members?.find(m => String(m.slot) === String(slot));
@@ -1380,21 +1417,6 @@ function favoritosApp() {
         getTeamName(teamId) {
             const team = this.teams.find(t => t.id === teamId);
             return team ? team.name : '';
-        },
-
-        composicionBadge(team) {
-            if (!team.members || team.members.length !== 3) return null;
-            const nombre = team.sinergia_nombre;
-            if (typeof nombre === 'string' && nombre.trim()) {
-                return {
-                    texto: 'Composición: ' + nombre,
-                    clase: 'bg-success-soft text-success-ink',
-                };
-            }
-            return {
-                texto: 'Composición neutra',
-                clase: 'bg-surface-sunken text-ink-muted',
-            };
         },
 
         pokemonTeam(pokemon) {
@@ -1695,7 +1717,7 @@ function favoritosApp() {
             return member.reclutado?.behavior || member.behavior || 'VANGUARDIA';
         },
 
-        // ─── Formación persistente (combate 3v3) ─────────────────────────────
+        // ─── Formación, posturas y objetos (edición del equipo) ──────────────
 
         /** Posición actual del slot: draft local > formación persistida > 'vanguardia'. */
         formacionDe(team, slot) {
@@ -1707,58 +1729,24 @@ function favoritosApp() {
         setFormacionSlot(team, slot, posicion) {
             if (!this.formacionDraft[team.id]) this.formacionDraft[team.id] = {};
             this.formacionDraft[team.id][slot] = posicion;
-            this.formacionSaveError = '';
-            this.formacionSaveSuccess = '';
         },
 
-        async guardarFormacion(team) {
-            const base = team.formacion || {};
-            const draft = this.formacionDraft[team.id] || {};
-            const formacionCompleta = {};
-            for (let slot = 1; slot <= 3; slot++) {
-                if (!this.getMember(team, slot)) continue;
-                formacionCompleta[slot] = draft[slot] || base[slot] || 'vanguardia';
-            }
-            if (Object.keys(formacionCompleta).length === 0) {
-                alert('No hay cambios en la formación para guardar.');
-                return;
-            }
-            this.formacionSavingTeamId = team.id;
-            this.formacionSaveError = '';
-            this.formacionSaveSuccess = '';
-            try {
-                const response = await fetch('/teams/' + team.id + '/formacion', {
-                    method: 'PATCH',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '',
-                        'Accept': 'application/json',
-                    },
-                    body: JSON.stringify({ formacion: formacionCompleta }),
-                });
-                const data = await response.json().catch(() => ({}));
-                if (!response.ok) {
-                    this.formacionSaveError = data.error || data.message || 'No se pudo guardar la formación.';
-                    return;
-                }
-                if (data.team) {
-                    // Contrato: { team: { id, formacion: {slot: pos} } }.
-                    this.formacionDraft[team.id] = {};
-                    team.formacion = data.team.formacion || {};
-                    this.formacionSaveSuccess = '✓ Formación guardada';
-                    setTimeout(() => {
-                        this.formacionSaveSuccess = '';
-                    }, 3000);
-                }
-            } catch (err) {
-                console.error('Error saving formation:', err);
-                this.formacionSaveError = 'Error de conexión al guardar la formación.';
-            } finally {
-                this.formacionSavingTeamId = null;
-            }
+        /** Postura del slot: draft local > postura persistida > 'atacar'. */
+        posturaDe(team, slot) {
+            return this.posturasDraft[team.id]?.[slot]
+                || team.posturas?.[slot]
+                || 'atacar';
         },
 
-        // ─── Objetos equipados (combate 3v3) ─────────────────────────────────
+        setPosturaSlot(team, slot, postura) {
+            if (!this.posturasDraft[team.id]) this.posturasDraft[team.id] = {};
+            this.posturasDraft[team.id][slot] = postura;
+        },
+
+        /** Etiqueta legible de la postura persistida. */
+        posturaEtiqueta(postura) {
+            return { atacar: 'Atacar', guardia: 'Guardia', cubrir: 'Cubrir' }[postura] || 'Atacar';
+        },
 
         itemDe(team, slot) {
             const draft = this.itemsDraft[team.id]?.[slot];
@@ -1771,110 +1759,142 @@ function favoritosApp() {
             return typeof item === 'string' ? item : '';
         },
 
-        async guardarItemSlot(team, slot, itemKey) {
+        setItemSlot(team, slot, itemKey) {
             if (!this.itemsDraft[team.id]) this.itemsDraft[team.id] = {};
             this.itemsDraft[team.id][slot] = itemKey;
-            this.itemSavingTeamId = team.id;
-            this.itemSaveError = '';
-            this.itemSaveSuccess = '';
+        },
 
+        // Mapas completos: solo slots con miembro (equipos de 1-2 guardan sin 422).
+        formacionCompletaDe(team) {
+            const mapa = {};
+            for (let slot = 1; slot <= 3; slot++) {
+                if (!this.getMember(team, slot)) continue;
+                mapa[slot] = this.formacionDraft[team.id]?.[slot]
+                    || team.formacion?.[slot]
+                    || 'vanguardia';
+            }
+            return mapa;
+        },
+
+        posturasCompletasDe(team) {
+            const mapa = {};
+            for (let slot = 1; slot <= 3; slot++) {
+                if (!this.getMember(team, slot)) continue;
+                mapa[slot] = this.posturasDraft[team.id]?.[slot]
+                    || team.posturas?.[slot]
+                    || 'atacar';
+            }
+            return mapa;
+        },
+
+        itemsCompletosDe(team) {
+            const mapa = {};
+            for (let slot = 1; slot <= 3; slot++) {
+                if (!this.getMember(team, slot)) continue;
+                mapa[slot] = this.itemDe(team, slot);
+            }
+            return mapa;
+        },
+
+        // ─── Modal de edición del equipo ────────────────────────────────────
+
+        abrirEdicionEquipo(team) {
+            this.formacionDraft[team.id] = {};
+            this.posturasDraft[team.id] = {};
+            this.itemsDraft[team.id] = {};
+            this.edicionError = '';
+            this.equipoEnEdicion = team;
+            this.showTeamEditModal = true;
+        },
+
+        cerrarEdicionEquipo() {
+            if (this.edicionGuardando) return;
+
+            const team = this.equipoEnEdicion;
+            if (team) {
+                this.formacionDraft[team.id] = {};
+                this.posturasDraft[team.id] = {};
+                this.itemsDraft[team.id] = {};
+            }
+            this.showTeamEditModal = false;
+            this.equipoEnEdicion = null;
+            this.edicionError = '';
+            this.edicionGuardando = false;
+        },
+
+        /**
+         * PATCH con la sección en el mensaje de error. Lanza para detener la
+         * secuencia y mantener el modal abierto.
+         */
+        async _patchEquipo(team, ruta, cuerpo, seccion) {
             try {
-                const response = await fetch('/teams/' + team.id + '/items', {
+                const response = await fetch('/teams/' + team.id + ruta, {
                     method: 'PATCH',
                     headers: {
                         'Content-Type': 'application/json',
                         'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '',
                         'Accept': 'application/json',
                     },
-                    body: JSON.stringify({ items: { [slot]: itemKey } }),
+                    body: JSON.stringify(cuerpo),
                 });
                 const data = await response.json().catch(() => ({}));
                 if (!response.ok) {
-                    this.itemSaveError = data.error || data.message || 'No se pudo guardar el objeto.';
-                    return;
+                    throw new Error(data.message || data.error || 'no se pudo guardar.');
                 }
-
-                const member = this.getMember(team, slot);
-                if (member) {
-                    member.obj_equipados = itemKey !== '' ? [itemKey] : [];
-                }
-                this.itemsDraft[team.id] = {};
-                this.itemSaveSuccess = '✓ Objeto guardado';
-                setTimeout(() => {
-                    this.itemSaveSuccess = '';
-                }, 2500);
+                return data;
             } catch (err) {
-                console.error('Error saving item:', err);
-                this.itemSaveError = 'Error de conexión al guardar el objeto.';
-            } finally {
-                this.itemSavingTeamId = null;
+                throw new Error(seccion + ': ' + (err?.message || 'no se pudo guardar.'));
             }
         },
 
-        // ─── Posturas (combate 3v3) ──────────────────────────────────────────
+        /** Secuencia formación → posturas → objetos; se detiene en el primer fallo. */
+        async guardarEdicionEquipo() {
+            const team = this.equipoEnEdicion;
+            if (!team || this.edicionGuardando) return;
 
-        /** Postura del slot: draft local > postura persistida > 'atacar'. */
-        posturaDe(team, slot) {
-            return this.posturasDraft[team.id]?.[slot]
-                || team.posturas?.[slot]
-                || 'atacar';
-        },
-
-        setPosturaSlot(team, slot, postura) {
-            if (!this.posturasDraft[team.id]) this.posturasDraft[team.id] = {};
-            this.posturasDraft[team.id][slot] = postura;
-            this.posturaSaveError = '';
-            this.posturaSaveSuccess = '';
-        },
-
-        async guardarPosturas(team) {
-            const base = team.posturas || {};
-            const draft = this.posturasDraft[team.id] || {};
-            const posturasCompletas = {};
-            for (let slot = 1; slot <= 3; slot++) {
-                if (!this.getMember(team, slot)) continue;
-                posturasCompletas[slot] = draft[slot] || base[slot] || 'atacar';
-            }
-
-            if (Object.keys(posturasCompletas).length === 0) {
-                alert('No hay posturas para guardar.');
+            const formacion = this.formacionCompletaDe(team);
+            if (Object.keys(formacion).length === 0) {
+                this.edicionError = 'Añade al menos un miembro al equipo antes de guardar.';
                 return;
             }
 
-            this.posturaSavingTeamId = team.id;
-            this.posturaSaveError = '';
-            this.posturaSaveSuccess = '';
+            this.edicionGuardando = true;
+            this.edicionError = '';
 
             try {
-                const response = await fetch('/teams/' + team.id + '/posturas', {
-                    method: 'PATCH',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '',
-                        'Accept': 'application/json',
-                    },
-                    body: JSON.stringify({ posturas: posturasCompletas }),
+                const dataFormacion = await this._patchEquipo(team, '/formacion', { formacion }, 'Formación');
+                team.formacion = dataFormacion.team?.formacion || formacion;
+
+                const posturas = this.posturasCompletasDe(team);
+                const dataPosturas = await this._patchEquipo(team, '/posturas', { posturas }, 'Posturas');
+                team.posturas = dataPosturas.team?.posturas || posturas;
+
+                const items = this.itemsCompletosDe(team);
+                const dataItems = await this._patchEquipo(team, '/items', { items }, 'Objetos');
+                const itemsGuardados = dataItems.team?.items || items;
+
+                Object.keys(itemsGuardados).forEach(slot => {
+                    const member = (team.members || []).find(m => String(m.slot) === String(slot));
+                    if (!member || !member.reclutado) return;
+                    const clave = itemsGuardados[slot] || '';
+                    member.reclutado.obj_equipados = clave !== '' ? [clave] : [];
                 });
-                const data = await response.json().catch(() => ({}));
-                if (!response.ok) {
-                    this.posturaSaveError = data.error || data.message || 'No se pudieron guardar las posturas.';
-                    return;
-                }
-                if (data.team) {
-                    // Contrato: { team: { id, posturas: {slot: postura} } }.
-                    this.posturasDraft[team.id] = {};
-                    team.posturas = data.team.posturas || {};
-                    this.posturaSaveSuccess = '✓ Posturas guardadas';
-                    setTimeout(() => {
-                        this.posturaSaveSuccess = '';
-                    }, 3000);
-                }
             } catch (err) {
-                console.error('Error saving postures:', err);
-                this.posturaSaveError = 'Error de conexión al guardar las posturas.';
+                this.edicionError = err?.message || 'No se pudieron guardar los cambios.';
+                return;
             } finally {
-                this.posturaSavingTeamId = null;
+                this.edicionGuardando = false;
             }
+
+            this.formacionDraft[team.id] = {};
+            this.posturasDraft[team.id] = {};
+            this.itemsDraft[team.id] = {};
+            this.showTeamEditModal = false;
+            this.equipoEnEdicion = null;
+            this.equipoGuardadoId = team.id;
+            setTimeout(() => {
+                if (this.equipoGuardadoId === team.id) this.equipoGuardadoId = null;
+            }, 2500);
         },
 
         // ═══════════════════════════════════════════════════════════════════════

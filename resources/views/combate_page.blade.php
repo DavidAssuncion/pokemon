@@ -7,7 +7,6 @@
 @endpush
 
 @push('scripts')
-    @vite(['resources/js/combate.js'])
     @include('livewire.partials.combate-scripts')
 @endpush
 

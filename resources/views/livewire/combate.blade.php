@@ -44,6 +44,7 @@
          const resolverAccion = async () => {
              if (reproduciendo) return;
              reproduciendo = true;
+             window.dispatchEvent(new CustomEvent('combate:animando', { detail: { animando: true } }));
              const previos = animacionDisponible ? instantaneaVitales() : null;
              const logPrevio = document.querySelector('.battle-log ul')?.innerHTML ?? null;
              let logFinal = null;
@@ -79,6 +80,7 @@
                  });
                  if (typeof mostrarModalVictoria === 'function') mostrarModalVictoria();
                  reproduciendo = false;
+                 window.dispatchEvent(new CustomEvent('combate:animando', { detail: { animando: false } }));
                  // Deja terminar el impacto antes de reiniciar la embestida del
                  // siguiente actor y abrir su ventana de 700 ms.
                  window.setTimeout(() => {
@@ -170,7 +172,7 @@
                                                         @if($captura['es_shiny'])
                                                             <span class="absolute -top-1.5 -left-1.5 px-1 py-0.5 bg-warning-soft text-warning-ink text-2xs font-bold rounded-full shadow" title="Shiny">Shiny</span>
                                                         @endif
-                                                        <span class="absolute -top-1.5 -right-1.5 px-1.5 py-0.5 bg-success text-on-primary text-2xs font-bold rounded-full">
+                                                        <span class="absolute -top-1.5 -right-1.5 px-1.5 py-0.5 bg-success text-on-success text-2xs font-bold rounded-full">
                                                             ×{{ $captura['cantidad'] }}
                                                         </span>
                                                     </div>

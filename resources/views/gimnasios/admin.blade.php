@@ -82,8 +82,8 @@
                                         <p class="text-sm font-bold text-ink truncate" x-text="gym.tipo_medalla"></p>
                                         <p class="text-xs text-ink-muted" x-text="'Slug: ' + gym.slug"></p>
                                         <div class="flex flex-wrap items-center gap-2 mt-1.5">
-                                            <span class="px-2 py-0.5 text-2xs font-bold rounded-full uppercase text-on-primary"
-                                                  :style="'background-color: var(--type-' + gym.tipo_slug + ')'"
+                                            <span class="px-2 py-0.5 text-2xs font-bold rounded-full uppercase"
+                                                  :style="'background-color: var(--type-' + gym.tipo_slug + '); color: var(--type-' + gym.tipo_slug + '-on)'"
                                                   x-text="gym.tipo_nombre || tipoBadge(gym.tipo)"></span>
                                             <span class="text-2xs text-ink-muted" x-text="'Niv mín ' + gym.nivel_minimo"></span>
                                         </div>

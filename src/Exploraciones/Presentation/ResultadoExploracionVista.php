@@ -133,11 +133,11 @@ final class ResultadoExploracionVista
     private static function claseResultado(mixed $resultado): ?string
     {
         return match ($resultado) {
-            'exito_excepcional' => 'bg-emerald-400 text-emerald-950 dark:bg-emerald-500 dark:text-emerald-950',
-            'exito' => 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400',
-            'exito_parcial' => 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400',
-            'fracaso' => 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400',
-            'retirada' => 'bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300',
+            'exito_excepcional' => 'bg-success text-on-success',
+            'exito' => 'bg-success-soft text-success-ink',
+            'exito_parcial' => 'bg-warning-soft text-warning-ink',
+            'fracaso' => 'bg-danger-soft text-danger-ink',
+            'retirada' => 'bg-secondary-soft text-secondary-ink',
             default => null,
         };
     }

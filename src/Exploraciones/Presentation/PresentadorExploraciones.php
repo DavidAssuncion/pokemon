@@ -793,12 +793,12 @@ final class PresentadorExploraciones
     private function claseEstado(EstadoExpedicion $estado): string
     {
         return match ($estado) {
-            EstadoExpedicion::EXPLORANDO => 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400',
-            EstadoExpedicion::VOLVIENDO => 'bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400',
-            EstadoExpedicion::PENDIENTE_RESOLUCION => 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400',
-            EstadoExpedicion::TERMINADA => 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400',
-            EstadoExpedicion::ARCHIVADA => 'bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300',
-            EstadoExpedicion::CANCELADA => 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400',
+            EstadoExpedicion::EXPLORANDO => 'bg-info-soft text-info-ink',
+            EstadoExpedicion::VOLVIENDO => 'bg-warning-soft text-warning-ink',
+            EstadoExpedicion::PENDIENTE_RESOLUCION => 'bg-warning-soft text-warning-ink',
+            EstadoExpedicion::TERMINADA => 'bg-success-soft text-success-ink',
+            EstadoExpedicion::ARCHIVADA => 'bg-secondary-soft text-secondary-ink',
+            EstadoExpedicion::CANCELADA => 'bg-danger-soft text-danger-ink',
         };
     }
 

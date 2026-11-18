@@ -10,9 +10,6 @@
 
 @custom-variant dark (&:where(.dark, .dark *));
 
-/* ─── Dark mode ─── */
-.dark { color-scheme: dark; }
-
 /* Icono de medalla de gimnasio */
 .medalla-icon {
     width: 96px;
@@ -176,13 +173,9 @@
     border: 2px solid var(--quality-color) !important;
 }
 
-/* Asignado a un equipo: se mantiene en gris dentro de la misma cuadrícula */
+/* Asignado a un equipo: se mantiene neutro dentro de la misma cuadrícula */
 .pokemon-card-assigned {
-    background-color: rgba(243, 244, 246, 0.65);
-}
-
-.dark .pokemon-card-assigned {
-    background-color: rgba(17, 24, 39, 0.45);
+    background-color: color-mix(in oklab, var(--color-surface-sunken) 65%, transparent);
 }
 
 /* Valores IV individuales: color por atributo */

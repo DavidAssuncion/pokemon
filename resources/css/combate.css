@@ -9,97 +9,300 @@
     cursor: not-allowed;
 }
 
+/* ─── Puente Bootstrap → tokens ───
+   Bootstrap resuelve sus componentes con `--bs-*`. Se enlazan aquí, en la capa
+   `components` (posterior a `bootstrap`), para no reordenar capas ni duplicar la
+   paleta. El bloque `.dark` solo aporta las tripletas RGB que Bootstrap exige
+   numéricas; el resto de valores se resuelven con `var()` en tiempo de uso. */
+@layer components {
+    :root {
+        --bs-body-bg: var(--color-canvas);
+        --bs-body-color: var(--color-ink);
+        --bs-body-color-rgb: 48, 46, 42;
+        --bs-emphasis-color: var(--color-ink);
+        --bs-secondary-color: var(--color-ink-muted);
+        --bs-secondary-bg: var(--color-surface-sunken);
+        --bs-tertiary-bg: var(--color-surface);
+        --bs-border-color: var(--color-line);
+        --bs-border-color-translucent: color-mix(in oklab, var(--color-line) 70%, transparent);
+        --bs-card-bg: var(--color-surface);
+        --bs-card-color: var(--color-ink);
+        --bs-card-border-color: var(--color-line);
+        --bs-card-border-radius: var(--radius-card);
+        --bs-list-group-bg: var(--color-surface);
+        --bs-list-group-color: var(--color-ink);
+        --bs-list-group-border-color: var(--color-line);
+        --bs-link-color: var(--color-primary-ink);
+        --bs-link-hover-color: var(--color-primary-ink);
+        --bs-primary: var(--color-primary);
+        --bs-secondary: var(--color-secondary);
+        --bs-success: var(--color-success);
+        --bs-info: var(--color-info);
+        --bs-warning: var(--color-warning);
+        --bs-danger: var(--color-danger);
+        --bs-primary-rgb: 164, 119, 80;
+        --bs-secondary-rgb: 110, 102, 90;
+        --bs-success-rgb: 63, 107, 75;
+        --bs-info-rgb: 54, 97, 126;
+        --bs-warning-rgb: 124, 84, 16;
+        --bs-danger-rgb: 158, 59, 49;
+    }
+
+    /* Solo tripletas RGB dependientes del tema (derivadas de tokens.css). */
+    .dark {
+        --bs-body-color-rgb: 234, 230, 248;
+        --bs-primary-rgb: 168, 85, 247;
+        --bs-secondary-rgb: 139, 136, 163;
+        --bs-success-rgb: 124, 169, 130;
+        --bs-info-rgb: 96, 165, 250;
+        --bs-warning-rgb: 251, 191, 36;
+        --bs-danger-rgb: 248, 113, 113;
+    }
+
+    /* Alertas: Bootstrap trae colores compilados; se reasignan a los estados del tema. */
+    .alert-secondary {
+        --bs-alert-color: var(--color-secondary-ink);
+        --bs-alert-bg: var(--color-secondary-soft);
+        --bs-alert-border-color: color-mix(in oklab, var(--color-secondary) 45%, var(--color-line));
+        --bs-alert-link-color: var(--color-secondary-ink);
+    }
+
+    .alert-success {
+        --bs-alert-color: var(--color-success-ink);
+        --bs-alert-bg: var(--color-success-soft);
+        --bs-alert-border-color: color-mix(in oklab, var(--color-success) 45%, var(--color-line));
+        --bs-alert-link-color: var(--color-success-ink);
+    }
+
+    .alert-warning {
+        --bs-alert-color: var(--color-warning-ink);
+        --bs-alert-bg: var(--color-warning-soft);
+        --bs-alert-border-color: color-mix(in oklab, var(--color-warning) 45%, var(--color-line));
+        --bs-alert-link-color: var(--color-warning-ink);
+    }
+
+    .alert-danger {
+        --bs-alert-color: var(--color-danger-ink);
+        --bs-alert-bg: var(--color-danger-soft);
+        --bs-alert-border-color: color-mix(in oklab, var(--color-danger) 45%, var(--color-line));
+        --bs-alert-link-color: var(--color-danger-ink);
+    }
+
+    .alert-info {
+        --bs-alert-color: var(--color-info-ink);
+        --bs-alert-bg: var(--color-info-soft);
+        --bs-alert-border-color: color-mix(in oklab, var(--color-info) 45%, var(--color-line));
+        --bs-alert-link-color: var(--color-info-ink);
+    }
+
+    /* Selects: fondo/borde de control y chevron con currentColor (sin data-URI ni hex). */
+    .form-select {
+        background-color: var(--color-control-bg);
+        border-color: var(--color-control-border);
+        color: var(--color-ink);
+        padding-right: 2.25rem;
+        background-image:
+            linear-gradient(45deg, transparent 50%, currentColor 50%),
+            linear-gradient(135deg, currentColor 50%, transparent 50%);
+        background-position:
+            calc(100% - 1.1rem) calc(50% + 0.1rem),
+            calc(100% - 0.75rem) calc(50% + 0.1rem);
+        background-size: 0.35rem 0.35rem;
+        background-repeat: no-repeat;
+    }
+
+    .form-select:focus {
+        border-color: var(--color-focus);
+        box-shadow: 0 0 0 0.2rem color-mix(in oklab, var(--color-focus) 25%, transparent);
+    }
+
+    /* Bootstrap atenúa el botón deshabilitado a 0.65; con `ink-muted` sobre
+       `surface-sunken` el contraste cae. Se anula la atenuación y el par de
+       colores tokenizado mantiene la legibilidad. */
+    .btn {
+        --bs-btn-disabled-opacity: 1;
+    }
+
+    /* Botones de combate: se reasignan las variables `--bs-btn-*` para que los
+       fills semánticos usen siempre el color `on-*` correspondiente y los estados
+       disabled queden legibles sin `!important`. */
+    .btn-primary {
+        --bs-btn-color: var(--color-on-primary);
+        --bs-btn-bg: var(--color-primary);
+        --bs-btn-border-color: var(--color-primary);
+        --bs-btn-hover-color: var(--color-on-primary);
+        --bs-btn-hover-bg: var(--color-primary-hover);
+        --bs-btn-hover-border-color: var(--color-primary-hover);
+        --bs-btn-active-color: var(--color-on-primary);
+        --bs-btn-active-bg: var(--color-primary-hover);
+        --bs-btn-active-border-color: var(--color-primary-hover);
+        --bs-btn-disabled-color: var(--color-ink-muted);
+        --bs-btn-disabled-bg: var(--color-surface-sunken);
+        --bs-btn-disabled-border-color: var(--color-line);
+    }
+
+    .btn-success {
+        --bs-btn-color: var(--color-on-success);
+        --bs-btn-bg: var(--color-success);
+        --bs-btn-border-color: var(--color-success);
+        --bs-btn-hover-color: var(--color-on-success);
+        --bs-btn-hover-bg: color-mix(in oklab, var(--color-success) 85%, var(--color-ink));
+        --bs-btn-hover-border-color: color-mix(in oklab, var(--color-success) 85%, var(--color-ink));
+        --bs-btn-active-color: var(--color-on-success);
+        --bs-btn-active-bg: color-mix(in oklab, var(--color-success) 85%, var(--color-ink));
+        --bs-btn-active-border-color: color-mix(in oklab, var(--color-success) 85%, var(--color-ink));
+        --bs-btn-disabled-color: var(--color-ink-muted);
+        --bs-btn-disabled-bg: var(--color-surface-sunken);
+        --bs-btn-disabled-border-color: var(--color-line);
+    }
+
+    .btn-outline-primary {
+        --bs-btn-color: var(--color-primary-ink);
+        --bs-btn-border-color: var(--color-primary);
+        --bs-btn-hover-color: var(--color-on-primary);
+        --bs-btn-hover-bg: var(--color-primary);
+        --bs-btn-hover-border-color: var(--color-primary);
+        --bs-btn-active-color: var(--color-on-primary);
+        --bs-btn-active-bg: var(--color-primary);
+        --bs-btn-active-border-color: var(--color-primary);
+        --bs-btn-disabled-color: var(--color-ink-muted);
+        --bs-btn-disabled-bg: transparent;
+        --bs-btn-disabled-border-color: var(--color-line);
+    }
+
+    .btn-outline-warning {
+        --bs-btn-color: var(--color-warning-ink);
+        --bs-btn-border-color: var(--color-warning);
+        --bs-btn-hover-color: var(--color-on-warning);
+        --bs-btn-hover-bg: var(--color-warning);
+        --bs-btn-hover-border-color: var(--color-warning);
+        --bs-btn-active-color: var(--color-on-warning);
+        --bs-btn-active-bg: var(--color-warning);
+        --bs-btn-active-border-color: var(--color-warning);
+        --bs-btn-disabled-color: var(--color-ink-muted);
+        --bs-btn-disabled-bg: transparent;
+        --bs-btn-disabled-border-color: var(--color-line);
+    }
+
+    /* Botón neutro: texto `ink`, borde de control y hover en superficie hundida. */
+    .btn-outline-secondary {
+        --bs-btn-color: var(--color-ink);
+        --bs-btn-border-color: var(--color-control-border);
+        --bs-btn-hover-color: var(--color-ink);
+        --bs-btn-hover-bg: var(--color-surface-sunken);
+        --bs-btn-hover-border-color: var(--color-control-border);
+        --bs-btn-active-color: var(--color-ink);
+        --bs-btn-active-bg: var(--color-surface-sunken);
+        --bs-btn-active-border-color: var(--color-control-border);
+        --bs-btn-disabled-color: var(--color-ink-muted);
+        --bs-btn-disabled-border-color: var(--color-line);
+    }
+
+    /* Track de progreso (HP, barreras, EXP). */
+    .progress {
+        --bs-progress-bg: var(--color-surface-sunken);
+    }
+
+    /* Modal: superficie elevada; el resto (cabecera, pie) usa `--bs-border-color`. */
+    .modal-content {
+        --bs-modal-bg: var(--color-surface-raised);
+        --bs-modal-color: var(--color-ink);
+        --bs-modal-border-color: var(--color-line);
+    }
+
+    /* La cruz de cierre es negra por defecto; en oscuro se invierte.
+       Bootstrap 5.3 no expone el filtro en :root, así que se aplica el valor. */
+    .dark .btn-close {
+        filter: invert(1) grayscale(100%) brightness(200%);
+    }
+}
+
 .bg-hp-low {
-    background-color: #dc3545;
+    background-color: var(--color-danger);
 }
 
 .bg-hp-mid {
-    background-color: #ffc107;
+    background-color: var(--color-warning);
 }
 
 .bg-hp-high {
-    background-color: #198754;
+    background-color: var(--color-success);
 }
 
 .stage-up {
-    background-color: #d1e7dd;
-    color: #0f5132;
+    background-color: var(--color-success-soft);
+    color: var(--color-success-ink);
 }
 
 .stage-down {
-    background-color: #f8d7da;
-    color: #842029;
+    background-color: var(--color-danger-soft);
+    color: var(--color-danger-ink);
 }
 
-.weather-sequia {
-    background: #78350f;
-    color: #fcd34d;
-    border-color: #92400e;
+/* Climas: tinte de un estado semántico sobre la superficie + texto `-ink`. */
+.weather-sequia,
+.weather-tormenta_arena {
+    background-color: color-mix(in oklab, var(--color-warning) 22%, var(--color-surface));
+    color: var(--color-warning-ink);
+    border-color: color-mix(in oklab, var(--color-warning) 45%, var(--color-line));
 }
 
 .weather-diluvio {
-    background: #1e3a5f;
-    color: #93c5fd;
-    border-color: #1d4ed8;
+    background-color: color-mix(in oklab, var(--color-info) 22%, var(--color-surface));
+    color: var(--color-info-ink);
+    border-color: color-mix(in oklab, var(--color-info) 45%, var(--color-line));
 }
 
 .weather-niebla {
-    background: #475569;
-    color: #e2e8f0;
-    border-color: #64748b;
+    background-color: color-mix(in oklab, var(--color-secondary) 20%, var(--color-surface));
+    color: var(--color-secondary-ink);
+    border-color: color-mix(in oklab, var(--color-secondary) 45%, var(--color-line));
 }
 
 .weather-granizo {
-    background: #1e293b;
-    color: #93c5fd;
-    border-color: #475569;
-}
-
-.weather-tormenta_arena {
-    background: #78350f;
-    color: #fcd34d;
-    border-color: #92400e;
+    background-color: color-mix(in oklab, var(--color-info) 14%, var(--color-surface));
+    color: var(--color-info-ink);
+    border-color: color-mix(in oklab, var(--color-info) 45%, var(--color-line));
 }
 
 .weather-turbulencias {
-    background: #4c1d95;
-    color: #d8b4fe;
-    border-color: #6d28d9;
+    background-color: color-mix(in oklab, var(--color-primary) 22%, var(--color-surface));
+    color: var(--color-primary-ink);
+    border-color: color-mix(in oklab, var(--color-primary) 45%, var(--color-line));
 }
 
+/* Turno activo: degradado de aviso con texto `ink` (legible en ambos temas). */
 .active-turn {
-    background: linear-gradient(360deg, #fde047 0%, #facc15 45%, #ca8a04 100%) !important;
-    color: #1e293b;
-    border-color: #facc15 !important;
+    background: linear-gradient(360deg,
+            var(--color-warning-soft) 0%,
+            color-mix(in oklab, var(--color-warning) 22%, var(--color-surface)) 100%) !important;
+    color: var(--color-ink);
+    border-color: color-mix(in oklab, var(--color-warning) 55%, var(--color-line)) !important;
 }
 
-/* Barra de turnos: fondo oscuro y borde claro por equipo. */
+/* Barra de turnos: aliado = info, rival = danger. */
 .turn-ally {
-    background-color: rgb(22, 78, 103);
-    border: 1px solid rgb(39, 200, 237);
-    color: #f8fafc;
+    background-color: var(--color-info-soft);
+    border: 1px solid color-mix(in oklab, var(--color-info) 55%, var(--color-line));
+    color: var(--color-info-ink);
 }
 
 .turn-enemy {
-    background-color: rgb(112, 42, 60);
-    border: 1px solid rgb(255, 99, 123);
-    color: #f8fafc;
+    background-color: var(--color-danger-soft);
+    border: 1px solid color-mix(in oklab, var(--color-danger) 55%, var(--color-line));
+    color: var(--color-danger-ink);
 }
 
 .targeted-card {
-    background: #ff000033;
-    border: 2px solid #dc3545 !important;
+    background: color-mix(in oklab, var(--color-danger) 20%, transparent);
+    border: 2px solid var(--color-danger) !important;
 }
 
 /* ─── Pokemon cards: fondo explícito, contenido contenido, tamaño uniforme ─── */
 .pokemon-card {
-    background-color: #fff;
+    background-color: var(--color-surface);
     overflow: hidden;
     min-height: 96px;
-}
-
-.dark .pokemon-card {
-    background-color: #1f2937;
 }
 
 /* ─── Tooltip de debug del rival (solo APP_DEBUG, hover real, overlay interno) ─── */
@@ -121,10 +324,10 @@
     z-index: 60;
     overflow-y: auto;
     padding: .45rem .55rem;
-    border: 1px solid #475569;
+    border: 1px solid var(--color-line);
     border-radius: inherit;
-    background: rgba(15, 23, 42, .97);
-    color: #e2e8f0;
+    background: color-mix(in oklab, var(--color-surface-raised) 97%, transparent);
+    color: var(--color-ink);
     font-size: .68rem;
     line-height: 1.25;
     pointer-events: none;
@@ -138,7 +341,7 @@
 
 .debug-tooltip__head {
     margin-bottom: .25rem;
-    color: #facc15;
+    color: var(--color-warning-ink);
     font-size: .6rem;
     font-weight: 700;
     letter-spacing: .08em;
@@ -149,12 +352,12 @@
     justify-content: space-between;
     gap: .3rem;
     padding: .05rem 0;
-    border-bottom: 1px solid rgba(71, 85, 105, .35);
+    border-bottom: 1px solid color-mix(in oklab, var(--color-line) 60%, transparent);
 }
 
 .debug-tooltip__key {
     flex: 0 0 auto;
-    color: #94a3b8;
+    color: var(--color-ink-muted);
     font-weight: 600;
 }
 
@@ -169,7 +372,7 @@
     grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: .1rem .4rem;
     padding: .2rem 0;
-    border-bottom: 1px solid rgba(71, 85, 105, .35);
+    border-bottom: 1px solid color-mix(in oklab, var(--color-line) 60%, transparent);
 }
 
 .debug-tooltip__stat {
@@ -180,7 +383,7 @@
 }
 
 .debug-tooltip__stat-label {
-    color: #94a3b8;
+    color: var(--color-ink-muted);
 }
 
 .debug-tooltip__moves {
@@ -191,7 +394,7 @@
 
 .debug-tooltip__move {
     padding: .12rem 0;
-    border-bottom: 1px solid rgba(71, 85, 105, .2);
+    border-bottom: 1px solid color-mix(in oklab, var(--color-line) 40%, transparent);
 }
 
 .debug-tooltip__move:last-child {
@@ -200,13 +403,13 @@
 
 .debug-tooltip__move-name {
     display: block;
-    color: #f8fafc;
+    color: var(--color-ink);
     font-weight: 600;
 }
 
 .debug-tooltip__move-meta {
     display: block;
-    color: #cbd5e1;
+    color: var(--color-ink-muted);
 }
 
 .debug-tooltip__move.is-unavailable {
@@ -215,40 +418,40 @@
 
 .debug-tooltip__move-reason {
     display: block;
-    color: #fca5a5;
+    color: var(--color-danger-ink);
 }
 
-/* ─── Vanguardia: color propio de cada equipo ─── */
+/* ─── Vanguardia: tinte de equipo, texto `ink` y borde semántico ─── */
 .pokemon-card.vanguardia-jugador,
 .pokemon-card.equipo-jugador {
-    border: 2px solid rgb(39, 200, 237);
-    background-color: rgb(22, 78, 103);
-    color: #f8fafc;
+    border: 2px solid var(--color-info);
+    background-color: color-mix(in oklab, var(--color-info) 22%, var(--color-surface));
+    color: var(--color-ink);
 }
 
 .pokemon-card.vanguardia-rival,
 .pokemon-card.equipo-rival {
-    border: 2px solid rgb(255, 99, 123) !important;
-    background-color: rgb(112, 42, 60);
-    color: #f8fafc;
+    border: 2px solid var(--color-danger) !important;
+    background-color: color-mix(in oklab, var(--color-danger) 22%, var(--color-surface));
+    color: var(--color-ink);
 }
 
 .pokemon-card.vanguardia-jugador .vital-label-row,
 .pokemon-card.equipo-jugador .vital-label-row,
 .pokemon-card.vanguardia-rival .vital-label-row,
 .pokemon-card.equipo-rival .vital-label-row {
-    color: #e5e7eb;
+    color: var(--color-ink-muted);
 }
 
-/* El borde del combatiente activo usa el amarillo de calidad perfecta. */
+/* El combatiente activo se marca con el tinte de aviso y borde sólido. */
 .pokemon-card.acting-card {
-    border-color: #facc15 !important;
-    background: linear-gradient(360deg, #fde047 0%, #facc15 45%, #ca8a04 100%) !important;
+    border-color: var(--color-warning) !important;
+    background-color: color-mix(in oklab, var(--color-warning) 28%, var(--color-surface)) !important;
 }
 
 .pokemon-card.vanguardia-rival.targeted-card,
 .pokemon-card.equipo-rival.targeted-card {
-    border-color: #dc3545 !important;
+    border-color: var(--color-danger) !important;
 }
 
 .pokemon-card .progress {
@@ -277,7 +480,7 @@
     left: 50%;
     width: 2px;
     border-radius: 999px;
-    background: linear-gradient(180deg, transparent, rgba(100, 116, 139, .55) 12%, rgba(100, 116, 139, .55) 88%, transparent);
+    background: linear-gradient(180deg, transparent, color-mix(in oklab, var(--color-line-strong) 55%, transparent) 12%, color-mix(in oklab, var(--color-line-strong) 55%, transparent) 88%, transparent);
     transform: translateX(-50%);
     pointer-events: none;
 }
@@ -312,7 +515,7 @@
 
     .battle-teams .row>.col-6:nth-child(3),
     .battle-teams .row>.col-6:nth-child(4) {
-        border-top: 2px solid rgba(100, 116, 139, .55);
+        border-top: 2px solid color-mix(in oklab, var(--color-line-strong) 55%, transparent);
         padding-top: .75rem;
         margin-top: .5rem;
     }
@@ -330,14 +533,10 @@
     justify-content: space-between;
     gap: .35rem;
     margin-bottom: .2rem;
-    color: #495057;
+    color: var(--color-ink-muted);
     font-size: .7rem;
     font-weight: 600;
     line-height: 1;
-}
-
-.dark .vital-label-row {
-    color: #cbd5e1;
 }
 
 .vital-label-row .vital-label {
@@ -359,73 +558,20 @@
 
 .move-card:hover {
     transform: translateY(-2px);
-    box-shadow: 0 0.4rem 0.9rem rgba(0, 0, 0, 0.16);
+    box-shadow: 0 0.4rem 0.9rem color-mix(in oklab, var(--color-ink) 16%, transparent);
 }
 
 .move-card.move-best {
-    box-shadow: 0 0 0 2px #0d6efd, 0 0.4rem 0.9rem rgba(13, 110, 253, 0.25);
+    box-shadow: 0 0 0 2px var(--color-primary), 0 0.4rem 0.9rem color-mix(in oklab, var(--color-primary) 25%, transparent);
 }
 
 .move-card:focus-visible {
-    outline: 2px solid #0d6efd;
+    outline: 2px solid var(--color-focus);
     outline-offset: 2px;
 }
 
 .dark .move-card:hover {
-    box-shadow: 0 0.4rem 0.9rem rgba(0, 0, 0, 0.5);
-}
-
-.dark .move-card.move-best {
-    box-shadow: 0 0 0 2px #60a5fa, 0 0.4rem 0.9rem rgba(96, 165, 250, 0.3);
-}
-
-/* ─── Dark mode: Bootstrap no es consciente de .dark en <html> ─── */
-.dark {
-    color-scheme: dark;
-
-    /* Body y texto base (consistentes con Tailwind gray-900/gray-100) */
-    --bs-body-bg: #111827;
-    --bs-body-color: #f9fafb;
-    --bs-body-color-rgb: 249, 250, 251;
-
-    /* Fondos secundarios/terciarios (progress track, header del registro) */
-    --bs-secondary-bg: #1f2937;
-    --bs-secondary-bg-rgb: 31, 41, 55;
-    --bs-tertiary-bg: #1f2937;
-    --bs-tertiary-bg-rgb: 31, 41, 55;
-
-    /* Texto muted (labels, "Sin eventos", "Próximos turnos") */
-    --bs-secondary-color: #9ca3af;
-
-    /* Cards (pokemon, turnos, registro) */
-    --bs-card-bg: #1f2937;
-    --bs-card-color: #f9fafb;
-    --bs-card-border-color: #374151;
-
-    /* List group del registro de batalla */
-    --bs-list-group-bg: #1f2937;
-    --bs-list-group-color: #f9fafb;
-    --bs-list-group-border-color: #374151;
-
-    /* Enlaces (si algún componente Bootstrap los usa) */
-    --bs-link-color: #93c5fd;
-    --bs-link-hover-color: #60a5fa;
-}
-
-/* Modal del registro en dark mode (Bootstrap no detecta la clase .dark). */
-.dark .modal-content {
-    background-color: #1f2937;
-    color: #f9fafb;
-    border-color: #374151;
-}
-
-.dark .modal-header,
-.dark .modal-footer {
-    border-color: #374151;
-}
-
-.dark .modal .btn-close {
-    filter: invert(1) grayscale(100%) brightness(200%);
+    box-shadow: 0 0.4rem 0.9rem color-mix(in oklab, var(--color-scrim) 70%, transparent);
 }
 
 /* ─── Animación de vitales (HP / DEF / DEF.ESP) ───
@@ -459,15 +605,15 @@
 }
 
 .vital-hp-trail {
-    background-color: rgba(220, 53, 69, 0.45);
+    background-color: color-mix(in oklab, var(--color-danger) 45%, transparent);
 }
 
 .vital-def-trail {
-    background-color: rgba(13, 202, 240, 0.45);
+    background-color: color-mix(in oklab, var(--color-info) 45%, transparent);
 }
 
 .vital-spdef-trail {
-    background-color: rgba(13, 110, 253, 0.45);
+    background-color: color-mix(in oklab, var(--color-primary) 45%, transparent);
 }
 
 /* ─── Píldora flotante con el delta de vitales (±N) ───
@@ -489,64 +635,43 @@
 }
 
 .vital-delta-dano {
-    color: #842029;
-    background-color: rgba(220, 53, 69, .18);
-    border: 1px solid rgba(220, 53, 69, .55);
+    color: var(--color-danger-ink);
+    background-color: color-mix(in oklab, var(--color-danger) 18%, transparent);
+    border: 1px solid color-mix(in oklab, var(--color-danger) 55%, transparent);
 }
 
 .vital-delta-cura {
-    color: #0f5132;
-    background-color: rgba(25, 135, 84, .18);
-    border: 1px solid rgba(25, 135, 84, .55);
+    color: var(--color-success-ink);
+    background-color: color-mix(in oklab, var(--color-success) 18%, transparent);
+    border: 1px solid color-mix(in oklab, var(--color-success) 55%, transparent);
 }
 
 .vital-delta-barrera {
-    color: #0e7490;
-    background-color: rgba(13, 202, 240, .18);
-    border: 1px solid rgba(13, 202, 240, .65);
+    color: var(--color-info-ink);
+    background-color: color-mix(in oklab, var(--color-info) 18%, transparent);
+    border: 1px solid color-mix(in oklab, var(--color-info) 65%, transparent);
 }
 
 .vital-delta-ko {
-    color: #fff;
-    background-color: #7f1d1d;
-    border: 1px solid #ef4444;
+    color: var(--color-on-danger);
+    background-color: var(--color-danger);
+    border: 1px solid color-mix(in oklab, var(--color-danger) 70%, var(--color-ink));
     font-size: .85rem;
     letter-spacing: .08em;
 }
 
 .vital-delta-estado {
-    color: #78350f;
-    background-color: rgba(245, 158, 11, .22);
-    border: 1px solid rgba(245, 158, 11, .65);
+    color: var(--color-warning-ink);
+    background-color: color-mix(in oklab, var(--color-warning) 22%, transparent);
+    border: 1px solid color-mix(in oklab, var(--color-warning) 65%, transparent);
     font-size: .72rem;
 }
 
 .vital-delta-bloqueo {
-    color: #374151;
-    background-color: rgba(107, 114, 128, .18);
-    border: 1px solid rgba(107, 114, 128, .55);
+    color: var(--color-secondary-ink);
+    background-color: color-mix(in oklab, var(--color-secondary) 18%, transparent);
+    border: 1px solid color-mix(in oklab, var(--color-secondary) 55%, transparent);
     font-size: .72rem;
-}
-
-.dark .vital-delta-dano {
-    color: #fca5a5;
-}
-
-.dark .vital-delta-cura {
-    color: #6ee7b7;
-}
-
-.dark .vital-delta-barrera {
-    color: #67e8f9;
-}
-
-.dark .vital-delta-estado {
-    color: #fcd34d;
-}
-
-.dark .vital-delta-bloqueo {
-    color: #d1d5db;
-    background-color: rgba(107, 114, 128, .3);
 }
 
 @keyframes vital-delta-flota {
@@ -577,7 +702,7 @@
 .anim-ataque {
     --anim-ataque-dir: 14px;
     animation: anim-ataque-embestida 500ms ease-in-out 1;
-    box-shadow: 0 0 0 2px rgba(255, 193, 7, 0.85), 0 0 16px rgba(255, 193, 7, 0.45) !important;
+    box-shadow: 0 0 0 2px color-mix(in oklab, var(--color-warning) 85%, transparent), 0 0 16px color-mix(in oklab, var(--color-warning) 45%, transparent) !important;
 }
 
 .pokemon-card[data-team="1"].anim-ataque {
@@ -609,11 +734,11 @@
 
 @keyframes anim-cura-brillo {
     0% {
-        box-shadow: 0 0 0 2px rgba(25, 135, 84, 0.85), 0 0 16px rgba(25, 135, 84, 0.45);
+        box-shadow: 0 0 0 2px color-mix(in oklab, var(--color-success) 85%, transparent), 0 0 16px color-mix(in oklab, var(--color-success) 45%, transparent);
     }
 
     100% {
-        box-shadow: 0 0 0 2px rgba(25, 135, 84, 0), 0 0 16px rgba(25, 135, 84, 0);
+        box-shadow: 0 0 0 2px color-mix(in oklab, var(--color-success) 0%, transparent), 0 0 16px color-mix(in oklab, var(--color-success) 0%, transparent);
     }
 }
 
@@ -652,7 +777,7 @@
 
 .anim-hit {
     animation: anim-hit-shake 600ms ease-in-out 1;
-    box-shadow: 0 0 0 2px rgba(220, 53, 69, 0.9), 0 0 18px rgba(220, 53, 69, 0.55) !important;
+    box-shadow: 0 0 0 2px color-mix(in oklab, var(--color-danger) 90%, transparent), 0 0 18px color-mix(in oklab, var(--color-danger) 55%, transparent) !important;
 }
 
 /* ─── Cola de eventos: hit-stop, impacto, barrera rota, KO y estados ─── */
@@ -686,15 +811,15 @@
 
 @keyframes barrera-rota-flash {
     0% {
-        box-shadow: 0 0 0 0 rgba(13, 202, 240, 0);
+        box-shadow: 0 0 0 0 color-mix(in oklab, var(--color-info) 0%, transparent);
     }
 
     30% {
-        box-shadow: 0 0 0 3px rgba(13, 202, 240, .95), 0 0 18px rgba(13, 202, 240, .7);
+        box-shadow: 0 0 0 3px color-mix(in oklab, var(--color-info) 95%, transparent), 0 0 18px color-mix(in oklab, var(--color-info) 70%, transparent);
     }
 
     100% {
-        box-shadow: 0 0 0 0 rgba(13, 202, 240, 0);
+        box-shadow: 0 0 0 0 color-mix(in oklab, var(--color-info) 0%, transparent);
     }
 }
 
@@ -764,7 +889,7 @@
 @keyframes hp-alerta {
     50% {
         filter: brightness(1.4);
-        box-shadow: 0 0 8px rgba(220, 53, 69, .85);
+        box-shadow: 0 0 8px color-mix(in oklab, var(--color-danger) 85%, transparent);
     }
 }
 
@@ -793,7 +918,7 @@
 @keyframes ronda-pulso {
     40% {
         transform: scale(1.12);
-        box-shadow: 0 0 0 3px rgba(13, 110, 253, .35);
+        box-shadow: 0 0 0 3px color-mix(in oklab, var(--color-primary) 35%, transparent);
     }
 }
 
@@ -986,4 +1111,15 @@
     .reward-progreso__nivel--sube {
         animation: none;
     }
+}
+
+/* ─── Hotfix de Reboot (sin capa: gana a Bootstrap) ───
+   Bootstrap subraya todos los enlaces y fuerza su pila tipográfica. Se respetan
+   los subrayados explícitos del markup (utilidades tipo `text-decoration-underline`). */
+a:not([class*="underline"]) {
+    text-decoration: none;
+}
+
+body {
+    font-family: inherit;
 }

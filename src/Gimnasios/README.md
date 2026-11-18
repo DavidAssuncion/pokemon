@@ -8,6 +8,7 @@ jugador. Incluye combate y CRUD administrativo.
 | Ruta | Contenido |
 |---|---|
 | `Domain/Gimnasio.php` | Entidad: slug, medalla, tipo, nivel mínimo, equipos por etapa |
+| `Domain/CatalogoLideres.php` | Nombre canónico del líder por slug (fallback `Líder`) |
 | `Domain/CatalogoGimnasios.php` | Catálogo en código (semilla y fallback del presentador) |
 | `Domain/DataTransferObjects/` | `EquipoEtapaGimnasio`, `GimnasioResumen`, `DetalleGimnasio`, `EtapaGimnasio`, `ResultadoGimnasio` |
 | `Domain/Collections/` | `GimnasioCollection`, `EquipoEtapaGimnasioCollection`, `EtapaGimnasioCollection`, `GimnasioResumenCollection` |
@@ -38,7 +39,7 @@ jugador. Incluye combate y CRUD administrativo.
 ## Reglas
 
 - Sin borrado/desactivación de gimnasios (solo crear/editar).
-- Etapas 1-3 = entrenadores; etapa 4 = líder.
+- Etapas 1-3 = entrenadores; etapa 4 = líder canónico con nombre propio (`Gimnasio::nombreEtapa(4)`).
 - Progreso por usuario en `gym_progress`; se bloquea por nivel mínimo.
 
 ## Tests

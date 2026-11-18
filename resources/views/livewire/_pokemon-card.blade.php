@@ -1,5 +1,6 @@
 @php($esDebugRival = ($p['team'] ?? 0) === 1 && ! empty($p['debug']))
 <div class="{{ $p['claseCarta'] }}{{ $esDebugRival ? ' pokemon-card--debug-rival' : '' }}"
+     wire:key="pokemon-{{ $p['team'] }}-{{ $p['posicion'] }}-{{ $p['refId'] }}"
      data-ref-id="{{ $p['refId'] }}"
      data-team="{{ $p['team'] }}"
      @if($p['selectable']) wire:click="previewTarget({{ $p['team'] }}, {{ $idx }})" role="button" tabindex="0" @endif>
@@ -92,12 +93,12 @@
             @endif
             @if($p['esJefe'])
                 <span class="badge bg-danger-soft text-danger-ink" title="Jefe">JEFE</span>
-                <span class="badge bg-warning-soft text-warning-ink" title="Fase actual">
-                    {{ $p['jefe']['nombreFase'] ?? 'Fase 1' }}
-                </span>
-                @if(!empty($p['jefe']['enrage']))
-                    <span class="badge bg-danger-soft text-danger-ink" title="Enrage activo">ENRAGE</span>
-                @endif
+                @foreach($p['statsJefe'] as $stat)
+                    <span class="badge bg-warning-soft text-warning-ink"
+                          title="Estadística mejorada de forma permanente (+{{ $stat['porcentaje'] }} %)">
+                        +{{ $stat['porcentaje'] }} % {{ $stat['label'] }}
+                    </span>
+                @endforeach
                 @foreach($p['jefePartes'] as $parte)
                     <span class="badge {{ $parte['clase'] }}"
                           title="{{ $parte['nombre'] }}: {{ $parte['hpTexto'] }}/{{ $parte['hpMaxTexto'] }}">
@@ -123,11 +124,6 @@
             @if($p['combo'] > 0)
                 <span class="badge bg-info-soft text-info-ink" title="Racha de combo">
                     COMBO {{ $p['combo'] }} · ×{{ number_format($p['comboMultiplicador'], 2) }}
-                </span>
-            @endif
-            @if(($p['buffTurns'] ?? 0) > 0)
-                <span class="badge bg-success-soft text-success-ink" title="Rondas restantes de mejoras de estadísticas">
-                    BUFF {{ $p['buffTurns'] }}
                 </span>
             @endif
             @foreach($p['condicionesBadge'] as $condicion)
