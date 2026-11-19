@@ -35,7 +35,7 @@
                             </div>
 
                             <div x-show="granja.familias.length === 0" class="text-center py-10 text-ink-muted">
-                                Este hábitat no tiene familias asignadas todavía.
+                                Todavía no hay familias para mostrar en este hábitat.
                             </div>
 
                             <div class="flex flex-wrap gap-2" role="tablist" aria-label="Familias del hábitat">

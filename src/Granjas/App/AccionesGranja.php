@@ -18,23 +18,40 @@ final class AccionesGranja
     ) {
     }
 
-    public function nido(int $userId, int $habitatId, int $evolutionChainId): void
-    {
-        $this->mejorarNido->handle($userId, $habitatId, $evolutionChainId);
+    public function nido(
+        int $userId,
+        int $habitatId,
+        int $evolutionChainId,
+        bool $incluirNoAvistadas = false,
+    ): void {
+        $this->mejorarNido->handle($userId, $habitatId, $evolutionChainId, $incluirNoAvistadas);
     }
 
-    public function refugio(int $userId, int $habitatId, int $evolutionChainId): void
-    {
-        $this->mejorarRefugio->handle($userId, $habitatId, $evolutionChainId);
+    public function refugio(
+        int $userId,
+        int $habitatId,
+        int $evolutionChainId,
+        bool $incluirNoAvistadas = false,
+    ): void {
+        $this->mejorarRefugio->handle($userId, $habitatId, $evolutionChainId, $incluirNoAvistadas);
     }
 
-    public function condiciones(int $userId, int $habitatId, int $evolutionChainId): void
-    {
-        $this->alternarCondiciones->handle($userId, $habitatId, $evolutionChainId);
+    public function condiciones(
+        int $userId,
+        int $habitatId,
+        int $evolutionChainId,
+        bool $incluirNoAvistadas = false,
+    ): void {
+        $this->alternarCondiciones->handle($userId, $habitatId, $evolutionChainId, $incluirNoAvistadas);
     }
 
-    public function complemento(int $userId, int $habitatId, int $evolutionChainId, string $stat): void
-    {
-        $this->mejorarComplemento->handle($userId, $habitatId, $evolutionChainId, $stat);
+    public function complemento(
+        int $userId,
+        int $habitatId,
+        int $evolutionChainId,
+        string $stat,
+        bool $incluirNoAvistadas = false,
+    ): void {
+        $this->mejorarComplemento->handle($userId, $habitatId, $evolutionChainId, $stat, $incluirNoAvistadas);
     }
 }

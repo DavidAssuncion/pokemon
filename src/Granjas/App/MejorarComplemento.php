@@ -25,9 +25,14 @@ final class MejorarComplemento
     ) {
     }
 
-    public function handle(int $userId, int $habitatId, int $evolutionChainId, string $statKey): void
-    {
-        $this->familiaEnHabitat->asegurar($habitatId, $evolutionChainId);
+    public function handle(
+        int $userId,
+        int $habitatId,
+        int $evolutionChainId,
+        string $statKey,
+        bool $incluirNoAvistadas = false,
+    ): void {
+        $this->familiaEnHabitat->asegurar($userId, $habitatId, $evolutionChainId, $incluirNoAvistadas);
 
         $stat = StatEnum::fromKey($statKey);
         if ($stat === null) {

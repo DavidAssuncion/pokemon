@@ -147,6 +147,7 @@ final class MotorRondas
             $actor->effects()->dispararInicioTurno($actor, $batalla);
             $puedeActuar = $actor->puedeActuar();
             if (! $puedeActuar->esPermitida()) {
+                $actor->effects()->dispararTurnoPerdido($actor, $batalla);
                 $batalla->agregarLog("{$actor->nombre()} no puede actuar: {$puedeActuar->motivo()}");
                 $turnos->consumeAction($actor);
                 $observador?->alFinalizarTurno($turnos->round(), $actor, $batalla);

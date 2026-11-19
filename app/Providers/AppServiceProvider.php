@@ -31,8 +31,10 @@ use Src\Gimnasios\Domain\Repositories\GymCatalogoRepositoryInterface;
 use Src\Gimnasios\Domain\Repositories\GymProgressRepositoryInterface;
 use Src\Gimnasios\Infra\EloquentGymCatalogoRepository;
 use Src\Gimnasios\Infra\EloquentGymProgressRepository;
+use Src\Granjas\Domain\Ports\PokedexLecturaInterface;
 use Src\Granjas\Infra\Nidos\NidosConstruidosEloquent;
 use Src\Granjas\Infra\Plantaciones\ConsultorPlantacionesEloquent;
+use Src\Granjas\Infra\PokedexLectura;
 use Src\Habitats\Domain\Repositories\HabitatGestionRepositoryInterface;
 use Src\Habitats\Domain\Repositories\HabitatLecturaRepositoryInterface;
 use Src\Habitats\Infra\HabitatGestionRepository;
@@ -70,6 +72,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(DefinicionesPieza::class, LectorFamiliasPiezas::class);
         $this->app->bind(PiezasPorEspecie::class, LectorFamiliasPiezas::class);
         $this->app->bind(PiezasEquipadas::class, PiezasEquipadasEloquent::class);
+        $this->app->bind(PokedexLecturaInterface::class, PokedexLectura::class);
     }
 
     /**

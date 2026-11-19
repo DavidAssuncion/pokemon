@@ -24,6 +24,9 @@ final class MultiplicadoresStats
 
     public const int TURNOS_TEMPORALES = 5;
 
+    /** Tolerancia para considerar que un stack temporal volvió a ser neutro. */
+    private const float MARGEN_NEUTRO = 0.0001;
+
     /** @var array<string, float> */
     private array $factores;
 
@@ -199,6 +202,40 @@ final class MultiplicadoresStats
             $this->limiteSuperior,
             $temporales,
             self::TURNOS_TEMPORALES,
+        );
+    }
+
+    /**
+     * Retira un stack temporal concreto dividiendo el factor aplicado.
+     *
+     * Si tras dividir el stack queda ≈1.0, la clave se elimina; si no quedan
+     * temporales, el contador compartido vuelve a 0 para no dejar una duración
+     * residual visible. Preserva los demás stacks, incluidos los del mismo
+     * stat cuando aún quede más de uno.
+     */
+    public function retirarTemporal(StatClave $stat, float $factor): self
+    {
+        $clave = $stat->value;
+
+        if ($factor <= 0.0 || ! isset($this->temporales[$clave])) {
+            return $this;
+        }
+
+        $temporales = $this->temporales;
+        $restante = $temporales[$clave] / $factor;
+
+        if (abs($restante - 1.0) < self::MARGEN_NEUTRO) {
+            unset($temporales[$clave]);
+        } else {
+            $temporales[$clave] = $restante;
+        }
+
+        return new self(
+            $this->factores,
+            $this->limiteInferior,
+            $this->limiteSuperior,
+            $temporales,
+            $temporales === [] ? 0 : $this->turnosTemporales,
         );
     }
 

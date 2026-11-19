@@ -32,9 +32,10 @@ final class PlantarBaya
         int $evolutionChainId,
         int $slot,
         string $berryKey,
+        bool $incluirNoAvistadas = false,
     ): void {
         $baya = $this->resolverBaya($berryKey);
-        $this->familiaEnHabitat->asegurar($habitatId, $evolutionChainId);
+        $this->familiaEnHabitat->asegurar($userId, $habitatId, $evolutionChainId, $incluirNoAvistadas);
 
         DB::transaction(function () use ($userId, $habitatId, $evolutionChainId, $slot, $baya): void {
             $granja = $this->asegurarGranja->para($userId, $habitatId);

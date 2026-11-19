@@ -13,7 +13,9 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        //
+        $middleware->alias([
+            'solo-local' => \App\Http\Middleware\SoloEnEntornoDePruebas::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->renderable(function (\Src\Shared\Domain\Exceptions\RecursoNoExiste $e, \Illuminate\Http\Request $request) {

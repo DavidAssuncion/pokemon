@@ -35,6 +35,11 @@ enum ClaveCondicion: string
     // Cancela prioridad/carga declarada y consume la siguiente acción.
     case INTERRUPCION = 'interrupcion';
 
+    // El portador descansará esta ronda: consume la acción y no actúa
+    // (Ausente). Se anuncia al inicio de la ronda y se retira al perder el
+    // turno o al enfadarse el portador.
+    case AUSENTE = 'ausente';
+
     // Rompe la postura y hace perder la siguiente acción.
     case ATURDIDO = 'aturdido';
 
@@ -88,6 +93,7 @@ enum ClaveCondicion: string
             self::VINCULO_DANO => 'vínculo de daño',
             self::SILENCIO => 'silencio',
             self::INTERRUPCION => 'interrupción',
+            self::AUSENTE => 'ausente',
             self::ATURDIDO => 'aturdido',
             self::RECARGA => 'recargando',
             self::MARIONETA_INERTE => 'marioneta inerte',

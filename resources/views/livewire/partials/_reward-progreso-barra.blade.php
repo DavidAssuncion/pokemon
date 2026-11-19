@@ -13,6 +13,14 @@
     $etiqueta = $esCuenta ? 'Cuenta' : 'Senda de '.$barra['label'];
     $porcentaje = $barra['porcentaje_despues'];
     $expMostrada = $barra['exp_mostrada_despues'] ?? $barra['exp_despues'];
+
+    // Estado inicial de la animación: el primer segmento ya trae el porcentaje
+    // y el nivel previos. Si no hay segmentos (tope ya alcanzado), se pinta el
+    // estado final y no se anima. Así la barra nunca retrocede al abrirse.
+    $segmentos = $barra['segmentos'];
+    $sinSegmentos = $segmentos === [];
+    $porcentajeInicial = $sinSegmentos ? $porcentaje : (int) $segmentos[0]['desde'];
+    $nivelInicial = $sinSegmentos ? (int) $barra['nivel_despues'] : (int) $segmentos[0]['nivel'];
 @endphp
 
 <div class="reward-progreso__fila"
@@ -32,7 +40,7 @@
         <span class="reward-progreso__nombre">{{ $etiqueta }}</span>
 
         <span class="reward-progreso__nivel" data-reward-nivel>
-            Nv {{ $barra['nivel_despues'] }}
+            Nv {{ $nivelInicial }}
         </span>
 
         @if (! $esCuenta)
@@ -46,14 +54,14 @@
          role="progressbar"
          aria-valuemin="0"
          aria-valuemax="100"
-         aria-valuenow="{{ $porcentaje }}"
-         aria-valuetext="{{ $etiqueta }}: nivel {{ $barra['nivel_despues'] }}, {{ $porcentaje }} por ciento"
+         aria-valuenow="{{ $porcentajeInicial }}"
+         aria-valuetext="{{ $etiqueta }}: nivel {{ $nivelInicial }}, {{ $porcentajeInicial }} por ciento"
          aria-label="{{ $etiqueta }}">
 
         <div class="reward-progreso__relleno"
              data-reward-fill
              data-segmentos='@json($barra['segmentos'])'
-             style="width: {{ $porcentaje }}%;@if (! $esCuenta) background-color: {{ $barra['color'] }};@endif"></div>
+             style="width: {{ $porcentajeInicial }}%;@if (! $esCuenta) background-color: {{ $barra['color'] }};@endif"></div>
     </div>
 
     <div class="reward-progreso__detalle">

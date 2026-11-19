@@ -135,10 +135,7 @@ final class ResolutorAccionBatalla
             $log[] = "¡{$objetivo->nombre()} se ha debilitado!";
         }
 
-        $nuevosDebilitados = $battle->procesarDebilitamientos();
-        if ($nuevosDebilitados > 0 && $actor->estaVivo()) {
-            $actor->otorgarAccionExtra();
-        }
+        $battle->procesarDebilitamientos();
 
         if (! $actor->estaVivo()) {
             $log[] = "¡{$actor->nombre()} se ha debilitado!";
@@ -237,10 +234,7 @@ final class ResolutorAccionBatalla
             $log[] = "¡{$objetivo->nombre()} se ha debilitado!";
         }
 
-        $nuevosDebilitados = $battle->procesarDebilitamientos();
-        if ($nuevosDebilitados > 0 && $actor->estaVivo()) {
-            $actor->otorgarAccionExtra();
-        }
+        $battle->procesarDebilitamientos();
 
         $despues = $grabando ? $this->grabador->capturar($battle) : SnapshotBatalla::vacia();
         $this->acumularEvento($eventos, 'item', $previo, $despues, [

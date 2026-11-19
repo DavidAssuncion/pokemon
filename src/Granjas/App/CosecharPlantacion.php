@@ -22,6 +22,7 @@ final class CosecharPlantacion
     public function __construct(
         private readonly AsegurarGranja $asegurarGranja,
         private readonly InventarioJugador $inventario,
+        private readonly FamiliaEnHabitat $familiaEnHabitat,
     ) {
     }
 
@@ -33,7 +34,10 @@ final class CosecharPlantacion
         int $habitatId,
         int $evolutionChainId,
         int $slot,
+        bool $incluirNoAvistadas = false,
     ): int {
+        $this->familiaEnHabitat->asegurar($userId, $habitatId, $evolutionChainId, $incluirNoAvistadas);
+
         return DB::transaction(function () use ($userId, $habitatId, $evolutionChainId, $slot): int {
             $granja = $this->asegurarGranja->para($userId, $habitatId);
 

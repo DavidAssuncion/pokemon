@@ -15,7 +15,9 @@ use Src\Granjas\Domain\DataTransferObjects\CosechaNido;
 use Src\Granjas\Domain\DataTransferObjects\ErrorCosecha;
 use Src\Granjas\Domain\DataTransferObjects\ResultadoCosechaGlobal;
 use Src\Granjas\Domain\Entities\Plantacion;
+use Src\Granjas\Domain\Ports\PokedexLecturaInterface;
 use Src\Granjas\Domain\ReglasPlantacion;
+use Src\Shared\Collections\IntCollection;
 use Src\Shared\Domain\Exceptions\DominioExcepcion;
 use Src\Shared\Domain\Ports\InventarioJugador;
 use Src\Shared\Domain\ValueObjects\MapaConteo;
@@ -33,10 +35,11 @@ final class CosecharTodo
 
     public function __construct(
         private readonly InventarioJugador $inventario,
+        private readonly PokedexLecturaInterface $pokedex,
     ) {
     }
 
-    public function handle(int $userId): ResultadoCosechaGlobal
+    public function handle(int $userId, bool $incluirNoAvistadas = false): ResultadoCosechaGlobal
     {
         $granjas = Granja::query()
             ->where('user_id', $userId)
@@ -60,6 +63,12 @@ final class CosecharTodo
                 ->get()
                 ->all(),
         );
+
+        if ($nidos->isEmpty()) {
+            return ResultadoCosechaGlobal::vacio();
+        }
+
+        $nidos = $this->soloCadenasVisibles($userId, $nidos, $incluirNoAvistadas);
 
         if ($nidos->isEmpty()) {
             return ResultadoCosechaGlobal::vacio();
@@ -118,6 +127,37 @@ final class CosecharTodo
             bayas: $this->bayasOrdenadas($bayas),
             errores: $errores,
         );
+    }
+
+    /**
+     * Descarta silenciosamente los nidos de cadenas sin ningún miembro visto.
+     * El prefiltro va antes de construir candidatos y no lanza excepción por
+     * nido: los errores parciales exponen `evolution_chain_id` y el contador de
+     * nidos no debe describir familias ocultas.
+     *
+     * @param  \Illuminate\Database\Eloquent\Collection<int, Nido>  $nidos
+     * @return \Illuminate\Database\Eloquent\Collection<int, Nido>
+     */
+    private function soloCadenasVisibles(
+        int $userId,
+        \Illuminate\Database\Eloquent\Collection $nidos,
+        bool $incluirNoAvistadas,
+    ): \Illuminate\Database\Eloquent\Collection {
+        if ($incluirNoAvistadas) {
+            return $nidos;
+        }
+
+        $cadenas = new IntCollection(array_values(array_unique(
+            $nidos->pluck('evolution_chain_id')
+                ->map(static fn (mixed $chainId): int => (int) $chainId)
+                ->all(),
+        )));
+
+        $visibles = $this->pokedex->cadenasConAlgunVisto($userId, $cadenas)->all();
+
+        return $nidos
+            ->filter(static fn (Nido $nido): bool => in_array($nido->evolution_chain_id, $visibles, true))
+            ->values();
     }
 
     /**

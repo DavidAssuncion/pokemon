@@ -115,6 +115,9 @@
                     @endif
                 </span>
             @endif
+            @if($p['ausente'])
+                <span class="badge bg-surface-sunken text-ink-muted" title="{{ $p['ausenteTooltip'] }}">AUSENTE</span>
+            @endif
             @if(! $p['alive'])
                 <span class="badge bg-ink text-ink-inverse ko-badge">K.O.</span>
             @endif

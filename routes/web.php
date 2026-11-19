@@ -47,3 +47,6 @@ Route::middleware('auth')->group(function (): void {
     require __DIR__.'/forja.php';
     require __DIR__.'/ruta.php';
 });
+
+// QA/debug — fuera del grupo auth: `solo-local` se evalúa antes de autenticar.
+require __DIR__.'/debug.php';

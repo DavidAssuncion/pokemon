@@ -3,7 +3,7 @@
 @section('title', 'Pokédex')
 
 @section('content')
-<div x-data="pokedexApp()" x-init="init()">
+<div x-data="pokedexApp()" x-init="init()" @combobox-seleccionado.window="onComboboxSeleccionado($event)">
         <!-- Header -->
         <div class="mb-6 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
             <div>
@@ -147,13 +147,27 @@
                     </template>
                 </div>
             </div>
+            <div class="flex flex-wrap items-center gap-2" role="group" aria-label="Filtros de habilidad y movimiento">
+                <x-ui.combobox
+                    name="ability"
+                    label="Habilidad"
+                    :options="$habilidades"
+                />
+                <x-ui.combobox
+                    name="move"
+                    label="Movimiento"
+                    :options="$movimientos"
+                    placeholder="Buscar movimiento…"
+                    ayuda="Incluye todos los movimientos del learnset, no solo los aprendidos por nivel"
+                />
+            </div>
             <div class="relative flex-1 max-w-xs">
                 <input
                     type="text"
                     x-model="searchQuery"
                     @input.debounce.300ms="onSearchInput()"
-                    placeholder="Buscar por nombre o número..."
-                    aria-label="Buscar por nombre o número"
+                    placeholder="Buscar por nombre..."
+                    aria-label="Buscar por nombre"
                     class="w-full px-4 py-2 pl-10 bg-surface border border-line rounded-control text-sm text-ink placeholder:text-ink-subtle focus-ring focus:border-primary transition-colors"
                 >
                 <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-ink-subtle" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -587,6 +601,43 @@
                                     <p class="text-sm text-ink-muted italic">Sin movimientos por nivel.</p>
                                 </template>
                             </div>
+
+                            {{-- TASK-064 --}}
+                            <template x-if="qaAcciones && detail">
+                                <div class="rounded-panel border border-dashed border-warning bg-warning-soft p-4 space-y-3">
+                                    <h3 class="text-sm font-bold uppercase tracking-wide text-warning-ink">Acciones QA</h3>
+                                    <div class="flex flex-wrap items-center gap-2">
+                                        <x-ui.button
+                                            variant="success"
+                                            size="sm"
+                                            x-on:click="reclutarQa()"
+                                            x-bind:disabled="qaProcesando"
+                                        >
+                                            Reclutar
+                                        </x-ui.button>
+                                        <template x-if="detail.family && detail.family.evolution_chain_id">
+                                            <template x-for="cantidad in qaCantidades" :key="'qa-caramelo-' + cantidad">
+                                                <x-ui.button
+                                                    variant="secondary"
+                                                    size="sm"
+                                                    x-on:click="carameloFamiliaQa(cantidad)"
+                                                    x-bind:disabled="qaProcesando"
+                                                >
+                                                    +<span x-text="cantidad"></span> familia
+                                                </x-ui.button>
+                                            </template>
+                                        </template>
+                                    </div>
+                                    <p
+                                        x-cloak
+                                        x-show="qaFeedback.mensaje"
+                                        role="status"
+                                        class="text-sm font-medium"
+                                        :class="qaFeedback.tipo === 'error' ? 'text-danger-ink' : 'text-success-ink'"
+                                        x-text="qaFeedback.mensaje"
+                                    ></p>
+                                </div>
+                            </template>
                         </div>
                     </template>
                 </div>
@@ -597,6 +648,7 @@
 
 @push('scripts')
 @include('partials.tipos-badge-script')
+@include('partials.combobox-filtro-script')
 <script>
 function pokedexApp() {
     return {
@@ -608,6 +660,8 @@ function pokedexApp() {
         showTypeFilter: false,
         effortFilter: null,
         showEffortFilter: false,
+        abilityFilterId: null,
+        moveFilterId: null,
         searchQuery: '',
         showModal: false,
         selectedPokemon: null,
@@ -625,8 +679,8 @@ function pokedexApp() {
         clickHandler: null,
 
         get emptyMessage() {
-            if (this.searchQuery.trim() || this.typeFilter || this.effortFilter) {
-                return 'No se encontraron Pokémon';
+            if (this.searchQuery.trim() || this.typeFilter || this.effortFilter || this.abilityFilterId || this.moveFilterId) {
+                return 'No se encontraron Pokémon con los filtros aplicados';
             }
             if (this.activeFilter === 'atrapados') {
                 return 'No has atrapado ningún Pokémon';
@@ -793,6 +847,12 @@ function pokedexApp() {
             if (this.effortFilter) {
                 params.set('filter[effort]', this.effortFilter);
             }
+            if (this.abilityFilterId) {
+                params.set('filter[ability]', String(this.abilityFilterId));
+            }
+            if (this.moveFilterId) {
+                params.set('filter[move]', String(this.moveFilterId));
+            }
             if (this.activeFilter === 'vistos') {
                 params.set('filter[visto]', '1');
             } else if (this.activeFilter === 'no_vistos') {
@@ -904,6 +964,19 @@ function pokedexApp() {
             this.resetAndFetch();
         },
 
+        onComboboxSeleccionado(event) {
+            const nombre = event?.detail?.name;
+            const id = event?.detail?.id ?? null;
+            if (nombre === 'ability') {
+                this.abilityFilterId = id;
+            } else if (nombre === 'move') {
+                this.moveFilterId = id;
+            } else {
+                return;
+            }
+            this.resetAndFetch();
+        },
+
         iconUrl(pokemon) {
             return pokemon.icon || '/images/iconos_webp/' + pokemon.id + '.webp';
         },
@@ -927,6 +1000,9 @@ function pokedexApp() {
             this.detail = null;
             this.detailLoading = false;
             this.detailError = false;
+            // TASK-064
+            this.qaFeedback = { tipo: '', mensaje: '' };
+            this.qaProcesando = false;
             this.showModal = true;
             if (pokemon.visto || this.unlockAll) {
                 this.detailLoading = true;
@@ -980,6 +1056,82 @@ function pokedexApp() {
         retryDetail() {
             if (this.selectedPokemon) {
                 this.loadDetail(this.selectedPokemon.id);
+            }
+        },
+
+        // TASK-064 — estado y acciones QA del modal
+        qaAcciones: @json(\App\Support\Qa\ModoQa::accionesPokedexHabilitadas($unlockAll ?? false)),
+        qaCantidades: @json(\App\Support\Qa\AjustesQa::CANTIDADES_CARAMELOS),
+        qaProcesando: false,
+        qaFeedback: { tipo: '', mensaje: '' },
+
+        async _postQa(url, payload) {
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '',
+                    'Accept': 'application/json',
+                },
+                body: JSON.stringify(payload),
+            });
+
+            let data = null;
+            try {
+                data = await response.json();
+            } catch (err) {
+                data = null;
+            }
+
+            if (!response.ok) {
+                const error = new Error((data && data.message) || 'No se pudo completar la acción.');
+                error.status = response.status;
+                throw error;
+            }
+
+            return data || {};
+        },
+
+        async reclutarQa() {
+            if (!this.qaAcciones || !this.selectedPokemon || this.qaProcesando) {
+                return;
+            }
+            this.qaProcesando = true;
+            this.qaFeedback = { tipo: '', mensaje: '' };
+            try {
+                const data = await this._postQa('/pokedex/qa/reclutar', {
+                    pokemon_id: this.selectedPokemon.id,
+                });
+                if (this.selectedPokemon) {
+                    this.selectedPokemon.atrapado = true;
+                }
+                this.qaFeedback = { tipo: 'success', mensaje: data.mensaje || 'Pokémon reclutado.' };
+            } catch (err) {
+                this.qaFeedback = { tipo: 'error', mensaje: err?.message || 'No se pudo reclutar el Pokémon.' };
+            } finally {
+                this.qaProcesando = false;
+            }
+        },
+
+        async carameloFamiliaQa(cantidad) {
+            if (!this.qaAcciones || !this.selectedPokemon || this.qaProcesando) {
+                return;
+            }
+            this.qaProcesando = true;
+            this.qaFeedback = { tipo: '', mensaje: '' };
+            try {
+                const data = await this._postQa('/pokedex/qa/caramelo-familia', {
+                    pokemon_id: this.selectedPokemon.id,
+                    cantidad: Number(cantidad),
+                });
+                this.qaFeedback = {
+                    tipo: 'success',
+                    mensaje: data.mensaje || ('+' + cantidad + ' caramelos de familia.'),
+                };
+            } catch (err) {
+                this.qaFeedback = { tipo: 'error', mensaje: err?.message || 'No se pudieron añadir los caramelos.' };
+            } finally {
+                this.qaProcesando = false;
             }
         },
 

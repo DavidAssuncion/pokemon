@@ -33,9 +33,12 @@ use Src\Granjas\Domain\DataTransferObjects\PlantacionGranja;
 use Src\Granjas\Domain\DataTransferObjects\RefugioGranja;
 use Src\Granjas\Domain\DataTransferObjects\StatGranja;
 use Src\Granjas\Domain\Entities\Plantacion;
+use Src\Granjas\Domain\Ports\PokedexLecturaInterface;
+use Src\Granjas\Domain\ProyectorFamiliasVisibles;
 use Src\Granjas\Domain\ReglasPlantacion;
 use Src\Habitats\App\ObtenerFamiliasDisponibles;
 use Src\Habitats\Presentation\DTOFamiliaDisponible;
+use Src\Habitats\Presentation\DTOFamiliasDisponibles;
 use Src\Shared\Domain\Items\ClaveBonguri;
 
 /**
@@ -49,14 +52,18 @@ final class ObtenerGranja
         private readonly ObtenerFamiliasDisponibles $obtenerFamilias,
         private readonly InventarioGranja $inventario,
         private readonly ResolverBonosFamilia $resolverBonos,
+        private readonly PokedexLecturaInterface $pokedex,
+        private readonly ProyectorFamiliasVisibles $proyectorFamilias,
     ) {
     }
 
-    public function handle(int $userId, int $habitatId): GranjaDetalle
+    public function handle(int $userId, int $habitatId, bool $incluirNoAvistadas = false): GranjaDetalle
     {
         $granja = $this->asegurarGranja->para($userId, $habitatId);
         $habitat = Habitat::find($habitatId);
-        $inventario = $this->inventario->resumen($userId);
+        $familias = $this->familiasVisibles($userId, $habitatId, $incluirNoAvistadas);
+        $cadenasVisibles = $incluirNoAvistadas ? null : $familias->evolutionChainIds();
+        $inventario = $this->inventario->resumen($userId, $cadenasVisibles);
         $ahora = now()->toDateTimeImmutable();
 
         $nidos = $granja->nidos()->get()->keyBy(fn (Nido $nido): int => $nido->evolution_chain_id);
@@ -75,16 +82,16 @@ final class ObtenerGranja
             inventario: $inventario,
         );
 
-        $familias = new FamiliasGranjaCollection();
+        $familiasGranja = new FamiliasGranjaCollection();
 
-        foreach ($this->obtenerFamilias->handle($habitatId) as $familia) {
+        foreach ($familias as $familia) {
             if (! $familia instanceof DTOFamiliaDisponible) {
                 continue;
             }
 
             $nido = $nidos->get($familia->evolutionChainId);
 
-            $familias->add($this->familiaGranja(
+            $familiasGranja->add($this->familiaGranja(
                 familia: $familia,
                 nido: $nido,
                 refugio: $refugiosModelo->get($familia->evolutionChainId),
@@ -102,11 +109,35 @@ final class ObtenerGranja
                 id: $habitatId,
                 name: $habitat !== null ? $habitat->name : '',
             ),
-            familias: $familias,
+            familias: $familiasGranja,
             inventario: $inventario,
             bayas: $this->inventario->resumenBayas($userId),
             bonguri: BonguriGranja::desde($bonguri),
         );
+    }
+
+    /**
+     * Familias del hábitat tal como las percibe el jugador. En QA (`$incluirNoAvistadas`)
+     * se devuelve el catálogo completo sin proyectar.
+     *
+     * Las lecturas de Pokédex y tipos se hacen una sola vez, fuera del bucle de
+     * familias, para no provocar N+1.
+     */
+    private function familiasVisibles(
+        int $userId,
+        int $habitatId,
+        bool $incluirNoAvistadas,
+    ): DTOFamiliasDisponibles {
+        $familias = $this->obtenerFamilias->handle($habitatId);
+
+        if ($incluirNoAvistadas) {
+            return $familias;
+        }
+
+        $vistos = $this->pokedex->vistos($userId, $familias->pokemonIds());
+        $tipos = $this->pokedex->tiposVistos($userId, $vistos);
+
+        return $this->proyectorFamilias->proyectar($familias, $vistos, $tipos);
     }
 
     /**

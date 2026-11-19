@@ -175,6 +175,13 @@ final class EstadosCombatiente
         MovimientosCombatiente $movimientos,
         RecursosCombatiente $recursos,
     ): ?ResultadoAccion {
+        if ($condiciones->tiene(ClaveCondicion::AUSENTE)) {
+            $condiciones->quitar(ClaveCondicion::AUSENTE);
+            $recursos->romperCombo();
+
+            return ResultadoAccion::denegada('está ausente y pierde el turno');
+        }
+
         if ($condiciones->tiene(ClaveCondicion::INTERRUPCION)) {
             $condiciones->quitar(ClaveCondicion::INTERRUPCION);
             $movimientos->cancelarCargas();

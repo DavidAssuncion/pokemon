@@ -21,9 +21,13 @@ final class MejorarRefugio
     ) {
     }
 
-    public function handle(int $userId, int $habitatId, int $evolutionChainId): void
-    {
-        $this->familiaEnHabitat->asegurar($habitatId, $evolutionChainId);
+    public function handle(
+        int $userId,
+        int $habitatId,
+        int $evolutionChainId,
+        bool $incluirNoAvistadas = false,
+    ): void {
+        $this->familiaEnHabitat->asegurar($userId, $habitatId, $evolutionChainId, $incluirNoAvistadas);
 
         DB::transaction(function () use ($userId, $habitatId, $evolutionChainId): void {
             $granja = $this->asegurarGranja->para($userId, $habitatId);

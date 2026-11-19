@@ -16,6 +16,7 @@ use App\Support\DesbloqueoPokedex;
 use App\Support\EquiposVistaPresenter;
 use App\Support\ItemCatalogo;
 use App\Support\Piezas\FabricaPiezasReclutado;
+use App\Support\Pokedex\CatalogoFiltrosPokedex;
 use App\Support\ReclutadoSerializer;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -59,6 +60,8 @@ class PlayerController extends Controller
             'counts' => $page['meta']['counts'] ?? ['total' => 0, 'vistos' => 0, 'atrapados' => 0, 'no_vistos' => 0],
             'tipos' => TipoEnum::options(),
             'stats' => StatEnum::options(),
+            'habilidades' => CatalogoFiltrosPokedex::habilidades(),
+            'movimientos' => CatalogoFiltrosPokedex::movimientos(),
             'unlockAll' => $unlockAll,
         ]);
     }

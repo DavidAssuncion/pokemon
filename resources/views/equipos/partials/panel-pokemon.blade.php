@@ -61,13 +61,19 @@
                                 :class="[calidadClase(pokemon), pokemonTeamId(pokemon) !== null ? 'pokemon-card-assigned' : '']"
                                 x-data="{ showTeamDropdown: false }"
                             >
-                                <!-- Nombre del equipo encima / libre -->
-                                <div class="px-1 pt-1 pb-1.5 border-b border-line">
+                                <!-- Cabecera: estado/equipo a la izquierda, CP a la derecha -->
+                                <div class="flex items-center justify-between gap-1 px-1 pt-1 pb-1.5 border-b border-line">
                                     <p
-                                        class="text-2xs font-bold uppercase tracking-wide truncate"
+                                        class="min-w-0 text-2xs font-bold uppercase tracking-wide truncate"
                                         :class="pokemonTeamId(pokemon) !== null ? 'text-ink-muted' : 'text-primary-ink'"
                                         x-text="pokemonTeamId(pokemon) !== null ? getTeamName(pokemonTeamId(pokemon)) : 'Libre'"
                                     ></p>
+                                    <template x-if="cpDe(pokemon) != null">
+                                        <p
+                                            class="shrink-0 text-2xs font-bold leading-none text-info-ink"
+                                            x-text="'CP ' + cpDe(pokemon)"
+                                        ></p>
+                                    </template>
                                 </div>
                                 <x-sprite
                                     size="96"
@@ -78,16 +84,6 @@
                                     x-bind:title="(pokemon.nombre || pokemon.pokemon_id || 'Pokémon') + (pokemonTeamId(pokemon) !== null ? ' — ' + getTeamName(pokemonTeamId(pokemon)) : '')"
                                     x-bind:class="pokemonTeamId(pokemon) !== null ? 'grayscale opacity-60' : ''"
                                 />
-                                <p
-                                    class="text-2xs truncate px-1 pb-1 text-ink-muted"
-                                    x-text="nombreDe(pokemon)"
-                                ></p>
-                                <template x-if="cpDe(pokemon) != null">
-                                    <p
-                                        class="text-2xs font-bold leading-none text-info-ink"
-                                        x-text="'CP ' + cpDe(pokemon)"
-                                    ></p>
-                                </template>
 
                                 <!-- Resumen en hover: habilidad activa y movimientos asignados -->
                                 <div class="pointer-events-none absolute left-1/2 top-full z-50 mt-2 hidden w-56 -translate-x-1/2 group-hover:block">

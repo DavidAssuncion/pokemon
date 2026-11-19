@@ -123,10 +123,7 @@ final class EjecutorAccion
             );
         }
 
-        $nuevosDebilitados = $batalla->procesarDebilitamientos();
-        if ($nuevosDebilitados > 0 && $actor->estaVivo()) {
-            $actor->otorgarAccionExtra();
-        }
+        $batalla->procesarDebilitamientos();
 
         if (! $actor->estaVivo()) {
             $batalla->agregarLog("¡{$actor->nombre()} se ha debilitado por el efecto!");

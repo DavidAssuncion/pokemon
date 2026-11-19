@@ -30,6 +30,7 @@ use Src\Battle\Domain\Effects\Capacidades\ReaccionaAlDebilitamiento;
 use Src\Battle\Domain\Effects\Capacidades\ReaccionaAlDebilitarRival;
 use Src\Battle\Domain\Effects\Capacidades\ReaccionaAlEscudoRoto;
 use Src\Battle\Domain\Effects\Capacidades\ReaccionaAlEstado;
+use Src\Battle\Domain\Effects\Capacidades\ReaccionaAlPerderTurno;
 use Src\Battle\Domain\Effects\Capacidades\ReaccionaAlSerObjetivo;
 use Src\Battle\Domain\Effects\Capacidades\RedirigeObjetivo;
 use Src\Battle\Domain\Effects\Capacidades\TransformaTipoMovimiento;
@@ -420,6 +421,19 @@ class ColeccionEfectos implements \Countable, \IteratorAggregate
         foreach ($this->effects as $e) {
             if ($e instanceof ReaccionaAlDanioRecibido) {
                 $e->alRecibirDanio($portador, $accion, $resultado, $battle);
+            }
+        }
+    }
+
+    /**
+     * Notifica a los efectos que su portador ha perdido la acción del turno.
+     * Cada efecto decide si reacciona (la invocación es idempotente).
+     */
+    public function dispararTurnoPerdido(Combatiente $portador, AgregadoBatalla $battle): void
+    {
+        foreach ($this->effects as $e) {
+            if ($e instanceof ReaccionaAlPerderTurno) {
+                $e->alPerderTurno($portador, $battle);
             }
         }
     }

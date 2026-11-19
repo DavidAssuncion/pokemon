@@ -93,6 +93,9 @@ final class GestorCicloTurnosBatalla
         // Verificar si el actor puede actuar (sueño, hielo, parálisis, confusión)
         $antesEstado = $grabando ? $this->gestorEventos->capturar($battle) : SnapshotBatalla::vacia();
         $statusCheck = $actor->puedeActuar();
+        if (! $statusCheck->esPermitida()) {
+            $actor->effects()->dispararTurnoPerdido($actor, $battle);
+        }
         if ($grabando) {
             $motivo = $statusCheck->autoDanio() > 0
                 ? "{$actor->nombre()} se golpeó a sí mismo ({$statusCheck->autoDanio()} daño)"

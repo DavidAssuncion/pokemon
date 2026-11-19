@@ -14,6 +14,7 @@ use Src\Granjas\Domain\DataTransferObjects\BayaGranja;
 use Src\Granjas\Domain\DataTransferObjects\CarameloEv;
 use Src\Granjas\Domain\DataTransferObjects\CarameloFamilia;
 use Src\Granjas\Domain\DataTransferObjects\InventarioCaramelosGranja;
+use Src\Shared\Collections\IntCollection;
 use Src\Shared\Collections\StringCollection;
 use Src\Shared\Domain\Items\CatalogoItems;
 use Src\Shared\Domain\Items\ClaveBaya;
@@ -34,10 +35,11 @@ final class InventarioGranja
     ) {
     }
 
-    public function resumen(int $userId): InventarioCaramelosGranja
+    public function resumen(int $userId, ?IntCollection $cadenasVisibles = null): InventarioCaramelosGranja
     {
         $familia = new CaramelosFamiliaCollection();
         $ev = new CaramelosEvCollection();
+        $cadenasPermitidas = $cadenasVisibles?->all();
 
         $items = PlayerInventory::withoutUserScope()
             ->where('user_id', $userId)
@@ -51,8 +53,14 @@ final class InventarioGranja
             $key = $item->item_key;
 
             if (str_starts_with($key, 'familia:')) {
+                $chainId = (int) substr($key, strlen('familia:'));
+
+                if ($cadenasPermitidas !== null && ! in_array($chainId, $cadenasPermitidas, true)) {
+                    continue;
+                }
+
                 $familia->add(new CarameloFamilia(
-                    chainId: (int) substr($key, strlen('familia:')),
+                    chainId: $chainId,
                     cantidad: $item->cantidad,
                 ));
                 continue;

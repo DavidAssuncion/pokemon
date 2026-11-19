@@ -143,6 +143,7 @@ final class GestorPrioridadesBatalla
 
             $puedeActuar = $actor->puedeActuar();
             if (! $puedeActuar->esPermitida()) {
+                $actor->effects()->dispararTurnoPerdido($actor, $battle);
                 $componente->log[] = "{$actor->nombre()} no puede usar {$movimiento->nombre}: {$puedeActuar->motivo()}";
                 if ($puedeActuar->autoDanio() > 0) {
                     $componente->log[] = "¡{$actor->nombre()} se golpeó a sí mismo! ({$puedeActuar->autoDanio()} daño)";

@@ -6,6 +6,7 @@ namespace Src\Battle\Domain;
 
 use Src\Battle\Domain\Catalog\CatalogoObjetos;
 use Src\Battle\Domain\Effects\InterfazEfecto;
+use Src\Battle\Domain\Enums\ClaveCondicion;
 use Src\Battle\Domain\Enums\EstadoPokemon;
 use Src\Battle\Domain\Enums\PosturaCombate;
 use Src\Battle\Domain\Enums\StatClave;
@@ -112,8 +113,14 @@ final class CombatienteVista
                     ],
                     $combatiente->condiciones()->all(),
                 ),
-                static fn (array $condicion): bool => $condicion['clave'] !== 'confusion',
+                static fn (array $condicion): bool => ! in_array(
+                    $condicion['clave'],
+                    ['confusion', 'ausente'],
+                    true,
+                ),
             )),
+            'ausente' => $combatiente->tieneCondicion(ClaveCondicion::AUSENTE),
+            'ausenteTooltip' => 'Ausente: descansará este turno. Si recibe daño directo antes de su turno, se enfadará, cancelará la ausencia y atacará con +1 Ataque.',
             'habilidades' => array_map(
                 static fn (InterfazEfecto $efecto): string => $efecto->obtenerClave(),
                 $combatiente->effects()->all(),

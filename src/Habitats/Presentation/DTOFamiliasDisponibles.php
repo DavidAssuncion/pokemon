@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Src\Habitats\Presentation;
 
+use Src\Shared\Collections\IntCollection;
 use Src\Shared\Domain\Collection;
 
 /**
@@ -39,6 +40,39 @@ class DTOFamiliasDisponibles extends Collection
         usort($items, fn (DTOFamiliaDisponible $a, DTOFamiliaDisponible $b): int => $a->minSpeciesId() <=> $b->minSpeciesId());
 
         return new static($items);
+    }
+
+    /**
+     * Ids de pokémon (base + evoluciones) de todas las familias, sin repetir.
+     */
+    public function pokemonIds(): IntCollection
+    {
+        $ids = [];
+
+        foreach ($this->all() as $familia) {
+            $ids[$familia->base->id] = $familia->base->id;
+
+            foreach ($familia->evolutions as $evolucion) {
+                $ids[$evolucion->id] = $evolucion->id;
+            }
+        }
+
+        return new IntCollection(array_values($ids));
+    }
+
+    /**
+     * Ids de cadena evolutiva de todas las familias, sin repetir y en orden de
+     * entrada.
+     */
+    public function evolutionChainIds(): IntCollection
+    {
+        $cadenas = [];
+
+        foreach ($this->all() as $familia) {
+            $cadenas[$familia->evolutionChainId] = $familia->evolutionChainId;
+        }
+
+        return new IntCollection(array_values($cadenas));
     }
 
     /**

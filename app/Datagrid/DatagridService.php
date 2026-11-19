@@ -121,7 +121,7 @@ final class DatagridService
 
         $query->getQuery()->where(function (QueryBuilder $q) use ($definition, $term, $table): void {
             foreach ($definition->searchable as $column) {
-                $q->orWhere($this->qualifyColumn($table, $column), 'like', $term);
+                $q->orWhereLike($this->qualifyColumn($table, $column), $term);
             }
         });
     }

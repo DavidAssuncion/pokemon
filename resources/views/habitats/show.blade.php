@@ -508,6 +508,12 @@ function habitatShow() {
             this.bayasCatalogoCargado = false;
         },
 
+        /** URL del endpoint de granja; propaga el flag QA de desbloqueo cuando está activo. */
+        urlGranja(ruta = '') {
+            const url = '/api/habitats/{{ $habitat['id'] }}/farm' + ruta;
+            return this.unlockAll ? url + '?unlock=1' : url;
+        },
+
         /** Escape: cierra primero el modal de bayas si está abierto. */
         cerrarCapaSuperior() {
             if (this.showBayaModal) {
@@ -534,7 +540,7 @@ function habitatShow() {
             const controller = new AbortController();
             const timeout = setTimeout(() => controller.abort(), 15000);
             try {
-                const response = await fetch('/api/habitats/{{ $habitat['id'] }}/farm', {
+                const response = await fetch(this.urlGranja(), {
                     headers: { 'Accept': 'application/json' },
                     signal: controller.signal,
                 });
@@ -813,7 +819,7 @@ function habitatShow() {
             const controller = new AbortController();
             const timeout = setTimeout(() => controller.abort(), 15000);
             try {
-                const response = await fetch('/api/habitats/{{ $habitat['id'] }}/farm/berries', {
+                const response = await fetch(this.urlGranja('/berries'), {
                     headers: { 'Accept': 'application/json' },
                     signal: controller.signal,
                 });
@@ -894,7 +900,7 @@ function habitatShow() {
             const timeout = setTimeout(() => controller.abort(), 15000);
             try {
                 const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || '';
-                const response = await fetch('/api/habitats/{{ $habitat['id'] }}/farm/nests/' + chainId + '/plantings', {
+                const response = await fetch(this.urlGranja('/nests/' + chainId + '/plantings'), {
                     method: 'POST',
                     headers: {
                         'Accept': 'application/json',
@@ -934,7 +940,7 @@ function habitatShow() {
 
         cosecharBaya(chainId, slot) {
             return this.accionGranja(
-                '/api/habitats/{{ $habitat['id'] }}/farm/nests/' + chainId + '/plantings/' + slot + '/harvest'
+                this.urlGranja('/nests/' + chainId + '/plantings/' + slot + '/harvest')
             );
         },
 
@@ -948,7 +954,7 @@ function habitatShow() {
             if (!confirmado) return;
 
             return this.accionGranja(
-                '/api/habitats/{{ $habitat['id'] }}/farm/nests/' + chainId + '/plantings',
+                this.urlGranja('/nests/' + chainId + '/plantings'),
                 { slot: Number(slot), berry: plantacion.berry_key }
             );
         },
@@ -971,19 +977,19 @@ function habitatShow() {
         },
 
         mejorarNido(chainId) {
-            return this.accionGranja('/api/habitats/{{ $habitat['id'] }}/farm/nests/' + chainId + '/upgrade');
+            return this.accionGranja(this.urlGranja('/nests/' + chainId + '/upgrade'));
         },
 
         mejorarRefugio(chainId) {
-            return this.accionGranja('/api/habitats/{{ $habitat['id'] }}/farm/shelters/' + chainId + '/upgrade');
+            return this.accionGranja(this.urlGranja('/shelters/' + chainId + '/upgrade'));
         },
 
         alternarInsalubres(chainId) {
-            return this.accionGranja('/api/habitats/{{ $habitat['id'] }}/farm/shelters/' + chainId + '/toggle-unhealthy');
+            return this.accionGranja(this.urlGranja('/shelters/' + chainId + '/toggle-unhealthy'));
         },
 
         mejorarComplemento(chainId, stat) {
-            return this.accionGranja('/api/habitats/{{ $habitat['id'] }}/farm/shelters/' + chainId + '/complements/' + encodeURIComponent(stat) + '/upgrade');
+            return this.accionGranja(this.urlGranja('/shelters/' + chainId + '/complements/' + encodeURIComponent(stat) + '/upgrade'));
         },
 
         // Admin Gestion state

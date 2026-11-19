@@ -5,8 +5,10 @@ declare(strict_types=1);
 namespace Src\Granjas\Infra\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Support\DesbloqueoPokedex;
 use Illuminate\Contracts\Auth\Guard;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Src\Granjas\App\AccionesGranja;
 use Src\Granjas\App\CosecharPlantacion;
 use Src\Granjas\App\CosecharTodo;
@@ -28,9 +30,9 @@ final class GranjaController extends Controller
     ) {
     }
 
-    public function show(int $habitat): JsonResponse
+    public function show(Request $request, int $habitat): JsonResponse
     {
-        return $this->respuesta($habitat);
+        return $this->respuesta($habitat, DesbloqueoPokedex::activo($request));
     }
 
     public function bayas(int $habitat): JsonResponse
@@ -40,38 +42,47 @@ final class GranjaController extends Controller
         ]);
     }
 
-    public function mejorarNido(int $habitat, int $chain): JsonResponse
+    public function mejorarNido(Request $request, int $habitat, int $chain): JsonResponse
     {
-        $this->acciones->nido($this->userId(), $habitat, $chain);
+        $incluirNoAvistadas = DesbloqueoPokedex::activo($request);
 
-        return $this->respuesta($habitat);
+        $this->acciones->nido($this->userId(), $habitat, $chain, $incluirNoAvistadas);
+
+        return $this->respuesta($habitat, $incluirNoAvistadas);
     }
 
-    public function mejorarRefugio(int $habitat, int $chain): JsonResponse
+    public function mejorarRefugio(Request $request, int $habitat, int $chain): JsonResponse
     {
-        $this->acciones->refugio($this->userId(), $habitat, $chain);
+        $incluirNoAvistadas = DesbloqueoPokedex::activo($request);
 
-        return $this->respuesta($habitat);
+        $this->acciones->refugio($this->userId(), $habitat, $chain, $incluirNoAvistadas);
+
+        return $this->respuesta($habitat, $incluirNoAvistadas);
     }
 
-    public function alternarCondiciones(int $habitat, int $chain): JsonResponse
+    public function alternarCondiciones(Request $request, int $habitat, int $chain): JsonResponse
     {
-        $this->acciones->condiciones($this->userId(), $habitat, $chain);
+        $incluirNoAvistadas = DesbloqueoPokedex::activo($request);
 
-        return $this->respuesta($habitat);
+        $this->acciones->condiciones($this->userId(), $habitat, $chain, $incluirNoAvistadas);
+
+        return $this->respuesta($habitat, $incluirNoAvistadas);
     }
 
-    public function mejorarComplemento(int $habitat, int $chain, string $stat): JsonResponse
+    public function mejorarComplemento(Request $request, int $habitat, int $chain, string $stat): JsonResponse
     {
-        $this->acciones->complemento($this->userId(), $habitat, $chain, $stat);
+        $incluirNoAvistadas = DesbloqueoPokedex::activo($request);
 
-        return $this->respuesta($habitat);
+        $this->acciones->complemento($this->userId(), $habitat, $chain, $stat, $incluirNoAvistadas);
+
+        return $this->respuesta($habitat, $incluirNoAvistadas);
     }
 
     public function plantar(int $habitat, int $chain, PlantarBayaRequest $request): JsonResponse
     {
         /** @var array{slot:int|string, berry:string} $datos */
         $datos = $request->validated();
+        $incluirNoAvistadas = DesbloqueoPokedex::activo($request);
 
         $this->plantarBaya->handle(
             $this->userId(),
@@ -79,27 +90,35 @@ final class GranjaController extends Controller
             $chain,
             (int) $datos['slot'],
             $datos['berry'],
+            $incluirNoAvistadas,
         );
 
-        return $this->respuesta($habitat);
+        return $this->respuesta($habitat, $incluirNoAvistadas);
     }
 
-    public function cosechar(int $habitat, int $chain, int $slot): JsonResponse
+    public function cosechar(Request $request, int $habitat, int $chain, int $slot): JsonResponse
     {
-        $this->cosecharPlantacion->handle($this->userId(), $habitat, $chain, $slot);
+        $incluirNoAvistadas = DesbloqueoPokedex::activo($request);
 
-        return $this->respuesta($habitat);
+        $this->cosecharPlantacion->handle($this->userId(), $habitat, $chain, $slot, $incluirNoAvistadas);
+
+        return $this->respuesta($habitat, $incluirNoAvistadas);
     }
 
     public function cosecharTodo(): JsonResponse
     {
-        return response()->json($this->cosecharTodo->handle($this->userId())->toArray());
+        return response()->json(
+            $this->cosecharTodo->handle(
+                $this->userId(),
+                (bool) config('pokedex.unlock_all'),
+            )->toArray(),
+        );
     }
 
-    private function respuesta(int $habitat): JsonResponse
+    private function respuesta(int $habitat, bool $incluirNoAvistadas): JsonResponse
     {
         return response()->json(
-            $this->obtenerGranja->handle($this->userId(), $habitat)->toArray(),
+            $this->obtenerGranja->handle($this->userId(), $habitat, $incluirNoAvistadas)->toArray(),
         );
     }
 

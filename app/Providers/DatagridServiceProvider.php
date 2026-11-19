@@ -59,6 +59,16 @@ final class DatagridServiceProvider extends ServiceProvider
                         $q->getQuery()->where('effort', '>', 0);
                     },
                 ),
+                'ability' => new RelationFilter(
+                    relation: 'abilities',
+                    column: 'abilities.id',
+                    map: fn (mixed $value): ?int => $this->idPositivo($value),
+                ),
+                'move' => new RelationFilter(
+                    relation: 'moves',
+                    column: 'moves.id',
+                    map: fn (mixed $value): ?int => $this->idPositivo($value),
+                ),
             ],
             sortable: [
                 'id' => 'id',
@@ -253,6 +263,17 @@ final class DatagridServiceProvider extends ServiceProvider
     private function tipoId(mixed $value): ?int
     {
         return $this->labelToId($value, TipoEnum::cases());
+    }
+
+    private function idPositivo(mixed $value): ?int
+    {
+        if (! is_numeric($value)) {
+            return null;
+        }
+
+        $id = (int) $value;
+
+        return $id > 0 ? $id : null;
     }
 
     /**

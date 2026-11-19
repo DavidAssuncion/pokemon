@@ -698,6 +698,7 @@
                         }
                     });
                     this.fijarNivel(etiquetaNivel, nivelFinal, false);
+                    this.fijarAria(barra, nivelFinal, barra.dataset.porcentajeFinal);
                 },
 
                 aplicarFinal(barra) {
@@ -718,6 +719,19 @@
                     }
 
                     this.fijarNivel(etiquetaNivel, Number(barra.dataset.nivelDespues), false);
+                    this.fijarAria(barra, Number(barra.dataset.nivelDespues), final);
+                },
+
+                fijarAria(barra, nivel, porcentaje) {
+                    const progreso = barra.querySelector('[role="progressbar"]');
+
+                    if (!progreso || porcentaje === undefined) {
+                        return;
+                    }
+
+                    progreso.setAttribute('aria-valuenow', String(porcentaje));
+                    const etiqueta = progreso.getAttribute('aria-label') || '';
+                    progreso.setAttribute('aria-valuetext', etiqueta + ': nivel ' + nivel + ', ' + porcentaje + ' por ciento');
                 },
 
                 sinTransicion(relleno, aplicar) {
