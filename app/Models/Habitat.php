@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\DB;
 
 class Habitat extends Model
 {
@@ -46,16 +47,34 @@ class Habitat extends Model
     public function pokemon(): BelongsToMany
     {
         return $this->belongsToMany(Pokemon::class, 'pokemon_habitat')
-            ->withPivot('level');
+            ->withPivot('level', 'min_level', 'manual');
     }
 
     /**
-     * Nivel mínimo de jugador requerido para explorar este hábitat en el
-     * nivel de exploración dado (columnas min_lvl_1/2/3; null = sin restricción).
+     * Nivel mínimo de jugador requerido para acceder al nivel de exploración
+     * dado, derivado de los spawns reales (`pokemon_habitat.min_level`).
+     * `null` si el nivel no tiene spawns o ninguno impone restricción.
      */
     public function minLvlParaNivel(int $nivel): ?int
     {
-        return $this->getAttribute('min_lvl_'.$nivel);
+        $minimo = DB::table('pokemon_habitat')
+            ->where('habitat_id', $this->id)
+            ->where('level', $nivel)
+            ->min('min_level');
+
+        return $minimo !== null ? (int) $minimo : null;
+    }
+
+    /**
+     * ¿El hábitat está excluido de los spawns salvajes? (p. ej. legendarios,
+     * que se sirven desde encuentros especiales).
+     */
+    public static function sinSpawns(int $habitatId): bool
+    {
+        /** @var list<int|string> $ids */
+        $ids = config('habitats.habitats_sin_spawns', []);
+
+        return in_array($habitatId, array_map(static fn (int|string $id): int => (int) $id, $ids), true);
     }
 
     /**

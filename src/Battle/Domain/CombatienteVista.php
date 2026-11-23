@@ -110,6 +110,7 @@ final class CombatienteVista
                         'clave' => $condicion->clave->value,
                         'label' => $condicion->clave->label(),
                         'turnos' => $condicion->turnos,
+                        'clase' => self::claseCondicion($condicion->clave),
                     ],
                     $combatiente->condiciones()->all(),
                 ),
@@ -279,6 +280,21 @@ final class CombatienteVista
         }
 
         return 'bg-hp-high';
+    }
+
+    private static function claseCondicion(ClaveCondicion $clave): string
+    {
+        return match ($clave) {
+            ClaveCondicion::ATRAPADO => 'bg-warning-soft text-warning-ink',
+            ClaveCondicion::BUCLE_ARENA => 'bg-warning-soft text-warning-ink',
+            ClaveCondicion::GIRO_FUEGO => 'bg-danger-soft text-danger-ink',
+            ClaveCondicion::DRENADORAS => 'bg-success-soft text-success-ink',
+            ClaveCondicion::MALDICION => 'bg-secondary-soft text-secondary-ink',
+            ClaveCondicion::CANTO_MORTAL => 'bg-danger-soft text-danger-ink',
+            ClaveCondicion::MARCADO => 'bg-danger-soft text-danger-ink',
+            ClaveCondicion::VINCULO_DANO => 'bg-secondary-soft text-secondary-ink',
+            default => 'bg-surface-sunken text-ink-muted',
+        };
     }
 
     private static function iconoEstado(EstadoPokemon $estado): ?string

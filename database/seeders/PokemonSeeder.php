@@ -45,6 +45,114 @@ class PokemonSeeder extends Seeder
     ];
 
     /**
+     * Evoluciones sin nivel específico en los datos de origen que se adelantan
+     * por decisión de producto. Clave = evolved_species_id.
+     *
+     * @var array<int, int>
+     */
+    private const EVOLUTION_LEVEL_OVERRIDES = [
+        10175 => 20, // Linoone de Galar ← Zigzagoon de Galar
+        10167 => 35, // Weezing de Galar ← Koffing
+        10165 => 37, // Slowbro de Galar ← Slowpoke de Galar
+        10092 => 20, // Raticate de Alola ← Rattata de Alola
+        10102 => 22, // Sandslash de Alola ← Sandshrew de Alola
+        10106 => 26, // Dugtrio de Alola ← Diglett de Alola
+        10108 => 28, // Persian de Alola ← Meowth de Alola
+        10110 => 25, // Graveler de Alola ← Geodude de Alola
+        10113 => 38, // Muk de Alola ← Grimer de Alola
+        10115 => 28, // Marowak de Alola ← Cubone
+        10232 => 30, // Electrode de Hisui ← Voltorb de Hisui
+        10233 => 36, // Typhlosion de Hisui ← Quilava
+        10236 => 36, // Samurott de Hisui ← Dewott
+        10239 => 30, // Zoroark de Hisui ← Zorua de Hisui
+        10240 => 54, // Braviary de Hisui ← Rufflet
+        10242 => 50, // Goodra de Hisui ← Sliggoo de Hisui
+        10243 => 37, // Avalugg de Hisui ← Bergmite
+        10244 => 34, // Decidueye de Hisui ← Dartrix
+        10177 => 35, // Darmanitan de Galar ← Darumaka de Galar
+        10178 => 35, // Darmanitan-zen de Galar ← Darumaka de Galar
+
+        // Ajustes de evolución revisados
+        282 => 35,  // Gardevoir ← Kirlia
+        475 => 35,  // Gallade ← Kirlia
+        342 => 28,  // Crawdaunt ← Corphish
+        130 => 25,  // Gyarados ← Magikarp
+        319 => 25,  // Sharpedo ← Carvanha
+        143 => 28,  // Snorlax ← Munchlax
+        530 => 38,  // Excadrill ← Drilbur
+
+        // Casos especiales revisados
+        292 => 20,  // Shedinja ← Nincada
+        867 => 34,  // Runerigus ← Yamask de Galar
+        923 => 30,  // Pawmot ← Pawmo
+        947 => 30,  // Brambleghast ← Bramblin
+        954 => 30,  // Rabsca ← Rellor
+        979 => 35,  // Annihilape ← Primeape
+
+        // Piedra/objeto tempranas
+        26 => 30,   // Raichu ← Pikachu
+        36 => 30,   // Clefable ← Clefairy
+        40 => 30,   // Wigglytuff ← Jigglypuff
+        38 => 35,   // Ninetales ← Vulpix
+        59 => 30,   // Arcanine ← Growlithe
+        45 => 30,   // Vileplume ← Gloom
+        182 => 30,  // Bellossom ← Gloom
+        91 => 30,   // Cloyster ← Shellder
+        121 => 30,  // Starmie ← Staryu
+        301 => 30,  // Delcatty ← Skitty
+        518 => 30,  // Musharna ← Munna
+        192 => 30,  // Sunflora ← Sunkern
+
+        // Amistad
+        169 => 35,  // Crobat ← Golbat
+        242 => 35,  // Blissey ← Chansey
+        428 => 35,  // Lopunny ← Buneary
+        528 => 35,  // Swoobat ← Woobat
+        542 => 35,  // Leavanny ← Swadloon
+        196 => 35,  // Espeon ← Eevee
+        197 => 35,  // Umbreon ← Eevee
+        700 => 35,  // Sylveon ← Eevee
+        773 => 35,  // Silvally ← Type: Null
+        873 => 35,  // Frosmoth ← Snom
+
+        // Por movimiento
+        424 => 35,  // Ambipom ← Aipom
+        463 => 35,  // Lickilicky ← Lickitung
+        465 => 35,  // Tangrowth ← Tangela
+        469 => 35,  // Yanmega ← Yanma
+        473 => 37,  // Mamoswine ← Piloswine
+        763 => 35,  // Tsareena ← Steenee
+        804 => 35,  // Naganadel ← Poipole
+        853 => 35,  // Grapploct ← Clobbopus
+        904 => 35,  // Overqwil ← Qwilfish de Hisui
+        981 => 35,  // Farigiraf ← Girafarig
+        982 => 35,  // Dudunsparce ← Dunsparce
+        1019 => 35, // Hydrapple ← Dipplin
+    ];
+
+    /**
+     * Pre-evoluciones "bebé": si la evolución no tiene nivel específico, se
+     * desbloquea a 20.
+     *
+     * @var list<int>
+     */
+    private const BABY_SPECIES_IDS = [
+        172, // Pichu
+        173, // Cleffa
+        174, // Igglybuff
+        175, // Togepi
+        298, // Azurill
+        406, // Budew
+        433, // Chingling
+        438, // Bonsly
+        439, // Mime Jr.
+        440, // Happiny
+        446, // Munchlax
+        447, // Riolu
+        458, // Mantyke
+    ];
+
+    /**
      * Run the database seeds.
      */
     public function run(): void
@@ -187,7 +295,10 @@ class PokemonSeeder extends Seeder
             }
 
             $rows = $evolutionRowsByEvolved[$pokemonId] ?? [];
-            $level = $this->minimumLevelOf($rows) ?? 40;
+            // 40 = método sin nivel específico (piedra, intercambio, amistad…).
+            $level = self::EVOLUTION_LEVEL_OVERRIDES[$pokemonId]
+                ?? $this->minimumLevelOf($rows)
+                ?? (in_array($speciesParent, self::BABY_SPECIES_IDS, true) ? 20 : 40);
 
             $hasOwnRow = false;
             foreach ($rows as $row) {

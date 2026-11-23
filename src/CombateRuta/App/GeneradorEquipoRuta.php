@@ -20,6 +20,7 @@ use Src\Pokemon\Domain\Stats\DatosStats;
 use Src\Pokemon\Domain\Stats\DatosStatsCollection;
 use Src\Shared\Domain\ClasificadorOfensivaDefensiva;
 use Src\Shared\Domain\PoliticaIvsEvs;
+use Src\Shared\Domain\Ports\FactorAparicion;
 use Src\Shared\Domain\ProbabilidadesShiny;
 
 /**
@@ -49,6 +50,7 @@ final class GeneradorEquipoRuta
         private readonly ClasificadorOfensivaDefensiva $clasificador,
         ?SelectorMovimientosRival $selector = null,
         ?ConfiguracionCombate $configuracion = null,
+        private readonly ?FactorAparicion $factorAparicion = null,
     ) {
         $this->selector = $selector ?? new SelectorMovimientosRival($mapeador);
         $this->configuracion = $configuracion ?? new ConfiguracionCombate();
@@ -69,12 +71,16 @@ final class GeneradorEquipoRuta
         ?callable $aleatorioShiny = null,
         array $movimientosDesbloqueados = [],
     ): DatosPokemonBatallaCollection {
-        $pool = $this->poolDelHabitat($habitatId, $nivel);
+        if (Habitat::sinSpawns($habitatId)) {
+            return new DatosPokemonBatallaCollection();
+        }
+
+        $pool = $this->poolDelHabitat($habitatId, $nivel, $nivelRival);
         if ($pool === []) {
             return new DatosPokemonBatallaCollection();
         }
 
-        $ponderado = $this->ponderar($pool);
+        $ponderado = $this->ponderar($pool, $habitatId);
         if ($ponderado->pesoTotal() <= 0) {
             return new DatosPokemonBatallaCollection();
         }
@@ -135,14 +141,18 @@ final class GeneradorEquipoRuta
      *
      * @return list<EspeciePonderadaRuta>
      */
-    public function especiesPonderadas(int $habitatId, int $nivel): array
+    public function especiesPonderadas(int $habitatId, int $nivel, ?int $nivelJugador = null): array
     {
-        $pool = $this->poolDelHabitat($habitatId, $nivel);
+        if (Habitat::sinSpawns($habitatId)) {
+            return [];
+        }
+
+        $pool = $this->poolDelHabitat($habitatId, $nivel, $nivelJugador);
         if ($pool === []) {
             return [];
         }
 
-        $ponderado = $this->ponderar($pool);
+        $ponderado = $this->ponderar($pool, $habitatId);
         $especies = [];
 
         foreach ($ponderado as $entrada) {
@@ -167,11 +177,17 @@ final class GeneradorEquipoRuta
     /**
      * @return array<int, Pokemon>  keyed por id
      */
-    private function poolDelHabitat(int $habitatId, int $nivel): array
+    private function poolDelHabitat(int $habitatId, int $nivel, ?int $nivelJugador = null): array
     {
         $habitat = Habitat::with('pokemon')
             ->with([
-                'pokemon' => fn ($q) => $q->wherePivot('level', $nivel)->with('stats', 'types'),
+                'pokemon' => fn ($q) => $q
+                    ->wherePivot('level', $nivel)
+                    ->when($nivelJugador !== null, fn ($q) => $q->whereRaw(
+                        '(pokemon_habitat.min_level is null or pokemon_habitat.min_level <= ?)',
+                        [$nivelJugador],
+                    ))
+                    ->with('stats', 'types'),
             ])
             ->find($habitatId);
 
@@ -196,7 +212,7 @@ final class GeneradorEquipoRuta
      *
      * @param  array<int, Pokemon>  $pool
      */
-    private function ponderar(array $pool): ColeccionPoolPonderado
+    private function ponderar(array $pool, int $habitatId): ColeccionPoolPonderado
     {
         $contratos = [];
         foreach ($pool as $id => $pokemon) {
@@ -206,6 +222,7 @@ final class GeneradorEquipoRuta
                 'hatch' => $pokemon->hatch,
                 'tipos' => [],
                 'stats' => [],
+                'factor' => $this->factorAparicion?->factor($habitatId, $pokemon->evolution_chain_id) ?? 1.0,
             ];
         }
 

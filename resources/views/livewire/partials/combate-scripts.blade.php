@@ -318,6 +318,24 @@
         async function reproducirEvento(evento) {
             const tipo = evento.tipo || 'damage';
 
+            if (tipo === 'detonacion') {
+                if (window.battleAnimationsReady) {
+                    await window.battleAnimationsReady;
+                }
+                if (typeof window.reproducirAnimacionDetonacion === 'function') {
+                    await window.reproducirAnimacionDetonacion(
+                        evento.portadorId,
+                        evento.objetivos || []
+                    );
+                }
+                return;
+            }
+
+            if (tipo === 'residuo') {
+                await reproducirResiduo(evento);
+                return;
+            }
+
             if (tipo === 'fin') {
                 aplicarEstadoVitales(evento.estado, false);
                 return;
@@ -336,6 +354,21 @@
 
             if (tipo === 'round') {
                 pulsoRonda();
+            }
+
+            if (evento.movimientoSlug || evento.movimiento) {
+                if (window.battleAnimationsReady) {
+                    await window.battleAnimationsReady;
+                }
+                if (typeof window.reproducirAnimacionMovimiento === 'function') {
+                    await window.reproducirAnimacionMovimiento(
+                        evento.movimientoSlug,
+                        evento.actorId,
+                        evento.objetivoId,
+                        evento.movimientoCategoria,
+                        evento.cambios || {}
+                    );
+                }
             }
 
             const cambios = evento.cambios || {};
@@ -366,7 +399,7 @@
 
             refs.forEach((ref) => {
                 const carta = buscarCarta(ref);
-                if (!carta) {
+                if (!carta || carta.classList.contains('anim-ko')) {
                     return;
                 }
 
@@ -396,7 +429,9 @@
                 }
 
                 if ((evento.muertos || []).includes(ref)) {
-                    animarKO(carta, offset);
+                    // Primero termina el impacto y la bajada de PS; luego se
+                    // revela el KO. Así no se ve la carta caída antes del daño.
+                    window.setTimeout(() => animarKO(carta, offset), 1000);
                 }
             });
 
@@ -420,6 +455,106 @@
 
                 clases.forEach((clase) => elemento.classList.remove(clase));
             }, duracion);
+        }
+
+        function animarBarraResiduo(carta, recurso, antes, despues) {
+            const barra = carta.querySelector('.vital-' + recurso);
+            const maximo = maximoVital(carta, recurso);
+
+            if (!barra || maximo <= 0) {
+                return;
+            }
+
+            barra.style.transition = 'none';
+            barra.style.width = Math.max(0, Math.min(100, (antes / maximo) * 100)) + '%';
+            void barra.offsetWidth;
+            barra.style.transition = '';
+            barra.style.width = Math.max(0, Math.min(100, (despues / maximo) * 100)) + '%';
+            actualizarNumero(carta, recurso, despues, maximo);
+        }
+
+        async function reproducirResiduo(evento) {
+            const objetivos = Array.isArray(evento.objetivos) && evento.objetivos.length > 0
+                ? evento.objetivos
+                : [{
+                    objetivoId: evento.objetivoId,
+                    hpAntes: evento.hpAntes,
+                    hpDespues: evento.hpDespues,
+                    defAntes: evento.defAntes,
+                    defDespues: evento.defDespues,
+                    spDefAntes: evento.spDefAntes,
+                    spDefDespues: evento.spDefDespues,
+                }];
+            const objetivosValidos = objetivos.filter((objetivo) => objetivo && objetivo.objetivoId);
+
+            if (objetivosValidos.length === 0) {
+                await esperar(300);
+                return;
+            }
+
+            // Un mismo efecto (granizo, Púas, Atrapado…) se aplica a todos sus
+            // objetivos a la vez. Si es una trampa, se repite la animación del
+            // movimiento original contra todos los atrapados.
+            if (evento.movimientoSlug && evento.origenId
+                && typeof window.reproducirAnimacionMovimiento === 'function') {
+                if (window.battleAnimationsReady) {
+                    await window.battleAnimationsReady;
+                }
+
+                await window.reproducirAnimacionMovimiento(
+                    evento.movimientoSlug,
+                    evento.origenId,
+                    objetivosValidos.map((objetivo) => objetivo.objetivoId),
+                    'fisico',
+                    {}
+                );
+            }
+
+            objetivosValidos.forEach((objetivo) => {
+                const carta = buscarCarta(objetivo.objetivoId);
+
+                // Si ya cayó en un grupo anterior, no se le vuelve a aplicar
+                // clima/estado ni se repite el KO.
+                if (!carta || carta.classList.contains('anim-ko')) {
+                    return;
+                }
+
+                const hpAntes = Number(objetivo.hpAntes) || 0;
+                const hpDespues = Number(objetivo.hpDespues) || 0;
+                const defAntes = Number(objetivo.defAntes) || 0;
+                const defDespues = Number(objetivo.defDespues) || 0;
+                const spDefAntes = Number(objetivo.spDefAntes) || 0;
+                const spDefDespues = Number(objetivo.spDefDespues) || 0;
+
+                animarBarraResiduo(carta, 'hp', hpAntes, hpDespues);
+                animarBarraResiduo(carta, 'def', defAntes, defDespues);
+                animarBarraResiduo(carta, 'spdef', spDefAntes, spDefDespues);
+
+                const delta = {
+                    hp: hpDespues - hpAntes,
+                    def: defDespues - defAntes,
+                    spdef: spDefDespues - spDefAntes,
+                };
+                const perdida = delta.hp < 0 || delta.def < 0 || delta.spdef < 0;
+                const ganancia = delta.hp > 0 || delta.def > 0 || delta.spdef > 0;
+                let offset = 0;
+
+                if (perdida) {
+                    offset = animarDanio(carta, { delta }, evento);
+                } else if (ganancia) {
+                    animarCura(carta, { delta });
+                }
+
+                if (evento.texto) {
+                    mostrarPildora(carta, evento.texto, 'vital-delta-estado', offset - 18);
+                }
+
+                if (hpDespues <= 0) {
+                    window.setTimeout(() => animarKO(carta), 1000);
+                }
+            });
+
+            await esperar(1500);
         }
 
         function animarDanio(carta, cambio, evento) {
@@ -505,6 +640,9 @@
         }
 
         function animarKO(carta, desplazamiento = 0) {
+            // Revela la insignia/opacidad del KO en el mismo momento en que
+            // empieza la animación de caída.
+            carta.classList.remove('estado-final-oculto');
             carta.classList.add('anim-ko');
             mostrarPildora(carta, 'K.O.', 'vital-delta-ko', desplazamiento);
         }
@@ -561,7 +699,7 @@
 
         function duracionEvento(tipo, evento) {
             if ((evento.muertos || []).length > 0) {
-                return 1100;
+                return 1500;
             }
 
             const hayCura = Object.values(evento.cambios || {}).some((cambio) => {

@@ -15,6 +15,8 @@ use App\Support\CadenasEvolutivas;
 use Carbon\Carbon;
 use DateTimeInterface;
 use Illuminate\Contracts\View\View;
+use Illuminate\Database\Eloquent\Relations\Pivot;
+use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -32,6 +34,7 @@ use Src\Exploraciones\Domain\RolExploracion;
 use Src\Exploraciones\Domain\ValueObjects\PoolHabitat;
 use Src\Exploraciones\Presentation\PresentadorExploraciones;
 use Src\Habitats\App\ValidadorExploracion;
+use Src\Habitats\App\ValidadorNivelHabitat;
 use Src\Shared\Domain\NivelHelper;
 use Src\Shared\Tipos\TipoPokemon;
 
@@ -44,6 +47,7 @@ class ExploracionActivaController extends Controller
         private readonly PresentadorExploraciones $presentador,
         private readonly ConsultarExpedicionesUsuario $consultarExpediciones,
         private readonly ConstructorExpedicionesResumen $constructorResumen,
+        private readonly ValidadorNivelHabitat $validadorNivelHabitat,
     ) {
     }
 
@@ -89,12 +93,8 @@ class ExploracionActivaController extends Controller
             'modo' => 'nullable|in:experiencia,reclutamiento,botin',
         ]);
 
-        if (isset($data['return_time'])) {
-            $finVuelta = CalculadorFinExploracion::calcular((string) $data['return_time'], null, now());
-
-            if ($finVuelta !== null && now()->diffInMinutes($finVuelta, false) < 60) {
-                return response()->json(['message' => 'La hora de vuelta debe ser al menos 1 hora después del inicio.'], 422);
-            }
+        if (isset($data['return_time']) && ! $this->horaDeVueltaValida((string) $data['return_time'])) {
+            return response()->json(['message' => 'La hora de vuelta debe ser al menos 1 hora después del inicio.'], 422);
         }
 
         $usuario = Auth::user();
@@ -116,7 +116,7 @@ class ExploracionActivaController extends Controller
 
         // RF-D: recompensas esperadas (estimador puro) sobre el pool del hábitat.
         $porHoras = $this->porHorasDe($data);
-        $poolArray = $this->poolParaEstimador($habitat, $nivel);
+        $poolArray = $this->poolParaEstimador($habitat, $nivel, $usuario->nivel());
         $pool = PoolHabitat::desdeArray($poolArray);
         $nivelSalvaje = max(1, $minLvl ?? $dificultad);
         $estimacion = $this->estimador->estimarDePool(
@@ -186,15 +186,25 @@ class ExploracionActivaController extends Controller
      * @param  int  $nivel
      * @return list<array{id:int, capture_rate:int, hatch:int|null, tipos:list<TipoPokemon>, stats:list<array{stat:int,effort:int}>, base_experience:int, evolution_chain_id:?int, species_id:int}>
      */
-    private function poolParaEstimador(?Habitat $habitat, int $nivel): array
+    private function poolParaEstimador(?Habitat $habitat, int $nivel, int $nivelJugador): array
     {
-        if ($habitat === null) {
+        if ($habitat === null || Habitat::sinSpawns($habitat->id)) {
             return [];
         }
 
         return $habitat->pokemon()
             ->wherePivot('level', $nivel)
             ->get()
+            ->filter(function (Pokemon $pokemon) use ($nivelJugador): bool {
+                $pivote = $pokemon->getRelation('pivot');
+                if (! $pivote instanceof Pivot) {
+                    return true;
+                }
+
+                $minimo = $pivote->getAttribute('min_level');
+
+                return $minimo === null || (int) $minimo <= $nivelJugador;
+            })
             ->loadMissing('types', 'stats')
             ->map(fn (Pokemon $pokemon) => [
                 'id' => $pokemon->id,
@@ -325,12 +335,8 @@ class ExploracionActivaController extends Controller
             return 'No puedes indicar una duración y una hora de vuelta a la vez.';
         }
 
-        if (isset($data['return_time'])) {
-            $finVuelta = CalculadorFinExploracion::calcular((string) $data['return_time'], null, now());
-
-            if ($finVuelta !== null && now()->diffInMinutes($finVuelta, false) < 60) {
-                return 'La hora de vuelta debe ser al menos 1 hora después del inicio.';
-            }
+        if (isset($data['return_time']) && ! $this->horaDeVueltaValida((string) $data['return_time'])) {
+            return 'La hora de vuelta debe ser al menos 1 hora después del inicio.';
         }
 
         if (! $this->validadorExploracion->reclutadoDisponible((int) $data['reclutado_id'])) {
@@ -338,13 +344,13 @@ class ExploracionActivaController extends Controller
         }
 
         $usuario = $request->user();
-        $habitat = Habitat::find((int) $data['habitat_id']);
-        $minLvl = $habitat?->minLvlParaNivel((int) $data['level']);
+        $nivel = (int) $data['level'];
+        $minLvl = $this->validadorNivelHabitat->nivelMinimo((int) $data['habitat_id'], $nivel);
 
-        if ($minLvl !== null && $usuario instanceof User
-            && ! $this->validadorExploracion->cumpleNivelMinimo($usuario->nivel(), $minLvl)
-        ) {
-            return "Requiere nivel Nv {$minLvl} para explorar esta zona.";
+        if ($usuario instanceof User && ! $this->validadorNivelHabitat->disponible((int) $data['habitat_id'], $nivel, $usuario->nivel())) {
+            return $minLvl !== null
+                ? "Requiere nivel Nv {$minLvl} para explorar esta zona."
+                : 'Ese nivel del hábitat no tiene Pokémon disponibles.';
         }
 
         $duracionHoras = (int) ($data['duracion_horas'] ?? $data['duration_hours'] ?? 0) ?: null;
@@ -355,21 +361,38 @@ class ExploracionActivaController extends Controller
             $horaLimite = Carbon::today()->setTimeFromTimeString($data['return_time']);
         }
 
-        $exploracion = ExploracionActiva::create([
-            'user_id' => $usuario?->id,
-            'reclutado_id' => $data['reclutado_id'],
-            'habitat_id' => $data['habitat_id'],
-            'nivel' => $data['level'],
-            'duracion_horas' => $duracionHoras,
-            'hora_limite' => $horaLimite,
-            'indefinido' => $indefinido,
-            'modo' => $data['modo'] ?? null,
-            'inicio_exploracion' => now(),
-            'llegada_destino' => null,
-            'regreso' => null,
-        ]);
+        try {
+            $exploracion = ExploracionActiva::create([
+                'user_id' => $usuario?->id,
+                'reclutado_id' => $data['reclutado_id'],
+                'habitat_id' => $data['habitat_id'],
+                'nivel' => $data['level'],
+                'duracion_horas' => $duracionHoras,
+                'hora_limite' => $horaLimite,
+                'indefinido' => $indefinido,
+                'modo' => $data['modo'] ?? null,
+                'inicio_exploracion' => now(),
+                'llegada_destino' => null,
+                'regreso' => null,
+            ]);
+        } catch (UniqueConstraintViolationException) {
+            // El índice parcial unique (reclutado_id WHERE regreso IS NULL)
+            // cubre la carrera entre dos peticiones simultáneas.
+            return 'El reclutado ya está en una exploración activa.';
+        }
 
         return null;
+    }
+
+    /**
+     * Regla de vuelta mínima: la hora indicada debe quedar al menos 60 minutos
+     * después de ahora. Fuente única para preview y creación.
+     */
+    private function horaDeVueltaValida(string $returnTime): bool
+    {
+        $finVuelta = CalculadorFinExploracion::calcular($returnTime, null, now());
+
+        return $finVuelta === null || now()->diffInMinutes($finVuelta, false) >= 60;
     }
 
     /**

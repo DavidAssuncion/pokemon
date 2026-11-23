@@ -13,81 +13,114 @@
              });
          };
 
-         // El servidor pinta .anim-ataque en el siguiente actor durante el commit.
-         // Se retira para que no se mezcle con el impacto y se reinicia al terminar
-         // la cola: así la embestida del siguiente turno se ve completa.
+         // La embestida genérica (.anim-ataque) se retiró: ahora la animación
+         // específica de Showdown representa el ataque. Se conserva la limpieza
+         // por si una vista antigua dejó la clase aplicada.
          const limpiarAtaques = () => {
              document.querySelectorAll('.pokemon-card.anim-ataque').forEach((carta) => {
                  carta.classList.remove('anim-ataque');
              });
          };
 
-         const marcarSiguienteAtacante = () => {
-             const refId = $wire.get('animAttackerId');
-             if (!refId) {
-                 return;
-             }
+          // Restaura el foco visual en el actor anterior mientras se reproduce
+         // la cola. El servidor ya ha avanzado `actingRefId`, pero el cambio de
+         // activo no debe verse hasta que termine la animación.
+        const aplicarActiveCard = (refId) => {
+            document.querySelectorAll('.pokemon-card.acting-card').forEach((carta) => {
+                carta.classList.remove('acting-card');
+            });
 
-             const carta = buscarCarta(refId);
-             if (!carta) {
-                 return;
-             }
+            if (refId) {
+                buscarCarta(refId)?.classList.add('acting-card');
+            }
+        };
 
-             carta.classList.remove('anim-ataque');
-             void carta.offsetWidth;
-             carta.classList.add('anim-ataque');
-         };
+        const aplicarTurnActivo = (titulos) => {
+            const activos = new Set((titulos || []).filter(Boolean));
 
-         // Resuelve la acción y reproduce en orden los eventos que devuelve el
-         // servidor. La interfaz queda bloqueada hasta terminar la cola para que
-         // ningún clic provoque un render intermedio (ver ANALISIS_FRONTEND).
-         const resolverAccion = async () => {
-             if (reproduciendo) return;
-             reproduciendo = true;
-             window.dispatchEvent(new CustomEvent('combate:animando', { detail: { animando: true } }));
-             const previos = animacionDisponible ? instantaneaVitales() : null;
-             const logPrevio = document.querySelector('.battle-log ul')?.innerHTML ?? null;
-             let logFinal = null;
-             try {
-                 await $wire.commitAction();
-                 limpiarAtaques();
+            document.querySelectorAll('.turn-bar .badge').forEach((badge) => {
+                badge.classList.toggle(
+                    'active-turn',
+                    activos.has(badge.getAttribute('title'))
+                );
+            });
+        };
 
-                 // El registro también se adelantaría al resultado; se conserva
-                 // el texto anterior hasta que termine la cola de animaciones.
-                 const logDespues = document.querySelector('.battle-log ul');
-                 if (logDespues) {
-                     logFinal = logDespues.innerHTML;
-                     if (logPrevio !== null) {
-                         logDespues.innerHTML = logPrevio;
-                     }
-                 }
+        // Resuelve la acción y reproduce en orden los eventos que devuelve el
+        // servidor. La interfaz queda bloqueada hasta terminar la cola para que
+        // ningún clic provoque un render intermedio (ver ANALISIS_FRONTEND).
+        const resolverAccion = async () => {
+            if (reproduciendo) return;
+            reproduciendo = true;
+            window.dispatchEvent(new CustomEvent('combate:animando', { detail: { animando: true } }));
+            const previos = animacionDisponible ? instantaneaVitales() : null;
 
-                 const eventos = $wire.get('eventos') || [];
-                 if (animacionDisponible && typeof reproducirEventos === 'function') {
-                     bloquearInterfaz(true);
-                     await reproducirEventos(eventos, previos);
-                 } else if (previos) {
-                     animarVitales(previos);
-                 }
-             } finally {
-                 const logAhora = document.querySelector('.battle-log ul');
-                 if (logAhora && logFinal !== null) {
-                     logAhora.innerHTML = logFinal;
-                 }
-                 bloquearInterfaz(false);
-                 document.querySelectorAll('.pokemon-card.estado-final-oculto').forEach((carta) => {
-                     carta.classList.remove('estado-final-oculto');
-                 });
-                 if (typeof mostrarModalVictoria === 'function') mostrarModalVictoria();
-                 reproduciendo = false;
-                 window.dispatchEvent(new CustomEvent('combate:animando', { detail: { animando: false } }));
-                 // Deja terminar el impacto antes de reiniciar la embestida del
-                 // siguiente actor y abrir su ventana de 700 ms.
-                 window.setTimeout(() => {
-                     marcarSiguienteAtacante();
-                     programarAccion();
-                 }, 90);
-             }
+            // El servidor ya conoce el resultado (incluido el KO). Se oculta el
+            // KO de las cartas que estaban vivas hasta que la cola lo revele.
+            if (previos) {
+                Object.entries(previos).forEach(([refId, datos]) => {
+                    if (!datos.ko) {
+                        buscarCarta(refId)?.classList.add('estado-final-oculto');
+                    }
+                });
+            }
+
+            const logPrevio = document.querySelector('.battle-log ul')?.innerHTML ?? null;
+            const activePrevio = document.querySelector('.pokemon-card.acting-card')?.dataset.refId ?? null;
+            const turnActivosPrevios = Array.from(
+                document.querySelectorAll('.turn-bar .badge.active-turn')
+            ).map((badge) => badge.getAttribute('title')).filter(Boolean);
+            let turnActivosNuevos = [];
+            let logFinal = null;
+            document.querySelector('.battle-container')?.classList.add('combate-ocultar-banner');
+            try {
+                await $wire.commitAction();
+                limpiarAtaques();
+                turnActivosNuevos = Array.from(
+                    document.querySelectorAll('.turn-bar .badge.active-turn')
+                ).map((badge) => badge.getAttribute('title')).filter(Boolean);
+                aplicarActiveCard(activePrevio);
+                aplicarTurnActivo(turnActivosPrevios);
+
+                // El registro también se adelantaría al resultado; se conserva
+                // el texto anterior hasta que termine la cola de animaciones.
+                const logDespues = document.querySelector('.battle-log ul');
+                if (logDespues) {
+                    logFinal = logDespues.innerHTML;
+                    if (logPrevio !== null) {
+                        logDespues.innerHTML = logPrevio;
+                    }
+                }
+
+                const eventos = $wire.get('eventos') || [];
+                if (animacionDisponible && typeof reproducirEventos === 'function') {
+                    bloquearInterfaz(true);
+                    await reproducirEventos(eventos, previos);
+                } else if (previos) {
+                    animarVitales(previos);
+                }
+            } finally {
+                const logAhora = document.querySelector('.battle-log ul');
+                if (logAhora && logFinal !== null) {
+                    logAhora.innerHTML = logFinal;
+                }
+                bloquearInterfaz(false);
+                document.querySelectorAll('.pokemon-card.estado-final-oculto').forEach((carta) => {
+                    carta.classList.remove('estado-final-oculto');
+                });
+                aplicarActiveCard($wire.get('actingRefId') || null);
+                aplicarTurnActivo(turnActivosNuevos);
+                document.querySelector('.battle-container')?.classList.remove('combate-ocultar-banner');
+                if (typeof mostrarModalVictoria === 'function') mostrarModalVictoria();
+                reproduciendo = false;
+                window.dispatchEvent(new CustomEvent('combate:animando', { detail: { animando: false } }));
+                // La embestida genérica se retiró: la animación específica del
+                // movimiento (Showdown) ya representa el ataque. Solo se deja
+                // terminar el impacto antes de abrir la ventana del siguiente actor.
+                window.setTimeout(() => {
+                    programarAccion();
+                }, 90);
+            }
          };
 
          const programarAccion = (demora = DURACION_ACCION) => {
@@ -99,21 +132,57 @@
          };
 
          $wire.$watch('animTick', () => programarAccion());
+
+         // Al cambiar de clima, el morph puede conservar el vídeo anterior.
+         // Se fuerza la fuente y la reproducción del clip del clima nuevo.
+         const clipsClima = {
+             tormenta_arena: { base: 'weather-gen6-sandstorm', poster: 'weather-sandstorm.png' },
+             diluvio: { base: 'weather-gen6-raindance', poster: 'weather-raindance.jpg' },
+             granizo: { base: 'weather-gen6-hail', poster: 'weather-hail.png' },
+             sequia: { base: 'weather-gen6-sunnyday', poster: 'weather-sunnyday.jpg' },
+         };
+         $wire.$watch('weather', (clima) => {
+             const clip = clipsClima[clima] ?? null;
+             const videos = document.querySelectorAll('.battle-weather-video');
+
+             if (clip === null) {
+                 videos.forEach((video) => {
+                     video.pause();
+                     video.remove();
+                 });
+                 return;
+             }
+
+             videos.forEach((video) => {
+                 video.className = `battle-weather-video battle-weather-video--${clima}`;
+                 const webm = video.querySelector('source[type=&quot;video/webm&quot;]');
+                 const mp4 = video.querySelector('source[type=&quot;video/mp4&quot;]');
+                 const webmSrc = `/showdown/fx/${clip.base}.webm`;
+                 const mp4Src = `/showdown/fx/${clip.base}.mp4`;
+
+                 if (webm) webm.setAttribute('src', webmSrc);
+                 if (mp4) mp4.setAttribute('src', mp4Src);
+                 video.setAttribute('poster', `/showdown/fx/${clip.poster}`);
+                 video.load();
+                 video.play().catch(() => {});
+             });
+         });
+
          if ($wire.get('animAttackerId')) programarAccion();
      })">
-
-    {{-- TOP: TURN ORDER --}}
-    @include('livewire.partials.turn-bar')
 
     {{-- CAMPO (2/3) Y ATAQUES (1/3) --}}
     <div class="row g-3">
         <div class="col-12 col-lg-9">
             @include('livewire.partials.battle-field')
+            {{-- BOTTOM: TURN ORDER --}}
+            @include('livewire.partials.turn-bar')
         </div>
         <div class="col-12 col-lg-3">
             @include('livewire.partials.moves-panel')
         </div>
     </div>
+
 </div>
 
 {{-- REGISTRO DE BATALLA: se consulta en modal para liberar la columna --}}
@@ -126,7 +195,6 @@
     @if($phase === 'battle_over' && $rewardsVista !== null)
         <div class="modal fade show d-block reward-modal scrim {{ !empty($eventos) ? 'modal-pendiente' : '' }}"
              x-data
-             x-init="if ($el.classList.contains('modal-pendiente')) setTimeout(() => $el.classList.remove('modal-pendiente'), 8000)"
              tabindex="-1" role="dialog" aria-modal="true" aria-labelledby="victory-modal-title">
             <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
                 <div class="modal-content">
@@ -249,7 +317,9 @@
                         @endif
                     </div>
                     <div class="modal-footer">
-                        @if($habitatId > 0)
+                        @if($returnUrl !== '')
+                            <a href="{{ $returnUrl }}" class="btn btn-success w-100 fw-bold">{{ $returnLabel !== '' ? $returnLabel : 'Volver' }}</a>
+                        @elseif($habitatId > 0)
                             <a href="/habitats/{{ $habitatId }}" class="btn btn-success w-100 fw-bold">Volver al hábitat</a>
                         @else
                             <a href="{{ route('gimnasios.index') }}" class="btn btn-success w-100 fw-bold">Volver a gimnasios</a>

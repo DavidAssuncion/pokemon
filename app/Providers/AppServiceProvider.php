@@ -6,12 +6,17 @@ namespace App\Providers;
 
 use App\Bus\DatabaseUnitOfWork;
 use App\Bus\LaravelCommandBus;
+use App\Models\User;
 use App\Support\WebpConverter;
 use App\Support\WebpConverterInterface;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
+use Src\Avistamientos\Domain\Repositories\AvistamientoRepositorioInterface;
+use Src\Avistamientos\Infra\EloquentAvistamientoRepositorio;
+use Src\Avistamientos\Infra\FactorAparicionAvistamientos;
 use Src\Battle\Domain\FabricaBatallaInterface;
 use Src\Battle\Domain\Repositories\MovimientoRepository;
 use Src\Battle\Infra\Repositories\EloquentMovimientoRepository;
@@ -39,12 +44,19 @@ use Src\Habitats\Domain\Repositories\HabitatGestionRepositoryInterface;
 use Src\Habitats\Domain\Repositories\HabitatLecturaRepositoryInterface;
 use Src\Habitats\Infra\HabitatGestionRepository;
 use Src\Habitats\Infra\HabitatLecturaRepository;
+use Src\HabitatsTemporales\Domain\Repositories\MedallasRepositoryInterface;
+use Src\HabitatsTemporales\Domain\Repositories\ProgresoHabitatTemporalRepositoryInterface;
+use Src\HabitatsTemporales\Infra\EloquentMedallasRepository;
+use Src\HabitatsTemporales\Infra\EloquentProgresoHabitatTemporalRepository;
 use Src\Mazmorras\Domain\Repositories\DungeonProgresoRepositoryInterface;
 use Src\Mazmorras\Infra\EloquentDungeonProgresoRepository;
 use Src\Shared\Bus\CommandBus;
 use Src\Shared\Bus\UnitOfWork;
 use Src\Shared\Domain\NivelHelper;
+use Src\Shared\Domain\Ports\FactorAparicion;
 use Src\Shared\Domain\Ports\InventarioJugador;
+use Src\Shared\Domain\Ports\Reloj;
+use Src\Shared\Domain\Time\RelojPredeterminado;
 use Src\Shared\Infra\Inventario\InventarioJugadorEloquent;
 
 class AppServiceProvider extends ServiceProvider
@@ -58,6 +70,8 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(FabricaBatallaInterface::class, FabricaBatallaMock::class);
         $this->app->bind(HabitatLecturaRepositoryInterface::class, HabitatLecturaRepository::class);
         $this->app->bind(HabitatGestionRepositoryInterface::class, HabitatGestionRepository::class);
+        $this->app->bind(ProgresoHabitatTemporalRepositoryInterface::class, EloquentProgresoHabitatTemporalRepository::class);
+        $this->app->bind(MedallasRepositoryInterface::class, EloquentMedallasRepository::class);
         $this->app->bind(WebpConverterInterface::class, WebpConverter::class);
         $this->app->bind(CommandBus::class, LaravelCommandBus::class);
         $this->app->bind(UnitOfWork::class, DatabaseUnitOfWork::class);
@@ -73,6 +87,9 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(PiezasPorEspecie::class, LectorFamiliasPiezas::class);
         $this->app->bind(PiezasEquipadas::class, PiezasEquipadasEloquent::class);
         $this->app->bind(PokedexLecturaInterface::class, PokedexLectura::class);
+        $this->app->bind(AvistamientoRepositorioInterface::class, EloquentAvistamientoRepositorio::class);
+        $this->app->scoped(FactorAparicion::class, FactorAparicionAvistamientos::class);
+        $this->app->bind(Reloj::class, RelojPredeterminado::class);
     }
 
     /**
@@ -80,19 +97,24 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // Autorización de catálogos (gimnasios). Los CRUD administrativos no
+        // deben quedar accesibles a cualquier jugador autenticado.
+        Gate::define('admin', static fn (User $user): bool => $user->isAdmin());
+
         // Multiplayer: compartir nivel y progreso del jugador AUTENTICADO con todas las
         // vistas (header del layout). El usuario se resuelve al renderizar (composer),
         // no en boot: durante el boot de providers la sesión aún no ha arrancado y
         // auth()->user() devolvería null. En CLI sin auth → experiencia 0 / nivel 1.
-        // Se verifica la existencia de la tabla en boot para no romper el arranque en
-        // una base recién migrada (p. ej. `artisan migrate` sobre una BD vacía).
-        $usersTableExists = Schema::hasTable('users');
-
-        View::composer('*', function (\Illuminate\View\View $view) use ($usersTableExists): void {
+        // La comprobación de tabla se evalúa de forma perezosa y se cachea por
+        // petición: antes se ejecutaba un `Schema::hasTable` en cada boot.
+        View::composer('*', static function (\Illuminate\View\View $view): void {
             // Los datos explícitos de la vista (p. ej. tests) ganan al share por defecto.
             if ($view->offsetExists('nivelJugador') && $view->offsetExists('progresoNivel')) {
                 return;
             }
+
+            static $usersTableExists = null;
+            $usersTableExists ??= Schema::hasTable('users');
 
             $user = $usersTableExists ? Auth::user() : null;
             // getAttribute() evita el cast del modelo: en BDs sin la columna migrada el valor

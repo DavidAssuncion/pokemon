@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Src\Equipos\Infra\Controllers;
 
-use App\Http\Controllers\Controller;
 use App\Support\Piezas\SlotsPiezas;
 use Illuminate\Contracts\Auth\Guard;
 use Illuminate\Http\JsonResponse;
@@ -22,7 +21,7 @@ use Src\Forja\Domain\Ports\PiezasPorEspecie;
  * inventario. Nombre, icono, stats y habilidad se resuelven en una única
  * lectura por especie, sin depender de que el jugador conserve el nido.
  */
-final class PiezasReclutadoController extends Controller
+final class PiezasReclutadoController
 {
     public function __construct(
         private readonly ObtenerPiezas $obtenerPiezas,

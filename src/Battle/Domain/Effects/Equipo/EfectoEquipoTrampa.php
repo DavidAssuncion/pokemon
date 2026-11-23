@@ -31,6 +31,16 @@ class EfectoEquipoTrampa implements InterfazEfectoEquipo
         return $this->clave;
     }
 
+    public function label(): string
+    {
+        return match ($this->clave) {
+            'puas' => 'Púas',
+            'puas_toxicas' => 'Púas Tóxicas',
+            'trampa_rocas' => 'Trampa Rocas',
+            default => $this->clave,
+        };
+    }
+
     public function sumar(): void
     {
         $this->acumulaciones = min($this->maxAcumulaciones, $this->acumulaciones + 1);
@@ -45,21 +55,24 @@ class EfectoEquipoTrampa implements InterfazEfectoEquipo
         foreach ($equipo->combatientesCollection()->vivos() as $objetivo) {
             $maxHp = $objetivo->pokemon()->battleStats()->hp;
             $danoHp = $maxHp * $this->fraccionHp * $this->acumulaciones;
-            $objetivo->recibirDaño($danoHp, false, 1.0);
 
-            $objetivo->daniarBarreras(
-                $objetivo->pokemon()->battleStats()->spDefenseHp * $this->fraccionEscudo * $this->acumulaciones,
-                true,
-            );
-            $objetivo->daniarBarreras(
-                $objetivo->pokemon()->battleStats()->defenseHp * $this->fraccionEscudo * $this->acumulaciones,
-                false,
-            );
+            $battle->medirResiduo($objetivo, 'trampa', $this->label(), function () use ($objetivo, $danoHp): void {
+                $objetivo->recibirDaño($danoHp, false, 1.0);
 
-            $battle->agregarLog("{$objetivo->nombre()} sufre el efecto de {$this->clave}");
+                $objetivo->daniarBarreras(
+                    $objetivo->pokemon()->battleStats()->spDefenseHp * $this->fraccionEscudo * $this->acumulaciones,
+                    true,
+                );
+                $objetivo->daniarBarreras(
+                    $objetivo->pokemon()->battleStats()->defenseHp * $this->fraccionEscudo * $this->acumulaciones,
+                    false,
+                );
+            });
+
+            $battle->agregarLog("{$objetivo->nombre()} sufre el efecto de {$this->label()}");
 
             if ($objetivo->hpActual() <= 0.0) {
-                $battle->agregarLog("¡{$objetivo->nombre()} se ha debilitado por {$this->clave}!");
+                $battle->agregarLog("¡{$objetivo->nombre()} se ha debilitado por {$this->label()}!");
             }
         }
     }

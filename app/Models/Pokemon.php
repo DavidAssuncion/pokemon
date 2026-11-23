@@ -35,7 +35,7 @@ class Pokemon extends Model
     public function habitats(): BelongsToMany
     {
         return $this->belongsToMany(Habitat::class, 'pokemon_habitat')
-            ->withPivot('level');
+            ->withPivot('level', 'min_level', 'manual');
     }
 
     /**

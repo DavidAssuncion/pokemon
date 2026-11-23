@@ -11,6 +11,7 @@ use App\Models\PlayerInventory;
 use App\Models\PlayerMoveUnlock;
 use App\Models\Pokemon;
 use App\Models\Reclutado;
+use App\Models\User;
 use App\Support\ItemCatalogo;
 use App\Support\Piezas\FabricaPiezasReclutado;
 use App\Support\ReclutadoSerializer;
@@ -18,11 +19,18 @@ use App\Support\ReclutadoVistaPresenter;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 use Src\Exploraciones\App\FabricaCapacidadesStats;
-use Src\Pokemon\Domain\Stats\StatsValue;
+use Src\Exploraciones\Domain\RolExploracion;
+use Src\Pokemon\App\ServicioVersiones;
 use Src\Reclutamiento\App\Collections\PokemonCollection;
 use Src\Reclutamiento\App\ServicioEvolucion;
+use Src\Reclutamiento\Domain\Collections\RequisitoEvolucionCollection;
+use Src\Reclutamiento\Domain\DataTransferObjects\RequisitoEvolucion;
+use Src\Shared\Domain\Exceptions\ViolacionReglaNegocio;
+use Src\Shared\Domain\ReglasCaramelo;
 use Src\Shared\Domain\ReglasEv;
 
 class ReclutadoController extends Controller
@@ -45,6 +53,7 @@ class ReclutadoController extends Controller
         $data = $request->validate([
             'tipo' => 'required|string',
             'evolved_species_id' => 'sometimes|integer|nullable',
+            'version_pokemon_id' => 'sometimes|integer|nullable',
             'cantidad' => 'sometimes|integer|min:1|max:100',
         ]);
 
@@ -57,7 +66,18 @@ class ReclutadoController extends Controller
         }
 
         $tipo = $data['tipo'];
-        $destino = $this->resolverDestino($reclutado, $data['evolved_species_id'] ?? null);
+        $versionPokemonId = isset($data['version_pokemon_id']) ? (int) $data['version_pokemon_id'] : 0;
+        $esVersion = $versionPokemonId > 0;
+
+        if ($esVersion) {
+            $destino = Pokemon::find($versionPokemonId);
+
+            if ($destino === null || ! ServicioVersiones::sonDelMismoGrupo($reclutado->pokemon_id, $destino->id)) {
+                return response()->json(['error' => 'Forma no válida'], 422);
+            }
+        } else {
+            $destino = $this->resolverDestino($reclutado, $data['evolved_species_id'] ?? null);
+        }
 
         if ($destino === null) {
             return response()->json(['error' => 'No hay evolución disponible'], 422);
@@ -66,25 +86,44 @@ class ReclutadoController extends Controller
         $tiposRequeridos = ServicioEvolucion::tiposRequeridos($destino);
 
         if (! $tiposRequeridos->contiene($tipo)) {
-            return response()->json(['error' => 'Ese tipo no es necesario para la evolución'], 422);
+            return response()->json([
+                'error' => $esVersion
+                    ? 'Ese tipo no es necesario para la forma'
+                    : 'Ese tipo no es necesario para la evolución',
+            ], 422);
         }
 
         $userId = (int) auth()->id();
 
         $cantidadSolicitada = (int) ($data['cantidad'] ?? 1);
-        $umbral = ServicioEvolucion::umbralParaNivel(ServicioEvolucion::nivelDe($reclutado));
-        $faltante = max(0, $umbral - $reclutado->exp->expTipo($tipo));
 
-        if ($faltante <= 0) {
-            return response()->json([
-                'error' => "Ya no necesita más caramelos de tipo {$tipo}",
-            ], 422);
-        }
+        // El lock y la escritura de EXP comparten transacción: el caramelo no
+        // puede consumirse si la EXP no se persiste, y dos peticiones
+        // concurrentes no pueden pisarse el JSON `exp`.
+        $resultado = DB::transaction(function () use ($reclutado, $destino, $tipo, $userId, $cantidadSolicitada, $esVersion): array {
+            $bloqueado = Reclutado::query()
+                ->whereKey($reclutado->getKey())
+                ->lockForUpdate()
+                ->firstOrFail();
 
-        // Cada caramelo aporta 100 exp: no gastar más de lo que falta para el umbral.
-        $cantidad = min($cantidadSolicitada, (int) ceil($faltante / 100));
+            if ($bloqueado->pokemon_id !== $reclutado->pokemon_id) {
+                return ['error' => 'La evolución ya se ha aplicado.'];
+            }
 
-        $resultado = DB::transaction(function () use ($tipo, $userId, $cantidad): ?array {
+            $umbral = $esVersion
+                ? ServicioEvolucion::umbralParaNivelObjetivo($bloqueado, ServicioVersiones::nivelDesbloqueo())
+                : ServicioEvolucion::umbralParaEvolucion($bloqueado, $destino);
+
+            $faltante = max(0, $umbral - $bloqueado->exp->expTipo($tipo));
+
+            if ($faltante <= 0) {
+                return ['error' => "Ya no necesita más caramelos de tipo {$tipo}"];
+            }
+
+            // Cada caramelo aporta una cantidad fija: no gastar más de lo que
+            // falta para el umbral.
+            $cantidad = min($cantidadSolicitada, (int) ceil($faltante / ReglasCaramelo::EXP_POR_CARAMELO));
+
             // Lock de la fila del inventario del jugador: evita doble consumo
             // concurrente (decrement atómico tras el chequeo de stock).
             $caramelo = PlayerInventory::where('user_id', $userId)
@@ -93,33 +132,52 @@ class ReclutadoController extends Controller
                 ->first();
 
             if ($caramelo === null || $caramelo->cantidad <= 0) {
-                return null;
+                return ['error' => "No hay caramelos de tipo {$tipo}"];
             }
 
             $consumidos = min($cantidad, $caramelo->cantidad);
             $caramelo->decrement('cantidad', $consumidos);
 
+            $bloqueado->exp = $bloqueado->exp->sumarExpTipo(
+                $tipo,
+                ReglasCaramelo::EXP_POR_CARAMELO * $consumidos,
+            );
+            $bloqueado->save();
+
             return [
+                'reclutado' => $bloqueado,
                 'caramelo' => $caramelo,
                 'consumidos' => $consumidos,
             ];
         });
 
-        if ($resultado === null) {
-            return response()->json(['error' => "No hay caramelos de tipo {$tipo}"], 422);
+        if (isset($resultado['error'])) {
+            return response()->json(['error' => $resultado['error']], 422);
         }
 
-        // Exp de tipo al JSON del reclutado (cast inmutable: se reasigna).
-        $reclutado->exp = $reclutado->exp->sumarExpTipo($tipo, 100 * $resultado['consumidos']);
-        $reclutado->save();
+        $reclutadoActualizado = $resultado['reclutado'];
+
+        $puedeDesbloquear = null;
+
+        if ($esVersion) {
+            $requisitos = ServicioEvolucion::requisitosParaNivel(
+                $reclutadoActualizado,
+                $destino,
+                ServicioVersiones::nivelDesbloqueo(),
+                $userId,
+            );
+            $puedeDesbloquear = $requisitos->isEmpty() || $requisitos->cumple();
+        }
 
         return response()->json([
             'success' => true,
-            'actual' => $reclutado->exp->expTipo($tipo),
+            'actual' => $reclutadoActualizado->exp->expTipo($tipo),
             'caramelos_disponibles' => $resultado['caramelo']->cantidad,
             'cantidad_consumida' => $resultado['consumidos'],
-            'exp_ganada' => 100 * $resultado['consumidos'],
-            'puede_evolucionar' => ServicioEvolucion::puedeEvolucionarPara($reclutado, $userId, $destino),
+            'exp_ganada' => ReglasCaramelo::EXP_POR_CARAMELO * $resultado['consumidos'],
+            'puede_evolucionar' => ! $esVersion
+                && ServicioEvolucion::puedeEvolucionarPara($reclutadoActualizado, $userId, $destino),
+            'puede_desbloquear' => $puedeDesbloquear,
         ]);
     }
 
@@ -158,8 +216,9 @@ class ReclutadoController extends Controller
         // consumir caramelos de más.
         $resultado = DB::transaction(function () use ($reclutado, $stat, $statEnum, $userId, $cantidadSolicitada): array {
             $bloqueado = Reclutado::query()
+                ->whereKey($reclutado->getKey())
                 ->lockForUpdate()
-                ->findOrFail($reclutado->getKey());
+                ->firstOrFail();
 
             $evsActuales = $bloqueado->evs;
             $valorActual = $evsActuales->valorDe($stat);
@@ -169,7 +228,11 @@ class ReclutadoController extends Controller
             }
 
             $maxPorEv = ReglasEv::caramelosHastaTope($valorActual, $cantidadSolicitada);
-            $cantidad = max(1, $maxPorEv);
+            $cantidad = $maxPorEv;
+
+            if ($cantidad <= 0) {
+                return ['error' => 'Ese stat ya está al máximo ('.ReglasEv::TOPE.')'];
+            }
 
             $caramelo = PlayerInventory::where('user_id', $userId)
                 ->where('item_key', ItemCatalogo::keyEv($statEnum->value))
@@ -197,7 +260,6 @@ class ReclutadoController extends Controller
             ];
         });
 
-        /** @var array{error: string}|array{reclutado: Reclutado, caramelo: PlayerInventory, consumidos: int, nuevo: float, evs: StatsValue} $resultado */
         if (isset($resultado['error'])) {
             return response()->json(['error' => $resultado['error']], 422);
         }
@@ -239,12 +301,37 @@ class ReclutadoController extends Controller
             return response()->json(['error' => 'No cumple los requisitos'], 422);
         }
 
-        $umbral = ServicioEvolucion::umbralParaNivel(ServicioEvolucion::nivelDe($reclutado));
         $tipos = ServicioEvolucion::tiposRequeridos($destino);
 
-        DB::transaction(function () use ($reclutado, $destino, $tipos, $umbral): void {
-            ServicioEvolucion::consumirExpTipo($reclutado, $tipos, $umbral);
-            $reclutado->update(['pokemon_id' => $destino->id]);
+        // Lock + revalidación dentro de la transacción: dos peticiones
+        // concurrentes no pueden consumir la EXP dos veces ni aplicar dos
+        // evoluciones distintas sobre el mismo reclutado.
+        DB::transaction(function () use ($reclutado, $destino, $tipos, $userId): void {
+            $bloqueado = Reclutado::query()
+                ->whereKey($reclutado->getKey())
+                ->lockForUpdate()
+                ->firstOrFail();
+
+            if ($bloqueado->pokemon_id !== $reclutado->pokemon_id) {
+                throw new ViolacionReglaNegocio('La evolución ya se ha aplicado.');
+            }
+
+            $umbralActual = ServicioEvolucion::umbralParaEvolucion($bloqueado, $destino);
+
+            if (! ServicioEvolucion::puedeEvolucionarPara($bloqueado, $userId, $destino)) {
+                throw new ViolacionReglaNegocio('No cumple los requisitos');
+            }
+
+            ServicioEvolucion::consumirExpTipo($bloqueado, $tipos, $umbralActual);
+
+            $origenId = $bloqueado->pokemon_id;
+            $bloqueado->update(['pokemon_id' => $destino->id]);
+
+            if (ServicioVersiones::esVersionable($origenId) || ServicioVersiones::esVersionable($destino->id)) {
+                ServicioVersiones::registrarForma($bloqueado, $origenId);
+                ServicioVersiones::registrarForma($bloqueado, $destino->id);
+                ServicioVersiones::asegurarOriginal($bloqueado);
+            }
         });
 
         ActualizarPokedexJob::dispatch($userId, $destino->id, 'RECLUTADO');
@@ -291,6 +378,258 @@ class ReclutadoController extends Controller
     }
 
     /**
+     * Formas/versiones disponibles del reclutado con su estado de desbloqueo.
+     * Solo los grupos de `config/pokemon_versions.php` son versionables.
+     */
+    public function versiones(Request $request, Reclutado $reclutado): JsonResponse
+    {
+        $userId = (int) $request->user()?->getAuthIdentifier();
+        $nivelObjetivo = ServicioVersiones::nivelDesbloqueo();
+        $reclutado->loadMissing('pokemon');
+
+        if ($reclutado->pokemon === null) {
+            return response()->json(['versiones' => [], 'nivel_objetivo' => $nivelObjetivo]);
+        }
+
+        $ids = ServicioVersiones::grupoDe($reclutado->pokemon_id);
+        if (count($ids) <= 1) {
+            return response()->json(['versiones' => [], 'nivel_objetivo' => $nivelObjetivo]);
+        }
+
+        $originalId = ServicioVersiones::asegurarOriginal($reclutado);
+        $versiones = [];
+
+        foreach ($ids as $id) {
+            $pokemon = Pokemon::find($id);
+            if (! $pokemon instanceof Pokemon) {
+                continue;
+            }
+
+            $desbloqueada = ServicioVersiones::estaDesbloqueada($reclutado, $id);
+            $requisitos = null;
+            $puedeDesbloquear = true;
+
+            if (! $desbloqueada) {
+                $coleccion = ServicioEvolucion::requisitosParaNivel(
+                    $reclutado,
+                    $pokemon,
+                    $nivelObjetivo,
+                    $userId,
+                );
+
+                $requisitos = $this->requisitosAVista($coleccion);
+                $puedeDesbloquear = $coleccion->isEmpty() || $coleccion->cumple();
+            }
+
+            $versiones[] = [
+                'pokemon_id' => $id,
+                'nombre' => ServicioVersiones::nombreVisible($pokemon),
+                'imagen' => "/images/iconos_webp/{$id}.webp",
+                'actual' => $id === $reclutado->pokemon_id,
+                'original' => $id === $originalId,
+                'desbloqueada' => $desbloqueada,
+                'puede_desbloquear' => $puedeDesbloquear,
+                'requisitos' => $requisitos,
+            ];
+        }
+
+        return response()->json([
+            'versiones' => $versiones,
+            'nivel_objetivo' => $nivelObjetivo,
+        ]);
+    }
+
+    /**
+     * Desbloquea una forma alternativa pagando la exp de tipo equivalente a
+     * subir al Pokémon al nivel de desbloqueo (55). Es permanente para ese
+     * reclutado: después podrá cambiar gratis.
+     */
+    public function desbloquearVersion(Request $request, Reclutado $reclutado, int $pokemon): JsonResponse
+    {
+        if ($reclutado->estaEnExploracion()) {
+            return response()->json(['error' => 'No se puede cambiar de forma a un Pokémon en exploración'], 422);
+        }
+
+        $reclutado->loadMissing('pokemon');
+        $actual = $reclutado->pokemon;
+        $destino = Pokemon::find($pokemon);
+
+        if ($actual === null || $destino === null) {
+            return response()->json(['error' => 'Forma no válida'], 422);
+        }
+
+        if (! ServicioVersiones::sonDelMismoGrupo($actual->id, $destino->id)) {
+            return response()->json(['error' => 'Esa forma no pertenece a la misma especie'], 422);
+        }
+
+        $originalId = ServicioVersiones::asegurarOriginal($reclutado);
+
+        if ($destino->id === $actual->id
+            || $destino->id === $originalId
+            || ServicioVersiones::estaDesbloqueada($reclutado, $destino->id)
+        ) {
+            return response()->json(['success' => true]);
+        }
+
+        $userId = (int) $request->user()?->getAuthIdentifier();
+        $nivelObjetivo = ServicioVersiones::nivelDesbloqueo();
+        $requisitos = ServicioEvolucion::requisitosParaNivel($reclutado, $destino, $nivelObjetivo, $userId);
+
+        if (! $requisitos->isEmpty() && ! $requisitos->cumple()) {
+            return response()->json([
+                'error' => 'No cumples los requisitos para desbloquear esta forma',
+                'requisitos' => $this->requisitosAVista($requisitos),
+            ], 422);
+        }
+
+        $tipos = ServicioEvolucion::tiposRequeridos($destino);
+
+        DB::transaction(function () use ($reclutado, $destino, $tipos): void {
+            $bloqueado = Reclutado::query()
+                ->whereKey($reclutado->getKey())
+                ->lockForUpdate()
+                ->firstOrFail();
+
+            if ($bloqueado->pokemon_id !== $reclutado->pokemon_id) {
+                throw new ViolacionReglaNegocio('La versión ya ha cambiado.');
+            }
+
+            $umbral = ServicioEvolucion::umbralParaNivelObjetivo(
+                $bloqueado,
+                ServicioVersiones::nivelDesbloqueo(),
+            );
+
+            ServicioEvolucion::consumirExpTipo($bloqueado, $tipos, $umbral);
+
+            ServicioVersiones::registrarForma($bloqueado, $bloqueado->pokemon_id);
+            ServicioVersiones::registrarForma($bloqueado, $destino->id);
+        });
+
+        $reclutado->refresh()->load('pokemon.types', 'pokemon.stats', 'pokemon.abilities', 'pokemon.moves');
+
+        $nivelUsuario = $request->user() instanceof User ? $request->user()->nivel() : null;
+
+        return response()->json([
+            'success' => true,
+            'reclutado' => ReclutadoSerializer::serializar(
+                $reclutado,
+                $nivelUsuario,
+                piezas: $this->fabricaPiezas->paraListado($userId, [$reclutado]),
+            ),
+        ]);
+    }
+
+    /**
+     * Cambia a una forma ya desbloqueada (o a la original/actual). Gratis.
+     */
+    public function cambiarVersion(Request $request, Reclutado $reclutado): JsonResponse
+    {
+        $data = Validator::make($request->all(), [
+            'pokemon_id' => ['required', 'integer', 'exists:pokemon,id'],
+        ])->validate();
+
+        if ($reclutado->estaEnExploracion()) {
+            return response()->json(['error' => 'No se puede cambiar de forma a un Pokémon en exploración'], 422);
+        }
+
+        $reclutado->loadMissing('pokemon');
+        $actual = $reclutado->pokemon;
+        $destino = Pokemon::findOrFail((int) $data['pokemon_id']);
+
+        if ($actual === null) {
+            return response()->json(['error' => 'Forma no válida'], 422);
+        }
+
+        if (! ServicioVersiones::sonDelMismoGrupo($actual->id, $destino->id)) {
+            return response()->json(['error' => 'Esa forma no pertenece a la misma especie'], 422);
+        }
+
+        $originalId = ServicioVersiones::asegurarOriginal($reclutado);
+
+        if ($destino->id !== $originalId
+            && ! ServicioVersiones::estaDesbloqueada($reclutado, $destino->id)
+        ) {
+            return response()->json(['error' => 'Desbloquea esta forma antes de cambiarla'], 422);
+        }
+
+        if ($destino->id === $actual->id) {
+            return response()->json(['success' => true]);
+        }
+
+        $userId = (int) $request->user()?->getAuthIdentifier();
+
+        DB::transaction(function () use ($reclutado, $destino): void {
+            $bloqueado = Reclutado::query()
+                ->whereKey($reclutado->getKey())
+                ->lockForUpdate()
+                ->firstOrFail();
+
+            if ($bloqueado->pokemon_id !== $reclutado->pokemon_id) {
+                throw new ViolacionReglaNegocio('La versión ya ha cambiado.');
+            }
+
+            $destino->loadMissing('abilities');
+            $habilidades = $destino->abilities->pluck('id');
+
+            ServicioVersiones::registrarForma($bloqueado, $bloqueado->pokemon_id);
+            ServicioVersiones::registrarForma($bloqueado, $destino->id);
+
+            $bloqueado->pokemon_id = $destino->id;
+
+            if ($bloqueado->habilidad_activa_id !== null
+                && ! $habilidades->contains($bloqueado->habilidad_activa_id)
+            ) {
+                $bloqueado->habilidad_activa_id = $habilidades->first();
+            }
+
+            $bloqueado->save();
+        });
+
+        ActualizarPokedexJob::dispatch($userId, $destino->id, 'RECLUTADO');
+
+        $reclutado->refresh()->load('pokemon.types', 'pokemon.stats', 'pokemon.abilities', 'pokemon.moves');
+
+        $nivelUsuario = $request->user() instanceof User ? $request->user()->nivel() : null;
+
+        return response()->json([
+            'success' => true,
+            'pokemon_id' => $destino->id,
+            'reclutado' => ReclutadoSerializer::serializar(
+                $reclutado,
+                $nivelUsuario,
+                piezas: $this->fabricaPiezas->paraListado($userId, [$reclutado]),
+            ),
+        ]);
+    }
+
+    /**
+     * Serializa los requisitos de exp de tipo para la vista sin usar el
+     * toArray() deprecado de la colección.
+     *
+     * @return list<array{tipo: string, slug: string, necesario: int, actual: int, caramelosDisponibles: int}>
+     */
+    private function requisitosAVista(RequisitoEvolucionCollection $coleccion): array
+    {
+        $resultado = [];
+
+        foreach ($coleccion as $requisito) {
+            if (! $requisito instanceof RequisitoEvolucion) {
+                continue;
+            }
+
+            $resultado[] = [
+                'tipo' => $requisito->tipo,
+                'slug' => $requisito->slug,
+                'necesario' => $requisito->necesario,
+                'actual' => $requisito->actual,
+                'caramelosDisponibles' => $requisito->caramelosDisponibles,
+            ];
+        }
+
+        return $resultado;
+    }
+
+    /**
      * Resuelve el destino de evolución devolviendo null si no se puede
      * determinar (para que el caller distinga entre "sin selección" e
      * "selección inválida").
@@ -333,7 +672,8 @@ class ReclutadoController extends Controller
 
     /**
      * Actualiza el loadout del reclutado: hasta 6 movimientos del catálogo de
-     * su especie y una habilidad activa.
+     * su especie. Las habilidades no se seleccionan: todas las de la especie
+     * están activas en combate.
      */
     public function actualizarLoadout(Request $request, Reclutado $reclutado): JsonResponse
     {
@@ -344,7 +684,6 @@ class ReclutadoController extends Controller
         }
 
         $data = $request->validate([
-            'habilidad_id' => 'nullable|integer',
             'movimientos' => 'sometimes|array|max:6',
             'movimientos.*' => 'string',
         ]);
@@ -354,18 +693,6 @@ class ReclutadoController extends Controller
 
         if ($pokemon === null) {
             return response()->json(['error' => 'El reclutado no tiene Pokémon asociado'], 422);
-        }
-
-        // Distinguir "campo omitido" (conservar) de "null explícito" (volver a
-        // la habilidad automática de la especie).
-        $habilidadEnviada = array_key_exists('habilidad_id', $data);
-        $habilidadId = $habilidadEnviada
-            ? $data['habilidad_id']
-            : $reclutado->habilidad_activa_id;
-        if ($habilidadEnviada
-            && $habilidadId !== null
-            && ! $pokemon->abilities->contains('id', $habilidadId)) {
-            return response()->json(['error' => 'La habilidad no pertenece a este Pokémon'], 422);
         }
 
         $slugs = array_values(array_unique(
@@ -429,7 +756,6 @@ class ReclutadoController extends Controller
         }
 
         $reclutado->update([
-            'habilidad_activa_id' => $habilidadId,
             'movimientos' => $slugs,
         ]);
 
@@ -486,28 +812,42 @@ class ReclutadoController extends Controller
         $habitatId = $data['habitat_id'] ?? null;
         $userId = (int) auth()->id();
 
-        // Antes de añadir, validar el límite del alcance (7º → 422).
-        if (! Favorito::esFavorito($userId, $reclutado->id, $habitatId)) {
+        // Mutex por usuario + transacción: el conteo y la inserción no pueden
+        // intercalarse entre dos peticiones del mismo jugador.
+        $resultado = DB::transaction(function () use ($userId, $reclutado, $habitatId): array {
+            User::query()->whereKey($userId)->lockForUpdate()->first();
+
             $max = 6;
-            $actual = $habitatId === null
+            $esFavorito = Favorito::esFavorito($userId, $reclutado->id, $habitatId);
+
+            if (! $esFavorito) {
+                $actual = $habitatId === null
+                    ? Favorito::countGlobales($userId)
+                    : Favorito::countParaHabitat($userId, $habitatId);
+
+                if ($actual >= $max) {
+                    $mensaje = $habitatId === null
+                        ? 'Máximo 6 favoritos globales.'
+                        : 'Máximo 6 favoritos para este hábitat.';
+
+                    return ['error' => $mensaje];
+                }
+            }
+
+            $favorito = Favorito::toggle($userId, $reclutado->id, $habitatId);
+
+            $count = $habitatId === null
                 ? Favorito::countGlobales($userId)
                 : Favorito::countParaHabitat($userId, $habitatId);
 
-            if ($actual >= $max) {
-                $mensaje = $habitatId === null
-                    ? 'Máximo 6 favoritos globales.'
-                    : 'Máximo 6 favoritos para este hábitat.';
+            return ['favorito' => $favorito, 'count' => $count];
+        });
 
-                return response()->json(['message' => $mensaje], 422);
-            }
+        if (isset($resultado['error'])) {
+            return response()->json(['message' => $resultado['error']], 422);
         }
 
-        $favorito = Favorito::toggle($userId, $reclutado->id, $habitatId);
-        $count = $habitatId === null
-            ? Favorito::countGlobales($userId)
-            : Favorito::countParaHabitat($userId, $habitatId);
-
-        return response()->json(['favorito' => $favorito, 'count' => $count]);
+        return response()->json($resultado);
     }
 
     /**
@@ -600,7 +940,7 @@ class ReclutadoController extends Controller
     public function actualizarRol(Request $request, Reclutado $reclutado): JsonResponse
     {
         $data = $request->validate([
-            'behavior' => ['required', 'string', 'in:VANGUARDIA,COMBATIENTE,RECOLECTOR,RASTREADOR'],
+            'behavior' => ['required', 'string', Rule::enum(RolExploracion::class)],
         ]);
 
         DB::transaction(function () use ($reclutado, $data): void {

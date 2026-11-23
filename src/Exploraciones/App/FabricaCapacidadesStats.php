@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Src\Exploraciones\App;
 
-use App\Enums\StatEnum;
 use App\Models\Reclutado;
 use App\Models\User;
 use Src\Exploraciones\Domain\CapacidadesStats;
@@ -22,23 +21,22 @@ final class FabricaCapacidadesStats
      * Factory desde modelos Eloquent: calcula nivel y stats del reclutado.
      * Los stats base se obtienen del pokémon asociado (misma lógica que
      * MapeadorPokemonBatalla::statsDe()). Los faltantes se rellenan con 0.
+     *
+     * `$user` es opcional porque el llamador puede no tener sesión (jobs/QA);
+     * en ese caso se asume nivel 1. Las rutas HTTP que lo usan exigen auth.
      */
-    public static function desdeReclutado(Reclutado $reclutado, User $user): CapacidadesStats
+    public static function desdeReclutado(Reclutado $reclutado, ?User $user = null): CapacidadesStats
     {
         $nivelPokemon = NivelHelper::nivelDesdeExperiencia($reclutado->exp->total());
-        $nivelEntrenador = $user->nivel();
+        $nivelEntrenador = $user?->nivel() ?? 1;
 
         $stats = ['hp' => 0, 'atk' => 0, 'def' => 0, 'spAtk' => 0, 'spDef' => 0, 'speed' => 0];
-        foreach ($reclutado->pokemon->stats as $stat) {
-            $clave = match ($stat->stat) {
-                StatEnum::HP => 'hp',
-                StatEnum::ATTACK => 'atk',
-                StatEnum::DEFENSE => 'def',
-                StatEnum::SPECIAL_ATTACK => 'spAtk',
-                StatEnum::SPECIAL_DEFENSE => 'spDef',
-                StatEnum::SPEED => 'speed',
-            };
-            $stats[$clave] = (int) $stat->base_stat;
+        $pokemon = $reclutado->pokemon;
+
+        if ($pokemon !== null) {
+            foreach ($pokemon->stats as $stat) {
+                $stats[$stat->stat->key()] = (int) $stat->base_stat;
+            }
         }
 
         return new CapacidadesStats(

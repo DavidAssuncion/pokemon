@@ -69,8 +69,12 @@ final class ResolutorAccionBatalla
             'actorId' => $actor->id(),
             'objetivoId' => $objetivo->id(),
             'movimiento' => $movimiento->nombre,
+            'movimientoSlug' => $movimiento->slug,
+            'movimientoCategoria' => $movimiento->categoria->value,
             'texto' => $fallo ? '¡Falló!' : '',
-            'forzar' => $fallo,
+            // Los movimientos de estado no cambian PS, pero deben emitir el
+            // evento para que el cliente reproduzca su animación.
+            'forzar' => $fallo || $movimiento->esEstado(),
         ], $grabando, $tickEvento, $secuencia);
         $previo = $actual;
 
@@ -136,6 +140,7 @@ final class ResolutorAccionBatalla
         }
 
         $battle->procesarDebilitamientos();
+        $this->acumularDetonaciones($eventos, $battle, $grabando, $tickEvento, $secuencia);
 
         if (! $actor->estaVivo()) {
             $log[] = "¡{$actor->nombre()} se ha debilitado!";
@@ -188,6 +193,9 @@ final class ResolutorAccionBatalla
         $this->acumularEvento($eventos, 'effect', $previo, $actual, [
             'actorId' => $actor->id(),
             'objetivoId' => $aliado->id(),
+            'movimiento' => $movimiento->nombre,
+            'movimientoSlug' => $movimiento->slug,
+            'movimientoCategoria' => $movimiento->categoria->value,
             'texto' => $texto,
             'forzar' => true,
         ], $grabando, $tickEvento, $secuencia);
@@ -196,6 +204,7 @@ final class ResolutorAccionBatalla
         $actor->consumirMovimiento($movimiento);
         $actor->effects()->dispararFinTurno($actor, $battle);
         $battle->procesarDebilitamientos();
+        $this->acumularDetonaciones($eventos, $battle, $grabando, $tickEvento, $secuencia);
 
         return new ResultadoAccionBatalla($log, $eventos);
     }
@@ -274,6 +283,39 @@ final class ResolutorAccionBatalla
             $verb = $factor > 1.0 ? 'subió' : 'bajó';
             $porcentaje = (int) round(abs(($factor - 1.0) * 100));
             $log[] = "{$combatant->nombre()} {$verb} {$label} en {$porcentaje}%!";
+        }
+    }
+
+    /**
+     * Convierte las detonaciones pendientes del agregado en eventos de
+     * presentación. El daño ya está aplicado en el dominio.
+     *
+     * @param  list<array<string, mixed>>  $eventos
+     */
+    private function acumularDetonaciones(
+        array &$eventos,
+        AgregadoBatalla $battle,
+        bool $grabando,
+        int $tick,
+        int &$secuencia,
+    ): void {
+        $detonaciones = $battle->consumirDetonaciones();
+
+        if (! $grabando) {
+            return;
+        }
+
+        foreach ($detonaciones as $detonacion) {
+            $eventos[] = [
+                'id' => $tick.'.'.$secuencia,
+                'tipo' => 'detonacion',
+                'cambios' => [],
+                'muertos' => [],
+                'portadorId' => $detonacion['portadorId'],
+                'objetivos' => $detonacion['objetivos'],
+                'texto' => '¡Detonación!',
+            ];
+            $secuencia++;
         }
     }
 

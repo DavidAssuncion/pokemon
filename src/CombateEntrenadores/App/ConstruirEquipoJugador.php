@@ -130,7 +130,6 @@ class ConstruirEquipoJugador
                 ivs: $reclutado->ivs,
                 postura: $postura,
                 movimientosSeleccionados: is_array($reclutado->movimientos) ? $reclutado->movimientos : null,
-                habilidadActivaId: $reclutado->habilidad_activa_id,
                 senda: $senda,
                 bonosPiezas: $bonos->bonos,
                 effectKeysPiezas: $bonos->habilidades,

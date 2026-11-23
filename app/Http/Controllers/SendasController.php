@@ -171,7 +171,7 @@ class SendasController extends Controller
                 return ['error' => "No tienes caramelos de {$tipo->label()}"];
             }
 
-            $consumidos = min($cantidad, (int) $caramelo->cantidad);
+            $consumidos = min($cantidad, $caramelo->cantidad);
 
             $expActual = (int) $path->exp;
             $restante = max(0, $expMaxima - $expActual);

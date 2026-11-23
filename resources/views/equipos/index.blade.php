@@ -125,6 +125,11 @@ function favoritosApp() {
         detailEvolucionesLoading: false,
         detailEvolucionesError: false,
         selectedEvolucionId: null,
+        detailVersiones: [],
+        detailVersionesLoading: false,
+        detailVersionesError: false,
+        versionesNivelObjetivo: 55,
+        versionFeedback: { tipo: '', mensaje: '' },
         detailChartInstances: [],
         // Catálogo de movimientos cargado bajo demanda al abrir el modal.
         detailMovimientosLoading: false,
@@ -152,6 +157,7 @@ function favoritosApp() {
         ],
         detailEvsFeeding: false,
         detailCandyFeeding: false,
+        detailVersionCandyFeeding: false,
         detailEvFeedback: { tipo: '', mensaje: '' },
 
         // ─── Huevos tab ──────────────────────────────────────────────────────
@@ -883,6 +889,7 @@ function favoritosApp() {
             this.filtroNombreMovimiento = '';
             this.loadoutFeedback = { tipo: '', mensaje: '' };
             this.cargarEvoluciones(pokemon);
+            this.cargarVersiones(pokemon);
             this.cargarMovimientosDetalle(pokemon);
             setTimeout(() => this.renderDetailCharts(), 50);
         },
@@ -895,11 +902,16 @@ function favoritosApp() {
             this.detailEvolucionesLoading = false;
             this.detailEvolucionesError = false;
             this.selectedEvolucionId = null;
+            this.detailVersiones = [];
+            this.detailVersionesLoading = false;
+            this.detailVersionesError = false;
+            this.versionFeedback = { tipo: '', mensaje: '' };
             this.detailMovimientosLoading = false;
             this.detailMovimientosError = '';
             this.detailEvFeedback = { tipo: '', mensaje: '' };
             this.detailEvsFeeding = false;
             this.detailCandyFeeding = false;
+            this.detailVersionCandyFeeding = false;
             this.loadoutHabilidadId = '';
             this.loadoutMovimientos = [];
             this.filtrosMovimientoTipo = [];
@@ -946,7 +958,6 @@ function favoritosApp() {
                         'Accept': 'application/json',
                     },
                     body: JSON.stringify({
-                        habilidad_id: this.loadoutHabilidadId || null,
                         movimientos: this.loadoutMovimientos,
                     }),
                 });
@@ -1007,6 +1018,124 @@ function favoritosApp() {
                 this.detailEvolucionesError = true;
             } finally {
                 this.detailEvolucionesLoading = false;
+            }
+        },
+
+        /**
+         * Formas/versiones del reclutado (Deoxys, Giratina, Gardevoir/Gallade).
+         * La original siempre está disponible; el resto se desbloquea a Nv 55.
+         */
+        async cargarVersiones(pokemon) {
+            if (!pokemon) return;
+            this.detailVersiones = [];
+            this.detailVersionesError = false;
+            this.detailVersionesLoading = true;
+            try {
+                const response = await fetch('/reclutado/' + pokemon.id + '/versiones', {
+                    headers: {
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '',
+                        'Accept': 'application/json',
+                    },
+                });
+                if (response.ok) {
+                    const data = await response.json();
+                    this.detailVersiones = data.versiones || [];
+                    this.versionesNivelObjetivo = data.nivel_objetivo || 55;
+                } else {
+                    this.detailVersionesError = true;
+                }
+            } catch (err) {
+                console.error('Error cargando versiones:', err);
+                this.detailVersionesError = true;
+            } finally {
+                this.detailVersionesLoading = false;
+            }
+        },
+
+        async desbloquearVersion(version) {
+            const pokemon = this.detailPokemon;
+            if (!pokemon || !version || this.detailLoading) return;
+
+            this.detailLoading = true;
+            this.versionFeedback = { tipo: '', mensaje: '' };
+            try {
+                const response = await fetch('/reclutado/' + pokemon.id + '/versiones/' + version.pokemon_id + '/desbloquear', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '',
+                        'Accept': 'application/json',
+                    },
+                });
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.reclutado) {
+                        this._actualizarReclutadoEnMemoria(data.reclutado);
+                        this.detailPokemon = this.reclutados.find(r => String(r.id) === String(data.reclutado.id)) || data.reclutado;
+                    }
+                    await this.cargarVersiones(this.detailPokemon);
+                    await this.cargarEvoluciones(this.detailPokemon);
+                    return;
+                }
+                const data = await response.json().catch(() => ({}));
+                this.versionFeedback = {
+                    tipo: 'error',
+                    mensaje: data.error || 'No se pudo desbloquear la forma.',
+                };
+            } catch (err) {
+                console.error('Error desbloqueando forma:', err);
+                this.versionFeedback = { tipo: 'error', mensaje: 'Error de conexión al desbloquear la forma.' };
+            } finally {
+                this.detailLoading = false;
+            }
+        },
+
+        async cambiarVersion(version) {
+            const pokemon = this.detailPokemon;
+            if (!pokemon || !version || this.detailLoading) return;
+
+            this.detailLoading = true;
+            this.versionFeedback = { tipo: '', mensaje: '' };
+            try {
+                const response = await fetch('/reclutado/' + pokemon.id + '/version', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '',
+                        'Accept': 'application/json',
+                    },
+                    body: JSON.stringify({ pokemon_id: version.pokemon_id }),
+                });
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.reclutado) {
+                        this._actualizarReclutadoEnMemoria(data.reclutado);
+                        this.detailPokemon = this.reclutados.find(r => String(r.id) === String(data.reclutado.id)) || data.reclutado;
+                        this.loadoutHabilidadId = this.detailPokemon.habilidad_activa_id ?? '';
+                        this.loadoutMovimientos = Array.isArray(this.detailPokemon.movimientos_seleccionados)
+                            ? [...this.detailPokemon.movimientos_seleccionados]
+                            : [];
+                        this.loadoutFeedback = { tipo: '', mensaje: '' };
+                        this.detailEvFeedback = { tipo: '', mensaje: '' };
+                        await this.cargarVersiones(this.detailPokemon);
+                        await this.cargarEvoluciones(this.detailPokemon);
+                        await this.cargarMovimientosDetalle(this.detailPokemon);
+                        setTimeout(() => this.renderDetailCharts(), 50);
+                        return;
+                    }
+                    location.reload();
+                    return;
+                }
+                const data = await response.json().catch(() => ({}));
+                this.versionFeedback = {
+                    tipo: 'error',
+                    mensaje: data.error || 'No se pudo cambiar la forma.',
+                };
+            } catch (err) {
+                console.error('Error cambiando forma:', err);
+                this.versionFeedback = { tipo: 'error', mensaje: 'Error de conexión al cambiar la forma.' };
+            } finally {
+                this.detailLoading = false;
             }
         },
 
@@ -1949,6 +2078,48 @@ function favoritosApp() {
                 console.error('Error dando caramelo:', err);
             } finally {
                 this.detailCandyFeeding = false;
+            }
+        },
+
+        /**
+         * Caramelos de tipo para desbloquear una forma a Nv 55. Usa el mismo
+         * endpoint de caramelos con `version_pokemon_id`.
+         */
+        async alimentarCarameloVersion(version, requisito, cantidad = 1) {
+            const pokemon = this.detailPokemon;
+            if (!pokemon || !version || !requisito || this.detailVersionCandyFeeding) return;
+
+            this.detailVersionCandyFeeding = true;
+            this.versionFeedback = { tipo: '', mensaje: '' };
+            try {
+                const response = await fetch('/reclutado/' + pokemon.id + '/dar-caramelo', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '',
+                        'Accept': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        tipo: requisito.tipo,
+                        version_pokemon_id: version.pokemon_id,
+                        cantidad: Math.max(1, Number(cantidad) || 1),
+                    }),
+                });
+                if (response.ok) {
+                    await this.cargarVersiones(this.detailPokemon);
+                    await this.cargarEvoluciones(this.detailPokemon);
+                    return;
+                }
+                const data = await response.json().catch(() => ({}));
+                this.versionFeedback = {
+                    tipo: 'error',
+                    mensaje: data.error || 'No se pudo usar el caramelo de tipo.',
+                };
+            } catch (err) {
+                console.error('Error dando caramelo de forma:', err);
+                this.versionFeedback = { tipo: 'error', mensaje: 'Error de conexión al usar el caramelo.' };
+            } finally {
+                this.detailVersionCandyFeeding = false;
             }
         },
 

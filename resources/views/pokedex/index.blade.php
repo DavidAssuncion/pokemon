@@ -572,7 +572,19 @@
                                                 <template x-for="(mov, index) in detail.moves" :key="mov.slug + '-' + index">
                                                     <tr class="border-b border-line/60 last:border-0">
                                                         <td class="py-1.5 pr-3 text-ink-muted" x-text="mov.level"></td>
-                                                        <td class="py-1.5 pr-3 font-medium text-ink" x-text="mov.name"></td>
+                                                        <td class="py-1.5 pr-3 font-medium text-ink">
+                                                            <span x-text="mov.name"></span>
+                                                            <template x-if="mov.objetivo_multiple">
+                                                                <span
+                                                                    class="ml-1 inline-flex items-center rounded-full border px-1.5 py-0.5 align-middle text-2xs font-bold"
+                                                                    :class="mov.objetivo_incluye_aliados
+                                                                        ? 'border-danger bg-danger-soft text-danger-ink'
+                                                                        : (mov.objetivo_es_fila ? 'border-info bg-info-soft text-info-ink' : 'border-warning bg-warning-soft text-warning-ink')"
+                                                                    :title="mov.objetivo_label"
+                                                                    x-text="mov.objetivo_corto"
+                                                                ></span>
+                                                            </template>
+                                                        </td>
                                                         <td class="py-1.5 pr-3">
                                                             <span
                                                                 class="tipo-badge shrink-0 py-0.5 pl-0 pr-2"

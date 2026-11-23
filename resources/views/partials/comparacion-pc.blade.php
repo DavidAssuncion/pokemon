@@ -56,6 +56,9 @@
                         <p x-show="pcComparacion.contexto && pcComparacion.contexto.tipo === 'gimnasio'" x-cloak class="text-xs text-ink-muted">
                             Rival de la etapa actual. No se muestran especies, tipos ni movimientos del rival.
                         </p>
+                        <p x-show="pcComparacion.contexto && pcComparacion.contexto.tipo === 'habitat_temporal'" x-cloak class="text-xs text-ink-muted">
+                            Rival de este combate. No se muestran especies, tipos ni movimientos del rival.
+                        </p>
                     </div>
                 </template>
 

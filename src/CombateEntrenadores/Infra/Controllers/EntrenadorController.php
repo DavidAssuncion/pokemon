@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Src\CombateEntrenadores\Infra\Controllers;
 
-use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -13,13 +12,15 @@ use Illuminate\Validation\Rule;
 use Src\CombateEntrenadores\App\CalcularComparacionPcEntrenador;
 use Src\CombateEntrenadores\App\IniciarCombateEntrenador;
 use Src\CombateEntrenadores\App\ObtenerEntrenadoresHabitat;
+use Src\Habitats\App\ValidadorNivelHabitat;
 
-class EntrenadorController extends Controller
+class EntrenadorController
 {
     public function __construct(
         private readonly ObtenerEntrenadoresHabitat $obtenerEntrenadores,
         private readonly IniciarCombateEntrenador $iniciarCombate,
         private readonly CalcularComparacionPcEntrenador $calcularComparacionPc,
+        private readonly ValidadorNivelHabitat $validadorNivelHabitat,
     ) {
     }
 
@@ -40,6 +41,8 @@ class EntrenadorController extends Controller
         )->validate();
 
         $user = Auth::user();
+
+        $this->validadorNivelHabitat->asegurar($data['habitat'], $data['nivel'], $user->nivel());
 
         $comparacion = $this->calcularComparacionPc->calcular(
             habitatId: $data['habitat'],
@@ -87,6 +90,8 @@ class EntrenadorController extends Controller
         ]);
 
         $user = Auth::user();
+
+        $this->validadorNivelHabitat->asegurar($habitat, $nivel, $user->nivel());
 
         $battleId = $this->iniciarCombate->iniciar(
             habitatId: $habitat,

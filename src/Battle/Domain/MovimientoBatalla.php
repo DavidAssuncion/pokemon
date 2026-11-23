@@ -11,8 +11,6 @@ use Src\Battle\Domain\Enums\CategoriaMovimiento;
 use Src\Battle\Domain\Enums\ClaveEfectoMovimiento;
 use Src\Battle\Domain\Enums\EstadoPokemon;
 use Src\Battle\Domain\Enums\ObjetivoMovimiento;
-use Src\Battle\Domain\Enums\StatClave;
-use Src\Battle\Domain\ValueObjects\CambioStat;
 use Src\Battle\Domain\ValueObjects\PerfilMovimiento;
 use Src\Shared\Tipos\TipoPokemon;
 
@@ -151,8 +149,8 @@ class MovimientoBatalla
         $this->categoria = CategoriaMovimiento::from((string) ($data['categoria'] ?? CategoriaMovimiento::FISICO->value));
         $this->statusEffect = EstadoPokemon::tryFrom((string) ($data['statusEffect'] ?? EstadoPokemon::NONE->value)) ?? EstadoPokemon::NONE;
         $this->priority = (int) ($data['priority'] ?? 0);
-        $this->selfStatChanges = self::cambiosDesdeSerializado($data['selfStatChanges'] ?? []);
-        $this->targetStatChanges = self::cambiosDesdeSerializado($data['targetStatChanges'] ?? []);
+        $this->selfStatChanges = CambiosStatsCollection::desdeSerializado($data['selfStatChanges'] ?? []);
+        $this->targetStatChanges = CambiosStatsCollection::desdeSerializado($data['targetStatChanges'] ?? []);
         $this->perfil = isset($data['perfil']) && is_array($data['perfil'])
             ? PerfilMovimiento::desdeArray($data['perfil'])
             : PerfilMovimiento::porDefecto();
@@ -239,27 +237,5 @@ class MovimientoBatalla
         }
 
         return $resultado;
-    }
-
-    /**
-     * @param  array<int, array<string, mixed>>  $cambios
-     */
-    private static function cambiosDesdeSerializado(array $cambios): CambiosStatsCollection
-    {
-        $items = [];
-        foreach ($cambios as $cambio) {
-            $stat = StatClave::tryFrom((string) ($cambio['stat'] ?? ''));
-            if ($stat === null) {
-                continue;
-            }
-
-            if (array_key_exists('factor', $cambio)) {
-                $items[] = new CambioStat($stat, (float) $cambio['factor'], (int) ($cambio['etapas'] ?? 0));
-            } elseif (array_key_exists('stages', $cambio)) {
-                $items[] = CambioStat::desdeEtapas($stat, (int) $cambio['stages']);
-            }
-        }
-
-        return new CambiosStatsCollection($items);
     }
 }

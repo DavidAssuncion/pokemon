@@ -62,18 +62,6 @@ $ignoreErrors[] = [
 	'path' => __DIR__ . '/app/Http/Controllers/HabitatsController.php',
 ];
 $ignoreErrors[] = [
-	'message' => '#^Offset \'id\' on array\\{id\\: int, name\\: string, icon\\: string\\} on left side of \\?\\? always exists and is not nullable\\.$#',
-	'identifier' => 'nullCoalesce.offset',
-	'count' => 1,
-	'path' => __DIR__ . '/app/Http/Controllers/HabitatsController.php',
-];
-$ignoreErrors[] = [
-	'message' => '#^Offset \'species_id\' on \\*NEVER\\* on left side of \\?\\? always exists and is not nullable\\.$#',
-	'identifier' => 'nullCoalesce.offset',
-	'count' => 1,
-	'path' => __DIR__ . '/app/Http/Controllers/HabitatsController.php',
-];
-$ignoreErrors[] = [
 	'message' => '#^Method App\\\\Http\\\\Controllers\\\\IconoController\\:\\:shiny\\(\\) should return Illuminate\\\\Http\\\\Response but returns Symfony\\\\Component\\\\HttpFoundation\\\\BinaryFileResponse\\.$#',
 	'identifier' => 'return.type',
 	'count' => 1,
@@ -100,7 +88,7 @@ $ignoreErrors[] = [
 $ignoreErrors[] = [
 	'message' => '#^Dynamic call to static method Illuminate\\\\Contracts\\\\Auth\\\\Guard\\:\\:id\\(\\)\\.$#',
 	'identifier' => 'staticMethod.dynamicCall',
-	'count' => 1,
+	'count' => 2,
 	'path' => __DIR__ . '/app/Http/Controllers/PlayerController.php',
 ];
 $ignoreErrors[] = [
@@ -215,25 +203,19 @@ $ignoreErrors[] = [
 $ignoreErrors[] = [
 	'message' => '#^Dynamic call to static method Illuminate\\\\Contracts\\\\Auth\\\\Guard\\:\\:id\\(\\)\\.$#',
 	'identifier' => 'staticMethod.dynamicCall',
-	'count' => 3,
-	'path' => __DIR__ . '/app/Http/Controllers/SendasController.php',
-];
-$ignoreErrors[] = [
-	'message' => '#^Dynamic call to static method Illuminate\\\\Contracts\\\\Auth\\\\Guard\\:\\:user\\(\\)\\.$#',
-	'identifier' => 'staticMethod.dynamicCall',
-	'count' => 3,
+	'count' => 4,
 	'path' => __DIR__ . '/app/Http/Controllers/SendasController.php',
 ];
 $ignoreErrors[] = [
 	'message' => '#^Dynamic call to static method Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<App\\\\Models\\\\PlayerInventory\\>\\:\\:lockForUpdate\\(\\)\\.$#',
 	'identifier' => 'staticMethod.dynamicCall',
-	'count' => 1,
+	'count' => 2,
 	'path' => __DIR__ . '/app/Http/Controllers/SendasController.php',
 ];
 $ignoreErrors[] = [
 	'message' => '#^Dynamic call to static method Illuminate\\\\Http\\\\Request\\:\\:validate\\(\\)\\.$#',
 	'identifier' => 'staticMethod.dynamicCall',
-	'count' => 1,
+	'count' => 2,
 	'path' => __DIR__ . '/app/Http/Controllers/SendasController.php',
 ];
 $ignoreErrors[] = [
@@ -343,13 +325,6 @@ $ignoreErrors[] = [
 	'identifier' => 'missingType.iterableValue',
 	'count' => 1,
 	'path' => __DIR__ . '/app/Livewire/Combate.php',
-];
-$ignoreErrors[] = [
-	'message' => '#^Call to deprecated method toArray\\(\\) of class Src\\\\CombateEntrenadores\\\\Domain\\\\DataTransferObjects\\\\DatosModalVictoria\\:
-Usar las propiedades tipadas\\.$#',
-	'identifier' => 'method.deprecated',
-	'count' => 2,
-	'path' => __DIR__ . '/app/Livewire/Presenters/PresentadorResultadoBatalla.php',
 ];
 $ignoreErrors[] = [
 	'message' => '#^Method App\\\\Livewire\\\\Presenters\\\\PresentadorResultadoBatalla\\:\\:procesarEntrenador\\(\\) return type has no value type specified in iterable type array\\.$#',
@@ -530,12 +505,6 @@ $ignoreErrors[] = [
 	'identifier' => 'missingType.iterableValue',
 	'count' => 1,
 	'path' => __DIR__ . '/app/Support/BattleSessionService.php',
-];
-$ignoreErrors[] = [
-	'message' => '#^Only booleans are allowed in \\|\\|, mixed given on the right side\\.$#',
-	'identifier' => 'booleanOr.rightNotBoolean',
-	'count' => 1,
-	'path' => __DIR__ . '/app/Support/DesbloqueoPokedex.php',
 ];
 $ignoreErrors[] = [
 	'message' => '#^Dynamic call to static method Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<App\\\\Models\\\\Pokemon\\>\\:\\:orderBy\\(\\)\\.$#',
@@ -970,12 +939,6 @@ $ignoreErrors[] = [
 	'identifier' => 'larastan.noUnnecessaryCollectionCall',
 	'count' => 1,
 	'path' => __DIR__ . '/src/Habitats/Infra/HabitatGestionRepository.php',
-];
-$ignoreErrors[] = [
-	'message' => '#^Access to an undefined property App\\\\Models\\\\Pokemon\\:\\:\\$pivot\\.$#',
-	'identifier' => 'property.notFound',
-	'count' => 1,
-	'path' => __DIR__ . '/src/Habitats/Infra/HabitatLecturaRepository.php',
 ];
 $ignoreErrors[] = [
 	'message' => '#^Called \'pluck\' on Laravel collection, but could have been retrieved as a query\\.$#',

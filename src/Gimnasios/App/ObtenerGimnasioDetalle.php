@@ -21,6 +21,7 @@ final class ObtenerGimnasioDetalle
     public function __construct(
         private readonly GymCatalogoRepositoryInterface $catalogo,
         private readonly GymProgressRepositoryInterface $repositorio,
+        private readonly RecomendarHabitatsGimnasio $recomendarHabitats,
     ) {
     }
 
@@ -58,6 +59,7 @@ final class ObtenerGimnasioDetalle
                 ? 'completado'
                 : ($bloqueado ? 'bloqueado' : 'disponible'),
             etapas: $etapas,
+            habitatsRecomendados: $this->recomendarHabitats->recomendar($gimnasio->tipo),
         );
     }
 }

@@ -9,6 +9,7 @@ use App\Models\Move;
 use App\Models\Pokemon;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\Pivot;
+use Src\Battle\Domain\Enums\ObjetivoMovimiento;
 use Src\Shared\UI\TipoBadges;
 
 /**
@@ -93,7 +94,13 @@ final class PresentadorDetalleEspecie
      *     base_power: int|null,
      *     accuracy: int|null,
      *     level: int|null,
-     *     source: string
+     *     source: string,
+     *     objetivo: string,
+     *     objetivo_label: string|null,
+     *     objetivo_corto: string|null,
+     *     objetivo_multiple: bool,
+     *     objetivo_incluye_aliados: bool,
+     *     objetivo_es_fila: bool
      * }>
      */
     private static function moves(Pokemon $pokemon, bool $soloNivel = false): array
@@ -109,7 +116,13 @@ final class PresentadorDetalleEspecie
          *     base_power: int|null,
          *     accuracy: int|null,
          *     level: int|null,
-         *     source: string
+         *     source: string,
+         *     objetivo: string,
+         *     objetivo_label: string|null,
+         *     objetivo_corto: string|null,
+         *     objetivo_multiple: bool,
+         *     objetivo_incluye_aliados: bool,
+         *     objetivo_es_fila: bool
          * }> $moves
          */
         $moves = $pokemon->moves
@@ -118,6 +131,8 @@ final class PresentadorDetalleEspecie
                 $typeId = (int) $move->getAttribute('type_id');
                 $badge = TipoBadges::porId($typeId);
                 $category = (string) $move->getAttribute('category');
+                $objetivo = ObjetivoMovimiento::tryFrom((string) $move->getAttribute('target'))
+                    ?? ObjetivoMovimiento::NORMAL;
 
                 return [
                     'slug' => (string) $move->getAttribute('slug'),
@@ -131,6 +146,12 @@ final class PresentadorDetalleEspecie
                     'accuracy' => self::intOrNull($move->getAttribute('accuracy')),
                     'level' => self::intOrNull(self::pivotValue($move, 'level')),
                     'source' => (string) (self::pivotValue($move, 'source') ?? ''),
+                    'objetivo' => $objetivo->value,
+                    'objetivo_label' => $objetivo->etiquetaAlcance(),
+                    'objetivo_corto' => $objetivo->etiquetaCortaAlcance(),
+                    'objetivo_multiple' => $objetivo->esMultiobjetivo(),
+                    'objetivo_incluye_aliados' => $objetivo->incluyeAliados(),
+                    'objetivo_es_fila' => $objetivo->esFila(),
                 ];
             })
             ->values()
@@ -142,7 +163,7 @@ final class PresentadorDetalleEspecie
     }
 
     /**
-     * @param  array{slug: string, name: string, type_id: int, tipo_nombre: string, tipo_slug: string, category: string, category_label: string, base_power: int|null, accuracy: int|null, level: int|null, source: string}  $move
+     * @param  array{slug: string, name: string, type_id: int, tipo_nombre: string, tipo_slug: string, category: string, category_label: string, base_power: int|null, accuracy: int|null, level: int|null, source: string, objetivo: string, objetivo_label: string|null, objetivo_corto: string|null, objetivo_multiple: bool, objetivo_incluye_aliados: bool, objetivo_es_fila: bool}  $move
      * @return array{0: int, 1: int, 2: string}
      */
     private static function moveOrder(array $move): array

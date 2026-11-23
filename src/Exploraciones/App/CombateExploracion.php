@@ -78,7 +78,6 @@ class CombateExploracion
             evs: $reclutado->evs,
             ivs: $reclutado->ivs,
             movimientosSeleccionados: is_array($reclutado->movimientos) ? $reclutado->movimientos : null,
-            habilidadActivaId: $reclutado->habilidad_activa_id,
             nivelDesbloqueo: $nivelDesbloqueo,
             senda: $senda,
             bonosPiezas: $bonos->bonos,

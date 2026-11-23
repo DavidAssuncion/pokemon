@@ -130,7 +130,7 @@
                 </span>
             @endif
             @foreach($p['condicionesBadge'] as $condicion)
-                <span class="badge bg-surface-sunken text-ink-muted" title="{{ $condicion['turnos'] }} turnos">
+                <span class="badge {{ $condicion['clase'] }} text-uppercase" title="{{ $condicion['turnos'] }} turnos">
                     {{ $condicion['label'] }}
                 </span>
             @endforeach

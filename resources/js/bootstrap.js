@@ -1,6 +1,7 @@
 import axios from 'axios';
 import { Livewire, Alpine } from '../../vendor/livewire/livewire/dist/livewire.esm';
 import { registrarStoreModales, trampaDeFoco } from './stores/comun';
+import { registrarStoreAvistamientos } from './stores/avistamientos';
 import { registrarStoreExpediciones } from './stores/expediciones';
 import { registrarStoreReclutamiento } from './stores/reclutamiento';
 
@@ -16,6 +17,7 @@ axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
 registrarStoreModales(Alpine);
 registrarStoreExpediciones(Alpine);
 registrarStoreReclutamiento(Alpine);
+registrarStoreAvistamientos(Alpine);
 
 // Livewire.start() inicia Livewire y su Alpine bundled (una sola instancia),
 // registra el magic $wire y deja Alpine disponible globalmente (window.Alpine)

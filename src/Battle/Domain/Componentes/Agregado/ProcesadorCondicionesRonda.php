@@ -23,8 +23,26 @@ final class ProcesadorCondicionesRonda
 
     public function procesar(AgregadoBatalla $batalla, Combatiente $portador): void
     {
+        if (! $portador->estaVivo()) {
+            return;
+        }
+
         foreach ($portador->condiciones()->all() as $condicion) {
-            $this->aplicar($batalla, $portador, $condicion);
+            $esAtrapado = $condicion->clave === ClaveCondicion::ATRAPADO;
+            $label = $esAtrapado && $condicion->movimientoNombre !== ''
+                ? 'Atrapado por '.$condicion->movimientoNombre
+                : $condicion->clave->label();
+
+            $batalla->medirResiduo(
+                $portador,
+                'condicion',
+                $label,
+                function () use ($batalla, $portador, $condicion): void {
+                    $this->aplicar($batalla, $portador, $condicion);
+                },
+                $esAtrapado ? $condicion->movimientoSlug : null,
+                $esAtrapado ? $condicion->origenId : null,
+            );
 
             if ($portador->hpActual() <= 0.0) {
                 $batalla->agregarLog("¡{$portador->nombre()} se ha debilitado por una condición!");

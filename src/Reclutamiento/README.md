@@ -30,7 +30,8 @@ opciones evolutivas y los requisitos que consume la UI.
 
 - La exp de tipo vive en el JSON `reclutados.exp` (cast `ExpReclutado`).
 - Los caramelos viven en `player_inventory` con clave `tipo:{slug}`.
-- Umbral = exp para subir del nivel actual al siguiente (curva media ×10).
+- Umbral = mitad de la exp para alcanzar el nivel de evolución (o el siguiente
+  nivel si ya se alcanzó), vía `ReglasCaramelo::FACTOR_COSTE_EVOLUCION`.
 - Una especie puede tener varias evoluciones (Eevee); el orden es determinista.
 - Las formas alternas (mega/gmax) no están en el seeder; las regionales sí.
 

@@ -49,7 +49,16 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'experiencia' => 'integer',
+            'is_admin' => 'boolean',
         ];
+    }
+
+    /**
+     * Indica si el usuario puede administrar catálogos (gimnasios).
+     */
+    public function isAdmin(): bool
+    {
+        return $this->is_admin ?? false;
     }
 
     /**

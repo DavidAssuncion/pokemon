@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Src\CombateEntrenadores\App;
 
-use App\Enums\StatEnum;
 use App\Models\Pokemon;
 use App\Models\PokemonType;
 use Src\Battle\Domain\Catalog\CatalogoHabilidades;
@@ -361,15 +360,7 @@ class MapeadorPokemonBatalla
         $stats = ['hp' => 0, 'atk' => 0, 'def' => 0, 'spAtk' => 0, 'spDef' => 0, 'speed' => 0];
 
         foreach ($pokemon->stats as $stat) {
-            $clave = match ($stat->stat) {
-                StatEnum::HP => 'hp',
-                StatEnum::ATTACK => 'atk',
-                StatEnum::DEFENSE => 'def',
-                StatEnum::SPECIAL_ATTACK => 'spAtk',
-                StatEnum::SPECIAL_DEFENSE => 'spDef',
-                StatEnum::SPEED => 'speed',
-            };
-            $stats[$clave] = (int) $stat->base_stat;
+            $stats[$stat->stat->key()] = (int) $stat->base_stat;
         }
 
         return new DatosStats(

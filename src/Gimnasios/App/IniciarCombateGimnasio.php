@@ -7,6 +7,7 @@ namespace Src\Gimnasios\App;
 use App\Models\Team;
 use App\Support\CargarMovimientosDesbloqueados;
 use App\Support\CreadorBatallaSesion;
+use Src\Battle\Domain\Collections\DatosPokemonBatallaCollection;
 use Src\CombateEntrenadores\App\ConstruirEquipoJugador;
 use Src\CombateEntrenadores\Domain\ValueObjects\FormacionEquipo;
 use Src\Gimnasios\Domain\Exceptions\GimnasioBloqueado;
@@ -84,7 +85,7 @@ final class IniciarCombateGimnasio
                 esLider: $etapa === 4,
                 movimientosDesbloqueados: $movimientosDesbloqueados,
             )
-            : [];
+            : new DatosPokemonBatallaCollection();
 
         if ($datosRival->isEmpty()) {
             throw new ViolacionReglaNegocio('Este gimnasio no tiene Pokémon disponibles.');

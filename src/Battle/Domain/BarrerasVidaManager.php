@@ -16,7 +16,7 @@ final class BarrerasVidaManager
 {
     public function estaVivo(float $hpActual): bool
     {
-        return $hpActual > 0;
+        return $hpActual > 0.0001;
     }
 
     /**

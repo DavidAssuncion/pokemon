@@ -70,6 +70,11 @@ function habitatShow() {
             2: {{ $habitat['min_lvl_2'] ?? 'null' }},
             3: {{ $habitat['min_lvl_3'] ?? 'null' }},
         },
+        levelsCount: {
+            1: {{ count($habitat['levels'][1] ?? []) }},
+            2: {{ count($habitat['levels'][2] ?? []) }},
+            3: {{ count($habitat['levels'][3] ?? []) }},
+        },
         nivelJugador: {{ $nivelJugador ?? 1 }},
         avisoNivel: '',
 
@@ -148,6 +153,13 @@ function habitatShow() {
         },
 
         selectRutaNivel(nivel) {
+            if (this.levelBlocked(nivel)) {
+                const min = this.minLvls ? this.minLvls[nivel] : null;
+                this.rutaCombatError = min !== null && min !== undefined
+                    ? 'Requiere Nv ' + min + ' de jugador para combatir en este nivel.'
+                    : 'Ese nivel del hábitat no tiene Pokémon disponibles.';
+                return;
+            }
             this.rutaNivel = nivel;
             this.rutaCombatError = '';
             if (this.showFormacionPopup && this.formacionContexto === 'ruta') {
@@ -302,6 +314,15 @@ function habitatShow() {
 
         async confirmarCombateRuta() {
             if (!this.selectedTeamId || this.rutaCombatiendo) return;
+
+            if (this.levelBlocked(this.rutaNivel)) {
+                const min = this.minLvls ? this.minLvls[this.rutaNivel] : null;
+                this.rutaCombatError = min !== null && min !== undefined
+                    ? 'Requiere Nv ' + min + ' de jugador para combatir en este nivel.'
+                    : 'Ese nivel del hábitat no tiene Pokémon disponibles.';
+                return;
+            }
+
             this.rutaCombatiendo = true;
             this.rutaCombatError = '';
             try {
@@ -1022,6 +1043,12 @@ function habitatShow() {
             // Cargar favoritos para la exploración individual. Tolerante: si el
             // endpoint aún no está disponible, se muestra el estado vacío/error.
             this.cargarFavoritos();
+
+            // Nivel de ruta por defecto: el primero disponible para el jugador.
+            const nivelRuta = [1, 2, 3].find(level => !this.levelBlocked(level));
+            if (nivelRuta !== undefined) {
+                this.rutaNivel = nivelRuta;
+            }
         },
 
         /** URL del sprite de un reclutado; shiny usa el sufijo _s. */
@@ -1196,6 +1223,10 @@ function habitatShow() {
         },
 
         levelBlocked(level) {
+            const cantidad = this.levelsCount ? this.levelsCount[level] : 0;
+            if (!cantidad) {
+                return true;
+            }
             const min = this.minLvls ? this.minLvls[level] : null;
             return min !== null && min !== undefined && this.nivelJugador < min;
         },
@@ -1555,6 +1586,103 @@ function habitatShow() {
                 }
             } catch (e) {
                 alert('Error al mover de nivel: ' + e.message);
+            } finally {
+                this.gestionLoading = false;
+            }
+        },
+
+        /** Actualiza los mínimos por nivel tras un ajuste manual o automático. */
+        aplicarMinLvls(data) {
+            if (!data.min_lvls) return;
+            this.minLvls = {
+                1: data.min_lvls[1] ?? null,
+                2: data.min_lvls[2] ?? null,
+                3: data.min_lvls[3] ?? null,
+            };
+        },
+
+        /** Localiza un pokémon asignado (base o evolución) en el estado local. */
+        findAssignedPokemon(pokemonId) {
+            for (const family of (this.assignedFamilies || [])) {
+                if (Number(family.base?.id) === pokemonId) {
+                    return family.base;
+                }
+                const evo = (family.evolutions || []).find(e => Number(e.id) === pokemonId);
+                if (evo) {
+                    return evo;
+                }
+            }
+            return null;
+        },
+
+        async updatePokemonMinLevel(pokemonId, minLevel) {
+            if (this.gestionLoading) return;
+
+            const valor = Number(minLevel);
+            if (!Number.isInteger(valor) || valor < 1 || valor > 100) {
+                alert('El nivel mínimo debe estar entre 1 y 100.');
+                return;
+            }
+
+            this.gestionLoading = true;
+            try {
+                const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || '';
+                const response = await fetch('/api/habitats/{{ $habitat['id'] }}/pokemon/' + pokemonId + '/min-level', {
+                    method: 'PATCH',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': csrfToken,
+                    },
+                    body: JSON.stringify({ min_level: valor, manual: true }),
+                });
+                if (!response.ok) {
+                    const err = await response.json().catch(() => ({}));
+                    throw new Error(err.message || 'Error al actualizar el nivel mínimo');
+                }
+
+                const data = await response.json();
+                this.aplicarMinLvls(data);
+                const pokemon = this.findAssignedPokemon(pokemonId);
+                if (pokemon) {
+                    pokemon.min_level = data.new_min_level;
+                    pokemon.manual = data.manual;
+                }
+            } catch (e) {
+                alert('Error al actualizar el nivel mínimo: ' + e.message);
+            } finally {
+                this.gestionLoading = false;
+            }
+        },
+
+        async resetPokemonMinLevel(pokemonId) {
+            if (this.gestionLoading) return;
+            this.gestionLoading = true;
+            try {
+                const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || '';
+                const response = await fetch('/api/habitats/{{ $habitat['id'] }}/pokemon/' + pokemonId + '/min-level', {
+                    method: 'PATCH',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': csrfToken,
+                    },
+                    body: JSON.stringify({ manual: false }),
+                });
+                if (!response.ok) {
+                    const err = await response.json().catch(() => ({}));
+                    throw new Error(err.message || 'Error al restaurar el nivel mínimo');
+                }
+
+                const data = await response.json();
+                this.aplicarMinLvls(data);
+                const pokemon = this.findAssignedPokemon(pokemonId);
+                if (pokemon) {
+                    pokemon.min_level = data.new_min_level;
+                    pokemon.manual = data.manual;
+                }
+            } catch (e) {
+                alert('Error al restaurar el nivel mínimo: ' + e.message);
             } finally {
                 this.gestionLoading = false;
             }

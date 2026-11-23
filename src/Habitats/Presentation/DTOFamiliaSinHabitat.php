@@ -4,37 +4,21 @@ declare(strict_types=1);
 
 namespace Src\Habitats\Presentation;
 
+use Src\Habitats\Presentation\Concerns\FamiliaEvolutivaComun;
+
 /**
  * DTO que representa una familia evolutiva sin hábitat asignado.
  */
 class DTOFamiliaSinHabitat
 {
+    use FamiliaEvolutivaComun;
+
     public function __construct(
         public readonly int $evolutionChainId,
         public readonly DTOPokemonFamilia $base,
         public readonly ColeccionPokemonFamilia $evolutions,
         public readonly ColeccionTiposFamilia $types = new ColeccionTiposFamilia(),
     ) {
-    }
-
-    public function contieneSpecies(int $speciesId): bool
-    {
-        if ($this->base->speciesId === $speciesId) {
-            return true;
-        }
-
-        return $this->evolutions->contains(fn (DTOPokemonFamilia $miembro) => $miembro->speciesId === $speciesId);
-    }
-
-    /**
-     * El species_id mínimo de la familia (el "primer integrante", criterio de negocio).
-     */
-    public function minSpeciesId(): int
-    {
-        return $this->evolutions->reduce(
-            fn (int $min, DTOPokemonFamilia $miembro) => min($min, $miembro->speciesId),
-            $this->base->speciesId,
-        );
     }
 
     /**

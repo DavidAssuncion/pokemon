@@ -92,8 +92,9 @@
         font-size: var(--text-3xs);
         line-height: var(--text-3xs--line-height);
         background-color: color-mix(in oklab, var(--type-color, var(--color-line)) 14%, var(--color-surface));
-        border: 1px solid color-mix(in oklab, var(--type-color, var(--color-line)) 45%, var(--color-line));
         color: var(--color-ink);
+        height: 28px;
+        border: none;
     }
 
     /* Placa de superficie alrededor del icono de tipo: separa el disco del WebP

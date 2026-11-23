@@ -28,6 +28,7 @@ class CatalogoSeeder extends Seeder
             TypePathNodeSeeder::class,
             AbilitySeeder::class,
             PokemonAbilitySeeder::class,
+            PokemonFormaSeeder::class,
         ]);
     }
 }

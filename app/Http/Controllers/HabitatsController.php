@@ -11,9 +11,11 @@ use App\Support\DesbloqueoPokedex;
 use App\Support\UI\SpritesEntrenador;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\View\View;
 use Src\Equipos\App\ObtenerEquipos;
+use Src\Habitats\App\ActualizarNivelMinimoSpawn;
 use Src\Habitats\App\AsignarFamiliaAHabitat;
 use Src\Habitats\App\EliminarFamiliaDeHabitat;
 use Src\Habitats\App\MoverPokemonDeNivel;
@@ -22,12 +24,14 @@ use Src\Habitats\App\ObtenerFamiliasSinHabitat;
 use Src\Habitats\App\ObtenerHabitatDetalle;
 use Src\Habitats\App\ObtenerHabitatsPorProvincia;
 use Src\Habitats\App\ObtenerPokemonsPorHabitat;
+use Src\HabitatsTemporales\App\ObtenerProvinciaTemporal;
 
 class HabitatsController extends Controller
 {
     public function __construct(
         public readonly ObtenerEquipos $obtenerEquipos,
         public readonly ObtenerHabitatsPorProvincia $obtenerHabitatsPorProvincia,
+        public readonly ObtenerProvinciaTemporal $obtenerProvinciaTemporal,
         public readonly ObtenerHabitatDetalle $obtenerHabitatDetalle,
         public readonly ObtenerPokemonsPorHabitat $obtenerPokemonsPorHabitat,
         public readonly ObtenerFamiliasDisponibles $obtenerFamiliasDisponibles,
@@ -35,6 +39,7 @@ class HabitatsController extends Controller
         public readonly AsignarFamiliaAHabitat $asignarFamiliaAHabitat,
         public readonly EliminarFamiliaDeHabitat $eliminarFamiliaDeHabitat,
         public readonly MoverPokemonDeNivel $moverPokemonDeNivel,
+        public readonly ActualizarNivelMinimoSpawn $actualizarNivelMinimoSpawn,
     ) {
     }
 
@@ -44,7 +49,12 @@ class HabitatsController extends Controller
         //Quitar Vacio de las provincias, ya que no tiene hábitats asignados y no se quiere mostrar en la vista.
         $provincias = $provincias->filter(fn ($provincia) => $provincia->name !== 'Vacio');
 
-        return view('habitats.index', ['provincias' => $provincias->toArray()]);
+        $provinciaTemporal = $this->obtenerProvinciaTemporal->obtener((int) Auth::id());
+
+        return view('habitats.index', [
+            'provincias' => array_values($provincias->toArray()),
+            'provinciaTemporal' => $provinciaTemporal?->toArray(),
+        ]);
     }
 
     public function show(Request $request, int $id): View
@@ -68,7 +78,7 @@ class HabitatsController extends Controller
         if (! empty($habitatData['levels'])) {
             foreach ($habitatData['levels'] as $levelPokemon) {
                 foreach ($levelPokemon as $pokemon) {
-                    $pokemonIds[] = $pokemon['id'] ?? $pokemon['species_id'] ?? 0;
+                    $pokemonIds[] = $pokemon['id'];
                 }
             }
         }
@@ -159,6 +169,39 @@ class HabitatsController extends Controller
             $result = $this->moverPokemonDeNivel->handle($habitat, $pokemon, (int) $validated['level']);
 
             return response()->json($result->toArray());
+        } catch (\InvalidArgumentException $e) {
+            return response()->json(['message' => $e->getMessage()], 422);
+        }
+    }
+
+    public function updateMinLevel(int $habitat, int $pokemon, Request $request): JsonResponse
+    {
+        $validated = Validator::make($request->all(), [
+            'min_level' => ['required_if:manual,true,1', 'integer', 'between:1,100'],
+            'manual' => ['sometimes', 'boolean'],
+        ])->validate();
+
+        try {
+            $manual = (bool) ($validated['manual'] ?? true);
+
+            $result = $manual
+                ? $this->actualizarNivelMinimoSpawn->handle(
+                    habitatId: $habitat,
+                    pokemonId: $pokemon,
+                    minLevel: (int) ($validated['min_level'] ?? 1),
+                    manual: true,
+                )
+                : $this->actualizarNivelMinimoSpawn->automatico($habitat, $pokemon);
+
+            $detalle = $this->obtenerHabitatDetalle->handle($habitat)->toArray();
+
+            return response()->json(array_merge($result->toArray(), [
+                'min_lvls' => [
+                    1 => $detalle['min_lvl_1'],
+                    2 => $detalle['min_lvl_2'],
+                    3 => $detalle['min_lvl_3'],
+                ],
+            ]));
         } catch (\InvalidArgumentException $e) {
             return response()->json(['message' => $e->getMessage()], 422);
         }

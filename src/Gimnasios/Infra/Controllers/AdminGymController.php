@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Src\Gimnasios\Infra\Controllers;
 
-use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -18,7 +17,7 @@ use Src\Shared\Tipos\TipoPokemon;
  * CRUD admin de gimnasios. NO existe borrado ni desactivación: solo crear,
  * editar datos fijos y editar etapas (requisito 1.4).
  */
-class AdminGymController extends Controller
+class AdminGymController
 {
     public function __construct(
         private readonly GymCatalogoRepositoryInterface $catalogo,

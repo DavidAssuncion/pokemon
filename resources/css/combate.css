@@ -300,6 +300,7 @@
 
 /* ─── Pokemon cards: fondo explícito, contenido contenido, tamaño uniforme ─── */
 .pokemon-card {
+    position: relative;
     background-color: var(--color-surface);
     overflow: hidden;
     min-height: 96px;
@@ -462,6 +463,7 @@
 /* ─── Campo de combate: una fila de 4 columnas, equipos separados y centrados ─── */
 .battle-teams {
     position: relative;
+    z-index: 1;
 }
 
 .battle-teams .row {
@@ -707,6 +709,29 @@
 
 .pokemon-card[data-team="1"].anim-ataque {
     --anim-ataque-dir: -14px;
+}
+
+/* Embestida estándar para movimientos sin animación específica: solo un
+   desplazamiento horizontal, sin agrandar la carta ni dar saltos. */
+.anim-ataque-generico {
+    --anim-ataque-dir: 12px;
+    animation: anim-ataque-generico 450ms ease-in-out 1;
+    box-shadow: 0 0 0 2px color-mix(in oklab, var(--color-warning) 70%, transparent), 0 0 12px color-mix(in oklab, var(--color-warning) 35%, transparent) !important;
+}
+
+.pokemon-card[data-team="1"].anim-ataque-generico {
+    --anim-ataque-dir: -12px;
+}
+
+@keyframes anim-ataque-generico {
+    0%,
+    100% {
+        transform: translateX(0);
+    }
+
+    45% {
+        transform: translateX(var(--anim-ataque-dir));
+    }
 }
 
 @keyframes anim-ataque-embestida {
@@ -1072,6 +1097,7 @@
 
     .anim-hit,
     .anim-ataque,
+    .anim-ataque-generico,
     .anim-cura,
     .anim-impacto .pokemon-sprite,
     .anim-barrera-rota,
@@ -1122,4 +1148,293 @@ a:not([class*="underline"]) {
 
 body {
     font-family: inherit;
+}
+
+/* ─── Efectos de movimientos (adaptador de animaciones Showdown) ───
+   El JS crea capas absolutas sobre el campo y posiciona imágenes de
+   /showdown/fx. El campo debe ser el contenedor de referencia. */
+.battle-field {
+    position: relative;
+    isolation: isolate;
+}
+
+.battle-fx-layer,
+.battle-bg-effect {
+    position: absolute;
+    inset: 0;
+    z-index: 80;
+    overflow: hidden;
+    pointer-events: none;
+}
+
+.battle-bg-effect {
+    z-index: 70;
+}
+
+.battle-fx {
+    position: absolute;
+    display: block;
+    pointer-events: none;
+    will-change: left, top, width, height, opacity;
+}
+
+.battle-fx.pixelated {
+    image-rendering: pixelated;
+}
+
+.battle-bg-fx {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+}
+
+.battle-tierra {
+    animation: batalla-tierra 900ms ease-in-out 1;
+}
+
+@keyframes batalla-tierra {
+    0%,
+    100% {
+        transform: translate(0, 0);
+    }
+
+    12% {
+        transform: translate(-3px, 2px);
+    }
+
+    25% {
+        transform: translate(3px, -2px);
+    }
+
+    38% {
+        transform: translate(-2px, 1px);
+    }
+
+    52% {
+        transform: translate(2px, -1px);
+    }
+
+    68% {
+        transform: translate(-1px, 1px);
+    }
+
+    84% {
+        transform: translate(1px, 0);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .battle-tierra {
+        animation: none;
+    }
+}
+
+/* Durante la cola de animaciones no se muestra el banner del siguiente actor:
+   el cambio de activo se aplica al terminar la animación. */
+.combate-ocultar-banner .battle-field > .alert-info {
+    display: none !important;
+}
+
+/* El panel de movimientos también se congela visualmente durante la cola:
+   evita que se vean las acciones del siguiente actor antes de tiempo. */
+.combate-ocultar-banner .moves-panel {
+    visibility: hidden;
+}
+
+/* ─── Condiciones persistentes sobre la carta ───
+   El atrapado se representa con su badge y con la animación del movimiento
+   original al recibir el daño residual; no lleva un remolino permanente. */
+.pokemon-card.condicion-giro-fuego {
+    box-shadow:
+        inset 0 0 0 2px color-mix(in oklab, var(--color-danger) 65%, transparent),
+        0 0 12px color-mix(in oklab, var(--color-danger) 30%, transparent);
+}
+
+.pokemon-card.condicion-drenadoras {
+    box-shadow:
+        inset 0 0 0 2px color-mix(in oklab, var(--color-success) 65%, transparent),
+        0 0 12px color-mix(in oklab, var(--color-success) 28%, transparent);
+}
+
+.pokemon-card.condicion-maldicion {
+    box-shadow:
+        inset 0 0 0 2px color-mix(in oklab, var(--color-secondary) 65%, transparent),
+        0 0 12px color-mix(in oklab, var(--color-secondary) 28%, transparent);
+}
+
+/* ─── Clima de campo ───
+   Capa por encima de las cartas y por debajo de los efectos de ataque. */
+.battle-weather-effect {
+    position: absolute;
+    inset: 0;
+    z-index: 5;
+    overflow: hidden;
+    border-radius: inherit;
+    pointer-events: none;
+    opacity: 1;
+    background-position: center;
+    background-size: cover;
+    mix-blend-mode: soft-light;
+}
+
+.battle-weather-effect.weather-tormenta_arena {
+    background-image: url('/showdown/fx/weather-sandstorm.png');
+}
+
+.battle-weather-effect.weather-diluvio {
+    background-image: url('/showdown/fx/weather-raindance.jpg');
+}
+
+.battle-weather-effect.weather-granizo {
+    background-image: url('/showdown/fx/weather-hail.png');
+}
+
+.battle-weather-effect.weather-sequia {
+    z-index: 0;
+    background: radial-gradient(
+        circle at 50% 0%,
+        color-mix(in oklab, var(--color-warning) 16%, transparent),
+        transparent 55%
+    );
+    mix-blend-mode: soft-light;
+}
+
+.battle-weather-effect.weather-niebla {
+    background: linear-gradient(180deg, color-mix(in oklab, var(--color-secondary) 45%, transparent), transparent 75%);
+}
+
+.battle-weather-effect.weather-turbulencias {
+    background: radial-gradient(circle at 50% 50%, color-mix(in oklab, var(--color-primary) 50%, transparent), transparent 72%);
+}
+
+
+@media (prefers-reduced-motion: reduce) {
+    .battle-weather-effect {
+        animation: none;
+    }
+}
+
+/* ─── Vídeo de clima de fondo ───
+   Los clips gen6 de Showdown van detrás de las cartas; el tinte de clima
+   sigue por encima. El póster cubre la carga y los navegadores sin VP9. */
+.battle-weather-video {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: inherit;
+    opacity: 1;
+    pointer-events: none;
+    filter: saturate(1.05) contrast(1.02);
+}
+
+.battle-field > .alert {
+    position: relative;
+    z-index: 2;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .battle-weather-video {
+        display: none;
+    }
+}
+
+/* ─── Trampas de lado (Púas, Púas Tóxicas, Trampa Rocas) ─── */
+.battle-hazards {
+    position: absolute;
+    bottom: .35rem;
+    z-index: 6;
+    display: flex;
+    flex-wrap: wrap;
+    gap: .25rem;
+    max-width: 44%;
+    pointer-events: none;
+}
+
+.battle-hazards--player {
+    right: calc(50% + .5rem);
+    justify-content: flex-end;
+}
+
+.battle-hazards--rival {
+    left: calc(50% + .5rem);
+    justify-content: flex-start;
+}
+
+.battle-hazard {
+    display: inline-flex;
+    align-items: center;
+    gap: .25rem;
+    padding: .12rem .4rem;
+    border-radius: 999px;
+    border: 1px solid color-mix(in oklab, var(--color-line) 70%, transparent);
+    background: color-mix(in oklab, var(--color-surface-raised) 92%, transparent);
+    color: var(--color-ink-muted);
+    font-size: .6rem;
+    font-weight: 700;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+    box-shadow: 0 1px 6px color-mix(in oklab, var(--color-ink) 12%, transparent);
+}
+
+.battle-hazard__icon {
+    width: 14px;
+    height: 14px;
+    object-fit: contain;
+    flex-shrink: 0;
+}
+
+.battle-hazard__count {
+    opacity: .8;
+}
+
+.battle-hazard--puas {
+    border-color: color-mix(in oklab, var(--color-warning) 55%, transparent);
+    color: var(--color-warning-ink);
+}
+
+.battle-hazard--puas_toxicas {
+    border-color: color-mix(in oklab, var(--color-danger) 55%, transparent);
+    color: var(--color-danger-ink);
+}
+
+.battle-hazard--trampa_rocas {
+    border-color: color-mix(in oklab, var(--color-secondary) 55%, transparent);
+    color: var(--color-secondary-ink);
+}
+
+
+/* El turn bar siempre por encima del campo y de sus capas absolutas. */
+.battle-container > .turn-bar {
+    position: relative;
+    z-index: 10;
+}
+
+/* Categorías de objetos plegables: resumen con chevron y contenido debajo. */
+.items-category > summary {
+    cursor: pointer;
+    list-style: none;
+    user-select: none;
+}
+
+.items-category > summary::-webkit-details-marker {
+    display: none;
+}
+
+.items-category > summary::after {
+    content: '▾';
+    font-size: .7rem;
+    line-height: 1;
+    color: var(--color-ink-muted);
+    transition: transform .18s ease;
+}
+
+.items-category:not([open]) > summary::after {
+    transform: rotate(-90deg);
+}
+
+.items-category:not([open]) > summary {
+    margin-bottom: 0 !important;
 }

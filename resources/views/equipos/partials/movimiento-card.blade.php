@@ -7,6 +7,16 @@
     </div>
     <div class="mt-1 flex flex-wrap items-center gap-x-1.5 text-xs text-ink-subtle">
         <img :src="categoriaIconoUrl(mov)" :alt="etiquetaCategoria(mov)" loading="lazy" decoding="async" class="w-7 h-7 object-contain"><span x-text="etiquetaCategoria(mov)"></span>
+        <template x-if="mov.objetivo_multiple">
+            <span
+                class="inline-flex items-center rounded-full border px-1.5 py-0.5 text-2xs font-bold leading-none"
+                :class="mov.objetivo_incluye_aliados
+                    ? 'border-danger bg-danger-soft text-danger-ink'
+                    : (mov.objetivo_es_fila ? 'border-info bg-info-soft text-info-ink' : 'border-warning bg-warning-soft text-warning-ink')"
+                :title="mov.objetivo_label"
+                x-text="mov.objetivo_corto"
+            ></span>
+        </template>
         <span x-show="mov.base_power > 0" x-text="'· ' + mov.base_power + ' pot.'"></span>
         <span x-show="mov.origen === 'nivel' && mov.nivel_requerido" x-text="'· Nv ' + mov.nivel_requerido"></span>
         <span x-show="mov.origen === 'senda' && mov.nivel_senda" x-text="'· Senda ' + mov.nivel_senda + (mov.es_maestria ? ' · Maestría ' + mov.tramo_senda + '/5' : '')"></span>

@@ -40,6 +40,8 @@ final class PresentadorVistaCombate
             objetivosItem: $componente->objetivosItem,
             actorAdmiteAliado: $actorAdmiteAliado,
             actorAutoobjetivoSeleccionable: $actorAutoobjetivoSeleccionable,
+            trampas1: $componente->trampas1,
+            trampas2: $componente->trampas2,
         );
 
         $vista['movesResumen'] = MovesPreviewPresenter::resumen($componente->currentMoves);

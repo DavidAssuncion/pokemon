@@ -18,7 +18,7 @@
     @if (count($filas) === 0)
         <p class="text-sm text-ink-muted italic">No hay caramelos disponibles.</p>
     @else
-        <ul class="grid grid-cols-1 gap-3 md:grid-cols-2">
+        <ul class="grid grid-cols-1 gap-3 md:grid-cols-4">
             @foreach ($filas as $fila)
                 <li class="rounded-panel border border-line bg-surface-sunken p-3">
                     <div class="flex items-center gap-3">

@@ -20,7 +20,7 @@ class Reclutado extends Model
     protected $table = 'reclutados';
 
     protected $fillable = [
-        'user_id', 'nombre', 'pokemon_id', 'exp', 'es_shiny', 'obj_equipados', 'movimientos', 'behavior',
+        'user_id', 'nombre', 'pokemon_id', 'forma_original_id', 'exp', 'es_shiny', 'obj_equipados', 'movimientos', 'behavior',
         'ivs', 'evs', 'habilidad_activa_id',
     ];
 
@@ -33,6 +33,7 @@ class Reclutado extends Model
         'ivs' => StatsReclutado::class,
         'evs' => StatsReclutado::class,
         'habilidad_activa_id' => 'integer',
+        'forma_original_id' => 'integer',
     ];
 
     /**
@@ -76,6 +77,16 @@ class Reclutado extends Model
     public function favoritos(): HasMany
     {
         return $this->hasMany(Favorito::class, 'reclutado_id');
+    }
+
+    /**
+     * Formas alternativas desbloqueadas a nivel 55.
+     *
+     * @return HasMany<ReclutadoForma, $this>
+     */
+    public function formasDesbloqueadas(): HasMany
+    {
+        return $this->hasMany(ReclutadoForma::class, 'reclutado_id');
     }
 
     /**

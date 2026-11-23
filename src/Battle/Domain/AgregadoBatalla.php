@@ -44,6 +44,23 @@ class AgregadoBatalla
     /** @var list<array<string, mixed>> */
     private array $danioDiferido = [];
 
+    /**
+     * Detonaciones ocurridas desde la última lectura. La capa de presentación
+     * las consume para reproducir la explosión; no participan en el cálculo.
+     *
+     * @var list<array{portadorId: string, objetivos: list<array{id: string, dano: float}>}>
+     */
+    private array $detonaciones = [];
+
+    /**
+     * Cambios de vitales producidos por efectos residuales (clima, estado,
+     * condiciones, trampas, habilidades). La presentación los reproduce en
+     * orden, uno detrás de otro.
+     *
+     * @var list<array{objetivoId: string, hpAntes: float, hpDespues: float, defAntes: float, defDespues: float, spDefAntes: float, spDefDespues: float, tipo: string, label: string, movimientoSlug: string, origenId: string}>
+     */
+    private array $residuos = [];
+
     private ?CalculadorDañoClima $calculadorClima = null;
 
     private ?SelectorAccionIA $selectorAccion = null;
@@ -378,6 +395,91 @@ class AgregadoBatalla
     public function procesarDebilitamientos(): int
     {
         return (new MotorRondas())->procesarDebilitamientos($this);
+    }
+
+    /**
+     * Registra una detonación para que la presentación pueda animarla.
+     *
+     * @param  list<array{id: string, dano: float}>  $objetivos
+     */
+    public function registrarDetonacion(string $portadorId, array $objetivos): void
+    {
+        if ($objetivos === []) {
+            return;
+        }
+
+        $this->detonaciones[] = [
+            'portadorId' => $portadorId,
+            'objetivos' => $objetivos,
+        ];
+    }
+
+    /**
+     * Devuelve y vacía las detonaciones pendientes.
+     *
+     * @return list<array{portadorId: string, objetivos: list<array{id: string, dano: float}>}>
+     */
+    public function consumirDetonaciones(): array
+    {
+        $detonaciones = $this->detonaciones;
+        $this->detonaciones = [];
+
+        return $detonaciones;
+    }
+
+    /**
+     * Ejecuta una acción residual midiendo el cambio de vitales del objetivo.
+     */
+    public function medirResiduo(
+        Combatiente $objetivo,
+        string $tipo,
+        string $label,
+        callable $accion,
+        ?string $movimientoSlug = null,
+        ?string $origenId = null,
+    ): void {
+        $hpAntes = $objetivo->hpActual();
+        $defAntes = $objetivo->defensaHpActual();
+        $spDefAntes = $objetivo->defensaEspHpActual();
+
+        $accion();
+
+        $hpDespues = $objetivo->hpActual();
+        $defDespues = $objetivo->defensaHpActual();
+        $spDefDespues = $objetivo->defensaEspHpActual();
+
+        if (abs($hpDespues - $hpAntes) < 0.001
+            && abs($defDespues - $defAntes) < 0.001
+            && abs($spDefDespues - $spDefAntes) < 0.001) {
+            return;
+        }
+
+        $this->residuos[] = [
+            'objetivoId' => $objetivo->id(),
+            'hpAntes' => $hpAntes,
+            'hpDespues' => $hpDespues,
+            'defAntes' => $defAntes,
+            'defDespues' => $defDespues,
+            'spDefAntes' => $spDefAntes,
+            'spDefDespues' => $spDefDespues,
+            'tipo' => $tipo,
+            'label' => $label,
+            'movimientoSlug' => $movimientoSlug ?? '',
+            'origenId' => $origenId ?? '',
+        ];
+    }
+
+    /**
+     * Devuelve y vacía los cambios residuales pendientes.
+     *
+     * @return list<array{objetivoId: string, hpAntes: float, hpDespues: float, defAntes: float, defDespues: float, spDefAntes: float, spDefDespues: float, tipo: string, label: string, movimientoSlug: string, origenId: string}>
+     */
+    public function consumirResiduos(): array
+    {
+        $residuos = $this->residuos;
+        $this->residuos = [];
+
+        return $residuos;
     }
 
     /**

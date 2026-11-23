@@ -13,6 +13,10 @@ class Combate extends Component
     public string $battleId = '';
     public array $team1 = [];
     public array $team2 = [];
+    /** @var list<array{clave: string, label: string, acumulaciones: int}> */
+    public array $trampas1 = [];
+    /** @var list<array{clave: string, label: string, acumulaciones: int}> */
+    public array $trampas2 = [];
     public array $turnQueue = [];
     public array $currentMoves = [];
     public ?int $selectedMoveIdx = null;
@@ -30,6 +34,8 @@ class Combate extends Component
     public string $weather = 'none';
     public array $rewards = [];
     public int $habitatId = 0;
+    public string $returnUrl = '';
+    public string $returnLabel = '';
     /** @var list<array<string, mixed>> */
     public array $eventos = [];
     public int $eventoTick = 0;

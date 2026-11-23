@@ -82,14 +82,14 @@
                 $categoriaId = 'items-cat-'.\Illuminate\Support\Str::slug($categoria);
             @endphp
 
-            <section class="mb-3" aria-labelledby="{{ $categoriaId }}">
-                <h4 id="{{ $categoriaId }}"
-                    class="h6 text-uppercase text-ink-muted mb-2 d-flex align-items-center justify-content-between gap-2">
+            <details class="items-category mb-3" open>
+                <summary id="{{ $categoriaId }}"
+                         class="h6 text-uppercase text-ink-muted mb-2 d-flex align-items-center justify-content-between gap-2">
                     <span>{{ $categoriaLabel }}</span>
                     <span class="badge bg-surface-sunken border text-ink-muted">{{ count($items) }}</span>
-                </h4>
+                </summary>
 
-                <div class="d-grid gap-2">
+                <div class="d-grid gap-2 mt-2">
                     @foreach($items as $objeto)
                         <button type="button"
                                 class="card w-100 text-start p-2 d-flex flex-row align-items-center gap-2 focus-ring {{ $objeto['aplicable'] ? '' : 'opacity-50' }}"
@@ -123,7 +123,7 @@
                         </button>
                     @endforeach
                 </div>
-            </section>
+            </details>
         @endforeach
     @endif
 </div>

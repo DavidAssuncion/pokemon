@@ -8,7 +8,7 @@
     $formatearDelta = static fn (int $delta): string => ($delta > 0 ? '+' : '-') . number_format(abs($delta), 0, ',', '.');
 @endphp
 
-<div class="mx-auto max-w-5xl">
+<div class="mx-auto">
     <header class="mb-6 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
             <h1 class="text-2xl font-bold text-ink">Debug QA</h1>

@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Src\Exploraciones\Infra\Controllers;
 
-use App\Http\Controllers\Controller;
 use App\Models\ExploracionActiva;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\JsonResponse;
@@ -28,7 +27,7 @@ use Src\Exploraciones\Presentation\PresentadorExploraciones;
  * procesando por su cuenta. Todas las rutas cuelgan del grupo `auth` y las
  * consultas acotan por `user_id`, además del global scope del modelo.
  */
-final class ExpedicionesPanelController extends Controller
+final class ExpedicionesPanelController
 {
     public function __construct(
         private readonly ConsultarExpedicionesUsuario $expediciones,

@@ -162,6 +162,29 @@
                                                         title="Nivel 3"
                                                     >3</button>
                                                 </div>
+                                                <div class="flex items-center justify-center gap-1 mt-2">
+                                                    <label class="text-2xs text-ink-muted" :for="'min-level-' + pokemon.id">Nv mín.</label>
+                                                    <input
+                                                        type="number"
+                                                        min="1"
+                                                        max="100"
+                                                        :id="'min-level-' + pokemon.id"
+                                                        x-model.number="pokemon.min_level"
+                                                        @change="updatePokemonMinLevel(pokemon.id, pokemon.min_level)"
+                                                        :disabled="gestionLoading"
+                                                        class="w-14 rounded border border-line bg-surface px-1 py-0.5 text-center text-xs text-ink disabled:opacity-30"
+                                                        :title="pokemon.manual ? 'Nivel mínimo fijado manualmente' : 'Nivel mínimo calculado automáticamente'"
+                                                    >
+                                                    <button
+                                                        type="button"
+                                                        x-show="pokemon.manual"
+                                                        :disabled="gestionLoading"
+                                                        @click="resetPokemonMinLevel(pokemon.id)"
+                                                        class="text-2xs text-primary-ink underline disabled:opacity-30"
+                                                        title="Volver al cálculo automático"
+                                                    >auto</button>
+                                                </div>
+                                                <p x-show="pokemon.manual" x-cloak class="mt-1 text-2xs text-warning-ink">Manual</p>
                                             </div>
                                         </template>
                                     </div>

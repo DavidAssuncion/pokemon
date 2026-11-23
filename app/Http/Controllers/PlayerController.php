@@ -171,14 +171,7 @@ class PlayerController extends Controller
 
         $ev = collect(StatEnum::cases())
             ->map(fn (StatEnum $stat): array => [
-                'key' => match ($stat) {
-                    StatEnum::HP => 'hp',
-                    StatEnum::ATTACK => 'atk',
-                    StatEnum::DEFENSE => 'def',
-                    StatEnum::SPECIAL_ATTACK => 'spAtk',
-                    StatEnum::SPECIAL_DEFENSE => 'spDef',
-                    StatEnum::SPEED => 'speed',
-                },
+                'key' => $stat->key(),
                 'nombre' => $stat->label(),
                 'corto' => match ($stat) {
                     StatEnum::HP => 'PS',

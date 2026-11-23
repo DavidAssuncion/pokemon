@@ -45,5 +45,7 @@ final class GestorVistaBatalla
         $componente->team1 = $vista->team1;
         $componente->team2 = $vista->team2;
         $componente->objetosCombate = $vista->objetosCombate;
+        $componente->trampas1 = $vista->trampas1;
+        $componente->trampas2 = $vista->trampas2;
     }
 }

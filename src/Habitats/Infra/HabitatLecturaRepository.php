@@ -83,17 +83,28 @@ class HabitatLecturaRepository implements HabitatLecturaRepositoryInterface
         }
 
         $levels = [1 => [], 2 => [], 3 => []];
+        $minLvlPorNivel = [1 => null, 2 => null, 3 => null];
 
-        $habitatPokemon = $habitat->pokemon()
-            ->select(['pokemon.id', 'pokemon.name'])
-            ->get()
-            ->sortBy('pokemon.id')
-            ->map(fn ($pokemon) => [
-                'id' => $pokemon->id,
-                'name' => $pokemon->name,
-                'level' => intval($pokemon->pivot->level ?? 2),
-                'icon' => $this->iconPath($pokemon->id),
-            ]);
+        $habitatPokemon = Habitat::sinSpawns($habitatId)
+            ? collect()
+            : $habitat->pokemon()
+                ->select([
+                    'pokemon.id',
+                    'pokemon.name',
+                    'pokemon_habitat.level as spawn_level',
+                    'pokemon_habitat.min_level as spawn_min_level',
+                ])
+                ->get()
+                ->sortBy('pokemon.id')
+                ->map(fn ($pokemon) => [
+                    'id' => $pokemon->id,
+                    'name' => $pokemon->name,
+                    'level' => intval($pokemon->getAttribute('spawn_level') ?? 2),
+                    'min_level' => $pokemon->getAttribute('spawn_min_level') !== null
+                        ? (int) $pokemon->getAttribute('spawn_min_level')
+                        : null,
+                    'icon' => $this->iconPath($pokemon->id),
+                ]);
 
         foreach ($habitatPokemon as $pokemon) {
             $level = $pokemon['level'];
@@ -101,10 +112,18 @@ class HabitatLecturaRepository implements HabitatLecturaRepositoryInterface
                 $level = 2;
             }
 
+            $minLevel = $pokemon['min_level'];
+            if ($minLevel !== null) {
+                $minLvlPorNivel[$level] = $minLvlPorNivel[$level] === null
+                    ? $minLevel
+                    : min($minLvlPorNivel[$level], $minLevel);
+            }
+
             $levels[$level][] = [
                 'id' => $pokemon['id'],
                 'name' => $pokemon['name'],
                 'icon' => $pokemon['icon'],
+                'min_level' => $minLevel,
             ];
         }
 
@@ -116,10 +135,45 @@ class HabitatLecturaRepository implements HabitatLecturaRepositoryInterface
             name: $habitat->name,
             image: "/habitats-img/{$habitat->id}.webp?v={$imageVersion}",
             levels: $levels,
-            min_lvl_1: $this->minLvlNullable($habitat->getAttribute('min_lvl_1')),
-            min_lvl_2: $this->minLvlNullable($habitat->getAttribute('min_lvl_2')),
-            min_lvl_3: $this->minLvlNullable($habitat->getAttribute('min_lvl_3')),
+            min_lvl_1: $minLvlPorNivel[1],
+            min_lvl_2: $minLvlPorNivel[2],
+            min_lvl_3: $minLvlPorNivel[3],
+            sinSpawns: Habitat::sinSpawns($habitatId),
         );
+    }
+
+    public function minLevelForHabitatLevel(int $habitatId, int $nivel): ?int
+    {
+        $minimo = DB::table('pokemon_habitat')
+            ->where('habitat_id', $habitatId)
+            ->where('level', $nivel)
+            ->min('min_level');
+
+        return $minimo !== null ? (int) $minimo : null;
+    }
+
+    public function levelAvailableForPlayer(int $habitatId, int $nivel, int $nivelJugador): bool
+    {
+        if (Habitat::sinSpawns($habitatId)) {
+            return false;
+        }
+
+        $spawns = DB::table('pokemon_habitat')
+            ->where('habitat_id', $habitatId)
+            ->where('level', $nivel)
+            ->get(['min_level']);
+
+        if ($spawns->isEmpty()) {
+            return false;
+        }
+
+        foreach ($spawns as $spawn) {
+            if ($spawn->min_level === null || (int) $spawn->min_level <= $nivelJugador) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     public function getFamiliesByHabitat(int $habitatId): DTOFamiliasDisponibles
@@ -140,13 +194,15 @@ class HabitatLecturaRepository implements HabitatLecturaRepositoryInterface
 
         $result = new DTOFamiliasDisponibles();
 
+        $pivotes = $this->pivotesDeHabitat($habitatId);
+
         foreach ($chainIds as $chainId) {
             $members = $this->cargarMiembrosFamilia($chainId);
             if ($members->isEmpty()) {
                 continue;
             }
 
-            $family = $this->buildAvailableFamilyFromChain($chainId, $members);
+            $family = $this->buildAvailableFamilyFromChain($chainId, $members, $pivotes);
             if ($family !== null) {
                 $result->add($family);
             }

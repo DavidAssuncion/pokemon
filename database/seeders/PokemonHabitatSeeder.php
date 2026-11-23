@@ -6,6 +6,7 @@ namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
+use Src\Habitats\App\RecalcularNivelesMinimosHabitat;
 
 class PokemonHabitatSeeder extends Seeder
 {
@@ -23,11 +24,20 @@ class PokemonHabitatSeeder extends Seeder
      */
     public function run(): void
     {
-        $rows = $this->loadCsv(storage_path('data/pokemon_habitat.csv'));
-
         DB::table('pokemon_habitat')
             ->whereIn('pokemon_id', self::ESPECIES_NO_SALVAJES)
             ->delete();
+
+        // La pertenencia pokémon ↔ hábitat se gestiona desde la administración.
+        // El CSV solo se usa para poblar una BD vacía; en una BD ya curada no
+        // se reinsertan filas antiguas. Siempre se recalculan los mínimos.
+        if (DB::table('pokemon_habitat')->exists()) {
+            app(RecalcularNivelesMinimosHabitat::class)->todos();
+
+            return;
+        }
+
+        $rows = $this->loadCsv(storage_path('data/pokemon_habitat.csv'));
 
         $toInsert = [];
         foreach ($rows as $row) {
@@ -44,8 +54,11 @@ class PokemonHabitatSeeder extends Seeder
         }
 
         foreach (array_chunk($toInsert, self::CHUNK_SIZE) as $chunk) {
-            DB::table('pokemon_habitat')->upsert($chunk, ['pokemon_id', 'habitat_id'], ['level']);
+            DB::table('pokemon_habitat')->insertOrIgnore($chunk);
         }
+
+        // Calcula el nivel mínimo de cada spawn (respeta `manual = true`).
+        app(RecalcularNivelesMinimosHabitat::class)->todos();
     }
 
     private function loadCsv(string $path): array

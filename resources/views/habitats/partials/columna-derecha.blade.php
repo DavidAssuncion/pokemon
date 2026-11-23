@@ -218,32 +218,41 @@
                     <div class="p-4 space-y-3">
                         <!-- MODO POKÉMON / RUTA -->
                         <div x-show="modo === 'pokemon' || modo === 'ruta'">
+                            @if($habitat['sin_spawns'] ?? false)
+                            <p class="mb-3 rounded-control border border-warning bg-warning-soft px-3 py-2 text-xs text-warning-ink">
+                                Este hábitat no tiene Pokémon salvajes: sus especies se sirven desde encuentros especiales.
+                            </p>
+                            @endif
                             <p x-show="avisoNivel && modo === 'pokemon'" x-cloak x-text="avisoNivel" role="status"
                                class="text-xs text-warning-ink bg-warning-soft border border-warning rounded-control px-3 py-2"></p>
                             @foreach([1,2,3] as $level)
                             @php
                                 $minLvl = $habitat['min_lvl_' . $level] ?? null;
-                                $bloqueadoNivel = $minLvl !== null && ($nivelJugador ?? 1) < $minLvl;
+                                $sinSpawns = count($habitat['levels'][$level] ?? []) === 0;
+                                $bloqueadoNivel = $sinSpawns || ($minLvl !== null && ($nivelJugador ?? 1) < $minLvl);
+                                $tooltipNivel = $sinSpawns
+                                    ? 'Sin Pokémon disponibles en este nivel'
+                                    : ($minLvl !== null ? 'Se desbloquea a Nv ' . $minLvl : '');
                             @endphp
                             <button
                                 @click="modo === 'ruta' ? selectRutaNivel({{ $level }}) : selectLevel({{ $level }})"
-                                :disabled="modo === 'pokemon' && {{ $bloqueadoNivel ? 'true' : 'false' }}"
-                                @if($bloqueadoNivel) title="Requiere Nv {{ $minLvl }}" @endif
+                                :disabled="{{ $bloqueadoNivel ? 'true' : 'false' }}"
+                                @if($bloqueadoNivel) title="{{ $tooltipNivel }}" @endif
                                 :class="[
                                     (modo === 'ruta' ? rutaNivel : selectedLevel) === {{ $level }}
                                         ? 'border-primary bg-primary-soft'
                                         : 'border-line hover:border-line-strong',
-                                    modo === 'pokemon' && {{ $bloqueadoNivel ? 'true' : 'false' }}
+                                    {{ $bloqueadoNivel ? 'true' : 'false' }}
                                         ? 'opacity-60 cursor-not-allowed border-dashed'
                                         : ''
                                 ]"
                                 class="w-full p-4 rounded-card border-2 text-left transition-all"
-                                aria-label="Nivel {{ $level }}"
+                                aria-label="Nivel {{ $level }}{{ $bloqueadoNivel ? ' (bloqueado)' : '' }}"
                             >
                                 <div class="flex items-center justify-between mb-2">
                                     <span class="text-sm font-semibold text-ink flex items-center gap-1.5">
                                         @if($bloqueadoNivel)
-                                            <svg x-show="modo === 'pokemon'" x-cloak class="w-3.5 h-3.5 text-warning-ink" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                                            <svg class="w-3.5 h-3.5 text-warning-ink" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
                                                 <path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd"/>
                                             </svg>
                                         @endif
@@ -251,8 +260,8 @@
                                     </span>
                                     <span class="flex items-center gap-2">
                                         @if($bloqueadoNivel)
-                                            <span x-show="modo === 'pokemon'" x-cloak class="px-2 py-0.5 bg-warning-soft text-warning-ink text-2xs font-bold rounded-full">
-                                                Requiere Nv {{ $minLvl }}
+                                            <span class="px-2 py-0.5 bg-warning-soft text-warning-ink text-2xs font-bold rounded-full">
+                                                {{ $sinSpawns ? 'Sin Pokémon' : 'Requiere Nv ' . $minLvl }}
                                             </span>
                                         @endif
                                         <span class="text-xs text-ink-muted">{{ count($habitat['levels'][$level] ?? []) }} pokémon</span>
@@ -260,9 +269,25 @@
                                 </div>
                                 <div class="flex flex-wrap gap-2">
                                     @forelse($habitat['levels'][$level] ?? [] as $pokemon)
+                                    @php
+                                        $bloqueadoPokemon = ($pokemon['min_level'] ?? null) !== null
+                                            && ($nivelJugador ?? 1) < (int) $pokemon['min_level'];
+                                    @endphp
+                                    @if($bloqueadoPokemon)
+                                        <div class="relative w-24 h-24"
+                                             title="Se desbloquea a Nv {{ $pokemon['min_level'] }}"
+                                             aria-label="Pokémon bloqueado, se desbloquea a nivel {{ $pokemon['min_level'] }}">
+                                            <img src="/images/misc/unknown.webp" alt="Pokémon bloqueado"
+                                                 class="w-full h-full object-contain grayscale opacity-50">
+                                            <span class="absolute bottom-0.5 right-0.5 rounded-full bg-warning-soft px-1.5 py-0.5 text-2xs font-bold text-warning-ink">
+                                                Nv {{ $pokemon['min_level'] }}
+                                            </span>
+                                        </div>
+                                    @else
                                     <template x-if="!isSighted({{ $pokemon['id'] ?? $pokemon['species_id'] ?? 0 }})">
-                                        <div class="relative w-24 h-24">
-                                            <img src="/images/misc/unknown.webp" alt="?" class="w-full h-full object-contain">
+                                        <div class="relative w-24 h-24" title="Aún no avistado">
+                                            <img src="/images/misc/unknown.webp" alt="Pokémon no avistado"
+                                                 class="w-full h-full object-contain grayscale opacity-50">
                                         </div>
                                     </template>
                                     <template x-if="isSighted({{ $pokemon['id'] ?? $pokemon['species_id'] ?? 0 }})">
@@ -270,6 +295,7 @@
                                             <x-sprite :src="$pokemon['icon']" :name="$pokemon['name']" size="96" :title="$pokemon['name']" />
                                         </div>
                                     </template>
+                                    @endif
                                     @empty
                                     <span class="text-xs text-ink-subtle">Sin Pokémon en este nivel</span>
                                     @endforelse
@@ -290,17 +316,21 @@
                                 </p>
                             </template>
                             <template x-for="(levelData, levelIdx) in (trainers || [])" :key="'level-' + levelIdx">
-                                <div class="mb-4">
-                                    <h4 class="text-sm font-semibold text-ink mb-2" x-text="'Nivel ' + levelIdx"></h4>
+                                <div class="mb-4" :class="levelBlocked(levelIdx) ? 'opacity-60' : ''">
+                                    <div class="mb-2 flex items-center justify-between">
+                                        <h4 class="text-sm font-semibold text-ink" x-text="'Nivel ' + levelIdx"></h4>
+                                        <span x-show="levelBlocked(levelIdx)" class="rounded-full bg-warning-soft px-2 py-0.5 text-2xs font-bold text-warning-ink"
+                                              x-text="minLvls[levelIdx] ? 'Requiere Nv ' + minLvls[levelIdx] : 'Sin Pokémon'"></span>
+                                    </div>
                                     <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
                                         <template x-for="(entrenador, eIdx) in levelData" :key="eIdx">
                                             <button
                                                 @click="selectTrainer(levelIdx, entrenador.indice)"
-                                                :disabled="!entrenador.desbloqueado || !selectedTeamId"
+                                                :disabled="!entrenador.desbloqueado || !selectedTeamId || levelBlocked(levelIdx)"
                                                 :class="{
-                                                    'border-success bg-success-soft': entrenador.desbloqueado && selectedTeamId,
-                                                    'border-line opacity-50 cursor-not-allowed': !entrenador.desbloqueado || !selectedTeamId,
-                                                    'hover:border-success': entrenador.desbloqueado && selectedTeamId
+                                                    'border-success bg-success-soft': entrenador.desbloqueado && selectedTeamId && !levelBlocked(levelIdx),
+                                                    'border-line opacity-50 cursor-not-allowed': !entrenador.desbloqueado || !selectedTeamId || levelBlocked(levelIdx),
+                                                    'hover:border-success': entrenador.desbloqueado && selectedTeamId && !levelBlocked(levelIdx)
                                                 }"
                                                 class="w-full p-2 rounded-card border-2 text-left transition-all"
                                                 :aria-label="'Entrenador ' + entrenador.indice + (spriteAlt(spriteEntrenador(entrenador.indice)) ? ' · ' + spriteAlt(spriteEntrenador(entrenador.indice)) : '')"

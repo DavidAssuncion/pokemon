@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Src\Reclutamiento\Infra\Controllers;
 
-use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
 use Src\Reclutamiento\App\ConstructorReclutablesResumen;
@@ -13,7 +12,7 @@ use Src\Reclutamiento\App\ConstructorReclutablesResumen;
  * Colección compacta de reclutables del usuario, ya ordenada por `updated_at`
  * descendente y con el icono resuelto por el backend.
  */
-final class ReclutamientoApiController extends Controller
+final class ReclutamientoApiController
 {
     public function __construct(
         private readonly ConstructorReclutablesResumen $reclutables,

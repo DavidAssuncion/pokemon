@@ -10,6 +10,8 @@ use App\Models\PokemonEvolution;
 use App\Models\PokemonType;
 use App\Models\Reclutado;
 use App\Support\ItemCatalogo;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 use Src\Reclutamiento\App\Collections\PokemonCollection;
 use Src\Reclutamiento\Domain\Collections\OpcionEvolucionCollection;
 use Src\Reclutamiento\Domain\Collections\RequisitoEvolucionCollection;
@@ -18,6 +20,7 @@ use Src\Reclutamiento\Domain\DataTransferObjects\RequisitoEvolucion;
 use Src\Reclutamiento\Domain\ValueObjects\InventarioCaramelos;
 use Src\Shared\Collections\StringCollection;
 use Src\Shared\Domain\NivelHelper;
+use Src\Shared\Domain\ReglasCaramelo;
 use Src\Shared\Domain\SlugTipo;
 
 /**
@@ -45,6 +48,81 @@ final class ServicioEvolucion
     }
 
     /**
+     * Nivel mínimo de la arista de evolución `pokemon actual -> destino`.
+     * `null` si no hay arista o no tiene mínimo.
+     */
+    public static function nivelMinimoEvolucion(Pokemon $pokemon, Pokemon $destino): ?int
+    {
+        $nivel = DB::table('pokemon_evolution')
+            ->where('evolves_from_species_id', $pokemon->species_id)
+            ->where('evolved_species_id', $destino->id)
+            ->value('minimum_level');
+
+        return $nivel !== null ? (int) $nivel : null;
+    }
+
+    /**
+     * Umbral de exp de tipo para evolucionar a un destino concreto.
+     *
+     * Si el jugador aún no ha alcanzado el `minimum_level` de la evolución, el
+     * umbral cubre la EXP desde el nivel actual hasta ese nivel. Si ya lo
+     * alcanzó, exige la EXP del siguiente nivel (comportamiento previo).
+     * El resultado se reduce por `ReglasCaramelo::FACTOR_COSTE_EVOLUCION`.
+     */
+    public static function umbralParaEvolucion(Reclutado $reclutado, Pokemon $destino): int
+    {
+        return self::umbralDesdeMinimo($reclutado, self::nivelMinimoEvolucion($reclutado->pokemon, $destino));
+    }
+
+    private static function umbralDesdeMinimo(Reclutado $reclutado, ?int $minimo): int
+    {
+        $nivelActual = self::nivelDe($reclutado);
+
+        $objetivo = $minimo !== null && $nivelActual < $minimo
+            ? $minimo
+            : $nivelActual + 1;
+
+        $expBase = NivelHelper::experienciaParaNivel($objetivo)
+            - NivelHelper::experienciaParaNivel($nivelActual);
+
+        return (int) ceil($expBase * ReglasCaramelo::FACTOR_COSTE_EVOLUCION);
+    }
+
+    /**
+     * Umbral para un nivel objetivo fijo (p. ej. desbloqueo de forma a 55).
+     */
+    public static function umbralParaNivelObjetivo(Reclutado $reclutado, int $nivelObjetivo): int
+    {
+        $nivelActual = self::nivelDe($reclutado);
+
+        return max(
+            0,
+            NivelHelper::experienciaParaNivel($nivelObjetivo)
+                - NivelHelper::experienciaParaNivel($nivelActual),
+        );
+    }
+
+    /**
+     * Requisitos de exp de tipo para alcanzar un nivel objetivo concreto,
+     * usado por el desbloqueo de formas (nivel 55).
+     */
+    public static function requisitosParaNivel(
+        Reclutado $reclutado,
+        Pokemon $destino,
+        int $nivelObjetivo,
+        int $userId,
+    ): RequisitoEvolucionCollection {
+        $umbral = self::umbralParaNivelObjetivo($reclutado, $nivelObjetivo);
+        $requisitos = new RequisitoEvolucionCollection();
+
+        foreach (self::tiposRequeridos($destino) as $tipo) {
+            $requisitos->add(self::requisitoTipo($tipo, $umbral, $reclutado, $userId));
+        }
+
+        return $requisitos;
+    }
+
+    /**
      * Devuelve TODAS las evoluciones válidas del pokémon (caso Eevee: varias),
      * con orden determinístico por minimum_level y evolved_species_id.
      * El seeder omite las formas alternas (mega/gmax), por lo que no es
@@ -65,7 +143,7 @@ final class ServicioEvolucion
 
         return new PokemonCollection(
             $ids
-                ->map(fn (int $id): Pokemon => $pokemons->get($id))
+                ->map(fn (int $id): ?Pokemon => $pokemons->get($id))
                 ->filter()
                 ->values()
                 ->all()
@@ -75,9 +153,9 @@ final class ServicioEvolucion
     /**
      * IDs de las evoluciones válidas del pokémon en orden determinístico.
      *
-     * @return \Illuminate\Support\Collection<int, int>
+     * @return Collection<int, int>
      */
-    private static function idsEvolucion(Pokemon $pokemon)
+    private static function idsEvolucion(Pokemon $pokemon): Collection
     {
         return PokemonEvolution::query()
             ->where('evolves_from_species_id', $pokemon->species_id)
@@ -131,7 +209,7 @@ final class ServicioEvolucion
      */
     public static function requisitosPara(Reclutado $reclutado, Pokemon $destino, int $userId): RequisitoEvolucionCollection
     {
-        $umbral = self::umbralParaNivel(self::nivelDe($reclutado));
+        $umbral = self::umbralParaEvolucion($reclutado, $destino);
         $requisitos = new RequisitoEvolucionCollection();
 
         foreach (self::tiposRequeridos($destino) as $tipo) {
@@ -157,9 +235,16 @@ final class ServicioEvolucion
         }
 
         $inventario = self::caramelosDeOpciones($opciones, $userId);
-        $umbral = self::umbralParaNivel(self::nivelDe($reclutado));
+
+        $nivelesMinimos = DB::table('pokemon_evolution')
+            ->where('evolves_from_species_id', $reclutado->pokemon->species_id)
+            ->whereIn('evolved_species_id', $opciones->map(static fn (Pokemon $opcion): int => $opcion->id))
+            ->pluck('minimum_level', 'evolved_species_id')
+            ->all();
 
         foreach ($opciones as $opcion) {
+            $minimo = $nivelesMinimos[$opcion->id] ?? null;
+            $umbral = self::umbralDesdeMinimo($reclutado, $minimo !== null ? (int) $minimo : null);
             $resultado->add(self::opcionRequisitos($opcion, $umbral, $reclutado, $inventario));
         }
 

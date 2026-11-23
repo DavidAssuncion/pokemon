@@ -69,6 +69,8 @@ final class GestorAccionBatalla
         $componente->log = array_merge($componente->log, $resultado['log']);
         $componente->rewards = $resultado['rewards'];
         $componente->habitatId = $resultado['habitatId'];
+        $componente->returnUrl = $resultado['returnUrl'];
+        $componente->returnLabel = $resultado['returnLabel'];
 
         $this->gestorEventos->batallaTerminada(
             $componente,
@@ -78,7 +80,13 @@ final class GestorAccionBatalla
         );
     }
 
-    public function prepararAnimacionIa(Combate $componente, AgregadoBatalla $battle, Combatiente $actor): void
+    /**
+     * Prepara la acción y la animación de un actor IA.
+     *
+     * @return bool true si hay animación pendiente; false si el turno se cerró
+     *              sin acción (el llamador no debe reconstruir la cola).
+     */
+    public function prepararAnimacionIa(Combate $componente, AgregadoBatalla $battle, Combatiente $actor): bool
     {
         // Con aliados y movimientos del catálogo, la IA decide objetivo y
         // movimiento en una sola evaluación: el `defender` puede ser un
@@ -86,7 +94,14 @@ final class GestorAccionBatalla
         if ($battle->actorAdmiteSoporte($actor)) {
             $accion = $battle->elegirAccionPara($actor);
             if ($accion === null) {
-                return;
+                $this->cancelarTurnoIa(
+                    $componente,
+                    $battle,
+                    $actor,
+                    "{$actor->nombre()} no tiene ninguna acción disponible y pierde el turno.",
+                );
+
+                return false;
             }
 
             $targetForAnim = $accion->defender;
@@ -95,18 +110,26 @@ final class GestorAccionBatalla
         } else {
             $objetivo = $battle->elegirObjetivoPara($actor);
             if ($objetivo === null) {
-                return;
+                $this->cancelarTurnoIa(
+                    $componente,
+                    $battle,
+                    $actor,
+                    "{$actor->nombre()} no tiene ningún objetivo disponible y pierde el turno.",
+                );
+
+                return false;
             }
 
             $movimiento = $battle->elegirMejorMovimiento($actor, $objetivo);
             if ($movimiento === null || ! $actor->movimientoDisponible($movimiento)) {
-                $componente->log[] = "{$actor->nombre()} no tiene movimientos disponibles.";
-                $battle->turnManager()->consumeAction($actor);
-                $this->gestorVista->sincronizar($componente, $battle, $actor);
-                $this->session->guardar($componente->battleId, $battle);
-                $componente->nextActor();
+                $this->cancelarTurnoIa(
+                    $componente,
+                    $battle,
+                    $actor,
+                    "{$actor->nombre()} no tiene movimientos disponibles.",
+                );
 
-                return;
+                return false;
             }
 
             // Movimientos autodirigidos (ej: Danza Espada) apuntan al actor.
@@ -131,6 +154,30 @@ final class GestorAccionBatalla
         $this->gestorAnimacion->movimiento($componente, $actor, $targetForAnim, $movimiento);
         $this->gestorVista->sincronizar($componente, $battle, $actor);
         $this->session->guardar($componente->battleId, $battle);
+
+        return true;
+    }
+
+    /**
+     * Cierra un turno de IA que no puede resolverse (sin objetivo, sin
+     * movimiento o sin acción de soporte). Sin este cierre el cliente quedaba
+     * esperando una animación que nunca se iniciaba: `processing` se quedaba
+     * en true y el turno no avanzaba.
+     */
+    private function cancelarTurnoIa(
+        Combate $componente,
+        AgregadoBatalla $battle,
+        Combatiente $actor,
+        string $motivo,
+    ): void {
+        $actor->romperCombo();
+        $componente->log[] = $motivo;
+        $battle->setPendingAction(null);
+        $battle->turnManager()->consumeAction($actor);
+        $this->gestorAnimacion->reiniciar($componente);
+        $this->gestorVista->sincronizar($componente, $battle, $actor);
+        $this->session->guardar($componente->battleId, $battle);
+        $componente->nextActor();
     }
 
     private function resolver(

@@ -9,6 +9,7 @@ use App\Support\CargarMapaSendaJugador;
 use App\Support\ProgresoRecompensas;
 use App\Support\ProgresoRecompensasVista;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Src\Battle\Domain\AgregadoBatalla;
 use Src\Battle\Domain\Combatiente;
 use Src\CombateEntrenadores\App\OtorgarRecompensasEntrenador;
@@ -19,6 +20,10 @@ use Src\Exploraciones\Domain\DificultadHabitat;
 use Src\Gimnasios\App\RegistrarResultadoGimnasio;
 use Src\Gimnasios\Domain\Exceptions\GimnasioNoExiste;
 use Src\Gimnasios\Domain\Repositories\GymCatalogoRepositoryInterface;
+use Src\HabitatsTemporales\App\RegistrarResultadoHabitatTemporal;
+use Src\HabitatsTemporales\Domain\CatalogoFaccionesRivales;
+use Src\HabitatsTemporales\Domain\Exceptions\FaccionNoExiste;
+use Src\HabitatsTemporales\Domain\ReglasHabitatTemporal;
 use Src\Mazmorras\App\ObtenerConfiguracionMazmorra;
 use Src\Mazmorras\App\OtorgarRecompensasMazmorra;
 use Src\Mazmorras\App\RegistrarResultadoMazmorra;
@@ -39,9 +44,9 @@ final class PresentadorResultadoBatalla
 {
     /**
      * Procesa el resultado de una batalla terminada según su tipo
-     * (entrenador, gimnasio o mazmorra).
+     * (entrenador, gimnasio, mazmorra o hábitat temporal).
      *
-     * @return array{log: list<string>, rewards: array<string, mixed>, habitatId: int}
+     * @return array{log: list<string>, rewards: array<string, mixed>, habitatId: int, returnUrl: string, returnLabel: string}
      */
     public static function procesar(
         AgregadoBatalla $battle,
@@ -50,7 +55,13 @@ final class PresentadorResultadoBatalla
     ): array {
         $meta = $session->cargarMeta($battleId);
         if ($meta === null) {
-            return ['log' => [], 'rewards' => [], 'habitatId' => 0];
+            return [
+                'log' => [],
+                'rewards' => [],
+                'habitatId' => 0,
+                'returnUrl' => '/gimnasios',
+                'returnLabel' => 'Volver a gimnasios',
+            ];
         }
 
         $tipo = $meta['tipo'] ?? null;
@@ -58,13 +69,56 @@ final class PresentadorResultadoBatalla
         $resultado = match ($tipo) {
             'gimnasio' => self::procesarGimnasio($battle, $meta),
             'mazmorra' => self::procesarMazmorra($battle, $meta),
+            'habitat_temporal' => self::procesarHabitatTemporal($battle, $meta),
             'ruta' => self::procesarRuta($battle, $meta),
             default => self::procesarEntrenador($battle, $meta),
         };
 
+        $completada = (bool) ($resultado['completada'] ?? false);
+        $devolucion = self::devolucion($tipo, $meta, (int) ($resultado['habitatId'] ?? 0), $completada);
+        $resultado['returnUrl'] = $devolucion['url'];
+        $resultado['returnLabel'] = $devolucion['label'];
+
         $session->limpiarMeta($battleId);
 
         return $resultado;
+    }
+
+    /**
+     * URL y etiqueta del botón de vuelta del modal de victoria.
+     *
+     * @param  array<string, mixed>  $meta
+     * @return array{url: string, label: string}
+     */
+    private static function devolucion(?string $tipo, array $meta, int $habitatId, bool $completada): array
+    {
+        if ($tipo === 'habitat_temporal') {
+            if ($completada) {
+                return [
+                    'url' => '/habitats',
+                    'label' => 'Volver a hábitats',
+                ];
+            }
+
+            $slug = (string) ($meta['faccion_slug'] ?? '');
+
+            return [
+                'url' => '/habitats/temporales/'.$slug,
+                'label' => 'Volver al hábitat',
+            ];
+        }
+
+        if ($habitatId > 0) {
+            return [
+                'url' => '/habitats/'.$habitatId,
+                'label' => 'Volver al hábitat',
+            ];
+        }
+
+        return [
+            'url' => '/gimnasios',
+            'label' => 'Volver a gimnasios',
+        ];
     }
 
     /**
@@ -101,7 +155,7 @@ final class PresentadorResultadoBatalla
             ));
 
             if ($datosModal !== null) {
-                $rewards = self::adjuntarProgreso($datosModal->toArray(), $progreso);
+                $rewards = self::adjuntarProgreso(self::modalAVista($datosModal), $progreso);
             }
         }
 
@@ -123,6 +177,7 @@ final class PresentadorResultadoBatalla
 
         $won = ! $battle->team1->todosDebilitados();
         $rewards = [];
+        $log = [];
 
         $repositorio = app(GymCatalogoRepositoryInterface::class);
 
@@ -132,7 +187,17 @@ final class PresentadorResultadoBatalla
                 $repositorio->indiceDe($gymId),
                 $stage === 4,
             ));
-        } catch (GimnasioNoExiste) {
+        } catch (GimnasioNoExiste $e) {
+            // La meta de la batalla debería apuntar a un gimnasio existente. Si
+            // no, no se puede registrar la medalla: se deja rastro en vez de
+            // perderla silenciosamente.
+            Log::error('Resultado de gimnasio con gym_id inexistente.', [
+                'gym_id' => $gymId,
+                'stage' => $stage,
+                'user_id' => $userId,
+                'error' => $e->getMessage(),
+            ]);
+            $log[] = 'No se pudo recuperar el gimnasio: la medalla no se ha registrado.';
             $gimnasio = null;
             $dificultad = null;
         }
@@ -164,11 +229,11 @@ final class PresentadorResultadoBatalla
                     $datosModal = $datosModal->conMedalla($resultado->medalla);
                 }
                 // Se adjunta después de conMedalla(): el DTO no puede perder el progreso.
-                $rewards = self::adjuntarProgreso($datosModal->toArray(), $progreso);
+                $rewards = self::adjuntarProgreso(self::modalAVista($datosModal), $progreso);
             }
         }
 
-        return ['log' => [], 'rewards' => $rewards, 'habitatId' => 0];
+        return ['log' => $log, 'rewards' => $rewards, 'habitatId' => 0];
     }
 
     /**
@@ -235,6 +300,92 @@ final class PresentadorResultadoBatalla
         }
 
         return ['log' => $log, 'rewards' => $rewards, 'habitatId' => 0];
+    }
+
+    /**
+     * Combate de hábitat temporal de facciones rivales.
+     *
+     * @param  array<string, mixed>  $meta
+     * @return array{log: list<string>, rewards: array<string, mixed>, habitatId: int, completada: bool}
+     */
+    private static function procesarHabitatTemporal(AgregadoBatalla $battle, array $meta): array
+    {
+        $faccionSlug = (string) ($meta['faccion_slug'] ?? '');
+        $oleada = (int) ($meta['oleada'] ?? 0);
+        $combate = (int) ($meta['combate'] ?? 0);
+        $esJefe = (bool) ($meta['es_jefe'] ?? ($combate === ReglasHabitatTemporal::COMBATES_POR_OLEADA));
+        $userId = (int) ($meta['user_id'] ?? 0);
+        $teamId = (int) ($meta['team_id'] ?? 0);
+        $nivelRival = (int) ($meta['nivel_rival'] ?? 0);
+
+        $won = ! $battle->team1->todosDebilitados();
+        $log = [];
+        $rewards = [];
+
+        try {
+            $faccion = app(CatalogoFaccionesRivales::class)->porSlug($faccionSlug);
+        } catch (FaccionNoExiste $e) {
+            Log::error('Resultado de hábitat temporal con facción inexistente.', [
+                'faccion_slug' => $faccionSlug,
+                'oleada' => $oleada,
+                'combate' => $combate,
+                'user_id' => $userId,
+                'error' => $e->getMessage(),
+            ]);
+
+            return [
+                'log' => ['No se pudo recuperar la facción: el progreso no se ha registrado.'],
+                'rewards' => [],
+                'habitatId' => 0,
+                'completada' => false,
+            ];
+        }
+
+        $resultado = app(RegistrarResultadoHabitatTemporal::class)->registrar(
+            faccionSlug: $faccionSlug,
+            oleada: $oleada,
+            combate: $combate,
+            userId: $userId,
+            won: $won,
+            authUserId: (int) Auth::id(),
+        );
+
+        if ($won && $resultado->avance) {
+            $senda = app(CargarMapaSendaJugador::class)->para($userId);
+
+            [$datosModal, $progreso] = self::medirProgreso($userId, fn () => self::otorgarRecompensas(
+                userId: $userId,
+                teamId: $teamId,
+                battle: $battle,
+                nivel: $nivelRival,
+                multiplicador: ReglasHabitatTemporal::MULTIPLICADOR_RECOMPENSA,
+                dificultad: MultiplicadoresDificultad::para(
+                    ReglasHabitatTemporal::perfilIvsEvs($oleada, $esJefe),
+                ),
+                senda: $senda,
+            ));
+
+            if ($datosModal !== null) {
+                $rewards = self::adjuntarProgreso(self::modalAVista($datosModal), $progreso);
+            }
+        }
+
+        if ($won && $resultado->completada) {
+            $log[] = "¡Has desmantelado a {$faccion->nombre}! El hábitat ha desaparecido.";
+        } elseif ($won && $combate === ReglasHabitatTemporal::COMBATES_POR_OLEADA) {
+            $log[] = '¡Jefe derrotado! Oleada completada.';
+        } elseif ($won) {
+            $log[] = '¡Recluta derrotado! Siguiente combate disponible.';
+        } elseif ($userId === (int) Auth::id()) {
+            $log[] = 'Has perdido. Puedes reintentar este combate.';
+        }
+
+        return [
+            'log' => $log,
+            'rewards' => $rewards,
+            'habitatId' => 0,
+            'completada' => $resultado->completada,
+        ];
     }
 
     /**
@@ -320,6 +471,37 @@ final class PresentadorResultadoBatalla
         $rewards['progreso'] = $progreso->aArray();
 
         return $rewards;
+    }
+
+    /**
+     * Serializa el modal de victoria al shape de la vista.
+     *
+     * @return array{exp_total: int, exp_miembro: int, caramelos: list<array{nombre: string, imagen: string, cantidad: int}>, medalla?: string}
+     */
+    private static function modalAVista(DatosModalVictoria $datos): array
+    {
+        $caramelos = [];
+        foreach ($datos->caramelos as $caramelo) {
+            if ($caramelo instanceof ItemCaramelo) {
+                $caramelos[] = [
+                    'nombre' => $caramelo->nombre,
+                    'imagen' => $caramelo->imagen,
+                    'cantidad' => $caramelo->cantidad,
+                ];
+            }
+        }
+
+        $data = [
+            'exp_total' => $datos->expTotal,
+            'exp_miembro' => $datos->expMiembro,
+            'caramelos' => $caramelos,
+        ];
+
+        if ($datos->medalla !== null) {
+            $data['medalla'] = $datos->medalla;
+        }
+
+        return $data;
     }
 
     /**

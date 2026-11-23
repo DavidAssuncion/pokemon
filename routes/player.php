@@ -63,6 +63,12 @@ Route::delete('/reclutado/{reclutado}', [ReclutadoController::class, 'destroy'])
 // Opciones de evolución bajo demanda (usado por el modal de /equipos)
 Route::get('/reclutado/{reclutado}/evoluciones', [ReclutadoController::class, 'evoluciones']);
 
+// Formas/versiones: desbloqueo a Nv 55 y cambio libre posterior.
+Route::get('/reclutado/{reclutado}/versiones', [ReclutadoController::class, 'versiones']);
+Route::post('/reclutado/{reclutado}/versiones/{pokemon}/desbloquear', [ReclutadoController::class, 'desbloquearVersion'])
+    ->whereNumber('pokemon');
+Route::post('/reclutado/{reclutado}/version', [ReclutadoController::class, 'cambiarVersion']);
+
 // Catálogo de movimientos bajo demanda (usado por el modal de /equipos)
 Route::get('/reclutado/{reclutado}/movimientos', [ReclutadoController::class, 'movimientos']);
 

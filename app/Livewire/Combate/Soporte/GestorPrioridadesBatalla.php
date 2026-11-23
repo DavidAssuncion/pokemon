@@ -8,8 +8,6 @@ use App\Livewire\Combate;
 use Src\Battle\Domain\AgregadoBatalla;
 use Src\Battle\Domain\AI\ClasificadorAccionIA;
 use Src\Battle\Domain\Combatiente;
-use Src\Battle\Domain\Enums\ClaveCondicion;
-use Src\Battle\Domain\Enums\ObjetivoMovimiento;
 use Src\Battle\Domain\Enums\PosturaCombate;
 use Src\Battle\Domain\MovimientoBatalla;
 use Src\Battle\Domain\ServicioEjecucionBatalla;
@@ -20,6 +18,8 @@ use Src\Battle\Domain\ServicioEjecucionBatalla;
  */
 final class GestorPrioridadesBatalla
 {
+    use Concerns\ObjetivosBatalla;
+
     public function __construct(
         private readonly ResolutorAccionBatalla $resolutorAccion,
         private readonly GestorVistaBatalla $gestorVista,
@@ -213,32 +213,5 @@ final class GestorPrioridadesBatalla
         }
 
         return $battle->elegirObjetivoPara($actor);
-    }
-
-    private function esAutodirigido(MovimientoBatalla $movimiento): bool
-    {
-        return $movimiento->esAutodirigido()
-            || $movimiento->objetivo === ObjetivoMovimiento::ALL;
-    }
-
-    private function objetivoForzadoDesafio(AgregadoBatalla $battle, Combatiente $actor): ?Combatiente
-    {
-        $desafio = $actor->condicion(ClaveCondicion::DESAFIO);
-        if ($desafio === null || $desafio->objetivoForzadoId === '') {
-            return null;
-        }
-
-        $objetivo = $battle->equipoRivalDe($actor)?->findCombatantById($desafio->objetivoForzadoId);
-
-        return $objetivo !== null && $objetivo->estaVivo() ? $objetivo : null;
-    }
-
-    /**
-     * Normaliza el valor de un mapa público de Livewire: cualquier valor que
-     * no sea una cadena se considera vacío.
-     */
-    private function textoMapa(mixed $valor): string
-    {
-        return is_string($valor) ? $valor : '';
     }
 }

@@ -1,4 +1,79 @@
+@php
+    $climaTipo = $battleField['clima']['tipo'] ?? '';
+    $climaVideo = match ($climaTipo) {
+        'tormenta_arena' => ['base' => 'weather-gen6-sandstorm', 'poster' => 'weather-sandstorm.png'],
+        'diluvio' => ['base' => 'weather-gen6-raindance', 'poster' => 'weather-raindance.jpg'],
+        'granizo' => ['base' => 'weather-gen6-hail', 'poster' => 'weather-hail.png'],
+        'sequia' => ['base' => 'weather-gen6-sunnyday', 'poster' => 'weather-sunnyday.jpg'],
+        default => null,
+    };
+@endphp
+
 <div class="battle-field">
+    @if($climaVideo !== null || $battleField['clima'] !== null)
+        {{-- La clave por clima fuerza a Livewire a reemplazar el bloque cuando
+             cambia el tiempo; si no, el navegador sigue reproduciendo el vídeo
+             anterior (p. ej. granizo después de pasar a tormenta de arena). --}}
+        <div class="battle-weather-layer" wire:key="clima-{{ $climaTipo }}" aria-hidden="true">
+            @if($climaVideo !== null)
+                <video class="battle-weather-video battle-weather-video--{{ $climaTipo }}"
+                       autoplay
+                       muted
+                       loop
+                       playsinline
+                       preload="metadata"
+                       poster="/showdown/fx/{{ $climaVideo['poster'] }}">
+                    <source src="/showdown/fx/{{ $climaVideo['base'] }}.webm" type="video/webm">
+                    <source src="/showdown/fx/{{ $climaVideo['base'] }}.mp4" type="video/mp4">
+                </video>
+            @endif
+
+            @if($battleField['clima'] !== null)
+                <div class="battle-weather-effect weather-{{ $battleField['clima']['tipo'] }}"></div>
+            @endif
+        </div>
+    @endif
+
+    @if($trampas1 !== [])
+        <div class="battle-hazards battle-hazards--player" aria-label="Trampas del equipo">
+            @foreach($trampas1 as $trampa)
+                @php($iconoTrampa = match ($trampa['clave']) {
+                    'puas' => 'tierra',
+                    'puas_toxicas' => 'veneno',
+                    'trampa_rocas' => 'roca',
+                    default => 'normal',
+                })
+                <span class="battle-hazard battle-hazard--{{ $trampa['clave'] }}" title="{{ $trampa['label'] }} · {{ $trampa['acumulaciones'] }}/3">
+                    <img src="/images/type/{{ $iconoTrampa }}.webp" alt="" loading="lazy" class="battle-hazard__icon">
+                    <span>{{ $trampa['label'] }}</span>
+                    @if($trampa['acumulaciones'] > 1)
+                        <span class="battle-hazard__count">×{{ $trampa['acumulaciones'] }}</span>
+                    @endif
+                </span>
+            @endforeach
+        </div>
+    @endif
+
+    @if($trampas2 !== [])
+        <div class="battle-hazards battle-hazards--rival" aria-label="Trampas del rival">
+            @foreach($trampas2 as $trampa)
+                @php($iconoTrampa = match ($trampa['clave']) {
+                    'puas' => 'tierra',
+                    'puas_toxicas' => 'veneno',
+                    'trampa_rocas' => 'roca',
+                    default => 'normal',
+                })
+                <span class="battle-hazard battle-hazard--{{ $trampa['clave'] }}" title="{{ $trampa['label'] }} · {{ $trampa['acumulaciones'] }}/3">
+                    <img src="/images/type/{{ $iconoTrampa }}.webp" alt="" loading="lazy" class="battle-hazard__icon">
+                    <span>{{ $trampa['label'] }}</span>
+                    @if($trampa['acumulaciones'] > 1)
+                        <span class="battle-hazard__count">×{{ $trampa['acumulaciones'] }}</span>
+                    @endif
+                </span>
+            @endforeach
+        </div>
+    @endif
+
     @if($phase === 'battle_over')
         <div class="alert {{ $battleField['claseFin'] }} fin-batalla {{ $battleField['ocultarFin'] ? 'd-none' : '' }} text-center fw-bold py-2 mb-2" role="status">
             {{ $battleField['victoria'] ? '¡Victoria!' : 'Derrota...' }}

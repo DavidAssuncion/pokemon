@@ -707,7 +707,7 @@ final class BuildShowdownMovesets extends Command
     }
 
     /**
-     * @param  array<string, true>  $claves
+     * @param  array<string, bool>  $claves
      * @return list<string>
      */
     private function clavesOrdenadas(array $claves): array

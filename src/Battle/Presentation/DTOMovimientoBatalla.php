@@ -11,9 +11,7 @@ use Src\Battle\Domain\Collections\FlagsMovimientoCollection;
 use Src\Battle\Domain\Enums\CategoriaMovimiento;
 use Src\Battle\Domain\Enums\EstadoPokemon;
 use Src\Battle\Domain\Enums\ObjetivoMovimiento;
-use Src\Battle\Domain\Enums\StatClave;
 use Src\Battle\Domain\MovimientoBatalla;
-use Src\Battle\Domain\ValueObjects\CambioStat;
 use Src\Battle\Domain\ValueObjects\PerfilMovimiento;
 use Src\Shared\Tipos\TipoPokemon;
 
@@ -143,8 +141,8 @@ class DTOMovimientoBatalla implements Wireable
             categoria: CategoriaMovimiento::from($this->categoria),
             statusEffect: $this->statusEffect !== '' ? EstadoPokemon::from($this->statusEffect) : EstadoPokemon::NONE,
             priority: $this->priority,
-            selfStatChanges: self::cambiosDesdeArray($this->selfStatChanges),
-            targetStatChanges: self::cambiosDesdeArray($this->targetStatChanges),
+            selfStatChanges: CambiosStatsCollection::desdeSerializado($this->selfStatChanges),
+            targetStatChanges: CambiosStatsCollection::desdeSerializado($this->targetStatChanges),
             perfil: PerfilMovimiento::desdeArray($this->perfil),
             objetivo: ObjetivoMovimiento::tryFrom($this->objetivo) ?? ObjetivoMovimiento::NORMAL,
             flags: FlagsMovimientoCollection::desdeArray($this->flags),
@@ -169,29 +167,5 @@ class DTOMovimientoBatalla implements Wireable
         }
 
         return $resultado;
-    }
-
-    /**
-     * Acepta el formato actual ({stat, factor}) y el legacy v9 ({stat, stages}).
-     *
-     * @param  array<int, array<string, mixed>>  $cambios
-     */
-    private static function cambiosDesdeArray(array $cambios): CambiosStatsCollection
-    {
-        $items = [];
-        foreach ($cambios as $cambio) {
-            $stat = StatClave::tryFrom((string) ($cambio['stat'] ?? ''));
-            if ($stat === null) {
-                continue;
-            }
-
-            if (array_key_exists('factor', $cambio)) {
-                $items[] = new CambioStat($stat, (float) $cambio['factor'], (int) ($cambio['etapas'] ?? 0));
-            } elseif (array_key_exists('stages', $cambio)) {
-                $items[] = CambioStat::desdeEtapas($stat, (int) $cambio['stages']);
-            }
-        }
-
-        return new CambiosStatsCollection($items);
     }
 }

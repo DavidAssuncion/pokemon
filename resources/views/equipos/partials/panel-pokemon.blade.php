@@ -90,14 +90,14 @@
                                     <div class="rounded-card border border-line bg-surface p-2.5 text-left shadow-modal border-line-strong bg-surface-sunken">
                                         <div class="flex items-center justify-between gap-2">
                                             <span class="text-2xs font-bold uppercase tracking-wide text-success-ink">Habilidad</span>
-                                            <span class="text-2xs text-ink-subtle" x-text="habilidadActivaDe(pokemon) ? 'Asignada' : 'Automática'"></span>
+                                            <span class="text-2xs text-ink-subtle">Todas activas</span>
                                         </div>
                                         <template x-if="(pokemon.habilidades_disponibles || []).length > 0">
                                             <div class="mt-1 space-y-0.5">
                                                 <template x-for="hab in pokemon.habilidades_disponibles" :key="'card-hab-' + pokemon.id + '-' + hab.id">
                                                     <div class="flex items-center gap-1.5" :title="hab.description || hab.name">
-                                                        <span class="h-1 w-1 shrink-0 rounded-full" :class="String(pokemon.habilidad_activa_id) === String(hab.id) ? 'bg-success' : 'bg-surface-sunken'"></span>
-                                                        <span class="truncate text-2xs leading-snug" :class="String(pokemon.habilidad_activa_id) === String(hab.id) ? 'font-semibold text-success-ink' : 'text-ink-muted'" x-text="hab.name"></span>
+                                                        <span class="h-1 w-1 shrink-0 rounded-full bg-success"></span>
+                                                        <span class="truncate text-2xs leading-snug font-semibold text-success-ink" x-text="hab.name"></span>
                                                     </div>
                                                 </template>
                                             </div>

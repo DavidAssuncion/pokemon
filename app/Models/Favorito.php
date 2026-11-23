@@ -80,7 +80,12 @@ class Favorito extends Model
             return false;
         }
 
-        static::withoutGlobalScope('belongsToUser')->create(['user_id' => $userId, 'reclutado_id' => $reclutadoId, 'habitat_id' => $habitatId]);
+        static::withoutGlobalScope('belongsToUser')->insertOrIgnore([
+            'user_id' => $userId,
+            'reclutado_id' => $reclutadoId,
+            'habitat_id' => $habitatId,
+            'created_at' => now(),
+        ]);
 
         return true;
     }

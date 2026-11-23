@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Src\Gimnasios\Domain\DataTransferObjects;
 
 use Src\Gimnasios\Domain\Collections\EtapaGimnasioCollection;
+use Src\Gimnasios\Domain\Collections\HabitatRecomendadoCollection;
 use Src\Shared\Tipos\TipoPokemon;
 
 /**
@@ -29,13 +30,14 @@ final readonly class DetalleGimnasio
         public readonly int $etapaActual,
         public readonly string $estado,
         public readonly EtapaGimnasioCollection $etapas,
+        public readonly HabitatRecomendadoCollection $habitatsRecomendados,
     ) {
     }
 
     /**
      * Frontera — shape exacto del contrato previo (claves snake_case).
      *
-     * @return array{slug: string, medalla: string, tipo: int, tipo_nombre: string, tipo_slug: string, tipo_medalla: string, tipo_color: string, nivel_minimo: int, nivel_jugador: int, etapa_actual: int, estado: string, etapas: list<array{etapa: int, nombre: string}>}
+     * @return array{slug: string, medalla: string, tipo: int, tipo_nombre: string, tipo_slug: string, tipo_medalla: string, tipo_color: string, nivel_minimo: int, nivel_jugador: int, etapa_actual: int, estado: string, etapas: list<array{etapa: int, nombre: string}>, habitats_recomendados: list<array{habitat_id: int, nombre: string, provincia: string, coincidencias: int, total: int, nivel_minimo: int}>}
      *
      * @deprecated Usar las propiedades tipadas.
      */
@@ -54,6 +56,7 @@ final readonly class DetalleGimnasio
             'etapa_actual' => $this->etapaActual,
             'estado' => $this->estado,
             'etapas' => $this->etapas->toArray(),
+            'habitats_recomendados' => $this->habitatsRecomendados->toArray(),
         ];
     }
 }

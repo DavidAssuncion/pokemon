@@ -173,7 +173,12 @@ final class GestorCicloTurnosBatalla
             $componente->processing = false;
         } else {
             $componente->processing = true;
-            $this->gestorAccion->prepararAnimacionIa($componente, $battle, $actor);
+            if (! $this->gestorAccion->prepararAnimacionIa($componente, $battle, $actor)) {
+                // El turno se cerró sin acción y ya se avanzó al siguiente
+                // actor: no reconstruir la cola con el estado anterior.
+                return;
+            }
+
             $componente->turnQueue = $this->colaTurnos->construir(
                 $battle,
                 $componente->actingRefId,

@@ -23,6 +23,8 @@ final class DTOPokemonFamilia
         public readonly int $speciesId,
         public readonly int $stage = 1,
         public readonly ?int $parentId = null,
+        public readonly ?int $minLevel = null,
+        public readonly bool $manual = false,
     ) {
     }
 
@@ -30,7 +32,7 @@ final class DTOPokemonFamilia
      * Frontera: retorna el array esperado por la API / blades.
      * El campo `level` se incluye solo cuando no es null (familias asignadas).
      *
-     * @return array{id: int, name: string, icon: string, level?: int, stage: int, parent_id: int|null, species_id: int}
+     * @return array{id: int, name: string, icon: string, level?: int, stage: int, parent_id: int|null, species_id: int, min_level: int|null, manual: bool}
      */
     public function toArray(): array
     {
@@ -47,6 +49,8 @@ final class DTOPokemonFamilia
         $data['stage'] = $this->stage;
         $data['parent_id'] = $this->parentId;
         $data['species_id'] = $this->speciesId;
+        $data['min_level'] = $this->minLevel;
+        $data['manual'] = $this->manual;
 
         return $data;
     }

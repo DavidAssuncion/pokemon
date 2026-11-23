@@ -302,6 +302,8 @@ final class GestorEfectosMovimiento
                     clave: $clave,
                     turnos: $turnos,
                     origenId: $accion->attacker->id(),
+                    movimientoSlug: $accion->move->slug,
+                    movimientoNombre: $accion->move->nombre,
                     fraccionDano: match ($clave) {
                         ClaveCondicion::DRENADORAS => 0.125,
                         ClaveCondicion::MALDICION => 0.0625,

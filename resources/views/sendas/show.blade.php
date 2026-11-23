@@ -203,6 +203,16 @@
                                         </div>
                                         <div class="mt-1 flex flex-wrap items-center gap-x-1.5 text-3xs text-ink-subtle">
                                             <span x-text="etiquetaCategoria(nodo.category)"></span>
+                                            <template x-if="nodo.objetivo_multiple">
+                                                <span
+                                                    class="inline-flex items-center rounded-full border px-1.5 py-0.5 text-2xs font-bold leading-none"
+                                                    :class="nodo.objetivo_incluye_aliados
+                                                        ? 'border-danger bg-danger-soft text-danger-ink'
+                                                        : (nodo.objetivo_es_fila ? 'border-info bg-info-soft text-info-ink' : 'border-warning bg-warning-soft text-warning-ink')"
+                                                    :title="nodo.objetivo_label"
+                                                    x-text="nodo.objetivo_corto"
+                                                ></span>
+                                            </template>
                                             <span x-show="nodo.base_power > 0" x-text="'· ' + nodo.base_power + ' pot.'"></span>
                                             <template x-if="nodo.es_maestria">
                                                 <span class="rounded-full border border-info bg-info-soft px-1.5 py-0.5 text-2xs font-bold text-info-ink" x-text="'Maestría · tramo ' + nodo.tramo"></span>

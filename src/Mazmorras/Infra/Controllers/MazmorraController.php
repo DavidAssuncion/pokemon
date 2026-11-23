@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Src\Mazmorras\Infra\Controllers;
 
-use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -12,7 +11,7 @@ use Illuminate\Validation\Rule;
 use Src\Mazmorras\App\IniciarCombateMazmorra;
 use Src\Mazmorras\App\ObtenerPisosMazmorra;
 
-class MazmorraController extends Controller
+class MazmorraController
 {
     public function __construct(
         private readonly ObtenerPisosMazmorra $obtenerPisos,

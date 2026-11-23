@@ -21,6 +21,7 @@ use Src\Equipos\App\AgregarMiembroEquipo;
 use Src\Equipos\App\EliminarEquipo;
 use Src\Equipos\App\QuitarMiembroEquipo;
 use Src\Equipos\Domain\ValueObjects\ObjetosEquipo;
+use Src\Exploraciones\Domain\RolExploracion;
 use Src\Shared\Domain\ReglasEquipo;
 
 /**
@@ -98,7 +99,7 @@ class TeamController extends Controller
             'reclutado_id' => ['required', Rule::exists('reclutados', 'id')->where('user_id', Auth::id())],
             // Equipos estándar de 3 (combates 3v3 y mazmorra 3v1).
             'slot' => 'required|integer|min:'.ReglasEquipo::SLOT_MIN.'|max:'.ReglasEquipo::SLOT_MAX,
-            'behavior' => 'required|in:VANGUARDIA,COMBATIENTE,RECOLECTOR,RASTREADOR',
+            'behavior' => ['required', Rule::enum(RolExploracion::class)],
             // Permite sustituir al miembro que ocupa el slot cuando el equipo está completo.
             'replace' => 'sometimes|boolean',
         ]);
@@ -281,7 +282,7 @@ class TeamController extends Controller
         abort_unless($member->team?->user_id === Auth::id(), 404);
 
         $data = $request->validate([
-            'behavior' => 'required|in:VANGUARDIA,COMBATIENTE,RECOLECTOR,RASTREADOR',
+            'behavior' => ['required', Rule::enum(RolExploracion::class)],
         ]);
 
         $this->actualizarRol->ejecutar($member, (string) $data['behavior']);

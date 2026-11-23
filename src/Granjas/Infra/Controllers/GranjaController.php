@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Src\Granjas\Infra\Controllers;
 
-use App\Http\Controllers\Controller;
 use App\Support\DesbloqueoPokedex;
 use Illuminate\Contracts\Auth\Guard;
 use Illuminate\Http\JsonResponse;
@@ -17,7 +16,7 @@ use Src\Granjas\App\ObtenerGranja;
 use Src\Granjas\App\PlantarBaya;
 use Src\Granjas\Infra\Requests\PlantarBayaRequest;
 
-final class GranjaController extends Controller
+final class GranjaController
 {
     public function __construct(
         private readonly ObtenerGranja $obtenerGranja,

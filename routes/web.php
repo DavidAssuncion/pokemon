@@ -17,7 +17,7 @@ Route::middleware('guest')->group(function (): void {
 
 Route::middleware('auth')->group(function (): void {
     Route::get('/', [HabitatsController::class, 'index']);
-    Route::get('/habitats', [HabitatsController::class, 'index']);
+    Route::get('/habitats', [HabitatsController::class, 'index'])->name('habitats.index');
 
     Route::get('/iconos/{filename}', [IconoController::class, 'show']);
     Route::get('/iconos/shiny/{filename}', [IconoController::class, 'shiny']);
@@ -41,11 +41,13 @@ Route::middleware('auth')->group(function (): void {
     require __DIR__.'/datagrid.php';
     require __DIR__.'/entrenadores.php';
     require __DIR__.'/gimnasios.php';
+    require __DIR__.'/habitats_temporales.php';
     require __DIR__.'/mazmorras.php';
     require __DIR__.'/huevos.php';
     require __DIR__.'/granjas.php';
     require __DIR__.'/forja.php';
     require __DIR__.'/ruta.php';
+    require __DIR__.'/avistamientos.php';
 });
 
 // QA/debug — fuera del grupo auth: `solo-local` se evalúa antes de autenticar.

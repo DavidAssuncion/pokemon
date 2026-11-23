@@ -76,7 +76,7 @@ final class VitalidadCombatiente
 
     public function setHpActual(float $hpActual): void
     {
-        $this->hpActual = $hpActual;
+        $this->hpActual = max(0.0, $hpActual);
     }
 
     public function setDefensaHpActual(float $defensaHpActual): void
@@ -125,7 +125,13 @@ final class VitalidadCombatiente
             $multiplicadorSalud,
         );
 
-        $this->hpActual = max(0.0, $this->hpActual - $resultado->danoHp);
+        $this->hpActual = $this->hpActual - $resultado->danoHp;
+
+        // Evita que un residuo de coma flotante deje al Pokémon "vivo" con 0 PS
+        // mostrados y siga recibiendo clima/estado en la misma ronda.
+        if ($this->hpActual < 0.0001) {
+            $this->hpActual = 0.0;
+        }
 
         if ($isSpecial) {
             $this->defensaEspHpActual = max(0.0, $this->defensaEspHpActual - $resultado->danoEscudo);
@@ -158,7 +164,10 @@ final class VitalidadCombatiente
             $multiplicadorSalud,
         );
 
-        $this->hpActual = max(0.0, $this->hpActual - $fisico->danoHp - $especial->danoHp);
+        $this->hpActual = $this->hpActual - $fisico->danoHp - $especial->danoHp;
+        if ($this->hpActual < 0.0001) {
+            $this->hpActual = 0.0;
+        }
         $this->defensaHpActual = max(0.0, $this->defensaHpActual - $fisico->danoEscudo);
         $this->defensaEspHpActual = max(0.0, $this->defensaEspHpActual - $especial->danoEscudo);
 

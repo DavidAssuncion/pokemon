@@ -26,6 +26,8 @@ final class BatallaVistaPresenter
      * @param  list<string>  $log
      * @param  list<array<string, mixed>>  $eventos
      * @param  array<string, mixed>  $rewards
+     * @param  list<array{clave: string, label: string, acumulaciones: int}>  $trampas1
+     * @param  list<array{clave: string, label: string, acumulaciones: int}>  $trampas2
      * @return array{
      *     team1Vista: list<array<string, mixed>>,
      *     team2Vista: list<array<string, mixed>>,
@@ -35,7 +37,9 @@ final class BatallaVistaPresenter
      *     rewardsVista: array<string, mixed>|null,
      *     refsAliado: list<string>,
      *     aliadosSeleccionables: bool,
-     *     actorAdmiteAliado: bool
+     *     actorAdmiteAliado: bool,
+     *     trampas1: list<array{clave: string, label: string, acumulaciones: int}>,
+     *     trampas2: list<array{clave: string, label: string, acumulaciones: int}>
      * }
      */
     public static function toView(
@@ -57,6 +61,8 @@ final class BatallaVistaPresenter
         string $objetivosItem = '',
         bool $actorAdmiteAliado = false,
         bool $actorAutoobjetivoSeleccionable = false,
+        array $trampas1 = [],
+        array $trampas2 = [],
     ): array {
         $faseSeleccion = in_array($phase, ['player_target', 'player_move', 'player_item_target'], true);
         $ventanaActiva = $animAttackerId !== '';
@@ -108,6 +114,8 @@ final class BatallaVistaPresenter
             'refsAliado' => $refsAliado,
             'aliadosSeleccionables' => $refsAliado !== [],
             'actorAdmiteAliado' => $actorAdmiteAliado,
+            'trampas1' => $trampas1,
+            'trampas2' => $trampas2,
         ];
     }
 
@@ -198,7 +206,6 @@ final class BatallaVistaPresenter
                 && ! (bool) ($p['canTarget'] ?? true);
             $p['acting'] = ($p['refId'] ?? '') === $actingRefId;
             $p['targeted'] = ($p['refId'] ?? '') === $selectedTargetRefId;
-            $p['animAtacante'] = ($p['refId'] ?? '') === $animAttackerId;
 
             $clases = [
                 'card',
@@ -230,9 +237,19 @@ final class BatallaVistaPresenter
             if ($p['hpCritica'] === true) {
                 $clases[] = 'hp-critico';
             }
-            if ($p['animAtacante'] === true) {
-                $clases[] = 'anim-ataque';
+
+            foreach ([
+                'giro_fuego' => 'condicion-giro-fuego',
+                'drenadoras' => 'condicion-drenadoras',
+                'maldicion' => 'condicion-maldicion',
+            ] as $condicion => $clase) {
+                if (in_array($condicion, $p['condiciones'] ?? [], true)) {
+                    $clases[] = $clase;
+                }
             }
+
+            // La embestida genérica (.anim-ataque) se retiró: la animación
+            // específica del movimiento la sustituye.
 
             $p['claseCarta'] = implode(' ', $clases);
         }

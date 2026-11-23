@@ -161,21 +161,21 @@ composición regional es deliberada: Kanto y Johto cubren 16 tipos, y Piers (Gal
 | `bug` | Bicho | 10 | Bugsy | `bugsy` |
 | `poison` | Veneno | 15 | Koga | `koga` |
 | `normal` | Normal | 20 | Whitney | `whitney` |
-| `grass` | Planta | 25 | Erika | `erika` |
+| `electric` | Eléctrico | 25 | Teniente Surge | `ltsurge` |
 | `flying` | Volador | 31 | Falkner | `falkner` |
 | `rock` | Roca | 36 | Brock | `brock` |
-| `electric` | Eléctrico | 41 | Teniente Surge | `ltsurge` |
-| `ice` | Hielo | 46 | Pryce | `pryce` |
-| `fire` | Fuego | 52 | Blaine | `blaine` |
-| `water` | Agua | 57 | Misty | `misty` |
-| `ground` | Tierra | 62 | Giovanni | `giovanni` |
-| `psychic` | Psíquico | 67 | Sabrina | `sabrina` |
-| `dark` | Siniestro | 73 | Piers | `piers` |
-| `ghost` | Fantasma | 78 | Morty | `morty` |
-| `fighting` | Lucha | 83 | Chuck | `chuck` |
-| `fairy` | Hada | 88 | Valerie | `valerie` |
-| `steel` | Acero | 94 | Jasmine | `jasmine` |
-| `dragon` | Dragón | 100 | Clair | `clair` |
+| `grass` | Planta | 41 | Erika | `erika` |
+| `fire` | Fuego | 46 | Blaine | `blaine` |
+| `water` | Agua | 52 | Misty | `misty` |
+| `ground` | Tierra | 57 | Giovanni | `giovanni` |
+| `psychic` | Psíquico | 62 | Sabrina | `sabrina` |
+| `dark` | Siniestro | 67 | Piers | `piers` |
+| `ghost` | Fantasma | 73 | Morty | `morty` |
+| `fighting` | Lucha | 78 | Chuck | `chuck` |
+| `ice` | Hielo | 83 | Pryce | `pryce` |
+| `dragon` | Dragón | 88 | Clair | `clair` |
+| `fairy` | Hada | 94 | Valerie | `valerie` |
+| `steel` | Acero | 100 | Jasmine | `jasmine` |
 
 El sprite se resuelve en presentación con `App\Support\UI\SpritesEntrenador` y el manifiesto
 `resources/data/entrenadores_sprites.json` (`gimnasios[slug].etapas[4]`); el dominio no conoce

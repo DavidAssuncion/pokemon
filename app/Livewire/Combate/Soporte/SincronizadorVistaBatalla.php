@@ -9,6 +9,8 @@ use App\Livewire\Presenters\DebugCombatientePresenter;
 use Src\Battle\App\ObtenerOpcionesObjeto;
 use Src\Battle\Domain\AgregadoBatalla;
 use Src\Battle\Domain\Combatiente;
+use Src\Battle\Domain\Effects\Equipo\EfectoEquipoTrampa;
+use Src\Battle\Domain\EquipoBatalla;
 
 /**
  * Proyecta el agregado al estado público del componente sin consumir dos
@@ -68,7 +70,31 @@ final class SincronizadorVistaBatalla
             team1: $team1,
             team2: $team2,
             objetosCombate: $objetosCombate,
+            trampas1: $this->trampas($battle->team1),
+            trampas2: $this->trampas($battle->team2),
         );
+    }
+
+    /**
+     * @return list<array{clave: string, label: string, acumulaciones: int}>
+     */
+    private function trampas(EquipoBatalla $equipo): array
+    {
+        $trampas = [];
+
+        foreach ($equipo->efectos()->all() as $efecto) {
+            if (! $efecto instanceof EfectoEquipoTrampa) {
+                continue;
+            }
+
+            $trampas[] = [
+                'clave' => $efecto->obtenerClave(),
+                'label' => $efecto->label(),
+                'acumulaciones' => $efecto->acumulaciones,
+            ];
+        }
+
+        return $trampas;
     }
 
     /**

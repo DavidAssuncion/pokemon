@@ -9,6 +9,7 @@ use App\Models\Habitat;
 use App\Models\Pokemon;
 use App\Models\PokemonEvolution;
 use App\Models\PokemonType;
+use Illuminate\Support\Facades\DB;
 use Src\Habitats\Domain\Collections\EvolucionCadenaCollection;
 use Src\Habitats\Domain\Collections\MiembrosCadenaCollection;
 use Src\Habitats\Domain\Collections\PokemonCadenaCollection;
@@ -37,19 +38,30 @@ trait CadenasFamiliaHabitatsTrait
         );
     }
 
-    protected function buildAvailableFamilyFromChain(int $chainId, MiembrosCadenaCollection $members): ?DTOFamiliaDisponible
+    /**
+     * @param  array<int, array{level: int, min_level: int|null, manual: bool}>|null  $pivotes
+     */
+    protected function buildAvailableFamilyFromChain(int $chainId, MiembrosCadenaCollection $members, ?array $pivotes = null): ?DTOFamiliaDisponible
     {
         $totalStages = $this->resolvedor()->totalStages($members);
 
-        $reparto = $this->resolvedor()->splitFamilyMembers($members, fn (MiembroCadena $member): DTOPokemonFamilia => new DTOPokemonFamilia(
-            id: $member->id,
-            name: $member->nombre,
-            icon: $this->iconPath($member->id),
-            level: $this->resolvedor()->levelForStage($member->stage, $totalStages),
-            speciesId: $member->speciesId,
-            stage: $member->stage,
-            parentId: $member->parentId,
-        ));
+        $reparto = $this->resolvedor()->splitFamilyMembers($members, function (MiembroCadena $member) use ($totalStages, $pivotes): DTOPokemonFamilia {
+            $pivote = $pivotes[$member->id] ?? null;
+
+            return new DTOPokemonFamilia(
+                id: $member->id,
+                name: $member->nombre,
+                icon: $this->iconPath($member->id),
+                level: $pivote !== null
+                    ? $pivote['level']
+                    : $this->resolvedor()->levelForStage($member->stage, $totalStages),
+                speciesId: $member->speciesId,
+                stage: $member->stage,
+                parentId: $member->parentId,
+                minLevel: $pivote['min_level'] ?? null,
+                manual: $pivote['manual'] ?? false,
+            );
+        });
 
         $base = $reparto->base;
         $evolutions = $reparto->evoluciones;
@@ -166,8 +178,39 @@ trait CadenasFamiliaHabitatsTrait
         return "/images/iconos_webp/{$pokemonId}.webp";
     }
 
-    protected function minLvlNullable(mixed $valor): ?int
+    /**
+     * Pivotes reales (tier, min_level, manual) de un hábitat para los Pokémon
+     * indicados, indexados por pokemon_id. Sin `$pokemonIds` carga todos los
+     * del hábitat.
+     *
+     * @param  list<int>|null  $pokemonIds
+     * @return array<int, array{level: int, min_level: int|null, manual: bool}>
+     */
+    protected function pivotesDeHabitat(int $habitatId, ?array $pokemonIds = null): array
     {
-        return $valor !== null ? (int) $valor : null;
+        if ($pokemonIds === []) {
+            return [];
+        }
+
+        $pivotes = [];
+
+        $query = DB::table('pokemon_habitat')
+            ->where('habitat_id', $habitatId);
+
+        if ($pokemonIds !== null) {
+            $query->whereIn('pokemon_id', $pokemonIds);
+        }
+
+        $rows = $query->get(['pokemon_id', 'level', 'min_level', 'manual']);
+
+        foreach ($rows as $row) {
+            $pivotes[(int) $row->pokemon_id] = [
+                'level' => (int) $row->level,
+                'min_level' => $row->min_level !== null ? (int) $row->min_level : null,
+                'manual' => (bool) $row->manual,
+            ];
+        }
+
+        return $pivotes;
     }
 }

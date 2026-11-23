@@ -56,6 +56,15 @@
                                 </div>
                             </div>
 
+                            @if(!empty($move['objetivoMultiple']))
+                                <div class="d-flex flex-wrap gap-1">
+                                    <span class="badge {{ ($move['objetivoIncluyeAliados'] ?? false) ? 'bg-danger text-on-danger' : (($move['objetivoEsFila'] ?? false) ? 'bg-info-soft text-info-ink' : 'bg-warning text-on-warning') }} move-target"
+                                          title="{{ $move['objetivoLabel'] ?? '' }}">
+                                        {{ $move['objetivoCorto'] ?? '' }}
+                                    </span>
+                                </div>
+                            @endif
+
                             {{-- Movimiento de apoyo sobre un aliado: se muestra el efecto y nunca la fila de daño. --}}
                             @if($move['modoAliado'])
                                 <div class="d-flex flex-wrap align-items-center gap-1">

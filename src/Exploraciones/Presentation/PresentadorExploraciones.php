@@ -14,7 +14,6 @@ use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Collection as BaseCollection;
 use Src\Exploraciones\App\ConsultorEstadoExpedicion;
 use Src\Exploraciones\App\FormateadorTiempoRestante;
-use Src\Exploraciones\Domain\CalculadorFinExploracion;
 use Src\Exploraciones\Domain\CalculadorVueltaExploracion;
 use Src\Exploraciones\Domain\EstadoExpedicion;
 use Src\Shared\Domain\Items\CatalogoItems;
@@ -143,6 +142,29 @@ final class PresentadorExploraciones
     }
 
     /**
+     * Explorador y diario de una expedición, con el mismo contrato en las
+     * tarjetas activas y terminadas.
+     *
+     * @param  array<array-key, string>  $nombres
+     * @return array{explorador: array<string, mixed>, diario: array<string, mixed>}
+     */
+    private function exploradorYDiario(ExploracionActiva $exp, array $nombres): array
+    {
+        $eventos = $this->eventosDe($exp)->all();
+        $explorador = ExploradorVista::toView($exp->reclutado, $eventos);
+
+        return [
+            'explorador' => $explorador,
+            'diario' => DiarioExploracion::toView(
+                $eventos,
+                $nombres,
+                $explorador['nombre'],
+                completarStats: true,
+            ),
+        ];
+    }
+
+    /**
      * @param  array<string, mixed>  $evento
      * @return list<int>
      */
@@ -236,9 +258,7 @@ final class PresentadorExploraciones
         $reclutado = $exp->reclutado;
         $habitat = $exp->habitat;
 
-        $eventos = $this->eventosDe($exp)->all();
-        $explorador = ExploradorVista::toView($reclutado, $eventos);
-        $diario = DiarioExploracion::toView($eventos, $nombres, $explorador['nombre'], completarStats: true);
+        ['explorador' => $explorador, 'diario' => $diario] = $this->exploradorYDiario($exp, $nombres);
 
         return array_merge([
             '_vista' => true,
@@ -403,9 +423,7 @@ final class PresentadorExploraciones
         $perdidas = $this->eventosDe($exp)->get('objetos_perdidos', []);
         $perdidas = is_array($perdidas) ? $perdidas : [];
 
-        $eventos = $this->eventosDe($exp)->all();
-        $explorador = ExploradorVista::toView($reclutado, $eventos);
-        $diario = DiarioExploracion::toView($eventos, $nombres, $explorador['nombre'], completarStats: true);
+        ['explorador' => $explorador, 'diario' => $diario] = $this->exploradorYDiario($exp, $nombres);
 
         $vista = ResultadoExploracionVista::toView([
             'id' => $exp->id,
@@ -679,32 +697,6 @@ final class PresentadorExploraciones
     }
 
     /**
-     * Transforma una tarjeta ya construida (útil para pruebas de vista o
-     * payloads legacy) sin depender del modelo Eloquent.
-     *
-     * @param  array<string, mixed>  $terminada
-     * @return array<string, mixed>
-     */
-    public function terminadaToView(array $terminada): array
-    {
-        if (($terminada['_vista'] ?? false) === true) {
-            return $terminada;
-        }
-
-        return ResultadoExploracionVista::toView($terminada);
-    }
-
-    /**
-     * @param  array<string, mixed>  $evento
-     * @param  array<array-key, string>  $nombres
-     * @return array<string, mixed>
-     */
-    public function transformarEvento(array $evento, array $nombres): array
-    {
-        return EventoExploracionVista::toView($evento, $nombres, completarStats: true);
-    }
-
-    /**
      * Nivel mínimo de jugador requerido por el hábitat para el nivel de
      * exploración dado (null = sin restricción). Lo consume el badge
      * "Requiere Nv X" de la vista de exploraciones.
@@ -712,11 +704,6 @@ final class PresentadorExploraciones
     public function minLvlDelHabitat(?Habitat $habitat, int $nivel): ?int
     {
         return $habitat?->minLvlParaNivel($nivel);
-    }
-
-    public function finExploracion(ExploracionActiva $exp, CarbonInterface $inicio): ?CarbonInterface
-    {
-        return CalculadorFinExploracion::calcular($exp->hora_limite, $exp->duracion_horas, $inicio);
     }
 
     public function inicioVuelta(CarbonInterface $inicio, ?CarbonInterface $fin): ?CarbonInterface

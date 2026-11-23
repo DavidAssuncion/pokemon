@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Src\Gimnasios\Infra\Controllers;
 
-use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -15,7 +14,7 @@ use Src\Gimnasios\App\IniciarCombateGimnasio;
 use Src\Gimnasios\App\ObtenerGimnasioDetalle;
 use Src\Gimnasios\App\ObtenerGimnasios;
 
-class GimnasioController extends Controller
+class GimnasioController
 {
     public function __construct(
         private readonly ObtenerGimnasios $obtenerGimnasios,

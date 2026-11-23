@@ -68,6 +68,10 @@ class GeneradorEquipoEntrenador
         ?PerfilIvsEvs $perfil = null,
         array $movimientosDesbloqueados = [],
     ): DatosPokemonBatallaCollection {
+        if (Habitat::sinSpawns($habitatId)) {
+            return new DatosPokemonBatallaCollection();
+        }
+
         $pool = $this->poolDelHabitat($habitatId, $nivel);
         if ($pool === []) {
             return new DatosPokemonBatallaCollection();
@@ -111,6 +115,10 @@ class GeneradorEquipoEntrenador
     }
 
     /**
+     * Pool completo del hábitat/nivel. Los entrenadores pueden usar Pokémon
+     * que el jugador aún no puede avistar: su nivel solo condiciona el acceso
+     * al nivel, no el roster del rival.
+     *
      * @return list<Pokemon>
      */
     private function poolDelHabitat(int $habitatId, int $nivel): array

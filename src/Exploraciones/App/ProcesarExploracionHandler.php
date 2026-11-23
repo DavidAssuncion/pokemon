@@ -27,6 +27,7 @@ use Src\Shared\Bus\Command;
 use Src\Shared\Bus\CommandBus;
 use Src\Shared\Bus\CommandHandler;
 use Src\Shared\Domain\EscaladorNivelRival;
+use Src\Shared\Domain\Ports\FactorAparicion;
 use Src\Shared\Domain\Ports\Reloj;
 use Src\Shared\Domain\Random\GeneradorAleatorioPredeterminado;
 use Src\Shared\Domain\Time\RelojPredeterminado;
@@ -71,12 +72,13 @@ final class ProcesarExploracionHandler implements CommandHandler
         ?ResolverBonosFamilia $bonosFamilia = null,
         ?EsDelHabitat $esDelHabitat = null,
         ?Reloj $reloj = null,
+        ?FactorAparicion $factorAparicion = null,
     ) {
         $this->aleatorio = $aleatorio !== null ? Closure::fromCallable($aleatorio) : self::aleatorioPredeterminado();
         $this->reloj = $reloj ?? new RelojPredeterminado();
         $this->mapeador = new MapeadorVentanaExploracion($this->reloj);
         $this->bonos = new GestorBonosHabitat($esDelHabitat);
-        $this->pool = new CargadorPoolHabitat($bonosFamilia);
+        $this->pool = new CargadorPoolHabitat($bonosFamilia, $factorAparicion);
         $this->gestor = $this->crearGestor($combate, $escalador);
     }
 

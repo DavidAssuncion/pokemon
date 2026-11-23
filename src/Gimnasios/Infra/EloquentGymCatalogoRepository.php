@@ -26,10 +26,14 @@ final class EloquentGymCatalogoRepository implements GymCatalogoRepositoryInterf
 {
     public function obtenerTodos(): GimnasioCollection
     {
-        $gyms = Gym::query()->with('stages')->get();
+        $gyms = Gym::with('stages')->get();
 
-        return new GimnasioCollection(
+        $gimnasios = new GimnasioCollection(
             $gyms->map(fn (Gym $model): Gimnasio => $this->desdeModelo($model))->values()->all()
+        );
+
+        return $gimnasios->sort(
+            static fn (Gimnasio $a, Gimnasio $b): int => [$a->nivelMinimo, $a->slug] <=> [$b->nivelMinimo, $b->slug],
         );
     }
 
@@ -46,13 +50,9 @@ final class EloquentGymCatalogoRepository implements GymCatalogoRepositoryInterf
 
     public function indiceDe(string $slug): int
     {
-        $gimnasios = $this->obtenerTodos()->sort(
-            static fn (Gimnasio $a, Gimnasio $b): int => [$a->nivelMinimo, $a->slug] <=> [$b->nivelMinimo, $b->slug],
-        );
-
         $posicion = array_search(
             $slug,
-            $gimnasios->pluck(static fn (Gimnasio $gimnasio): string => $gimnasio->slug),
+            $this->obtenerTodos()->pluck(static fn (Gimnasio $gimnasio): string => $gimnasio->slug),
             true,
         );
 

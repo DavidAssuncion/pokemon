@@ -30,6 +30,8 @@ class EjecutorTenaza extends EjecutorMovimientoAbstracto
             clave: ClaveCondicion::ATRAPADO,
             turnos: $turnos,
             origenId: $accion->attacker->id(),
+            movimientoSlug: $accion->move->slug,
+            movimientoNombre: $accion->move->nombre,
             fraccionDano: 0.125,
             esFisico: true,
         ));

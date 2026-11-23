@@ -17,6 +17,7 @@ use App\Support\Pc\CalculadoraPcReclutado;
 use App\Support\Pc\EstadisticasBasePokemon;
 use App\Support\Piezas\PiezasReclutado;
 use App\Support\Piezas\SlotsPiezas;
+use Src\Battle\Domain\Enums\ObjetivoMovimiento;
 use Src\Pokemon\Domain\Stats\BattleStats;
 use Src\Pokemon\Domain\Stats\StatsValue;
 use Src\Shared\Domain\NivelHelper;
@@ -199,6 +200,7 @@ final class ReclutadoSerializer
             ))
             ->sortBy([
                 static fn (array $a, array $b): int => $prioridadOrigen[$a['origen']] <=> $prioridadOrigen[$b['origen']],
+                static fn (array $a, array $b): int => self::prioridadDesbloqueo($a) <=> self::prioridadDesbloqueo($b),
                 static fn (array $a, array $b): int => self::nivelOrden($a) <=> self::nivelOrden($b),
                 static fn (array $a, array $b): int => $a['type_id'] <=> $b['type_id'],
                 static fn (array $a, array $b): int => self::ordenCategoria($a['category']) <=> self::ordenCategoria($b['category']),
@@ -294,6 +296,8 @@ final class ReclutadoSerializer
             && ! $desbloqueadoPorSenda
             && $nivelRequerido !== null
             && $nivelRequerido > $nivel;
+        $objetivo = ObjetivoMovimiento::tryFrom($move->target)
+            ?? ObjetivoMovimiento::NORMAL;
 
         return [
             'slug' => $move->slug,
@@ -313,7 +317,29 @@ final class ReclutadoSerializer
             'senda_desbloqueada' => $desbloqueadoPorSenda,
             'origen' => $esNivel ? 'nivel' : 'senda',
             'category' => $move->category,
+            'objetivo' => $objetivo->value,
+            'objetivo_label' => $objetivo->etiquetaAlcance(),
+            'objetivo_corto' => $objetivo->etiquetaCortaAlcance(),
+            'objetivo_multiple' => $objetivo->esMultiobjetivo(),
+            'objetivo_incluye_aliados' => $objetivo->incluyeAliados(),
+            'objetivo_es_fila' => $objetivo->esFila(),
         ];
+    }
+
+    /**
+     * Dentro de la sección de Sendas, los movimientos ya desbloqueados ocupan
+     * las primeras posiciones. Los movimientos de nivel conservan su orden
+     * propio, que depende únicamente del nivel requerido.
+     *
+     * @param  array<string, mixed>  $movimiento
+     */
+    private static function prioridadDesbloqueo(array $movimiento): int
+    {
+        if (($movimiento['origen'] ?? null) !== 'senda') {
+            return 0;
+        }
+
+        return ($movimiento['desbloqueado'] ?? false) === true ? 0 : 1;
     }
 
     /**

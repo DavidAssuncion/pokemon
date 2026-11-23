@@ -187,6 +187,14 @@ final class MotorRondas
         foreach ($batalla->turnManager()->combatientesVivos() as $c) {
             $c->effects()->triggerRoundEnd($c, $batalla);
 
+            // Un efecto de fin de ronda puede dejar KO al combatiente. No debe
+            // seguir recibiendo condiciones, estado ni daño de clima.
+            if (! $c->estaVivo()) {
+                $c->avanzarMultiplicadoresTemporales();
+
+                continue;
+            }
+
             if (! $this->equipoProtegido($batalla, $c)) {
                 $this->aplicarDanioIndirecto($batalla, $c, $obtenerCalculador);
             }
@@ -205,15 +213,28 @@ final class MotorRondas
         Combatiente $c,
         callable $obtenerCalculador,
     ): void {
+        if (! $c->estaVivo()) {
+            return;
+        }
+
         (new ProcesadorCondicionesRonda())->procesar($batalla, $c);
 
+        if (! $c->estaVivo()) {
+            return;
+        }
+
         // Daño por estado al final de la ronda
-        $dañoStatus = $c->aplicarDañoStatus();
+        $dañoStatus = 0;
+        $batalla->medirResiduo($c, 'estado', $c->estado()->label(), function () use ($c, &$dañoStatus): void {
+            $dañoStatus = $c->aplicarDañoStatus();
+        });
         if ($dañoStatus > 0) {
             $label = $c->estado()->label();
             $batalla->agregarLog("{$c->nombre()} sufre {$dañoStatus} de daño por {$label}");
             if (! $c->estaVivo()) {
                 $batalla->agregarLog("¡{$c->nombre()} se ha debilitado por {$label}!");
+
+                return;
             }
         }
 
@@ -221,7 +242,9 @@ final class MotorRondas
         $calculadorClima = $obtenerCalculador();
         $dañoClima = $calculadorClima->calcular($c, $batalla->weather());
         if ($dañoClima > 0) {
-            $c->recibirDaño($dañoClima, false);
+            $batalla->medirResiduo($c, 'clima', $batalla->weather()->label(), function () use ($c, $dañoClima): void {
+                $c->recibirDaño($dañoClima, false);
+            });
             $climaLabel = $batalla->weather()->label();
             $batalla->agregarLog("{$c->nombre()} sufre {$dañoClima} de daño por {$climaLabel}");
             if (! $c->estaVivo()) {

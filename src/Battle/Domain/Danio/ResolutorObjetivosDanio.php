@@ -30,7 +30,10 @@ final class ResolutorObjetivosDanio
                 return $rival?->combatientesCollection()->vivos() ?? new CombatientesCollection();
             }
 
-            if ($objetivo === ObjetivoMovimiento::ALL_ADJACENT || $objetivo === ObjetivoMovimiento::ALL) {
+            // ALL identifica movimientos de campo/tiempo (Danza Lluvia, Día
+            // Soleado, Trick Room…): no deben repartirse como ataque entre los
+            // combatientes ni disparar reacciones de aliados.
+            if ($objetivo === ObjetivoMovimiento::ALL_ADJACENT) {
                 $defensores = [];
                 foreach ([$battle->equipoDe($accion->attacker), $rival] as $equipo) {
                     if ($equipo === null) {

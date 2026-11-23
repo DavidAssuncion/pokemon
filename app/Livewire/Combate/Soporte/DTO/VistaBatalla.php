@@ -14,6 +14,8 @@ final readonly class VistaBatalla
      * @param  list<array<string, mixed>>  $team1
      * @param  list<array<string, mixed>>  $team2
      * @param  list<array<string, mixed>>  $objetosCombate
+     * @param  list<array{clave: string, label: string, acumulaciones: int}>  $trampas1
+     * @param  list<array{clave: string, label: string, acumulaciones: int}>  $trampas2
      */
     public function __construct(
         public string $weather,
@@ -21,6 +23,8 @@ final readonly class VistaBatalla
         public array $team1,
         public array $team2,
         public array $objetosCombate,
+        public array $trampas1 = [],
+        public array $trampas2 = [],
     ) {
     }
 }

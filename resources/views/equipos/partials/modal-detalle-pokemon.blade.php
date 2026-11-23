@@ -59,6 +59,97 @@
                     <div class="grid grid-cols-1 xl:grid-cols-3 gap-4">
                         <!-- Columna 2/3: evolución, habilidades y movimientos -->
                         <div class="xl:col-span-2 space-y-4">
+                            <!-- Formas/versiones (Deoxys, Giratina, Gardevoir/Gallade) -->
+                            <template x-if="detailVersiones.length > 1">
+                                <div class="rounded-panel border border-line bg-surface-sunken p-4">
+                                    <h4 class="text-sm font-bold uppercase tracking-wide text-ink-muted mb-2">Formas</h4>
+                                    <p class="mb-3 text-3xs text-ink-muted">
+                                        La forma original siempre está disponible. Las demás se desbloquean una vez pagando la exp de tipo
+                                        equivalente a Nv <span class="font-semibold" x-text="versionesNivelObjetivo"></span>; después puedes
+                                        cambiar gratis cuando quieras.
+                                    </p>
+                                    <p x-show="versionFeedback.mensaje" x-cloak role="alert"
+                                       :class="versionFeedback.tipo === 'error'
+                                           ? 'border-danger bg-danger-soft text-danger-ink'
+                                           : 'border-success bg-success-soft text-success-ink'"
+                                       class="mb-3 rounded-control border px-3 py-2 text-xs"
+                                       x-text="versionFeedback.mensaje"></p>
+                                    <div class="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                                        <template x-for="version in detailVersiones" :key="version.pokemon_id">
+                                            <div class="rounded-control border-2 p-2 text-center"
+                                                 :class="version.actual ? 'border-primary bg-primary-soft' : 'border-line bg-surface'">
+                                                <x-sprite
+                                                    size="96"
+                                                    wrapper-class="mx-auto"
+                                                    x-bind:src="version.imagen"
+                                                    x-bind:alt="version.nombre"
+                                                />
+                                                <p class="mt-1 truncate text-2xs font-semibold text-ink" x-text="version.nombre"></p>
+                                                <p class="text-3xs text-primary-ink" x-show="version.actual">Actual</p>
+                                                <p class="text-3xs text-ink-muted" x-show="!version.actual && version.original">Original</p>
+
+                                                <template x-if="!version.actual && version.desbloqueada">
+                                                    <button type="button"
+                                                            @click="cambiarVersion(version)"
+                                                            :disabled="detailLoading"
+                                                            class="mt-2 w-full rounded-control bg-primary px-2 py-1 text-2xs font-bold text-on-primary transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-40">
+                                                        Cambiar
+                                                    </button>
+                                                </template>
+
+                                                <template x-if="!version.desbloqueada">
+                                                    <div class="mt-2 space-y-1">
+                                                        <template x-for="req in (version.requisitos || [])" :key="req.slug">
+                                                            <div>
+                                                                <div class="flex items-center justify-between text-3xs text-ink-muted">
+                                                                    <span x-text="req.tipo"></span>
+                                                                    <span x-text="formatExp(req.actual) + ' / ' + formatExp(req.necesario)"></span>
+                                                                </div>
+                                                                <div class="h-1.5 w-full overflow-hidden rounded-full bg-surface-sunken"
+                                                                     role="progressbar"
+                                                                     :aria-valuenow="porcentajeExpRequisito(req)"
+                                                                     aria-valuemin="0" aria-valuemax="100">
+                                                                    <div class="h-full rounded-full bg-primary transition-all duration-500"
+                                                                         :style="'width: ' + porcentajeExpRequisito(req) + '%'"></div>
+                                                                </div>
+                                                                <div class="mt-1 flex items-center justify-center gap-1">
+                                                                    <span class="inline-flex items-center gap-1 rounded-full bg-surface-sunken px-1.5 py-0.5 text-2xs font-semibold text-ink-muted"
+                                                                          :title="'Caramelos de ' + req.tipo + ' disponibles: ' + req.caramelosDisponibles">
+                                                                        <img :src="'/images/candy_type/' + req.slug + '.webp'"
+                                                                             loading="lazy" decoding="async"
+                                                                             :alt="'Caramelo de ' + req.tipo"
+                                                                             class="h-3.5 w-3.5 object-contain"
+                                                                             onerror="this.onerror=null; this.src='/images/candy_pokemon/0.webp';">
+                                                                        <span x-text="'×' + req.caramelosDisponibles"></span>
+                                                                    </span>
+                                                                    <template x-for="cantidad in [1, 10, 100]" :key="'version-feed-' + req.slug + '-' + cantidad">
+                                                                        <button type="button"
+                                                                                @click="alimentarCarameloVersion(version, req, cantidad)"
+                                                                                :disabled="detailVersionCandyFeeding || req.caramelosDisponibles <= 0"
+                                                                                :title="'Consumir hasta ' + cantidad + ' caramelo(s) de ' + req.tipo + ' (+' + (cantidad * 100) + ' exp máx.)'"
+                                                                                class="rounded-control bg-warning px-1.5 py-0.5 text-2xs font-bold text-on-primary transition-colors hover:bg-warning/90 disabled:cursor-not-allowed disabled:opacity-40"
+                                                                                x-text="'x' + cantidad"></button>
+                                                                    </template>
+                                                                </div>
+                                                            </div>
+                                                        </template>
+                                                        <button type="button"
+                                                                @click="desbloquearVersion(version)"
+                                                                :disabled="detailLoading || !version.puede_desbloquear"
+                                                                class="w-full rounded-control bg-warning px-2 py-1 text-2xs font-bold text-on-primary transition-colors hover:bg-warning/90 disabled:cursor-not-allowed disabled:opacity-40"
+                                                                :title="version.puede_desbloquear
+                                                                    ? 'Desbloquear esta forma a Nv ' + versionesNivelObjetivo
+                                                                    : 'Falta exp de tipo para desbloquear'">
+                                                            Desbloquear
+                                                        </button>
+                                                    </div>
+                                                </template>
+                                            </div>
+                                        </template>
+                                    </div>
+                                </div>
+                            </template>
+
                             <!-- Evolución (solo si el Pokémon puede evolucionar) -->
                             <template x-if="detailEvoluciones.length > 0">
                                 <div class="rounded-panel border border-line bg-surface-sunken p-4">
@@ -110,16 +201,17 @@
                                 </div>
                             </template>
 
-                            <!-- Habilidades -->
+                            <!-- Habilidades: todas las de la especie están activas -->
                             <div class="rounded-panel border border-line bg-surface-sunken p-4">
                                 <h4 class="text-sm font-bold uppercase tracking-wide text-ink-muted mb-2">Habilidades</h4>
+                                <p class="mb-2 text-xs text-ink-muted">Todas las habilidades de la especie están activas en combate. No requieren selección.</p>
                                 <template x-if="(detailPokemon.habilidades_disponibles || []).length > 0">
                                     <div class="space-y-2">
                                         <template x-for="hab in detailPokemon.habilidades_disponibles" :key="'detail-hab-'+hab.id">
-                                            <button type="button" @click="loadoutHabilidadId = (loadoutHabilidadId == hab.id ? '' : hab.id)" class="w-full text-left rounded-card border p-3 transition-colors" :class="loadoutHabilidadId == hab.id ? 'border-success bg-success-soft' : 'border-line bg-surface-sunken hover:border-success'">
-                                                <div class="flex items-center justify-between gap-2"><span class="text-sm font-semibold text-ink" x-text="hab.name"></span><span x-show="loadoutHabilidadId == hab.id" class="text-3xs font-bold text-success-ink">ACTIVA</span></div>
+                                            <div class="w-full rounded-card border border-success bg-success-soft p-3">
+                                                <div class="flex items-center justify-between gap-2"><span class="text-sm font-semibold text-ink" x-text="hab.name"></span><span class="text-3xs font-bold text-success-ink">ACTIVA</span></div>
                                                 <p class="mt-1 text-xs leading-snug text-ink-muted" x-text="hab.description || 'Sin descripción.'"></p>
-                                            </button>
+                                            </div>
                                         </template>
                                     </div>
                                 </template>
@@ -134,7 +226,6 @@
                                     <h4 class="text-sm font-bold uppercase tracking-wide text-primary-ink">Movimientos asignados</h4>
                                     <span class="text-3xs text-primary-ink" x-text="loadoutMovimientos.length + '/6'"></span>
                                 </div>
-                                <p class="text-xs text-ink-muted mb-2">Habilidad activa: <strong x-text="nombreHabilidadLoadout()"></strong></p>
                                 <div class="flex flex-wrap gap-1.5 mb-3">
                                     <template x-for="slug in loadoutMovimientos" :key="'loadout-chip-'+slug">
                                         <span class="inline-flex items-center gap-1 pl-1 pr-1.5 py-0.5 rounded-full bg-surface border border-primary text-3xs text-primary-ink">

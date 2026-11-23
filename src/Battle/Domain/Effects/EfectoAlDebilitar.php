@@ -37,6 +37,9 @@ class EfectoAlDebilitar implements InterfazEfecto, ReaccionaAlDebilitamiento
             return;
         }
 
+        /** @var list<array{id: string, dano: float}> $objetivos */
+        $objetivos = [];
+
         foreach ($rival->combatientesCollection()->vivos() as $objetivo) {
             $cantidad = $objetivo->pokemon()->battleStats()->hp * $this->fraccion;
             if ($cantidad <= 0.0) {
@@ -45,10 +48,13 @@ class EfectoAlDebilitar implements InterfazEfecto, ReaccionaAlDebilitamiento
 
             $objetivo->recibirDaño($cantidad, false, $this->vaDirectoAHp ? 1.0 : 0.0);
             $battle->agregarLog("{$portador->nombre()} detona y causa ".round($cantidad)." de daño a {$objetivo->nombre()}");
+            $objetivos[] = ['id' => $objetivo->id(), 'dano' => $cantidad];
 
             if (! $objetivo->estaVivo()) {
                 $battle->agregarLog("¡{$objetivo->nombre()} se ha debilitado por la detonación!");
             }
         }
+
+        $battle->registrarDetonacion($portador->id(), $objetivos);
     }
 }

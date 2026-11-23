@@ -24,6 +24,7 @@ final readonly class PokemonDelPool
         public readonly ?int $evolutionChainId = null,
         public readonly int $speciesId = 0,
         public readonly ?float $pesoOverride = null,
+        public readonly float $factor = 1.0,
     ) {
     }
 
@@ -46,12 +47,16 @@ final readonly class PokemonDelPool
             evolutionChainId: isset($datos['evolution_chain_id']) ? (int) $datos['evolution_chain_id'] : null,
             speciesId: (int) ($datos['species_id'] ?? 0),
             pesoOverride: isset($datos['peso']) ? (float) $datos['peso'] : null,
+            factor: isset($datos['factor']) ? (float) $datos['factor'] : 1.0,
         );
     }
 
     /**
-     * Peso del pokémon en el pool ponderado: capture_rate / hatch. Los hatch
-     * nulos o cero se tratan como 1 y un capture_rate <= 0 excluye la entrada.
+     * Peso del pokémon en el pool ponderado.
+     *
+     * Sin override: capture_rate / hatch multiplicado por el factor del evento
+     * de aparición (1.0 si no aplica). Con override, el override ya es el peso
+     * final y el factor no se aplica otra vez.
      */
     public function peso(): float
     {
@@ -65,7 +70,7 @@ final readonly class PokemonDelPool
 
         $divisor = ($this->hatch === null || $this->hatch <= 0) ? 1 : $this->hatch;
 
-        return $this->captureRate / $divisor;
+        return ($this->captureRate / $divisor) * max(0.0, $this->factor);
     }
 
     /**
@@ -98,6 +103,10 @@ final readonly class PokemonDelPool
 
         if ($this->pesoOverride !== null) {
             $datos['peso'] = $this->pesoOverride;
+        }
+
+        if ($this->factor !== 1.0) {
+            $datos['factor'] = $this->factor;
         }
 
         return $datos;

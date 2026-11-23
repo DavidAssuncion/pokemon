@@ -84,7 +84,9 @@ class EfectoDanioFinTurno implements InterfazEfecto
                 continue;
             }
 
-            $objetivo->recibirDaño($cantidad, $this->especial, $this->vaDirectoAHp ? 1.0 : 0.0);
+            $battle->medirResiduo($objetivo, 'habilidad', $this->clave, function () use ($objetivo, $cantidad): void {
+                $objetivo->recibirDaño($cantidad, $this->especial, $this->vaDirectoAHp ? 1.0 : 0.0);
+            });
             $battle->agregarLog("{$objetivo->nombre()} sufre ".round($cantidad)." de daño por {$this->clave}");
 
             if ($objetivo->hpActual() <= 0.0) {

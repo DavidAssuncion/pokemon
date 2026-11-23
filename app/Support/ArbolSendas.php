@@ -12,6 +12,7 @@ use App\Models\PlayerTypePath;
 use App\Models\TypePathNode;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use Src\Battle\Domain\Enums\ObjetivoMovimiento;
 use Src\Shared\Domain\Sendas\BeneficiosSenda;
 use Src\Shared\Domain\Sendas\NivelSenda;
 use Src\Shared\Domain\SlugTipo;
@@ -136,6 +137,8 @@ final class ArbolSendas
             $categoria = in_array($nodo->category, self::CATEGORIAS, true)
                 ? $nodo->category
                 : 'estado';
+            $objetivo = ObjetivoMovimiento::tryFrom($move->target)
+                ?? ObjetivoMovimiento::NORMAL;
             $tramo = max(1, min(5, (int) $nodo->required_level));
             $nivelRequerido = min(3, $tramo);
             $coste = SendaCostes::coste($tramo);
@@ -153,6 +156,12 @@ final class ArbolSendas
                 'category' => $categoria,
                 'base_power' => (int) $move->base_power,
                 'accuracy' => $move->accuracy,
+                'objetivo' => $objetivo->value,
+                'objetivo_label' => $objetivo->etiquetaAlcance(),
+                'objetivo_corto' => $objetivo->etiquetaCortaAlcance(),
+                'objetivo_multiple' => $objetivo->esMultiobjetivo(),
+                'objetivo_incluye_aliados' => $objetivo->incluyeAliados(),
+                'objetivo_es_fila' => $objetivo->esFila(),
                 'nivel_requerido' => $nivelRequerido,
                 'tramo' => $tramo,
                 'coste' => $coste,

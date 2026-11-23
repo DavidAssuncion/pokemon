@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Src\CombateRuta\Infra\Controllers;
 
-use App\Http\Controllers\Controller;
 use App\Support\CombateRuta\AlmacenRivalRutaFijado;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -15,6 +14,7 @@ use Src\Battle\Domain\DatosPokemonBatalla;
 use Src\CombateRuta\App\CalcularComparacionPcRuta;
 use Src\CombateRuta\App\GeneradorEquipoRuta;
 use Src\CombateRuta\App\IniciarCombateRuta;
+use Src\Habitats\App\ValidadorNivelHabitat;
 use Symfony\Component\HttpFoundation\Response;
 
 /**
@@ -22,13 +22,14 @@ use Symfony\Component\HttpFoundation\Response;
  * - GET  /api/habitats/{habitat}/ruta/rivales  → rivales salvajes del panel.
  * - POST /api/habitats/{habitat}/ruta/iniciar   → crea la batalla 3v3.
  */
-final class CombateRutaController extends Controller
+final class CombateRutaController
 {
     public function __construct(
         private readonly GeneradorEquipoRuta $generadorEquipo,
         private readonly IniciarCombateRuta $iniciarCombate,
         private readonly CalcularComparacionPcRuta $calcularComparacionPc,
         private readonly AlmacenRivalRutaFijado $almacenRival,
+        private readonly ValidadorNivelHabitat $validadorNivelHabitat,
     ) {
     }
 
@@ -46,6 +47,8 @@ final class CombateRutaController extends Controller
 
         $nivel = (int) ($data['nivel'] ?? 1);
         $user = Auth::user();
+
+        $this->validadorNivelHabitat->asegurar($habitat, $nivel, $user->nivel());
 
         $comparacion = $this->calcularComparacionPc->calcular(
             habitatId: $habitat,
@@ -75,7 +78,10 @@ final class CombateRutaController extends Controller
         $nivel = $request->integer('nivel', 1);
         $user = Auth::user();
 
-        $rivales = $this->generadorEquipo->generar($habitat, max(1, min(3, $nivel)), $user->nivel());
+        $nivel = max(1, min(3, $nivel));
+        $this->validadorNivelHabitat->asegurar($habitat, $nivel, $user->nivel());
+
+        $rivales = $this->generadorEquipo->generar($habitat, $nivel, $user->nivel());
 
         return response()->json([
             'rivales' => array_map(
@@ -105,6 +111,8 @@ final class CombateRutaController extends Controller
 
         $user = Auth::user();
         $nivel = (int) ($data['nivel'] ?? 1);
+
+        $this->validadorNivelHabitat->asegurar($habitat, $nivel, $user->nivel());
 
         $battleId = $this->iniciarCombate->iniciar(
             habitatId: $habitat,

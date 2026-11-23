@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Support\Pc;
 
-use App\Enums\StatEnum;
 use App\Models\Pokemon;
 use Src\Pokemon\Domain\Stats\StatsValue;
 
@@ -25,15 +24,7 @@ final class EstadisticasBasePokemon
         $base = ['hp' => 0.0, 'atk' => 0.0, 'def' => 0.0, 'spAtk' => 0.0, 'spDef' => 0.0, 'speed' => 0.0];
 
         foreach ($pokemon->stats as $stat) {
-            $clave = match ($stat->stat) {
-                StatEnum::HP => 'hp',
-                StatEnum::ATTACK => 'atk',
-                StatEnum::DEFENSE => 'def',
-                StatEnum::SPECIAL_ATTACK => 'spAtk',
-                StatEnum::SPECIAL_DEFENSE => 'spDef',
-                StatEnum::SPEED => 'speed',
-            };
-            $base[$clave] = (float) $stat->base_stat;
+            $base[$stat->stat->key()] = (float) $stat->base_stat;
         }
 
         return new StatsValue(

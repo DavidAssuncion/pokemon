@@ -76,4 +76,60 @@ enum ObjetivoMovimiento: string
             self::FILA_OBJETIVO,
         ], true);
     }
+
+    /**
+     * Movimientos que alcanzan a más de un combatiente.
+     *
+     * `ALL` queda fuera: en el catálogo identifica movimientos de campo/tiempo
+     * (Día Soleado, Danza Lluvia, Trick Room…), no ataques que golpeen a todos.
+     */
+    public function esMultiobjetivo(): bool
+    {
+        return in_array($this, [
+            self::ALL_ADJACENT_FOES,
+            self::ALL_ADJACENT,
+            self::FILA_VANGUARDIA,
+            self::FILA_RETAGUARDIA,
+            self::FILA_OBJETIVO,
+        ], true);
+    }
+
+    /**
+     * El alcance incluye a los aliados del atacante.
+     */
+    public function incluyeAliados(): bool
+    {
+        return in_array($this, [
+            self::ALL_ADJACENT,
+        ], true);
+    }
+
+    /**
+     * Texto completo del alcance para tooltips. `null` cuando el movimiento no
+     * es multiobjetivo y no debe mostrar indicador.
+     */
+    public function etiquetaAlcance(): ?string
+    {
+        return match ($this) {
+            self::ALL_ADJACENT_FOES => 'Afecta a todos los rivales',
+            self::ALL_ADJACENT => 'Afecta a todos los combatientes (incluye aliados)',
+            self::FILA_VANGUARDIA => 'Afecta a toda la vanguardia rival',
+            self::FILA_RETAGUARDIA => 'Afecta a toda la retaguardia rival',
+            self::FILA_OBJETIVO => 'Afecta a toda la fila del objetivo',
+            default => null,
+        };
+    }
+
+    /**
+     * Texto corto del alcance para badges. `null` cuando no aplica.
+     */
+    public function etiquetaCortaAlcance(): ?string
+    {
+        return match ($this) {
+            self::ALL_ADJACENT_FOES => 'TODOS RIVALES',
+            self::ALL_ADJACENT => 'A TODOS',
+            self::FILA_VANGUARDIA, self::FILA_RETAGUARDIA, self::FILA_OBJETIVO => 'FILA COMPLETA',
+            default => null,
+        };
+    }
 }

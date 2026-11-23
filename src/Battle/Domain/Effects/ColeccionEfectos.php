@@ -140,50 +140,34 @@ class ColeccionEfectos implements \Countable, \IteratorAggregate
 
     public function multiplicadorDanioInfligido(AccionBatalla $accion): float
     {
-        $factor = 1.0;
-        foreach ($this->effects as $e) {
-            if ($e instanceof ModificaDanioInfligido) {
-                $factor *= $e->multiplicadorDanioInfligido($accion);
-            }
-        }
-
-        return $factor;
+        return $this->multiplicarPorInterfaz(
+            ModificaDanioInfligido::class,
+            static fn (ModificaDanioInfligido $e): float => $e->multiplicadorDanioInfligido($accion),
+        );
     }
 
     public function multiplicadorDanioEscudo(AccionBatalla $accion): float
     {
-        $factor = 1.0;
-        foreach ($this->effects as $e) {
-            if ($e instanceof ModificaDanioEscudo) {
-                $factor *= $e->multiplicadorDanioEscudo($accion);
-            }
-        }
-
-        return $factor;
+        return $this->multiplicarPorInterfaz(
+            ModificaDanioEscudo::class,
+            static fn (ModificaDanioEscudo $e): float => $e->multiplicadorDanioEscudo($accion),
+        );
     }
 
     public function multiplicadorDanioRecibido(AccionBatalla $accion): float
     {
-        $factor = 1.0;
-        foreach ($this->effects as $e) {
-            if ($e instanceof ModificaDanioRecibido) {
-                $factor *= $e->multiplicadorDanioRecibido($accion);
-            }
-        }
-
-        return $factor;
+        return $this->multiplicarPorInterfaz(
+            ModificaDanioRecibido::class,
+            static fn (ModificaDanioRecibido $e): float => $e->multiplicadorDanioRecibido($accion),
+        );
     }
 
     public function multiplicadorEstadistica(Combatiente $portador, StatClave $estadistica): float
     {
-        $factor = 1.0;
-        foreach ($this->effects as $e) {
-            if ($e instanceof ModificaEstadistica) {
-                $factor *= $e->multiplicadorEstadistica($portador, $estadistica);
-            }
-        }
-
-        return $factor;
+        return $this->multiplicarPorInterfaz(
+            ModificaEstadistica::class,
+            static fn (ModificaEstadistica $e): float => $e->multiplicadorEstadistica($portador, $estadistica),
+        );
     }
 
     public function inmunidadTipo(TipoPokemon $tipo): ?InmunidadTipo
@@ -224,26 +208,18 @@ class ColeccionEfectos implements \Countable, \IteratorAggregate
 
     public function multiplicadorProbabilidadCritico(): float
     {
-        $factor = 1.0;
-        foreach ($this->effects as $e) {
-            if ($e instanceof AjustaCritico) {
-                $factor *= $e->multiplicadorProbabilidadCritico();
-            }
-        }
-
-        return $factor;
+        return $this->multiplicarPorInterfaz(
+            AjustaCritico::class,
+            static fn (AjustaCritico $e): float => $e->multiplicadorProbabilidadCritico(),
+        );
     }
 
     public function multiplicadorStab(AccionBatalla $accion): float
     {
-        $factor = 1.0;
-        foreach ($this->effects as $e) {
-            if ($e instanceof BonusStab) {
-                $factor *= $e->multiplicadorStab($accion);
-            }
-        }
-
-        return $factor;
+        return $this->multiplicarPorInterfaz(
+            BonusStab::class,
+            static fn (BonusStab $e): float => $e->multiplicadorStab($accion),
+        );
     }
 
     public function redireccion(AccionBatalla $accion): ?RedirigeObjetivo
@@ -273,26 +249,18 @@ class ColeccionEfectos implements \Countable, \IteratorAggregate
 
     public function multiplicadorPrecisionAtaque(): float
     {
-        $factor = 1.0;
-        foreach ($this->effects as $efecto) {
-            if ($efecto instanceof ModificaPrecision) {
-                $factor *= $efecto->multiplicadorPrecision();
-            }
-        }
-
-        return $factor;
+        return $this->multiplicarPorInterfaz(
+            ModificaPrecision::class,
+            static fn (ModificaPrecision $e): float => $e->multiplicadorPrecision(),
+        );
     }
 
     public function multiplicadorPrecisionEstado(): float
     {
-        $factor = 1.0;
-        foreach ($this->effects as $efecto) {
-            if ($efecto instanceof ModificaPrecisionEstado) {
-                $factor *= $efecto->multiplicadorPrecisionEstado();
-            }
-        }
-
-        return $factor;
+        return $this->multiplicarPorInterfaz(
+            ModificaPrecisionEstado::class,
+            static fn (ModificaPrecisionEstado $e): float => $e->multiplicadorPrecisionEstado(),
+        );
     }
 
     public function inmuneAFlag(FlagMovimiento $flag): bool
@@ -364,6 +332,12 @@ class ColeccionEfectos implements \Countable, \IteratorAggregate
 
     public function dispararContacto(Combatiente $portador, Combatiente $atacante, AgregadoBatalla $battle): void
     {
+        // Las reacciones al contacto son defensivas: no deben castigar a un
+        // aliado que golpea a otro aliado (p. ej. Hedor aplicando retroceso).
+        if ($battle->equipoDe($portador) === $battle->equipoDe($atacante)) {
+            return;
+        }
+
         foreach ($this->effects as $e) {
             if ($e instanceof ReaccionaAlContacto) {
                 $e->alRecibirContacto($portador, $atacante, $battle);
@@ -521,5 +495,28 @@ class ColeccionEfectos implements \Countable, \IteratorAggregate
         foreach ($this->effects as $e) {
             $e->onTurnEnd($portador, $battle);
         }
+    }
+
+    /**
+     * Producto de los multiplicadores de todos los efectos que implementan
+     * una capacidad concreta. Centraliza el patrón `foreach + instanceof`
+     * repetido en los multiplicadores de daño, estadística, STAB, crítico y
+     * precisión.
+     *
+     * @template T of object
+     * @param  class-string<T>  $interfaz
+     * @param  callable(T): float  $calcular
+     */
+    private function multiplicarPorInterfaz(string $interfaz, callable $calcular): float
+    {
+        $factor = 1.0;
+
+        foreach ($this->effects as $efecto) {
+            if ($efecto instanceof $interfaz) {
+                $factor *= $calcular($efecto);
+            }
+        }
+
+        return $factor;
     }
 }

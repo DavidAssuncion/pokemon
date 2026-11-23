@@ -17,6 +17,9 @@ use Src\Shared\Tipos\TipoPokemon;
  */
 interface GymCatalogoRepositoryInterface
 {
+    /**
+     * Todos los gimnasios ordenados por `nivelMinimo ASC, slug ASC`.
+     */
     public function obtenerTodos(): GimnasioCollection;
 
     /**

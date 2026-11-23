@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Src\Huevos\Infra\Controllers;
 
-use App\Http\Controllers\Controller;
 use App\Models\Huevo;
 use App\Support\ReclutadoSerializer;
 use Illuminate\Http\JsonResponse;
@@ -13,7 +12,7 @@ use Src\Huevos\App\CrearHuevo;
 use Src\Huevos\App\EclosionarHuevo;
 use Src\Huevos\App\ListarHuevos;
 
-final class HuevoController extends Controller
+final class HuevoController
 {
     public function __construct(
         private readonly ListarHuevos $listar,

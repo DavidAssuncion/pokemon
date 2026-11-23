@@ -31,3 +31,27 @@ parameters:
             identifier: staticMethod.dynamicCall
             paths:
                 - src/Granjas/App/*
+        # Larastan resuelve el builder genérico como llamada estática en modelos
+        # con global scope; es un falso positivo del trait, no un bug.
+        -
+            message: '#^Dynamic call to static method Illuminate\\Database\\Eloquent\\Builder<App\\Models\\(Reclutado|Reclutable|User|PlayerTypePath|Favorito)>::(lockForUpdate|insertOrIgnore)\(\)\.$#'
+            identifier: staticMethod.dynamicCall
+        # Los casts del generador de movesets normalizan claves de JSON (pueden
+        # llegar como int) y son defensivos a propósito.
+        -
+            message: '#^Casting to (bool|int|string) something that.s already (bool|int|string)\.$#'
+            identifier: cast.useless
+            paths:
+                - app/Console/Commands/BuildShowdownMovesets.php
+        -
+            message: '#^Parameter \#1 \$array \(list<string>\) of array_values is already a list, call has no effect\.$#'
+            identifier: arrayValues.list
+            paths:
+                - app/Console/Commands/BuildShowdownMovesets.php
+        # PreferenciasShowdown lee JSON externo: los guards son validación real
+        # aunque el PHPDoc interno afirme el tipo.
+        -
+            message: '#^Call to function (is_string|is_array)\(\) with .* will always evaluate to true\.$#'
+            identifier: function.alreadyNarrowedType
+            paths:
+                - app/Support/PreferenciasShowdown.php
