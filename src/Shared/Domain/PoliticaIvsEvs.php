@@ -43,7 +43,7 @@ final class PoliticaIvsEvs
         return match (self::clamp($nivel, self::NIVEL_MINIMO, self::NIVEL_MAXIMO)) {
             1 => PerfilIvsEvs::Nulo,
             2 => PerfilIvsEvs::TopUno,
-            default => PerfilIvsEvs::Completo,
+            default => PerfilIvsEvs::TopDos,
         };
     }
 
