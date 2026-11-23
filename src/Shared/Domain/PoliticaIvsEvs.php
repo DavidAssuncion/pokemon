@@ -36,13 +36,13 @@ final class PoliticaIvsEvs
     private const TIER_MAXIMO = 3;
 
     /**
-     * Ruta según nivel de hábitat: 1 → Nulo, 2 → TopDos, 3 → Completo.
+     * Ruta según nivel de hábitat: 1 → Nulo, 2 → TopUno, 3 → Completo.
      */
     public static function perfilRuta(int $nivel): PerfilIvsEvs
     {
         return match (self::clamp($nivel, self::NIVEL_MINIMO, self::NIVEL_MAXIMO)) {
             1 => PerfilIvsEvs::Nulo,
-            2 => PerfilIvsEvs::TopDos,
+            2 => PerfilIvsEvs::TopUno,
             default => PerfilIvsEvs::Completo,
         };
     }

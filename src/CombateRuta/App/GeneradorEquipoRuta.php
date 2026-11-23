@@ -36,7 +36,7 @@ use Src\Shared\Domain\ProbabilidadesShiny;
  * - Cada salvaje lleva hasta 6 movimientos elegidos por `SelectorMovimientosRival`
  *   con el perfil de su tier: nivel disponible + desbloqueos del jugador.
  * - IV/EV se reparten con PoliticaIvsEvs según el nivel de ruta: 1 → Nulo,
- *   2 → TopDos, 3 → Completo. El shiny en batalla usa el perfil de su tier;
+ *   2 → TopUno, 3 → Completo. El shiny en batalla usa el perfil de su tier;
  *   al capturarlo, OtorgarRecompensasRuta le asigna IV 15.
  */
 final class GeneradorEquipoRuta

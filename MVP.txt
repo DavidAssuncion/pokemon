@@ -22,3 +22,18 @@ Armadura requieren def/spD/hp
 -
 encantamientos esperan
 Encantar movimientos, latigo cepa puede alicar veneno, subir potencias... Requiere Exp del tipo, algo mas?
+-
+Las misiones deben ayudar a progresar y recompensare el avance
+Eventos aleatorio de 3 dias, Control de población, derrota X de Y familia
+Desbloquear/Avistar todo un nivel del habitat dara 25/50/100 caramelos por nivel
+-
+revisa evoluciones como meowth galar perseker u obstagoon, algunas se han mezclado, corrigelo en seeders
+-
+pdte definirlo
+categorizar las mt de sendas
+
+bisharp??
+
+- corregir
+-
+Cuesta mucho reunir la exp necesaria para evolucionar... La ponemos a la mitad?
