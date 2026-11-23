@@ -176,6 +176,7 @@
         <div class="col-12 col-lg-9">
             @include('livewire.partials.battle-field')
             {{-- BOTTOM: TURN ORDER --}}
+            <br><hr><br>
             @include('livewire.partials.turn-bar')
         </div>
         <div class="col-12 col-lg-3">

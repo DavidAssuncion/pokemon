@@ -82,11 +82,10 @@
                 $categoriaId = 'items-cat-'.\Illuminate\Support\Str::slug($categoria);
             @endphp
 
-            <details class="items-category mb-3" open>
+            <details class="items-category mb-3">
                 <summary id="{{ $categoriaId }}"
                          class="h6 text-uppercase text-ink-muted mb-2 d-flex align-items-center justify-content-between gap-2">
                     <span>{{ $categoriaLabel }}</span>
-                    <span class="badge bg-surface-sunken border text-ink-muted">{{ count($items) }}</span>
                 </summary>
 
                 <div class="d-grid gap-2 mt-2">
